@@ -23,6 +23,7 @@ deps:300
 wasm:1800
 msrv:1800
 script-tests:300
+shapes:120
 "
 # Later legs go here, above this line and in run_leg: the spec ratchets per layer
 # (0002 onward), the Windows legs (0007).
@@ -61,6 +62,11 @@ run_leg() {
     script-tests)
       bash scripts/test-timeout.sh
       bash scripts/test-merge-to-main.sh
+      ;;
+    shapes)
+      # The committed shape corpus holds only vocabulary words and placeholders.
+      python3 scripts/shape-corpus-check --self-test
+      python3 scripts/shape-corpus-check
       ;;
     *)
       echo "gate: unknown leg '$1' (scripts/gate.sh --list)" >&2

@@ -19,6 +19,7 @@ Subcommands:
   build       write shapes.txt (runs the privacy check on the result)
   parsecheck  run `bash -n` on every skeleton and compare with the originals
               (needs $PSH_CORPUS_DATA/syntax.json from research/corpus/syntaxcheck.py)
+  selftest    skeletons of a few hand-written commands
 
 Needs tree-sitter and tree-sitter-bash (local only; never part of the build). Without
 them, the script re-runs itself under research/corpus/.venv of the primary checkout.
@@ -554,9 +555,48 @@ def cmd_parsecheck(args):
     print("regressions (skeletons only) in", os.path.join(SCRATCH, "parse-regressions.txt"))
 
 
+SELF_TESTS = [
+    ("cd /Users/x/y && cargo test --release -p my-crate 2>&1 | head -50",
+     "cd /w1 && cargo test --release -p w2 2>&1 | head -w3"),
+    ("cat <<'EOF' > /tmp/x.py\nimport os\nprint('$x')\nEOF\npython3 /tmp/x.py",
+     "cat <<'EOF' > /w1\nw0\nEOF\npython3 /w1"),
+    ("for f in src/*.rs; do echo \"$f: $(wc -l < \"$f\")\"; done",
+     'for v1 in w1/*.w2; do echo "$v1: $(wc -w3 < "$v1")"; done'),
+    ('git commit -m "fix: it\'s \\"really\\" status" && git status',
+     'git w1 -w2 "w3 \\"w4\\" w5" && git status'),
+    ("mysql -uroot -psecret --password=hunter2 -e 'select 1' $'a\\nb\\'c'",
+     "mysql -w1 -w2 --w3=w4 -e 'w5' $'w6\\w7\\'w8'"),
+    ('echo $((i+10)) ${x:-dflt} ${#arr[@]} "${HOME}/.cargo" ~/foo {a,b}.txt $1 $@ # note',
+     'echo $((v1+w1)) ${v2:-w2} ${#v3[@]} "${HOME}/.w3" ~/w4 {w5,w6}.w7 $1 $@ # w0'),
+    ("f() { local y=2; }; export A=1 Z; x=$(ls) && [[ $x =~ ^a(b)$ ]] && f",
+     "w1() { local v1=2; }; export v2=1 v3; v4=$(ls) && [[ $v4 =~ ^w2(w3)$ ]] && w1"),
+    ("find . -name '*.rs' -exec grep -l foo {} \\; -print0 | xargs -0 -I{} cat {} >/dev/null",
+     "find . -name '*.w1' -exec grep -w2 w3 {} \\; -print0 | xargs -0 -I{} cat {} >/dev/null"),
+    ('echo "$a $b" $x.txt "$y.log" ffmpeg -pix_fmt yuv420p', 'echo "$v1 $v2" $v3.w1 "$v4.w2" ffmpeg -w3 w4'),
+    ("cat <<-END\n\tbody\n\tEND\nwhile read -r line; do :; done < <(ls)",
+     "cat <<-w1\n\tw0\n\tw1\nwhile read -r w2; do :; done < <(ls)"),
+]
+
+
+def cmd_selftest(args):
+    """Skeletons of hand-written commands against the fixed vocabulary lists only."""
+    words = set(KEYWORDS + BUILTINS + UTILITIES + NEVER + SPECIAL + ["EOF", "test", "status"])
+    opts = set(TEST_OPERATORS + ["--release", "-0", "-I", "-exec", "-name", "-print0"])
+    variables = set(VARIABLES)
+    failed = 0
+    for cmd, want in SELF_TESTS:
+        got = render(template(cmd)[0], words, opts, variables)
+        bad = check.violations(got, words, opts, variables)
+        if got != want or bad:
+            failed += 1
+            print(f"FAIL: {cmd!r}\n  want {want!r}\n  got  {got!r}\n  violations {bad}")
+    print(f"shape-corpus: self-test {len(SELF_TESTS) - failed}/{len(SELF_TESTS)} ok")
+    sys.exit(1 if failed else 0)
+
+
 def main():
     cmd = sys.argv[1] if len(sys.argv) > 1 else ""
-    fn = {"vocab": cmd_vocab, "build": cmd_build, "parsecheck": cmd_parsecheck}.get(cmd)
+    fn = {"vocab": cmd_vocab, "build": cmd_build, "parsecheck": cmd_parsecheck, "selftest": cmd_selftest}.get(cmd)
     if fn is None:
         sys.exit(__doc__)
     fn(sys.argv[2:])

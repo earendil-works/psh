@@ -406,3 +406,33 @@ on djs's `djs-docs check`, without its site building and generated regions. "use
 counts as history except after is/are/be/been/being/get/gets/got, so "a pipe is used to
 connect" passes; 4-digit numbers starting with 0 count as issue numbers even in inline
 code (write a file mode as `755`).
+## D1070: The Windows legs: Rust legs on the Parallels VM, from a snapshot commit
+date: 2026-11-06 · by: windows · issue: 0007
+`scripts/windows-gate.sh` (macOS host, bash 3.2) runs the gate's Rust legs on the owner's
+Windows 11 arm64 VM (D027): `fmt`, `clippy -D warnings`, `test` (aarch64-pc-windows-msvc,
+native), `test-x64` (x86_64-pc-windows-msvc, run under Windows' x64 emulation) and
+`msrv` (`cargo check` with the `rust-version` toolchain). Not on Windows: `scripts` and
+`script-tests` (bash and perl host tooling, not psh), `deps` and `wasm` (the same on
+every host). The VM uses exactly the host's `rustc` version, installed there on first
+use with the MSRV, so clippy and rustfmt agree with the macOS legs. Sync: the host
+commits the worktree as it is (HEAD plus uncommitted and untracked files, through a
+scratch index; no stash) to `refs/windows-gate/NAME`, and the VM `git fetch`es it over
+the Parallels share (`\\Mac\Home`) into `C:\psh-gate\NAME`, its own checkout with a warm
+`target\`; building on the share itself would be slow and mix both hosts' `target/`.
+The VM-side runner, `scripts/windows-gate.ps1` (Windows PowerShell 5.1), enforces each
+leg's timeout itself and puts itself into a kill-on-close Job Object, because killing
+`prlctl exec` on the host leaves the guest processes running; the host's cleanup kills
+the runner, and the job takes cargo, rustc and test processes along.
+
+## D1071: The windows leg is on by default, last; the VM is shared by refcount
+date: 2026-11-06 · by: windows (agreed with the coordinator) · issue: 0007
+`scripts/gate.sh` runs `windows` (the D1070 legs) as its last leg, on every merge, since
+every merge happens on the owner's Mac and optional Windows CI is how oh-my-pi let Windows
+regress (D011). `PSH_GATE_WINDOWS=0` skips it when the VM is broken, for the coordinator
+and the owner only, never to get green; the gate prints a loud warning and appends the
+skip to `work/scratch/windows-gate/skipped.tsv` in the primary checkout. An unreachable
+VM fails the leg within bounded time (every `prlctl` call has a timeout; at most 300s of
+waiting for the guest). Concurrent gates share the VM: each run holds
+`run-NAME.lock` (a refcount with PIDs; dead runs are dropped); a run that wakes a
+suspended or stopped VM records that in `resumed`, and the last run out puts it back only
+then. A VM that was already running (the owner may be using it) stays running.

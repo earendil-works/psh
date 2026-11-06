@@ -134,7 +134,9 @@ reaches `main` (AGENTS.md). Legs, as they come into existence:
    `shapes`: the shape corpus passes its privacy check (0003, D1030).
    `guide`: `psh-docs check` holds the guide to its writing rules (0012, D1120).
 4. The spec ratchets for every layer that exists (0002 onward).
-5. Windows: the same legs on a Windows machine (0007; D027).
+5. `windows`, always last: `fmt`, clippy, `cargo test` (arm64 and x64) and the MSRV
+   check on the owner's Windows VM, through `scripts/windows-gate.sh` (0007; D027,
+   D1070, D1071). See "Windows" below.
 
 `scripts/gate.sh --list` names the legs; `scripts/gate.sh LEG...` runs a few while
 iterating. Each leg runs under `scripts/timeout.sh`.
@@ -157,6 +159,20 @@ Never weaken a leg to get green.
 ## Windows
 
 Windows compares against the same goldens through the normalization table. The gate's
-legs run on Windows as soon as 0007 part A lands (right after 0001): on the owner's
-Parallels VM via `prlctl exec` until the repository has a remote, then on GitHub Actions
-(D027).
+Rust legs run on Windows on the owner's Parallels VM (Windows 11 on arm64) via `prlctl
+exec` until the repository has a remote, then on GitHub Actions (D027):
+
+- `scripts/windows-gate.sh [LEG...]` runs them from the Mac: `fmt`, `clippy`, `test`
+  (aarch64-pc-windows-msvc), `test-x64` (x86_64-pc-windows-msvc under emulation),
+  `msrv`. It tests the worktree as it is, uncommitted changes included, so it is also
+  the inner loop for Windows work: `scripts/windows-gate.sh test`.
+- The VM fetches a snapshot commit into `C:\psh-gate\<worktree>` and builds there with
+  the host's exact `rustc` version. Each leg has a timeout inside the VM, and nothing the
+  run starts outlives it (D1070).
+- The gate runs it as its last leg, always. It wakes the VM if it sleeps and lets it
+  sleep again when the last concurrent run ends; a VM that was already running stays
+  running. An unreachable VM fails the leg in bounded time. `PSH_GATE_WINDOWS=0` skips
+  the leg when the VM is broken, for the coordinator and the owner only; the skip is
+  logged (D1071).
+- Not on Windows: the bash/perl script legs and the `deps` and `wasm` legs, which are
+  the same on every host.

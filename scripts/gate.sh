@@ -136,7 +136,10 @@ for leg in $selected; do
   fi
   echo "== gate: $leg"
   start=$(date +%s)
-  if ! scripts/timeout.sh "$secs" scripts/gate.sh --leg "$leg"; then
+  # The windows leg needs time after a TERM to stop its runner in the VM and suspend it.
+  grace=${PSH_TIMEOUT_GRACE:-5}
+  [ "$leg" = windows ] && grace=120
+  if ! PSH_TIMEOUT_GRACE=$grace scripts/timeout.sh "$secs" scripts/gate.sh --leg "$leg"; then
     echo "== gate: FAILED in leg '$leg' after $(($(date +%s) - start))s" >&2
     exit 1
   fi

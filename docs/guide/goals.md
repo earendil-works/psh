@@ -158,7 +158,7 @@ compare output with.
 ## Non-goals
 
 psh is not an interactive shell, a login shell or a POSIX `sh`, and has no zsh mode. Its
-utilities never include interpreters, compilers, package managers, version control or
-network and database clients (`python`, `cargo`, `npm`, `git`, `curl`, `sqlite3`): those
-stay real programs, which also keeps them visible to a classifier. Conformance to a test
+utilities never include interpreters, compilers, package managers or database clients
+(`python`, `cargo`, `npm`, `sqlite3`): those stay real programs, which also keeps them
+visible to a classifier. Conformance to a test
 suite for its own sake is not a target; matching bash on what agents run is.

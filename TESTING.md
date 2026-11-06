@@ -41,8 +41,12 @@ that issues 0001–0003 build; update them as they land.
 | L6 stress | L1–L3 re-run under perturbation | – | cancel at a random step (no leaked process, shell still usable); pause/resume at every k-th safepoint; a host where every op is `Pending`; tiny pipe buffers; slow consumers |
 
 For L4, where GNU and BSD agree both goldens must match; where they conflict, the
-expected output follows the tie-break rules in `research/builtins.md` §4.6, and the case
-says which rule applies.
+expected output follows the tie-break rules (ARCH.md "psh-utils", D016), and the case
+says which rule applies. Upstream suites back the big utilities: jaq's `jq-tests.jq`,
+the onetrueawk `T.*` and goawk tests for `awk`, ripgrep's tests for `rg`, and
+just-bash's recorded GNU fixtures (Apache) for `grep`/`sed`/`awk`/`jq`. Permissive ones
+may be vendored (check each license); uutils' runs of the GNU test suite are run for
+reference only, never vendored.
 
 ## Cases and goldens *(planned, 0002)*
 

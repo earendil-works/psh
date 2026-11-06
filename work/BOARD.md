@@ -7,7 +7,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
 | 0022 | L0 leg, gate caching, hit list on the parser, deps allowlist | infra | .worktrees/infra |
-| 0004 | Parser: psh-syntax from brush-parser, hand-written (part 1 merged 6496f61) | parser | .worktrees/parser |
+| 0023 | Arithmetic parser, bash-format printer, byte-exact sources | parser | .worktrees/parser |
 | 0009 | Classifier | shapes | .worktrees/shapes |
 | 0005 | Minimal interpreter | engine | .worktrees/engine |
 
@@ -56,3 +56,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0012 | Guide check tool | 2983147 (shapes) |
 | 0007A | Windows gate on the Parallels VM (part A of 0007) | bad4d63 (windows) |
 | 0002 | psh-spec runner, vendored cases, recorded goldens, ratchets, status | feb2a7c (infra) |
+| 0004 | Parser: psh-syntax from brush-parser, hand-written | f6bf28a (parser) |

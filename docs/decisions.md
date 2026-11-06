@@ -669,3 +669,28 @@ reparse with the same `dump`. A parser panic is a failure. Its ratchet is
 psh-syntax (a workspace crate, no new external dependency); the `deps` leg allows it.
 `tests/l0/syntax.txt`'s inline `## status:` lines stay the parser's quick check; the
 container verdicts are the oracle (they agree on all 196 snippets today).
+## D1230: Arithmetic: parse expanded text, evaluate over an environment trait
+date: 2026-11-07 · by: parser · issue: 0023
+`psh_syntax::parse_arith(&[u8])` parses the text of `$(( ))`, `(( ))`, `for (( ))`,
+subscripts and `let` after expansion into an `ArithExpr` tree with byte spans (numbers
+decoded, variables left as `LValue { name, index }` with the raw subscript text).
+`eval_arith`/`eval_arith_expr` evaluate it over `trait ArithEnv { type Error; is_assoc,
+get, set }`: the engine keeps variable semantics (indexed vs associative subscripts,
+negative indexes, `set -u`, readonly), the evaluator does bash's math (64-bit wrapping,
+shifts mod 64, short-circuit `&&` `||` `?:`, `x op= v` reading x first) and evaluates
+variable values as arithmetic in turn, up to bash's 1024 levels. Errors render bash's
+exact text (`EXPR: message (error token is "…")`) through `ArithError::bash_text`; the
+caller adds the context (`bash: line N: `, `let: `, `((: `). Agreed with the engine
+agent (0005). Checked against bash 5.3 on 18k random expressions (syntax errors and
+values, side effects and runtime errors).
+
+## D1231: Where arithmetic differs from bash's parse-while-evaluating
+date: 2026-11-07 · by: parser · issue: 0023
+Bash evaluates while it parses; psh parses the whole text first. So a runtime error
+before a syntax error in the same text (`1/0 +`, `x++ + )`) is reported as the syntax
+error, and side effects before it do not happen. Bash's look-ahead is reproduced where it
+changes messages: after a name the next token is read (so `x y 08` is a number error),
+error tokens follow bash (the divisor's start for `/` `%`, the token after the exponent for
+`**`). The evaluator's own nesting is capped at 2048 (`x=x` takes one per level), so
+values nested deep inside nested values fail with "expression recursion level exceeded"
+earlier than bash would, instead of overflowing a 1 MiB stack.

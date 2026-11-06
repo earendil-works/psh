@@ -13,6 +13,8 @@
 
 extern crate alloc;
 
+mod arith;
+mod arith_eval;
 mod ast;
 mod brace;
 mod dump;
@@ -25,6 +27,13 @@ mod words;
 #[cfg(test)]
 mod tests;
 
+pub use arith::{
+    ArithError, ArithErrorKind, ArithExpr, ArithKind, BinOp, LValue, UnaryOp, arith_dump,
+    parse_arith,
+};
+pub use arith_eval::{
+    ARITH_RECURSION_LIMIT, ArithEnv, ArithIndex, EvalError, eval_arith, eval_arith_expr,
+};
 pub use ast::*;
 pub use dump::dump;
 pub use error::ParseError;

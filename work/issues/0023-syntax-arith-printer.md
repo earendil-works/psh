@@ -78,6 +78,41 @@ short-circuit `&&`/`||`/`?:`, wrapping 64-bit math, shifts mod 64, `division by 
 `exponent less than 0`, error tokens like bash's). About 250 lines; the engine would only
 supply variables.
 
+### 2026-11-07: part 1, arithmetic (as landed; supersedes the proposal above)
+The engine agent agreed to both (via the coordinator) and asked for `set -u` and
+subscript handling in the environment. API (`psh_syntax::*`, D1230, D1231):
+
+```rust
+pub fn parse_arith(text: &[u8]) -> Result<Option<ArithExpr>, ArithError>; // None: blank (0)
+pub fn eval_arith<E: ArithEnv>(text: &[u8], env: &mut E) -> Result<i64, EvalError<E::Error>>;
+pub fn eval_arith_expr<E: ArithEnv>(expr: &ArithExpr, text: &[u8], env: &mut E)
+    -> Result<i64, EvalError<E::Error>>;                       // reuse a parse (for loops)
+pub trait ArithEnv {
+    type Error;                                                // the engine's own errors
+    fn is_assoc(&mut self, name: &[u8]) -> bool;               // subscripts are keys then
+    fn get(&mut self, name: &[u8], index: Option<ArithIndex<'_>>)
+        -> Result<Option<Vec<u8>>, Self::Error>;              // None = unset (0); set -u: Err
+    fn set(&mut self, name: &[u8], index: Option<ArithIndex<'_>>, value: i64)
+        -> Result<(), Self::Error>;                            // readonly: Err
+}
+pub enum ArithIndex<'a> { Num(i64) /* evaluated, may be negative */, Key(&'a [u8]) /* raw text */ }
+pub enum EvalError<E> { Arith { error: ArithError, text: Vec<u8> }, Env(E) }
+// EvalError::bash_text() -> Option<String>: `EXPR: message (error token is "…")`
+// ArithError { kind: ArithErrorKind, token: u32, prefix: Option<Span> },
+//   .message(), .bash_text(text); ARITH_RECURSION_LIMIT = 1024
+```
+
+`text` in `EvalError::Arith` is the text the error is in: the expression, a variable's
+value or a subscript, as bash names it. A plain `a` for an array is `get("a", None)`:
+the environment maps it to element 0.
+
+Tests: unit tests (precedence, increments, numbers, 43 error texts, spans, values,
+assignments, runtime errors, recursion limit, a 1 MiB stack in release). Differential
+fuzzing against bash 5.3 (`work/scratch/0023/fuzz.py`, `fuzzeval.py`, through
+`examples/arithcheck`): 30k random token strings agree on parse errors (the only
+difference is `let --`, which is `let`'s option end), and 9k random expressions agree on
+value, side effects and runtime error text.
+
 ## Follow-ups
 
 ## Result

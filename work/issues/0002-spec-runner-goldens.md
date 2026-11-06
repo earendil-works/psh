@@ -44,7 +44,7 @@ list", "The runner") and `research/hillclimb.md`.
       `research/corpus.md` §4 and §9, recorded like the rest.
 - [x] `expected-failures.txt` per layer with every active case (0%), and a gate leg that
       runs the ratchets.
-- [ ] `scripts/status` (summary per layer and area, appended to
+- [x] `scripts/status` (summary per layer and area, appended to
       `tests/scores/status.tsv`) and `--hitlist` (failures weighted by
       `research/corpus/results.json` `features`).
 - [ ] TESTING.md's *(planned)* sections updated to what was built (only those sections).
@@ -122,6 +122,13 @@ list", "The runner") and `research/hillclimb.md`.
   - Docs: TESTING.md "Oracle", "Cases and goldens", "Groups", "Ratchets", "The runner",
     "The gate"; decisions D1020-D1027.
 
+- 2026-11-06, part 2 (status, hit list): `scripts/status [--hitlist] [-n N]
+  [--no-append]` on psh-spec `--status`; first line of `tests/scores/status.tsv` (oils
+  71/2,511, brush 59/3,171 with the stub). Hit list weight = corpus frequency of the
+  rarest construct (D1028), detected lexically; a minimal JSON reader in psh-spec reads
+  results.json (no dependency). The top areas today: assignments, word splitting,
+  printf, globbing, parse errors, quoting, redirections.
+
 ## Follow-ups
 - Platform-dependent cases: the goldens are Linux/GNU; on macOS and Windows, cases
   that run external programs (`wc`, `od`, `touch -d`, `/proc`, signal numbers) cannot
@@ -131,5 +138,7 @@ list", "The runner") and `research/hillclimb.md`.
 - The external engine on Windows kills only the shell, not its tree (no process groups
   without a dependency); psh-spec does not run cases on Windows yet.
 - guide: `testing.md` (not written yet).
+- Hit list: detect constructs with psh-syntax once it parses (0004), instead of the
+  lexical approximation.
 
 ## Result

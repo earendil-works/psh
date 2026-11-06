@@ -331,6 +331,29 @@ impl Walker {
                         reason: None,
                     });
                     self.apply(child, sub, cx.nested(child, *via), false, Stdin::Inherited);
+                    // File names spliced into shell code (`xargs -I{} sh -c '… {} …'`,
+                    // `find -exec sh -c '… {} …'`) can inject commands.
+                    let c = &self.out.commands[child];
+                    let shell = c
+                        .name
+                        .as_deref()
+                        .is_some_and(|n| rules::SHELLS.contains(&n) || n == "eval");
+                    // The `-c` string, or the `eval` arguments.
+                    let code = c.words.iter().enumerate().skip(1).find_map(|(k, w)| {
+                        let v = w.value.as_deref()?;
+                        let opt = v.starts_with('-') && !v.starts_with("--") && v.contains('c');
+                        if c.name.as_deref() == Some("eval") {
+                            Some(v)
+                        } else if opt {
+                            c.words.get(k + 1).and_then(|n| n.value.as_deref())
+                        } else {
+                            None
+                        }
+                    });
+                    let spliced = *via == Via::Xargs || code.is_some_and(|v| v.contains("{}"));
+                    if shell && spliced && matches!(via, Via::Xargs | Via::FindExec) {
+                        self.mark_unknown(child, "file names are spliced into shell code");
+                    }
                 }
                 Nested::Source {
                     first,

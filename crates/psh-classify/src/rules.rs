@@ -108,7 +108,7 @@ pub(crate) fn command_name(word: &str) -> Option<&str> {
     None
 }
 
-const SHELLS: &[&str] = &["bash", "sh", "zsh", "dash", "ksh", "psh"];
+pub(crate) const SHELLS: &[&str] = &["bash", "sh", "zsh", "dash", "ksh", "psh"];
 const PYTHONS: &[&str] = &[
     "python",
     "python3",
@@ -1614,8 +1614,8 @@ fn shell(args: &[Arg]) -> Outcome {
             if matches!(long, "version" | "help") {
                 return Outcome::of(Category::Read);
             }
-            if matches!(long, "rcfile" | "init-file") {
-                i += 1;
+            if matches!(long, "rcfile" | "init-file" | "login") {
+                return Outcome::unknown("the shell loads startup files");
             }
             i += 1;
             continue;
@@ -1625,6 +1625,9 @@ fn shell(args: &[Arg]) -> Outcome {
         }
         for c in a[1..].chars() {
             match c {
+                'i' | 'l' if a.starts_with('-') => {
+                    return Outcome::unknown("the shell loads startup files");
+                }
                 'c' => command_string = true,
                 'n' => check_only = true,
                 'o' | 'O' => i += 1,

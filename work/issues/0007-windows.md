@@ -1,7 +1,7 @@
 # 0007: Windows CI and process layer
 
-status: open
-agent: -
+status: in-progress
+agent: windows
 branch: issue/0007-windows
 depends-on: part A: 0001; part B: 0006 (`windows-sys` allowed, D024)
 touches: .github/ or scripts/windows-*, crates/psh-os/ (windows), crates/psh-spec/ (Windows normalization), tests/process/ (Windows cases)

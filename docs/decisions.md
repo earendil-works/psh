@@ -395,3 +395,14 @@ shortest first, up to 2 MB, none over 4 KB. Single-session skeletons pass the sa
 token check as the rest, so they carry no private words; limiting them to new syntax
 keeps the file small (2.3 MB of 18 MB) while covering every 4-gram of the corpus, which
 is what L0 needs.
+
+## D1120: psh-docs: the guide's rules as a zero-dependency check
+date: 2026-11-06 · by: shapes · issue: 0012
+`crates/psh-docs` (binary, no dependencies) checks every page of `docs/guide/SUMMARY.md`
+against the writing rules of `docs/guide/README.md`; the gate leg `guide` runs it. A
+line scanner handles what the rules need (fenced blocks, code spans, inline links and
+reference definitions, headings with mdBook's ids) instead of a Markdown crate. Modeled
+on djs's `djs-docs check`, without its site building and generated regions. "used to"
+counts as history except after is/are/be/been/being/get/gets/got, so "a pipe is used to
+connect" passes; 4-digit numbers starting with 0 count as issue numbers even in inline
+code (write a file mode as `755`).

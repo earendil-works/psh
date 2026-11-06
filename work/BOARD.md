@@ -6,9 +6,10 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
-| 0002 | psh-spec runner, vendored cases, recorded goldens, ratchets, status | infra | .worktrees/infra |
+| 0002 | psh-spec runner, vendored cases, recorded goldens, ratchets, status (part 1 merged 21dc1ab) | infra | .worktrees/infra |
 | 0004 | Parser: psh-syntax from brush-parser, hand-written (part 1 merged 6496f61) | parser | .worktrees/parser |
 | 0009 | Classifier | shapes | .worktrees/shapes |
+| 0005 | Minimal interpreter | engine | .worktrees/engine |
 
 ## Open (ready)
 
@@ -20,7 +21,6 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | depends-on |
 | --- | --- | --- |
-| 0005 | Minimal interpreter | 0002, 0004 |
 | 0006 | Unix process layer | 0005 |
 | 0007B | Windows process layer (part B of 0007) | 0006 |
 | 0008 | Utility framework and first batch | 0005, 0006 |

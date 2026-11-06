@@ -1,6 +1,6 @@
 # 0008: Utility framework and first batch
 
-status: open (draft: refine when research/builtins.md lands)
+status: open
 agent: -
 branch: issue/0008-utilities
 depends-on: 0005, 0006
@@ -27,6 +27,10 @@ agent demand. Later batches are separate issues, one agent per batch, in paralle
       `cat`, `wc`, `true`/`false` standalone forms, `sleep` (cancellable).
 
 ## Notes
+- `research/builtins.md` §4 is the source for tiers, modes (S/F/W) and the GNU/BSD
+  tie-breaks. Its undecided points need a coordinator/owner decision before the batch
+  that hits them: `ls -G`/`-T` meaning, `xargs` on empty input (GNU vs BSD), `sort`'s
+  default collation, `grep -P` backend (pcre2 vs fancy-regex, both new dependencies).
 - Port from uutils (MIT) with attribution; copying beats depending (D006).
 - Proposed later batches, from the corpus ranking: (b) `grep`/`rg`/`fd` on the ripgrep
   crates; (c) `sed` (both `-i` forms); (d) `ls`/`cp`/`mv`/`rm`/`mkdir`/`touch`/`ln`/

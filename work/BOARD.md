@@ -23,7 +23,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | 0005 | Minimal interpreter | 0002, 0004 |
 | 0006 | Unix process layer | 0005 |
 | 0007 | Windows CI and process layer | 0006 |
-| 0008 | Utility framework and first batch | 0005, 0006; builtins.md |
+| 0008 | Utility framework and first batch | 0005, 0006 |
 | 0009 | Classifier | 0004 |
 | 0010 | pi-env integration behind a flag | 0006, 0007, L3 high |
 | 0011 | WASM build and JS host | 0005 |
@@ -43,6 +43,7 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | Windows CI: GitHub Actions or the Parallels VM | TESTING.md "Windows" |
 | Ranking of the goals | docs/guide/goals.md |
 | psh's license | README.md |
+| Utility dialect points left open in research/builtins.md §4.6 (`ls -G`, `xargs` on empty input, `sort` collation, `grep -P` backend) | 0008 and later batches |
 
 ## Done
 

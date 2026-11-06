@@ -1,0 +1,9 @@
+# Text files are stored with LF and checked out with LF on every platform, Windows
+# included: scripts must run under bash and goldens compare byte for byte.
+* text=auto eol=lf
+
+# Append-mostly files: merge both sides' additions instead of conflicting. A stale or
+# duplicate ratchet line is harmless (the gate reports it; --update-ratchet rewrites the
+# file).
+docs/decisions.md merge=union
+tests/**/expected-failures.txt merge=union

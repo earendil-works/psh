@@ -166,3 +166,48 @@ WASM and breaks cancellation. `awk` is a port of goawk (MIT), checked against th
 onetrueawk `T.*` and goawk tests, and stays in F mode until it passes them. Wrappers
 (`timeout nice nohup env xargs`), `which`, `xxd`, `tree`, `column` and `strings` are our
 own. Each new crate still needs its own decision (D006).
+
+## D019: fd is a Tier 1 utility
+date: 2026-11-06 · by: owner · issue: -
+`fd` moves from Tier 3 (fallback) to Tier 1, mode S (always embedded), next to `rg`.
+Tier 1 is now 62 names; this supersedes the count in D017. Reason: agents reach for `fd`
+wherever it exists, and it is rarely installed (30 corpus uses on macOS).
+
+## D020: Search utilities on the ripgrep crates (proposed, pending owner)
+date: 2026-11-06 · by: coordinator · issue: -
+**Status: proposed, pending owner confirmation.** Nobody adds these crates before it is
+confirmed. Source: `research/builtins.md` §5 (measurements at ripgrep `91f5d22`, fd
+`193d0df`).
+- **Crate set** (the whole D006 exception): direct dependencies `grep-matcher` 0.1.9,
+  `grep-regex` 0.1.14, `grep-searcher` 0.1.17, `grep-printer` 0.3.1 with
+  `default-features = false` (no serde), `ignore` 0.4.34, `globset` 0.4.21, `regex`
+  1.13.1, and `regex-automata` 0.4.18 / `regex-syntax` 0.8.11 where used directly; plus
+  their transitive crates as of that lock (about 27 on macOS, 30 on Windows, 28 on
+  linux-musl, 25 on wasm32: memchr, bstr, aho-corasick, walkdir, same-file, termcolor,
+  winapi-util, crossbeam-deque/epoch/utils, encoding_rs, encoding_rs_io, simdutf8,
+  memmap2, log, libc, cfg-if, scopeguard, windows-sys/windows-link and the like).
+  **Excluded:** `grep-cli` (process-centric; psh owns TTY, stdin, decompression) and
+  `grep-pcre2` (C code via pcre2-sys; breaks the C-free WASM build). Adding a crate to
+  the set, or a new feature that pulls one in, needs its own decision; version bumps
+  within the set are fine if the transitive set does not grow.
+- **rg:** copy ripgrep's flag layer (`crates/core/flags/*`) and glue with attribution,
+  patching the in-process seams (statics, process env/cwd/stdio, `exit`, spawning
+  through psh's runner); copy `lexopt` rather than depend on it. `rg --json` falls
+  through until JSON output is decided.
+- **fd:** re-implement the CLI on psh's argument parser; copy fd's filter, exec and
+  format code with attribution; none of fd's other dependencies (clap, jiff, ctrlc, nix,
+  ...).
+- **Walkers:** native = `ignore`'s walker (absolute roots, shell cwd/env, cancel checks);
+  virtual fs / WASM = psh's own single-threaded walker reusing `ignore`'s matchers with
+  the ignore chain copied from `ignore/src/dir.rs`. A parity test runs both natively over
+  the same fixtures and requires identical results. `grep` and `find` reuse the walker
+  and matchers.
+- **Output order:** path-sorted by default when searching with more than one thread
+  (ordered merge, not ripgrep's single-threaded `--sort path`).
+- **Regex gaps fall through** (D010): backreferences until psh's own backtracking
+  matcher exists; POSIX leftmost-longest spans (`grep -o`, `--color`, `-b`, `sed s///`)
+  until a `regex-automata` longest-match mode is proven; PCRE-only syntax always. Where
+  no host program exists (Windows, WASM), they fail clearly.
+Reason: the library route costs about 0.5–0.75 MB over the regex stack psh needs anyway,
+against 3.7–4.7 MB for vendoring both CLIs; it works in WASM except for the walk, which
+the second walker covers; and copying ripgrep's flags keeps rg's full surface and help.

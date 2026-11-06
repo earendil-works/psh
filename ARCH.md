@@ -44,7 +44,7 @@ crates/
   psh-classify/  AST -> effects and summaries                     psh-syntax only, wasm32
   psh-engine/    the stepped interpreter; Host trait; vprocs      psh-syntax only, wasm32
   psh-os/        OS hosts: unix and windows                       platform bindings (Open)
-  psh-utils/     in-process utilities (grep, sed, head, jq, ...)  ripgrep crates for rg/fd
+  psh-utils/     in-process utilities (grep, sed, head, jq, ...)  ripgrep crates (D020)
   psh/           the `psh` binary: -c, scripts, --parse, --classify
   psh-spec/      the conformance runner (TESTING.md)
   psh-wasm/      later: the WASM build and its JS host
@@ -183,8 +183,8 @@ From `research/execution-core.md` §5; the pitfalls listed there are requirement
 - Environment names are case-insensitive for the OS environment, case-sensitive for
   shell variables.
 - Output of native programs in the ANSI/OEM code page is decoded per program. **Open:**
-  where decoding lives (engine output layer or host), and how much `encoding_rs` costs us
-  in a near-zero-dependency tree.
+  where decoding lives (engine output layer or host). `encoding_rs` is in the tree anyway
+  once `grep-searcher` is (D020), so the cost question is settled if D020 is confirmed.
 - CRLF: scripts with `\r\n` parse; `$(…)` and `read` strip a trailing `\r` from native
   output.
 - Utilities whose names collide with System32 programs (`find`, `sort`, `timeout`,
@@ -274,11 +274,11 @@ Around the modes:
 
 - **Tier 0**, shell builtins: part of the engine (`cd`, `export`, `read`, `mapfile`,
   `printf`, `test`, `kill`, `wait`, `trap`, ...), not up for debate.
-- **Tier 1**, day one, 61 names: the top corpus names that are not excluded, everything
-  the agent read/edit/search loop needs, and the wrappers (which must be builtins so they
-  can wrap builtins and own process trees):
+- **Tier 1**, day one, 62 names: the top corpus names that are not excluded, everything
+  the agent read/edit/search loop needs, the wrappers (which must be builtins so they
+  can wrap builtins and own process trees), and `fd`, which the owner moved up (D019):
   `head tail cat ls cp mv rm mkdir rmdir touch ln chmod pwd basename dirname realpath
-  readlink mktemp stat du grep egrep fgrep rg sed awk sort uniq wc cut tr paste nl tee
+  readlink mktemp stat du grep egrep fgrep rg fd sed awk sort uniq wc cut tr paste nl tee
   seq comm printf echo test true false sleep find xargs diff cmp jq base64 md5sum
   sha1sum sha256sum sha512sum shasum md5 date env printenv timeout nice nohup which`.
   `timeout` comes first: it is the most common "command not found" (389) in the corpus.
@@ -289,7 +289,7 @@ Around the modes:
   checksum family, `shuf patch`, archives in F mode (`tar gzip gunzip zcat unzip`),
   `sponge ts ifne`, `dos2unix unix2dos iconv`, `install link unlink sync mkfifo logname
   tty`.
-- **Tier 3**, on demand, mostly F: `file bc dc yq fd` (decompressors as tar codecs),
+- **Tier 3**, on demand, mostly F: `file bc dc yq` (decompressors as tar codecs),
   `zip dd numfmt fmt pr csplit tsort factor uuidgen getopt envsubst chown chgrp clear
   pidwait pidof free`; `ast-grep` only as an optional feature.
 
@@ -297,7 +297,7 @@ Around the modes:
 
 Port mature permissive code rather than write new, above all for the four big ones:
 
-- `grep`/`rg` on the ripgrep crates, `sed` from uutils sed, `jq` on jaq, and **`awk`**,
+- `rg`, `fd`, `grep` and `find` on the ripgrep crates (next section), `sed` from uutils sed, `jq` on jaq, and **`awk`**,
   which has no mature permissive Rust implementation: port goawk (MIT, passes the
   onetrueawk tests), with onetrueawk (the macOS awk) and its `T.*` tests as reference.
   awk runs in F mode until it passes the onetrueawk and goawk suites.
@@ -309,18 +309,111 @@ Port mature permissive code rather than write new, above all for the four big on
   are never read (D007); BSD implementations are fine as references.
 
 **Open:** which of the crates these need are allowed (D006): jaq (and whether it is a
-dependency or copied), a `grep -P` backend (`pcre2` or `fancy-regex`), `parse_datetime`
-for `date -d`, `tar`/`flate2`/`zip` for Tier 2 archives, `sysinfo` for `ps`,
-`encoding_rs` for `iconv`, and whether `grep` and `find` reuse the ripgrep crates.
+dependency or copied), `parse_datetime` for `date -d` (also `touch -d`, `find -newermt`,
+`fd --changed-*`), `tar`/`flate2`/`zip` for Tier 2 archives, `sysinfo` for `ps`. The
+search crates, including `encoding_rs`, are D020 (proposed); under it there is no PCRE
+backend, so `grep -P` accepts what the regex crate parses and falls through otherwise.
 
-### rg and fd on the ripgrep/fd crates
+### Search: rg, fd, grep and find on the ripgrep crates (D020, proposed)
 
-> **Placeholder.** `research/builtins.md` is getting a section on embedding `rg` and
-> `fd` via the ripgrep/fd crates (`grep-*`, `ignore`, `globset`, `regex`), the standing
-> dependency exception (D006). Fill this in when it lands. Requirements already known:
-> `rg` must match real rg exactly (no smart-case by default, `--no-heading` and line
-> numbers only on a TTY, `-g` brace globs, `.gitignore` semantics including parent
-> directories, early exit under `| head`).
+`rg` and `fd` are embedded by owner requirement, on the upstream crates, the one
+standing dependency exception (D006). Neither ripgrep nor fd has a library entry point,
+and fd's `main` is unusable in-process (it changes the process cwd, installs a Ctrl-C
+handler, needs threads, pulls clap and jiff). Source: `research/builtins.md` §5. All of
+this is D020, proposed and pending owner confirmation.
+
+**Crates.** Exactly: `grep-matcher`, `grep-regex`, `grep-searcher`, `grep-printer`
+(`default-features = false`, so no serde), `ignore`, `globset`, `regex` (plus
+`regex-automata`/`regex-syntax` directly where needed), and what they pull in: about 27
+crates on macOS, 30 on Windows, 25 on wasm32. Not `grep-cli` (process-centric helpers;
+psh owns TTY, stdin and decompression) and not `grep-pcre2` (C code, breaks the WASM
+build). `encoding_rs` arrives with `grep-searcher`. Marginal size of rg+fd+grep+find:
+about 0.5–0.75 MB on top of the regex stack (1.2–1.4 MB), which `sed`, `[[ =~ ]]` and
+`find -regex` need anyway. Vendoring both CLIs verbatim would cost 3.7–4.7 MB.
+
+**rg: copy ripgrep's flag layer ("B+").** `crates/core/flags/*` (defs, lowargs, hiargs,
+parse) and the glue in `search.rs`/`main.rs` are copied into `psh-utils` with
+attribution (MIT OR Unlicense), so the whole flag surface and its `--help` text stay a
+mechanical diff from upstream. The seams are patched: per-invocation message/error state
+instead of statics, cwd/env/stdio/TTY from `UtilCtx` (also for `RIPGREP_CONFIG_PATH`),
+`--pre` and `-z` through psh's command runner, no `process::exit`, no global logger.
+`lexopt` is copied (about 1k lines, no dependencies). Search and printing use
+`grep-searcher` and `grep-printer`. `rg --json` falls through until JSON output is
+decided (`serde_json` or a hand-written printer). Broken pipe ends the search with
+status 0, so `rg … | head` stops early.
+
+**fd: rewrite the CLI, copy the logic.** fd's command line is re-implemented on psh's
+own argument parser; its filters (`filter/size.rs`, `time.rs`, `owner.rs`), `exec/`
+(`-x`/`-X` templates, run through the command runner) and `fmt/` (`{}`, `{/}`, `{//}`,
+`{.}`, `{/.}`) are copied with attribution (MIT/Apache). clap, jiff, lscolors, ctrlc,
+nix, etcetera, normpath, faccess, argmax and crossbeam-channel are not used.
+`--changed-within/-before` use psh's shared date parser. `--base-directory` never
+changes the process cwd. fd's tests and documented flags are the conformance target.
+
+**One walker seam, two implementations.**
+- *Native:* `ignore::WalkBuilder`/`WalkParallel` with absolute roots (parent-directory
+  ignore discovery canonicalizes against the *process* cwd), `current_dir(cwd)`, display
+  paths mapped back to the user's spelling, global gitignore located from the shell's
+  `HOME`/`XDG_CONFIG_HOME`/`GIT_CONFIG_*`, not the process's, and a cancel check in each
+  visitor. The parallel walker uses scoped, always-joined threads, which fits the
+  utility thread rule.
+- *Virtual fs (WASM, sandboxes):* psh's own single-threaded walker over the `UtilCtx`
+  fs. It reuses `ignore`'s in-memory matchers (`gitignore`, `overrides`, `types`) and
+  re-implements only the ignore chain (`.ignore` > `.gitignore` > `.git/info/exclude` >
+  global, parent directories), about 600–800 lines copied from `ignore/src/dir.rs` with
+  attribution.
+- A **parity test** runs both walkers natively over the same fixture trees with the same
+  flags and requires identical results.
+
+**Sorted output.** When rg or fd search with more than one thread, output is
+path-sorted by default (real rg's order is arbitrary, so sorted output is a valid rg
+output). This keeps goldens and replay stable. ripgrep's `--sort path` forces a single
+thread, so psh merges results in order instead; the cost is measured in 0013.
+
+**grep shares the engine, not the rg front end.** Shared: the `grep-regex` matcher,
+`grep-searcher` (context, binary detection, `-z`, encodings), the walker, and the
+0/1/2 exit rules (`-q` beats errors). GNU-specific: a POSIX BRE/ERE → `regex-syntax`
+translator (`\( \) \{ \}`, GNU `\+ \? \|`, leading `*` literal, `[[:class:]]`, bracket
+rules; oh-my-pi's `bre.rs` is an MIT reference); GNU output through psh's own `Sink`
+(`file:line:text`, `file-line-text` context, `--` separators, `Binary file X matches`,
+the `-c -l -L -H/-h` defaults), since `grep-printer`'s standard printer is rg-shaped;
+GNU recursion (`-r` without a path means `.`, hidden files searched, `.gitignore`
+ignored, `-R` follows symlinks, `--include/--exclude/--exclude-dir` as basename fnmatch
+via `globset` with `literal_separator(false)`).
+
+**find** uses the same walker with all ignore filtering off; `-name`/`-path` go through
+`globset` in fnmatch mode, `-regex` through the translator.
+
+**Regex gaps** (shared by grep and sed):
+- *Backreferences* (`\(a\)\1`): the regex crate lacks them. Plan: a small backtracking
+  matcher of psh's own implementing `grep_matcher::Matcher`, used only when the
+  translator sees a backreference. Until it exists, such patterns fall through to the
+  host program (D010), or fail clearly where there is none (Windows, WASM).
+- *Leftmost-longest:* Rust regex is leftmost-first, POSIX is leftmost-longest. Line
+  selection is the same, but `grep -o`, `--color`, `-b` and `sed s///` can pick a
+  different span (`echo abcd | grep -o 'ab\|abcd'`: POSIX `abcd`, Rust `ab`). Plan:
+  `regex-automata` with `MatchKind::All` and a forward search to the last match end for
+  those modes (needs a spike). Until then, in those modes a conservative check (for
+  example, any alternation in the pattern) makes the utility fall through; the spike
+  settles the exact rule.
+- *PCRE-only syntax* (`grep -P` lookaround): no PCRE; what `regex-syntax` parses is
+  accepted, the rest falls through.
+- *Locale:* UTF-8 Unicode semantics for classes and ranges, documented; this matches GNU
+  in a UTF-8 locale.
+
+**Windows.** Default `/` path separators for rg and fd (as `--path-separator /`; an
+explicit flag overrides). `psh.exe` carries a `longPathAware` manifest like ripgrep's.
+Color is ANSI or none, from the `UtilCtx` TTY state, never the console API. Gitignore
+matching stays case-sensitive (ripgrep's default). **Open:** CRLF-aware line ends
+(`--crlf`) by default for `grep`/`rg` on Windows, to be tested against Git for Windows'
+grep.
+
+**WASM.** The `grep-*` crates, `globset`, `regex` and the `ignore` matchers build for
+`wasm32-unknown-unknown` and work over `UtilCtx` readers; only the `ignore` walker does
+not (every fs call is `Unsupported`), which is what the virtual-fs walker replaces.
+
+**Size option.** If pi-env must stay small, the utilities (and with them the regex stack)
+can be a cargo feature of the daemon build.
 
 ### Never builtins (D014)
 
@@ -411,9 +504,9 @@ way for approval and another way for execution.
    psh.
 4. Minimum supported Rust version: pi-env pins 1.96.0, so psh must build with it if it
    is linked in.
-5. Windows output decoding: where it lives and whether `encoding_rs` is allowed.
-6. Dependencies beyond rg/fd: jaq for `jq`, a `grep -P` backend, `parse_datetime`,
-   archive crates, `sysinfo`, `encoding_rs`, ripgrep-crate reuse for `grep`/`find`.
+5. Windows output decoding: where it lives (`encoding_rs` comes with D020).
+6. Dependencies beyond the search crates: jaq for `jq`, `parse_datetime`, archive
+   crates, `sysinfo`, `serde_json` for `rg --json`.
 7. Where the per-utility effect tables live.
 8. Whether the WASM host is needed before pi-env integration.
 9. License of psh itself (MIT, or MIT/Apache-2.0).
@@ -421,3 +514,5 @@ way for approval and another way for execution.
 11. Never-builtins beyond the owner rule: `git`, `curl`/`wget`, `ssh`/`rsync` and the
     other proposed exclusions (D014).
 12. Dialect points: `ls -G`/`-T`, `xargs` on empty input, `sort` collation.
+13. D020 (search crates and approach), proposed: needs owner confirmation.
+14. CRLF-aware `grep`/`rg` by default on Windows.

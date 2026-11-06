@@ -1,7 +1,7 @@
 # 0004: Parser: psh-syntax from brush-parser, hand-written
 
-status: open
-agent: -
+status: in-progress
+agent: parser
 branch: issue/0004-parser
 depends-on: 0001 (0002 for the bash -n verdicts of L0)
 touches: crates/psh-syntax/, crates/psh/ (the --parse flag), NOTICE, tests/l0/

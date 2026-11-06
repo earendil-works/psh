@@ -213,6 +213,41 @@ pub(crate) fn classify(name: &str, args: &[Arg]) -> Outcome {
             o.reads.extend(files.map(|i| path(args, i)));
             o
         }
+        "sips" => {
+            let gets = |v: &str| {
+                matches!(
+                    v,
+                    "-g" | "--getProperty" | "-1" | "--oneLine" | "-h" | "--help"
+                )
+            };
+            let flags = args[1..]
+                .iter()
+                .filter_map(|a| a.value.as_deref())
+                .filter(|v| v.starts_with('-'));
+            if args[1..].iter().all(|a| a.value.is_some()) && flags.clone().all(gets) {
+                Outcome::of(Category::Read)
+            } else {
+                Outcome::of(Category::Mutate)
+            }
+        }
+        "plutil" => {
+            let reads =
+                |v: &str| matches!(v, "-p" | "-lint" | "-help" | "-type" | "-extract" | "-s");
+            let first = args.get(1).and_then(|a| a.value.as_deref());
+            match first {
+                Some(f)
+                    if reads(f) && !args.iter().any(|a| a.value.as_deref() == Some("-o"))
+                        || (f == "-extract"
+                            && args.windows(2).any(|w| {
+                                w[0].value.as_deref() == Some("-o")
+                                    && w[1].value.as_deref() == Some("-")
+                            })) =>
+                {
+                    Outcome::of(Category::Read)
+                }
+                _ => Outcome::of(Category::Mutate),
+            }
+        }
         "open" | "xdg-open" => Outcome::unknown("opens a file with another program"),
         "vim" | "vi" | "nvim" | "nano" | "emacs" | "code" | "subl" => {
             Outcome::unknown("starts an editor")
@@ -248,7 +283,7 @@ fn scan(u: &Utility, args: &[Arg], start: usize) -> Scan {
     let mut i = start;
     while i < args.len() {
         let Some(a) = args[i].value.as_deref() else {
-            if !ended {
+            if !ended && args[i].may_be_option() {
                 s.dynamic = true;
             }
             s.operands.push(i);
@@ -337,8 +372,15 @@ fn path(args: &[Arg], i: usize) -> PathRef {
 fn table(name: &str, u: &Utility, args: &[Arg], start: usize) -> Outcome {
     let mut s = scan(u, args, start);
     let mut o = Outcome::of(u.category);
-    let has_effects = !u.effects.is_empty() || matches!(u.operands, Operands::Script(_));
-    if s.dynamic && has_effects {
+    // A dynamic word can turn into an option (`rg "$x"` with x=`--pre=sh`): it matters
+    // only where some option writes, mutates or runs code.
+    let risky = u.effects.iter().any(|(_, e)| {
+        matches!(
+            e,
+            Effect::WritesOperands | Effect::WritesValue | Effect::Mutates | Effect::Unknown
+        )
+    });
+    if s.dynamic && risky {
         o.set_unknown("a dynamic word could be an option that changes the effect");
     }
     let mut writes_operands = false;
@@ -412,8 +454,10 @@ fn table(name: &str, u: &Utility, args: &[Arg], start: usize) -> Outcome {
                 if k == 0 {
                     o.reads.push(path(args, i));
                 } else {
+                    if !val(args, i).is_some_and(harmless_path) {
+                        o.cats.insert(Category::Mutate);
+                    }
                     o.writes.push(path(args, i));
-                    o.cats.insert(Category::Mutate);
                 }
             }
         }
@@ -450,22 +494,82 @@ fn script_check(name: &str, args: &[Arg], i: usize, o: &mut Outcome) {
 }
 
 /// An awk program that may run commands or write files: `system(...)`, `cmd | getline`,
-/// or `print`/`printf` with `>` or `|`. Comparisons with `>` outside print statements
-/// are fine.
+/// `print … | "cmd"`, or `print … > "file"`. String and regex literals are skipped, and a
+/// `>` inside parentheses (`print ($1 > 5)`) or outside a print statement is a
+/// comparison.
 fn awk_has_effects(p: &str) -> bool {
-    if p.contains("system") || p.contains("fflush") {
+    let code = awk_code(p);
+    if code.contains("system") || code.contains("fflush") {
         return true;
     }
-    let b = p.as_bytes();
+    let b = code.as_bytes();
     for (k, &c) in b.iter().enumerate() {
         if c == b'|' && b.get(k + 1) != Some(&b'|') && (k == 0 || b[k - 1] != b'|') {
             return true;
         }
     }
-    p.split([';', '{', '}', '\n']).any(|stmt| {
-        stmt.find("print")
-            .is_some_and(|at| stmt[at..].contains('>'))
+    code.split([';', '{', '}', '\n']).any(|stmt| {
+        let Some(at) = stmt.find("print") else {
+            return false;
+        };
+        let mut depth = 0i32;
+        stmt[at..].bytes().any(|c| {
+            match c {
+                b'(' => depth += 1,
+                b')' => depth -= 1,
+                _ => {}
+            }
+            c == b'>' && depth <= 0
+        })
     })
+}
+
+/// The program without its string and regex literals (each replaced by a space).
+fn awk_code(p: &str) -> String {
+    let mut out = String::with_capacity(p.len());
+    let mut chars = p.chars().peekable();
+    // A `/` starts a regex where an operand is expected.
+    let mut operand_expected = true;
+    while let Some(c) = chars.next() {
+        match c {
+            '"' => {
+                while let Some(d) = chars.next() {
+                    match d {
+                        '\\' => {
+                            chars.next();
+                        }
+                        '"' => break,
+                        _ => {}
+                    }
+                }
+                out.push(' ');
+                operand_expected = false;
+            }
+            '/' if operand_expected => {
+                let mut in_bracket = false;
+                while let Some(d) = chars.next() {
+                    match d {
+                        '\\' => {
+                            chars.next();
+                        }
+                        '[' => in_bracket = true,
+                        ']' => in_bracket = false,
+                        '/' if !in_bracket => break,
+                        _ => {}
+                    }
+                }
+                out.push(' ');
+                operand_expected = false;
+            }
+            _ => {
+                out.push(c);
+                if !c.is_whitespace() {
+                    operand_expected = "(,~!&|{};=<>?:+-*%^".contains(c) || c == '\n';
+                }
+            }
+        }
+    }
+    out
 }
 
 fn alias(args: &[Arg]) -> Outcome {
@@ -695,7 +799,9 @@ fn find(args: &[Arg]) -> Outcome {
     while i < args.len() {
         let Some(a) = args[i].value.as_deref() else {
             // Even a path from a variable can start with `-` and be read as an action.
-            o.set_unknown("a dynamic word in find's arguments");
+            if args[i].may_be_option() || in_expr {
+                o.set_unknown("a dynamic word in find's arguments");
+            }
             i += 1;
             continue;
         };
@@ -1266,7 +1372,7 @@ fn uv(args: &[Arg]) -> Outcome {
             // `uv run [opts] cmd ...`: the command decides.
             let mut i = si + 1;
             while let Some(a) = val(args, i) {
-                if !a.starts_with('-') {
+                if !a.starts_with('-') || a == "-" {
                     break;
                 }
                 i += if matches!(
@@ -1283,6 +1389,9 @@ fn uv(args: &[Arg]) -> Outcome {
                 } else {
                     1
                 };
+            }
+            if i >= args.len() || val(args, i) == Some("-") {
+                return Outcome::unknown("uv run without a command runs a script");
             }
             wrap_at(args, i, Via::Wrapper)
         }

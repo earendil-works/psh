@@ -116,6 +116,21 @@ pub struct Arg {
     pub glob: bool,
 }
 
+impl Arg {
+    /// Whether the word could start with `-` once expanded, and so be taken as an
+    /// option: it does literally, or it starts with an expansion (`$x`, `"$x"`,
+    /// `` `…` ``, a brace). `src/$f` and `{a,b}.rs` cannot.
+    pub fn may_be_option(&self) -> bool {
+        if let Some(v) = &self.value {
+            return v.starts_with('-');
+        }
+        // Skip opening quotes and backslashes; a `$` among them starts an expansion.
+        let t = self.text.trim_start_matches(['"', '\'', '\\', '$']);
+        let lead = &self.text[..self.text.len() - t.len()];
+        lead.contains('$') || matches!(t.chars().next(), Some('-' | '{' | '`') | None)
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct RedirInfo {
     pub span: Span,
@@ -220,7 +235,6 @@ pub(crate) fn dangerous_var(name: &str) -> bool {
         "PATH"
             | "BASH_ENV"
             | "ENV"
-            | "IFS"
             | "SHELLOPTS"
             | "BASHOPTS"
             | "PROMPT_COMMAND"

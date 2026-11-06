@@ -578,3 +578,21 @@ error	echo "unclosed
 error	ls |
 error	(ls
 error	case x in
+
+# --- Dynamic words that cannot be options
+read	rg -n foo src/{a,b}.rs
+read	grep -n "$pattern" file
+read	sed -n 1,20p "src/$f"
+read	cat "$f"
+read	find "src/$d" -name x
+unknown	rg -n "$pattern" src
+unknown	find "$dir" -name x
+unknown	sed -n 1,20p "$f"
+unknown	sort "$f"
+read	pdftotext file.pdf - | head
+read	awk '/foo|bar/ {print $1 " -> " $2}' file
+read	awk '{ print ($2 > 10) }' file
+read	awk -F'|' '{print $3}' file
+read	awk '$1 ~ /a|b/ && $2 > 3 { n++ } END { print n }' f
+unknown	awk '{ print $1 > "/tmp/out" }' f
+unknown	awk 'BEGIN { "date" | getline d; print d }'

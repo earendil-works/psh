@@ -1,0 +1,20 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+edition = "2024"
+# MSRV: pi-env's pinned toolchain. Develop on current stable, use nothing newer.
+rust-version = "1.96"
+version = "0.0.0"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[workspace.dependencies]
+psh-syntax = { path = "crates/psh-syntax" }
+psh-engine = { path = "crates/psh-engine" }
+
+# Every crate opts in with `[lints] workspace = true`. `unsafe` is forbidden outside the
+# OS host crates (AGENTS.md); psh-os declares its own lint table when it lands.
+[workspace.lints.rust]
+unsafe_code = "forbid"

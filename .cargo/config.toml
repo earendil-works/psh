@@ -1,0 +1,8 @@
+# Several agents build and test in parallel on one machine: cap each cargo invocation at
+# 6 jobs and 6 test threads, leaving cores for the others (and for the gate, which uses
+# the same caps since several gates can run at once).
+[build]
+jobs = 6
+
+[env]
+RUST_TEST_THREADS = "6"

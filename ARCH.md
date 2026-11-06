@@ -21,10 +21,10 @@ The guide's `docs/guide/goals.md` is the human-facing statement of these. In sho
   mixed), not for interactive use.
 - **Portable.** The same binary semantics on macOS, Linux and Windows; Windows is not a
   port done at the end.
-- **Consistent.** One shell and one utility dialect everywhere: locally, over pi-env, in
-  the browser.
 - **Bash's behavior.** What bash 5.3 prints and returns is the target, including error
   messages. Deviations are recorded decisions.
+- **Consistent.** One shell and one utility dialect everywhere: locally, over pi-env, in
+  the browser.
 - **Understandable commands.** The parser is a product: hosts classify, summarize and
   approve commands with the exact parser that runs them.
 - **Control of execution.** Cancel, timeouts and process-tree kill with no orphans; the

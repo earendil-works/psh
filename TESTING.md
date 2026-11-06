@@ -123,7 +123,8 @@ reaches `main` (AGENTS.md). Legs, as they come into existence:
 1. `cargo fmt --check`, clippy `-D warnings`, `cargo test --workspace` (0001).
 2. `psh-syntax` builds for `wasm32-unknown-unknown` (0001), later the engine too.
 3. The spec ratchets for every layer that exists (0002 onward).
-4. Windows: the same legs on a Windows machine (0007).
+4. Windows: the same legs on a Windows machine (0007; D027).
+5. Later: a build with Rust 1.96, the MSRV (D025); a follow-up, not blocking.
 
 Later the gate caches each leg by its inputs, so a docs-only change gates in seconds.
 Never weaken a leg to get green.
@@ -142,7 +143,7 @@ Never weaken a leg to get green.
 
 ## Windows
 
-Windows compares against the same goldens through the normalization table. CI runs the
-gate's legs on Windows from the first process-layer issue on (0007), on GitHub Actions
-runners or the owner's Parallels VM via `prlctl exec` for local runs. **Open:** which of
-the two is the gate's Windows leg, given that nothing is pushed yet.
+Windows compares against the same goldens through the normalization table. The gate's
+legs run on Windows as soon as 0007 part A lands (right after 0001): on the owner's
+Parallels VM via `prlctl exec` until the repository has a remote, then on GitHub Actions
+(D027).

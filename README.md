@@ -26,4 +26,5 @@ agents write. Status: design only; nothing is implemented yet.
 
 ## License
 
-MIT or Apache-2.0 (to be confirmed). Code copied from brush (MIT) keeps its attribution.
+MIT OR Apache-2.0 (`LICENSE-MIT`, `LICENSE-APACHE`). Code copied from other projects
+(brush, uutils, ripgrep, fd, ...) keeps its attribution in `NOTICE`.

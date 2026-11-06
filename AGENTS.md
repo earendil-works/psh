@@ -34,9 +34,8 @@ before you start any work:
 - **No tokio, no async runtime.** The engine is synchronous and stepped by its embedder,
   using only `std::task::Waker`. OS waits live behind the `Host` trait (ARCH.md).
 - **Near-zero dependencies.** No crate without a recorded decision in
-  `docs/decisions.md`, dev-dependencies included. The standing exception: `rg` and `fd`
-  are built on the ripgrep/fd crates (`grep-*`, `ignore`, `globset`, `regex`). We copy
-  from brush instead of depending on it.
+  `docs/decisions.md`, dev-dependencies included (the allowed list is under "Code
+  conventions"). We copy from brush instead of depending on it.
 - **Windows from the start.** Every layer builds and is tested on Windows. Never assume
   Git Bash, MSYS or WSL.
 - **Never weaken the gate** to get green: no deleted tests, no ratchet entries added to
@@ -59,10 +58,15 @@ GNU bash 5.3 is the reference (TESTING.md "Oracle"):
 
 ## Code conventions
 
-- Rust edition 2024, stable toolchain, a Cargo workspace with `crates/*`. `cargo fmt`
-  and clippy with `-D warnings` must be clean.
-- `psh-syntax` builds for `wasm32-unknown-unknown` with zero dependencies; the gate
-  checks it. The engine must build for it too, once it exists.
+- Rust edition 2024, a Cargo workspace with `crates/*`. Develop on current stable, but
+  the MSRV is **1.96** (pi-env's pin, D025): use no language or library feature newer
+  than 1.96. `cargo fmt` and clippy with `-D warnings` must be clean.
+- `psh-syntax` (and `psh-classify`) are `#![no_std]` + `alloc` with zero dependencies
+  (D023); never force std into them from the engine. `psh-engine` uses std and must
+  build for `wasm32-unknown-unknown` (gate).
+- Allowed dependencies so far: the ripgrep crate set (D020/D021) in `psh-utils`,
+  `libc`/`windows-sys` in `psh-os` (D024), jaq for `jq` (D028), `deser-json` for all
+  JSON (D029). Anything else needs a decision.
 - No `unsafe` outside the OS host crates (`psh-os`) unless a decision records why. In
   `psh-os`, every `unsafe` block says which invariant makes it sound.
 - Prefer plain, direct code. Comments explain *why*. No speculative abstraction.

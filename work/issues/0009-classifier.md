@@ -1,7 +1,7 @@
 # 0009: Classifier
 
-status: open
-agent: -
+status: in-progress
+agent: shapes
 branch: issue/0009-classifier
 depends-on: 0004
 touches: crates/psh-classify/, crates/psh/ (the --classify flag), tests/classify/

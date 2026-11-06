@@ -595,3 +595,15 @@ the summed weight of their failing cases. Reason: a spec case usually tests its 
 exotic part, so the minimum, not the sum, says how much agents depend on it. The
 constructs are detected lexically until psh-syntax can classify scripts; then the
 detector should move onto the parser (follow-up).
+## D1047: `psh --parse` JSON shape
+date: 2026-11-06 · by: parser · issue: 0004
+`psh --parse [--compact] [-O extglob] [-c CMD | FILE]` prints `{"ok": true, "script":
+LIST}` or `{"ok": false, "error": {message, span, line, column, incomplete}}`; status 0 or
+2. Every node is an object with `type` and `span` (`[start, end]` byte offsets into the
+UTF-8 source); words carry `text` (as written), `value` (after quote removal when there is
+no expansion, else `null`), `quoted` and typed `parts`; substitutions carry their parsed
+`body`; backquote bodies are parsed for the JSON (spans relative to their unescaped
+`text`). The full shape is documented at the top of `crates/psh/src/parse_json.rs`. The
+JSON is built in the `psh` crate on deser-json (D029; `default-features = false`, `std`),
+so psh-syntax stays dependency-free. Reason: the classifier (0009) and pi's UI need
+kinds, spans, quoting and nested commands without re-deriving them from source text.

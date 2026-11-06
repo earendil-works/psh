@@ -88,6 +88,26 @@ hand-written lexer and recursive-descent parser, byte spans on every node, a pri
   corpus verdicts need recording too (0002 or 0003). The ratchet file
   `tests/l0/expected-failures.txt` would start empty. To agree with infra.
 
+### 2026-11-06: part 2, `psh --parse`
+- Coordinator: 0002 (infra) records container `bash -n` verdicts (Oils/brush scripts,
+  shapes, `tests/l0/syntax.txt`) and builds the L0 leg + ratchet in psh-spec.
+- `tests/l0/syntax.txt` format (stable, for infra): UTF-8, LF. Lines starting with `# `
+  before the first case are a header. A case starts with `#### NAME` (NAME is a number
+  today; treat it as an opaque id); the script is every following line up to the
+  `## status: N` line, each line terminated by `\n` (so the script always ends with a
+  newline, which is how the verdicts were recorded); `## status: N` is `bash -n`'s exit
+  status (0 = parses; one case has 1); an optional `## message: TEXT` follows for
+  failures: bash's first stderr line without `FILE: line N: `. Blank lines between cases
+  are not part of any script. No script line starts with `#### ` or `## `. To re-record,
+  run `bash -n` on each script and rewrite `status`/`message`.
+- `psh --parse [--compact] [-O extglob] [-c CMD | FILE]` (stdin without either): JSON on
+  stdout via deser-json in the `psh` crate (`src/json.rs`: a small JSON tree with a deser
+  `Serialize` impl; `src/parse_json.rs`: the mapping, its shape documented at the top;
+  D1047). Status 0 parsed, 2 syntax error (the JSON then holds the error). Pretty output
+  inlines short leaf arrays (spans). Smoke-checked over all 33.8k L0 inputs: no crashes.
+- deser-json added with `default-features = false, features = ["std"]` (+ `deser-core`,
+  its own dependency, for the trait): the build pulls deser-core, deser-json, itoa, zmij.
+
 ## Follow-ups
 
 ## Result

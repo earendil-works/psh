@@ -76,3 +76,56 @@ fn no_arguments_prints_usage() {
     assert_eq!(out.status, Some(2));
     assert!(out.stderr.starts_with("usage: psh"), "{}", out.stderr);
 }
+
+#[test]
+fn parse_prints_json() {
+    let out = psh(&["--parse", "--compact", "-c", "echo hi"]);
+    assert_eq!(out.status, Some(0), "{}", out.stderr);
+    assert!(
+        out.stdout
+            .starts_with(r#"{"ok":true,"script":{"type":"list","span":[0,7],"#),
+        "{}",
+        out.stdout
+    );
+    assert!(out.stdout.ends_with("}\n"));
+    // Pretty by default.
+    let out = psh(&["--parse", "-c", "echo hi"]);
+    assert!(
+        out.stdout.starts_with("{\n  \"ok\": true,\n"),
+        "{}",
+        out.stdout
+    );
+}
+
+#[test]
+fn parse_reports_syntax_errors() {
+    let out = psh(&["--parse", "--compact", "-c", "echo a\nfi"]);
+    assert_eq!(out.status, Some(2));
+    assert_eq!(
+        out.stdout,
+        "{\"ok\":false,\"error\":{\"message\":\"syntax error near unexpected token `fi'\",\"span\":[7,9],\"line\":2,\"column\":1,\"incomplete\":false}}\n"
+    );
+}
+
+#[test]
+fn parse_options_and_files() {
+    let out = psh(&["--parse", "--compact", "-c", "echo @(a)"]);
+    assert_eq!(out.status, Some(2));
+    let out = psh(&["--parse", "--compact", "-O", "extglob", "-c", "echo @(a)"]);
+    assert_eq!(out.status, Some(0));
+    assert!(out.stdout.contains(r#""type":"extglob""#), "{}", out.stdout);
+
+    let dir = std::env::temp_dir().join(format!("psh-cli-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("script.sh");
+    std::fs::write(&file, "ls | head\n").unwrap();
+    let out = psh(&["--parse", "--compact", file.to_str().unwrap()]);
+    std::fs::remove_dir_all(&dir).ok();
+    assert_eq!(out.status, Some(0));
+    assert!(out.stdout.contains(r#""pipes":["|"]"#), "{}", out.stdout);
+
+    // No script: stdin (here empty).
+    let out = psh(&["--parse", "--compact"]);
+    assert_eq!(out.status, Some(0));
+    assert!(out.stdout.contains(r#""items":[]"#), "{}", out.stdout);
+}

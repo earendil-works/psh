@@ -301,3 +301,54 @@ date: 2026-11-06 · by: owner · issue: -
 `ls -G`/`-T`, `xargs` on empty input and `sort`'s default collation are decided in the
 utility issues that implement them (0015, 0017, 0016), each as a recorded decision. Until
 then, those flags and cases fall through to the host program (or fail clearly).
+
+## D1010: merge-to-main gates outside the lock, optimistically
+date: 2026-11-06 · by: infra · issue: 0001
+`scripts/merge-to-main.sh` rebases and runs the gate in the issue worktree without the
+merge lock, then takes the lock only to check that `main` has not moved and to
+fast-forward it (seconds). If `main` moved, it releases the lock, rebases and gates
+again; after two lost races the next attempt holds the lock from rebase to
+fast-forward, so no branch starves. Reason: the coordinator's and docs agent's commits
+on `main` (through `scripts/with-merge-lock.sh`) never wait for a whole gate, and gates
+of different branches overlap. Gates are not serialized by a lock; the cargo caps
+(D1013) bound what several concurrent gates cost.
+
+## D1011: A dirty primary checkout makes merge-to-main wait, not fail
+date: 2026-11-06 · by: infra · issue: 0001
+When the primary checkout has uncommitted changes to tracked files at fast-forward
+time, merge-to-main releases the lock and polls until they are committed (up to
+`PSH_MERGE_DIRTY_WAIT` seconds, default 1800), then rebases and gates again if the
+commit moved `main`; it never touches those changes. Untracked files in the primary
+checkout do not block (the fast-forward itself refuses to overwrite one). The issue
+worktree, in contrast, must be fully clean, untracked files included, so the gate tests
+exactly the commit that lands.
+
+## D1012: scripts/timeout.sh runs on perl
+date: 2026-11-06 · by: infra · issue: 0001
+The portable timeout is a bash wrapper around a short perl program (fork, `setpgrp`,
+`alarm`, kill the group), because bash 3.2 cannot put a command into its own process
+group without job control, and perl is on every macOS and on Debian (perl-base).
+Time::HiRes, when present, gives fractional durations; without it they round up to
+whole seconds. On timeout the group gets TERM, then KILL after `PSH_TIMEOUT_GRACE`
+seconds (default 5) unless it has emptied; the status is 124. Commands run under
+`nice -n 10` except the gate and the merge scripts (`PSH_GATE=1`), so agents' builds
+yield to the gate.
+
+## D1013: Gate legs and their bounds
+date: 2026-11-06 · by: infra · issue: 0001
+`scripts/gate.sh` runs its legs in order, each under `scripts/timeout.sh`: `scripts`
+(every script parses), `fmt`, `clippy`, `test`, `deps` (the full dependency set of
+`psh-syntax` is empty and of `psh-engine` is exactly `psh-syntax`; a new dependency
+there must change the leg along with its decision), `wasm`, `msrv` (`cargo check` of
+the workspace with the `rust-version` toolchain, D025; fails if that toolchain is not
+installed) and `script-tests` (the tests of timeout and merge-to-main). The gate keeps
+`.cargo/config.toml`'s caps (6 build jobs, 6 test threads) because several gates may
+run at once (D1010).
+
+## D1014: Workspace conventions
+date: 2026-11-06 · by: infra · issue: 0001
+The workspace sets `unsafe_code = "forbid"` in `[workspace.lints.rust]` and every crate
+opts in with `[lints] workspace = true`; `psh-os` will declare its own lint table instead.
+`.gitattributes` stores and checks out text files with LF everywhere (`* text=auto
+eol=lf`), so scripts and goldens are byte-identical on Windows. The copyright line in
+`LICENSE-MIT` and `NOTICE` is "Earendil Inc.", as in djs.

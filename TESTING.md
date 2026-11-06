@@ -121,10 +121,15 @@ at scale) and syntax ranking. Running anything is never involved.
 reaches `main` (AGENTS.md). Legs, as they come into existence:
 
 1. `cargo fmt --check`, clippy `-D warnings`, `cargo test --workspace` (0001).
-2. `psh-syntax` builds for `wasm32-unknown-unknown` (0001), later the engine too.
-3. The spec ratchets for every layer that exists (0002 onward).
-4. Windows: the same legs on a Windows machine (0007; D027).
-5. Later: a build with Rust 1.96, the MSRV (D025); a follow-up, not blocking.
+2. `psh-syntax` and `psh-engine` build for `wasm32-unknown-unknown`; their dependency
+   sets are checked (`deps`: none, and `psh-syntax` only) (0001).
+3. `cargo check` with Rust 1.96, the MSRV (D025, 0001); the scripts parse and the
+   tests of `timeout.sh` and `merge-to-main.sh` pass (0001, D1013).
+4. The spec ratchets for every layer that exists (0002 onward).
+5. Windows: the same legs on a Windows machine (0007; D027).
+
+`scripts/gate.sh --list` names the legs; `scripts/gate.sh LEG...` runs a few while
+iterating. Each leg runs under `scripts/timeout.sh`.
 
 Later the gate caches each leg by its inputs, so a docs-only change gates in seconds.
 Never weaken a leg to get green.

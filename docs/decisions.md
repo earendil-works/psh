@@ -352,3 +352,46 @@ opts in with `[lints] workspace = true`; `psh-os` will declare its own lint tabl
 `.gitattributes` stores and checks out text files with LF everywhere (`* text=auto
 eol=lf`), so scripts and goldens are byte-identical on Windows. The copyright line in
 `LICENSE-MIT` and `NOTICE` is "Earendil Inc.", as in djs.
+
+## D1030: The shape corpus is made with tree-sitter-bash, checked with stdlib Python
+date: 2026-11-06 · by: shapes · issue: 0003
+`scripts/shape-corpus` parses each command with tree-sitter-bash (local venv only, as
+`research/corpus/` did) and rewrites the original text in place, word by word, so
+skeletons keep the original's layout and the parser under test is never its own oracle.
+Text the tree does not explain is sanitized word by word too, so a misparse costs
+fidelity, never privacy. The gate leg `shapes` runs `scripts/shape-corpus-check`
+(python3 standard library only): every token of `tests/shapes/shapes.txt` must be in
+`tests/shapes/vocabulary.txt`, a placeholder or a single digit. Neither file needs the
+tool or the corpus.
+
+## D1031: Vocabulary: fixed lists plus frequent words from public positions
+date: 2026-11-06 · by: shapes · issue: 0003
+Fixed: shell keywords and builtins, the utility names of research/builtins.md tiers 1–3,
+the never-builtins, `test` operators, well-known variables, a few path pieces (`dev`,
+`null`, `usr`, `bin`, `tmp`, …). From the corpus, only in positions that name public
+things: command names, the first argument of tools with their own subcommands (not
+`make`, `just`, `pnpm`, `yarn`, `bun`, `npx`: those name project targets and
+packages), option tokens matching `^--?[A-Za-z0-9][A-Za-z0-9-]*$` (never the `=value`),
+here-doc delimiters, upper-case variables (only without `_` or with a public tool's
+prefix). Each needs ≥ 20 distinct commands, ≥ 5 sessions and ≥ 3 projects (cwd folded
+to four path components, worktrees into their checkout), so glued values (`-pSECRET`)
+and project-private flags stay out. Every change to the file is reviewed by hand.
+
+## D1032: Skeleton rules
+date: 2026-11-06 · by: shapes · issue: 0003
+Unlisted words become `w1, w2, …`, variables `v1, …`, numbered per command in order of
+appearance, equal words sharing a placeholder. A placeholder replaces a run of word
+characters joined by `. / @ % + : -`; other punctuation stays (`*.w1`, `{w1,w2}`).
+Quoted text is always a placeholder, even a vocabulary word (it is data); only `$`,
+`` ` ``, `"` and `\` keep their place inside double quotes, `\` and `'` inside `$'…'`.
+An unlisted option keeps its dashes (`-w3`). Here-doc bodies become the line `w0`,
+comments `# w0`. Single digits stay (fds, `$1`, `-n 1`); longer numbers do not.
+
+## D1033: Which skeletons are committed
+date: 2026-11-06 · by: shapes · issue: 0003
+All skeletons seen in ≥ 2 sessions; of the single-session ones only those that add a
+syntax 4-gram (punctuation, newlines, keywords, `W` for other words) not yet covered,
+shortest first, up to 2 MB, none over 4 KB. Single-session skeletons pass the same
+token check as the rest, so they carry no private words; limiting them to new syntax
+keeps the file small (2.3 MB of 18 MB) while covering every 4-gram of the corpus, which
+is what L0 needs.

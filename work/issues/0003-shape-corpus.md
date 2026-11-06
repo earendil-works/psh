@@ -84,7 +84,7 @@ syntax skeletons that tests the parser at scale and ranks which syntax matters
   the gate leg `shapes`.
 - `tests/shapes/shapes.txt`: 26,234 skeletons (`COUNT\tESCAPED-SKELETON`, most frequent
   first) for 122,848 of 295,401 commands, covering every syntax 4-gram of the corpus.
-- `tests/shapes/vocabulary.txt`: 1,362 entries in `[words]`, `[variables]`, `[options]`.
+- `tests/shapes/vocabulary.txt`: 1,410 entries in `[words]`, `[variables]`, `[options]`.
 - `tests/shapes/README.md`: format, rules, privacy, counts. Decisions D1030–D1033.
 - Known gaps: L0 leg not yet wired (follow-up); 7 skeletons of parsing originals do not
   parse; the 172k-skeleton single-session tail is not committed beyond coverage.

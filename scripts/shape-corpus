@@ -108,6 +108,14 @@ GOPATH GOOS GOARCH CC CXX CFLAGS LDFLAGS GIT_PAGER""".split()
 TEST_OPERATORS = "-a -b -c -d -e -f -g -h -k -p -r -s -t -u -w -x -G -L -N -O -S -z -n -o -v -R " \
                  "-eq -ne -lt -le -gt -ge -ef -nt -ot".split()
 # Path pieces and special words that carry no private data but shape common commands.
+# `set -o` and `shopt` option names (bash manual).
+SHELL_OPTIONS = """allexport braceexpand errexit errtrace functrace hashall histexpand history ignoreeof
+keyword monitor noclobber noexec noglob nolog notify nounset onecmd physical pipefail posix privileged
+verbose xtrace autocd cdable_vars cdspell checkhash checkjobs checkwinsize cmdhist dotglob execfail
+expand_aliases extdebug extglob extquote failglob force_fignore globasciiranges globskipdots globstar
+gnu_errfmt histappend huponexit inherit_errexit lastpipe lithist localvar_inherit localvar_unset
+login_shell mailwarn nocaseglob nocasematch noexpand_translation nullglob patsub_replacement progcomp
+promptvars restricted_shell shift_verbose sourcepath varredir_close xpg_echo""".split()
 # A run of these joined by `/` is kept too (`/dev/null`, `/usr/bin/env`).
 SPECIAL = """_ dev null stdin stdout stderr tty zero urandom fd tmp usr bin local etc""".split()
 
@@ -376,7 +384,7 @@ def cmd_vocab(args):
             p[0] += 1
             p[1] |= sids
             p[2] |= projects
-    fixed_words = set(KEYWORDS + BUILTINS + UTILITIES + NEVER + SPECIAL)
+    fixed_words = set(KEYWORDS + BUILTINS + UTILITIES + NEVER + SPECIAL + SHELL_OPTIONS)
     fixed_opts = set(TEST_OPERATORS)
     fixed_vars = set(VARIABLES)
     freq = {"cmd": set(), "sub": set(), "opt": set(), "var": set(), "delim": set()}
@@ -389,6 +397,7 @@ def cmd_vocab(args):
         ("words", "Utility names (research/builtins.md tiers 1-3)", UTILITIES),
         ("words", "Never-builtins: interpreters, toolchains, clients (research/builtins.md 4.5)", NEVER),
         ("words", "Path pieces and special words", SPECIAL),
+        ("words", "set -o and shopt options", SHELL_OPTIONS),
         ("words", "Command names frequent in the corpus", sorted(freq["cmd"] - fixed_words)),
         ("words", "Subcommands of never-builtins frequent in the corpus", sorted(freq["sub"] - fixed_words - freq["cmd"])),
         ("words", "Here-doc delimiters frequent in the corpus", sorted(freq["delim"] - fixed_words - freq["cmd"] - freq["sub"])),
@@ -580,7 +589,7 @@ SELF_TESTS = [
 
 def cmd_selftest(args):
     """Skeletons of hand-written commands against the fixed vocabulary lists only."""
-    words = set(KEYWORDS + BUILTINS + UTILITIES + NEVER + SPECIAL + ["EOF", "test", "status"])
+    words = set(KEYWORDS + BUILTINS + UTILITIES + NEVER + SPECIAL + SHELL_OPTIONS + ["EOF", "test", "status"])
     opts = set(TEST_OPERATORS + ["--release", "-0", "-I", "-exec", "-name", "-print0"])
     variables = set(VARIABLES)
     failed = 0

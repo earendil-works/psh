@@ -367,7 +367,7 @@ tool or the corpus.
 ## D1031: Vocabulary: fixed lists plus frequent words from public positions
 date: 2026-11-06 · by: shapes · issue: 0003
 Fixed: shell keywords and builtins, the utility names of research/builtins.md tiers 1–3,
-the never-builtins, `test` operators, well-known variables, a few path pieces (`dev`,
+the never-builtins, `test` operators, `set -o`/`shopt` option names, well-known variables, a few path pieces (`dev`,
 `null`, `usr`, `bin`, `tmp`, …). From the corpus, only in positions that name public
 things: command names, the first argument of tools with their own subcommands (not
 `make`, `just`, `pnpm`, `yarn`, `bun`, `npx`: those name project targets and

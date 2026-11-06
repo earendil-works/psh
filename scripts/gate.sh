@@ -24,6 +24,7 @@ wasm:1800
 msrv:1800
 script-tests:300
 shapes:120
+guide:600
 "
 # Later legs go here, above this line and in run_leg: the spec ratchets per layer
 # (0002 onward), the Windows legs (0007).
@@ -67,6 +68,10 @@ run_leg() {
       # The committed shape corpus holds only vocabulary words and placeholders.
       python3 scripts/shape-corpus-check --self-test
       python3 scripts/shape-corpus-check
+      ;;
+    guide)
+      # The guide keeps its writing rules (docs/guide/README.md).
+      cargo run -q --locked -p psh-docs -- check
       ;;
     *)
       echo "gate: unknown leg '$1' (scripts/gate.sh --list)" >&2

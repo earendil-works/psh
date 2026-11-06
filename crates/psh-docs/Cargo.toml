@@ -1,0 +1,13 @@
+[package]
+name = "psh-docs"
+description = "Checks the guide (docs/guide) against its writing rules"
+edition.workspace = true
+rust-version.workspace = true
+version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true

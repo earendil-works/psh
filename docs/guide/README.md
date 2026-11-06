@@ -11,8 +11,9 @@ This file is about the guide; it is not a chapter, so the rules below do not app
 ## The rules
 
 These hold for every page listed in `SUMMARY.md` (code blocks are exempt; inline code is
-held to the word rules). A check tool is planned to enforce them in the gate; until it
-exists, they are on the writer and the reviewer.
+held to the word rules). `psh-docs check` enforces them in the gate (see Tooling below);
+what it cannot see, such as a goal called a goal without being on `goals.md`, is on the
+writer and the reviewer.
 
 - **Self-contained.** A reader of the guide has the guide and nothing else. Never mention
   or link ARCH.md, TESTING.md, docs/*.md (the decision log included), `research/`,
@@ -57,3 +58,20 @@ a chapter not written yet.
 - Plain, direct sentences, in the present tense. No marketing.
 - When psh deliberately behaves differently from bash, say so where the behavior is
   described, with the reason.
+
+## Tooling
+
+`cargo run -p psh-docs -- check` checks every page in `SUMMARY.md`; the gate runs it. It
+reports `docs/guide/PAGE:LINE: message` for:
+
+- a link to a page that is not in `SUMMARY.md`, to a section (`#id`, as mdBook makes ids
+  from headings) that does not exist, or to a repository file that does not exist;
+- a mention or link of ARCH.md, TESTING.md, docs/*.md outside the guide, `work/` or
+  `research/`, and any `.md` name that is not a guide page;
+- issue numbers (`0004`), decision IDs (`D005`), bare goal numbers (`G2`, "goal 3");
+- history phrases ("no longer", "used to", "was replaced", "originally", ...); "is used
+  to" is fine;
+- `pi` as a whole word on any page but `pi.md`.
+
+Fenced code blocks are skipped; inline code is held to the word rules but not to the
+history phrases. A false positive is fixed in the tool, not worked around in the text.

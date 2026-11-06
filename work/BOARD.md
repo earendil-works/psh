@@ -7,6 +7,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
 | 0001 | Workspace skeleton and the empty gate | infra | .worktrees/infra |
+| 0003 | Shape corpus (L0 leg after 0002, 0004) | shapes | .worktrees/shapes |
 
 ## Open (ready)
 
@@ -18,7 +19,6 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | issue | title | depends-on |
 | --- | --- | --- |
 | 0002 | psh-spec runner, vendored cases, recorded goldens, ratchets, status | 0001 |
-| 0003 | Shape corpus | 0001 (0004 for the L0 leg) |
 | 0004 | Parser: psh-syntax from brush-parser, hand-written | 0001 |
 | 0005 | Minimal interpreter | 0002, 0004 |
 | 0006 | Unix process layer | 0005 |

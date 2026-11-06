@@ -1,0 +1,310 @@
+# Goldens for tests/oils/spec/builtin-process.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: exec builtin
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 1: exec builtin with redirects
+status: 0
+bash-n: 0
+--- stderr
+|to stderr
+
+=== 2: exec builtin with here doc
+status: 0
+bash-n: 0
+--- stdout
+|x=one
+|y=two
+|DONE
+
+=== 3: exec builtin accepts --
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 4: exec -- 2>&1
+status: 0
+bash-n: 0
+--- stdout
+|stdout
+
+=== 5: exec -a sets argv[0]
+status: 0
+bash-n: 0
+--- stdout
+|FOOPROC
+
+=== 6: Exit out of function
+status: 3
+bash-n: 0
+
+=== 7: Exit builtin with invalid arg
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 1: exit: invalid: numeric argument required
+
+=== 8: Exit builtin with too many args
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|bash: line 1: exit: too many arguments
+
+=== 9: time with brace group argument
+status: 0
+bash-n: 0
+--- stdout
+|user
+|result=0
+|non-zero
+--- file time-bash.txt
+|
+|real	0m0.035s
+|user	0m0.000s
+|sys	0m0.002s
+
+=== 10: ulimit with no flags is like -f
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+|diff=0
+--- file f.txt
+|unlimited
+--- file no-flags.txt
+|unlimited
+
+=== 11: ulimit too many args
+status: 0
+bash-n: 0
+--- stdout
+|fail
+
+=== 12: ulimit negative flag
+status: 0
+bash-n: 0
+--- stdout
+|unlimited
+|pass
+--- stderr
+|bash: line 3: ulimit: -4: invalid option
+|ulimit: usage: ulimit [-SHabcdefiklmnpqrstuvxPRT] [limit]
+
+=== 13: ulimit negative arg
+status: 0
+bash-n: 0
+--- stdout
+|unlimited
+|pass
+--- stderr
+|bash: line 3: ulimit: -42: invalid number
+
+=== 14: ulimit -a doesn't take arg
+status: 0
+bash-n: 0
+--- stdout
+|real-time non-blocking time  (microseconds, -R) unlimited
+|core file size              (blocks, -c) 0
+|data seg size               (kbytes, -d) unlimited
+|scheduling priority                 (-e) 0
+|file size                   (blocks, -f) unlimited
+|pending signals                     (-i) 31328
+|max locked memory           (kbytes, -l) unlimited
+|max memory size             (kbytes, -m) unlimited
+|open files                          (-n) 1048576
+|pipe size                (512 bytes, -p) 8
+|POSIX message queues         (bytes, -q) 819200
+|real-time priority                  (-r) 0
+|stack size                  (kbytes, -s) 8192
+|cpu time                   (seconds, -t) unlimited
+|max user processes                  (-u) unlimited
+|virtual memory              (kbytes, -v) unlimited
+|file locks                          (-x) unlimited
+
+=== 15: ulimit doesn't accept multiple flags - reduce confusion between shells
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+|status=0
+
+=== 16: YSH readability: ulimit --all the same as ulimit -a
+status: 0
+bash-n: 0
+--- stdout
+| 17 short.txt
+|  0 long.txt
+| 17 total
+|--- short.txt	2026-11-06 22:57:25.185559013 +0000
+|+++ long.txt	2026-11-06 22:57:25.185559013 +0000
+|@@ -1,17 +0,0 @@
+|-real-time non-blocking time  (microseconds, -R) unlimited
+|-core file size              (blocks, -c) 0
+|-data seg size               (kbytes, -d) unlimited
+|-scheduling priority                 (-e) 0
+|-file size                   (blocks, -f) unlimited
+|-pending signals                     (-i) 31328
+|-max locked memory           (kbytes, -l) unlimited
+|-max memory size             (kbytes, -m) unlimited
+|-open files                          (-n) 1048576
+|-pipe size                (512 bytes, -p) 8
+|-POSIX message queues         (bytes, -q) 819200
+|-real-time priority                  (-r) 0
+|-stack size                  (kbytes, -s) 8192
+|-cpu time                   (seconds, -t) unlimited
+|-max user processes                  (-u) unlimited
+|-virtual memory              (kbytes, -v) unlimited
+|-file locks                          (-x) unlimited
+|status=1
+--- stderr
+|bash: line 4: ulimit: --: invalid option
+|ulimit: usage: ulimit [-SHabcdefiklmnpqrstuvxPRT] [limit]
+--- file long.txt
+--- file short.txt
+|real-time non-blocking time  (microseconds, -R) unlimited
+|core file size              (blocks, -c) 0
+|data seg size               (kbytes, -d) unlimited
+|scheduling priority                 (-e) 0
+|file size                   (blocks, -f) unlimited
+|pending signals                     (-i) 31328
+|max locked memory           (kbytes, -l) unlimited
+|max memory size             (kbytes, -m) unlimited
+|open files                          (-n) 1048576
+|pipe size                (512 bytes, -p) 8
+|POSIX message queues         (bytes, -q) 819200
+|real-time priority                  (-r) 0
+|stack size                  (kbytes, -s) 8192
+|cpu time                   (seconds, -t) unlimited
+|max user processes                  (-u) unlimited
+|virtual memory              (kbytes, -v) unlimited
+|file locks                          (-x) unlimited
+
+=== 17: ulimit accepts 'unlimited'
+status: 0
+bash-n: 0
+--- stdout
+|  arg zz
+|unlimited
+|status=0
+|FAILED
+|
+|  arg unlimited
+|unlimited
+|status=0
+|
+--- stderr
+|bash: line 5: ulimit: zz: invalid number
+
+=== 18: ulimit of 2**32, 2**31 (int overflow)
+status: 0
+bash-n: 0
+--- stdout
+|one unlimited
+|two 4294967296
+|three 2147483648
+
+=== 19: ulimit that is 64 bits
+status: 0
+bash-n: 0
+--- stdout
+|before unlimited
+|after 9007199254740992
+
+=== 20: arg that would overflow 64 bits is detected
+status: 0
+bash-n: 0
+--- stdout
+|before unlimited
+|after unlimited
+--- stderr
+|bash: line 9: ulimit: 4611686018427387905: limit out of range
+
+=== 21: ulimit -f 1 prevents files larger 512 bytes
+status: 0
+bash-n: 0
+--- stdout
+|512 status=0
+|513 status=0
+|
+| 512 ok.txt
+| 513 too-big.txt
+|1025 total
+|
+--- file err.txt
+--- file ok.txt
+|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+~ no newline at end
+--- file too-big.txt
+|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+~ no newline at end
+
+=== 22: write big file with ulimit
+status: 0
+bash-n: 0
+--- stdout
+|inner=0
+|outer=0
+--- stderr
+|bash: line 2: python2: command not found
+--- file big.sh
+|ulimit -f 1
+|echo inner=$?
+
+=== 23: ulimit -S for soft limit (default), -H for hard limit
+status: 0
+bash-n: 0
+--- stdout
+|init
+|  unlimited
+|  unlimited
+|
+|-S
+|  123456
+|  unlimited
+|
+|-H
+|  123456
+|  123457
+|
+|no flag
+|  123455
+|  123455
+|
+|GET
+|  123454
+|  123454
+|  123455
+
+=== 24: Changing resource limit is denied
+status: 0
+bash-n: 0
+--- stdout
+|both=0
+|soft=0
+|soft=0
+|soft OK
+|hard OK
+--- stderr
+|bash: line 15: ulimit: cpu time: cannot modify limit: Invalid argument
+|bash: line 22: ulimit: cpu time: cannot modify limit: Operation not permitted
+
+=== 25: ulimit -n limits file descriptors
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=1
+--- stderr
+|<sh>: line 1: out: Too many open files
+--- file out
+|hi

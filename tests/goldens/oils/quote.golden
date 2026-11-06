@@ -1,0 +1,239 @@
+# Goldens for tests/oils/spec/quote.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Unquoted words
+status: 0
+bash-n: 0
+--- stdout
+|unquoted words
+
+=== 1: Single-quoted
+status: 0
+bash-n: 0
+--- stdout
+|single   quoted
+
+=== 2: Two single-quoted parts
+status: 0
+bash-n: 0
+--- stdout
+|two single-quoted parts in one token
+
+=== 3: Unquoted and single quoted
+status: 0
+bash-n: 0
+--- stdout
+|unquoted and single-quoted
+
+=== 4: newline inside single-quoted string
+status: 0
+bash-n: 0
+--- stdout
+|newline
+|inside single-quoted string
+
+=== 5: Double-quoted
+status: 0
+bash-n: 0
+--- stdout
+|double   quoted
+
+=== 6: Mix of quotes in one word
+status: 0
+bash-n: 0
+--- stdout
+|unquoted  single-quoted  double-quoted  unquoted
+
+=== 7: Var substitution
+status: 0
+bash-n: 0
+--- stdout
+|==bar==
+
+=== 8: Var substitution with braces
+status: 0
+bash-n: 0
+--- stdout
+|foobar
+
+=== 9: Var substitution with braces, quoted
+status: 0
+bash-n: 0
+--- stdout
+|foobar
+
+=== 10: Var length
+status: 0
+bash-n: 0
+--- stdout
+|foo3
+
+=== 11: Storing backslashes and then echoing them
+status: 0
+bash-n: 0
+--- stdout
+|\ \\
+|\ \\
+
+=== 12: Backslash escapes
+status: 0
+bash-n: 0
+--- stdout
+|$ | a b c d \
+
+=== 13: Backslash escapes inside double quoted string
+status: 0
+bash-n: 0
+--- stdout
+|$ \ \ \p \q
+
+=== 14: C-style backslash escapes inside double quoted string
+status: 0
+bash-n: 0
+--- stdout
+|\a \b
+
+=== 15: Literal $
+status: 0
+bash-n: 0
+--- stdout
+|$
+
+=== 16: Quoted Literal $
+status: 0
+bash-n: 0
+--- stdout
+|$ $ $
+
+=== 17: Line continuation
+status: 0
+bash-n: 0
+--- stdout
+|foo$
+
+=== 18: Line continuation inside double quotes
+status: 0
+bash-n: 0
+--- stdout
+|foo$
+
+=== 19: $? split over multiple lines
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 20: Unterminated single quote
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected EOF while looking for matching `''
+--- bash-n stderr
+|bash: line 1: unexpected EOF while looking for matching `''
+
+=== 21: Unterminated double quote
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected EOF while looking for matching `"'
+--- bash-n stderr
+|bash: line 1: unexpected EOF while looking for matching `"'
+
+=== 22: Semicolon
+status: 0
+bash-n: 0
+--- stdout
+|separated
+|by semi-colon
+
+=== 23: No tab escapes within single quotes
+status: 0
+bash-n: 0
+--- stdout
+|a\tb
+
+=== 24: $''
+status: 0
+bash-n: 0
+--- stdout
+|foo
+
+=== 25: $'' with quotes
+status: 0
+bash-n: 0
+--- stdout
+|single ' double "
+
+=== 26: $'' with newlines
+status: 0
+bash-n: 0
+--- stdout
+|col1
+|col2
+|col3
+
+=== 27: $'' octal escapes don't have leading 0
+status: 0
+bash-n: 0
+--- stdout
+| 001 377
+
+=== 28: $'' octal escapes with fewer than 3 chars
+status: 0
+bash-n: 0
+--- stdout
+| 001 \t \t I \n
+
+=== 29: OSH allows invalid backslashes
+status: 0
+bash-n: 0
+--- stdout
+|\uZ \u{03bc \z
+
+=== 30: YSH allows unquoted foo\ bar too
+status: 0
+bash-n: 0
+--- stdout
+|foo bar
+--- stderr
+|bash: line 1: shopt: ysh:all: invalid shell option name
+--- file foo bar
+
+=== 31: $"" is a synonym for ""
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|foo x
+
+=== 32: printf supports tabs
+status: 0
+bash-n: 0
+--- stdout
+|c1	c2
+|c3	c4
+
+=== 33: $'' supports \cA escape for Ctrl-A - mask with 0x1f
+status: 0
+bash-n: 0
+--- stdout
+| 020 031   -
+|  10  19  2d
+|
+| 001 032
+|  01  1a
+|
+| 001 032
+|  01  1a
+|
+|  \r  \v 002
+|  0d  0b  02
+
+=== 34: \c' is an escape, unlike bash
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 7: unexpected EOF while looking for matching `''
+--- bash-n stderr
+|bash: line 7: unexpected EOF while looking for matching `''

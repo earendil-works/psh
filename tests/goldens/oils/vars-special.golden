@@ -1,0 +1,334 @@
+# Goldens for tests/oils/spec/vars-special.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: $PWD is set
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 1: $PWD is not only set, but exported
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 2: $PATH is set if unset at startup
+status: 0
+bash-n: 0
+--- stdout
+|yes
+|yes
+--- file path.txt
+|/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:.
+
+=== 3: $HOME is NOT set
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|HOME=<home>
+|status=0
+|<home>
+|status=0
+--- stderr
+|bash: cannot set terminal process group (29957): Inappropriate ioctl for device
+|bash: no job control in this shell
+
+=== 4: Vars set interactively only: $HISTFILE
+status: 0
+bash-n: 0
+--- stdout
+|histfile=
+|histfile=yes
+--- stderr
+|bash: cannot set terminal process group (29969): Inappropriate ioctl for device
+|bash: no job control in this shell
+
+=== 5: Some vars are set, even without startup file, or env: PATH, PWD
+status: 0
+bash-n: 0
+--- stdout
+|path pwd ps4 0
+|shellopts 0
+|home ps1 1
+|ifs 0
+--- stderr
+|declare -- PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:."
+|declare -x PWD="<case>"
+|declare -- PS4="+ "
+|declare -r SHELLOPTS="braceexpand:hashall:interactive-comments"
+|<sh>: line 1: typeset: HOME: not found
+|<sh>: line 1: typeset: PS1: not found
+|declare -- IFS=$' \t\n'
+
+=== 6: UID EUID PPID can't be changed
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 2: UID: readonly variable
+|bash: line 4: EUID: readonly variable
+|bash: line 6: PPID: readonly variable
+--- file out.txt
+|uid=1000
+|euid=1000
+|ppid=29975
+
+=== 7: HOSTNAME OSTYPE can be changed
+status: 0
+bash-n: 0
+--- stdout
+|hostname=x
+|ostype=x
+|
+
+=== 8: $1 .. $9 are scoped, while $0 is not
+status: 0
+bash-n: 0
+--- stdout
+|sh
+|a b
+
+=== 9: $?
+status: 0
+bash-n: 0
+--- stdout
+|0
+|33
+
+=== 10: $#
+status: 0
+bash-n: 0
+--- stdout
+|4
+
+=== 11: $$ looks like a PID
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 12: $$ doesn't change with subshell or command sub
+status: 3
+bash-n: 0
+--- stdout
+|subshell OK
+|command sub OK
+
+=== 13: $BASHPID DOES change with subshell and command sub
+status: 3
+bash-n: 0
+--- stdout
+|subshell OK
+|command sub OK
+
+=== 14: Background PID $! looks like a PID
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 15: $PPID
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 16: $PIPESTATUS
+status: 0
+bash-n: 0
+--- stdout
+|['0', '33', '0']
+
+=== 17: $RANDOM
+status: 0
+bash-n: 0
+--- stdout
+|0
+|22413
+
+=== 18: $UID and $EUID
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 19: $OSTYPE is non-empty
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 20: $HOSTNAME
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 21: $LINENO is the current line, not line of function call
+status: 0
+bash-n: 0
+--- stdout
+|1
+|['6']
+|['3']
+|['8']
+
+=== 22: $LINENO in "bare" redirect arg (bug regression)
+status: 0
+bash-n: 0
+--- stdout
+|written
+|5
+--- file bare3
+
+=== 23: $LINENO in redirect arg (bug regression)
+status: 0
+bash-n: 0
+--- stdout
+|written
+|5
+--- file lineno_regression3
+|x
+
+=== 24: $LINENO in [[
+status: 0
+bash-n: 0
+--- stdout
+|one
+|OK
+
+=== 25: $LINENO in ((
+status: 0
+bash-n: 0
+--- stdout
+|one
+|2
+
+=== 26: $LINENO in for loop
+status: 0
+bash-n: 0
+--- stdout
+|one
+|2
+|zzz
+
+=== 27: $LINENO in other for loops
+status: 0
+bash-n: 0
+--- stdout
+|3 a
+|3 b
+|3 c
+
+=== 28: $LINENO in for (( loop
+status: 0
+bash-n: 0
+--- stdout
+|one
+|0
+|1
+
+=== 29: $LINENO for assignment
+status: 0
+bash-n: 0
+--- stdout
+|1 1
+|2 2
+
+=== 30: $LINENO in case
+status: 0
+bash-n: 0
+--- stdout
+|got line 1
+
+=== 31: $_ with simple command and evaluation
+status: 0
+bash-n: 0
+--- stdout
+|hi world
+|hi world
+
+=== 32: $_ and ${_}
+status: 0
+bash-n: 0
+--- stdout
+|42 value 42var
+|foobar
+
+=== 33: $_ with word splitting
+status: 0
+bash-n: 0
+--- stdout
+|spaces
+--- stderr
+|bash: line 3: setopt: command not found
+
+=== 34: $_ with pipeline and subshell
+status: 0
+bash-n: 0
+--- stdout
+|last=lastpipe
+|pipeline=last=lastpipe
+|subshell=pipeline=last=lastpipe
+|done=pipeline=last=lastpipe
+
+=== 35: $_ with && and ||
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|last=hi
+|and=last=hi
+|hi
+|or=hi
+
+=== 36: $_ is not reset with (( and [[
+status: 0
+bash-n: 0
+--- stdout
+|simple
+|(( simple
+|[[ (( simple
+
+=== 37: $_ with assignments, arrays, etc.
+status: 0
+bash-n: 0
+--- stdout
+|colon [foo]
+|bare assign []
+|declare [s=bar]
+|array []
+|declare array [a]
+|declare flag [d]
+
+=== 38: $_ with loop
+status: 0
+bash-n: 0
+--- stdout
+|init
+|begin=init
+|prev=begin=init
+|prev=prev=begin=init
+|prev=prev=prev=begin=init
+
+=== 39: $_ is not undefined on first use
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 40: BASH_VERSION / OILS_VERSION
+status: 0
+bash-n: 0
+--- stdout
+|no version
+
+=== 41: $SECONDS
+status: 0
+bash-n: 0
+--- stdout
+|ok

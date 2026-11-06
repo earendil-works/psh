@@ -1,0 +1,184 @@
+# Goldens for tests/oils/spec/ble-idioms.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: recursive arith: one level
+status: 0
+bash-n: 0
+--- stdout
+|123
+
+=== 1: recursive arith: two levels
+status: 0
+bash-n: 0
+--- stdout
+|123
+
+=== 2: recursive arith: short circuit &&, ||
+status: 0
+bash-n: 0
+--- stdout
+|1:0
+|1:123
+|0:0
+|1:321
+
+=== 3: recursive arith: short circuit ?:
+status: 0
+bash-n: 0
+--- stdout
+|123:123
+|321:321
+
+=== 4: recursive arith: side effects
+status: 0
+bash-n: 0
+--- stdout
+|123:123
+
+=== 5: recursive arith: recursion
+status: 0
+bash-n: 0
+--- stdout
+|5050
+
+=== 6: recursive arith: array elements
+status: 0
+bash-n: 0
+--- stdout
+|123
+
+=== 7: dynamic arith varname: assign
+status: 0
+bash-n: 0
+--- stdout
+|a_x=3 a_y=4
+|b_x=5 b_y=12
+
+=== 8: dynamic arith varname: read
+status: 0
+bash-n: 0
+--- stdout
+|x=12 y=34
+
+=== 9: dynamic arith varname: copy/add
+status: 0
+bash-n: 0
+--- stdout
+|c_x=3 c_y=4
+|c_x=7 c_y=24
+--- stderr
+|bash: line 1: shopt: eval_unsafe_arith: invalid shell option name
+
+=== 10: is-array with ${var@a}
+status: 0
+bash-n: 0
+--- stdout
+|undef 1
+|string 1
+|array 0
+
+=== 11: Sparse array with big index
+status: 0
+bash-n: 0
+--- stdout
+|len=1
+
+=== 12: shift unshift reverse
+status: 0
+bash-n: 0
+--- stdout
+|1 2 3 4 5 6
+|2 3 4 5 6
+|4 5 6
+|---
+|99 4 5 6
+|---
+|6 5 4 99
+
+=== 13: shopt -u expand_aliases and eval
+status: 0
+bash-n: 0
+--- stdout
+|hello
+
+=== 14: Issue #1069 [40] BUG: a=(declare v); "${a[@]}" fails
+status: 0
+bash-n: 0
+--- stdout
+|v=1
+
+=== 15: Issue #1069 [40] BUG: a=declare; "$a" v=1 fails
+status: 0
+bash-n: 0
+--- stdout
+|v=1
+
+=== 16: Issue #1069 [49] BUG: \return 0 does not work
+status: 0
+bash-n: 0
+--- stdout
+|status=3
+|status=3
+
+=== 17: Issue #1069 [49] BUG: \return 0 does not work (other variations)
+status: 0
+bash-n: 0
+--- stdout
+|status=3
+|status=3
+|status=3
+
+=== 18: Issue #1069 [52] BUG: \builtin local v=1 fails
+status: 0
+bash-n: 0
+--- stdout
+|l:v=1
+|g:v=x
+
+=== 19: Issue #1069 [53] BUG: a[1 + 1]=2, etc. fails
+status: 0
+bash-n: 0
+--- stdout
+|status=0, a[1]=hello
+|status=0, a[2]=hello
+|status=0, a[3]=hello
+
+=== 20: Issue #1069 [53] - LHS array parsing a[1 + 2]=3 (see spec/array-assign for more)
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([3]="7" [7]="8" [9]="9")
+|declare -a a=([3]="55" [7]="8" [9]="9" [41]="66")
+
+=== 21: Issue #1069 [56] BUG: declare -p unset does not print any error message
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: typeset: nonexistent: not found
+
+=== 22: Issue #1069 [57] BUG: variable v is invisible after IFS= eval 'local v=...'
+status: 0
+bash-n: 0
+--- stdout
+|l:1
+|g:x
+
+=== 23: Issue #1069 [57] - Variable v should be visible after IFS= eval 'local v=...'
+status: 0
+bash-n: 0
+--- stdout
+|v=hello
+
+=== 24: Issue #1069 [59] N-I: arr=s should set RHS to arr[0]
+status: 0
+bash-n: 0
+--- stdout
+|['v', '2', '3']
+
+=== 25: Issue #1069 [59] - Assigning Str to BashArray/BashAssoc should not remove BashArray/BashAssoc
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([0]="99" [1]="2" [2]="3")
+|declare -A A=([0]="99" [k]="v" )

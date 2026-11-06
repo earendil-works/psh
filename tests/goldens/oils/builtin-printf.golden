@@ -1,0 +1,641 @@
+# Goldens for tests/oils/spec/builtin-printf.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: printf with no args
+status: 2
+bash-n: 0
+--- stderr
+|printf: usage: printf [-v var] format [arguments]
+
+=== 1: printf -v %s
+status: 0
+bash-n: 0
+--- stdout
+|['hello there']
+
+=== 2: printf -v %q
+status: 0
+bash-n: 0
+--- stdout
+|OK
+
+=== 3: printf -v a[1]
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|['a', 'foo', 'c']
+
+=== 4: printf -v syntax error
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|bash: line 1: printf: `a[': not a valid identifier
+
+=== 5: dynamic declare instead of %s
+status: 0
+bash-n: 0
+--- stdout
+|['hello there']
+
+=== 6: dynamic declare instead of %q
+status: 0
+bash-n: 0
+--- stdout
+|'"quoted" with spaces and \'
+
+=== 7: printf -v dynamic scope
+status: 0
+bash-n: 0
+--- stdout
+|dollar=dollar
+|--
+|dollar=\$
+|mylocal=mylocal
+|--
+|dollar=\$
+|mylocal=
+
+=== 8: printf with too few arguments
+status: 0
+bash-n: 0
+--- stdout
+|-a b-x y--
+
+=== 9: printf with too many arguments
+status: 0
+bash-n: 0
+--- stdout
+|-a-b-
+|-c-d-
+|-e--
+
+=== 10: printf width strings
+status: 0
+bash-n: 0
+--- stdout
+|[  abc]
+|[abc  ]
+
+=== 11: printf integer
+status: 0
+bash-n: 0
+--- stdout
+|42
+|42
+|97
+|97
+|[   42]
+|[42   ]
+|[00042]
+
+=== 12: printf %6.4d -- "precision" does padding for integers
+status: 0
+bash-n: 0
+--- stdout
+|[  0042]
+|[0042]
+|[    42]
+|--
+|[ -0042]
+|[-0042]
+|[   -42]
+
+=== 13: printf %6.4x X o
+status: 0
+bash-n: 0
+--- stdout
+|[  002a]
+|[002a]
+|[    2a]
+|--
+|[  002A]
+|[002A]
+|[    2A]
+|--
+|[  0052]
+|[0052]
+|[    52]
+
+=== 14: %06d zero padding vs. %6.6d
+status: 0
+bash-n: 0
+--- stdout
+|[000042]
+|[-00042]
+|--
+|[000042]
+|[-000042]
+
+=== 15: %06x %06X %06o
+status: 0
+bash-n: 0
+--- stdout
+|[00002a]
+|[00002A]
+|[000052]
+
+=== 16: %06s is no-op
+status: 0
+bash-n: 0
+--- stdout
+|(    42)
+|(   -42)
+|(    42)
+|(   -42)
+|status=0
+
+=== 17: printf %6.4s does both truncation and padding
+status: 0
+bash-n: 0
+--- stdout
+|[   foo]
+|[   foo]
+|[foo   ]
+|[spam-eggs]
+|[  spam]
+|[spam  ]
+
+=== 18: printf %6.0s and %0.0s
+status: 0
+bash-n: 0
+--- stdout
+|[      ]
+|[]
+
+=== 19: printf %6.s and %0.s
+status: 0
+bash-n: 0
+--- stdout
+|[      ]
+|[]
+
+=== 20: printf %*.*s (width/precision from args)
+status: 0
+bash-n: 0
+--- stdout
+|[    hello]
+|[hel]
+|[      hel]
+|[      hel]
+|[      hel]
+
+=== 21: unsigned / octal / hex
+status: 0
+bash-n: 0
+--- stdout
+|[42]
+|[52]
+|[2a]
+|[2A]
+|
+|[61]
+|[61]
+
+=== 22: unsigned / octal / hex big
+status: 0
+bash-n: 0
+--- stdout
+|[4294967296]
+|[40000000000]
+|[100000000]
+|[100000000]
+|
+|[9223372036854775807]
+|[777777777777777777777]
+|[7fffffffffffffff]
+|[7FFFFFFFFFFFFFFF]
+|
+
+=== 23: empty string (osh is more strict)
+status: 1
+bash-n: 0
+--- stdout
+|0
+--- stderr
+|bash: line 1: printf: : invalid number
+
+=== 24: No char after ' => zero code point
+status: 0
+bash-n: 0
+--- stdout
+|0
+|0
+
+=== 25: Unicode char with '
+status: 0
+bash-n: 0
+--- stdout
+|3bc
+|956
+|1674
+|
+|4e09
+|19977
+|47011
+|
+
+=== 26: Invalid UTF-8
+status: 0
+bash-n: 0
+--- stdout
+|bytes1
+|0
+|0
+|0
+|
+|bytes2
+|0
+|0
+|0
+|
+|overlong2
+|0
+|0
+|0
+|
+|overlong3
+|0
+|0
+|0
+|
+--- stderr
+|bash: line 2: python2: command not found
+|bash: line 10: python2: command not found
+|bash: line 18: python2: command not found
+|bash: line 25: python2: command not found
+
+=== 27: Too large
+status: 0
+bash-n: 0
+--- stdout
+|too large
+|0
+|0
+|0
+|
+--- stderr
+|bash: line 4: python2: command not found
+
+=== 28: negative numbers with unsigned / octal / hex
+status: 0
+bash-n: 0
+--- stdout
+|[18446744073709551574]
+|status=0
+|[1777777777777777777726]
+|status=0
+|[ffffffffffffffd6]
+|status=0
+|[FFFFFFFFFFFFFFD6]
+|status=0
+
+=== 29: printf floating point (not required, but they all implement it)
+status: 0
+bash-n: 0
+--- stdout
+|[3.141590]
+|[3.14]
+|[    3.14]
+|[3.14    ]
+|[3.141590]
+|[3.140000]
+
+=== 30: printf floating point with - and 0
+status: 0
+bash-n: 0
+--- stdout
+|[  3.1400]
+|[003.1400]
+|[  3.1400]
+|[003.1400]
+|---
+|[3.1400  ]
+|[3.1400  ]
+|[3.1400  ]
+|[3.1400  ]
+
+=== 31: printf eE fF gG
+status: 0
+bash-n: 0
+--- stdout
+|[3.140000e+00]
+|[3.140000E+00]
+|[3.140000]
+|[3.14]
+|[3.14]
+
+=== 32: printf backslash escapes
+status: 0
+bash-n: 0
+--- stdout
+|['a\tb']
+|['\xe2\x98\xa0']
+|['$e']
+|['\x1f7']
+
+=== 33: printf octal backslash escapes
+status: 0
+bash-n: 0
+--- stdout
+|['\x1f7']
+|['\xff']
+
+=== 34: printf unicode backslash escapes
+status: 0
+bash-n: 0
+--- stdout
+|['\xe2\x98\xa0']
+|['\xd9\x9f']
+
+=== 35: printf invalid backslash escape (is ignored)
+status: 0
+bash-n: 0
+--- stdout
+|[\Z]
+
+=== 36: printf % escapes
+status: 0
+bash-n: 0
+--- stdout
+|[%]
+
+=== 37: printf %c ASCII
+status: 0
+bash-n: 0
+--- stdout
+|a
+|A
+|AZ
+
+=== 38: printf %c unicode - prints the first BYTE of a string - it does not respect UTF-8
+status: 0
+bash-n: 0
+--- stdout
+|[μμ]
+| ce
+
+=== 39: printf invalid format
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|bash: line 1: printf: `%z': missing format character
+|bash: line 3: printf: `%-z': missing format character
+
+=== 40: printf %q
+status: 0
+bash-n: 0
+--- stdout
+|[a\ b]
+
+=== 41: printf %6q (width)
+status: 0
+bash-n: 0
+--- stdout
+|[  a\ b]
+|[a\ b]
+
+=== 42: printf negative numbers
+status: 0
+bash-n: 0
+--- stdout
+|[-42] status=0
+|[-42] status=0
+|[-42] status=0
+|[-42] status=0
+|[-42] status=1
+|[-42] status=1
+|[-42] status=1
+|[-42] status=1
+--- stderr
+|bash: line 11: printf:  -42 : invalid number
+|bash: line 13: printf:  -42 : invalid number
+|bash: line 16: printf:  -42z: invalid number
+|bash: line 18: printf:  -42z: invalid number
+
+=== 43: printf + and space flags
+status: 0
+bash-n: 0
+--- stdout
+|[+42]
+|[-42]
+|[ 42]
+|[-42]
+
+=== 44: printf # flag
+status: 0
+bash-n: 0
+--- stdout
+|[0][052]
+|[0][0x2a]
+|[0][0X2A]
+|---
+|[3][3.]
+|[3][3.00000]
+
+=== 45: Runtime error for invalid integer
+status: 0
+bash-n: 0
+--- stdout
+|3
+|status=1
+|0
+|status=1
+--- stderr
+|bash: line 2: printf: 3abc: invalid number
+|bash: line 4: printf: xyz: invalid number
+
+=== 46: %(strftime format)T
+status: 0
+bash-n: 0
+--- stdout
+|2019-05-16
+|2019-05-16
+|status=0
+
+=== 47: %(strftime format)T doesn't respect TZ if not exported
+status: 0
+bash-n: 0
+
+=== 48: %(strftime format)T TZ in environ but not in shell's memory
+status: 0
+bash-n: 0
+
+=== 49: %10.5(strftime format)T
+status: 0
+bash-n: 0
+--- stdout
+|[     2019-]
+|[     2019-]
+|status=0
+
+=== 50: Regression for 'printf x y'
+status: 0
+bash-n: 0
+--- stdout
+|xz
+
+=== 51: bash truncates long strftime string at 128
+status: 0
+bash-n: 0
+--- stdout
+|4
+|40
+|120
+|124
+|0
+
+=== 52: printf positive integer overflow
+status: 0
+bash-n: 0
+--- stdout
+|18446744073709551615
+|status=0
+|18446744073709551615
+|status=1
+|
+|9223372036854775807
+|status=1
+|9223372036854775807
+|status=1
+|
+--- stderr
+|bash: line 4: printf: 18446744073709551616: Numerical result out of range
+|bash: line 2: printf: 18446744073709551615: Numerical result out of range
+|bash: line 4: printf: 18446744073709551616: Numerical result out of range
+
+=== 53: printf negative integer overflow
+status: 0
+bash-n: 0
+--- stdout
+|1
+|status=0
+|18446744073709551615
+|status=1
+|
+|-9223372036854775808
+|status=1
+|-9223372036854775808
+|status=1
+|
+--- stderr
+|bash: line 5: printf: -18446744073709551616: Numerical result out of range
+|bash: line 3: printf: -18446744073709551615: Numerical result out of range
+|bash: line 5: printf: -18446744073709551616: Numerical result out of range
+
+=== 54: printf %b does backslash escaping
+status: 0
+bash-n: 0
+--- stdout
+|[\044]
+|[$]
+|
+|[\x7e]
+|[~]
+|
+|[\A]
+|[\A]
+
+=== 55: printf %b unicode escapes
+status: 0
+bash-n: 0
+--- stdout
+|[\u03bc]
+|[μ]
+
+=== 56: printf %b respects \c early return
+status: 0
+bash-n: 0
+--- stdout
+|[ab
+|cd0
+
+=== 57: printf %b supports octal escapes, both \141 and \0141
+status: 0
+bash-n: 0
+--- stdout
+|three a
+|four  a
+|
+|a9
+|a9
+
+=== 58: printf %b with truncated octal escapes
+status: 0
+bash-n: 0
+--- stdout
+|-8
+|-8
+|
+| 07
+| 07
+| 07
+| 07
+
+=== 59: printf %d %X support hex 0x5 and octal 055
+status: 0
+bash-n: 0
+--- stdout
+|hex
+|85
+|55
+|hex CAPS
+|85
+|55
+|octal 3
+|45
+|2D
+|octal 4
+|45
+|2D
+|octal 5
+|45
+|2D
+
+=== 60: printf %d with + prefix (positive sign)
+status: 0
+bash-n: 0
+--- stdout
+|decimal
+|42
+|octal
+|63
+|hex lowercase
+|171
+|hex uppercase
+|171
+
+=== 61: leading spaces are accepted in value given to %d %X, but not trailing spaces
+status: 0
+bash-n: 0
+--- stdout
+|-123
+|status=0
+|-123
+|status=1
+|---
+|63
+|status=0
+|255
+|status=0
+|FF
+|status=0
+|ff
+|status=0
+--- stderr
+|bash: line 5: printf:  -123 : invalid number
+
+=== 62: Arbitrary base 64#a is rejected (unlike in shell arithmetic)
+status: 0
+bash-n: 0
+--- stdout
+|64
+|status=1
+--- stderr
+|bash: line 1: printf: 64#a: invalid number

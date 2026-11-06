@@ -1,0 +1,123 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/return.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Return outside function or script
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 1: return: can only `return' from a function or sourced script
+
+=== 1: Return outside function with stderr to /dev/full
+status: 0
+bash-n: 0
+--- stdout
+|exit: 2
+
+=== 2: Return in directly invoked script
+status: 0
+bash-n: 0
+--- stdout
+|Got past return
+--- stderr
+|./script.sh: line 1: return: can only `return' from a function or sourced script
+
+=== 3: Return from sourced script
+status: 42
+bash-n: 0
+
+=== 4: Return from subshell
+status: 42
+bash-n: 0
+--- stdout
+|Got past subshell
+--- stderr
+|bash: line 1: return: can only `return' from a function or sourced script
+
+=== 5: Return from nested sourced script
+status: 0
+bash-n: 0
+--- stdout
+|Got to end of outer script
+
+=== 6: Return in function
+status: 0
+bash-n: 0
+--- stdout
+|Calling myfunc()...
+|In myfunc()
+|Returned: 5
+
+=== 7: Return in for loop in function
+status: 0
+bash-n: 0
+--- stdout
+|In myfunc: 1
+|Returned: 5
+
+=== 8: Return in arithmetic for loop in function
+status: 0
+bash-n: 0
+--- stdout
+|In myfunc: 0
+|Returned: 5
+
+=== 9: Return in while loop in function
+status: 0
+bash-n: 0
+--- stdout
+|In myfunc: 0
+|Returned: 33
+
+=== 10: Return in case
+status: 0
+bash-n: 0
+--- stdout
+|In case
+|Returned: 5
+
+=== 11: Return in brace group
+status: 0
+bash-n: 0
+--- stdout
+|In brace group
+|Returned: 5
+
+=== 12: Return in and/or
+status: 0
+bash-n: 0
+--- stdout
+|In and/or
+|Returned: 5
+
+=== 13: Return from nested clauses
+status: 5
+bash-n: 0
+--- stdout
+|Shifted and fell through
+|Returning
+
+=== 14: return with a non-numeric argument returns 2
+status: 0
+bash-n: 0
+--- stdout
+|f returned 2
+--- stderr
+|bash: line 1: return: abc: numeric argument required
+
+=== 15: return with too many arguments abandons the rest of the line
+status: 0
+bash-n: 0
+--- stdout
+|next line: 2
+--- stderr
+|bash: line 1: return: too many arguments
+
+=== 16: return takes -- and a negative status
+status: 0
+bash-n: 0
+--- stdout
+|a=255
+|b=0
+|c=0
+|d=6

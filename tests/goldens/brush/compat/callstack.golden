@@ -1,0 +1,679 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/callstack.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: No calls - top level
+status: 0
+bash-n: 0
+--- stdout
+|=== Top level ===
+|  caller: 37 callstack_helpers.sh
+|  LINENO: 10
+|  FUNCNAME[@]: dump_source_info dump_stack
+|  BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh
+
+=== 1: Simple function call
+status: 0
+bash-n: 0
+--- stdout
+|=== In my_function ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack my_function
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+
+=== 2: Nested function calls
+status: 0
+bash-n: 0
+--- stdout
+|=== In level1 ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack level1
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+|=== In level2 ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack level2 level1
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+|  [Frame 1]
+|    caller N: 10 level2 main
+|=== In level3 ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack level3 level2 level1
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main main main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+|  [Frame 1]
+|    caller N: 5 level3 main
+|  [Frame 2]
+|    caller N: 11 level2 main
+
+=== 3: Function call from sourced script
+status: 0
+bash-n: 0
+--- stdout
+|=== In sourced_function ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack sourced_function
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh sourced.sh
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+
+=== 4: Nested sourcing
+status: 0
+bash-n: 0
+--- stdout
+|=== In outer.sh top level ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack source
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh outer.sh
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+|=== In inner.sh top level ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack source source
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh inner.sh outer.sh
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+|  [Frame 1]
+|    caller N: 2 source inner.sh
+|=== In inner_func ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack inner_func source source
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh inner.sh inner.sh outer.sh
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+|  [Frame 1]
+|    caller N: 6 inner_func inner.sh
+|  [Frame 2]
+|    caller N: 9 source inner.sh
+
+=== 5: Command substitution in top level
+status: 0
+bash-n: 0
+--- stdout
+|  [CmdSub]   caller: 37 callstack_helpers.sh
+|  [CmdSub]   LINENO: 10
+|  [CmdSub]   FUNCNAME[@]: dump_source_info dump_stack
+|  [CmdSub]   BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh
+
+=== 6: Command substitution in function
+status: 0
+bash-n: 0
+--- stdout
+|=== In my_function ===
+|  [CmdSub]   caller: 37 callstack_helpers.sh
+|  [CmdSub]   LINENO: 10
+|  [CmdSub]   FUNCNAME[@]: dump_source_info dump_stack my_function
+|  [CmdSub]   BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [CmdSub] [Frame 0]
+|  [CmdSub]   caller N: 45 dump_stack callstack_helpers.sh
+
+=== 7: Command substitution invoking function
+status: 0
+bash-n: 0
+--- stdout
+|=== In my_function via cmdSub ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack my_function
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+
+=== 8: Nested command substitutions
+status: 0
+bash-n: 0
+--- stdout
+|=== In outer_func ===
+|=== In inner_func ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack inner_func outer_func
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+|  [Frame 1]
+|    caller N: 5 inner_func main
+
+=== 9: eval at top level
+status: 0
+bash-n: 0
+--- stdout
+|=== In eval ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh
+
+=== 10: eval in function
+status: 0
+bash-n: 0
+--- stdout
+|=== In my_function ===
+|=== In eval ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack my_function
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+
+=== 11: eval calling function
+status: 0
+bash-n: 0
+--- stdout
+|=== In my_function via eval ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack my_function
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+
+=== 12: Nested evals
+status: 0
+bash-n: 0
+--- stdout
+|=== In my_function ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack my_function
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+
+=== 13: eval with command substitution
+status: 0
+bash-n: 0
+--- stdout
+|=== In my_function ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack my_function
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+
+=== 14: Trap handler - DEBUG
+status: 0
+bash-n: 0
+--- stdout
+|=== In DEBUG trap handler ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack trap_handler
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+|Command 1
+|=== In DEBUG trap handler ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack trap_handler
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+|Command 2
+
+=== 15: Trap handler - DEBUG in function
+status: 0
+bash-n: 0
+--- stdout
+|=== In DEBUG trap handler ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack trap_handler
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+|In my_function
+|Still in my_function
+
+=== 16: Trap handler - EXIT
+status: 0
+bash-n: 0
+--- stdout
+|Main script
+|=== In EXIT trap ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh
+
+=== 17: Trap handler calling function
+status: 0
+bash-n: 0
+--- stdout
+|Main script
+|=== In trap_function ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack trap_function
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+
+=== 18: LINENO tracking across contexts
+status: 0
+bash-n: 0
+--- stdout
+|Line 1: LINENO=1
+|Line 2: LINENO=2
+|In function line 1: LINENO=5
+|In function line 2: LINENO=6
+|Line 3: LINENO=11
+
+=== 19: LINENO in eval
+status: 0
+bash-n: 0
+--- stdout
+|Before eval: LINENO=1
+|In eval: LINENO=2
+|After eval: LINENO=3
+
+=== 20: LINENO in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|Before cmdSub: LINENO=1
+|In cmdSub: LINENO=2
+|After cmdSub: LINENO=4
+
+=== 21: LINENO in sourced script
+status: 0
+bash-n: 0
+--- stdout
+|Main line 1: LINENO=1
+|Sourced line 1: LINENO=1
+|Sourced line 2: LINENO=2
+|In sourced_func: LINENO=5
+|Main line 2: LINENO=3
+
+=== 22: different depths
+status: 0
+bash-n: 0
+--- stdout
+|  caller: 37 callstack_helpers.sh
+|  LINENO: 10
+|  FUNCNAME[@]: dump_source_info dump_stack level3 level2 level1
+|  BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main main main
+|[Frame 0]
+|  caller N: 45 dump_stack callstack_helpers.sh
+|[Frame 1]
+|  caller N: 4 level3 main
+|[Frame 2]
+|  caller N: 8 level2 main
+
+=== 23: BASH_SOURCE and FUNCNAME arrays
+status: 0
+bash-n: 0
+--- stdout
+|=== In outer_func ===
+|  FUNCNAME[@]: outer_func
+|  BASH_SOURCE[@]: outer.sh
+|=== In inner_func ===
+|  FUNCNAME[@]: inner_func source outer_func
+|  BASH_SOURCE[@]: inner.sh inner.sh outer.sh
+
+=== 24: Mixed: eval in sourced function with command substitution
+status: 0
+bash-n: 0
+--- stdout
+|=== In script_func ===
+|  [Eval->CmdSub]   caller: 37 callstack_helpers.sh
+|  [Eval->CmdSub]   LINENO: 10
+|  [Eval->CmdSub]   FUNCNAME[@]: dump_source_info dump_stack script_func
+|  [Eval->CmdSub]   BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh script.sh
+|  [Eval->CmdSub] [Frame 0]
+|  [Eval->CmdSub]   caller N: 45 dump_stack callstack_helpers.sh
+
+=== 25: Complex nesting: function -> eval -> cmdSub -> function
+status: 0
+bash-n: 0
+--- stdout
+|=== In outer_func ===
+|=== In inner_func ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack inner_func outer_func
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+|  [Frame 1]
+|    caller N: 5 inner_func main
+
+=== 26: Call stack with -c flag
+status: 0
+bash-n: 0
+--- stdout
+|=== Via -c ===
+|  caller: 37 callstack_helpers.sh
+|  LINENO: 10
+|  FUNCNAME[@]: dump_source_info dump_stack
+|  BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh
+
+=== 27: Function call with -c flag
+status: 0
+bash-n: 0
+--- stdout
+|=== In my_func via -c ===
+|  caller: 37 callstack_helpers.sh
+|  LINENO: 10
+|  FUNCNAME[@]: dump_source_info dump_stack my_func
+|  BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|[Frame 0]
+|  caller N: 45 dump_stack callstack_helpers.sh
+
+=== 28: Nested functions with -c flag
+status: 0
+bash-n: 0
+--- stdout
+|In f1
+|In f2
+|  caller: 37 callstack_helpers.sh
+|  LINENO: 10
+|  FUNCNAME[@]: dump_source_info dump_stack f2 f1
+|  BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main main
+|[Frame 0]
+|  caller N: 45 dump_stack callstack_helpers.sh
+|[Frame 1]
+|  caller N: 1 f2 main
+
+=== 29: eval with -c flag
+status: 0
+bash-n: 0
+--- stdout
+|In eval via -c
+|  caller: 37 callstack_helpers.sh
+|  LINENO: 10
+|  FUNCNAME[@]: dump_source_info dump_stack
+|  BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh
+
+=== 30: Command substitution with -c flag
+status: 0
+bash-n: 0
+--- stdout
+|LINENO=1 caller: 37 callstack_helpers.sh LINENO: 10 FUNCNAME[@]: dump_source_info dump_stack BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh
+
+=== 31: Interactive mode - simple function
+status: 0
+bash-n: 0
+--- stdout
+|  caller: 4 callstack_helpers.sh
+|  LINENO: 8
+|  FUNCNAME[@]: dump_source_info dump_stack f
+|  BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|[Frame 0]
+|  caller N: 12 dump_stack callstack_helpers.sh
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ source callstack_helpers.sh
+|test$ 
+|test$ f() { dump_stack; }
+|test$ f
+|test$ exit
+
+=== 32: Interactive mode - FUNCNAME and BASH_SOURCE
+status: 0
+bash-n: 0
+--- stdout
+|FUNCNAME: f
+|BASH_SOURCE: main
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+\test$ \x0d<NAME[@]}"; echo "BASH_SOURCE: ${BASH_SOURCE[@]}"; }
+|test$ f
+|test$ exit
+
+=== 33: PROMPT_COMMAND with call stack
+status: 0
+bash-n: 0
+--- stdout
+|[PC]   caller: 4 callstack_helpers.sh
+|[PC]   LINENO: 8
+|[PC]   FUNCNAME[@]: dump_source_info dump_stack
+|[PC]   BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh
+|test
+|[PC]   caller: 4 callstack_helpers.sh
+|[PC]   LINENO: 8
+|[PC]   FUNCNAME[@]: dump_source_info dump_stack
+|[PC]   BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ source callstack_helpers.sh
+|test$ 
+|test$ PROMPT_COMMAND='dump_stack "[PC] "'
+|test$ echo test
+|test$ exit
+
+=== 34: PROMPT_COMMAND calling function
+status: 0
+bash-n: 0
+--- stdout
+|[PC_FUNC] In function
+|  caller: 4 callstack_helpers.sh
+|  LINENO: 8
+|  FUNCNAME[@]: dump_source_info dump_stack pc_func
+|  BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|[Frame 0]
+|  caller N: 12 dump_stack callstack_helpers.sh
+|test
+|[PC_FUNC] In function
+|  caller: 4 callstack_helpers.sh
+|  LINENO: 8
+|  FUNCNAME[@]: dump_source_info dump_stack pc_func
+|  BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|[Frame 0]
+|  caller N: 12 dump_stack callstack_helpers.sh
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ source callstack_helpers.sh
+|test$ 
+|test$ pc_func() { echo "[PC_FUNC] In function"; dump_stack; }
+|test$ PROMPT_COMMAND='pc_func'
+|test$ echo test
+|test$ exit
+
+=== 35: PROMPT_COMMAND with nested calls
+status: 0
+bash-n: 0
+--- stdout
+|  caller: 4 callstack_helpers.sh
+|  LINENO: 8
+|  FUNCNAME[@]: dump_source_info dump_stack inner outer
+|  BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main main
+|[Frame 0]
+|  caller N: 12 dump_stack callstack_helpers.sh
+|[Frame 1]
+|  caller N: 1 inner main
+|test
+|  caller: 4 callstack_helpers.sh
+|  LINENO: 8
+|  FUNCNAME[@]: dump_source_info dump_stack inner outer
+|  BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main main
+|[Frame 0]
+|  caller N: 12 dump_stack callstack_helpers.sh
+|[Frame 1]
+|  caller N: 1 inner main
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ source callstack_helpers.sh
+|test$ 
+|test$ inner() { dump_stack; }
+|test$ outer() { inner; }
+|test$ PROMPT_COMMAND='outer'
+|test$ echo test
+|test$ exit
+
+=== 36: Recursive function call stack
+status: 0
+bash-n: 0
+--- stdout
+|=== Depth 3 ===
+|=== Depth 2 ===
+|=== Depth 1 ===
+|=== Depth 0 ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack recursive_func recursive_func recursive_func recursive_func
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main main main main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+|  [Frame 1]
+|    caller N: 10 recursive_func main
+|  [Frame 2]
+|    caller N: 8 recursive_func main
+|  [Frame 3]
+|    caller N: 8 recursive_func main
+
+=== 37: Call stack with process substitution
+status: 0
+bash-n: 0
+--- stdout
+|=== In my_func ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack my_func
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+
+=== 38: Call stack across pipe
+status: 0
+bash-n: 0
+--- stdout
+|=== In my_func ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack my_func
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+
+=== 39: Call stack in subshell
+status: 0
+bash-n: 0
+--- stdout
+|=== In my_func (subshell) ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack my_func
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+
+=== 40: Call stack with background job
+status: 0
+bash-n: 0
+--- stdout
+|=== In my_func (background) ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack my_func
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+
+=== 41: BASH_SOURCE indexing
+status: 0
+bash-n: 0
+--- stdout
+|Main script
+|  BASH_SOURCE[0]: 
+|In script.sh
+|  BASH_SOURCE[0]: script.sh
+|  BASH_SOURCE[1]: 
+|In script_func
+|  BASH_SOURCE[0]: script.sh
+|  BASH_SOURCE[1]: script.sh
+|  BASH_SOURCE[2]: 
+
+=== 42: BASH_SOURCE includes the outer script when sourcing at top level
+status: 0
+bash-n: 0
+--- stdout
+|test.bash
+|./source.bash
+|test.bash ./source.bash
+
+=== 43: FUNCNAME at top level
+status: 0
+bash-n: 0
+--- stdout
+|Top level FUNCNAME: ''
+|Top level FUNCNAME[@]: ''
+|Top level FUNCNAME[*]: ''
+
+=== 44: Empty BASH_LINENO at top level
+status: 0
+bash-n: 0
+--- stdout
+|Top level BASH_LINENO[@]: ''
+|Top level BASH_LINENO[*]: ''
+
+=== 45: Call stack in trap with function call
+status: 0
+bash-n: 0
+--- stdout
+|=== In trap_func ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack trap_func
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+|=== In my_func ===
+|About to trigger trap
+
+=== 46: Call stack: source within eval within function
+status: 0
+bash-n: 0
+--- stdout
+|=== In my_func ===
+|=== In sourced script ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack source my_func
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh script.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+|  [Frame 1]
+|    caller N: 2 source script.sh
+
+=== 47: Multiple eval levels
+status: 0
+bash-n: 0
+--- stdout
+|=== In my_func ===
+|    caller: 37 callstack_helpers.sh
+|    LINENO: 10
+|    FUNCNAME[@]: dump_source_info dump_stack my_func
+|    BASH_SOURCE[@]: callstack_helpers.sh callstack_helpers.sh main
+|  [Frame 0]
+|    caller N: 45 dump_stack callstack_helpers.sh
+
+=== 48: LINENO persistence in function
+status: 0
+bash-n: 0
+--- stdout
+|line1: 2
+|line2: 3
+|line3: 4

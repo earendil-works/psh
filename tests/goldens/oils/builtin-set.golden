@@ -1,0 +1,221 @@
+# Goldens for tests/oils/spec/builtin-set.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: can continue after unknown option
+status: 0
+bash-n: 0
+--- stdout
+|hello
+--- stderr
+|bash: line 2: set: STRICT: invalid option name
+
+=== 1: set with both options and argv
+status: 1
+bash-n: 0
+--- stdout
+|a b c
+
+=== 2: nounset with "$@"
+status: 0
+bash-n: 0
+--- stdout
+|a b c
+
+=== 3: set -u -- clears argv
+status: 0
+bash-n: 0
+--- stdout
+|
+
+=== 4: set -u -- x y z
+status: 0
+bash-n: 0
+--- stdout
+|x y z
+
+=== 5: set -u with undefined variable exits the interpreter
+status: 0
+bash-n: 0
+--- stdout
+|before
+|OK
+|before
+|OK
+--- stderr
+|<sh>: line 1: x: unbound variable
+|bash: cannot set terminal process group (12597): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash: x: unbound variable
+
+=== 6: set -u with undefined var in interactive shell does NOT exit the interpreter
+status: 0
+bash-n: 0
+--- stdout
+|before
+|OK
+|before
+|line2
+--- stderr
+|<sh>: line 1: x: unbound variable
+|bash: cannot set terminal process group (12620): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash: x: unbound variable
+
+=== 7: set -u error can break out of nested evals
+status: 0
+bash-n: 0
+--- stdout
+|before
+|OK
+--- stderr
+|<sh>: line 4: blarg: unbound variable
+
+=== 8: reset option with long flag
+status: 0
+bash-n: 0
+--- stdout
+|[]
+
+=== 9: reset option with short flag
+status: 0
+bash-n: 0
+--- stdout
+|[]
+
+=== 10: set -eu (flag parsing)
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset: unbound variable
+
+=== 11: set -o lists options
+status: 0
+bash-n: 0
+--- stdout
+|noexec
+
+=== 12: 'set' and 'eval' round trip
+status: 0
+bash-n: 0
+--- stdout
+|[ ]
+|OK
+|OK
+|OK
+|OK
+|OK
+--- stderr
+|Code saved to <case>/vars-bash.txt
+--- file vars-bash.txt
+|_=
+|_backslash_dq='\ "'
+|_space='[ ]'
+|_sq=''\''single quotes'\'''
+|_unicode='[μ]'
+|_whitespace=$'[\t\r\n]'
+
+=== 13: set - - and so forth
+status: 0
+bash-n: 0
+--- stdout
+|a b
+|a b
+|a b
+|-
+|--
+
+=== 14: set - leading single dash is ignored, turns off xtrace verbose (#2364)
+status: 0
+bash-n: 0
+--- stdout
+|verbose-on
+|xtrace-on
+|
+|a b c
+|
+|x - y z
+--- stderr
+|show_options
+|+ show_options
+|+ case $- in
+|+ echo verbose-on
+|+ case $- in
+|+ echo xtrace-on
+|echo
+|+ echo
+|
+|set - a b c
+|+ set - a b c
+
+=== 15: set - stops option processing like set --
+status: 0
+bash-n: 0
+--- stdout
+|argv -v
+
+=== 16: A single + is an ignored flag; not an argument
+status: 0
+bash-n: 0
+--- stdout
+|plus
+|verbose-on
+|xtrace-on
+|plus x y
+--- stderr
+|show_options
+|+ show_options
+|+ case $- in
+|+ echo verbose-on
+|+ case $- in
+|+ echo xtrace-on
+|echo plus "$@"
+|+ echo plus x y
+|
+
+=== 17: set - + and + -
+status: 0
+bash-n: 0
+--- stdout
+|+
+|+
+
+=== 18: set -a exports variables
+status: 0
+bash-n: 0
+--- stdout
+|bar
+|qux
+
+=== 19: set +a stops exporting
+status: 0
+bash-n: 0
+--- stdout
+|exported
+|None
+
+=== 20: set -o allexport (long form)
+status: 0
+bash-n: 0
+--- stdout
+|value1
+|None
+
+=== 21: variables set before set -a are not exported
+status: 0
+bash-n: 0
+--- stdout
+|None
+|after_value
+
+=== 22: set -a exports local variables
+status: 0
+bash-n: 0
+--- stdout
+|zzz
+
+=== 23: set -a exports declare variables
+status: 0
+bash-n: 0
+--- stdout
+|zzz

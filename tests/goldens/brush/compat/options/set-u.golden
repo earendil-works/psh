@@ -1,0 +1,438 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/options/set-u.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic set variable access
+status: 0
+bash-n: 0
+--- stdout
+|value
+
+=== 1: Unset variable triggers error
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 2: Command line -u
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: unset_var: unbound variable
+
+=== 3: Special parameter $@ does not error
+status: 0
+bash-n: 0
+--- stdout
+|args: 
+
+=== 4: Special parameter $* does not error
+status: 0
+bash-n: 0
+--- stdout
+|args: 
+
+=== 5: Special parameter $# does not error
+status: 0
+bash-n: 0
+--- stdout
+|count: 0
+
+=== 6: Special parameter $? does not error
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+
+=== 7: Special parameter $$ does not error
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 8: Special parameter $! does not error when no background jobs
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: !: unbound variable
+
+=== 9: Special parameter $0 does not error
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 10: Special parameter $- does not error
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 11: Unset positional parameter triggers error
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: $1: unbound variable
+
+=== 12: Set positional parameter does not error
+status: 0
+bash-n: 0
+--- stdout
+|arg
+
+=== 13: Positional parameters beyond provided args error
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: $2: unbound variable
+
+=== 14: Unset variable with default does not error
+status: 0
+bash-n: 0
+--- stdout
+|default
+
+=== 15: Empty vs unset with :- operator
+status: 0
+bash-n: 0
+--- stdout
+|default
+|default
+
+=== 16: Empty vs unset with - operator
+status: 0
+bash-n: 0
+--- stdout
+|
+|default
+
+=== 17: Unset array element with default
+status: 0
+bash-n: 0
+--- stdout
+|default
+
+=== 18: Unset array treated as unset variable
+status: 0
+bash-n: 0
+--- stdout
+|
+|should not print
+
+=== 19: Unset array with default does not error
+status: 0
+bash-n: 0
+--- stdout
+|default
+
+=== 20: Unset variable in conditional test errors
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 21: Unset variable in [[ test errors
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 22: Unset variable with default in conditional works
+status: 0
+bash-n: 0
+--- stdout
+|empty
+
+=== 23: test -v for unset variable
+status: 0
+bash-n: 0
+--- stdout
+|unset
+
+=== 24: test -z with unset variable errors
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 25: Unset variable in command substitution errors
+status: 0
+bash-n: 0
+--- stdout
+|should not print
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 26: Unset variable with default in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|default
+
+=== 27: Unset variable in arithmetic defaults to zero
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 28: set +u disables unset variable check
+status: 0
+bash-n: 0
+--- stdout
+|
+|ok
+
+=== 29: set -u can be re-enabled
+status: 1
+bash-n: 0
+--- stdout
+|
+--- stderr
+|bash: line 5: another_unset: unbound variable
+
+=== 30: set +u in function does not affect parent
+status: 0
+bash-n: 0
+--- stdout
+|
+|
+|should not print
+
+=== 31: Unset variable in function body errors
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: unset_var: unbound variable
+
+=== 32: Local unset variable errors
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 4: unset_local: unbound variable
+
+=== 33: Local variable declaration with value works
+status: 0
+bash-n: 0
+--- stdout
+|value
+
+=== 34: Function parameter shadows unset global
+status: 0
+bash-n: 0
+--- stdout
+|arg
+
+=== 35: Unset variable in subshell errors
+status: 0
+bash-n: 0
+--- stdout
+|should not print
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 36: set +u in subshell does not affect parent
+status: 1
+bash-n: 0
+--- stdout
+|
+--- stderr
+|bash: line 6: unset_in_parent: unbound variable
+
+=== 37: Variable set then unset errors on access
+status: 1
+bash-n: 0
+--- stdout
+|value
+--- stderr
+|bash: line 5: var: unbound variable
+
+=== 38: Variable set then unset with default works
+status: 0
+bash-n: 0
+--- stdout
+|default
+
+=== 39: Unsetting non-existent variable does not error
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 40: Exported unset variable errors
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: unset_exported: unbound variable
+
+=== 41: Exported variable with value works
+status: 0
+bash-n: 0
+--- stdout
+|value
+
+=== 42: Unset variable in pattern errors
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 43: Length of unset variable errors
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 44: Length of empty variable works
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 45: Indirect expansion of unset variable errors
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: !ref: unbound variable
+
+=== 46: Indirect expansion to set variable works
+status: 0
+bash-n: 0
+--- stdout
+|value
+
+=== 47: Unset variable in case pattern errors
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 48: Unset variable with default in case works
+status: 0
+bash-n: 0
+--- stdout
+|matched
+
+=== 49: Unset variable in for loop errors
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 50: Unset variable with default in for loop works
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+
+=== 51: Unset variable in while condition errors
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 52: read into variable then access works
+status: 0
+bash-n: 0
+--- stdout
+|default
+
+=== 53: Variable unset before read then set works
+status: 0
+bash-n: 0
+--- stdout
+|test
+
+=== 54: Associative array unset key with default
+status: 0
+bash-n: 0
+--- stdout
+|default
+
+=== 55: Unset variable with default in pipeline works
+status: 0
+bash-n: 0
+--- stdout
+|default
+
+=== 56: Unset variable in here doc errors
+status: 0
+bash-n: 0
+--- stdout
+|should not print
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 57: Unset variable with default in here doc works
+status: 0
+bash-n: 0
+--- stdout
+|default
+
+=== 58: Empty string is not unset
+status: 0
+bash-n: 0
+--- stdout
+|var is: ''
+
+=== 59: Null value vs unset
+status: 0
+bash-n: 0
+--- stdout
+|
+|default
+
+=== 60: IFS unset behavior
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 61: PATH unset would error
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 4: PATH: unbound variable
+
+=== 62: set -u with set -e
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 63: declare without value then access errors
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: my_var: unbound variable
+
+=== 64: declare with value then access works
+status: 0
+bash-n: 0
+--- stdout
+|value
+
+=== 65: readonly without value then access errors
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: my_var: unbound variable
+
+=== 66: Nameref to set variable with set -u
+status: 0
+bash-n: 0
+--- stdout
+|value
+
+=== 67: Nameref to unset variable with set -u errors
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: ref: unbound variable
+
+=== 68: Unset variable in a -c string exits with status 127
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: unset_var: unbound variable

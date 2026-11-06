@@ -1,0 +1,167 @@
+# Goldens for tests/brush/brush-shell/tests/cases/brush/pipelines.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Builtin output piped into a brace group
+status: 0
+bash-n: 0
+--- stdout
+|got: hello
+
+=== 1: Several builtin stages
+status: 0
+bash-n: 0
+--- stdout
+|[c][b][a]
+
+=== 2: while-read loop consumes every line
+status: 0
+bash-n: 0
+--- stdout
+|1:item
+|2:item
+|3:item
+|4:item
+|5:item
+
+=== 3: Functions as producer and consumer
+status: 0
+bash-n: 0
+--- stdout
+|1=alpha
+|2=beta
+
+=== 4: Exit status is the last stage's
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|status: 0
+
+=== 5: PIPESTATUS records every stage
+status: 0
+bash-n: 0
+--- stdout
+|0 1 0
+|3 4 0
+
+=== 6: Negated pipelines
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|status: 1
+
+=== 7: pipefail reports the last failing stage
+status: 0
+bash-n: 0
+--- stdout
+|status: 2
+|status: 4
+
+=== 8: Stages don't change the shell's variables
+status: 0
+bash-n: 0
+--- stdout
+|x=outer
+|x=outer
+
+=== 9: Thousands of lines through a pipeline
+status: 0
+bash-n: 0
+--- stdout
+|count=5000 last=line 5000
+
+=== 10: Reading an empty pipe reports end of input
+status: 0
+bash-n: 0
+--- stdout
+|status=1 x=[]
+
+=== 11: Last line without a trailing newline
+status: 0
+bash-n: 0
+--- stdout
+|status=1 x=abc
+
+=== 12: Several reads from one pipe
+status: 0
+bash-n: 0
+--- stdout
+|321
+
+=== 13: IFS splitting in a pipeline stage
+status: 0
+bash-n: 0
+--- stdout
+|c-b-a
+
+=== 14: read with and without -r
+status: 0
+bash-n: 0
+--- stdout
+|a\tb\\c
+|atb\c
+
+=== 15: stderr sent down the pipe
+status: 0
+bash-n: 0
+--- stdout
+|got: out
+|got: err
+|got: via-pipe-and
+
+=== 16: mapfile reads a pipeline's output
+status: 0
+bash-n: 0
+--- stdout
+|3: x y z
+
+=== 17: A stage that ignores its input
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|ignored input
+
+=== 18: Pipelines nested in subshells
+status: 0
+bash-n: 0
+--- stdout
+|w=v=inner
+
+=== 19: Pipelines in loop bodies and conditions
+status: 0
+bash-n: 0
+--- stdout
+|3
+|3
+|5
+|matched
+|n=3
+
+=== 20: A long line through a pipe
+status: 0
+bash-n: 0
+--- stdout
+|10000
+
+=== 21: eval and source in pipeline stages
+status: 0
+bash-n: 0
+--- stdout
+|[from-eval]
+|[hello from lib]
+
+=== 22: Coprocess round trip
+status: 0
+bash-n: 0
+--- stdout
+|reply=co:ping
+
+=== 23: An endless producer stops once its consumer is done
+status: 0
+bash-n: 0
+--- stdout
+|got y
+|done

@@ -1,0 +1,275 @@
+# Goldens for tests/oils/spec/here-doc.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Here string
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 1: Here string with $
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|
+
+=== 2: Here redirect with explicit descriptor
+status: 0
+bash-n: 0
+--- stdout
+|one
+
+=== 3: Here doc from another input file descriptor
+status: 0
+bash-n: 0
+--- stdout
+|8: here doc on descriptor
+
+=== 4: Multiple here docs with different descriptors
+status: 0
+bash-n: 0
+--- stdout
+|0: fd0
+|3: fd3
+
+=== 5: Here doc with bad var delimiter
+status: 0
+bash-n: 0
+--- stdout
+|here
+
+=== 6: Here doc with bad comsub delimiter
+status: 0
+bash-n: 0
+--- stdout
+|here
+
+=== 7: Here doc and < redirect -- last one wins
+status: 0
+bash-n: 0
+--- stdout
+|hello
+--- file hello.txt
+|hello
+
+=== 8: < redirect and here doc -- last one wins
+status: 0
+bash-n: 0
+--- stdout
+|here
+--- file hello.txt
+|hello
+
+=== 9: Here doc with var sub, command sub, arith sub
+status: 0
+bash-n: 0
+--- stdout
+|var: v
+|command: hi
+|arith: 3
+
+=== 10: Here doc in middle.  And redirects in the middle.
+status: 0
+bash-n: 0
+--- stderr
+|foo
+|here
+|bar
+--- file bar.txt
+|bar
+--- file foo.txt
+|foo
+
+=== 11: Here doc line continuation
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+
+=== 12: Here doc with quote expansion in terminator
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+
+=== 13: Here doc with multiline double quoted string
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|three
+
+=== 14: Two here docs -- first is ignored; second ones wins!
+status: 0
+bash-n: 0
+--- stdout
+|there
+
+=== 15: Here doc with line continuation, then pipe.  Syntax error.
+status: 2
+bash-n: 2
+--- stderr
+|cat: 1: No such file or directory
+|bash: line 6: syntax error near unexpected token `|'
+|bash: line 6: `| tac'
+--- bash-n stderr
+|bash: line 6: syntax error near unexpected token `|'
+|bash: line 6: `| tac'
+
+=== 16: Here doc with pipe on first line
+status: 0
+bash-n: 0
+--- stdout
+|3
+|2
+|1
+
+=== 17: Here doc with pipe continued on last line
+status: 0
+bash-n: 0
+--- stdout
+|3
+|2
+|1
+
+=== 18: Here doc with builtin 'read'
+status: 0
+bash-n: 0
+--- stdout
+|=val1= =val2=
+
+=== 19: Compound command here doc
+status: 0
+bash-n: 0
+--- stdout
+|X 1
+|X 2
+|X 3
+
+=== 20: Here doc in while condition and here doc in body
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 21: Here doc in while condition and here doc in body on multiple lines
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 22: Here doc in while loop split up more
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 23: Mixing << and <<-
+status: 0
+bash-n: 0
+--- stdout
+|one
+|--
+|two
+
+=== 24: Two compound commands with two here docs
+status: 0
+bash-n: 0
+--- stdout
+|X 1
+|X 2
+|==
+|Y 3
+|Y 4
+
+=== 25: Function def and execution with here doc
+status: 0
+bash-n: 0
+--- stdout
+|before
+|1
+|2
+|after
+
+=== 26: Here doc as command prefix
+status: 0
+bash-n: 0
+--- stdout
+|3
+|2
+|1
+
+=== 27: Redirect after here doc
+status: 0
+bash-n: 0
+--- stderr
+|out
+
+=== 28: here doc stripping tabs
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3  # 2 tabs are both stripped
+|  4  # spaces are preserved
+
+=== 29: Here doc within subshell with boolean
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 30: Here Doc in if condition
+status: 0
+bash-n: 0
+--- stdout
+|here doc in IF CONDITION
+|THEN executed
+
+=== 31: Nested here docs which are indented
+status: 0
+bash-n: 0
+--- stdout
+|outside
+|inside
+
+=== 32: Multiple here docs in pipeline
+status: 0
+bash-n: 0
+--- stdout
+|0: 3: fd3
+|5: fd5
+|ok
+
+=== 33: Multiple here docs in pipeline on multiple lines
+status: 0
+bash-n: 0
+--- stdout
+|0: 3: fd3
+|5: fd5
+|ok
+
+=== 34: Here doc and backslash double quote
+status: 0
+bash-n: 0
+--- stdout
+|a \"quote\"
+
+=== 35: Here doc escapes
+status: 0
+bash-n: 0
+--- stdout
+|\ \" $ `

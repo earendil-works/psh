@@ -1,0 +1,74 @@
+# Goldens for tests/oils/spec/serialize.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: printf %q newline
+status: 0
+bash-n: 0
+--- stdout
+|$'one\ntwo'
+|roundtrip-ok
+
+=== 1: printf %q spaces
+status: 0
+bash-n: 0
+--- stdout
+|one\ two
+
+=== 2: printf %q quotes
+status: 0
+bash-n: 0
+--- stdout
+|\'\"
+|roundtrip-ok
+
+=== 3: printf %q unprintable
+status: 0
+bash-n: 0
+--- stdout
+|$'\377'
+
+=== 4: printf %q unicode
+status: 0
+bash-n: 0
+--- stdout
+|μ
+
+=== 5: printf %q invalid unicode
+status: 0
+bash-n: 0
+--- stdout
+|$'\316'
+|$'\316μ'
+|$'μ\316'
+|$'\316a'
+|$'a\316'
+
+=== 6: set
+status: 0
+bash-n: 0
+--- stdout
+|zz=$'one\ntwo'
+
+=== 7: declare
+status: 0
+bash-n: 0
+--- stdout
+|zz=$'one\ntwo'
+|declare -- zz=$'one\ntwo'
+
+=== 8: ${var@Q}
+status: 0
+bash-n: 0
+--- stdout
+|$'one\ntwo μ'
+|$'one\ntwo μ'
+
+=== 9: xtrace
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+--- stderr
+|+ echo $'one\ntwo'

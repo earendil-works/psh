@@ -1,0 +1,237 @@
+# Goldens for tests/oils/spec/builtin-getopts.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: getopts empty
+status: 0
+bash-n: 0
+--- stdout
+|status=1 opt=? OPTARG=
+
+=== 1: getopts sees unknown arg
+status: 0
+bash-n: 0
+--- stdout
+|status=0 opt=? OPTARG=
+--- stderr
+|bash: illegal option -- Z
+
+=== 2: getopts three invocations
+status: 0
+bash-n: 0
+--- stdout
+|status=0 opt=h
+|status=0 opt=c
+|status=1 opt=?
+
+=== 3: getopts resets OPTARG
+status: 0
+bash-n: 0
+--- stdout
+|status=0 opt=c OPTARG=foo
+|status=0 opt=h OPTARG=
+
+=== 4: OPTARG is empty (not unset) after parsing a flag doesn't take an arg
+status: 1
+bash-n: 0
+--- stdout
+|name=a
+--- stderr
+|bash: line 4: OPTARG: unbound variable
+
+=== 5: Basic getopts invocation
+status: 0
+bash-n: 0
+--- stdout
+|h=1 c=foo optind=4 argv=x y z
+
+=== 6: getopts with invalid variable name
+status: 0
+bash-n: 0
+--- stdout
+|status=1 opt= OPTARG=foo OPTIND=3
+--- stderr
+|bash: line 2: getopts: `opt-': not a valid identifier
+
+=== 7: getopts with invalid flag
+status: 2
+bash-n: 0
+--- stdout
+|ERROR 3
+--- stderr
+|bash: illegal option -- x
+
+=== 8: getopts with with -
+status: 0
+bash-n: 0
+--- stdout
+|-h -
+|status=0
+
+=== 9: getopts missing required argument
+status: 2
+bash-n: 0
+--- stdout
+|ERROR 3
+--- stderr
+|bash: option requires an argument -- c
+
+=== 10: getopts doesn't look for flags after args
+status: 0
+bash-n: 0
+--- stdout
+|h=0 c= optind=1 argv=x -h -c y
+
+=== 11: getopts with explicit args
+status: 0
+bash-n: 0
+--- stdout
+|h=1 c=foo optind=4 argv=A B C
+
+=== 12: OPTIND
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 13: OPTIND after multiple getopts with same spec
+status: 0
+bash-n: 0
+--- stdout
+|OPTIND=1
+|-
+|-
+|OPTIND=4
+|OPTIND=1
+
+=== 14: OPTIND after multiple getopts with different spec
+status: 0
+bash-n: 0
+--- stdout
+|.
+|OPTIND=2
+|-
+|-
+|OPTIND=5
+|OPTIND=2
+
+=== 15: OPTIND narrowed down
+status: 0
+bash-n: 0
+--- stdout
+|a=1 b= c= d=1 e=E
+
+=== 16: Getopts parses the function's arguments
+status: 0
+bash-n: 0
+--- stdout
+|h=0 c=bar opt=? optind=3 argv=-h -c foo x y z
+
+=== 17: Local OPTIND
+status: 0
+bash-n: 0
+--- stdout
+|loop 2
+
+=== 18: two flags: -ab
+status: 0
+bash-n: 0
+--- stdout
+|OPTIND=1 opt=a OPTARG=
+|OPTIND=2 opt=b OPTARG=
+
+=== 19: flag and arg: -c10
+status: 0
+bash-n: 0
+--- stdout
+|OPTIND=2 opt=c OPTARG=10
+|OPTIND=2 opt=? OPTARG=
+
+=== 20: More Smooshing 1
+status: 0
+bash-n: 0
+--- stdout
+|OPTIND=1 opt=a OPTARG=
+|OPTIND=3 opt=b OPTARG=hi
+|OPTIND=5 opt=c OPTARG=hello
+
+=== 21: More Smooshing 2
+status: 0
+bash-n: 0
+--- stdout
+|OPTIND=1 opt=a OPTARG=
+|OPTIND=1 opt=b OPTARG=
+|OPTIND=2 opt=c OPTARG=10
+
+=== 22: OPTIND should be >= 1 (regression)
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+
+=== 23: getopts bug #1523
+status: 1
+bash-n: 0
+--- stdout
+|opt:a
+|opt:b
+|opt:c arg:def
+|opt:a
+|opt:b
+|opt:c arg:de
+
+=== 24: More regression for #1523
+status: 1
+bash-n: 0
+--- stdout
+|opt:a
+|opt:b
+|opt:c arg:def
+|err:?
+|err:?
+|err:?
+--- stderr
+|<repo>/spec/testdata/getopts-1523.sh: illegal option -- x
+|<repo>/spec/testdata/getopts-1523.sh: illegal option -- y
+|<repo>/spec/testdata/getopts-1523.sh: illegal option -- z
+
+=== 25: getopts silent error reporting - invalid option
+status: 0
+bash-n: 0
+--- stdout
+|status=0 opt=? OPTARG=Z
+
+=== 26: getopts silent error reporting - missing required argument
+status: 0
+bash-n: 0
+--- stdout
+|status=0 opt=: OPTARG=a
+
+=== 27: getopts normal mode - invalid option (compare with silent)
+status: 0
+bash-n: 0
+--- stdout
+|status=0 opt=? OPTARG=
+
+=== 28: getopts normal mode - missing required argument (compare with silent)
+status: 0
+bash-n: 0
+--- stdout
+|status=0 opt=? OPTARG=
+
+=== 29: getopts handles '--' #2579
+status: 0
+bash-n: 0
+--- stdout
+|a
+|name=?
+|3
+
+=== 30: getopts leaves all args after '--' as operands #2579
+status: 0
+bash-n: 0
+--- stdout
+|a
+|2
+|-c operand

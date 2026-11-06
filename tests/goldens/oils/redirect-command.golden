@@ -1,0 +1,224 @@
+# Goldens for tests/oils/spec/redirect-command.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: >$file touches a file
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=0
+--- file myfile
+
+=== 1: $(< $file) yields the contents of the file
+status: 0
+bash-n: 0
+--- stdout
+|['2\n3']
+--- file myfile
+|2
+|3
+
+=== 2: `< $file` behaves like $(< file)
+status: 0
+bash-n: 0
+--- stdout
+|[7
+|8]
+--- file myfile
+|7
+|8
+
+=== 3: $(< file; end) is not a special case
+status: 0
+bash-n: 0
+--- stdout
+|begin
+|---
+|end
+|---
+|
+|---
+--- file myfile
+|5
+|6
+
+=== 4: < file in pipeline and subshell doesn't work
+status: 0
+bash-n: 0
+--- stdout
+|end
+--- file file2
+|FOO
+
+=== 5: Leading redirect in a simple command
+status: 0
+bash-n: 0
+--- stdout
+|hello
+--- file hello.txt
+|hello
+
+=== 6: Redirect in the middle of a simple command
+status: 0
+bash-n: 0
+--- stdout
+|1 2 3 4 5 6 7 8 9 1 2 3 4 5 6
+--- file out
+|1 2 3 4 5 6 7 8 9 1 2 3 4 5 6
+~ no newline at end
+
+=== 7: Redirect in command sub
+status: 0
+bash-n: 0
+--- stdout
+|
+--- stderr
+|foo
+
+=== 8: Redirect in the middle of two assignments
+status: 0
+bash-n: 0
+--- stdout
+|bar
+|foo
+--- file out.txt
+|foo
+|bar
+
+=== 9: Redirect in assignment
+status: 0
+bash-n: 0
+--- stdout
+|FILE=
+|FOO=
+--- stderr
+|foo
+--- file no-command.txt
+
+=== 10: Redirect in function body
+status: 0
+bash-n: 0
+--- stderr
+|hi
+
+=== 11: Redirect in function body is evaluated multiple times
+status: 0
+bash-n: 0
+--- stdout
+|i=2
+|__
+|file 1
+|__
+|file 2
+--- file file0
+|file 1
+--- file file1
+|file 2
+
+=== 12: Redirect in function body AND function call
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 13: redirect bash extensions:   [[  ((  for ((
+status: 0
+bash-n: 0
+--- stdout
+|0 dbracket
+|0 dparen
+|1 for-expr
+|1 total
+--- file dbracket
+--- file dparen
+--- file for-expr
+|for-expr
+
+=== 14: redirect if
+status: 0
+bash-n: 0
+--- stdout
+|if-body
+--- file out
+|if-body
+
+=== 15: redirect case
+status: 0
+bash-n: 0
+--- stdout
+|case-body
+--- file out
+|case-body
+
+=== 16: redirect while
+status: 0
+bash-n: 0
+--- stdout
+|while-body
+--- file out
+|while-body
+
+=== 17: redirect for loop
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+--- file redirect-for-loop.txt
+|1
+|2
+|3
+
+=== 18: redirect subshell
+status: 0
+bash-n: 0
+--- stderr
+|foo
+
+=== 19: Prefix redirect for loop -- not allowed
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: for: command not found
+|bash: line 2: syntax error near unexpected token `do'
+|bash: line 2: `do'
+--- file redirect2.txt
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `do'
+|bash: line 2: `do'
+
+=== 20: Brace group redirect
+status: 0
+bash-n: 0
+--- stdout
+|15
+--- file br.txt
+|block-redirect
+
+=== 21: Redirect function stdout
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+--- file redirect-func.txt
+|one
+|two
+
+=== 22: Nested function stdout redirect
+status: 0
+bash-n: 0
+--- stdout
+|i1
+|i2
+|--
+|o1
+|o2
+--- file inner.txt
+|i1
+|i2
+--- file outer.txt
+|o1
+|o2

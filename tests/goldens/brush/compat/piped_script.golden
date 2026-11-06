@@ -1,0 +1,148 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/piped_script.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Multi-line if/then/fi
+status: 0
+bash-n: 0
+--- stdout
+|yes
+
+=== 1: Multi-line function definition
+status: 0
+bash-n: 0
+--- stdout
+|hello, world
+
+=== 2: Here document
+status: 0
+bash-n: 0
+--- stdout
+|first
+|second
+|after
+
+=== 3: Pipeline continued after trailing pipe
+status: 0
+bash-n: 0
+--- stdout
+|HI
+
+=== 4: And-and continuation
+status: 0
+bash-n: 0
+--- stdout
+|yes
+
+=== 5: For loop with do/done on separate lines
+status: 0
+bash-n: 0
+--- stdout
+|item 1
+|item 2
+|item 3
+
+=== 6: While loop
+status: 0
+bash-n: 0
+--- stdout
+|i=0
+|i=1
+|i=2
+
+=== 7: Case statement
+status: 0
+bash-n: 0
+--- stdout
+|two
+
+=== 8: Multi-line subshell and command substitution
+status: 0
+bash-n: 0
+--- stdout
+|in-subshell
+|from-cmd-subst
+
+=== 9: Realistic installer-shaped script
+status: 0
+bash-n: 0
+--- stdout
+|[install] created dir
+|[install] config: platform=detected
+|[install] config: dir=./installed
+|[install] done
+--- dir installed
+--- file installed/config
+|platform=detected
+|dir=./installed
+
+=== 10: Stream truncated mid-construct
+status: 2
+bash-n: 2
+--- stdout
+|start
+|hello
+--- stderr
+|bash: line 9: syntax error: unexpected end of file from `if' command on line 6
+--- bash-n stderr
+|bash: line 9: syntax error: unexpected end of file from `if' command on line 6
+
+=== 11: Syntax error mid-stream
+status: 2
+bash-n: 2
+--- stdout
+|before
+--- stderr
+|bash: line 2: syntax error near unexpected token `;;'
+|bash: line 2: `;;'
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `;;'
+|bash: line 2: `;;'
+
+=== 12: Syntax error mid-stream on a line ending in a continuation
+status: 2
+bash-n: 2
+--- stdout
+|before
+--- stderr
+|bash: line 2: syntax error near unexpected token `;;'
+|bash: line 2: `echo ;; \'
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `;;'
+|bash: line 2: `echo ;; \'
+
+=== 13: Backslash line continuation (minimal backend)
+status: 0
+bash-n: 0
+--- stdout
+|ab
+
+=== 14: Backslash line continuation (basic backend)
+status: 0
+bash-n: 0
+--- stdout
+|ab
+
+=== 15: Backslash continuation splitting arguments
+status: 0
+bash-n: 0
+--- stdout
+|one-two-three
+
+=== 16: Backslash before trailing whitespace is not a continuation
+status: 2
+bash-n: 2
+--- stdout
+|a 
+--- stderr
+|bash: line 2: syntax error near unexpected token `;;'
+|bash: line 2: `;;'
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `;;'
+|bash: line 2: `;;'
+
+=== 17: Backslash continuation after a comment line
+status: 0
+bash-n: 0
+--- stdout
+|ab

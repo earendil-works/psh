@@ -1,0 +1,146 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/builtin.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: builtin with no builtin
+status: 0
+bash-n: 0
+
+=== 1: builtin with unknown builtin
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: builtin: not-a-builtin: not a shell builtin
+
+=== 2: valid builtin
+status: 0
+bash-n: 0
+--- stdout
+|Hello world
+
+=== 3: valid builtin with hyphen args
+status: 0
+bash-n: 0
+--- stdout
+|Hello
+|World
+
+=== 4: builtin passing through results
+status: 0
+bash-n: 0
+--- stdout
+|builtin false => 1
+|builtin true => 0
+
+=== 5: builtin with non-decl builtin
+status: 0
+bash-n: 0
+--- stdout
+|variable=value
+
+=== 6: builtin expands assignment-looking argument for ordinary builtin
+status: 0
+bash-n: 0
+--- stdout
+|argument=world
+
+=== 7: builtin expands assignment-looking argument for simple builtin
+status: 0
+bash-n: 0
+--- stdout
+|[argument=world]
+
+=== 8: builtin expands assignment-looking builtin name
+status: 0
+bash-n: 0
+--- stdout
+|status=1 last=<missing=world>
+
+=== 9: builtin with decl builtin
+status: 0
+bash-n: 0
+--- stdout
+|declare -- variable="value"
+
+=== 10: builtin forwards expanded declaration assignments
+status: 0
+bash-n: 0
+--- stdout
+|declare -- declared="world"
+|declare -x exported="world"
+
+=== 11: builtin with disabled builtin
+status: 0
+bash-n: 0
+--- stdout
+|0
+|1
+|0
+--- stderr
+|bash: line 5: builtin: cd: not a shell builtin
+
+=== 12: Function shadowing builtin receives its arguments
+status: 0
+bash-n: 0
+--- stdout
+|shadow builtin: [echo hi] count=2
+
+=== 13: builtin forwards a value with no field separators intact
+status: 0
+bash-n: 0
+--- stdout
+|declare -- declared="world"
+|declare -x exported="world"
+
+=== 14: builtin does not preserve assignment splitting semantics
+status: 0
+bash-n: 0
+--- stdout
+|declare -- c="x"
+|declare -- y
+
+=== 15: builtin splits assignment-shaped words for ordinary builtins
+status: 0
+bash-n: 0
+--- stdout
+|[a=1][2]
+
+=== 16: builtin --help prints help on stdout
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|help on stdout
+
+=== 17: builtin rejects options
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|rc=0
+--- stderr
+|bash: line 1: builtin: -z: invalid option
+|builtin: usage: builtin [shell-builtin [arg ...]]
+
+=== 18: builtin drops a special builtin's fatal errors in POSIX mode
+status: 0
+bash-n: 0
+--- stdout
+|still running: 2
+--- stderr
+|bash: line 2: export: --: invalid option
+|export: usage: export [-fn] [name[=value] ...] or export -p [-f]
+
+=== 19: builtin expands a ~ after the = of a declaration it passes on
+status: 0
+bash-n: 0
+--- stdout
+|ROOT/z
+|ROOT/w
+
+=== 20: builtin passes --help on to the builtin it runs
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|same as help cd

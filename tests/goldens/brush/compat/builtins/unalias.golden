@@ -1,0 +1,24 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/unalias.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Unalias basic usage
+status: 0
+bash-n: 0
+--- stdout
+|prefixed something
+|something
+
+=== 1: Unalias non-existent alias
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unalias: not_an_alias: not found
+
+=== 2: unalias with no names fails with status 2
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+--- stderr
+|unalias: usage: unalias [-a] name [name ...]

@@ -1,0 +1,57 @@
+# Goldens for tests/oils/spec/builtin-type.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: type -> keyword builtin
+status: 0
+bash-n: 0
+--- stdout
+|while is a shell keyword
+|cd is a shell builtin
+
+=== 1: type -> alias external
+status: 0
+bash-n: 0
+--- stdout
+|ll is an alias for ls -l
+|date is _tmp/date
+--- dir _tmp
+--- file _tmp/date
+
+=== 2: type of relative path
+status: 1
+bash-n: 0
+--- stdout
+|_tmp/ex is _tmp/ex
+--- stderr
+|bash: line 5: type: _tmp/file: not found
+--- dir _tmp
+--- file _tmp/ex
+--- file _tmp/file
+
+=== 3: type -> not found
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|zz: not found
+--- file err.txt
+|bash: line 1: type: zz: not found
+
+=== 4: special builtins are called out
+status: 0
+bash-n: 0
+--- stdout
+|cd is a shell builtin
+|eval is a shell builtin
+|: is a shell builtin
+|true is a shell builtin
+|
+|export is a shell builtin
+
+=== 5: more special builtins
+status: 0
+bash-n: 0
+--- stdout
+|. is a shell builtin
+|source is a shell builtin

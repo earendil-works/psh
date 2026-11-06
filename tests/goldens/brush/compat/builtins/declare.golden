@@ -1,0 +1,1303 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/declare.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Display vars
+status: 0
+bash-n: 0
+--- stdout
+|declare -- myvar="something"
+|declare -a myarr=([0]="a" [1]="b" [2]="c")
+
+=== 1: Display vars with interesting chars
+status: 0
+bash-n: 0
+--- stdout
+|declare -- testvar="\"abc\""
+|testvar='"abc"'
+|-------------------------
+|declare -- testvar="a b c"
+|testvar='a b c'
+|-------------------------
+|declare -- testvar="'"
+|testvar=\'
+
+=== 2: Display vars with adjacent single quotes
+status: 0
+bash-n: 0
+--- stdout
+|declare -- testvar="a''b"
+|testvar='a'\'''\''b'
+|-------------------------
+|declare -- testvar="''"
+|testvar=''\'''\'''
+|-------------------------
+|declare -- testvar="'a"
+|testvar=''\''a'
+|-------------------------
+|declare -- testvar="a'"
+|testvar='a'\'''
+|-------------------------
+|declare -a arr=([0]="a''b" [1]="'")
+|-------------------------
+|declare -A m=([k]="a''b" )
+
+=== 3: Display vars with interesting chars 2
+status: 0
+bash-n: 0
+--- stdout
+|declare -- testvar=$'a\nb'
+|testvar=$'a\nb'
+|-------------------------
+|declare -- testvar=$'\003'
+|testvar=$'\003'
+|-------------------------
+|declare -- testvar=$'\b'
+|testvar=$'\b'
+|-------------------------
+|declare -- testvar=$'\E[34mabc\E[0m'
+|testvar=$'\E[34mabc\E[0m'
+
+=== 4: Declare integer
+status: 0
+bash-n: 0
+--- stdout
+|declare -i num="10"
+|10
+|20
+|declare -- num="20"
+|20
+|2010
+
+=== 5: Appending to an integer wraps around on overflow
+status: 0
+bash-n: 0
+--- stdout
+|-9223372036854775808
+|declare -ai arr=([0]="-9223372036854775808")
+|declare -Ai assoc=([key]="9223372036854775807" )
+
+=== 6: Declare integer with non-integer string
+status: 0
+bash-n: 0
+--- stdout
+|declare -i var="0"
+
+=== 7: Removing integer attribute prevents arithmetic evaluation
+status: 0
+bash-n: 0
+--- stdout
+|declare -- var="1+2"
+
+=== 8: Invalid integer declaration does not evaluate value
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|side effect: 0
+
+=== 9: Readonly integer declaration does not evaluate value
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|side effect: 0
+
+=== 10: Update integer with non-integer string
+status: 0
+bash-n: 0
+--- stdout
+|declare -i var="10"
+|declare -i var="0"
+
+=== 11: Update integer indexed array with non-integer string
+status: 0
+bash-n: 0
+--- stdout
+|declare -ai arr=()
+|declare -ai arr=([0]="0")
+
+=== 12: Update integer associative array with non-integer string
+status: 0
+bash-n: 0
+--- stdout
+|declare -Ai arr=()
+|declare -Ai arr=([key]="0" )
+
+=== 13: Declare readonly variable
+status: 0
+bash-n: 0
+--- stdout
+|declare -r var="readonly"
+|readonly
+|change result: 1
+|var: readonly
+|+r result: 1
+|declare -r var="readonly"
+--- stderr
+|bash: line 6: var: readonly variable
+|bash: line 10: declare: var: readonly variable
+
+=== 14: Declare array
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="element1" [1]="element2" [2]="element3")
+|[0]: element1
+|[1]: element1
+|[2]: element1
+|[3]: element1
+|STAR: element1 element2 element3
+|AT: element1 element2 element3
+
+=== 15: Declare associative array
+status: 0
+bash-n: 0
+--- stdout
+|declare -A arr=([x1]="1" [x2]="2" )
+|[x]: 1
+|[y]: 2
+|[z]: 
+|STAR: 1 2
+|AT: 1 2
+
+=== 16: Declare and export variable
+status: 0
+bash-n: 0
+--- stdout
+|myexportedvar=exported variable
+
+=== 17: Declare and export unset variable
+status: 1
+bash-n: 0
+
+=== 18: Re-declaring variable
+status: 0
+bash-n: 0
+--- stdout
+|var: value
+
+=== 19: Appending via declare
+status: 0
+bash-n: 0
+--- stdout
+|declare -- var="value"
+|declare -- var="valueappended"
+
+=== 20: Multiple declare operands expand before assignments are applied
+status: 0
+bash-n: 0
+--- stdout
+|declare -- first="one"
+|declare -- second=""
+
+=== 21: Declare command substitutions expand left to right exactly once
+status: 0
+bash-n: 0
+--- stdout
+|declare -- first="one"
+|declare -- second="x"
+|marker: x
+--- file marker.txt
+|x
+~ no newline at end
+
+=== 22: Declare expansion error occurs before any operand is applied
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|state: unset
+--- file state.txt
+|unset
+~ no newline at end
+
+=== 23: Aliases preserve declaration assignment expansion
+status: 0
+bash-n: 0
+--- stdout
+|declare -- declared="world"
+|declare -x exported="world"
+
+=== 24: Disabled declare uses ordinary argument expansion
+status: 0
+bash-n: 0
+--- stdout
+|status: 127
+|unset
+
+=== 25: Declaring without value
+status: 0
+bash-n: 0
+--- stdout
+|declare -- var
+|declare -- var2=""
+|3: Variable is set
+
+=== 26: Displaying local vars
+status: 0
+bash-n: 0
+--- stdout
+|Dumping local variables (should be empty)
+|Dump all variables
+|declare -a array=([0]="a" [1]="b" [2]="c")
+|declare -A assoc_array=([x1]="1" [x2]="2" )
+|declare -i int_var="10"
+|declare -r ro_var="readonly"
+|declare -t traced="value"
+
+=== 27: Using local to detect function presence
+status: 0
+bash-n: 0
+--- stdout
+|Not in function
+|In function
+
+=== 28: Displaying function names
+status: 0
+bash-n: 0
+--- stdout
+|Dumping function names
+|Dumping function names again
+|declare -f test
+|declare -f test
+|Dumping test
+|test
+|declare -f test
+
+=== 29: Displaying functions
+status: 0
+bash-n: 0
+--- stdout
+|Dumping functions
+|Dumping functions again
+|test () 
+|{ 
+|    :
+|}
+|test () 
+|{ 
+|    :
+|}
+|Dumping test
+|test () 
+|{ 
+|    :
+|}
+|test () 
+|{ 
+|    :
+|}
+
+=== 30: Displaying functions with compound bodies
+status: 0
+bash-n: 0
+--- stdout
+|f () 
+|{ 
+|    local x=1;
+|    if [ 1 ]; then
+|        echo "a b";
+|    fi;
+|    for i in 1 2;
+|    do
+|        :;
+|    done
+|}
+|g () 
+|{ 
+|    if [ 1 ]; then
+|        echo a;
+|        echo b;
+|    else
+|        echo c;
+|    fi
+|}
+|h () 
+|{ 
+|    while :; do
+|        break;
+|    done;
+|    { 
+|        echo a
+|    };
+|    case x in 
+|        a)
+|            echo b
+|        ;;
+|    esac
+|}
+|i () 
+|{ 
+|    until :; do
+|        echo x;
+|    done;
+|    ( echo s;
+|    echo t )
+|}
+
+=== 31: Displaying a function whose compound commands have redirections
+status: 0
+bash-n: 0
+--- stdout
+|f () 
+|{ 
+|    if true; then
+|        :;
+|    fi 2>&1;
+|    while false; do
+|        :;
+|    done 3> /dev/null;
+|    { 
+|        :
+|    } 2> /dev/null
+|}
+|g () 
+|{ 
+|    [[ -n x ]] 2>&1 | cat
+|}
+
+=== 32: Displaying a function with case patterns
+status: 0
+bash-n: 0
+--- stdout
+|f () 
+|{ 
+|    case "$1" in 
+|        a | b | c)
+|            echo abc
+|        ;;
+|        d | e)
+|            echo de
+|        ;;
+|        single)
+|            echo one
+|        ;;
+|        *)
+|
+|        ;;
+|    esac
+|}
+
+=== 33: Displaying non-existent functions
+status: 0
+bash-n: 0
+--- stdout
+|Result (-f): 1
+|Result (-F): 1
+
+=== 34: Valid conversions
+status: 0
+bash-n: 0
+--- stdout
+|Conversion result: 0
+|declare -a arr1=([0]="a" [1]="b" [2]="c")
+|Conversion result: 0
+|declare -A arr2=([x1]="1" [x2]="2" )
+|Conversion result: 0
+|declare -a scalar1=([0]="value")
+|Conversion result: 0
+|declare -A scalar2=([0]="value" )
+
+=== 35: Bad conversions
+status: 0
+bash-n: 0
+--- stdout
+|Conversion result: 1
+|declare -a arr1=([0]="a" [1]="b" [2]="c")
+|Conversion result: 1
+|declare -A arr2=([x1]="1" [x2]="2" )
+--- stderr
+|bash: line 2: declare: arr1: cannot convert indexed to associative array
+|bash: line 7: declare: arr2: cannot convert associative to indexed array
+
+=== 36: Declare -p using invalid forms
+status: 0
+bash-n: 0
+--- stdout
+|Result: 1
+|Result: 1
+|Result: 0
+|Result: 1
+--- stderr
+|bash: line 2: declare: arr[0]: not found
+|bash: line 4: declare: arr[0]=1: not found
+|bash: line 9: declare: scalar=y: not found
+
+=== 37: Declare -p error shows expanded assignment
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|error: missing=world: not found
+
+=== 38: Updating value
+status: 0
+bash-n: 0
+--- stdout
+|declare -- var="value"
+|declare -- var="changed"
+
+=== 39: Updating value attributes
+status: 0
+bash-n: 0
+--- stdout
+|declare -ix var="10"
+|declare -- var="10"
+
+=== 40: Updating array
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b" [2]="c")
+|declare -a arr=([0]="d" [1]="e")
+|declare -a arr=([0]="10" [1]="e")
+|declare -- arr2="a"
+|declare -A arr2=([key]="value" )
+
+=== 41: Updating causing conversion
+status: 0
+bash-n: 0
+--- stdout
+|declare -- assoc_array="scalar-value"
+|"0" => scalar-value
+|"key" => key-value
+
+=== 42: Uppercase attribute
+status: 0
+bash-n: 0
+--- stdout
+|declare -u var="value"
+|declare -u var="ABCD"
+|declare -u another="ABCDEFG"
+
+=== 43: Lowercase attribute
+status: 0
+bash-n: 0
+--- stdout
+|declare -l var="value"
+|declare -l var="abcd"
+|declare -l another="abcdefg"
+
+=== 44: Capitalize attribute
+status: 0
+bash-n: 0
+--- stdout
+|declare -c var="value"
+|declare -c var="Abcd efg"
+|declare -c another="Abcdefg"
+
+=== 45: Declare invalid identifiers
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: declare: `1=x': not a valid identifier
+|bash: line 2: declare: `@=10': not a valid identifier
+
+=== 46: Nameref declare -p shows nameref attribute
+status: 0
+bash-n: 0
+--- stdout
+|declare -n ref="target"
+|declare -- target="hello"
+
+=== 47: Nameref declare -n with initial value
+status: 0
+bash-n: 0
+--- stdout
+|ref: original
+|target: original
+
+=== 48: Nameref remove attribute with +n
+status: 0
+bash-n: 0
+--- stdout
+|as nameref: value
+|after +n: ref=target
+|declare -- ref="target"
+
+=== 49: Nameref to array via declare
+status: 0
+bash-n: 0
+--- stdout
+|ref[0]: one
+|ref[1]: two
+|ref[@]: one two three
+|ref[*]: one two three
+
+=== 50: Nameref array modification via declare
+status: 0
+bash-n: 0
+--- stdout
+|arr[1]: modified
+|ref[1]: modified
+
+=== 51: Nameref to associative array via declare
+status: 0
+bash-n: 0
+--- stdout
+|ref[key1]: val1
+|ref[key2]: val2
+
+=== 52: Nameref array iteration in function via local -n
+status: 0
+bash-n: 0
+--- stdout
+|count: 3
+|elem: first
+|elem: second
+|elem: third
+
+=== 53: Nameref get keys via declare
+status: 0
+bash-n: 0
+--- stdout
+|keys (sorted): a b c 
+|count: 3
+
+=== 54: Nameref array length via declare
+status: 0
+bash-n: 0
+--- stdout
+|length: 5
+|first element length: 3
+
+=== 55: Nameref declare -n filter
+status: 0
+bash-n: 0
+--- stdout
+|declare -n ref1="regular"
+|declare -n ref2="regular"
+
+=== 56: Single-quoted scalar assignment
+status: 0
+bash-n: 0
+--- stdout
+|hello
+
+=== 57: Single-quoted scalar with dollar sign preserved
+status: 0
+bash-n: 0
+--- stdout
+|$Y
+
+=== 58: Double-quoted scalar assignment expands
+status: 0
+bash-n: 0
+--- stdout
+|world
+
+=== 59: Single-quoted array assignment with -a
+status: 0
+bash-n: 0
+--- stdout
+|1 2 3
+|3
+
+=== 60: Single-quoted array assignment with deferred expansion
+status: 0
+bash-n: 0
+--- stdout
+|a b
+|2
+
+=== 61: Single-quoted array assignment with IFS splitting
+status: 0
+bash-n: 0
+--- stdout
+|a b
+|2
+
+=== 62: Double-quoted compound assignment with escaped expansion
+status: 0
+bash-n: 0
+--- stdout
+|a b
+|2
+
+=== 63: Variable-generated compound assignment syntax
+status: 0
+bash-n: 0
+--- stdout
+|a b
+|2
+
+=== 64: Command-substitution-generated compound assignment syntax
+status: 0
+bash-n: 0
+--- stdout
+|a b
+|2
+
+=== 65: Single-quoted compound value in parsed assignment is reparsed
+status: 0
+bash-n: 0
+--- stdout
+|a b
+|2
+
+=== 66: Single-quoted array assignment without -a is scalar
+status: 0
+bash-n: 0
+--- stdout
+|declare -- arr="(1 2 3)"
+
+=== 67: Single-quoted array assignment Gentoo rpm.eclass pattern
+status: 0
+bash-n: 0
+--- stdout
+|lzma zstd
+|1
+
+=== 68: local -a single-quoted array assignment
+status: 0
+bash-n: 0
+--- stdout
+|a b
+
+=== 69: Single-quoted indexed element assignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="hello")
+
+=== 70: Quoted array assignment does not execute value as shell code
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|declare -a arr=([0]="(x); printf \"INJECTED\\n\"; #")
+
+=== 71: Quoted array assignment propagates assignment failure
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|declare -ar arr=([0]="old")
+
+=== 72: Quoted array assignment applies uppercase attribute
+status: 0
+bash-n: 0
+--- stdout
+|declare -au arr=([0]="AB" [1]="CD")
+
+=== 73: Quoted array assignment applies integer attribute
+status: 0
+bash-n: 0
+--- stdout
+|declare -ai arr=([0]="3" [1]="12")
+
+=== 74: Quoted assignment uses existing indexed array type
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="new" [1]="values")
+
+=== 75: Quoted assignment uses existing associative array type
+status: 0
+bash-n: 0
+--- stdout
+|declare -A map=([new]="value" [other]="two" )
+
+=== 76: Quoted assignment uses declaration target scope
+status: 0
+bash-n: 0
+--- stdout
+|declare -- arr="scalar"
+|declare -a arr=([0]="new" [1]="values")
+
+=== 77: Quoted global assignment ignores local array type
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="local")
+|declare -- arr="(new values)"
+
+=== 78: Quoted local declaration does not inherit global array type
+status: 0
+bash-n: 0
+--- stdout
+|declare -- arr="(local values)"
+|declare -a arr=([0]="global")
+
+=== 79: Single-quoted nonzero indexed element assignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([5]="hello")
+
+=== 80: Single-quoted indexed element append assignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="onetwo")
+
+=== 81: Single-quoted associative element append assignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -A map=([key]="onetwo" )
+
+=== 82: Single-quoted arithmetic indexed element assignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([4]="value")
+
+=== 83: Single-quoted variable arithmetic indexed element assignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([4]="value")
+
+=== 84: Single-quoted parameter-expanded indexed element assignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([4]="value")
+
+=== 85: Single-quoted command-substitution indexed element assignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([5]="value")
+
+=== 86: Single-quoted parameter-expanded associative element assignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -A map=(["space key"]="value" )
+
+=== 87: Single-quoted indexed subscript expands without re-expanding value
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([2]="\$value")
+
+=== 88: Single-quoted associative subscript expands without re-expanding value
+status: 0
+bash-n: 0
+--- stdout
+|declare -A map=(["space key"]="\$value" )
+
+=== 89: Single-quoted append assignment
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|declare -- text="onetwo"
+
+=== 90: Single-quoted array-like scalar assignment with +a
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|declare -- arr="(1 2)"
+
+=== 91: Cannot remove indexed array attribute with +a
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|declare -a arr=([0]="1" [1]="2")
+
+=== 92: Cannot update indexed array while removing attribute with +a
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|declare -a arr=([0]="1" [1]="2")
+
+=== 93: Single-quoted associative array assignment
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|declare -A map=([alpha]="one" [beta]="two" )
+
+=== 94: Function shadowing declare receives its arguments
+status: 0
+bash-n: 0
+--- stdout
+|shadow declare: [x=1] count=1
+|shadow declare: [a b c] count=3
+
+=== 95: Function shadowing local and readonly receives its arguments
+status: 0
+bash-n: 0
+--- stdout
+|shadow readonly: [r=1] count=1
+|shadow local: [l=2] count=1
+
+=== 96: Function shadowing declare is reached through command
+status: 0
+bash-n: 0
+
+=== 97: Temporary environment is not visible to a declare operand
+status: 0
+bash-n: 0
+--- stdout
+|declare -- y=""
+
+=== 98: Temporary IFS does not split an unquoted compound declare operand
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a:b")
+
+=== 99: Temporary IFS does split a quoted compound declare operand
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b")
+
+=== 100: Redirections do not apply to a declare operand's command substitution
+status: 0
+bash-n: 0
+--- stdout
+|declare -- w="val"
+--- stderr
+|to-stderr
+
+=== 101: Unset variable in a declare operand is fatal under set -u
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+--- stderr
+|bash: line 1: undefined: unbound variable
+
+=== 102: Unset variable in a local operand is fatal under set -u
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+--- stderr
+|bash: line 1: undefined: unbound variable
+
+=== 103: $_ - declare display and query forms
+status: 0
+bash-n: 0
+--- stdout
+|declare -p: [PWD]
+|declare bare: [declare]
+|declare -f: [f]
+|declare assign: [declared=world]
+
+=== 104: $_ - export and readonly display forms
+status: 0
+bash-n: 0
+--- stdout
+|export bare: [export]
+|readonly bare: [readonly]
+|readonly -p: [-p]
+
+=== 105: Assignment value ending in a bracket is not a subscripted name
+status: 0
+bash-n: 0
+--- stdout
+|declare -- x="[a]"
+
+=== 106: Assignment value containing brackets is preserved
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([1]="v[2]")
+
+=== 107: Bare subscripted name declares an array
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr
+
+=== 108: Removing array attribute reports an error
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|declare -a arr=([0]="1" [1]="2")
+--- stderr
+|bash: line 2: declare: arr: cannot destroy array variables in this way
+
+=== 109: Removing array attribute from a declared but unset array fails
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|declare -a arr
+--- stderr
+|bash: line 2: declare: arr: cannot destroy array variables in this way
+
+=== 110: Removing associative array attribute fails
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|declare -A map=([k]="v" )
+--- stderr
+|bash: line 2: declare: map: cannot destroy array variables in this way
+
+=== 111: Parsed associative subscript is expanded
+status: 0
+bash-n: 0
+--- stdout
+|declare -A m=(["a b"]="v" )
+
+=== 112: Subscript of a parsed element assignment is expanded a second time
+status: 0
+bash-n: 0
+--- stdout
+|declare -A m=([SECOND]="v" )
+
+=== 113: Compound element key is not expanded a second time
+status: 0
+bash-n: 0
+--- stdout
+|declare -A m=(["\$(echo SECOND)"]="v" )
+
+=== 114: Quoted element subscript is expanded exactly once
+status: 0
+bash-n: 0
+--- stdout
+|declare -A m=(["\$(echo SECOND)"]="v" )
+
+=== 115: Parsed indexed subscript is arithmetically evaluated
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([4]="v")
+
+=== 116: Compound associative key is expanded exactly once
+status: 0
+bash-n: 0
+--- stdout
+|declare -A m=(["a b"]="v" )
+
+=== 117: Compound indexed key is arithmetically evaluated
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([4]="v")
+
+=== 118: Compound value assigned to an array element targets the whole array
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|declare -a n=([0]="9" [1]="8")
+
+=== 119: Empty subscript is rejected
+status: 1
+bash-n: 0
+--- stdout
+|status: 1
+|bash: line 3: declare: b: not found
+--- stderr
+|bash: line 1: declare: `b[]': not a valid identifier
+
+=== 120: An attribute given as both - and + is not set
+status: 0
+bash-n: 0
+--- stdout
+|declare -- zzx="1"
+|declare -- zzy="1"
+|declare -- zzi="1+1"
+|declare -- zzo="1"
+
+=== 121: An attribute given as both - and + is removed
+status: 0
+bash-n: 0
+--- stdout
+|declare -- zzx="1"
+|declare -- zzi="1"
+
+=== 122: Display filtered by readonly and trace attributes
+status: 0
+bash-n: 0
+--- stdout
+|-r:
+|declare -r zzro="1"
+|declare -rt zzboth="3"
+|-t:
+|declare -rt zzboth="3"
+|declare -t zztr="2"
+
+=== 123: Display filtered by several attributes lists any that match
+status: 0
+bash-n: 0
+--- stdout
+|declare -r zzro="1"
+|declare -rt zzboth="3"
+|declare -t zztr="2"
+
+=== 124: Display is not filtered by a plus attribute option
+status: 0
+bash-n: 0
+--- stdout
+|zzex=1
+|zzplain=2
+
+=== 125: Display is filtered by -X, not +X, when both are given
+status: 0
+bash-n: 0
+--- stdout
+|declare -x zzex="1"
+|declare -x zzex="1"
+|declare -i zzint="2"
+
+=== 126: Combining -a and -A is rejected
+status: 0
+bash-n: 0
+--- stdout
+|status: 2
+|declare -A both=([x]="" )
+--- stderr
+|bash: line 1: declare: -a: invalid option
+
+=== 127: Combining -a and -A with a compound operand still creates the variable
+status: 0
+bash-n: 0
+--- stdout
+|status: 2
+|declare -A both=([x]="" )
+|declare_status: 0
+--- stderr
+|bash: line 1: declare: -a: invalid option
+
+=== 128: Display diagnostics name the builtin as invoked
+status: 0
+bash-n: 0
+--- stdout
+|declare: nosuch: not found: ok
+|typeset: nosuch: not found: ok
+|local: nosuch: not found: ok
+
+=== 129: Display quotes an associative key of @
+status: 0
+bash-n: 0
+--- stdout
+|declare -A zzat=(["*"]="star" ["@"]="at" [k]="v" )
+
+=== 130: Display filtered by array attributes includes unassigned arrays
+status: 0
+bash-n: 0
+--- stdout
+|-a:
+|declare -a zzempty
+|declare -a zzfull=([0]="1")
+|-A:
+|declare -A zzemptyA
+|declare -A zzfullA=([k]="v" )
+
+=== 131: Declaration diagnostics name the builtin and quote the operand
+status: 0
+bash-n: 0
+--- stdout
+|local: can only be used in a function
+|declare: missing=w: not found
+|declare: nosuchvar: not found
+|declare: da: cannot destroy array variables in this way
+|declare: `bad-name=1': not a valid identifier
+|local: `bad-name2=1': not a valid identifier
+|readonly: `bad-name3=1': not a valid identifier
+|export: nosuchfn: not a function
+|export: `e[0]': not a valid identifier
+
+=== 132: declare -fx exports a function
+status: 1
+bash-n: 0
+--- stdout
+|0
+|rc=0
+|1
+|rc=0
+|0
+
+=== 133: declare -f with both -x and +x leaves a function unexported
+status: 1
+bash-n: 0
+--- stdout
+|rc=0
+|0
+|rc=0
+|0
+
+=== 134: declare -F -x lists only exported functions
+status: 0
+bash-n: 0
+--- stdout
+|declare -fx g
+
+=== 135: declare -f with attribute flags doesn't display the function
+status: 0
+bash-n: 0
+--- stdout
+|[]
+|rc=0
+|[]
+|rc=0
+
+=== 136: declare -f with attribute flags on a missing function
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|rc=1
+
+=== 137: declare -ft records the trace attribute
+status: 0
+bash-n: 0
+--- stdout
+|declare -ft f
+
+=== 138: Declaration builtins quote an invalid operand in full
+status: 0
+bash-n: 0
+--- stdout
+|declare: `1x=2': not a valid identifier
+|typeset: `1x': not a valid identifier
+|readonly: `a b=1': not a valid identifier
+|local: `1x=2': not a valid identifier
+
+=== 139: Quoted declaration with = in its subscript
+status: 0
+bash-n: 0
+--- stdout
+|declare: 0
+|declare -A m=([a=b]="1" )
+
+=== 140: Quoted declaration with text after its subscript
+status: 1
+bash-n: 0
+--- stdout
+|declare: 1
+|declare: 1
+--- stderr
+|bash: line 1: declare: `x[1]]=2': not a valid identifier
+|bash: line 3: declare: `y[1]z=2': not a valid identifier
+|bash: line 5: declare: x: not found
+|bash: line 5: declare: y: not found
+
+=== 141: Declaration expansion depends on the command name as written
+status: 0
+bash-n: 0
+--- stdout
+|declare -- x="a b"
+|declare -- y="a"
+|declare -- z="a"
+|declare -- w="a"
+
+=== 142: A quoted declaration's subscript is expanded and evaluated
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([3]="x")
+|declare -A m=([foo]="x" )
+
+=== 143: A command word that expands to nothing doesn't make the next word a declaration utility
+status: 0
+bash-n: 0
+--- stdout
+|declare -- x="a"
+
+=== 144: A function shadowing declare receives a compound assignment's name
+status: 0
+bash-n: 0
+--- stdout
+|shadow declare: [a]
+
+=== 145: Declaration builtins take dash-prefixed operands after -- as names
+status: 0
+bash-n: 0
+--- stdout
+|declare: `-x': not a valid identifier
+|declare -- -x: 1
+|typeset: `-x': not a valid identifier
+|typeset -- -x: 1
+|readonly: `-x': not a valid identifier
+|readonly -- -x: 1
+|local: `-x': not a valid identifier
+|local -- -x: 1
+|declare -- y="-z"
+
+=== 146: Declaration builtins take dash-prefixed words after the first operand as names
+status: 0
+bash-n: 0
+--- stdout
+|declare: 1
+|declare -- a="1"
+|typeset: 1
+|declare -- t="1"
+|readonly: 1
+|declare -r c="1"
+|local: 1
+|declare -- x="2"
+
+=== 147: the integer attribute evaluates an arithmetic value on assignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -i x="2"
+|declare -i y="6"
+|declare -ai a=([0]="2" [1]="6")
+
+=== 148: declare -g with a subscripted operand under a shadowing local
+status: 0
+bash-n: 0
+--- stdout
+|declare -a g=([0]="2")
+|declare -A g=([x]="1" )
+
+=== 149: declare assigns through a nameref
+status: 0
+bash-n: 0
+--- stdout
+|declare -- tgt="hello"
+|declare -n nr="tgt"
+
+=== 150: a subscripted assignment through a nameref targets the referenced array
+status: 0
+bash-n: 0
+--- stdout
+|declare -A m=([key]="v" )
+|declare -A m=([key]="v" )
+--- stderr
+|bash: line 5: warning: r: removing nameref attribute
+
+=== 151: declare +f drops the function restriction
+status: 0
+bash-n: 0
+--- stdout
+|declare: f: not found
+|status: 1
+
+=== 152: declare +F drops names-only display and declares a variable instead
+status: 0
+bash-n: 0
+--- stdout
+|f
+|status: 0
+|declare -- f
+
+=== 153: declare +g declares locally inside a function
+status: 0
+bash-n: 0
+--- stdout
+|inside: inner
+|outside: outer
+
+=== 154: declare +p displays just as -p does
+status: 0
+bash-n: 0
+--- stdout
+|declare -- x="1"
+|declare -- x="1"
+|status: 0
+
+=== 155: declare +ft combines a mode option and an attribute option
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|declare -ft f
+|declare -- f

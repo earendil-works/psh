@@ -1,0 +1,335 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/bind.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: bind succeeds in non-interactive mode
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0
+
+=== 1: bind -l
+status: 0
+bash-n: 0
+--- stdout
+|[bind -l]
+|abort
+|accept-line
+|alias-expand-line
+|arrow-key-prefix
+|backward-byte
+|backward-char
+|backward-delete-char
+|backward-kill-line
+|backward-kill-word
+|backward-word
+|bash-vi-complete
+|beginning-of-history
+|beginning-of-line
+|bracketed-paste-begin
+|call-last-kbd-macro
+|capitalize-word
+|character-search
+|character-search-backward
+|clear-display
+|clear-screen
+|complete
+|complete-command
+|complete-filename
+|complete-hostname
+|complete-into-braces
+|complete-username
+|complete-variable
+|copy-backward-word
+|copy-forward-word
+|copy-region-as-kill
+|dabbrev-expand
+|delete-char
+|delete-char-or-list
+|delete-horizontal-space
+|digit-argument
+|display-shell-version
+|do-lowercase-version
+|downcase-word
+|dump-functions
+|dump-macros
+|dump-variables
+|dynamic-complete-history
+|edit-and-execute-command
+|emacs-editing-mode
+|end-kbd-macro
+|end-of-history
+|end-of-line
+|exchange-point-and-mark
+|execute-named-command
+|export-completions
+|fetch-history
+|forward-backward-delete-char
+|forward-byte
+|forward-char
+|forward-search-history
+|forward-word
+|glob-complete-word
+|glob-expand-word
+|glob-list-expansions
+|history-and-alias-expand-line
+|history-expand-line
+|history-search-backward
+|history-search-forward
+|history-substring-search-backward
+|history-substring-search-forward
+|insert-comment
+|insert-completions
+|insert-last-argument
+|kill-line
+|kill-region
+|kill-whole-line
+|kill-word
+|magic-space
+|menu-complete
+|menu-complete-backward
+|next-history
+|next-screen-line
+|non-incremental-forward-search-history
+|non-incremental-forward-search-history-again
+|non-incremental-reverse-search-history
+|non-incremental-reverse-search-history-again
+|old-menu-complete
+|operate-and-get-next
+|overwrite-mode
+|possible-command-completions
+|possible-completions
+|possible-filename-completions
+|possible-hostname-completions
+|possible-username-completions
+|possible-variable-completions
+|previous-history
+|previous-screen-line
+|print-last-kbd-macro
+|quoted-insert
+|re-read-init-file
+|redraw-current-line
+|reverse-search-history
+|revert-line
+|self-insert
+|set-mark
+|shell-backward-kill-word
+|shell-backward-word
+|shell-expand-line
+|shell-forward-word
+|shell-kill-word
+|shell-transpose-words
+|skip-csi-sequence
+|spell-correct-word
+|start-kbd-macro
+|tab-insert
+|tilde-expand
+|transpose-chars
+|transpose-words
+|tty-status
+|undo
+|universal-argument
+|unix-filename-rubout
+|unix-line-discard
+|unix-word-rubout
+|upcase-word
+|vi-append-eol
+|vi-append-mode
+|vi-arg-digit
+|vi-bWord
+|vi-back-to-indent
+|vi-backward-bigword
+|vi-backward-word
+|vi-bword
+|vi-change-case
+|vi-change-char
+|vi-change-to
+|vi-char-search
+|vi-column
+|vi-complete
+|vi-delete
+|vi-delete-to
+|vi-eWord
+|vi-edit-and-execute-command
+|vi-editing-mode
+|vi-end-bigword
+|vi-end-word
+|vi-eof-maybe
+|vi-eword
+|vi-fWord
+|vi-fetch-history
+|vi-first-print
+|vi-forward-bigword
+|vi-forward-word
+|vi-fword
+|vi-goto-mark
+|vi-insert-beg
+|vi-insertion-mode
+|vi-match
+|vi-movement-mode
+|vi-next-word
+|vi-overstrike
+|vi-overstrike-delete
+|vi-prev-word
+|vi-put
+|vi-redo
+|vi-replace
+|vi-rubout
+|vi-search
+|vi-search-again
+|vi-set-mark
+|vi-subst
+|vi-tilde-expand
+|vi-undo
+|vi-unix-word-rubout
+|vi-yank-arg
+|vi-yank-pop
+|vi-yank-to
+|yank
+|yank-last-arg
+|yank-nth-arg
+|yank-pop
+|bind -l result: 0 0 0
+--- stderr
+|run.sh: line 3: bind: warning: line editing not enabled
+
+=== 2: bind -q/-P/-p
+status: 0
+bash-n: 0
+--- stdout
+|[bind -q]
+|clear-screen can be invoked via "\C-l".
+|bind -q result: 0
+|[bind -P]
+|clear-screen can be found on "\C-l".
+|bind -P result: 0 0
+|[bind -p]
+|"\C-l": clear-screen
+|bind -p result: 0 0
+--- stderr
+|run.sh: line 5: bind: warning: line editing not enabled
+|run.sh: line 9: bind: warning: line editing not enabled
+|run.sh: line 13: bind: warning: line editing not enabled
+
+=== 3: bind -x/-X/-r/-u
+status: 0
+bash-n: 0
+--- stdout
+|[bind -x]
+|bind -x result: 0
+|[bind -X]
+|"\C-t" "echo hi"
+|bind -X result: 0
+|[bind -r]
+|bind -r result: 0
+|bind -X result: 0
+|[bind -r (again)]
+|bind -r (again) result: 0
+|[bind -u]
+|bind -u result: 0
+|[bind -q (after -u)]
+|clear-screen is not bound to any keys.
+|bind -q (after -u) result: 1
+--- stderr
+|run.sh: line 3: bind: warning: line editing not enabled
+|run.sh: line 7: bind: warning: line editing not enabled
+|run.sh: line 12: bind: warning: line editing not enabled
+|run.sh: line 14: bind: warning: line editing not enabled
+|run.sh: line 17: bind: warning: line editing not enabled
+|run.sh: line 23: bind: warning: line editing not enabled
+|run.sh: line 26: bind: warning: line editing not enabled
+
+=== 4: bind keyseq
+status: 0
+bash-n: 0
+--- stdout
+|[bind keyseq]
+|bind keyseq result: 0
+|clear-screen can be invoked via "\C-t".
+|bind -q result: 0
+--- stderr
+|run.sh: line 2: bind: warning: line editing not enabled
+|run.sh: line 6: bind: warning: line editing not enabled
+|run.sh: line 10: bind: warning: line editing not enabled
+
+=== 5: bind macro 1
+status: 0
+bash-n: 0
+--- stdout
+|[bind -S (pre)]
+|bind -S result: 0 1
+|[bind -s (pre)]
+|bind -s result: 0 1
+|[bind macro]
+|bind macro result: 0
+|[bind -S]
+|\C-r outputs \e[0;1A\e[0;0A
+|bind -S result: 0 0
+|[bind -s]
+|"\C-r": "\e[0;1A\e[0;0A"
+|bind -s result: 0 0
+|[bind -r]
+|bind -r result: 0
+|[bind -s (after -r)]
+|bind -s (after -r) result: 0 1
+|[bind -S (after -r)]
+|bind -S (after -r) result: 0 1
+--- stderr
+|run.sh: line 4: bind: warning: line editing not enabled
+|run.sh: line 8: bind: warning: line editing not enabled
+|run.sh: line 12: bind: warning: line editing not enabled
+|run.sh: line 16: bind: warning: line editing not enabled
+|run.sh: line 20: bind: warning: line editing not enabled
+|run.sh: line 24: bind: warning: line editing not enabled
+|run.sh: line 28: bind: warning: line editing not enabled
+|run.sh: line 32: bind: warning: line editing not enabled
+
+=== 6: bind macro 2
+status: 0
+bash-n: 0
+--- stdout
+|[bind macro]
+|bind macro result: 0
+|[bind -S]
+|\ec outputs  \C-b\C-k`something`\e\C-e
+|bind -S result: 0 0
+--- stderr
+|run.sh: line 4: bind: warning: line editing not enabled
+|run.sh: line 8: bind: warning: line editing not enabled
+
+=== 7: bind -m takes each keymap name
+status: 0
+bash-n: 0
+--- stdout
+|emacs: 0
+|emacs-standard: 0
+|emacs-meta: 0
+|emacs-ctlx: 0
+|vi: 0
+|vi-move: 0
+|vi-command: 0
+|vi-insert: 0
+|attached: 0
+|no keymap: 2
+--- stderr
+|run.sh: line 2: bind: warning: line editing not enabled
+|run.sh: line 2: bind: warning: line editing not enabled
+|run.sh: line 2: bind: warning: line editing not enabled
+|run.sh: line 2: bind: warning: line editing not enabled
+|run.sh: line 2: bind: warning: line editing not enabled
+|run.sh: line 2: bind: warning: line editing not enabled
+|run.sh: line 2: bind: warning: line editing not enabled
+|run.sh: line 2: bind: warning: line editing not enabled
+|run.sh: line 5: bind: warning: line editing not enabled
+|run.sh: line 6: bind: warning: line editing not enabled
+|run.sh: line 6: bind: -m: option requires an argument
+|bind: usage: bind [-lpsvPSVX] [-m keymap] [-f filename] [-q name] [-u name] [-r keyseq] [-x keyseq:shell-command] [keyseq:readline-function or readline-command]
+
+=== 8: bind -m with an unknown keymap fails with status 1
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+--- stderr
+|run.sh: line 1: bind: warning: line editing not enabled
+|run.sh: line 1: bind: `bogus': invalid keymap name

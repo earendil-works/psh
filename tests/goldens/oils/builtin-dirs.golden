@@ -1,0 +1,160 @@
+# Goldens for tests/oils/spec/builtin-dirs.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: pushd/popd
+status: 0
+bash-n: 0
+--- stdout
+|/tmp /
+|pwd=/tmp
+|/
+|pwd=/
+
+=== 1: pushd usage
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+|status=0
+|status=0
+--- stderr
+|bash: line 1: pushd: -z: invalid number
+|pushd: usage: pushd [-n] [+N | -N | dir]
+
+=== 2: popd usage error
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+|status=0
+|status=2
+--- stderr
+|bash: line 2: popd: zzz: invalid argument
+|popd: usage: popd [-n] [+N | -N]
+|bash: line 8: popd: -z: invalid number
+|popd: usage: popd [-n] [+N | -N]
+
+=== 3: popd returns error on empty directory stack
+status: 0
+bash-n: 0
+--- stdout
+|1
+|directory stack
+
+=== 4: cd replaces the lowest entry on the directory stack!
+status: 0
+bash-n: 0
+--- stdout
+|pushd=0
+|/tmp /tmp/oils-spec/builtin-dirs
+|cd=0
+|/ /tmp/oils-spec/builtin-dirs
+|popd=0
+|popd=1
+--- stderr
+|bash: line 19: popd: directory stack empty
+
+=== 5: dirs builtin
+status: 0
+bash-n: 0
+--- stdout
+|/
+
+=== 6: dirs -c to clear the stack
+status: 0
+bash-n: 0
+--- stdout
+|--
+|/tmp /
+|--
+|/tmp
+
+=== 7: dirs -v to print numbered stack, one entry per line
+status: 0
+bash-n: 0
+--- stdout
+|--
+| 0  /tmp
+| 1  /
+|--
+| 0  /dev
+| 1  /tmp
+| 2  /
+
+=== 8: dirs -p to print one entry per line
+status: 0
+bash-n: 0
+--- stdout
+|--
+|/tmp
+|/
+|--
+|/dev
+|/tmp
+|/
+
+=== 9: dirs -l to print in long format, no tilde prefix
+status: 0
+bash-n: 0
+--- stdout
+|~/oil_test /
+|/tmp/oil_test /
+
+=== 10: dirs to print using tilde-prefix format
+status: 0
+bash-n: 0
+--- stdout
+|~/oil_test /
+
+=== 11: dirs test converting true home directory to tilde
+status: 0
+bash-n: 0
+--- stdout
+|~/oil_test/tmp /
+
+=== 12: dirs don't convert to tilde when $HOME is substring
+status: 0
+bash-n: 0
+--- stdout
+|/tmp/oil_tests /
+|/tmp/oil_tests /
+
+=== 13: dirs tilde test when $HOME is exactly $PWD
+status: 0
+bash-n: 0
+--- stdout
+|~ /
+|~ /
+
+=== 14: dirs test of path alias `..`
+status: 0
+bash-n: 0
+--- stdout
+|/ /tmp
+
+=== 15: dirs test of path alias `.`
+status: 0
+bash-n: 0
+--- stdout
+|/tmp /tmp
+
+=== 16: pushd does not take more than one argument
+status: 0
+bash-n: 0
+--- stdout
+|too many args!
+--- stderr
+|bash: line 1: pushd: too many arguments
+
+=== 17: dirs does not take arguments
+status: 0
+bash-n: 0
+--- stdout
+|failed
+|failed
+--- stderr
+|bash: line 1: dirs: a: invalid option
+|dirs: usage: dirs [-clpv] [+N] [-N]
+|bash: line 2: dirs: a: invalid option
+|dirs: usage: dirs [-clpv] [+N] [-N]

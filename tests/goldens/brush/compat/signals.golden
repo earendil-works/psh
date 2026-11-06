@@ -1,0 +1,450 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/signals.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: trap runs once for signals that arrive while a program runs
+status: 0
+bash-n: 0
+--- stdout
+|child-done
+|got
+|done
+
+=== 1: trap runs for each signal that arrives between commands
+status: 0
+bash-n: 0
+--- stdout
+|got
+|got
+|done
+
+=== 2: trap runs again for its signal arriving during the trap
+status: 0
+bash-n: 0
+--- stdout
+|in 1
+|in 2
+|in 3
+|out 3
+|out 3
+|out 3
+|done
+
+=== 3: trap runs again for its signal, nested many deep
+status: 0
+bash-n: 0
+--- stdout
+|n=20
+
+=== 4: trapped signal interrupts wait
+status: 0
+bash-n: 0
+--- stdout
+|got
+|wait=138
+|done
+
+=== 5: trapped signal doesn't interrupt read
+status: 0
+bash-n: 0
+--- stdout
+|got
+|read=0 x=line
+
+=== 6: trapped signal interrupts read in POSIX mode
+status: 0
+bash-n: 0
+--- stdout
+|got
+|read=138 x=
+
+=== 7: SIGTERM ends a non-interactive shell, after its EXIT trap
+status: signal 15
+bash-n: 0
+--- stdout
+|exit-trap
+
+=== 8: SIGINT ends a non-interactive shell, after its EXIT trap
+status: signal 2
+bash-n: 0
+--- stdout
+|exit-trap
+
+=== 9: SIGHUP ends a non-interactive shell, after its EXIT trap
+status: signal 1
+bash-n: 0
+--- stdout
+|exit-trap
+
+=== 10: SIGUSR1 ends a non-interactive shell, after its EXIT trap
+status: signal 10
+bash-n: 0
+--- stdout
+|exit-trap
+
+=== 11: SIGTERM ends a shell waiting for a program at once
+status: signal 15
+bash-n: 0
+--- stdout
+|early
+--- file late
+
+=== 12: SIGTERM ends a shell blocked in read
+status: signal 15
+bash-n: 0
+--- stdout
+|x=[]
+
+=== 13: SIGPIPE from a builtin's write ends a pipeline stage
+status: 0
+bash-n: 0
+--- stdout
+|status=141
+
+=== 14: SIGPIPE from a builtin's write ends a loop writing to a pipeline
+status: 0
+bash-n: 0
+--- stdout
+|y
+|status=141 0
+
+=== 15: SIGPIPE from a builtin's write runs the stage's PIPE trap
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|printf=0
+|t
+|printf=1
+|t
+|printf=1
+
+=== 16: trap '' PIPE leaves a builtin's write failing
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|printf=0
+|printf=1
+|printf=1
+
+=== 17: trap '' ignores SIGTERM
+status: 0
+bash-n: 0
+--- stdout
+|after
+
+=== 18: a signal ignored when a non-interactive shell started can't be trapped
+status: 0
+bash-n: 0
+--- stdout
+|trap -- '' SIGUSR1
+|after
+
+=== 19: SIGTERM ends the shell again after its trap is reset
+status: signal 15
+bash-n: 0
+--- stdout
+|exit-trap
+
+=== 20: SIGINT a program handled doesn't end the shell
+status: 0
+bash-n: 0
+--- stdout
+|child-done
+|after=0
+
+=== 21: SIGINT a program run by command handled doesn't end the shell
+status: 0
+bash-n: 0
+--- stdout
+|child-done
+|after=0
+
+=== 22: SIGINT a program died of ends the shell
+status: signal 2
+bash-n: 0
+--- stdout
+|exit-trap
+
+=== 23: INT trap runs though the program handled SIGINT
+status: 0
+bash-n: 0
+--- stdout
+|child-done
+|int-trap
+|after=0
+
+=== 24: INT trap runs when the program died of SIGINT
+status: 0
+bash-n: 0
+--- stdout
+|int-trap
+|after=130
+
+=== 25: Programs inherit an ignored SIGINT after the shell first waits for one
+status: 0
+bash-n: 0
+--- stdout
+|survived
+
+=== 26: SIGINT during a command substitution ends the shell
+status: signal 2
+bash-n: 0
+
+=== 27: signal sent to the shell isn't the subshell's
+status: 0
+bash-n: 0
+--- stdout
+|sub-after
+|T
+|after=0
+
+=== 28: a subshell resets the signal traps it inherits
+status: 0
+bash-n: 0
+--- stdout
+|after=138
+--- stderr
+|User defined signal 1      ( kill -USR1 $BASHPID; echo sub-alive )
+
+=== 29: a subshell's own trap handles a signal sent to it
+status: 0
+bash-n: 0
+--- stdout
+|sub
+|after=0
+
+=== 30: a signal sent to the shell's process isn't its command substitution's
+status: 0
+bash-n: 0
+--- stdout
+|trapped
+|x=sub
+
+=== 31: a trapped signal sent to the shell waits for its subshell
+status: 0
+bash-n: 0
+--- stdout
+|sub-after
+|T
+|after=0
+
+=== 32: a subshell goes on when the shell dies of a signal sent to it
+status: signal 15
+bash-n: 0
+--- stdout
+|sub-after
+
+=== 33: a signal sent to a subshell waits for the subshell it runs
+status: 0
+bash-n: 0
+--- stdout
+|inner-after
+|after=143
+--- stderr
+|Terminated                 ( x=$BASHPID; ( kill -TERM $x; echo inner-after > inner.txt ); echo mid-after )
+
+=== 34: SIGQUIT ends a subshell, though the shell ignores it
+status: 0
+bash-n: 0
+--- stdout
+|subshell=131
+|cmdsubst=131 x=[]
+|stage=131 0
+|ignored-reached
+|ignored=0
+--- stderr
+|bash: line 1: 69337 Quit                       ( kill -QUIT $BASHPID; echo not-reached )
+
+=== 35: kill 0 in a pipeline stage ends the stage at once
+status: 1
+bash-n: 0
+--- stdout
+|T
+|stage=138
+
+=== 36: a program's signal to the shell's group reaches its subshells
+status: 0
+bash-n: 0
+--- stdout
+|status=143 143
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash: [69329: 1 (255)] tcsetattr: Inappropriate ioctl for device
+
+=== 37: SIGTERM ends an interactive shell's subshell, though the shell ignores it
+status: 0
+bash-n: 0
+--- stdout
+|subshell=143
+|stage=143 0
+|shell survives
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash: [69353: 1 (255)] tcsetattr: Inappropriate ioctl for device
+|bash: [69353: 1 (255)] tcsetattr: Inappropriate ioctl for device
+
+=== 38: a subshell has a BASHPID of its own
+status: 0
+bash-n: 0
+--- stdout
+|same
+|differ
+|differ
+|differ
+
+=== 39: a foreground program's death by a signal is reported
+status: 0
+bash-n: 0
+--- stdout
+|after
+--- stderr
+|Terminated                 sh -c 'kill -TERM $$'
+
+=== 40: a signal is caught only while the shell needs it
+status: 1
+bash-n: 0
+--- stdout
+|start INT: 0
+|after-program INT: 0
+|trapped USR1: 1
+|reset USR1: 0
+|again
+|retrapped USR1: 1
+
+=== 41: a signal sent to the shell alone leaves its pipeline stages running
+status: 0
+bash-n: 0
+--- stdout
+|stage-done
+|T
+|status=0
+
+=== 42: a subshell keeps the signals its parent ignores
+status: 0
+bash-n: 0
+--- stdout
+|sub-alive
+|after=0
+
+=== 43: kill signals a background job running shell code
+status: 0
+bash-n: 0
+--- stdout
+|status=143
+
+=== 44: CHLD trap runs for each program that ends
+status: 0
+bash-n: 0
+--- stdout
+|chld
+|chld
+|done
+
+=== 45: CHLD trap runs for each background job that ends
+status: 0
+bash-n: 0
+--- stdout
+|chld
+|chld
+|done
+
+=== 46: CHLD trap runs for each background job that ends, with job control
+status: 0
+bash-n: 0
+--- stdout
+|chld
+|chld
+|done
+
+=== 47: CHLD trap interrupts wait in POSIX mode
+status: 0
+bash-n: 0
+--- stdout
+|chld
+|wait=145
+
+=== 48: CHLD trap runs for each subshell and command substitution
+status: 0
+bash-n: 0
+--- stdout
+|chld
+|a b
+|chld
+|chld
+|chld
+|done
+
+=== 49: programs inherit the signals the shell ignores
+status: 0
+bash-n: 0
+--- stdout
+|foreground: INT=0 QUIT=0 USR1=0 PIPE=0 TSTP=0 TTIN=0 TTOU=0 
+|subshell: INT=0 QUIT=0 USR1=0 PIPE=0 TSTP=0 TTIN=0 TTOU=0 
+|cmdsubst: INT=0 QUIT=0 USR1=0 PIPE=0 TSTP=0 TTIN=0 TTOU=0 
+|trap '' USR1: INT=0 QUIT=0 USR1=1 PIPE=0 TSTP=0 TTIN=0 TTOU=0 
+--- file fg.txt
+|SigIgn:	0000000180000000
+--- file sub.txt
+|SigIgn:	0000000180000000
+--- file tr.txt
+|SigIgn:	0000000180000200
+
+=== 50: programs of async lists ignore SIGINT and SIGQUIT
+status: 0
+bash-n: 0
+--- stdout
+|async: INT=1 QUIT=1 USR1=0 PIPE=0 TSTP=0 TTIN=0 TTOU=0 
+|procsubst: INT=1 QUIT=1 USR1=0 PIPE=0 TSTP=0 TTIN=0 TTOU=0 
+|coproc: INT=1 QUIT=1 USR1=0 PIPE=0 TSTP=0 TTIN=0 TTOU=0 
+--- file bg.txt
+|SigIgn:	0000000180000006
+
+=== 51: programs of substitutions ignore stop signals with job control
+status: 0
+bash-n: 0
+--- stdout
+|async: INT=0 QUIT=0 USR1=0 PIPE=0 TSTP=0 TTIN=0 TTOU=0 
+|cmdsubst: INT=0 QUIT=0 USR1=0 PIPE=0 TSTP=1 TTIN=1 TTOU=1 
+|procsubst: INT=0 QUIT=0 USR1=0 PIPE=0 TSTP=1 TTIN=1 TTOU=1 
+--- file bg.txt
+|SigIgn:	0000000180000000
+
+=== 52: SIGINT breaks out of a loop to the prompt
+status: signal 2
+bash-n: 0
+
+=== 53: INT trap runs and the loop goes on
+status: 0
+bash-n: 0
+--- stdout
+|T[4]
+|T[4]
+|D[2]
+
+=== 54: Ctrl+C ends a read from the terminal
+status: 0
+bash-n: 0
+--- stdout
+|unreached
+|S[0]
+
+=== 55: Ctrl+C ends a pipeline stage blocked in a builtin
+status: timeout
+bash-n: 0
+--- stdout
+|R[2]
+--- other p
+
+=== 56: an interactive shell ignores SIGTERM and SIGQUIT
+status: signal 15
+bash-n: 0
+
+=== 57: Ctrl+C ends a loop running a program
+status: 7
+bash-n: 0
+--- stdout
+|L[2]

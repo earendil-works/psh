@@ -1,0 +1,77 @@
+# Goldens for tests/brush/brush-shell/tests/cases/brush/here_documents.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Here-document into a read loop
+status: 0
+bash-n: 0
+--- stdout
+|1-one
+|2-two
+
+=== 1: Expansion in an unquoted here-document
+status: 0
+bash-n: 0
+--- stdout
+|hello world
+|sum 3
+|cmd output
+
+=== 2: No expansion with a quoted delimiter
+status: 0
+bash-n: 0
+--- stdout
+|hello $name
+|sum $((1 + 2))
+
+=== 3: Here-strings
+status: 0
+bash-n: 0
+--- stdout
+|second first
+|42
+
+=== 4: Multi-line here-string into mapfile
+status: 0
+bash-n: 0
+--- stdout
+|3 l3
+
+=== 5: A large here-string
+status: 0
+bash-n: 0
+--- stdout
+|108889
+|1000 999
+
+=== 6: Here-document into a function
+status: 0
+bash-n: 0
+--- stdout
+|f:x
+|f:y
+
+=== 7: Here-document on another file descriptor
+status: 0
+bash-n: 0
+--- stdout
+|three
+
+=== 8: Here-document feeding a pipeline
+status: 0
+bash-n: 0
+--- stdout
+|B,A
+
+=== 9: Here-document inside a substitution
+status: 0
+bash-n: 0
+--- stdout
+|abcd
+
+=== 10: Here-documents in a loop
+status: 0
+bash-n: 0
+--- stdout
+|val1
+|val2

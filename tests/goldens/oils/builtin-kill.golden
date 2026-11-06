@@ -1,0 +1,174 @@
+# Goldens for tests/oils/spec/builtin-kill.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: kill -15 kills the process with SIGTERM
+status: 0
+bash-n: 0
+--- stdout
+|kill=0
+|wait=143
+
+=== 1: kill -KILL kills the process with SIGKILL
+status: 0
+bash-n: 0
+--- stdout
+|kill=0
+|wait=137
+--- stderr
+|bash: line 6: 10194 Killed                     sleep 0.1
+
+=== 2: kill -n 9 specifies the signal number
+status: 0
+bash-n: 0
+--- stdout
+|kill=0
+|wait=137
+--- stderr
+|bash: line 6: 10169 Killed                     sleep 0.1
+
+=== 3: kill -s TERM specifies the signal name
+status: 0
+bash-n: 0
+--- stdout
+|kill=0
+|wait=143
+
+=== 4: kill -terM -SigterM isn't case sensitive
+status: 0
+bash-n: 0
+--- stdout
+|kill=0
+|wait=143
+|kill=0
+|wait=143
+
+=== 5: kill HUP pid gives the correct error
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|bash: line 3: kill: `HUP': not a pid or valid job spec
+
+=== 6: kill -l shows signals
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 7: kill -L also shows signals
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 8: kill -l 10 TERM translates between names and numbers
+status: 0
+bash-n: 0
+--- stdout
+|USR1
+|SEGV
+|USR2
+|status=0
+|
+|10
+|11
+|12
+|status=0
+|
+|USR1
+|11
+|USR2
+|status=0
+|
+
+=== 9: kill -L checks for invalid input
+status: 0
+bash-n: 0
+--- stdout
+|USR1
+|USR2
+|status=1
+|
+|10
+|12
+|status=1
+|
+--- stderr
+|bash: line 3: kill: BAD: invalid signal specification
+|bash: line 7: kill: 9999: invalid signal specification
+
+=== 10: kill -l with exit code
+status: 0
+bash-n: 0
+--- stdout
+|ABRT
+
+=== 11: kill -l with 128 is invalid
+status: 0
+bash-n: 0
+--- stdout
+|invalid
+--- stderr
+|bash: line 1: kill: 128: invalid signal specification
+
+=== 12: kill -l 0 returns EXIT
+status: 0
+bash-n: 0
+--- stdout
+|EXIT
+
+=== 13: kill -l 0 INT lists both signals
+status: 0
+bash-n: 0
+--- stdout
+|EXIT
+|2
+
+=== 14: kill -9999 is an invalid signal
+status: 0
+bash-n: 0
+--- stdout
+|kill=1
+|wait=0
+--- stderr
+|bash: line 4: kill: 9999: invalid signal specification
+
+=== 15: kill -15 %% kills current job
+status: 0
+bash-n: 0
+--- stdout
+|kill=0
+|wait=143
+|wait=127
+--- stderr
+|bash: line 9: wait: %%: no such job
+
+=== 16: kill -15 %- kills previous job
+status: 0
+bash-n: 0
+--- stdout
+|kill=0
+|wait=143
+
+=== 17: kill multiple pids at once
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 18: kill pid and job at once
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 19: Numeric signal out of range - OSH may send it anyway
+status: 0
+bash-n: 0
+--- stdout
+|kill=1
+|wait=0
+--- stderr
+|bash: line 4: kill: 9999: invalid signal specification

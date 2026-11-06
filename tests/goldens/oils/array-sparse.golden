@@ -1,0 +1,437 @@
+# Goldens for tests/oils/spec/array-sparse.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Performance demo
+status: 0
+bash-n: 0
+--- stdout
+|len: 6
+|subst: foo 25 26 27 bar sparse
+|keys: 0 1 2 3 4 10
+|slice: 26 27 bar
+|get0: set0
+|get1: 25
+|---
+|append
+|subst: set0 25 26 27 bar sparse x y
+|keys: 0 1 2 3 4 10 11 12
+|---
+|unset
+|subst: set0 25 26 27 bar sparse y
+|keys: 0 1 2 3 4 10 12
+--- stderr
+|bash: line 3: shopt: ysh:upgrade: invalid shell option name
+|bash: line 10: type(sp): arithmetic syntax error in expression (error token is "(sp)")
+
+=== 1: test length
+status: 0
+bash-n: 0
+--- stdout
+|len=4
+|len=5
+
+=== 2: test "declare -p sp"
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a0=()
+|declare -a a1=([0]="1")
+|declare -a a2=([0]="1" [1]="2")
+|declare -a a=([0]="x" [1]="y" [2]="z" [3]="w" [500]="100" [1000]="100")
+
+=== 3: +=
+status: 0
+bash-n: 0
+--- stdout
+|declare -a sp1=([10]=a [20]=b [99]=c)
+|declare -a sp1=([10]=a [20]=b [99]=c [100]=1 [101]=2 [102]=3)
+
+=== 4: a[i]=v
+status: 0
+bash-n: 0
+--- stdout
+|declare -a sp1=([10]=a [20]=b [30]=c)
+|declare -a sp1=([10]=X [20]=b [25]=Y [30]=c [90]=Z)
+
+=== 5: Negative index with a[i]=v
+status: 0
+bash-n: 0
+--- stdout
+|declare -a sp1=([9]=x)
+|declare -a sp1=([0]=D [2]=C [6]=B [9]=A)
+
+=== 6: a[i]=v with BigInt
+status: 0
+bash-n: 0
+--- stdout
+|3
+|4
+|5
+|6
+
+=== 7: Negative out-of-bound index with a[i]=v (1/2)
+status: 0
+bash-n: 0
+--- stdout
+|declare -a sp1=([9]="x")
+--- stderr
+|bash: line 4: sp1[-11]: bad array subscript
+
+=== 8: Negative out-of-bound index with a[i]=v (2/2)
+status: 0
+bash-n: 0
+--- stdout
+|declare -a sp1=([9]="x")
+--- stderr
+|bash: line 5: sp1[-21]: bad array subscript
+
+=== 9: xtrace a+=()
+status: 0
+bash-n: 0
+--- stderr
+|+ sp1+=(2)
+
+=== 10: unset -v a[i]
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([0]="1" [1]="2" [2]="3" [3]="4" [4]="5" [5]="6" [6]="7" [7]="8" [8]="9")
+|declare -a a=([0]="1" [2]="3" [3]="4" [4]="5" [5]="6" [6]="7" [7]="8" [8]="9")
+|declare -a a=([0]="1" [2]="3" [3]="4" [4]="5" [5]="6" [6]="7" [7]="8" [8]="9")
+|declare -a a=([2]="3" [3]="4" [4]="5" [5]="6" [6]="7" [7]="8" [8]="9")
+
+=== 11: unset -v a[i] with out-of-bound negative index
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 5: unset: [-2]: bad array subscript
+|bash: line 6: unset: [-3]: bad array subscript
+
+=== 12: unset -v a[i] for max index
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([0]="1" [1]="2" [2]="3" [3]="4" [4]="5" [5]="6" [6]="7" [7]="x")
+|declare -a a=([0]="1" [1]="2" [2]="3" [3]="4" [4]="5" [5]="6" [6]="x")
+
+=== 13: [[ -v a[i] ]]
+status: 0
+bash-n: 0
+--- stdout
+|1 (expect 1)
+|1 (expect 1)
+|0 (expect 0)
+|0 (expect 0)
+|1 (expect 1)
+|0 (expect 0)
+|0 (expect 0)
+|0 (expect 0)
+|0 (expect 0)
+|1 (expect 1)
+|0 (expect 0)
+|0 (expect 0)
+|0 (expect 0)
+|1 (expect 1)
+|0 (expect 0)
+|0 (expect 0)
+
+=== 14: [[ -v a[i] ]] with invalid negative index
+status: 0
+bash-n: 0
+--- stdout
+|1 (expect 1)
+|1 (expect 1)
+|1 (expect 1)
+--- stderr
+|bash: line 4: sp1: bad array subscript
+|bash: line 6: sp2: bad array subscript
+|bash: line 9: sp3: bad array subscript
+
+=== 15: ((sp[i])) and ((sp[i]++))
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|0
+|0
+|0
+|2
+|0
+|0
+|0
+|4
+|2
+|2
+|2
+|100
+|100
+|100
+|100
+
+=== 16: ((sp[i])) and ((sp[i]++)) with invalid negative index
+status: 0
+bash-n: 0
+--- stdout
+|0
+--- stderr
+|bash: line 6: a: bad array subscript
+
+=== 17: ${sp[i]}
+status: 0
+bash-n: 0
+--- stdout
+|sp[0]: '1', 1, set.
+|sp[1]: '2', 2, set.
+|sp[8]: '9', 9, set.
+|sp[2]: '', (empty), .
+|sp[3]: '', (empty), .
+|sp[7]: '', (empty), .
+|sp[-1]: '9'.
+|sp[-2]: ''.
+|sp[-3]: '7'.
+|sp[-4]: '6'.
+|sp[-9]: '1'.
+
+=== 18: ${sp[i]} with negative invalid index
+status: 0
+bash-n: 0
+--- stdout
+|sp[-10]: ''.
+|sp[-11]: ''.
+|sp[-19]: ''.
+--- stderr
+|bash: line 8: sp: bad array subscript
+|bash: line 9: sp: bad array subscript
+|bash: line 10: sp: bad array subscript
+
+=== 19: ${a[@]:offset:length}
+status: 0
+bash-n: 0
+--- stdout
+|==== ${a[@]:offset} ====
+|[v0 v1 v5 v6 v8 v9][v0 v1 v5 v6 v8 v9]
+|[v5 v6 v8 v9][v5 v6 v8 v9]
+|[v5 v6 v8 v9][v5 v6 v8 v9]
+|[v5 v6 v8 v9][v5 v6 v8 v9]
+|[v9][v9]
+|[][]
+|[][]
+|==== ${a[@]:negative} ====
+|[v9][v9]
+|[v8 v9][v8 v9]
+|[v5 v6 v8 v9][v5 v6 v8 v9]
+|[v1 v5 v6 v8 v9][v1 v5 v6 v8 v9]
+|[v0 v1 v5 v6 v8 v9][v0 v1 v5 v6 v8 v9]
+|[][]
+|[][]
+|==== ${a[@]:offset:length} ====
+|[][]
+|[v0][v0]
+|[v0 v1 v5][v0 v1 v5]
+|[v5][v5]
+|[v5 v6 v8 v9][v5 v6 v8 v9]
+|[v5 v6 v8 v9][v5 v6 v8 v9]
+|[v5 v6 v8 v9][v5 v6 v8 v9]
+|[][]
+|[v9][v9]
+|[v9][v9]
+|[][]
+
+=== 20: ${@:offset:length}
+status: 0
+bash-n: 0
+--- stdout
+|==== ${@:offset:length} ====
+|[$SH v1 v2][$SH v1 v2]
+|[v1 v2 v3][v1 v2 v3]
+|[v3 v4 v5][v3 v4 v5]
+|[v5 v6 v7 v8 v9][v5 v6 v7 v8 v9]
+|==== ${@:negative} ====
+|[v9][v9]
+|[v7 v8 v9][v7 v8 v9]
+|[v1 v2 v3 v4 v5 v6 v7 v8 v9][v1 v2 v3 v4 v5 v6 v7 v8 v9]
+|[$SH v1 v2 v3 v4 v5 v6 v7 v8 v9][$SH v1 v2 v3 v4 v5 v6 v7 v8 v9]
+|[][]
+|[v7 v8][v7 v8]
+|[v1 v2 v3 v4][v1 v2 v3 v4]
+|[$SH v1 v2 v3][$SH v1 v2 v3]
+|[][]
+
+=== 21: ${a[@]:BigInt}
+status: 0
+bash-n: 0
+--- stdout
+|[][]
+|[][]
+|[][]
+|[][]
+
+=== 22: ${a[@]}
+status: 0
+bash-n: 0
+--- stdout
+|['v0', 'v1', 'v5', 'v6', 'v8', 'v9']
+|['abcv0', 'v1', 'v5', 'v6', 'v8', 'v9xyz']
+
+=== 23: ${a[@]#...}
+status: 0
+bash-n: 0
+--- stdout
+|['0', '1', '5', '6', '8', '9']
+|['abc0', '1', '5', '6', '8', '9xyz']
+|['v', 'v', 'v', 'v6', 'v8', 'v9']
+|['abcv', 'v', 'v', 'v6', 'v8', 'v9xyz']
+|['', '', '', '', '', '']
+
+=== 24: ${a[@]/pat/rep}
+status: 0
+bash-n: 0
+--- stdout
+|['0', '1', '5', '6', '8', '9']
+|['', '', '', '', '', '']
+|['0', '1', '5', '6', '8', '9']
+|['v', 'v', 'v', 'v', 'v', 'v']
+|['x0', 'x1', 'x5', 'x6', 'x8', 'x9']
+|['x0', 'x1', 'x5', 'x6', 'x8', 'x9']
+|['vD', 'vD', 'vD', 'v6', 'v8', 'v9']
+|['_0', '_1', '_5', '__', '__', '__']
+
+=== 25: ${a[@]@P}, ${a[@]@Q}, and ${a[@]@a}
+status: 0
+bash-n: 0
+--- stdout
+|['v0', 'v1', 'v5', 'v6', 'v8', 'v9']
+|['v0 v1 v5 v6 v8 v9']
+|["'v0'", "'v1'", "'v5'", "'v6'", "'v8'", "'v9'"]
+|["'v0' 'v1' 'v5' 'v6' 'v8' 'v9'"]
+|['a', 'a', 'a', 'a', 'a', 'a']
+|['a a a a a a']
+
+=== 26: ${a[@]-unset}, ${a[@]:-empty}, etc.
+status: 0
+bash-n: 0
+--- stdout
+|a1 unset: [unset]
+|a1 empty: [empty]
+|a2 unset: []
+|a2 empty: [empty]
+|a3 unset: [ ]
+|a3 empty: [ ]
+
+=== 27: ${a-}
+status: 0
+bash-n: 0
+--- stdout
+|, (unset), (empty);
+|, , (empty);
+|foo, foo, foo;
+
+=== 28: ${!a[0]}
+status: 0
+bash-n: 0
+--- stdout
+|hello, world
+
+=== 29: ${!a[@]}
+status: 0
+bash-n: 0
+--- stdout
+|['0', '1', '2', '5', '6', '8']
+
+=== 30: "${a[*]}"
+status: 0
+bash-n: 0
+--- stdout
+|v0 v1 v2 v5 v6 v8
+|v0v1v2v5v6v8
+|v0/v1/v2/v5/v6/v8
+
+=== 31: compgen -F _set_COMPREPLY
+status: 0
+bash-n: 0
+--- stdout
+|0
+|1
+|3
+|5
+|7
+|8
+|9
+--- stderr
+|bash: line 8: compgen: warning: -F option may not work as you expect
+
+=== 32: compadjust
+status: 0
+bash-n: 0
+--- stdout
+|['', '', '']
+|[]
+--- stderr
+|bash: line 4: compadjust: command not found
+
+=== 33: (YSH) @[sp] and @sp
+status: 0
+bash-n: 0
+--- stdout
+|['@[a]']
+|['@a']
+--- stderr
+|bash: line 6: shopt: parse_at: invalid shell option name
+
+=== 34: (YSH) $[a1 === a2]
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 11: shopt: ysh:upgrade: invalid shell option name
+|bash: line 13: a1 === a1: arithmetic syntax error: operand expected (error token is "= a1")
+|bash: line 14: a1 === a2: arithmetic syntax error: operand expected (error token is "= a2")
+|bash: line 15: a1 === a3: arithmetic syntax error: operand expected (error token is "= a3")
+|bash: line 16: a1 === a4: arithmetic syntax error: operand expected (error token is "= a4")
+|bash: line 17: a2 === a1: arithmetic syntax error: operand expected (error token is "= a1")
+|bash: line 18: a3 === a1: arithmetic syntax error: operand expected (error token is "= a1")
+|bash: line 19: a4 === a1: arithmetic syntax error: operand expected (error token is "= a1")
+
+=== 35: (YSH) append v1 v2... (a)
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 5: syntax error near unexpected token `('
+|bash: line 5: `append 'x' 'y' 'z' (a)'
+--- bash-n stderr
+|bash: line 5: syntax error near unexpected token `('
+|bash: line 5: `append 'x' 'y' 'z' (a)'
+
+=== 36: (YSH) $[bool(a)]
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 9: shopt: ysh:upgrade: invalid shell option name
+|bash: line 11: bool(a1): arithmetic syntax error in expression (error token is "(a1)")
+|bash: line 12: bool(a2): arithmetic syntax error in expression (error token is "(a2)")
+|bash: line 13: bool(a3): arithmetic syntax error in expression (error token is "(a3)")
+|bash: line 14: bool(a4): arithmetic syntax error in expression (error token is "(a4)")
+
+=== 37: crash dump
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `json read (&crash_dump) < $TMP/*.json'
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `json read (&crash_dump) < $TMP/*.json'
+
+=== 38: Regression: a[-1]=1
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: a[-1]: bad array subscript
+
+=== 39: Initializing indexed array with ([index]=value)
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|['3']

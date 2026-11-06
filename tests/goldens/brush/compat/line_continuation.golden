@@ -1,0 +1,59 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/line_continuation.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Line continuation inside operators
+status: 0
+bash-n: 0
+--- stdout
+|and
+|or
+|pipe
+|case
+|body
+
+=== 1: Line number after a line continuation
+status: 0
+bash-n: 0
+--- stdout
+|2
+|4
+
+=== 2: Line number of a word after a line continuation
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 3: Line continuation after a dollar sign
+status: 0
+bash-n: 0
+--- stdout
+|cmdsub 1 1 2 ansi
+
+=== 4: Line continuation in quotes
+status: 0
+bash-n: 0
+--- stdout
+|ab c\
+|d e\
+|f
+|[g\
+|h]
+
+=== 5: Line continuation in an extglob
+status: 0
+bash-n: 2
+--- stdout
+|unquoted
+|double-quoted
+|single-quoted
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `case ab in @(a\'
+
+=== 6: Line continuation in single quotes in a parameter expansion in double quotes
+status: 0
+bash-n: 0
+--- stdout
+|'ab'

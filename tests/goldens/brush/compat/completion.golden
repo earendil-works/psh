@@ -1,0 +1,21 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/completion.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Restarted completion uses the specs the completion function registered
+status: 0
+bash-n: 0
+--- stdout
+|<l>
+
+=== 1: Restarted completion discards the COMPREPLY the function set
+status: 0
+bash-n: 0
+--- stdout
+|<unset>
+
+=== 2: compopt with no options in a completion function prints the completion's options
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 13: ./zz: No such file or directory

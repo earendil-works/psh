@@ -1,0 +1,119 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/variables.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Appending to a variable
+status: 0
+bash-n: 0
+--- stdout
+|x: somethinghere
+
+=== 1: Appending an integer to an integer variable
+status: 0
+bash-n: 0
+--- stdout
+|x: 10
+|x: 15
+|x: 15
+|y: value
+|y: 5
+
+=== 2: Append to an unset variable
+status: 0
+bash-n: 0
+--- stdout
+|myvar: abc
+|myint: 0
+
+=== 3: Parameter length of unset variable with nounset
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 4: local -I inherits from enclosing scope
+status: 0
+bash-n: 0
+--- stdout
+|[global-value]
+|[global-value]
+
+=== 5: local -I with append
+status: 0
+bash-n: 0
+--- stdout
+|[base +more]
+|[base]
+
+=== 6: local -I combined flags (-Ix)
+status: 0
+bash-n: 0
+--- stdout
+|declare -x e
+
+=== 7: local -I without an enclosing variable falls through to normal creation
+status: 0
+bash-n: 0
+--- stdout
+|[fresh]
+
+=== 8: local -I with a matching explicit array kind inherits value and attributes
+status: 0
+bash-n: 0
+--- stdout
+|declare -ax a=([0]="one" [1]="two")
+|declare -A m=([k]="v" )
+
+=== 9: local -I when a same-name local already exists updates it in place
+status: 0
+bash-n: 0
+--- stdout
+|declare -- v="firstsuffix"
+|declare -- v="outer"
+
+=== 10: local without -I does not inherit the enclosing array kind
+status: 0
+bash-n: 0
+--- stdout
+|declare -a m=([0]="y")
+|declare -A m=([foo]="x" )
+
+=== 11: local -I over a same-scope local honors set -a auto-export
+status: 0
+bash-n: 0
+--- stdout
+|declare -x v="firstsuffix"
+
+=== 12: local -I -a over a dynamic variable inherits its resolved contents
+status: 0
+bash-n: 0
+--- stdout
+|inherited_all=1
+--- dir sub
+
+=== 13: local -g creates a global rather than a local
+status: 0
+bash-n: 0
+--- stdout
+|declare -- g="1"
+
+=== 14: local -g updates the global while a same-name local shadows it
+status: 0
+bash-n: 0
+--- stdout
+|inside: inner
+|outside: global
+
+=== 15: local -g carries its attributes and array kind to the global
+status: 0
+bash-n: 0
+--- stdout
+|declare -x s="str"
+|declare -a arr=([0]="x" [1]="y")
+
+=== 16: local -g with a bare name declares an unset global
+status: 0
+bash-n: 0
+--- stdout
+|declare -- bare
+|status=0

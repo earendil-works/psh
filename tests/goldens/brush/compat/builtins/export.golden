@@ -1,0 +1,343 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/export.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic export usage
+status: 0
+bash-n: 0
+--- stdout
+|Looking for unexported variable...
+|Exporting and looking for it again...
+|MY_TEST_VAR=value
+|Exporting with new value...
+|MY_TEST_VAR=changed value
+
+=== 1: Exporting array
+status: 0
+bash-n: 0
+--- stdout
+|declare -ax arr=([0]="a" [1]="1" [2]="2")
+
+=== 2: Export scalar assignment with parameter expansion
+status: 0
+bash-n: 0
+--- stdout
+|hello world
+
+=== 3: Export scalar assignment with command substitution
+status: 0
+bash-n: 0
+--- stdout
+|hello
+
+=== 4: Export structured assignment does not recursively expand its value
+status: 0
+bash-n: 0
+--- stdout
+|declare -x result="\$(printf expanded)"
+
+=== 5: Export generated assignment does not expand its value again
+status: 0
+bash-n: 0
+--- stdout
+|declare -x result="\$(printf expanded)"
+
+=== 6: Export indexed array with arithmetic key
+status: 0
+bash-n: 0
+--- stdout
+|declare -ax arr=([4]="value")
+
+=== 7: Export associative array with expanded key
+status: 0
+bash-n: 0
+--- stdout
+|declare -Ax map=(["space key"]="value" )
+
+=== 8: Unexporting variable
+status: 1
+bash-n: 0
+
+=== 9: Export with assignment through nameref
+status: 0
+bash-n: 0
+--- stdout
+|MY_EXPORT_VAR: exported_value
+|MY_EXPORT_VAR=exported_value
+
+=== 10: Export append to existing variable
+status: 0
+bash-n: 0
+--- stdout
+|MYVAR: -O3 -pipe -Wno-foo
+
+=== 11: Export append to already-exported variable
+status: 0
+bash-n: 0
+--- stdout
+|MYVAR: -O3 -pipe -Wno-baz
+
+=== 12: Export append to unset variable
+status: 0
+bash-n: 0
+--- stdout
+|MYVAR: first
+
+=== 13: Multiple export operands expand before assignments are applied
+status: 0
+bash-n: 0
+--- stdout
+|declare -x first="one"
+|declare -x second=""
+
+=== 14: Export command substitutions expand left to right exactly once
+status: 0
+bash-n: 0
+--- stdout
+|declare -x first="one"
+|declare -x second="x"
+|marker: x
+--- file marker.txt
+|x
+~ no newline at end
+
+=== 15: Export expansion error occurs before any operand is applied
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|state: unset
+--- file state.txt
+|unset
+~ no newline at end
+
+=== 16: Disabled export uses ordinary argument expansion
+status: 0
+bash-n: 0
+--- stdout
+|status: 127
+|unset
+
+=== 17: Temporary environment is not visible to an export operand
+status: 0
+bash-n: 0
+--- stdout
+|declare -x y=""
+
+=== 18: Redirections do not apply to an export operand's command substitution
+status: 0
+bash-n: 0
+--- stdout
+|declare -x w="val"
+--- stderr
+|to-stderr
+
+=== 19: Unset variable in an export operand is fatal under set -u
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+--- stderr
+|bash: line 1: undefined: unbound variable
+
+=== 20: Function shadowing export receives its arguments
+status: 0
+bash-n: 0
+--- stdout
+|shadow export: [y=2] count=1
+
+=== 21: Export rejects an array element target
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+--- stderr
+|bash: line 1: export: `ea[0]': not a valid identifier
+
+=== 22: Export identifier failure inside a pipeline exits with bash's status
+status: 0
+bash-n: 0
+--- stdout
+|pipeline: 4
+|direct: 1
+
+=== 23: Export recognizes an assignment produced through command
+status: 0
+bash-n: 0
+--- stdout
+|declare -x wrapped="world"
+
+=== 24: export rejects dash-prefixed operands after a name
+status: 0
+bash-n: 0
+--- stdout
+|export: `-x': not a valid identifier
+|export v -x: 1
+|export: `-x': not a valid identifier
+|export -- -x: 1
+|export: `+r': not a valid identifier
+|export w=1 +r: 1
+
+=== 25: Usage error in a special builtin is fatal in POSIX mode
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 2: export: --: invalid option
+|export: usage: export [-fn] [name[=value] ...] or export -p [-f]
+
+=== 26: Usage error in a special builtin is not fatal outside POSIX mode
+status: 0
+bash-n: 0
+--- stdout
+|still running: 2
+--- stderr
+|bash: line 1: export: --: invalid option
+|export: usage: export [-fn] [name[=value] ...] or export -p [-f]
+
+=== 27: export --help prints help on stdout
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|help on stdout
+
+=== 28: export --help is fatal in POSIX mode
+status: 2
+bash-n: 0
+
+=== 29: export -f of a missing function
+status: 0
+bash-n: 0
+--- stdout
+|export: nofunc: not a function
+|export: 1
+
+=== 30: export reports a readonly variable and goes on
+status: 0
+bash-n: 0
+--- stdout
+|export: 1 r=1 y=3
+|readonly: 1 r=1 z=5
+|unset: 1 r=1
+--- stderr
+|bash: line 2: r: readonly variable
+|bash: line 4: r: readonly variable
+|bash: line 6: unset: r: cannot unset: readonly variable
+
+=== 31: export rejects a name that isn't an identifier
+status: 0
+bash-n: 0
+--- stdout
+|a b=1: 1
+|1x=2: 1
+|a-b: 1
+--- stderr
+|bash: line 1: export: `a b=1': not a valid identifier
+|bash: line 2: export: `1x=2': not a valid identifier
+|bash: line 3: export: `a-b': not a valid identifier
+
+=== 32: export rejects an invalid name and goes on with the rest
+status: 0
+bash-n: 0
+--- stdout
+|export: `1x': not a valid identifier
+|rc=1
+|export: `a-b=1': not a valid identifier
+|export: `=x': not a valid identifier
+|rc=1
+|export: `arr[1]': not a valid identifier
+|rc=1
+|also=2
+
+=== 33: export takes a word that expanded into an assignment
+status: 0
+bash-n: 0
+--- stdout
+|A=x
+|A=xy
+|1
+
+=== 34: export takes -- and -n
+status: 0
+bash-n: 0
+--- stdout
+|B=2
+|0
+|B=2
+
+=== 35: export -f with no names lists the exported functions
+status: 1
+bash-n: 0
+--- stdout
+|1
+|0
+
+=== 36: export -nf of a name that isn't a function fails with status 1
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+--- stderr
+|bash: line 1: export: nosuchfunction: not a function
+
+=== 37: export rejects attribute options other than -a and -A
+status: 0
+bash-n: 0
+--- stdout
+|-i: 2
+|-r: 2
+|-u: 2
+|-x: 2
+|-t: 2
+|-g: 2
+|declare_status: 1
+
+=== 38: export -n on a missing variable creates nothing
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|declare_status: 1
+
+=== 39: export -n with an assignment creates the variable unexported
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|declare -- zz_n="5"
+|declare -- zz_n2="x"
+
+=== 40: set -a does not export what export -n assigns
+status: 0
+bash-n: 0
+--- stdout
+|declare -- zz_na="1"
+|declare -x zz_nb="2"
+
+=== 41: export with no operands lists in declare -p form
+status: 0
+bash-n: 0
+--- stdout
+|declare -x zz_v="1"
+
+=== 42: export -n outranks set -a
+status: 0
+bash-n: 0
+--- stdout
+|declare -- v="2"
+|declare -- w="1"
+|declare -- nv="3"
+
+=== 43: export -h is an invalid option and prints nothing on stdout
+status: 0
+bash-n: 0
+--- stdout
+|rc=2 len=0
+
+=== 44: export treats a plus option as an invalid identifier operand
+status: 0
+bash-n: 0
+--- stdout
+|export: `+x': not a valid identifier
+|status=1
+|declare -x zz_plus="1"

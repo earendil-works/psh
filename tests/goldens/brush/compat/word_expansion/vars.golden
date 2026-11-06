@@ -1,0 +1,80 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/word_expansion/vars.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Undefined variables
+status: 0
+bash-n: 0
+--- stdout
+|Undefined: 
+|Undefined: 
+
+=== 1: Defined variables
+status: 0
+bash-n: 0
+--- stdout
+|Defined: xyz
+|Defined: var
+|Defined: prefixxyzsuffix
+|Defined: prefixxyz
+
+=== 2: Undefined positional params
+status: 0
+bash-n: 0
+--- stdout
+|Param: 
+|Param: 
+
+=== 3: High-numbered positional params
+status: 0
+bash-n: 0
+--- stdout
+|Param: 9
+|Param: 
+
+=== 4: Nameref indirect expansion returns target name
+status: 0
+bash-n: 0
+--- stdout
+|indirect: target
+|direct: the_value
+
+=== 5: Nameref with string operations
+status: 0
+bash-n: 0
+--- stdout
+|upper: HELLO WORLD
+|lower: hello world
+|length: 11
+|substring: Hello
+|replace: Hello Bash
+
+=== 6: Nameref with default value expansion
+status: 0
+bash-n: 0
+--- stdout
+|default: default_value
+|assign default: assigned
+|unset_var: assigned
+
+=== 7: Nameref with error expansion
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: ref: should error
+
+=== 8: Nameref with alternative expansion
+status: 0
+bash-n: 0
+--- stdout
+|alternative
+|''
+
+=== 9: Nameref with pattern removal
+status: 0
+bash-n: 0
+--- stdout
+|## */: bash
+|%% /*: 
+|# */: usr/local/bin/bash
+|% /*: /usr/local/bin

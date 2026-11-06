@@ -1,0 +1,19 @@
+# Goldens for tests/oils/spec/known-differences.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: `set` output format - ifupdown-ng
+status: 0
+bash-n: 0
+--- stdout
+|FOO=bar
+
+=== 1: nested function declaration - xcb-util-renderutil
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `g'
+|bash: line 1: `f() g() { echo 'hi'; }'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `g'
+|bash: line 1: `f() g() { echo 'hi'; }'

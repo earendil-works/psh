@@ -1,0 +1,918 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/trap.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: trap -l - lists all signal names
+status: 0
+bash-n: 0
+--- stdout
+|has HUP
+|has INT
+|has TERM
+
+=== 1: trap registration
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo 2' SIGINT
+|trap -- 'echo 3' SIGINT
+|trap -- 'echo 4' SIGINT
+
+=== 2: trap unregistering
+status: 0
+bash-n: 0
+--- stdout
+|[Case 1]
+|[Case 2]
+
+=== 3: trap EXIT
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[exit]"' EXIT
+|[exit]
+
+=== 4: trap EXIT: status code handling
+status: 1
+bash-n: 0
+--- stdout
+|trap -- 'echo "[exit]: \$?: $?"' EXIT
+|[exit]: $?: 1
+
+=== 5: trap DEBUG
+status: 1
+bash-n: 0
+--- stdout
+|[command: trap -p DEBUG]
+|trap -- 'echo [command: ${BASH_COMMAND}]' DEBUG
+|[command: echo First]
+|First
+|[command: echo Second]
+|Second
+|[command: false]
+
+=== 6: trap ERR - registration only
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo [err]' ERR
+
+=== 7: trap ERR - basic invocation
+status: 0
+bash-n: 0
+--- stdout
+|ERR: 1
+|continues
+|ERR: 1
+|continues again
+
+=== 8: trap ERR - not triggered in conditional
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after
+
+=== 9: trap ERR - not triggered with && short-circuit
+status: 0
+bash-n: 0
+--- stdout
+|after
+
+=== 10: trap ERR - not triggered with ||
+status: 0
+bash-n: 0
+--- stdout
+|fallback
+|after
+
+=== 11: trap ERR - not triggered with negation
+status: 0
+bash-n: 0
+--- stdout
+|after
+
+=== 12: trap ERR - not triggered in while condition
+status: 0
+bash-n: 0
+--- stdout
+|after while
+
+=== 13: trap ERR - not triggered in until condition
+status: 0
+bash-n: 0
+--- stdout
+|ERR
+|after until
+
+=== 14: trap ERR - not triggered as part of || list
+status: 0
+bash-n: 0
+--- stdout
+|after
+
+=== 15: trap ERR - not triggered for negated command
+status: 0
+bash-n: 0
+--- stdout
+|after
+
+=== 16: trap ERR - triggered after && chain completes then fails
+status: 0
+bash-n: 0
+--- stdout
+|ERR trapped
+|after
+
+=== 17: trap ERR - execution doesn't affect control flow
+status: 0
+bash-n: 0
+--- stdout
+|result: 1
+
+=== 18: trap ERR - multiple failures trigger multiple traps
+status: 0
+bash-n: 0
+--- stdout
+|ERR 1
+|ERR 2
+|ERR 3
+|total: 3
+
+=== 19: A trap leaves PIPESTATUS as it found it
+status: 0
+bash-n: 0
+--- stdout
+|signal: 0
+|err: 0 1
+
+=== 20: trap ERR - has access to exit status
+status: 0
+bash-n: 0
+--- stdout
+|ERR with status: 42
+|after
+
+=== 21: trap ERR - exit in the handler ends the shell
+status: 3
+bash-n: 0
+--- stdout
+|in ERR
+
+=== 22: trap ERR - exit in the handler sets the status under errexit
+status: 3
+bash-n: 0
+--- stdout
+|in ERR
+
+=== 23: trap ERR - exit in the handler ends the shell from a function
+status: 3
+bash-n: 0
+--- stdout
+|in ERR
+
+=== 24: trap ERR - exit with no status in the handler exits with the failed status
+status: 4
+bash-n: 0
+
+=== 25: trap ERR - return in the handler returns from the function
+status: 0
+bash-n: 0
+--- stdout
+|f: 7
+|g: 5
+
+=== 26: trap ERR - break in the handler ends the loop
+status: 0
+bash-n: 0
+--- stdout
+|after: 1
+
+=== 27: trap ERR - not run for exit
+status: 3
+bash-n: 0
+
+=== 28: trap ERR - with errtrace, runs once for a function that returns a failure
+status: 0
+bash-n: 0
+--- stdout
+|in ERR: 3
+|f: 3
+
+=== 29: trap ERR - runs for a pipeline whose last stage exits
+status: 0
+bash-n: 0
+--- stdout
+|in ERR: 3
+|in ERR: 4
+|in ERR: 5
+|after: 5
+
+=== 30: trap ERR - exit in the handler sets the status for a failed pipeline stage under errexit
+status: 7
+bash-n: 0
+--- stdout
+|in ERR
+
+=== 31: trap ERR - exit in a pipeline stage's handler ends only the stage
+status: 0
+bash-n: 0
+--- stdout
+|after: 3
+
+=== 32: trap ERR - return in a pipeline stage's handler ends only the stage
+status: 0
+bash-n: 0
+--- stdout
+|in f: 3
+|f: 0
+
+=== 33: trap ERR - exit in the last stage's handler ends the shell with lastpipe
+status: 3
+bash-n: 0
+--- stdout
+|in ERR
+
+=== 34: trap ERR - has access to BASH_COMMAND
+status: 0
+bash-n: 0
+--- stdout
+|ERR for: nonexistent_command_xyz 2> /dev/null
+|after
+
+=== 35: trap ERR - has access to LINENO
+status: 0
+bash-n: 0
+--- stdout
+|ERR at line: 2
+|after
+
+=== 36: return in EXIT trap within function
+status: 0
+bash-n: 0
+--- stdout
+|should not print in func
+|after func
+--- stderr
+|bash: line 1: return: can only `return' from a function or sourced script
+
+=== 37: subshell inherits signal traps (for trap -p display)
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[parent int]"' SIGINT
+|---
+|trap -- 'echo "[parent int]"' SIGINT
+|trap -- 'echo "[parent term]"' SIGTERM
+
+=== 38: subshell can override inherited trap
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[parent int]"' SIGINT
+|---
+|trap -- 'echo "[subshell int]"' SIGINT
+
+=== 39: subshell inherits EXIT trap
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[exit]"' EXIT
+|---
+|trap -- 'echo "[exit]"' EXIT
+|[exit]
+
+=== 40: subshell inherits DEBUG trap
+status: 0
+bash-n: 0
+--- stdout
+|[debug]
+|trap -- 'echo "[debug]"' DEBUG
+|[debug]
+|---
+|trap -- 'echo "[debug]"' DEBUG
+
+=== 41: subshell does not execute inherited DEBUG trap
+status: 0
+bash-n: 0
+--- stdout
+|[debug]
+|parent
+|[debug]
+|---
+|subshell
+|[debug]
+|back in parent
+
+=== 42: subshell can set its own EXIT trap
+status: 0
+bash-n: 0
+--- stdout
+|parent
+|subshell
+|[subshell exit]
+|back in parent
+|[parent exit]
+
+=== 43: subshell inherited EXIT trap does not fire
+status: 0
+bash-n: 0
+--- stdout
+|parent
+|subshell
+|back in parent
+|[exit]
+
+=== 44: command substitution inherits signal trap (trap -p display)
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[int]"' SIGINT
+
+=== 45: command substitution does not fire inherited signal trap
+status: 0
+bash-n: 0
+--- stdout
+|result: after kill
+--- stderr
+|[int]
+
+=== 46: command substitution can set its own trap
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[subshell int]"' SIGINT
+
+=== 47: command substitution EXIT trap not inherited from parent
+status: 0
+bash-n: 0
+--- stdout
+|result: trap -- 'echo "[parent exit]"' EXIT
+|inside
+|[parent exit]
+
+=== 48: command substitution can have its own EXIT trap
+status: 0
+bash-n: 0
+--- stdout
+|result: inside
+|[sub exit]
+|[parent exit]
+
+=== 49: nested command substitution trap inheritance
+status: 0
+bash-n: 0
+--- stdout
+|outer: inner: trap -- 'echo "[int]"' SIGINT
+
+=== 50: pipeline component inherits signal trap (trap -p display)
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[int]"' SIGINT
+
+=== 51: pipeline component can override trap
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[pipe int]"' SIGINT
+
+=== 52: pipeline EXIT trap behavior
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[exit]"' EXIT
+|in pipe
+|after pipe
+|[exit]
+
+=== 53: multiple pipeline stages trap inheritance
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[int]"' SIGINT
+
+=== 54: process substitution inherits signal trap
+status: 0
+bash-n: 0
+
+=== 55: process substitution output trap inheritance
+status: 0
+bash-n: 0
+
+=== 56: process substitution can set own EXIT trap
+status: 0
+bash-n: 0
+--- stdout
+|inside
+|[sub exit]
+|after
+|[parent exit]
+
+=== 57: background job inherits signal trap (trap -p display)
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[int]"' SIGINT
+
+=== 58: background job does not fire inherited signal trap
+status: 0
+bash-n: 0
+--- stdout
+|before kill
+|main done
+--- stderr
+|[int]
+
+=== 59: background job EXIT trap behavior
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[exit]"' EXIT
+|bg job
+|main continues
+|[exit]
+
+=== 60: background job can set own traps
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[bg int]"' SIGINT
+|trap -- 'echo "[parent int]"' SIGINT
+
+=== 61: coproc - EXIT trap behavior
+status: 0
+bash-n: 0
+--- stdout
+|main continues
+|[exit]
+--- stderr
+|bash: line 3: ${COPROC[0]}: ambiguous redirect
+
+=== 62: coproc - DEBUG trap inheritance
+status: 0
+bash-n: 0
+--- stdout
+|[debug]
+|trap -- 'echo "[debug]"' DEBUG
+|coproc
+|[debug]
+
+=== 63: coproc - ERR trap with errtrace
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[err]"' ERR
+|[err]
+|after false
+
+=== 64: RETURN trap - fires on function return
+status: 0
+bash-n: 0
+--- stdout
+|in func
+|after func
+
+=== 65: RETURN trap - fires with return value
+status: 0
+bash-n: 0
+--- stdout
+|in func
+|after func
+
+=== 66: RETURN trap - fires on sourced script completion
+status: 0
+bash-n: 0
+--- stdout
+|in sourced
+|[return]
+|after source
+
+=== 67: RETURN trap - not inherited in function without functrace
+status: 0
+bash-n: 0
+--- stdout
+|in inner
+|after inner
+|done
+
+=== 68: RETURN trap - inherited with functrace
+status: 0
+bash-n: 0
+--- stdout
+|in inner
+|[return: inner]
+|after inner
+|[return: outer]
+|done
+
+=== 69: RETURN trap - in explicit subshell
+status: 0
+bash-n: 0
+--- stdout
+|in func
+|after subshell
+
+=== 70: RETURN trap - does not fire for regular commands
+status: 0
+bash-n: 0
+--- stdout
+|cmd1
+|cmd2
+|done
+
+=== 71: RETURN trap - does not fire for subshell completion
+status: 0
+bash-n: 0
+--- stdout
+|in subshell
+|after subshell
+
+=== 72: trap SIGUSR1
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[usr1 received]"' SIGUSR1
+|[usr1 received]
+|after signal
+
+=== 73: trap SIGUSR2
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[usr2 received]"' SIGUSR2
+|[usr2 received]
+|after signal
+
+=== 74: trap multiple signals with same handler
+status: 0
+bash-n: 0
+--- stdout
+|[signal received]
+|[signal received]
+|done
+
+=== 75: trap handler can inspect signal
+status: 0
+bash-n: 0
+--- stdout
+|handler called
+|after
+
+=== 76: trap - clears trap
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[int]"' SIGINT
+
+=== 77: trap '' ignores signal
+status: 0
+bash-n: 0
+--- stdout
+|trap -- '' SIGINT
+|survived
+
+=== 78: trap with empty string can be cleared
+status: 0
+bash-n: 0
+--- stdout
+|trap -- '' SIGINT
+
+=== 79: trap -p - with no args shows all traps
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo a' SIGINT
+|trap -- 'echo b' SIGTERM
+|trap -- 'echo c' EXIT
+|c
+
+=== 80: trap -p - with specific signal
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[int]"' SIGINT
+|trap -- 'echo "[term]"' SIGTERM
+
+=== 81: trap -p - with multiple signals
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[int]"' SIGINT
+|trap -- 'echo "[term]"' SIGTERM
+|trap -- 'echo "[usr1]"' SIGUSR1
+
+=== 82: trap -p - for unset trap shows nothing
+status: 0
+bash-n: 0
+--- stdout
+|done
+
+=== 83: trap -p - output is re-executable
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "hello world"' SIGINT
+
+=== 84: trap handler - single quotes preserved
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo '\''quoted'\''' SIGINT
+
+=== 85: trap handler - double quotes in handler
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "double quoted"' SIGINT
+
+=== 86: trap handler - special characters
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo $HOME; echo "done"' SIGINT
+
+=== 87: trap handler - newlines in handler
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo line1
+|echo line2' SIGINT
+
+=== 88: DEBUG trap - sees BASH_COMMAND
+status: 0
+bash-n: 0
+--- stdout
+|cmd: x=1
+|cmd: echo "x is $x"
+|x is 1
+
+=== 89: DEBUG trap - BASH_COMMAND reports the command after alias substitution
+status: 0
+bash-n: 0
+--- stdout
+|cmd: echo hello there
+|hello there
+
+=== 90: DEBUG trap - output is not captured by the command's own redirection
+status: 0
+bash-n: 0
+--- stdout
+|[debug: echo hidden > /dev/null]
+|[debug: echo visible]
+|visible
+
+=== 91: DEBUG trap - sees LINENO
+status: 0
+bash-n: 0
+--- stdout
+|line: 2
+|first
+|line: 3
+|second
+
+=== 92: DEBUG trap - fires before each simple command
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+|count: 4
+
+=== 93: DEBUG trap - in loop
+status: 0
+bash-n: 0
+--- stdout
+|[debug: for i in 1 2]
+|[debug: echo "iter $i"]
+|iter 1
+|[debug: for i in 1 2]
+|[debug: echo "iter $i"]
+|iter 2
+
+=== 94: EXIT trap - has access to exit status
+status: 42
+bash-n: 0
+--- stdout
+|exiting with: 42
+
+=== 95: EXIT trap - runs even after errexit
+status: 1
+bash-n: 0
+--- stdout
+|[exit trap ran]
+
+=== 96: EXIT trap - can modify exit status
+status: 0
+bash-n: 0
+
+=== 97: EXIT trap - exit in the handler sets the status of a shell that ends normally
+status: 7
+bash-n: 0
+--- stdout
+|body
+|in EXIT
+
+=== 98: EXIT trap - exit in the handler sets the status of a -c command
+status: 7
+bash-n: 0
+--- stdout
+|in EXIT
+
+=== 99: EXIT trap - exit in the handler sets the status of a script
+status: 7
+bash-n: 0
+--- stdout
+|body
+|in EXIT
+
+=== 100: EXIT trap - set by the ERR trap, its exit wins over the ERR trap's
+status: 9
+bash-n: 0
+--- stdout
+|in EXIT
+
+=== 101: EXIT trap - multiple assignments last one wins
+status: 0
+bash-n: 0
+--- stdout
+|done
+|second
+
+=== 102: EXIT trap fires in -c mode
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|exiting
+
+=== 103: EXIT trap in -c mode has access to exit status
+status: 42
+bash-n: 0
+--- stdout
+|status: 42
+
+=== 104: EXIT trap in -c mode runs after errexit
+status: 1
+bash-n: 0
+--- stdout
+|trapped
+
+=== 105: EXIT trap in -c mode with multiple assignments last one wins
+status: 0
+bash-n: 0
+--- stdout
+|done
+|second
+
+=== 106: trap - clear multiple signals at once
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "[handler]"' SIGINT
+|trap -- 'echo "[handler]"' SIGTERM
+|trap -- 'echo "[handler]"' SIGUSR1
+|---
+|done
+
+=== 107: trap - ignore multiple signals
+status: 0
+bash-n: 0
+--- stdout
+|trap -- '' SIGINT
+|trap -- '' SIGTERM
+|done
+
+=== 108: DEBUG trap - BASH_COMMAND reports commands before expansion
+status: 0
+bash-n: 0
+--- stdout
+|cmd: <echo $value>
+|world
+|cmd: <declare declared=$value>
+|cmd: <printf '%s\n' "$value">
+|world
+
+=== 109: DEBUG trap - before each stage of a pipeline
+status: 0
+bash-n: 0
+--- stdout
+|debug: true
+|debug: false
+|debug: echo done
+|done
+|debug: trap - DEBUG
+
+=== 110: ERR trap with errtrace runs once for a subshell that exits
+status: 0
+bash-n: 0
+--- stdout
+|ERR 3
+|after: 3
+
+=== 111: trap -p lists traps in bash's order
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo x' EXIT
+|trap -- 'echo i' SIGINT
+|trap -- 'echo u' SIGUSR1
+|trap -- 'echo t' SIGTERM
+|trap -- 'echo r' RETURN
+
+=== 112: ERR trap runs once for a failing brace group
+status: 0
+bash-n: 0
+--- stdout
+|err
+|err
+|done
+
+=== 113: ERR trap runs twice for a failing subshell that ends a pipeline
+status: 0
+bash-n: 0
+--- stdout
+|err 3
+|err 3
+|status: 3
+|err 4
+|err 4
+|status: 4
+
+=== 114: ERR trap set inside a function runs there
+status: 0
+bash-n: 0
+--- stdout
+|err
+|in-f
+
+=== 115: ERR trap doesn't run for the call that set it
+status: 0
+bash-n: 0
+--- stdout
+|first call: 3
+|err
+|second call: 3
+
+=== 116: ERR trap set inside a subshell runs there
+status: 0
+bash-n: 0
+--- stdout
+|err
+|in-sub
+|after
+
+=== 117: EXIT trap - exit in the handler sets a subshell's status
+status: 0
+bash-n: 0
+--- stdout
+|rc=5
+
+=== 118: DEBUG trap - exit in the handler ends the shell
+status: 4
+bash-n: 0
+
+=== 119: trap rejects -- after the action as a signal
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|trap -- 'echo x' SIGINT
+|rc=0
+|trap -- 'echo y' SIGINT
+
+=== 120: trap sets and resets the valid signals around an invalid one
+status: 0
+bash-n: 0
+--- stdout
+|set: 1
+|trap -- 'echo x' SIGINT
+|trap -- 'echo x' SIGUSR1
+|reset: 1
+|trap -- 'echo x' SIGUSR1
+|exit: 1
+|y
+--- stderr
+|bash: line 1: trap: BOGUS: invalid signal specification
+|bash: line 3: trap: BOGUS: invalid signal specification
+|bash: line 5: trap: --: invalid signal specification
+
+=== 121: trap takes -- before the action, and - to reset
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo x' SIGUSR1
+|done
+
+=== 122: trap -l lists the signals in columns
+status: 0
+bash-n: 0
+--- stdout
+| 1) SIGHUP	 2) SIGINT	 3) SIGQUIT	 4) SIGILL	 5) SIGTRAP
+
+=== 123: trap -P prints the action alone
+status: 0
+bash-n: 0
+--- stdout
+|echo x

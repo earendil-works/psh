@@ -1,0 +1,17 @@
+# Goldens for tests/oils/spec/vars-bash.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: $SHELL is set to what is in /etc/passwd
+status: 0
+bash-n: 0
+--- stdout
+|SHELL is set
+|SHELL is set
+|SHELL is set
+--- stderr
+|SHELL=/bin/sh
+|bash: cannot set terminal process group (29885): Inappropriate ioctl for device
+|bash: no job control in this shell
+|SHELL=/bin/sh
+|SHELL=/bin/sh

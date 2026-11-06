@@ -1,0 +1,27 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/common.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Piping builtin output
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 1: Redirecting builtin output
+status: 0
+bash-n: 0
+--- stdout
+|Dumping file contents...
+|declare -- my_variable="10"
+--- file out.txt
+|declare -- my_variable="10"
+
+=== 2: Overrides
+status: 1
+bash-n: 0
+--- stdout
+|declare -x myvar="10"
+--- stderr
+|bash: line 1: declare: myvar: not found
+|bash: line 3: declare: myvar: not found

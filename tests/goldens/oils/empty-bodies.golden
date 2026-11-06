@@ -1,0 +1,29 @@
+# Goldens for tests/oils/spec/empty-bodies.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Empty do/done
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 2: syntax error near unexpected token `done'
+|bash: line 2: `done'
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `done'
+|bash: line 2: `done'
+
+=== 1: Empty case/esac
+status: 0
+bash-n: 0
+--- stdout
+|empty
+
+=== 2: Empty then/fi
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 2: syntax error near unexpected token `fi'
+|bash: line 2: `fi'
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `fi'
+|bash: line 2: `fi'

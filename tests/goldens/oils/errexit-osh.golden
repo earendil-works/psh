@@ -1,0 +1,349 @@
+# Goldens for tests/oils/spec/errexit-osh.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: command sub: errexit is NOT inherited and outer shell keeps going
+status: 0
+bash-n: 0
+--- stdout
+|one two
+|parent status=0
+
+=== 1: command sub with inherit_errexit only
+status: 0
+bash-n: 0
+--- stdout
+|zero
+|one
+|parent status=0
+
+=== 2: strict_errexit and assignment builtins (local, export, readonly ...)
+status: 0
+bash-n: 0
+--- stdout
+|x=hi
+|---
+--- stderr
+|bash: line 2: shopt: strict_errexit: invalid shell option name
+
+=== 3: strict_errexit and command sub in export / readonly
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+|status=2
+|status=2
+--- stderr
+|<sh>: line 0: strict_errexit: invalid shell option name
+|<sh>: line 0: strict_errexit: invalid shell option name
+|<sh>: line 0: strict_errexit: invalid shell option name
+
+=== 4: strict_errexit disallows pipeline
+status: 0
+bash-n: 0
+--- stdout
+|1
+|one
+--- stderr
+|bash: line 2: shopt: strict_errexit: invalid shell option name
+
+=== 5: strict_errexit allows singleton pipeline
+status: 0
+bash-n: 0
+--- stdout
+|yes
+--- stderr
+|bash: line 2: shopt: strict_errexit: invalid shell option name
+
+=== 6: strict_errexit with && || !
+status: 0
+bash-n: 0
+--- stdout
+|A
+|B
+|C
+--- stderr
+|bash: line 2: shopt: strict_errexit: invalid shell option name
+
+=== 7: strict_errexit detects proc in && || !
+status: 0
+bash-n: 0
+--- stdout
+|failing
+|should not get here
+|failing
+|should not get here
+--- stderr
+|bash: line 2: shopt: strict_errexit: invalid shell option name
+
+=== 8: strict_errexit without errexit proc
+status: 0
+bash-n: 0
+--- stdout
+|myproc
+|myproc
+--- stderr
+|bash: line 6: shopt: strict_errexit: invalid shell option name
+
+=== 9: strict_errexit without errexit proc / command sub
+status: 0
+bash-n: 0
+--- stdout
+|before
+|x=
+|ok
+--- stderr
+|bash: line 1: shopt: strict_errexit: invalid shell option name
+
+=== 10: strict_errexit and errexit disabled
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 3: shopt: parse_brace: invalid shell option name
+|bash: line 3: shopt: strict_errexit: invalid shell option name
+|bash: line 13: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]
+--- bash-n stderr
+|bash: line 15: syntax error near unexpected token `}'
+|bash: line 15: `}'
+
+=== 11: command sub with command_sub_errexit only
+status: 0
+bash-n: 0
+--- stdout
+|zero
+|one two
+|parent status=0
+--- stderr
+|bash: line 2: shopt: command_sub_errexit: invalid shell option name
+
+=== 12: command_sub_errexit stops at first error
+status: 127
+bash-n: 2
+--- stderr
+|bash: line 4: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]
+|bash: line 8: try: command not found
+--- bash-n stderr
+|bash: line 10: syntax error near unexpected token `}'
+|bash: line 10: `}'
+
+=== 13: command sub with inherit_errexit and command_sub_errexit
+status: 0
+bash-n: 0
+--- stdout
+|zero
+|one
+|parent status=0
+--- stderr
+|bash: line 4: shopt: command_sub_errexit: invalid shell option name
+
+=== 14: command sub: last command fails but keeps going and exit code is 0
+status: 0
+bash-n: 0
+--- stdout
+|one
+|status=0
+
+=== 15: global assignment with command sub: middle command fails
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+
+=== 16: global assignment with command sub: last command fails and it aborts
+status: 1
+bash-n: 0
+
+=== 17: local: middle command fails and keeps going
+status: 0
+bash-n: 0
+--- stdout
+|good
+|status=0
+|one two
+
+=== 18: local: last command fails and also keeps going
+status: 0
+bash-n: 0
+--- stdout
+|good
+|status=0
+|one
+
+=== 19: local and inherit_errexit / command_sub_errexit
+status: 0
+bash-n: 0
+--- stdout
+|good
+|status=0
+|one
+--- stderr
+|bash: line 3: shopt: command_sub_errexit: invalid shell option name
+
+=== 20: global assignment when last status is failure
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 21: strict_errexit prevents errexit from being disabled in function
+status: 0
+bash-n: 0
+--- stdout
+|fun
+|builtin ok
+|external ok
+|fun
+--- stderr
+|bash: line 6: shopt: strict_errexit: invalid shell option name
+
+=== 22: strict_errexit prevents errexit from being disabled in brace group
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|bar
+|foo
+|bar
+--- stderr
+|bash: line 4: shopt: strict_errexit: invalid shell option name
+
+=== 23: strict_errexit prevents errexit from being disabled in subshell
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|bar
+|foo
+|bar
+--- stderr
+|bash: line 6: shopt: strict_errexit: invalid shell option name
+
+=== 24: strict_errexit and ! && || if while until
+status: 0
+bash-n: 0
+--- stdout
+|fun
+|should not get here
+|bang=0
+|--
+|fun
+|or=0
+|--
+|fun
+|and=0
+|--
+|fun
+|if=0
+|--
+|fun
+|while
+|while=0
+|--
+|fun
+|until=0
+|--
+--- stderr
+|<sh>: line 2: shopt: strict_errexit: invalid shell option name
+|<sh>: line 2: shopt: strict_errexit: invalid shell option name
+|<sh>: line 2: shopt: strict_errexit: invalid shell option name
+|<sh>: line 2: shopt: strict_errexit: invalid shell option name
+|<sh>: line 2: shopt: strict_errexit: invalid shell option name
+|<sh>: line 2: shopt: strict_errexit: invalid shell option name
+
+=== 25: if pipeline doesn't fail fatally
+status: 0
+bash-n: 0
+--- stdout
+|done
+--- stderr
+|rmdir: failed to remove '<case>/_tmp': No such file or directory
+|ls: cannot access '/nonexistent': No such file or directory
+
+=== 26: errexit is silent (verbose_errexit for Oils)
+status: 1
+bash-n: 0
+
+=== 27: command sub errexit preserves exit code
+status: 0
+bash-n: 0
+--- stdout
+|before
+|
+|after
+--- stderr
+|bash: line 2: shopt: command_sub_errexit: invalid shell option name
+
+=== 28: What's in strict:all?
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|should not get here
+--- stderr
+|bash: line 2: shopt: strict:all: invalid shell option name
+|date: invalid date ‘%x’
+
+=== 29: command_sub_errexit causes local d=$(date %x) to fail
+status: 0
+bash-n: 0
+--- stdout
+|hi
+--- stderr
+|bash: line 3: shopt: command_sub_errexit: invalid shell option name
+|date: invalid date ‘%x’
+
+=== 30: command_sub_errexit and command sub in array
+status: 0
+bash-n: 0
+--- stdout
+|['one', '', 'two']
+--- stderr
+|bash: line 5: shopt: command_sub_errexit: invalid shell option name
+|date: invalid date ‘%x’
+
+=== 31: OLD: command sub in conditional, with inherit_errexit
+status: 0
+bash-n: 0
+--- stdout
+|1 2
+|A
+|done
+
+=== 32: OLD: command sub in redirect in conditional
+status: 0
+bash-n: 0
+--- stdout
+|2
+|tmp_contents
+--- file tmp
+|tmp_contents
+
+=== 33: Regression
+status: 2
+bash-n: 2
+--- stdout
+|hi
+--- stderr
+|bash: line 3: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]
+|bash: line 5: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]
+|bash: line 7: syntax error near unexpected token `}'
+|bash: line 7: `}'
+--- bash-n stderr
+|bash: line 7: syntax error near unexpected token `}'
+|bash: line 7: `}'
+
+=== 34: ShAssignment used as conditional
+status: 0
+bash-n: 0
+--- stdout
+|yes
+|yes
+|yes
+--- stderr
+|bash: line 33: shopt: strict_errexit: invalid shell option name

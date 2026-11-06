@@ -1,0 +1,205 @@
+# Goldens for tests/oils/spec/toysh-posix.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Fatal error
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: a: bc
+
+=== 1: setting readonly var (bash is only one where it's non-fatal)
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 2: abc: readonly variable
+
+=== 2: readonly with temp binding
+status: 0
+bash-n: 0
+--- stdout
+|one
+|status=0
+|hello
+--- stderr
+|bash: line 2: abc: readonly variable
+|bash: line 5: /does/not/exist: No such file or directory
+
+=== 3: Failed redirect in assignment, vs. export
+status: 0
+bash-n: 0
+--- stdout
+|abc=def
+|abc=def
+--- stderr
+|bash: line 1: /does/not/exist1: No such file or directory
+|bash: line 4: /does/not/exist2: No such file or directory
+
+=== 4: Evaluation order of redirect and ${undef?error}
+status: 0
+bash-n: 0
+--- stderr
+|<sh>: line 1: x: bc
+|<sh>: line 1: a: bc
+
+=== 5: Function def in pipeline
+status: 0
+bash-n: 0
+--- stdout
+|ha
+
+=== 6: dynamic glob - http://landley.net/notes.html#08-05-2020
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|**.?z
+--- file foo
+
+=== 7: no shebang
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|hello
+|hello 123
+--- file snork
+|echo hello $BLAH
+
+=== 8: IFS
+status: 0
+bash-n: 0
+--- stdout
+|agd
+|{ ,y,z="${ ,y,z"}
+
+=== 9: shift is fatal at top level?
+status: 0
+bash-n: 0
+--- stdout
+|hello
+
+=== 10: var and func - http://landley.net/notes.html#19-03-2020
+status: 0
+bash-n: 0
+--- stdout
+|42
+|hello
+
+=== 11: IFS - http://landley.net/notes.html#05-03-2020
+status: 0
+bash-n: 0
+--- stdout
+|=one=
+|=abc=
+|=d f=
+|=ghi=
+|---
+|=one=
+|==
+|=two=
+
+=== 12: IFS=x and '' and unquoted $@ - reduction of case above - copied into spec/word-split
+status: 0
+bash-n: 0
+--- stdout
+|['one', '', 'two']
+|-one-
+|--
+|-two-
+--- stderr
+|bash: line 1: setopt: command not found
+
+=== 13: for loop parsing - http://landley.net/notes.html#04-03-2020
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|three
+|0
+|cannot-parse
+--- stderr
+|<sh>: -c: line 1: syntax error near unexpected token `in'
+|<sh>: -c: line 1: `for i; in one two three; do echo $i; done'
+
+=== 14: Parsing $(( ))
+status: 0
+bash-n: 0
+--- stdout
+|fail
+--- stderr
+|<sh>: line 1: echo hello: arithmetic syntax error in expression (error token is "hello")
+
+=== 15: IFS - http://landley.net/notes.html#15-02-2020 (TODO: osh)
+status: 0
+bash-n: 0
+--- stdout
+|==
+|=abc=
+|==
+|
+|==
+|=abc=
+|=def=
+|==
+
+=== 16: IFS 2 - copied into spec/word-split
+status: 0
+bash-n: 0
+--- stdout
+|=x=
+|=abc=
+|=def=
+|==
+
+=== 17: IFS 3
+status: 0
+bash-n: 0
+--- stdout
+|one two  three
+
+=== 18: IFS 4
+status: 0
+bash-n: 0
+--- stdout
+|/ /
+|--
+|
+|/x/
+|-=-
+|-=-
+--- stderr
+|bash: line 1: setopt: command not found
+
+=== 19: IFS 5
+status: 0
+bash-n: 0
+--- stdout
+|==
+
+=== 20: Can't parse extra }
+status: 2
+bash-n: 0
+--- stderr
+|123: -c: line 1: syntax error near unexpected token `}'
+|123: -c: line 1: `for i in a"$@"b;do echo =$i=;done;}'
+
+=== 21: Command Sub Syntax Error
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `)'
+|bash: line 1: `echo $(if true)'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `)'
+|bash: line 1: `echo $(if true)'
+
+=== 22: Pipeline - http://landley.net/notes-2019.html#16-12-2019
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|-@hello@-

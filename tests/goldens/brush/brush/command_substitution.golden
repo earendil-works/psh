@@ -1,0 +1,122 @@
+# Goldens for tests/brush/brush-shell/tests/cases/brush/command_substitution.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Modern and backtick forms
+status: 0
+bash-n: 0
+--- stdout
+|modern legacy
+
+=== 1: Trailing newlines are stripped, inner ones kept
+status: 0
+bash-n: 0
+--- stdout
+|[a
+|
+|b]
+|[abc]
+|[] 0
+
+=== 2: Nested substitutions
+status: 0
+bash-n: 0
+--- stdout
+|outer inner deepest
+
+=== 3: Exit status of a substitution
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|status: 7
+|status: 0
+
+=== 4: Assignments inside don't leak out
+status: 0
+bash-n: 0
+--- stdout
+|v=1 out=2
+
+=== 5: Functions and loops inside
+status: 0
+bash-n: 0
+--- stdout
+|1 2 3
+|1
+|2
+|3
+
+=== 6: Captures a pipeline's output
+status: 0
+bash-n: 0
+--- stdout
+|ba
+
+=== 7: Large output
+status: 0
+bash-n: 0
+--- stdout
+|109889
+|line 0 0
+|01234567890123456789
+
+=== 8: stderr is captured only when redirected
+status: 0
+bash-n: 0
+--- stdout
+|visible
+|captured
+
+=== 9: Word splitting of results
+status: 0
+bash-n: 0
+--- stdout
+|3
+|1
+
+=== 10: Substitutions in arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|42
+
+=== 11: Quotes and dollars inside
+status: 0
+bash-n: 0
+--- stdout
+|pre-mid "quoted" $notvar-post
+
+=== 12: Reading a file
+status: 0
+bash-n: 0
+--- stdout
+|first line
+|second line
+|<first line>
+|<second line>
+
+=== 13: Here-string inside a substitution
+status: 0
+bash-n: 0
+--- stdout
+|21
+
+=== 14: Many substitutions in a loop
+status: 0
+bash-n: 0
+--- stdout
+|200 123456789012
+
+=== 15: Recursion through substitutions
+status: 0
+bash-n: 0
+--- stdout
+|144
+
+=== 16: Builtin output
+status: 0
+bash-n: 0
+--- stdout
+|builtin
+|keyword

@@ -1,0 +1,11 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/true_false.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: true and false ignore all args
+status: 0
+bash-n: 0
+--- stdout
+|builtin false --help => 1
+|builtin true --help => 0
+|builtin true s87tien5 => 0

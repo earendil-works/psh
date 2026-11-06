@@ -1,0 +1,98 @@
+# Goldens for tests/oils/spec/array-compat.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Assignment Causes Array Decay
+status: 0
+bash-n: 0
+--- stdout
+|['[x', 'y', 'z]']
+|['[x y z]']
+
+=== 1: Array Decay with IFS
+status: 0
+bash-n: 0
+--- stdout
+|['[x y z]']
+
+=== 2: User arrays decay
+status: 0
+bash-n: 0
+--- stdout
+|['x', 'y', 'z']
+|['x y z']
+|['x', 'YYY', 'z']
+
+=== 3: strict_array: $array is not valid in OSH, is ${array[0]} in ksh/bash
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|bash: line 1: shopt: strict_array: invalid shell option name
+
+=== 4: strict_array: ${array} is not valid in OSH, is ${array[0]} in ksh/bash
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|bash: line 1: shopt: strict_array: invalid shell option name
+
+=== 5: Assign to array index without initialization
+status: 0
+bash-n: 0
+--- stdout
+|5 6 2
+
+=== 6: a[40] grows array
+status: 0
+bash-n: 0
+--- stdout
+|1 5 3 20 30 5
+
+=== 7: array decays to string when comparing with [[ a = b ]]
+status: 0
+bash-n: 0
+--- stdout
+|2 7
+|EQUAL
+
+=== 8: ++ on a whole array increments the first element (disallowed with strict_array)
+status: 0
+bash-n: 0
+--- stdout
+|2 10
+--- stderr
+|bash: line 1: shopt: strict_array: invalid shell option name
+
+=== 9: Apply vectorized operations on ${a[*]}
+status: 0
+bash-n: 0
+--- stdout
+|['x- y-y z-']
+
+=== 10: value.BashArray internal representation - Indexed
+status: 0
+bash-n: 0
+--- stdout
+|declare -a z=()
+|declare -a z=([0]="b" [1]="c")
+|declare -a z=([0]="b" [1]="c" [5]="d")
+|declare -a z=([0]="b" [1]="ZZZ" [5]="d")
+|declare -a z=([0]="b" [1]="ZZZ" [5]="d" [6]="f" [7]="g")
+|declare -a z=([0]="b-mystr" [1]="ZZZ" [5]="d" [6]="f" [7]="g")
+|declare -a z=([0]="b-mystr" [1]="ZZZ-append" [5]="d" [6]="f" [7]="g")
+|['keys', '0', '1', '5', '6', '7']
+|['values', 'b-mystr', 'ZZZ-append', 'd', 'f', 'g']
+|status=1
+--- stderr
+|bash: line 27: declare: z: cannot convert indexed to associative array
+
+=== 11: value.BashArray internal representation - Assoc (ordering is a problem)
+status: 0
+bash-n: 0
+--- stdout
+|declare -A A=([k]="v" )
+|['keys', 'k']
+|['values', 'v']

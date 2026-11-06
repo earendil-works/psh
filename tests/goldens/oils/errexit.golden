@@ -1,0 +1,280 @@
+# Goldens for tests/oils/spec/errexit.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: errexit aborts early
+status: 1
+bash-n: 0
+
+=== 1: errexit for nonexistent command
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 2: nonexistent__ZZ: command not found
+
+=== 2: errexit aborts early on pipeline
+status: 1
+bash-n: 0
+
+=== 3: errexit with { }
+status: 1
+bash-n: 0
+--- stdout
+|one
+
+=== 4: errexit with if and { }
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|three
+|four
+
+=== 5: errexit with ||
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 6: errexit with &&
+status: 1
+bash-n: 0
+--- stdout
+|ok
+
+=== 7: errexit test && -- from gen-module-init
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 8: errexit test && and fail
+status: 1
+bash-n: 0
+
+=== 9: More && ||
+status: 0
+bash-n: 0
+--- stdout
+|group
+|status=1
+|
+|subshell
+|status=42
+|
+|status=1
+
+=== 10: errexit and loop
+status: 1
+bash-n: 0
+--- stdout
+|hi 2
+
+=== 11: errexit and brace group { }
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 12: errexit and time { }
+status: 1
+bash-n: 0
+--- stderr
+|
+|real	0m0.000s
+|user	0m0.000s
+|sys	0m0.000s
+
+=== 13: errexit with !
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|three
+
+=== 14: errexit with ! and ;
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|three
+
+=== 15: errexit with while/until
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 16: errexit with (( ))
+status: 1
+bash-n: 0
+
+=== 17: errexit with subshell
+status: 1
+bash-n: 0
+--- stdout
+|one
+
+=== 18: set -o errexit while it's being ignored (moot with strict_errexit)
+status: 1
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|4
+|5
+|6
+
+=== 19: set +o errexit while it's being ignored (moot with strict_errexit)
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|4
+|5
+|6
+|7
+
+=== 20: set +o errexit with 2 levels of ignored
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|6
+|7
+
+=== 21: setting errexit in a subshell works but doesn't affect parent shell
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|5
+|6
+
+=== 22: set errexit while it's ignored in a subshell (moot with strict_errexit)
+status: 1
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|4
+|5
+|6
+
+=== 23: shopt -s strict:all || true while errexit is on
+status: 1
+bash-n: 0
+--- stdout
+|one
+--- stderr
+|bash: line 2: shopt: strict:all: invalid shell option name
+
+=== 24: errexit double guard
+status: 1
+bash-n: 0
+--- stdout
+|true
+
+=== 25: background processes respect errexit
+status: 1
+bash-n: 0
+--- stdout
+|one
+
+=== 26: pipeline process respects errexit
+status: 1
+bash-n: 0
+--- stdout
+|one
+|[three]
+
+=== 27: simple command / assign - redir failure DOES respect errexit
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+|status=1
+--- stderr
+|<sh>: line 3: /: Is a directory
+|<sh>: line 3: /: Is a directory
+|<sh>: line 3: /: Is a directory
+
+=== 28: simple command that's an alias - redir failure checked
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|<sh>: line 6: /: Is a directory
+
+=== 29: bash atoms [[ (( - redir failure checked
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|<sh>: line 3: /: Is a directory
+|<sh>: line 3: /: Is a directory
+
+=== 30: brace group - redir failure checked
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: not_exist.txt: No such file or directory
+
+=== 31: while loop - redirect failure checked
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 5: not_exist.txt: No such file or directory
+
+=== 32: errexit and compound command with redirect, ending with && (regression)
+status: 1
+bash-n: 0
+--- stdout
+|while found=1
+|for status=1
+|brace status=1
+|if status=1
+|case status=1
+|one
+
+=== 33: set -e enabled in function (regression)
+status: 0
+bash-n: 0
+--- stdout
+|should be executed
+|should be executed
+
+=== 34: set -e in function #2
+status: 0
+bash-n: 0
+--- stdout
+|should be executed
+|should be executed
+
+=== 35: Command sub exit code is lost
+status: 0
+bash-n: 0
+--- stdout
+|ft
+|status=0
+|f
+|status=0
+|ft
+|status=0
+--- stderr
+|date: invalid date ‘%x’

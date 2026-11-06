@@ -1,0 +1,15 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/options/default.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Default options
+status: 0
+bash-n: 0
+--- stdout
+|Default options: hBs
+
+=== 1: Default options (-c)
+status: 0
+bash-n: 0
+--- stdout
+|Default options: hBc

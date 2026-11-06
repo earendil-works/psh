@@ -1,0 +1,15 @@
+# Goldens for tests/oils/spec/let.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: let
+status: 0
+bash-n: 0
+--- stdout
+|1 3 9 9
+
+=== 1: let with ()
+status: 0
+bash-n: 0
+--- stdout
+|1 3 9

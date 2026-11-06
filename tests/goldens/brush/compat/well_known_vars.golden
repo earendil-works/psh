@@ -1,0 +1,318 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/well_known_vars.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic defaulted PATH var
+status: 0
+bash-n: 0
+--- stdout
+|PATH is set and non-empty
+
+=== 1: Basic variables
+status: 0
+bash-n: 0
+--- stdout
+|declare -- BASH
+|declare -r BASHOPTS
+|declare -i BASHPID
+|declare -A BASH_ALIASES
+|declare -a BASH_ARGC
+|declare -a BASH_ARGV
+|declare -- BASH_ARGV0
+|declare -A BASH_CMDS
+|declare -- BASH_COMMAND
+|declare -a BASH_LINENO
+|declare -- BASH_LOADABLES_PATH
+|declare -- BASH_MONOSECONDS
+|declare -a BASH_SOURCE
+|declare -- BASH_SUBSHELL
+|declare -ar BASH_VERSINFO
+|declare -- BASH_VERSION
+|declare -- COMP_WORDBREAKS
+|declare -a DIRSTACK
+|declare -- EPOCHREALTIME
+|declare -- EPOCHSECONDS
+|declare -ir EUID
+|declare -a FUNCNAME
+|declare -a GROUPS
+|declare -i HISTCMD
+|declare -x HOME
+|declare -- HOSTNAME
+|declare -- HOSTTYPE
+|declare -- IFS
+|declare -x LC_ALL
+|declare -- LINENO
+|declare -x LOGNAME
+|declare -- MACHTYPE
+|declare -x OLDPWD
+|declare -- OPTERR
+|declare -i OPTIND
+|declare -- OSTYPE
+|declare -x PATH
+|declare -ir PPID
+|declare -- PS4
+|declare -x PWD
+|declare -i RANDOM
+|declare -- SECONDS
+|declare -- SHELL
+|declare -r SHELLOPTS
+|declare -x SHLVL
+|declare -i SRANDOM
+|declare -- TERM
+|declare -x TZ
+|declare -ir UID
+|declare -x USER
+|declare -- _
+
+=== 2: Static well-known variables
+status: 0
+bash-n: 0
+--- stdout
+|EUID: 1000
+|UID: 1000
+|BASHPID == \$$:  0
+|BASH_ARGV0 == $0:  0
+|MACHTYPE == ${BASH_VERSINFO[5]:  0
+
+=== 3: OSTYPE pattern match for current platform
+status: 0
+bash-n: 0
+--- stdout
+|prefix=linux
+
+=== 4: dollar-_
+status: 0
+bash-n: 0
+--- stdout
+|$_ matches $0 on start
+|$_ after first echo command: last
+|
+|$_ after second echo command: echo
+|Spawning child process...
+|_=/usr/bin/env
+|$_ after child process exited: Spawning child process...
+
+=== 5: BASH_ALIASES
+status: 0
+bash-n: 0
+--- stdout
+|Initial BASH_ALIASES: 
+|Updated BASH_ALIASES:  y
+|Final BASH_ALIASES: 
+
+=== 6: BASHOPTS
+status: 0
+bash-n: 0
+--- stdout
+|BASHOPTS: checkwinsize:cmdhist:complete_fullquote:extquote:force_fignore:globasciiranges:globskipdots:hostcomplete:interactive_comments:patsub_replacement:progcomp:promptvars:sourcepath
+
+=== 7: BASH_SOURCE
+status: 0
+bash-n: 0
+--- stdout
+|Input entry
+|declare -a BASH_SOURCE=()
+|In function: $1: 4
+|declare -a BASH_SOURCE=([0]="bash")
+|In function: $1: 3
+|declare -a BASH_SOURCE=([0]="bash" [1]="bash")
+|In function: $1: 2
+|declare -a BASH_SOURCE=([0]="bash" [1]="bash" [2]="bash")
+|In function: $1: 1
+|declare -a BASH_SOURCE=([0]="bash" [1]="bash" [2]="bash" [3]="bash")
+|In function: $1: 0
+|declare -a BASH_SOURCE=([0]="bash" [1]="bash" [2]="bash" [3]="bash" [4]="bash")
+|Input exit
+|declare -a BASH_SOURCE=()
+
+=== 8: FUNCNAME
+status: 0
+bash-n: 0
+--- stdout
+|Input entry
+|declare -a FUNCNAME
+|In function: $1: 4
+|declare -a FUNCNAME=([0]="myfunc")
+|In function: $1: 3
+|declare -a FUNCNAME=([0]="myfunc" [1]="myfunc")
+|In function: $1: 2
+|declare -a FUNCNAME=([0]="myfunc" [1]="myfunc" [2]="myfunc")
+|In function: $1: 1
+|declare -a FUNCNAME=([0]="myfunc" [1]="myfunc" [2]="myfunc" [3]="myfunc")
+|In function: $1: 0
+|declare -a FUNCNAME=([0]="myfunc" [1]="myfunc" [2]="myfunc" [3]="myfunc" [4]="myfunc")
+|Input exit
+|declare -a FUNCNAME
+
+=== 9: BASH_ARGV/BASH_ARGC - sourced script without arguments
+status: 0
+bash-n: 0
+--- stdout
+|declare -a BASH_ARGV=([0]="./argv.sh")
+|declare -a BASH_ARGC=([0]="1" [1]="0")
+
+=== 10: BASH_ARGV/BASH_ARGC - nested sourced scripts without arguments
+status: 0
+bash-n: 0
+--- stdout
+|declare -a BASH_ARGV=([0]="./inner.sh" [1]="./outer.sh")
+|declare -a BASH_ARGC=([0]="1" [1]="1" [2]="0")
+
+=== 11: BASH_ARGV/BASH_ARGC - empty inside function without extdebug
+status: 0
+bash-n: 0
+--- stdout
+|declare -a BASH_ARGV=()
+|declare -a BASH_ARGC=()
+
+=== 12: BASH_ARGV/BASH_ARGC - sourced script without arguments with extdebug
+status: 0
+bash-n: 0
+--- stdout
+|declare -a BASH_ARGV=([0]="./argv.sh")
+|declare -a BASH_ARGC=([0]="1" [1]="0")
+
+=== 13: BASH_SUBSHELL
+status: 0
+bash-n: 0
+--- stdout
+|Initial BASH_SUBSHELL: 0
+|Subshell BASH_SUBSHELL: 1
+|Nested subshell BASH_SUBSHELL: 2
+|Command substitution BASH_SUBSHELL: 1
+
+=== 14: BASH_SUBSHELL counts a subshell in a pipeline stage once
+status: 0
+bash-n: 0
+--- stdout
+|last stage: 1
+|first stage: 1
+|group stage: 1
+|substitution: 2
+
+=== 15: BASH_VERSINFO
+status: 0
+bash-n: 0
+--- stdout
+|len(BASH_VERSINFO):  6
+|Cleaned BASH_VERSINFO[0]: d
+|Cleaned BASH_VERSINFO[1]: d
+|Cleaned BASH_VERSINFO[2]: d
+|Cleaned BASH_VERSINFO[3]: d
+
+=== 16: BASH_VERSION
+status: 0
+bash-n: 0
+--- stdout
+|Cleaned BASH_VERSION: d.d.d(d)-release
+
+=== 17: COMP_WORDBREAKS
+status: 0
+bash-n: 0
+--- stdout
+|COMP_WORDBREAKS:  $'\n'
+|  $'\t'
+|  ' '
+|  '"'
+|  '&'
+|  '('
+|  ':'
+|  ';'
+|  '<'
+|  '='
+|  '>'
+|  '@'
+|  '|'
+|  \'
+
+=== 18: EPOCHSECONDS
+status: 0
+bash-n: 0
+--- stdout
+|EPOCHSECONDS is a number
+|EPOCHSECONDS is still a number
+|Time is moving forward
+|Time is moving forward within the shell
+
+=== 19: GROUPS
+status: 0
+bash-n: 0
+--- stdout
+|1000
+
+=== 20: LINENO
+status: 0
+bash-n: 0
+--- stdout
+|LINENO: 1
+|LINENO: 2
+|LINENO: 3
+
+=== 21: LINENO with multi-line input
+status: 0
+bash-n: 0
+--- stdout
+|LINENO: 2
+|LINENO: 2
+|LINENO: 2
+
+=== 22: RANDOM
+status: 0
+bash-n: 0
+--- stdout
+|Confirmed RANDOM at least isn't static
+|RANDOM value is within expected range
+|RANDOM value is within expected range
+
+=== 23: SHELL
+status: 0
+bash-n: 0
+--- stdout
+|declare -- SHELL="/bin/sh"
+|SHELL: /bin/sh
+
+=== 24: SHELLOPTS
+status: 0
+bash-n: 0
+--- stdout
+|SHELLOPTS: braceexpand:hashall:interactive-comments
+
+=== 25: SHLVL
+status: 0
+bash-n: 0
+--- stdout
+|SHLVL: 1
+|bash SHLVL: 2
+|nested SHLVL: 2
+
+=== 26: SRANDOM
+status: 0
+bash-n: 0
+--- stdout
+|Confirmed SRANDOM at least isn't static
+
+=== 27: EPOCHREALTIME has fixed six-digit microsecond precision
+status: 0
+bash-n: 0
+--- stdout
+|done
+
+=== 28: Appending to SECONDS adds to its value
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+
+=== 29: BASH_SOURCE, BASH_LINENO, and BASH_ARGV can't be unset
+status: 0
+bash-n: 0
+--- stdout
+|BASH_SOURCE: 1
+|BASH_LINENO: 1
+|BASH_ARGV: 1
+|FUNCNAME: 0
+--- stderr
+|bash: line 1: unset: BASH_SOURCE: cannot unset
+|bash: line 2: unset: BASH_LINENO: cannot unset
+|bash: line 3: unset: BASH_ARGV: cannot unset

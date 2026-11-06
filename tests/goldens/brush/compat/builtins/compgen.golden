@@ -1,0 +1,1651 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/compgen.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: compgen -A alias
+status: 0
+bash-n: 0
+--- stdout
+|myalias
+|myalias2
+
+=== 1: compgen -A alias is sorted by name
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+|d
+|e
+|f
+
+=== 2: compgen -A binding
+status: 0
+bash-n: 0
+--- stdout
+|tab-insert
+
+=== 3: compgen -A builtin
+status: 0
+bash-n: 0
+--- stdout
+|cd
+
+=== 4: compgen lists builtins sorted by name
+status: 0
+bash-n: 0
+--- stdout
+|caller
+|cd
+|command
+|compgen
+|complete
+|compopt
+|continue
+|---
+|echo
+|enable
+|eval
+|exec
+|exit
+|export
+
+=== 5: compgen lists enabled and disabled builtins sorted by name
+status: 0
+bash-n: 0
+--- stdout
+|cd
+|command
+|echo
+|---
+|caller
+|compgen
+|complete
+|compopt
+|continue
+|---
+|enable
+|eval
+|exec
+|exit
+|export
+
+=== 6: compgen -A directory
+status: 0
+bash-n: 0
+--- stdout
+|somedir
+|somedir2
+--- dir somedir
+--- dir somedir2
+--- file somefile
+
+=== 7: compgen -A file
+status: 0
+bash-n: 0
+--- stdout
+|somedir
+|somedir2
+|somefile
+--- dir somedir
+--- dir somedir2
+--- file somefile
+
+=== 8: compgen -A file with dot files
+status: 0
+bash-n: 0
+--- stdout
+|[without dotglob]
+|.dir
+|.file
+|[with dotglob]
+|.dir
+|.file
+--- dir .dir
+--- file .file
+
+=== 9: compgen -A function
+status: 0
+bash-n: 0
+--- stdout
+|myfunc
+|myfunc2
+
+=== 10: compgen -A function is sorted by name
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+|d
+|e
+|f
+
+=== 11: compgen -A function only returns functions matching the prefix
+status: 0
+bash-n: 0
+--- stdout
+|zzfa
+|zzfb
+|[0]
+|[1]
+
+=== 12: compgen -A command is sorted by name
+status: 0
+bash-n: 0
+--- stdout
+|zzfa
+|zzfc
+|zzfe
+
+=== 13: compgen -A command only returns functions matching the prefix
+status: 0
+bash-n: 0
+--- stdout
+|zzfa
+|zzfb
+
+=== 14: compgen -A keyword
+status: 0
+bash-n: 0
+--- stdout
+|esac
+
+=== 15: compgen -A variable
+status: 0
+bash-n: 0
+--- stdout
+|myvar
+|myvar2
+
+=== 16: compgen -W
+status: 0
+bash-n: 0
+--- stdout
+|1. Basic compgen -W
+|three
+|two
+|2. compgen -W with expansion
+|value
+
+=== 17: compgen -W splits before expanding each word
+status: 0
+bash-n: 0
+--- stdout
+|[brace words after default splitting]
+|a
+|b
+|c
+|[IFS separator breaks brace syntax]
+|x{1
+|2}
+|[empty list fields are removed]
+|a
+|b
+
+=== 18: compgen -W does not pathname-expand
+status: 0
+bash-n: 0
+--- stdout
+|[glob pattern should be literal]
+|*.txt
+|[question mark glob should be literal]
+|?.log
+--- file bar.txt
+--- file baz.log
+--- file foo.txt
+
+=== 19: compgen -W with unsorted values
+status: 0
+bash-n: 0
+--- stdout
+|c
+|b
+|d
+|a
+
+=== 20: compgen -W with options
+status: 0
+bash-n: 0
+--- stdout
+|--abc
+
+=== 21: compgen with no matches
+status: 1
+bash-n: 0
+
+=== 22: compgen -f with tilde
+status: 0
+bash-n: 0
+--- stdout
+|HOME base: testhome
+|~ base: testhome
+|[0]
+|HOME
+|[1]
+|HOME/item1
+--- dir testhome
+--- file testhome/item1
+
+=== 23: compgen -f with quoted tilde
+status: 0
+bash-n: 0
+--- stdout
+|[0]
+|~/item1
+--- file item1
+
+=== 24: compgen -f with quoted var
+status: 0
+bash-n: 0
+--- stdout
+|[0]
+|$HOME/item1
+--- file item1
+
+=== 25: compgen -f with quoted + escaped var
+status: 0
+bash-n: 0
+--- stdout
+|[0]
+--- file item1
+
+=== 26: compgen with interesting hyphens
+status: 0
+bash-n: 0
+--- stdout
+|-beforethree-after
+|-beforetwo-after
+
+=== 27: compgen -X
+status: 0
+bash-n: 0
+--- stdout
+|[Take 1]
+|bar
+|[Take 2]
+|bar
+|[Take 3]
+|foo
+
+=== 28: compgen -X with a leading ! keeps only matches
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|fab
+|rc=0
+|rc=1
+
+=== 29: compgen -X with replacement
+status: 0
+bash-n: 0
+--- stdout
+|[Take 1]
+|something
+
+=== 30: compgen -X with extglob
+status: 1
+bash-n: 0
+--- stdout
+|[Take 1]
+|README
+|[Take 2]
+|README
+|[Take 3]
+|[Take 4]
+|[Take 5]
+|README
+|[Take 6]
+|README
+|[Take 7]
+--- file README
+
+=== 31: compgen -o dirnames
+status: 0
+bash-n: 0
+--- stdout
+|[Take 1]
+|completion
+|[Take 2]
+|subdir
+|[Take 3]
+|completion
+|[Take 4]
+|cdir
+|cdir2
+|[Take 5]
+|cdir
+|cdir2
+|[Take 6]
+|cdir
+|cdir2
+|completion
+--- dir cdir
+--- dir cdir2
+--- file cfile
+--- dir subdir
+--- file subfile
+
+=== 32: compgen -o default
+status: 0
+bash-n: 0
+--- stdout
+|[Take 1]
+|completion
+|[Take 2]
+|subdir
+|subfile
+--- dir subdir
+--- file subfile
+
+=== 33: compgen -o bashdefault
+status: 0
+bash-n: 0
+--- stdout
+|[Take 1]
+|completion
+|[Take 2]
+--- dir subdir
+--- file subfile
+
+=== 34: compgen -o plusdirs
+status: 0
+bash-n: 0
+--- stdout
+|[Take 1]
+|cdir
+|completionsuffix
+--- dir cdir
+--- file cfile
+
+=== 35: compgen -A command
+status: 0
+bash-n: 0
+--- stdout
+|!
+|.
+|:
+|[
+|[
+|[
+|[[
+|]]
+|add-shell
+|add-shell
+|agetty
+|agetty
+|alias
+|apt
+|apt
+|apt-cache
+|apt-cache
+|apt-cdrom
+|apt-cdrom
+|apt-config
+|apt-config
+|apt-get
+|apt-get
+|apt-mark
+|apt-mark
+|arch
+|arch
+|argv.py
+|awk
+|awk
+|b2sum
+|b2sum
+|base32
+|base32
+|base64
+|base64
+|basename
+|basename
+|basenc
+|basenc
+|bash
+|bash
+|bash
+|bashbug
+|bashbug
+|bg
+|bind
+|blkdiscard
+|blkdiscard
+|blkid
+|blkid
+|blkzone
+|blkzone
+|blockdev
+|blockdev
+|break
+|builtin
+|builtins-exec-here-doc-helper.sh
+|caller
+|captoinfo
+|captoinfo
+|case
+|cat
+|cat
+|cd
+|chage
+|chage
+|chcon
+|chcon
+|chcpu
+|chcpu
+|chfn
+|chfn
+|chgpasswd
+|chgpasswd
+|chgrp
+|chgrp
+|chmem
+|chmem
+|chmod
+|chmod
+|choom
+|choom
+|chown
+|chown
+|chpasswd
+|chpasswd
+|chroot
+|chroot
+|chrt
+|chrt
+|chsh
+|chsh
+|cksum
+|cksum
+|clear
+|clear
+|clear_console
+|clear_console
+|cmp
+|cmp
+|comm
+|comm
+|command
+|compgen
+|complete
+|compopt
+|continue
+|coproc
+|cp
+|cp
+|csplit
+|csplit
+|cut
+|cut
+|dash
+|dash
+|date
+|date
+|dd
+|dd
+|deb-systemd-helper
+|deb-systemd-helper
+|deb-systemd-invoke
+|deb-systemd-invoke
+|debconf
+|debconf
+|debconf-apt-progress
+|debconf-apt-progress
+|debconf-communicate
+|debconf-communicate
+|debconf-copydb
+|debconf-copydb
+|debconf-escape
+|debconf-escape
+|debconf-set-selections
+|debconf-set-selections
+|debconf-show
+|debconf-show
+|declare
+|df
+|df
+|diff
+|diff
+|diff3
+|diff3
+|dir
+|dir
+|dircolors
+|dircolors
+|dirname
+|dirname
+|dirs
+|disown
+|dmesg
+|dmesg
+|dnsdomainname
+|dnsdomainname
+|do
+|domainname
+|domainname
+|done
+|dpkg
+|dpkg
+|dpkg-deb
+|dpkg-deb
+|dpkg-divert
+|dpkg-divert
+|dpkg-maintscript-helper
+|dpkg-maintscript-helper
+|dpkg-preconfigure
+|dpkg-preconfigure
+|dpkg-query
+|dpkg-query
+|dpkg-realpath
+|dpkg-realpath
+|dpkg-reconfigure
+|dpkg-reconfigure
+|dpkg-split
+|dpkg-split
+|dpkg-statoverride
+|dpkg-statoverride
+|dpkg-trigger
+|dpkg-trigger
+|du
+|du
+|echo
+|echo
+|echo
+|egrep
+|egrep
+|elif
+|else
+|enable
+|env
+|env
+|esac
+|eval
+|exec
+|exit
+|expand
+|expand
+|expiry
+|expiry
+|export
+|expr
+|expr
+|factor
+|factor
+|faillock
+|faillock
+|fallocate
+|fallocate
+|false
+|false
+|false
+|fc
+|fg
+|fgrep
+|fgrep
+|fi
+|find
+|find
+|findfs
+|findfs
+|findmnt
+|findmnt
+|flock
+|flock
+|fmt
+|fmt
+|fold
+|fold
+|foo=bar
+|for
+|free
+|free
+|fsck
+|fsck
+|fsfreeze
+|fsfreeze
+|fstab-decode
+|fstab-decode
+|fstrim
+|fstrim
+|function
+|gawk
+|gawk
+|gawkbug
+|gawkbug
+|getconf
+|getconf
+|getent
+|getent
+|getopt
+|getopt
+|getopts
+|getty
+|getty
+|gpasswd
+|gpasswd
+|grep
+|grep
+|groupadd
+|groupadd
+|groupdel
+|groupdel
+|groupmod
+|groupmod
+|groups
+|groups
+|grpck
+|grpck
+|grpconv
+|grpconv
+|grpunconv
+|grpunconv
+|gunzip
+|gunzip
+|gzexe
+|gzexe
+|gzip
+|gzip
+|hardlink
+|hardlink
+|hash
+|head
+|head
+|help
+|history
+|hostid
+|hostid
+|hostname
+|hostname
+|iconv
+|iconv
+|iconvconfig
+|iconvconfig
+|id
+|id
+|if
+|in
+|infocmp
+|infocmp
+|infotocap
+|infotocap
+|install
+|install
+|installkernel
+|installkernel
+|invoke-rc.d
+|invoke-rc.d
+|ionice
+|ionice
+|ipcmk
+|ipcmk
+|ipcrm
+|ipcrm
+|ipcs
+|ipcs
+|ischroot
+|ischroot
+|isosize
+|isosize
+|jobs
+|join
+|join
+|kill
+|kill
+|kill
+|killall5
+|killall5
+|ld.so
+|ld.so
+|ldattach
+|ldattach
+|ldconfig
+|ldconfig
+|ldd
+|ldd
+|let
+|link
+|link
+|linux32
+|linux32
+|linux64
+|linux64
+|ln
+|ln
+|local
+|locale
+|locale
+|locale-gen
+|locale-gen
+|localedef
+|localedef
+|logger
+|logger
+|login
+|login
+|logname
+|logname
+|logout
+|losetup
+|losetup
+|ls
+|ls
+|lsblk
+|lsblk
+|lscpu
+|lscpu
+|lsipc
+|lsipc
+|lslocks
+|lslocks
+|lslogins
+|lslogins
+|lsmem
+|lsmem
+|lsns
+|lsns
+|mapfile
+|mawk
+|mawk
+|mcookie
+|mcookie
+|md5sum
+|md5sum
+|mkdir
+|mkdir
+|mkfifo
+|mkfifo
+|mkfs
+|mkfs
+|mkhomedir_helper
+|mkhomedir_helper
+|mknod
+|mknod
+|mkswap
+|mkswap
+|mktemp
+|mktemp
+|more
+|more
+|mount
+|mount
+|mountpoint
+|mountpoint
+|mv
+|mv
+|namei
+|namei
+|nawk
+|nawk
+|newgrp
+|newgrp
+|newusers
+|newusers
+|nice
+|nice
+|nisdomainname
+|nisdomainname
+|nl
+|nl
+|nohup
+|nohup
+|nologin
+|nologin
+|nproc
+|nproc
+|nsenter
+|nsenter
+|numfmt
+|numfmt
+|od
+|od
+|pager
+|pager
+|pam-auth-update
+|pam-auth-update
+|pam_getenv
+|pam_getenv
+|pam_namespace_helper
+|pam_namespace_helper
+|pam_timestamp_check
+|pam_timestamp_check
+|partx
+|partx
+|passwd
+|passwd
+|paste
+|paste
+|pathchk
+|pathchk
+|perl
+|perl
+|perl5.40.1
+|perl5.40.1
+|pgrep
+|pgrep
+|pidof
+|pidof
+|pidwait
+|pidwait
+|pinky
+|pinky
+|pivot_root
+|pivot_root
+|pkill
+|pkill
+|pldd
+|pldd
+|pmap
+|pmap
+|policy-rc.d
+|policy-rc.d
+|popd
+|pr
+|pr
+|printenv
+|printenv
+|printenv.py
+|printf
+|printf
+|printf
+|prlimit
+|prlimit
+|ps
+|ps
+|ptx
+|ptx
+|pushd
+|pwck
+|pwck
+|pwconv
+|pwconv
+|pwd
+|pwd
+|pwd
+|pwdx
+|pwdx
+|pwhistory_helper
+|pwhistory_helper
+|pwunconv
+|pwunconv
+|rbash
+|rbash
+|read
+|read_from_fd.py
+|readarray
+|readlink
+|readlink
+|readonly
+|readprofile
+|readprofile
+|realpath
+|realpath
+|remove-shell
+|remove-shell
+|rename.ul
+|rename.ul
+|renice
+|renice
+|reset
+|reset
+|return
+|rev
+|rev
+|rgrep
+|rgrep
+|rm
+|rm
+|rmdir
+|rmdir
+|rmt
+|rmt
+|rmt-tar
+|rmt-tar
+|rtcwake
+|rtcwake
+|run-parts
+|run-parts
+|runcon
+|runcon
+|runuser
+|runuser
+|savelog
+|savelog
+|script
+|script
+|scriptlive
+|scriptlive
+|scriptreplay
+|scriptreplay
+|sdiff
+|sdiff
+|sed
+|sed
+|select
+|seq
+|seq
+|service
+|service
+|set
+|setarch
+|setarch
+|setpriv
+|setpriv
+|setsid
+|setsid
+|setterm
+|setterm
+|sg
+|sg
+|sh
+|sh
+|sha1sum
+|sha1sum
+|sha224sum
+|sha224sum
+|sha256sum
+|sha256sum
+|sha384sum
+|sha384sum
+|sha512sum
+|sha512sum
+|shadowconfig
+|shadowconfig
+|shift
+|shopt
+|show_fd_table.py
+|shred
+|shred
+|shuf
+|shuf
+|skill
+|skill
+|slabtop
+|slabtop
+|sleep
+|sleep
+|snice
+|snice
+|sort
+|sort
+|source
+|split
+|split
+|sqv
+|sqv
+|start-stop-daemon
+|start-stop-daemon
+|stat
+|stat
+|stdbuf
+|stdbuf
+|stdout_stderr.py
+|stty
+|stty
+|su
+|su
+|sulogin
+|sulogin
+|sum
+|sum
+|suspend
+|swaplabel
+|swaplabel
+|swapoff
+|swapoff
+|swapon
+|swapon
+|switch_root
+|switch_root
+|sync
+|sync
+|sysctl
+|sysctl
+|tabs
+|tabs
+|tac
+|tac
+|tail
+|tail
+|tar
+|tar
+|tarcat
+|tarcat
+|taskset
+|taskset
+|tee
+|tee
+|tempfile
+|tempfile
+|test
+|test
+|test
+|then
+|tic
+|tic
+|time
+|timeout
+|timeout
+|times
+|tload
+|tload
+|toe
+|toe
+|top
+|top
+|touch
+|touch
+|tput
+|tput
+|tr
+|tr
+|trap
+|true
+|true
+|true
+|truncate
+|truncate
+|tset
+|tset
+|tsort
+|tsort
+|tty
+|tty
+|type
+|typeset
+|tzselect
+|tzselect
+|uclampset
+|uclampset
+|ulimit
+|umask
+|umount
+|umount
+|unalias
+|uname
+|uname
+|uncompress
+|uncompress
+|unexpand
+|unexpand
+|uniq
+|uniq
+|unix_chkpwd
+|unix_chkpwd
+|unix_update
+|unix_update
+|unlink
+|unlink
+|unset
+|unshare
+|unshare
+|until
+|update-alternatives
+|update-alternatives
+|update-locale
+|update-locale
+|update-passwd
+|update-passwd
+|update-rc.d
+|update-rc.d
+|update-shells
+|update-shells
+|uptime
+|uptime
+|useradd
+|useradd
+|userdel
+|userdel
+|usermod
+|usermod
+|users
+|users
+|validlocale
+|validlocale
+|vdir
+|vdir
+|vigr
+|vigr
+|vipw
+|vipw
+|vmstat
+|vmstat
+|w
+|w
+|wait
+|wall
+|wall
+|watch
+|watch
+|wc
+|wc
+|wdctl
+|wdctl
+|whereis
+|whereis
+|which
+|which
+|which.debianutils
+|which.debianutils
+|while
+|who
+|who
+|whoami
+|whoami
+|wipefs
+|wipefs
+|xargs
+|xargs
+|yes
+|yes
+|ypdomainname
+|ypdomainname
+|zcat
+|zcat
+|zcmp
+|zcmp
+|zdiff
+|zdiff
+|zdump
+|zdump
+|zegrep
+|zegrep
+|zfgrep
+|zfgrep
+|zforce
+|zforce
+|zgrep
+|zgrep
+|zic
+|zic
+|zless
+|zless
+|zmore
+|zmore
+|znew
+|znew
+|zramctl
+|zramctl
+|{
+|}
+
+=== 36: compgen -A command in a constrained PATH
+status: 0
+bash-n: 0
+--- stdout
+|!
+|.
+|:
+|[
+|[[
+|]]
+|alias
+|bg
+|bind
+|break
+|builtin
+|caller
+|case
+|cd
+|command
+|compgen
+|complete
+|compopt
+|continue
+|coproc
+|declare
+|dirs
+|disown
+|do
+|done
+|echo
+|elif
+|else
+|enable
+|esac
+|eval
+|exec
+|exit
+|export
+|false
+|fc
+|fg
+|fi
+|for
+|function
+|getopts
+|hash
+|help
+|history
+|if
+|in
+|jobs
+|kill
+|let
+|local
+|logout
+|mapfile
+|popd
+|printf
+|pushd
+|pwd
+|read
+|readarray
+|readonly
+|return
+|select
+|set
+|shift
+|shopt
+|source
+|suspend
+|test
+|then
+|time
+|times
+|trap
+|true
+|type
+|typeset
+|ulimit
+|umask
+|unalias
+|unset
+|until
+|wait
+|while
+|{
+|}
+
+=== 37: compgen -A command builtins in a constrained PATH
+status: 0
+bash-n: 0
+--- stdout
+|cd
+
+=== 38: compgen -A command keywords in a constrained PATH
+status: 0
+bash-n: 0
+--- stdout
+|[
+|[[
+
+=== 39: compgen -A command function in a constrained PATH
+status: 0
+bash-n: 0
+--- stdout
+|myfunc
+|myfunc2
+
+=== 40: compgen -A command with executable symlink
+status: 1
+bash-n: 0
+--- stdout
+|[Valid]
+|link_valid
+|[Invalid]
+--- dir test-bin
+--- file test-bin/dummy_exe
+--- file test-bin/dummy_non_exe
+--- dir test-links
+--- link test-links/link_broken -> <case>/test-bin/dummy_non_exist
+--- link test-links/link_non_exec -> <case>/test-bin/dummy_non_exe
+--- link test-links/link_valid -> <case>/test-bin/dummy_exe
+--- link test-links/link_valid_rec -> <case>/test-links/link_vaild
+
+=== 41: compgen -A command includes aliases but not disabled builtins, in order
+status: 1
+bash-n: 0
+--- stdout
+|zzqa
+|zzqc
+|zzqb
+|zzqf
+|zzqx
+|[disabled]
+--- dir test-bin
+--- file test-bin/zzqx
+
+=== 42: compgen -k lists keywords in bash's order
+status: 0
+bash-n: 0
+--- stdout
+|if
+|then
+|else
+|elif
+|fi
+|case
+|esac
+|for
+|select
+|while
+|until
+|do
+|done
+|in
+|function
+|time
+|{
+|}
+|!
+|[[
+|]]
+|coproc
+
+=== 43: compgen -A command lists keywords in bash's order
+status: 0
+bash-n: 0
+--- stdout
+|do
+|done
+|fi
+|for
+|function
+
+=== 44: compgen -F ignores a function that asks for completion to restart
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+--- stderr
+|bash: line 2: compgen: warning: -F option may not work as you expect
+
+=== 45: compgen -F tells the function about an empty line
+status: 1
+bash-n: 0
+--- stdout
+|#=3 1=<compgen> 2=<xy> 3=<> LINE=<> POINT=<0>
+|WORDS=<> NWORDS=0 CWORD=<-1>
+--- stderr
+|bash: line 5: compgen: warning: -F option may not work as you expect
+
+=== 46: compgen -C tells the command about an empty line
+status: 0
+bash-n: 0
+--- stdout
+|<compgen>
+|<xy>
+|<>
+|LINE=<> POINT=<0> #=3
+--- stderr
+|bash: line 1: compgen: warning: -C option may not work as you expect
+|bash: line 4: compgen: warning: -C option may not work as you expect
+
+=== 47: compgen -F sets COMP_KEY and COMP_TYPE to 0
+status: 1
+bash-n: 0
+--- stdout
+|KEY=0 TYPE=0
+--- stderr
+|bash: line 2: compgen: warning: -F option may not work as you expect
+
+=== 48: compgen -C passes words with commas or braces intact
+status: 0
+bash-n: 0
+--- stdout
+|<a,b>
+|<{a,b}>
+--- stderr
+|bash: line 1: compgen: warning: -C option may not work as you expect
+|bash: line 2: compgen: warning: -C option may not work as you expect
+
+=== 49: compgen -F leaves no COMP_* variables set
+status: 0
+bash-n: 0
+--- stdout
+|[unset] [unset] [unset]
+
+=== 50: compgen -F leaves no COMP_* variables set, even ones set before or re-created
+status: 0
+bash-n: 0
+--- stdout
+|[unset] [unset] [unset]
+
+=== 51: compgen -F function's prefix assignment to a COMP_* variable is temporary
+status: 1
+bash-n: 0
+--- stdout
+|same
+|0
+
+=== 52: compgen -A helptopic includes keywords
+status: 0
+bash-n: 0
+--- stdout
+|while
+
+=== 53: compgen -V
+status: 0
+bash-n: 0
+--- stdout
+|rc=0
+|declare -a out=([0]="b")
+
+=== 54: compgen -W closes a quote left open at the end of the list
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|rc=0
+|foo bar
+|rc=0
+|foo bar
+|rc=0
+|a
+|b c
+|rc=0
+|foo
+|rc=0
+|fo
+|rc=0
+|foo\
+|rc=0
+
+=== 55: compgen -W with a $ before a quote
+status: 0
+bash-n: 0
+--- stdout
+|$'a
+|a$b
+|PIDa
+|PIDb
+|PIDPIDd
+|A
+|B
+
+=== 56: compgen -W with an expansion error
+status: 0
+bash-n: 0
+--- stdout
+|next1
+|next2
+--- stderr
+|bash: command substitution: line 3: unexpected EOF while looking for matching `)'
+|bash: command substitution: line 3: unexpected EOF while looking for matching `)'
+|bash: line 3: ${x c: bad substitution
+
+=== 57: compgen -W with an unset variable under set -u
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: nope: unbound variable
+
+=== 58: compgen -W with ${x?} on an unset variable
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: nope: boom
+
+=== 59: compgen -W with an unset variable under set -u, in a function
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: nope: unbound variable
+
+=== 60: compgen -W with an unset variable under set -u, before ||
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: nope: unbound variable
+
+=== 61: command compgen -W with ${x?} on an unset variable
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: nope: boom
+
+=== 62: compgen -W with an unset variable under set -u ends only its subshell
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|next
+--- stderr
+|bash: line 1: nope: unbound variable
+
+=== 63: compgen -A shopt lists names in order
+status: 0
+bash-n: 0
+--- stdout
+|cdable_vars
+|cdspell
+|checkhash
+|checkwinsize
+|cmdhist
+|execfail
+|expand_aliases
+|extdebug
+|extglob
+|extquote
+
+=== 64: compgen -A setopt lists names in order
+status: 0
+bash-n: 0
+--- stdout
+|allexport
+|braceexpand
+|emacs
+|errexit
+|errtrace
+|functrace
+|hashall
+|histexpand
+|history
+|ignoreeof
+
+=== 65: compgen takes the last of a repeated option argument, and repeated flags
+status: 0
+bash-n: 0
+--- stdout
+|c
+|d
+|bxd
+|xa
+|xb
+
+=== 66: compgen takes flags clustered and option arguments attached
+status: 0
+bash-n: 0
+--- stdout
+|ab
+|zz
+|while
+|whz
+
+=== 67: compgen takes each shorthand action flag
+status: 0
+bash-n: 0
+--- stdout
+|zyalias
+|zzalias
+|rc=0
+|echo
+|rc=0
+|zzdir
+|rc=0
+|ZZEXP
+|rc=0
+|zzdir
+|zzfile
+|function
+|rc=0
+|zzvar
+|rc=0
+|rc=1
+|zzfunc
+|rc=0
+|echo
+|rc=0
+|rc=1
+--- dir zzdir
+--- file zzfile
+
+=== 68: compgen rejects unknown options and names
+status: 0
+bash-n: 0
+--- stdout
+|compgen -x: rc=2
+|compgen -A bogus: rc=2
+|compgen -o bogus: rc=2
+|compgen -A: rc=2
+|compgen -o: rc=2
+|compgen -W: rc=2
+|compgen -X: rc=2
+
+=== 69: compgen ignores words after the first
+status: 0
+bash-n: 0
+--- stdout
+|ab
+|ac
+|rc=0
+|ab
+|ac
+|rc=0
+
+=== 70: compgen with no options succeeds
+status: 0
+bash-n: 0
+--- stdout
+|rc=0
+|rc=0
+|rc=0
+|rc=1
+
+=== 71: compgen -F and -C warn that they may not work as expected
+status: 0
+bash-n: 0
+--- stdout
+|compgen: warning: -F option may not work as you expect
+|a
+|compgen: warning: -C option may not work as you expect
+|b compgen  
+
+=== 72: compgen -A signal lists signals by number, with DEBUG, ERR, and RETURN last
+status: 0
+bash-n: 0
+--- stdout
+|EXIT
+|SIGHUP
+|SIGINT
+|SIGKILL
+|SIGTERM
+|DEBUG
+|ERR
+|RETURN
+
+=== 73: compgen -A variable lists names sorted
+status: 0
+bash-n: 0
+--- stdout
+|zv1
+|zv2
+|zv3
+|zv4
+|zv5
+|zv6
+|zv7
+|zv8

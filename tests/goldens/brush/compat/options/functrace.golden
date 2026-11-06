@@ -1,0 +1,282 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/options/functrace.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: functrace can be enabled and disabled
+status: 0
+bash-n: 0
+--- stdout
+|T is set
+|T is unset
+
+=== 1: DEBUG trap - does not fire in function without set -T
+status: 0
+bash-n: 0
+--- stdout
+|[debug: echo "before func"]
+|before func
+|[debug: myfunc]
+|in func
+|[debug: echo "after func"]
+|after func
+
+=== 2: DEBUG trap - fires in function with set -T
+status: 0
+bash-n: 0
+--- stdout
+|[debug: echo "before func"]
+|before func
+|[debug: myfunc]
+|[debug: myfunc]
+|[debug: echo "in func"]
+|in func
+|[debug: echo "after func"]
+|after func
+
+=== 3: DEBUG trap - does not fire in subshell without set -T
+status: 0
+bash-n: 0
+--- stdout
+|[debug: echo "before subshell"]
+|before subshell
+|in subshell
+|[debug: echo "after subshell"]
+|after subshell
+
+=== 4: DEBUG trap - fires in subshell with set -T
+status: 0
+bash-n: 0
+--- stdout
+|[debug: echo "before subshell"]
+|before subshell
+|[debug: echo "in subshell"]
+|in subshell
+|[debug: echo "after subshell"]
+|after subshell
+
+=== 5: DEBUG trap - does not fire in command substitution without set -T
+status: 0
+bash-n: 0
+--- stdout
+|before
+|result: in substitution
+--- stderr
+|[debug: echo "before"]
+|[debug: result=$(echo "in substitution")]
+|[debug: echo "result: $result"]
+
+=== 6: DEBUG trap - fires in command substitution with set -T
+status: 0
+bash-n: 0
+--- stdout
+|before
+|result: in substitution
+--- stderr
+|[debug: echo "before"]
+|[debug: result=$(echo "in substitution")]
+|[debug: echo "in substitution"]
+|[debug: echo "result: $result"]
+
+=== 7: DEBUG trap - does not fire in pipeline without set -T
+status: 0
+bash-n: 0
+--- stdout
+|before
+|hello
+|after
+--- stderr
+|[debug: echo "before"]
+|[debug: echo "hello"]
+|[debug: cat]
+|[debug: cat]
+|[debug: echo "after"]
+
+=== 8: DEBUG trap - fires in pipeline with set -T
+status: 0
+bash-n: 0
+--- stdout
+|before
+|hello
+|after
+--- stderr
+|[debug: echo "before"]
+|[debug: echo "hello"]
+|[debug: cat]
+|[debug: cat]
+|[debug: echo "after"]
+
+=== 9: RETURN trap - does not fire in called function without set -T
+status: 0
+bash-n: 0
+--- stdout
+|in outer
+|in inner
+|outer continuing
+|after
+
+=== 10: RETURN trap - fires in called function with set -T
+status: 0
+bash-n: 0
+--- stdout
+|in outer
+|in inner
+|[return: inner]
+|outer continuing
+|[return: outer]
+|after
+
+=== 11: RETURN trap - fires for each nested function return with set -T
+status: 0
+bash-n: 0
+--- stdout
+|level1
+|level2
+|level3
+|[return: level3 -> 0]
+|[return: level2 -> 3]
+|[return: level1 -> 2]
+|done
+
+=== 12: declare -t - enables trace for specific function
+status: 0
+bash-n: 0
+--- stdout
+|[debug: declare -t traced_func]
+|[debug: echo "calling untraced"]
+|calling untraced
+|[debug: untraced_func]
+|in untraced
+|[debug: echo "calling traced"]
+|calling traced
+|[debug: traced_func]
+|in traced
+|[debug: echo "done"]
+|done
+
+=== 13: declare +t - disables trace for specific function
+status: 0
+bash-n: 0
+--- stdout
+|[debug: declare +t myfunc]
+|[debug: echo "calling func"]
+|calling func
+|[debug: myfunc]
+|[debug: myfunc]
+|[debug: echo "in func"]
+|in func
+|[debug: echo "done"]
+|done
+
+=== 14: declare -f - shows trace attribute
+status: 0
+bash-n: 0
+--- stdout
+|myfunc () 
+
+=== 15: set -T enabled mid-script affects subsequent calls
+status: 0
+bash-n: 0
+--- stdout
+|[debug: echo "calling func1 without -T"]
+|calling func1 without -T
+|[debug: func1]
+|in func1
+|[debug: set -T]
+|[debug: echo "calling func2 with -T"]
+|calling func2 with -T
+|[debug: func2]
+|[debug: func2]
+|[debug: echo "in func2"]
+|in func2
+|[debug: echo "done"]
+|done
+
+=== 16: set +T disables inheritance mid-script
+status: 0
+bash-n: 0
+--- stdout
+|[debug: echo "calling func1 with -T"]
+|calling func1 with -T
+|[debug: func1]
+|[debug: func1]
+|[debug: echo "in func1"]
+|in func1
+|[debug: set +T]
+|[debug: echo "calling func2 without -T"]
+|calling func2 without -T
+|[debug: func2]
+|in func2
+|[debug: echo "done"]
+|done
+
+=== 17: DEBUG trap - in background job with set -T
+status: 0
+bash-n: 0
+--- stdout
+|in background
+|done
+--- stderr
+|[debug]
+|[debug]
+|[debug]
+
+=== 18: DEBUG trap - in process substitution with set -T
+status: 0
+bash-n: 0
+--- stdout
+|from procsub
+|done
+--- stderr
+|[debug]
+|[debug]
+|[debug]
+
+=== 19: BASH_COMMAND in function with set -T
+status: 0
+bash-n: 0
+--- stdout
+|cmd: myfunc
+|cmd: myfunc
+|cmd: local v=10
+|cmd: echo "v=$v"
+|v=10
+
+=== 20: Outer function traced, inner function not traced
+status: 0
+bash-n: 0
+--- stdout
+|[debug in main]
+|[debug in main]
+|outer start
+|inner
+|outer end
+|[debug in main]
+|done
+
+=== 21: Only inner function traced
+status: 0
+bash-n: 0
+--- stdout
+|[debug in main]
+|[debug in main]
+|outer start
+|inner
+|outer end
+|[debug in main]
+|done
+
+=== 22: RETURN trap - fires for function in sourced script with set -T
+status: 0
+bash-n: 0
+--- stdout
+|in sourced_func
+|[return: sourced_func]
+|[return: main]
+|after source
+
+=== 23: DEBUG trap - count in deeply nested function calls with set -T
+status: 0
+bash-n: 0
+--- stdout
+|deep
+|debug count: 8

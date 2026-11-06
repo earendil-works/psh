@@ -1,0 +1,119 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/word_expansion/tilde.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Tilde expansion: basic
+status: 0
+bash-n: 0
+--- stdout
+|~: TEST_ROOT
+--- dir subdir
+
+=== 1: Tilde expansion: explicit user
+status: 0
+bash-n: 0
+--- stdout
+|~root: /root
+|~<non-existent-username>: ~nonexistentuserwhodoesnotexist
+
+=== 2: Tilde expansion: working dirs
+status: 0
+bash-n: 0
+--- stdout
+|~+: TEST_ROOT/subdir
+|~-: TEST_ROOT
+|~- (without OLDPWD): ~-
+--- dir subdir
+
+=== 3: Tilde expansion: dir stack
+status: 0
+bash-n: 0
+--- stdout
+|~2: TEST_ROOT/a/b/c/d/e
+|~9: ~9
+|~+2: TEST_ROOT/a/b/c/d/e
+|~+9: ~+9
+|~-2: TEST_ROOT/a/b
+|~-9: ~-9
+--- dir a
+--- dir a/b
+--- dir a/b/c
+--- dir a/b/c/d
+--- dir a/b/c/d/e
+--- dir a/b/c/d/e/f
+--- dir a/b/c/d/e/f/g
+
+=== 4: Tilde expansion: after colons
+status: 0
+bash-n: 0
+--- stdout
+|D: something:TEST_ROOT
+|D: something:~
+|D: something:~
+|D: something:TEST_ROOT:another:TEST_ROOT
+
+=== 5: Tilde expansion: unexpanded tildes
+status: 0
+bash-n: 0
+--- stdout
+|D: ~
+|D: x~
+
+=== 6: Tilde expansion: colon context sensitivity
+status: 0
+bash-n: 0
+--- stdout
+|echo tilde: /testhome
+|assignment tilde: /testhome
+|echo with colon: /testhome:~/bin
+|/testhome:~/bin
+|assignment with colon: /testhome:/testhome/bin
+|PATH: /usr/bin:/testhome:/bin:/testhome/local
+
+=== 7: Tilde expansion: parameter defaults
+status: 0
+bash-n: 0
+--- stdout
+|Use default value with tilde
+|Default: ~
+|myvar after :-: 
+|Assign default value with tilde
+|Assign default: ~
+|myvar after :=: ~
+|Use default with colon-tilde
+|Default colon-tilde: ~:~/bin
+|Assign default with colon-tilde
+|Assign colon-tilde: ~:~/bin
+|myvar3 after := ~:~/bin
+
+=== 8: Tilde expansion: OLDPWD declared without a value
+status: 0
+bash-n: 0
+--- stdout
+|<~->
+|<~-/x>
+|<~->
+|<~->
+|<>
+
+=== 9: Tilde expansion: out-of-range dir stack index
+status: 0
+bash-n: 0
+--- stdout
+|D: ~99999999999999999999
+|D: ~-99999999999999999999
+|D: ~+99999999999999999999
+
+=== 10: Tilde expansion in list
+status: 0
+bash-n: 0
+--- stdout
+|./file.txt ./file.txt.bak
+
+=== 11: Tilde expansion: after the = of an assignment-shaped argument
+status: 0
+bash-n: 0
+--- stdout
+|y=ROOT/z
+|ROOT/z
+|ROOT/z

@@ -1,0 +1,333 @@
+# Goldens for tests/oils/spec/builtin-history.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: history -a
+status: 0
+bash-n: 0
+--- stdout
+|1
+|HISTFILE=tmp
+|echo 1
+|history -a
+|2
+|HISTFILE=tmp
+|echo 1
+|history -a
+--- stderr
+|bash: cannot set terminal process group (9923): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$ 
+|bash-5.3$ history -c
+|bash-5.3$ 
+|bash-5.3$ HISTFILE=tmp
+|bash-5.3$ echo 1
+|bash-5.3$ history -a
+|bash-5.3$ cat tmp
+|bash-5.3$ 
+|bash-5.3$ echo 2
+|bash-5.3$ 
+|bash-5.3$ cat tmp
+|bash-5.3$ 
+|bash-5.3$ exit
+--- file tmp
+|HISTFILE=tmp
+|echo 1
+|history -a
+|cat tmp
+|echo 2
+|cat tmp
+
+=== 1: history -w writes out the in-memory history to the history file
+status: 0
+bash-n: 0
+--- stdout
+|found=1
+--- file tmp
+
+=== 2: history -r reads from the history file, and appends it to the current history
+status: 0
+bash-n: 0
+--- stdout
+|20
+--- file tmp
+|cmd orig1
+|cmd orig2
+|cmd orig3
+|cmd orig4
+|cmd orig5
+|cmd orig6
+|cmd orig7
+|cmd orig8
+|cmd orig9
+|cmd orig10
+
+=== 3: history -n reads *new* commands from the history file, and appends them to the current history
+status: 0
+bash-n: 0
+--- stdout
+|10
+|10
+--- file tmp1
+|cmd orig1
+|cmd orig2
+|cmd orig3
+|cmd orig4
+|cmd orig5
+|cmd orig6
+|cmd orig7
+|cmd orig8
+|cmd orig9
+|cmd orig10
+--- file tmp2
+|cmd orig1
+|cmd orig2
+|cmd orig3
+|cmd orig4
+|cmd orig5
+|cmd orig6
+|cmd orig7
+|cmd orig8
+|cmd orig9
+|cmd orig10
+|cmd new1
+|cmd new2
+|cmd new3
+|cmd new4
+|cmd new5
+|cmd new6
+|cmd new7
+|cmd new8
+|cmd new9
+|cmd new10
+
+=== 4: history -c clears in-memory history
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|bash: cannot set terminal process group (9959): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$ echo 'foo' > /dev/null
+|bash-5.3$ echo 'bar' > /dev/null
+|bash-5.3$ history -c 
+|bash-5.3$ history | wc -l
+|bash-5.3$ exit
+
+=== 5: history -d to delete 1 item
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- file tmp
+|cmd orig1
+|cmd orig2
+|cmd orig3
+
+=== 6: history -d to delete history from end
+status: 0
+bash-n: 0
+--- stdout
+|42
+|43
+|44
+|status=0
+|status=0
+|status=0
+|status=1
+--- stderr
+|bash: cannot set terminal process group (10015): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$ 
+|bash-5.3$ echo 42
+|bash-5.3$ echo 43
+|bash-5.3$ echo 44
+|bash-5.3$ 
+|bash-5.3$ history -a
+|bash-5.3$ 
+|bash-5.3$ history -d 1
+|bash-5.3$ echo status=$?
+|bash-5.3$ 
+|bash-5.3$ history -d -1
+|bash-5.3$ echo status=$?
+|bash-5.3$ history -d -2
+|bash-5.3$ echo status=$?
+|bash-5.3$ history -d 99
+|bash: history: 99: history position out of range
+|bash-5.3$ echo status=$?
+|bash-5.3$ 
+|bash-5.3$ case $SH in bash*) echo '^D' ;; esac
+|bash-5.3$ 
+|bash-5.3$ exit
+--- file myhist
+|echo 42
+|echo 43
+|echo 44
+|history -a
+|echo status=$?
+|history -d -2
+|echo status=$?
+|history -d 99
+|echo status=$?
+|case $SH in bash*) echo '^D' ;; esac
+
+=== 7: HISTFILE is defined initially
+status: 0
+bash-n: 0
+--- stdout
+|exists
+--- stderr
+|bash: cannot set terminal process group (10026): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$ 
+|bash-5.3$ if test -n $HISTFILE; then echo exists; fi
+|bash-5.3$ 
+|bash-5.3$ exit
+
+=== 8: HISTFILE must point to a file
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: cannot set terminal process group (10045): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$ 
+|bash-5.3$ HISTFILE=_tmp/does-not-exist
+|bash-5.3$ history -r
+|bash-5.3$ echo status=$?
+|bash-5.3$ 
+|bash-5.3$ exit
+
+=== 9: HISTFILE set to array
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+--- stderr
+|bash: cannot set terminal process group (10059): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$ 
+|bash-5.3$ HISTFILE=(a b c)
+|bash-5.3$ history -a
+|bash-5.3$ echo status=$?
+|bash-5.3$ 
+|bash-5.3$ exit
+--- file a
+|HISTFILE=(a b c)
+|history -a
+|echo status=$?
+
+=== 10: HISTFILE unset
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+--- stderr
+|bash: cannot set terminal process group (10057): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$ 
+|bash-5.3$ unset HISTFILE
+|bash-5.3$ history -a
+|bash: history: HISTFILE: parameter null or not set
+|bash-5.3$ echo status=$?
+|bash-5.3$ 
+|bash-5.3$ exit
+
+=== 11: history usage
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+|status=2
+--- stderr
+|bash: line 1: history: not-a-number: numeric argument required
+|bash: line 4: history: too many arguments
+
+=== 12: HISTSIZE shrinks the in-memory history when changed
+status: 0
+bash-n: 0
+--- stdout
+|10
+|5
+--- file tmp
+|cmd 1
+|cmd 2
+|cmd 3
+|cmd 4
+|cmd 5
+|cmd 6
+|cmd 7
+|cmd 8
+|cmd 9
+|cmd 10
+
+=== 13: HISTFILESIZE shrinks the history file when changed
+status: 0
+bash-n: 0
+--- stdout
+|5
+--- file tmp
+|cmd 6
+|cmd 7
+|cmd 8
+|cmd 9
+|cmd 10
+
+=== 14: recording history can be toggled with set -o/+o history
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=0
+--- stderr
+|bash: cannot set terminal process group (10090): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$ set +o history
+|bash-5.3$ echo "not recorded" >> /dev/null
+|bash-5.3$ set -o history
+|bash-5.3$ echo "recorded" >> /dev/null
+|bash-5.3$ exit
+--- file tmp
+|echo 1
+|echo 2
+|echo 3
+|set +o history
+|echo "recorded" >> /dev/null
+
+=== 15: shopt histappend toggle check
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|shopt -s histappend
+|status=0
+|shopt -u histappend
+
+=== 16: shopt histappend - osh ignores shopt and appends, bash sometimes overwrites
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=1
+--- stderr
+|bash: cannot set terminal process group (10113): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$   HISTSIZE=2 # Stifle the history down to 2 commands
+|bash-5.3$   shopt -s histappend
+|bash-5.3$   echo cmd new1 > /dev/null
+|bash-5.3$   echo cmd new2 > /dev/null
+|bash-5.3$   echo cmd new3 > /dev/null
+|bash-5.3$ exit
+|bash: cannot set terminal process group (10113): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$   HISTSIZE=2 # Stifle the history down to 2 commands
+|bash-5.3$   shopt -u histappend
+|bash-5.3$   echo cmd new1 > /dev/null
+|bash-5.3$   echo cmd new2 > /dev/null
+|bash-5.3$   echo cmd new3 > /dev/null
+|bash-5.3$ exit
+--- file tmp
+|  echo cmd new2 > /dev/null
+|  echo cmd new3 > /dev/null

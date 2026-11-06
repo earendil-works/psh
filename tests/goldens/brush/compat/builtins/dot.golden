@@ -1,0 +1,131 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/dot.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic dot usage
+status: 0
+bash-n: 0
+--- stdout
+|In sourced script
+|var: updated
+
+=== 1: Basic source usage
+status: 0
+bash-n: 0
+--- stdout
+|In sourced script
+|BASH_SOURCE: './script.sh'
+|var: updated
+|In script func
+|FUNCNAME: 'script_func'
+|BASH_SOURCE: './script.sh'
+
+=== 2: Source non-existent file path
+status: 0
+bash-n: 0
+--- stdout
+|Result: 1
+--- stderr
+|bash: line 1: script.sh: No such file or directory
+
+=== 3: Source dir
+status: 0
+bash-n: 0
+--- stdout
+|Result: 1
+--- stderr
+|bash: line 1: source: .: is a directory
+
+=== 4: Source script without args
+status: 0
+bash-n: 0
+--- stdout
+|In sourced script
+|Args: outer1 outer2 outer3
+
+=== 5: Source script with args
+status: 0
+bash-n: 0
+--- stdout
+|In sourced script
+|Args: inner1 inner2
+
+=== 6: Source with redirection
+status: 0
+bash-n: 0
+--- stdout
+|Sourced script; dumping...
+|In sourced script
+--- file out.txt
+|In sourced script
+
+=== 7: Source /dev/stdin with heredoc redirection
+status: 0
+bash-n: 0
+--- stdout
+|VAR in source: scoped
+|VAR after source: outer
+|INNER after source: from_source
+
+=== 8: Source with return
+status: 0
+bash-n: 0
+--- stdout
+|Before source
+|Before return
+|After source, exit code: 42
+
+=== 9: Source with exit
+status: 42
+bash-n: 0
+--- stdout
+|Before source
+|Before exit
+
+=== 10: Source with break in caller's loop
+status: 0
+bash-n: 0
+--- stdout
+|Iteration 1
+|In script, breaking
+|After loop
+
+=== 11: Source with continue in caller's loop
+status: 0
+bash-n: 0
+--- stdout
+|Iteration 1
+|In script, continuing
+|Iteration 2
+|In script, continuing
+|Iteration 3
+|In script, continuing
+|After loop
+
+=== 12: Sourcing a missing file fails and goes on
+status: 0
+bash-n: 0
+--- stdout
+|after: 1
+--- stderr
+|bash: line 1: /nonexistent-file: No such file or directory
+
+=== 13: Sourcing a file with an unset variable under set -u ends the shell
+status: 1
+bash-n: 0
+--- stderr
+|./script.sh: line 1: nope: unbound variable
+
+=== 14: source passes -- and options to the script
+status: 0
+bash-n: 0
+--- stdout
+|2: -- a
+|1: -x
+|1: b
+
+=== 15: . --help prints what help . prints
+status: 0
+bash-n: 0
+--- stdout
+|same

@@ -1,0 +1,195 @@
+# Goldens for tests/oils/spec/builtin-echo.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: echo dashes
+status: 0
+bash-n: 0
+--- stdout
+|-
+|--
+|---
+
+=== 1: echo backslashes
+status: 0
+bash-n: 0
+--- stdout
+|\
+|\
+|\\
+|\
+
+=== 2: echo -e backslashes
+status: 0
+bash-n: 0
+--- stdout
+|\
+|\
+|\
+|\
+|
+|\
+|line2
+
+=== 3: echo builtin should disallow typed args - literal
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `42'
+|bash: line 1: `echo (42)'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `42'
+|bash: line 1: `echo (42)'
+
+=== 4: echo builtin should disallow typed args - variable
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: var: command not found
+|bash: line 2: syntax error near unexpected token `x'
+|bash: line 2: `echo (x)'
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `x'
+|bash: line 2: `echo (x)'
+
+=== 5: echo -en
+status: 0
+bash-n: 0
+--- stdout
+|abc
+|def
+
+=== 6: echo -ez (invalid flag)
+status: 0
+bash-n: 0
+--- stdout
+|-ez abc\n
+
+=== 7: echo -e with embedded newline
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|bar
+
+=== 8: echo -e line continuation
+status: 0
+bash-n: 0
+--- stdout
+|foo\
+|bar
+
+=== 9: echo -e with C escapes
+status: 0
+bash-n: 0
+--- stdout
+\\x07\x08\\d\x1b\x0c
+
+=== 10: echo -e with whitespace C escapes
+status: 0
+bash-n: 0
+--- stdout
+|
+\\x0d	\x0b
+
+=== 11: \0
+status: 0
+bash-n: 0
+--- stdout
+\ab\x00cd
+
+=== 12: \c stops processing input
+status: 0
+bash-n: 0
+--- stdout
+|xy ab
+~ no newline at end
+
+=== 13: echo -e with hex escape
+status: 0
+bash-n: 0
+--- stdout
+|abcdef
+
+=== 14: echo -e with octal escape
+status: 0
+bash-n: 0
+--- stdout
+|abcd$e
+
+=== 15: echo -e with 4 digit unicode escape
+status: 0
+bash-n: 0
+--- stdout
+|abcdef
+
+=== 16: echo -e with 8 digit unicode escape
+status: 0
+bash-n: 0
+--- stdout
+|abcdef
+
+=== 17: \0377 is the highest octal byte
+status: 0
+bash-n: 0
+--- stdout
+| ff 37
+
+=== 18: \0400 is one more than the highest octal byte
+status: 0
+bash-n: 0
+--- stdout
+| 00 30
+
+=== 19: \0777 is out of range
+status: 0
+bash-n: 0
+--- stdout
+| ff
+
+=== 20: incomplete hex escape
+status: 0
+bash-n: 0
+--- stdout
+| a b c d 006
+
+=== 21: \x
+status: 0
+bash-n: 0
+--- stdout
+| \ x \ x g \n
+
+=== 22: incomplete octal escape
+status: 0
+bash-n: 0
+--- stdout
+| a b c d 004
+
+=== 23: incomplete unicode escape
+status: 0
+bash-n: 0
+--- stdout
+| a b c d 006
+
+=== 24: \u6
+status: 0
+bash-n: 0
+--- stdout
+| 006
+
+=== 25: \0 \1 \8
+status: 0
+bash-n: 0
+--- stdout
+| \0 \ 1 \ 8
+
+=== 26: echo to redirected directory is an error
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|bash: line 3: ./dir: Is a directory
+|bash: line 5: ./dir: Is a directory
+--- dir dir

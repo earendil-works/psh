@@ -1,0 +1,110 @@
+# Goldens for tests/oils/spec/builtin-meta-assign.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: builtin declare a=(x y) is allowed
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([0]="x" [1]="y")
+|fail
+|fail
+--- stderr
+|<sh>: -c: line 1: syntax error near unexpected token `('
+|<sh>: -c: line 1: `builtin declare a=(x y); declare -p a'
+|<sh>: -c: line 1: syntax error near unexpected token `('
+|<sh>: -c: line 1: `builtin declare -a a=(x y); declare -p a'
+
+=== 1: command export,readonly
+status: 0
+bash-n: 0
+--- stdout
+|c=export
+|c=readonly
+|--
+|cc=export
+|cc=readonly
+
+=== 2: command local
+status: 0
+bash-n: 0
+--- stdout
+|s=local
+
+=== 3: export, builtin export
+status: 0
+bash-n: 0
+--- stdout
+|a b
+|a
+
+=== 4: \builtin declare - ble.sh relies on it
+status: 0
+bash-n: 0
+--- stdout
+|a
+|a
+|a
+|a
+|a
+
+=== 5: \command readonly - similar issue
+status: 0
+bash-n: 0
+--- stdout
+|a b
+|a
+|a
+|a
+
+=== 6: Dynamic $c readonly - bash and dash change behavior, mksh bug
+status: 0
+bash-n: 0
+--- stdout
+|a
+|a
+
+=== 7: static builtin command ASSIGN, command builtin ASSIGN
+status: 0
+bash-n: 0
+--- stdout
+|bc=export
+|bc=readonly
+|--
+|cb=export
+|cb=readonly
+
+=== 8: dynamic builtin command ASSIGN, command builtin ASSIGN
+status: 0
+bash-n: 0
+--- stdout
+|bc=export
+|bc=readonly
+|--
+|cb=export
+|cb=readonly
+|--
+|bce=export
+|bcr=readonly
+|--
+|cbe=export
+|cbr=readonly
+
+=== 9: builtin typeset, export,readonly
+status: 0
+bash-n: 0
+--- stdout
+|s=typeset
+|s=export
+|s=readonly
+|--
+|s2=typeset
+|s2=export
+|s2=readonly
+
+=== 10: builtin declare,local
+status: 0
+bash-n: 0
+--- stdout
+|s=declare
+|s=local

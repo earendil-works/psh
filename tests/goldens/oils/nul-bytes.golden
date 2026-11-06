@@ -1,0 +1,175 @@
+# Goldens for tests/oils/spec/nul-bytes.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: NUL bytes with echo -e
+status: 0
+bash-n: 0
+--- stdout
+|  \0   -  \n
+|  00  2d  0a
+
+=== 1: printf - literal NUL in format string
+status: 0
+bash-n: 0
+--- stdout
+|   x
+|  78
+|---
+|   x
+|  78
+|---
+
+=== 2: printf - \0 escape shows NUL byte
+status: 0
+bash-n: 0
+--- stdout
+|  \0  \n
+|  00  0a
+
+=== 3: printf - NUL byte in value (OSH and zsh agree)
+status: 0
+bash-n: 0
+--- stdout
+|  \n
+|  0a
+|  \n
+|  0a
+
+=== 4: NUL bytes with echo $'\0' (OSH and zsh agree)
+status: 0
+bash-n: 0
+--- stdout
+|  \n
+|  0a
+
+=== 5: NUL bytes and IFS splitting
+status: 0
+bash-n: 0
+--- stdout
+|[]
+|['']
+|['ab']
+|['ab']
+--- stderr
+|bash: line 3: warning: command substitution: ignored null byte in input
+|bash: line 4: warning: command substitution: ignored null byte in input
+|bash: line 5: warning: command substitution: ignored null byte in input
+|bash: line 6: warning: command substitution: ignored null byte in input
+
+=== 6: NUL bytes with test -n
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+
+=== 7: NUL bytes with test -f
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=0
+|status=0
+|status=1
+--- file foo
+
+=== 8: NUL bytes with ${#s} (OSH and zsh agree)
+status: 0
+bash-n: 0
+--- stdout
+|empty=0
+|nul=0
+
+=== 9: Compare \x00 byte versus \x01 byte - command sub
+status: 0
+bash-n: 0
+--- stdout
+|len=3
+| 2e 01 2e
+|len=2
+| 2e 2e
+|len=0
+--- stderr
+|bash: line 9: warning: command substitution: ignored null byte in input
+|bash: line 13: warning: command substitution: ignored null byte in input
+
+=== 10: Compare \x00 byte versus \x01 byte - read builtin
+status: 0
+bash-n: 0
+--- stdout
+|len=3
+| 2e 01 2e
+|len=2
+| 2e 2e
+|len=0
+
+=== 11: Compare \x00 byte versus \x01 byte - read -n
+status: 0
+bash-n: 0
+--- stdout
+|len=3
+| 2e 01 2e
+|len=2
+| 2e 2e
+|len=0
+
+=== 12: Compare \x00 byte versus \x01 byte - mapfile builtin
+status: 0
+bash-n: 0
+--- stdout
+|len=2
+| 2e
+| 2e
+
+=== 13: Strip ops # ## % %% with NUL bytes
+status: 0
+bash-n: 0
+--- stdout
+|len=1
+| 2e
+|---
+|len=0
+|len=0
+|len=0
+|len=0
+--- stderr
+|bash: line 5: warning: command substitution: ignored null byte in input
+
+=== 14: Issue 2269 Reduction
+status: 0
+bash-n: 0
+--- stdout
+|len=1
+| 78
+|len=0
+|---
+|len=2
+| 01 78
+|len=1
+| 78
+--- stderr
+|bash: line 5: warning: command substitution: ignored null byte in input
+
+=== 15: Issue 2269 - Do NUL bytes match ? in ${a#?}
+status: 0
+bash-n: 0
+--- stdout
+|escaped that'"'"'s it!
+|that's it!
+|---
+|escaped ::
+--- stderr
+|len=9
+|len=8
+|len=7
+|len=6
+|len=5
+|len=4
+|len=3
+|len=2
+|len=1
+|len=0
+|bash: line 20: warning: command substitution: ignored null byte in input
+|len=1
+|len=0

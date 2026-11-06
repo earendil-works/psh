@@ -1,0 +1,133 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/enable.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: List special builtins
+status: 0
+bash-n: 0
+--- stdout
+|enable .
+|enable :
+|enable break
+|enable continue
+|enable eval
+|enable exec
+|enable exit
+|enable export
+|enable readonly
+|enable return
+|enable set
+|enable shift
+|enable source
+|enable times
+|enable trap
+|enable unset
+
+=== 1: List default-disabled builtins
+status: 0
+bash-n: 0
+
+=== 2: List all builtins
+status: 0
+bash-n: 0
+--- stdout
+|enable .
+|enable :
+|enable [
+|enable alias
+|enable bg
+|enable bind
+|enable break
+|enable builtin
+|enable caller
+|enable cd
+|enable command
+|enable compgen
+|enable complete
+|enable compopt
+|enable continue
+|enable declare
+|enable dirs
+|enable disown
+|enable echo
+|enable enable
+|enable eval
+|enable exec
+|enable exit
+|enable export
+|enable false
+|enable fc
+|enable fg
+|enable getopts
+|enable hash
+|enable help
+|enable history
+|enable jobs
+|enable kill
+|enable let
+|enable local
+|enable logout
+|enable mapfile
+|enable popd
+|enable printf
+|enable pushd
+|enable pwd
+|enable read
+|enable readarray
+|enable readonly
+|enable return
+|enable set
+|enable shift
+|enable shopt
+|enable source
+|enable suspend
+|enable test
+|enable times
+|enable trap
+|enable true
+|enable type
+|enable typeset
+|enable ulimit
+|enable umask
+|enable unalias
+|enable unset
+|enable wait
+
+=== 3: Disable builtins
+status: 0
+bash-n: 0
+--- stdout
+|printf is a shell builtin
+|printf is a shell builtin
+|Back
+--- stderr
+|bash: line 8: type: printf: not found
+|bash: line 9: print: command not found
+
+=== 4: enable -p lists only enabled builtins
+status: 0
+bash-n: 0
+--- stdout
+|0
+|enable -n echo
+
+=== 5: enable lists only enabled builtins, -a lists all of them
+status: 0
+bash-n: 0
+--- stdout
+|default: 1
+|enable set
+|enable -n echo
+|enable printf
+|enable -n echo
+|enable printf
+|enable -n echo
+
+=== 6: enable takes --
+status: 0
+bash-n: 0
+--- stdout
+|a=0
+|file
+|b=0
+|builtin

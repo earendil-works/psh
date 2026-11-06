@@ -1,0 +1,12 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/colon.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic colon usage
+status: 0
+bash-n: 0
+--- stdout
+|Result 1: 0
+|Result 2: 0
+|Result 3: 0
+|Result 4: 0

@@ -1,0 +1,63 @@
+# Goldens for tests/oils/spec/builtin-misc.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: history builtin usage
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+|status=2
+|status=2
+|status=2
+--- stderr
+|bash: line 5: history: -5: invalid option
+|history: usage: history [-c] [-d offset] [n] or history -anrw [filename] or history -ps arg [arg...]
+|bash: line 7: history: f: numeric argument required
+|bash: line 9: history: too: numeric argument required
+
+=== 1: Print shell strings with weird chars: set and printf %q and ${x@Q}
+status: 0
+bash-n: 0
+--- stdout
+|foo=$'a\nb\001c\'d'
+|pf  $'a\nb\001c\'d'
+|@Q  $'a\nb\001c\'d'
+
+=== 2: Print shell strings with normal chars: set and printf %q and ${x@Q}
+status: 0
+bash-n: 0
+--- stdout
+|foo=spam
+|declare -- foo="spam"
+|pf  spam
+|@Q  'spam'
+
+=== 3: time pipeline
+status: 0
+bash-n: 0
+--- stdout
+|3
+--- stderr
+|
+|real	0m0.001s
+|user	0m0.000s
+|sys	0m0.001s
+
+=== 4: shift
+status: 0
+bash-n: 0
+--- stdout
+|2 3 4
+|4
+
+=== 5: Shifting too far
+status: 1
+bash-n: 0
+
+=== 6: Invalid shift argument
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 1: shift: ZZZ: numeric argument required

@@ -1,0 +1,548 @@
+# Goldens for tests/oils/spec/builtin-read.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: read line from here doc
+status: 0
+bash-n: 0
+--- stdout
+|[A		B C D E]
+
+=== 1: read from empty file
+status: 0
+bash-n: 0
+--- stdout
+|['status=1', '']
+|['status=1', '']
+--- file empty.txt
+
+=== 2: read /dev/null
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 3: read with zero args
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 4: read builtin with no newline returns status 1
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|ZZZ
+
+=== 5: read builtin splits value across multiple vars
+status: 0
+bash-n: 0
+--- stdout
+|[A/B/C D E]
+
+=== 6: read builtin with too few variables
+status: 0
+bash-n: 0
+--- stdout
+|/A/B//
+
+=== 7: read -n (with $REPLY)
+status: 0
+bash-n: 0
+--- stdout
+|['1234', '12']
+--- file readn.txt
+|12345
+
+=== 8: IFS= read -n (OSH regression: value saved in tempenv)
+status: 0
+bash-n: 0
+--- stdout
+|['X']
+--- file readn.txt
+|XYZ
+
+=== 9: read -n doesn't strip whitespace (bug fix)
+status: 0
+bash-n: 0
+--- stdout
+|[  a ]
+|[  a b]
+|[  a b ]
+|
+|one var strips whitespace
+|[a]
+|[a b]
+|[a b]
+|
+|three vars
+|[a] [] []
+|[a] [b] []
+|[a] [b] []
+
+=== 10: read -d -n - respects delimiter and splits
+status: 0
+bash-n: 0
+--- stdout
+|delim c
+|[  a]
+|[  a ]
+|[  a b]
+|
+|one var
+|[a]
+|[a]
+|[a b]
+|
+|three vars
+|[a] [] []
+|[a] [] []
+|[a] [b] []
+
+=== 11: read -n with invalid arg
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: read: not_a_number: invalid number
+
+=== 12: read -n from pipe
+status: 0
+bash-n: 0
+--- stdout
+|reply=abc
+
+=== 13: read without args uses $REPLY, no splitting occurs (without -n)
+status: 0
+bash-n: 0
+--- stdout
+|[  a b  ]
+|[a b]
+|[  a b    line2]
+|[a b    line2]
+|[  a b  \]
+|[a b  \]
+
+=== 14: read -n vs. -N
+status: 0
+bash-n: 0
+--- stdout
+|read -n
+|'a' 'b' 'c'
+|'a' 'b' ''
+|
+|read -N
+|'a b c' '' ''
+|'a b ' '' ''
+--- file readn.txt
+|a b c
+
+=== 15: read -N ignores delimiters
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+--- file read-lines.txt
+|a
+|b
+|c
+
+=== 16: read will unset extranous vars
+status: 0
+bash-n: 0
+--- stdout
+|'a' 'b' ''
+|'a' 'b' ''
+--- file read-few.txt
+|a b
+
+=== 17: read -r ignores backslashes
+status: 0
+bash-n: 0
+--- stdout
+|['one two', 'one\\ two']
+--- file readr.txt
+|one\ two
+
+=== 18: read -r with other backslash escapes
+status: 0
+bash-n: 0
+--- stdout
+|['one twox65three', 'one\\ two\\x65three']
+--- file readr.txt
+|one\ two\x65three
+
+=== 19: read with line continuation reads multiple physical lines
+status: 0
+bash-n: 0
+--- stdout
+|['onetwo', 'one\\']
+--- file bash-readr.txt
+|one\
+|two
+|
+
+=== 20: read multiple vars spanning many lines
+status: 0
+bash-n: 0
+--- stdout
+|['one-two', 'three-four five-six', '']
+
+=== 21: read -r with \n
+status: 0
+bash-n: 0
+--- stdout
+|['nline', '\\nline']
+--- file readr.txt
+|\nline
+
+=== 22: read -s from pipe, not a terminal
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|ba
+|0
+|b
+
+=== 23: read with IFS=$'\n'
+status: 0
+bash-n: 0
+--- stdout
+|[  a b c]
+
+=== 24: read multiple lines with IFS=:
+status: 0
+bash-n: 0
+--- stdout
+|[  \a |b: c|d  e|]
+--- file bash-read-ifs.txt
+|  \\a :b\: c:d\
+|  e
+
+=== 25: read with IFS=''
+status: 0
+bash-n: 0
+--- stdout
+|[  a b c d|]
+
+=== 26: read does not respect C backslash escapes
+status: 0
+bash-n: 0
+--- stdout
+|a b c d e f g h x65 145 i
+--- file read-c.txt
+|\a \b \c \d \e \f \g \h \x65 \145 \i
+
+=== 27: dynamic scope used to set vars
+status: 0
+bash-n: 0
+--- stdout
+|ref: refs/heads/dev/andy
+
+=== 28: read -a reads into array
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'b', 'c d']
+|['a', 'b', 'c\\', 'd']
+|[]
+|[]
+
+=== 29: read -d : (colon-separated records)
+status: 0
+bash-n: 0
+--- stdout
+|v1=a,b,c
+|v1=d v2=e,f
+|v1=g v2=h v3=i
+
+=== 30: read -d '' (null-separated records)
+status: 0
+bash-n: 0
+--- stdout
+|v1=a,b,c
+|v1=d v2=e,f
+|v1=g v2=h v3=i
+
+=== 31: read -rd
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|bar
+
+=== 32: read -d when there's no delimiter
+status: 0
+bash-n: 0
+--- stdout
+|foo 0
+|bar 1
+
+=== 33: read -t 0 tests if input is available
+status: 0
+bash-n: 0
+--- stdout
+|0
+|0
+|reply=
+|0
+
+=== 34: read -t 0.5
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 35: read -t -0.5 is invalid
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|bash: line 1: read: -0.5: invalid timeout specification
+
+=== 36: read -u
+status: 0
+bash-n: 0
+--- stdout
+|reply=hi
+
+=== 37: read -u syntax error
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: read: -3: invalid file descriptor specification
+
+=== 38: read -u -s
+status: 0
+bash-n: 0
+--- stdout
+|reply=hi
+
+=== 39: read -u 3 -d 5
+status: 0
+bash-n: 0
+--- stdout
+|reply=1234
+
+=== 40: read -u 3 -d b -N 6
+status: 0
+bash-n: 0
+--- stdout
+|reply=abab
+|reply=ab
+
+=== 41: read -N doesn't respect delimiter, while read -n does
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|fooba
+
+=== 42: read -p (not fully tested)
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|h
+
+=== 43: read usage
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: read: -1: invalid number
+
+=== 44: read with smooshed args
+status: 0
+bash-n: 0
+--- stdout
+|var=h
+
+=== 45: read -r -d '' for NUL strings, e.g. find -print0
+status: 0
+bash-n: 0
+--- stdout
+|[./a\b\c\d]
+--- dir read0
+--- file read0/a\b\c\d
+
+=== 46: read from redirected directory is non-fatal error
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 5: read: 0: read error: Is a directory
+--- dir dir
+
+=== 47: read -n from directory
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 6: read: 0: read error: Is a directory
+--- dir dir
+
+=== 48: mapfile from directory (bash doesn't handle errors)
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+--- dir dir
+
+=== 49: read -n 0
+status: 0
+bash-n: 0
+--- stdout
+|['']
+
+=== 50: read -n and backslash escape
+status: 0
+bash-n: 0
+--- stdout
+|['abcde']
+|['a    ']
+
+=== 51: read -n 4 with incomplete backslash
+status: 0
+bash-n: 0
+--- stdout
+|['abcd']
+|['   x']
+
+=== 52: read -n 4 with backslash + delim
+status: 0
+bash-n: 0
+--- stdout
+|['abcd']
+
+=== 53: "backslash + newline" should be swallowed regardless of "-d <delim>"
+status: 0
+bash-n: 0
+--- stdout
+|['a bc d']
+|['a b,c d']
+|['a bc d\n']
+|['a b,c d\n']
+
+=== 54: empty input and splitting
+status: 0
+bash-n: 0
+--- stdout
+|[]
+|[]
+|[]
+
+=== 55: IFS='x ' read -a: trailing spaces (unlimited split)
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'b']
+|['a', 'b']
+|['a', 'b']
+|['a', 'b']
+|['a', 'b']
+|['a', 'b']
+|['a', 'b', '']
+
+=== 56: IFS='x ' read a b: trailing spaces (with max_split)
+status: 0
+bash-n: 0
+--- stdout
+|['hello', 'world  test']
+|-- IFS=x --
+|['a', 'ax  x']
+|['a', 'ax  x  x']
+|['a', 'ax  x  x']
+|['a', 'ax  x  x  a']
+
+=== 57: IFS='x ' read -a: intermediate spaces (unlimited split)
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'b']
+|['a', '', 'b']
+|['a', '', '', 'b']
+|['a', '', 'b']
+|['a', '', 'b']
+|['a', 'b']
+|['a', '', 'b']
+|['a', '', 'b']
+|['a', '', '', 'b']
+
+=== 58: IFS='x ' incomplete backslash
+status: 0
+bash-n: 0
+--- stdout
+|['a b']
+|['a', 'b']
+|['a', 'ax  x    hello']
+
+=== 59: IFS='\ ' and backslash escaping
+status: 0
+bash-n: 0
+--- stdout
+|['hello world', 'test']
+|['hello world  test', '']
+
+=== 60: max_split and backslash escaping
+status: 0
+bash-n: 0
+--- stdout
+|['Aa', 'b  a b']
+|['Aa', 'b', ' a b']
+|['Aa', 'b', ' a b', '']
+
+=== 61: IFS=x read a b <<< xxxxxx
+status: 0
+bash-n: 0
+--- stdout
+|['', '']
+|['', '']
+|['', 'xx']
+|['', 'xxx']
+|['', 'xxxx']
+|-- spaces --
+|['', '']
+|['', '']
+|['', 'xx']
+|['', 'xxx']
+|['', 'xxxx']
+|-- with char --
+|['', 'a']
+|['', 'a']
+|['', 'axx']
+|['', 'axxx']
+|['', 'axxxx']
+
+=== 62: read and "\ "
+status: 0
+bash-n: 0
+--- stdout
+|-- xs... --
+|['', '']
+|['', ' ']
+|['', '  ']
+|['', '   ']
+|-- xe... --
+|['', ' ']
+|['', '  ']
+|['', '   ']
+|['', ' ']
+|['', ' ']
+|['', ' ']
+
+=== 63: read bash bug
+status: 0
+bash-n: 0
+--- stdout
+|['', '\x01']

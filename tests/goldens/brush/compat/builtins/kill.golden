@@ -1,0 +1,299 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/kill.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: kill -l
+status: 0
+bash-n: 0
+--- stdout
+|HUP
+|INT
+|QUIT
+|ILL
+|TRAP
+|ABRT
+|BUS
+|FPE
+|KILL
+|USR1
+|SEGV
+|USR2
+|PIPE
+|ALRM
+|TERM
+|STKFLT
+|CHLD
+|CONT
+|STOP
+|TSTP
+|TTIN
+|TTOU
+|URG
+|XCPU
+|XFSZ
+|VTALRM
+|PROF
+|WINCH
+|IO
+|PWR
+|SYS
+|SIGHUP
+|SIGINT
+|SIGQUIT
+|SIGILL
+|SIGTRAP
+|SIGABRT
+|SIGBUS
+|SIGFPE
+|SIGKILL
+|SIGUSR1
+|SIGSEGV
+|SIGUSR2
+|SIGPIPE
+|SIGALRM
+|SIGTERM
+|SIGSTKFLT
+|SIGCHLD
+|SIGCONT
+|SIGSTOP
+|SIGTSTP
+|SIGTTIN
+|SIGTTOU
+|SIGURG
+|SIGXCPU
+|SIGXFSZ
+|SIGVTALRM
+|SIGPROF
+|SIGWINCH
+|SIGIO
+|SIGPWR
+|SIGSYS
+|1
+|2
+|2
+|1
+|0
+--- stderr
+|bash: line 5: kill: 9999: invalid signal specification
+
+=== 1: kill -s
+status: signal 10
+bash-n: 0
+
+=== 2: kill -n
+status: signal 9
+bash-n: 0
+
+=== 3: kill -s with its signal attached
+status: signal 10
+bash-n: 0
+
+=== 4: kill -n with its signal attached
+status: signal 15
+bash-n: 0
+
+=== 5: kill -SIGNAME
+status: signal 1
+bash-n: 0
+
+=== 6: kill -s SIG -- pid
+status: signal 1
+bash-n: 0
+
+=== 7: kill -SIG -- pid
+status: signal 9
+bash-n: 0
+
+=== 8: kill -n 0
+status: 0
+bash-n: 0
+--- stdout
+|OK
+
+=== 9: A shell ignores SIGQUIT, even when not interactive
+status: 0
+bash-n: 0
+--- stdout
+|survived
+|status: 0
+
+=== 10: A program that a signal ends is reported
+status: 0
+bash-n: 0
+--- stdout
+|status: 143
+--- stderr
+|Terminated                 sh -c 'kill -TERM $$'
+
+=== 11: An interactive shell without a terminal survives SIGTERM
+status: 0
+bash-n: 0
+--- stdout
+|survived
+|status: 0
+
+=== 12: kill -sigspec
+status: signal 10
+bash-n: 0
+
+=== 13: kill -sigspec (numeric)
+status: signal 9
+bash-n: 0
+
+=== 14: kill -0 (numeric)
+status: 0
+bash-n: 0
+--- stdout
+|OK
+
+=== 15: kill -0 (numeric, non-existent)
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: kill: (99999999) - No such process
+
+=== 16: kill continues a stopped job sent SIGTERM, so it can act on it
+status: 0
+bash-n: 0
+--- stdout
+|terminated
+
+=== 17: kill continues a job sent SIGTERM that stopped again in the background
+status: 0
+bash-n: 0
+--- stdout
+|terminated
+
+=== 18: A stopped job that survives SIGTERM runs on
+status: 0
+bash-n: 0
+--- stdout
+|caught
+|running: 1
+|stopped: 0
+
+=== 19: kill -sigspec (numeric, full name resolution)
+status: 0
+bash-n: 0
+--- stdout
+|KILL
+
+=== 20: kill -sigspec (numeric, invalid)
+status: 0
+bash-n: 0
+--- stdout
+|exit code: 1
+--- stderr
+|bash: line 1: kill: 9999: invalid signal specification
+
+=== 21: kill -s without a signal fails with status 1
+status: 0
+bash-n: 0
+--- stdout
+|missing signal: 1
+--- stderr
+|bash: line 1: kill: -s: option requires an argument
+
+=== 22: kill with a bad or missing signal fails with status 1
+status: 0
+bash-n: 0
+--- stdout
+|unknown signal: 1
+|missing signal: 1
+--- stderr
+|bash: line 1: kill: BOGUS: invalid signal specification
+|bash: line 3: kill: -s: option requires an argument
+
+=== 23: kill sends SIGTERM by default
+status: 0
+bash-n: 0
+--- stdout
+|got TERM
+
+=== 24: kill takes -- before a process group, and -s 0
+status: 0
+bash-n: 0
+--- stdout
+|a=0
+|b=0
+|c=0
+|d=1
+|e=1
+--- stderr
+|bash: line 6: kill: (-45708) - No such process
+|bash: line 7: kill: (-45708) - No such process
+
+=== 25: kill takes -N after a signal as a process group
+status: 0
+bash-n: 0
+--- stdout
+|a=0
+|0
+|b=1
+
+=== 26: kill takes -N alone as a signal number
+status: 0
+bash-n: 0
+--- stdout
+|1
+|rc=1
+
+=== 27: kill takes the words after its first operand as operands
+status: 0
+bash-n: 0
+--- stdout
+|done
+--- stderr
+|bash: line 1: kill: `-l': not a pid or valid job spec
+
+=== 28: kill takes its signal in each form
+status: 0
+bash-n: 0
+--- stdout
+|KILL
+|1
+|0
+|a=1
+|0
+|b=1
+|0
+|c=1
+
+=== 29: kill takes options after a -SIG shorthand
+status: 0
+bash-n: 0
+--- stdout
+|a=0
+|b=0
+
+=== 30: kill takes -- after a signal
+status: 0
+bash-n: 0
+--- stdout
+|0
+|a=1
+|0
+|b=1
+
+=== 31: kill -s takes a signal number
+status: signal 15
+bash-n: 0
+
+=== 32: kill -l with several signals prints each
+status: 0
+bash-n: 0
+--- stdout
+|TERM
+|KILL
+
+=== 33: kill -l maps an exit status above 128 to its signal
+status: 0
+bash-n: 0
+--- stdout
+|HUP
+
+=== 34: kill -l lists the signals in columns
+status: 0
+bash-n: 0
+--- stdout
+| 1) SIGHUP	 2) SIGINT	 3) SIGQUIT	 4) SIGILL	 5) SIGTRAP

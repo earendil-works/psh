@@ -1,0 +1,22 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/options/set-a.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: set -a
+status: 0
+bash-n: 0
+--- stdout
+|declare -- v1="1"
+|declare -- v2="2"
+|declare -- v3="3"
+|declare -- v4="4"
+|declare -x v1="reassigned"
+|declare -x v2="2appended"
+|declare -i v3="3"
+|declare -a v4=([0]="4" [1]="appended")
+|declare -a v5=([0]="a" [1]="b" [2]="updated")
+|declare -x v6="new"
+|declare -a v7=([0]="new")
+|declare -a v8=([0]="new")
+|declare -x v9="new"
+|declare -a v10=([0]="new")

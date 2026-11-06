@@ -1,0 +1,56 @@
+# Goldens for tests/oils/spec/fatal-errors.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Unrecoverable: divide by zero in redirect word
+status: 0
+bash-n: 0
+--- stdout
+|inside=1
+|outside=0
+--- stderr
+|<sh>: line 2: 42 / 0 : division by 0 (error token is "0 ")
+
+=== 1: Unrecoverable: divide by zero in conditional word
+status: 0
+bash-n: 0
+--- stdout
+|inside=1
+|outside=0
+|---
+|inside=1
+|outside=0
+--- stderr
+|<sh>: line 2: 42 / 0 : division by 0 (error token is "0 ")
+|<sh>: line 2: 42 / 0 : division by 0 (error token is "0 ")
+
+=== 2: Unrecoverable: divide by zero in case
+status: 0
+bash-n: 0
+--- stdout
+|inside=1
+|outside=0
+|---
+|inside=1
+|outside=0
+--- stderr
+|<sh>: line 2: 42 / 0 : division by 0 (error token is "0 ")
+|<sh>: line 2: 42 / 0 : division by 0 (error token is "0 ")
+
+=== 3: Unrecoverable: ${undef?message}
+status: 0
+bash-n: 0
+--- stdout
+|outside=127
+|outside=127
+--- stderr
+|<sh>: line 2: undef: message
+|<sh>: line 2: undef: message
+
+=== 4: ${undef} with nounset
+status: 0
+bash-n: 0
+--- stdout
+|outside=127
+--- stderr
+|<sh>: line 3: undef: unbound variable

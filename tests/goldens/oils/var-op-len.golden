@@ -1,0 +1,93 @@
+# Goldens for tests/oils/spec/var-op-len.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: String length
+status: 0
+bash-n: 0
+--- stdout
+|3
+
+=== 1: Unicode string length (UTF-8)
+status: 0
+bash-n: 0
+--- stdout
+|3
+
+=== 2: Unicode string length (spec/testdata/utf8-chars.txt)
+status: 0
+bash-n: 0
+--- stdout
+|7
+
+=== 3: String length with incomplete utf-8
+status: 0
+bash-n: 0
+--- stdout
+|0
+|1
+|2
+|3
+|3
+|4
+|5
+|6
+|5
+|6
+|7
+|8
+|9
+|7
+--- file err.txt
+
+=== 4: String length with invalid utf-8 continuation bytes
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|4
+|4
+|5
+|6
+|7
+|6
+|7
+|8
+|9
+|10
+|8
+|8
+--- file err.txt
+
+=== 5: Length of undefined variable
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 6: Length of undefined variable with nounset
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: undef: unbound variable
+
+=== 7: Length operator can't be followed by test operator
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: ${#x-default}: bad substitution
+|bash: line 4: ${#x-default}: bad substitution
+|bash: line 7: ${#x-default}: bad substitution
+
+=== 8: ${#s} respects LC_ALL - length in bytes or code points
+status: 0
+bash-n: 0
+--- stdout
+|len=1
+|len=2
+|
+|len=1
+|len=4
+|

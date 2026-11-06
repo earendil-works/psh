@@ -1,0 +1,978 @@
+# Goldens for tests/brush/brush-shell/tests/cases/brush/zsh_hooks.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: zsh hooks stay inert in a non-interactive shell
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 1: non-interactive zsh hooks cannot consume piped script lines
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 2: zsh hooks stay inert when -i runs a script
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 3: zsh hooks stay inert when -c runs a command
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 4: zsh hooks stay inert reading a pipe without -s
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 5: zsh hooks fire when -i makes a pipe-fed shell interactive
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 6: zsh hook state is assigned without clobbering attributes
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 7: zsh hooks each see the command's own status and PIPESTATUS
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 8: zsh preexec sees the command in history
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 9: zsh precmd failures are non-fatal and preserve status
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 10: zsh preexec failures are non-fatal
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 11: zsh hook registries skip names that resolve to nothing
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 12: zsh hook names that are not functions are skipped quietly
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 13: zsh hooks run shell functions only, ignoring builtins and programs
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 14: zsh hooks dispatch a function that shadows a builtin
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 15: zsh hook names are not re-expanded
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 16: zsh hook arrays pass arguments and preserve order
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 17: zsh hook registry edits take effect on the next dispatch
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 18: sourcing bash-preexec after initialization is a no-op
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 19: exit from zsh precmd stops remaining prompt actions
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 20: exit from zsh preexec stops the command
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 21: exit from PROMPT_COMMAND exits the interactive shell
+status: 3
+bash-n: 0
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ PROMPT_COMMAND='exit 3'
+
+=== 22: zsh hook guards and registries are not exported
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 23: zsh preexec skips lines that run no command
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 24: zsh preexec skips a syntax error
+status: 2
+bash-n: 2
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `)'
+|bash: line 2: `echo )'
+
+=== 25: zsh preexec skips a line that only defines a function
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 26: zsh hooks preserve the last argument in $_
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 27: zsh hooks are inert when disabled
+status: 0
+bash-n: 0
+--- stdout
+|state=[unset|unset|unset|unset]
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ precmd() { echo PRECMD-RAN; }; preexec() { echo PREEXEC-RAN; }
+\test$ \x0d<nctions[*]:-unset}|${preexec_functions[*]:-unset}]"
+|test$ exit
+
+=== 28: zsh precmd runs before PROMPT_COMMAND
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 29: zsh precmd leaves no trace in what PROMPT_COMMAND sees
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 30: zsh hook registry is read as a word list, scalar included
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 31: zsh preexec receives a multi-line command verbatim
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 32: zsh precmd obeys errexit like PROMPT_COMMAND
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 33: zsh preexec obeys errexit and stops the command
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 34: zsh precmd obeys errexit when the hook uses return
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 35: zsh preexec obeys errexit when the hook uses return
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-zsh-hooks: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option

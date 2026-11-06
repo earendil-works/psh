@@ -1,0 +1,500 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/complete.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: complete with no options
+status: 0
+bash-n: 0
+--- stdout
+|complete -W 'foo' mycmd
+
+=== 1: complete -p with no such completion spec fails
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|complete: mycmd: no completion specification
+|rc=1
+|complete: _DefaultCmD_: no completion specification
+|rc=1
+|complete: _EmptycmD_: no completion specification
+|rc=1
+|complete: _InitialWorD_: no completion specification
+
+=== 2: complete -p lists every spec, including -D, -E, and -I
+status: 0
+bash-n: 0
+--- stdout
+|-D
+|-E
+|-I
+|acmd
+|bcmd
+|---
+|-D
+|-E
+|-I
+|acmd
+|bcmd
+|---
+|-W 'x'
+|-F f
+|-W 'y'
+|-W 'x'
+
+=== 3: Roundtrip: complete -W
+status: 0
+bash-n: 0
+--- stdout
+|complete -W 'foo' mycmd
+|complete -W 'foo bar' mycmd
+
+=== 4: Roundtrip: complete -P
+status: 0
+bash-n: 0
+--- stdout
+|complete -P 'myprefix' mycmd
+|complete -P 'my prefix' mycmd
+
+=== 5: compopt +o wins over -o for the same option
+status: 0
+bash-n: 0
+--- stdout
+|complete -W 'x' cmd
+|complete -W 'x' cmd
+|complete -o nospace -W 'x' cmd
+
+=== 6: Roundtrip: complete -S
+status: 0
+bash-n: 0
+--- stdout
+|complete -S 'mysuffix' mycmd
+|complete -S 'my suffix' mycmd
+
+=== 7: Roundtrip: complete -F
+status: 0
+bash-n: 0
+--- stdout
+|complete -F myfunc mycmd
+
+=== 8: Roundtrip: complete -G
+status: 0
+bash-n: 0
+--- stdout
+|complete -G 'pattern' mycmd
+|complete -G 'pat tern' mycmd
+
+=== 9: Roundtrip: complete -X
+status: 0
+bash-n: 0
+--- stdout
+|complete -X 'pattern' mycmd
+|complete -X 'pat tern' mycmd
+
+=== 10: Roundtrip: complete -C
+status: 0
+bash-n: 0
+--- stdout
+|complete -C 'cmd' mycmd
+|complete -C 'c md' mycmd
+
+=== 11: Roundtrip: complete -A
+status: 0
+bash-n: 0
+--- stdout
+|complete -a mycmd
+|complete -A arrayvar mycmd
+|complete -A binding mycmd
+|complete -b mycmd
+|complete -c mycmd
+|complete -d mycmd
+|complete -A disabled mycmd
+|complete -A enabled mycmd
+|complete -e mycmd
+|complete -f mycmd
+|complete -A function mycmd
+|complete -g mycmd
+|complete -A helptopic mycmd
+|complete -A hostname mycmd
+|complete -j mycmd
+|complete -k mycmd
+|complete -A running mycmd
+|complete -s mycmd
+|complete -A setopt mycmd
+|complete -A shopt mycmd
+|complete -A signal mycmd
+|complete -A stopped mycmd
+|complete -u mycmd
+|complete -v mycmd
+
+=== 12: Roundtrip: complete -o options
+status: 0
+bash-n: 0
+--- stdout
+|--- Testing option: bashdefault ------------------
+|complete -o bashdefault mycmd_bashdefault
+|--- Testing option: default ------------------
+|complete -o default mycmd_default
+|--- Testing option: dirnames ------------------
+|complete -o dirnames mycmd_dirnames
+|--- Testing option: filenames ------------------
+|complete -o filenames mycmd_filenames
+|--- Testing option: noquote ------------------
+|complete -o noquote mycmd_noquote
+|--- Testing option: nosort ------------------
+|complete -o nosort mycmd_nosort
+|--- Testing option: nospace ------------------
+|complete -o nospace mycmd_nospace
+|--- Testing option: plusdirs ------------------
+|complete -o plusdirs mycmd_plusdirs
+
+=== 13: compopt +o disables an option
+status: 0
+bash-n: 0
+--- stdout
+|rc=0
+|complete -o filenames -W 'x' mycmd
+
+=== 14: compopt takes command names starting with + or - after --
+status: 0
+bash-n: 0
+--- stdout
+|rc=0
+|complete -o nospace -W 'x' +cmd
+|complete -o nospace -W 'x' -cmd
+
+=== 15: compopt takes a lone + as a command name
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|compopt: +: no completion specification
+|complete -o nospace -W 'x' ls
+
+=== 16: compopt with no options prints each spec's options
+status: 0
+bash-n: 0
+--- stdout
+|compopt +o bashdefault +o default +o dirnames +o filenames +o fullquote +o noquote +o nosort -o nospace +o plusdirs ls
+|compopt +o bashdefault +o default +o dirnames +o filenames +o fullquote +o noquote +o nosort +o nospace +o plusdirs cat
+|rc=0
+|compopt +o bashdefault +o default +o dirnames +o filenames +o fullquote +o noquote +o nosort +o nospace +o plusdirs -D
+|rc=0
+
+=== 17: compopt with no options reports names that have no completion spec
+status: 0
+bash-n: 0
+--- stdout
+|compopt: nope: no completion specification
+|rc=1
+|compopt +o bashdefault +o default +o dirnames +o filenames +o fullquote +o noquote +o nosort -o nospace +o plusdirs ls
+|compopt: nope: no completion specification
+|compopt +o bashdefault +o default +o dirnames +o filenames +o fullquote +o noquote +o nosort +o nospace +o plusdirs cat
+|rc=1
+
+=== 18: compopt -E or -I with no options prints the spec's options
+status: 0
+bash-n: 0
+--- stdout
+|compopt: _DefaultCmD_: no completion specification
+|rc=1
+|compopt: _EmptycmD_: no completion specification
+|rc=1
+|compopt: _InitialWorD_: no completion specification
+|rc=1
+|compopt +o bashdefault +o default +o dirnames -o filenames +o fullquote +o noquote +o nosort +o nospace +o plusdirs -E
+|rc=0
+|compopt +o bashdefault +o default +o dirnames +o filenames -o fullquote +o noquote +o nosort +o nospace +o plusdirs -I
+|rc=0
+|compopt +o bashdefault +o default +o dirnames -o filenames +o fullquote +o noquote +o nosort +o nospace +o plusdirs -E
+|compopt +o bashdefault +o default +o dirnames +o filenames -o fullquote +o noquote +o nosort +o nospace +o plusdirs -I
+|rc=0
+
+=== 19: compopt with no options quotes names as complete -p does
+status: 0
+bash-n: 0
+--- stdout
+|compopt +o bashdefault +o default +o dirnames +o filenames +o fullquote +o noquote +o nosort +o nospace +o plusdirs 'a b'
+|compopt +o bashdefault +o default +o dirnames +o filenames +o fullquote +o noquote +o nosort +o nospace +o plusdirs 'x'\''y'
+|compopt +o bashdefault +o default +o dirnames +o filenames +o fullquote +o noquote +o nosort +o nospace +o plusdirs -foo
+|compopt +o bashdefault +o default +o dirnames +o filenames +o fullquote +o noquote +o nosort +o nospace +o plusdirs '*'
+|rc=0
+
+=== 20: compopt with options and names prints nothing
+status: 0
+bash-n: 0
+--- stdout
+|rc=0
+|rc=0
+|rc=0
+|rc=0
+|complete -W 'x' ls
+|complete -o nospace -W 'y' -D
+
+=== 21: complete and compopt take the fullquote option
+status: 0
+bash-n: 0
+--- stdout
+|rc=0
+|complete -o fullquote -W 'x' ls
+|rc=0
+|complete -W 'x' ls
+|rc=0
+|complete -o fullquote -W 'x' ls
+|a
+|b
+|rc=0
+
+=== 22: complete -r
+status: 1
+bash-n: 0
+--- stdout
+|[Removing non-existent]
+|0
+|[Removing existing]
+|0
+
+=== 23: compopt with a name that has no completion spec fails
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|compopt: b: no completion specification
+|complete -o nospace -W 'x' a
+|b has a spec: rc=1
+
+=== 24: compopt -D, -E, or -I with no such completion spec fails
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|compopt: _DefaultCmD_: no completion specification
+|rc=1
+|compopt: _EmptycmD_: no completion specification
+|rc=1
+|compopt: _InitialWorD_: no completion specification
+
+=== 25: compopt -D, -E, or -I updates an existing completion spec
+status: 0
+bash-n: 0
+--- stdout
+|rc=0
+|-o nospace
+|rc=0
+|-o nospace
+|rc=0
+|-o nospace
+
+=== 26: complete -r with no args
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 27: compopt outside a completion fails
+status: 0
+bash-n: 0
+--- stdout
+|compopt: not currently executing completion function
+|rc=1
+|compopt: not currently executing completion function
+|rc=1
+
+=== 28: compopt in a function that compgen -F runs fails
+status: 0
+bash-n: 0
+--- stdout
+|compopt rc=1
+|x
+|compgen rc=0
+
+=== 29: complete -r with special options
+status: 0
+bash-n: 0
+--- stdout
+|0
+|complete -W 'token' mycmd
+
+=== 30: complete -p prints options, actions, and arguments in bash's order
+status: 0
+bash-n: 0
+--- stdout
+|complete -o default -o nospace -a -v -A function -G '*.c' -W 'w1 w2' -P 'pre' -S 'suf' -X '*.x' -C 'cmd' -F fn mycmd
+|complete -a -b -A arrayvar -A signal other
+|complete -W 'x' -X '*.y' 'a b'
+
+=== 31: complete -p output round-trips
+status: 0
+bash-n: 0
+--- stdout
+|complete -o filenames -A function -W 'w1 w2' -P 'pre' -X '*.x' mycmd
+|complete -X '*.y' -F fn -D
+|round-tripped
+
+=== 32: complete -p quotes names like bash, so its output round-trips
+status: 0
+bash-n: 0
+--- stdout
+|complete -W 'x' -F '#fn' '~'
+|complete -F a,b cmd1
+|complete -F fn a,b
+|round-tripped
+
+=== 33: complete actions are generated once each, in bash's order
+status: 0
+bash-n: 0
+--- stdout
+|zzqa
+|zzqf
+|---
+|zzqa
+|---
+|complete -o nosort -a -A function mycmd
+
+=== 34: compgen -W preserves duplicates
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|a
+|c
+|b
+
+=== 35: compgen -W preserves order
+status: 0
+bash-n: 0
+--- stdout
+|z
+|y
+|x
+|a
+
+=== 36: complete -p shows a -X pattern with a leading ! as given
+status: 0
+bash-n: 0
+--- stdout
+|complete -f -X '!*.txt' mycmd
+
+=== 37: compopt and complete -p take words after the first name as names
+status: 0
+bash-n: 0
+--- stdout
+|compopt +o bashdefault +o default +o dirnames +o filenames +o fullquote +o noquote +o nosort +o nospace +o plusdirs ls
+|rc=1
+|compopt: -o: no completion specification
+|compopt: nospace: no completion specification
+|complete -W 'x' ls
+|complete -W 'x' ls
+|complete -W 'x' -foo
+|rc=0
+
+=== 38: compopt -D, -E, or -I ignores names given alongside
+status: 0
+bash-n: 0
+--- stdout
+|rc=0
+|complete -o nospace -W 'x' -D
+|complete -W 'y' cat
+
+=== 39: compopt +o wins over -o in any order and number, for each spec it updates
+status: 0
+bash-n: 0
+--- stdout
+|complete -o filenames -W 'x' a
+|complete -W 'y' b
+|complete -o dirnames -W 'z' -D
+|complete -o nospace -W 'w' -E
+|complete -o nosort -W 'v' -I
+
+=== 40: compopt takes +o and -o with the option name attached
+status: 0
+bash-n: 0
+--- stdout
+|rc=0
+|complete -o dirnames -o filenames -W 'x' cmd
+
+=== 41: complete and compopt pick one of -D, -E, and -I, in that order
+status: 0
+bash-n: 0
+--- stdout
+|complete -W 'x' -E
+|complete -W 'y' -D
+|complete -o filenames -W 'd' -D
+|complete -o nospace -W 'e' -E
+|complete -W 'i' -I
+
+=== 42: complete takes the last of a repeated option argument
+status: 0
+bash-n: 0
+--- stdout
+|complete -G '*.b' -W 'y' -P 'b' -S 'd' -X 'q' -C 'c2' -F g cmd
+
+=== 43: complete takes flags clustered and option arguments attached
+status: 0
+bash-n: 0
+--- stdout
+|complete -o nospace -d c1
+|complete -f -W 'ab' c2
+|complete -o nospace -a c3
+|complete -d -A function -W 'x' c4
+
+=== 44: complete -p takes precedence over -r
+status: 0
+bash-n: 0
+--- stdout
+|complete -W 'x' c
+|rc=0
+|complete -W 'x' c
+|rc=0
+|complete -W 'x' c
+
+=== 45: complete and compopt reject unknown options and names
+status: 0
+bash-n: 0
+--- stdout
+|complete -x d: rc=2
+|complete -A bogus d: rc=2
+|complete -o bogus d: rc=2
+|complete -A: rc=2
+|complete -o: rc=2
+|complete -W: rc=2
+|complete -W x -A bogus d: rc=2
+|compopt -x c: rc=2
+|compopt -o bogus c: rc=2
+|compopt +o bogus c: rc=2
+|compopt +x c: rc=2
+|compopt -o: rc=2
+|compopt +o: rc=2
+|complete -W 'x' c
+
+=== 46: compopt takes +D, +E, and +I as -D, -E, and -I
+status: 0
+bash-n: 0
+--- stdout
+|rc=0
+|rc=0
+|rc=0
+|complete -o nospace -W 'x' -D
+|complete -o nospace -W 'y' -E
+|complete -o dirnames -W 'z' -I
+
+=== 47: complete with options but no names is a usage error
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|rc=2
+
+=== 48: complete -F rejects a function name with blanks or metacharacters
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|rc=2
+
+=== 49: complete -p shows an empty -F function name unquoted
+status: 0
+bash-n: 0
+--- stdout
+|complete -F  c

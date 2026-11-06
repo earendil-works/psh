@@ -1,0 +1,362 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/redirection.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Redirection to null
+status: 0
+bash-n: 0
+
+=== 1: Output redirection to file
+status: 0
+bash-n: 0
+--- stdout
+|out.txt
+|hi
+--- file out.txt
+|hi
+
+=== 2: Output redirection to file (append)
+status: 0
+bash-n: 0
+--- stdout
+|out.txt
+|hi
+|there
+--- file out.txt
+|hi
+|there
+
+=== 3: Input redirection from file
+status: 0
+bash-n: 0
+--- stdout
+|Something here.
+
+=== 4: Redirection to fd
+status: 0
+bash-n: 0
+--- stderr
+|hi
+
+=== 5: Redirecting stdout + stderr to file
+status: 0
+bash-n: 0
+--- stdout
+|[Writing]
+|[Contents of file.txt]
+|stdout
+|stderr
+--- file file.txt
+|stdout
+|stderr
+
+=== 6: Invalid stdout + stderr redir
+status: 1
+bash-n: 0
+--- stdout
+|[Writing]
+|[Contents of file.txt]
+--- stderr
+|bash: line 7: file.txt: ambiguous redirect
+|cat: file.txt: No such file or directory
+
+=== 7: Redirecting an fd
+status: 0
+bash-n: 0
+--- file stderr.txt
+|hi-error
+--- file stdout.txt
+|hi-out
+
+=== 8: Almost redirecting but not actually redirecting
+status: 0
+bash-n: 0
+--- stderr
+|1
+
+=== 9: Redirection with arbitrary fd number
+status: 0
+bash-n: 0
+--- file file.txt
+|hi
+
+=== 10: Process substitution: basic
+status: 0
+bash-n: 0
+--- stdout
+|/dev/fd/63 /dev/fd/62
+|/dev/fd/63 /dev/fd/62
+|/dev/fd/63 /dev/fd/62
+
+=== 11: Process substitution: not in simple commands
+status: 0
+bash-n: 0
+--- stdout
+|/dev/fd/63
+
+=== 12: Process substitution: builtins
+status: 0
+bash-n: 0
+--- stdout
+|var: 100
+
+=== 13: Process substitution: input redirection
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 14: Process substitution: output redirection
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+
+=== 15: Process substitution: wait for an output consumer
+status: 0
+bash-n: 0
+--- stdout
+|out:hi
+|after wait
+
+=== 16: Process substitution: input
+status: 0
+bash-n: 0
+--- stdout
+|updated
+|Done.
+|value
+
+=== 17: Input redirection from /dev/null
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0
+
+=== 18: Redirect stderr to /dev/null
+status: 0
+bash-n: 0
+--- stdout
+|exit: 2
+
+=== 19: Append redirection to /dev/null
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0
+
+=== 20: Redirect to /dev/null via variable
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0
+
+=== 21: Read and write /dev/null
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0
+
+=== 22: Redirect stdout and stderr
+status: 2
+bash-n: 0
+
+=== 23: Process substitution: input + output
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 24: Redirection in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|
+--- stderr
+|hi
+--- file stderr.txt
+
+=== 25: Redirection in command substitution to non-standard fd
+status: 0
+bash-n: 0
+--- stdout
+|
+--- stderr
+|bash: line 1: 3: Bad file descriptor
+--- file output.txt
+
+=== 26: Redirection in command substitution in braces to non-standard fd
+status: 0
+bash-n: 0
+--- file output.txt
+|hi
+
+=== 27: Redirection in command substitution in subshell to non-standard fd
+status: 0
+bash-n: 0
+--- file output.txt
+|hi
+
+=== 28: Expansions in a command don't see its redirections
+status: 0
+bash-n: 0
+--- stdout
+|[stdin-data]
+|[stdin-data]
+
+=== 29: Redirection failure
+status: 0
+bash-n: 0
+--- stdout
+|following-command
+--- stderr
+|bash: line 1: /non-existent-dir/file.txt: No such file or directory
+
+=== 30: Redirection for opening read and write
+status: 0
+bash-n: 0
+--- stdout
+|hi
+--- file file.txt
+|hi
+
+=== 31: Close stdout
+status: 0
+bash-n: 0
+--- stdout
+|This should appear
+--- stderr
+|bash: line 1: echo: write error: Bad file descriptor
+
+=== 32: Close stderr
+status: 0
+bash-n: 0
+--- stdout
+|This should appear
+
+=== 33: Close stdout of external command
+status: 0
+bash-n: 0
+--- stdout
+|This should appear
+--- stderr
+|echo: write error: Bad file descriptor
+
+=== 34: Close standard streams of external commands: exit status
+status: 0
+bash-n: 0
+--- stdout
+|stdout: 2
+|stdin: 2
+--- stderr
+|sh: 1: 1: Bad file descriptor
+|sh: 1: 0: Bad file descriptor
+
+=== 35: Redirect for an external command with one file descriptor to spare
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+
+=== 36: Redirect external command output between stdout and stderr
+status: 0
+bash-n: 0
+--- stdout
+|to stdout
+--- stderr
+|to stderr
+
+=== 37: Redirect external command output to the shell's stdin
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+--- stderr
+|echo: write error: Bad file descriptor
+
+=== 38: Close output file descriptor
+status: 0
+bash-n: 0
+--- stdout
+|Cannot write to closed fd
+--- stderr
+|bash: line 8: 3: Bad file descriptor
+--- file test.txt
+|test
+
+=== 39: Close input file descriptor
+status: 0
+bash-n: 0
+--- stdout
+|Read: line1
+|Cannot read from closed fd
+--- stderr
+|bash: line 9: 3: Bad file descriptor
+
+=== 40: Duplicate input file descriptor
+status: 0
+bash-n: 0
+--- stdout
+|Read: test input line
+
+=== 41: Input file descriptor duplication from stdin
+status: 0
+bash-n: 0
+--- stdout
+|Read: 
+
+=== 42: Multiple file descriptor redirections
+status: 127
+bash-n: 0
+--- stdout
+|[3]
+|fd3
+|[4]
+|[5]
+--- stderr
+|bash: line 13: fd4.txt: command not found
+|bash: line 15: fd5.txt: command not found
+--- file fd3.txt
+|fd3
+--- file fd4.txt
+|fd4
+--- file fd5.txt
+|fd5
+
+=== 43: High file descriptor numbers
+status: 0
+bash-n: 0
+--- stdout
+|[10]
+|test
+--- file fd10.txt
+|test
+
+=== 44: Redirection with out-of-range io number falls back to a word
+status: 0
+bash-n: 0
+--- stdout
+|hi 299999999999999999999999999999999999999999999999999999
+--- file out.txt
+|hi 299999999999999999999999999999999999999999999999999999
+
+=== 45: Redirection with out-of-range io number duplicated to a valid fd
+status: 0
+bash-n: 0
+--- stdout
+|99999999999999999999
+
+=== 46: Redirection with out-of-range io numbers on both sides of a dup
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+--- stderr
+|bash: line 1: 20000000000000000000000000000000000000000000: Bad file descriptor
+
+=== 47: Inheritance of fds from parent
+status: 0
+bash-n: 0
+--- file output.txt
+|hi

@@ -1,0 +1,236 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/hash.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Non-existent program
+status: 0
+bash-n: 0
+--- stdout
+|Result: 1
+--- stderr
+|bash: line 1: hash: non-existent-program: not found
+
+=== 1: Re-hash non-existent program
+status: 1
+bash-n: 0
+--- stdout
+|/some/path
+|1. Result: 0
+--- stderr
+|bash: line 3: hash: non-existent-program: not found
+|bash: line 4: hash: non-existent-program: not found
+
+=== 2: Existent program
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+
+=== 3: Display not-yet-hashed program
+status: 0
+bash-n: 0
+--- stdout
+|1. Result: 1
+|/usr/bin/ls
+|2. Result: 0
+--- stderr
+|bash: line 1: hash: ls: not found
+
+=== 4: Display hashed program
+status: 0
+bash-n: 0
+--- stdout
+|1. Result: 0
+|/some/path
+|2. Result: 0
+
+=== 5: Display multiple hashed programs
+status: 0
+bash-n: 0
+--- stdout
+|1. Result: 0
+|2. Result: 0
+|somecmd1	/some/path
+|somecmd2	/some/path
+|3. Result: 0
+
+=== 6: Display -l path
+status: 0
+bash-n: 0
+--- stdout
+|1. Result: 0
+|/some/spaces path
+|2. Result: 0
+|builtin hash -p /some/spaces path somecmd
+|3. Result: 0
+
+=== 7: Remove
+status: 1
+bash-n: 0
+--- stdout
+|1. Result: 0
+|/some/path
+|2. Result: 0
+|3. Result: 0
+--- stderr
+|bash: line 4: hash: somecmd: not found
+
+=== 8: Remove all
+status: 1
+bash-n: 0
+--- stdout
+|1. Result: 0
+|2. Result: 0
+|3. Result: 0
+--- stderr
+|bash: line 4: hash: somecmd1: not found
+|bash: line 5: hash: somecmd2: not found
+
+=== 9: Hash file path
+status: 0
+bash-n: 0
+--- stdout
+|1. Result: 0
+|2. Result: 0
+
+=== 10: hash -p refuses a directory
+status: 0
+bash-n: 0
+--- stdout
+|[a directory is refused]
+|hash: adir: Is a directory
+|rc=1
+|rc=1
+|hash: z1: not found
+|rc=1
+|[any other path is taken at face value]
+|rc=0
+|rc=0
+|z2	afile
+|z3	/nonexistent/x
+|rc=0
+|[refused once per name]
+|hash: adir: Is a directory
+|hash: adir: Is a directory
+|rc=1
+|[a relative path resolves against the shell's working directory]
+|hash: reldir: Is a directory
+|rc=1
+|rc=0
+|reldir
+|rc=0
+|[hash NAME stays strict about executables]
+|hash: only: not found
+|rc=1
+--- dir adir
+--- file afile
+--- dir d1
+--- file d1/only
+--- dir sub
+--- dir sub/reldir
+--- dir sub2
+
+=== 11: Display the whole table
+status: 0
+bash-n: 0
+--- stdout
+|[empty]
+|hash: hash table empty
+|rc=0
+|[populated, in insertion order]
+|hits	command
+|   0	/some/path
+|   0	/other/path
+|rc=0
+|[emptied again]
+|hash: hash table empty
+|rc=0
+
+=== 12: Display the whole table in reusable form
+status: 0
+bash-n: 0
+--- stdout
+|builtin hash -p /some/path sc1
+|builtin hash -p '/some/spaces path' sc2
+|rc=0
+
+=== 13: Count hits per hashed command
+status: 0
+bash-n: 0
+--- stdout
+|hits	command
+|   2	<TMPDIR>/prog
+|rc=0
+--- file prog
+|#!/bin/sh
+|:
+
+=== 14: Assigning PATH empties the table
+status: 0
+bash-n: 0
+--- stdout
+|prog in x
+|status: 127
+--- stderr
+|bash: line 4: prog: command not found
+
+=== 15: Hash a path starting with a dot
+status: 0
+bash-n: 0
+--- stdout
+|.nosuch
+|status: 0
+
+=== 16: Hash paths starting with a dot, as given
+status: 0
+bash-n: 0
+--- stdout
+|0=./././prog
+|./././prog
+|0=.//prog
+|.//prog
+|./nosuch/
+|status: 0
+|./nosuch//
+|status: 0
+
+=== 17: Hash a builtin or function
+status: 0
+bash-n: 0
+--- stdout
+|echo: 0
+|f: 0
+|hashed: 1
+--- stderr
+|bash: line 4: hash: echo: not found
+
+=== 18: command -p hashes what it finds
+status: 0
+bash-n: 0
+--- stdout
+|/bin/cat
+|status: 0
+
+=== 19: Run a hashed path that doesn't exist
+status: 0
+bash-n: 0
+--- stdout
+|status: 127
+|says no such file
+--- stderr
+|bash: line 2: /no/such/prog: No such file or directory
+
+=== 20: hash -t with no names fails with status 1
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+--- stderr
+|bash: line 1: hash: -t: option requires an argument
+
+=== 21: hash -r -p empties the table, then adds the path
+status: 0
+bash-n: 0
+--- stdout
+|/bin/sh
+|seeded: 1

@@ -1,0 +1,975 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/options/set-e.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: errexit with set -o errexit
+status: 1
+bash-n: 0
+
+=== 1: errexit status check
+status: 0
+bash-n: 0
+--- stdout
+|errexit        	on
+
+=== 2: Basic non-error case
+status: 0
+bash-n: 0
+--- stdout
+|Text after call
+
+=== 3: Basic error case
+status: 1
+bash-n: 0
+
+=== 4: Command line -e
+status: 1
+bash-n: 0
+
+=== 5: Multiple commands before error
+status: 1
+bash-n: 0
+--- stdout
+|first
+|second
+
+=== 6: Error in middle of script
+status: 1
+bash-n: 0
+--- stdout
+|before
+
+=== 7: Error in if condition
+status: 0
+bash-n: 0
+--- stdout
+|else branch
+|after if
+
+=== 8: Error in elif condition
+status: 0
+bash-n: 0
+--- stdout
+|else branch
+|after if
+
+=== 9: Error in if body
+status: 1
+bash-n: 0
+
+=== 10: Error in elif body
+status: 1
+bash-n: 0
+
+=== 11: Error in else body
+status: 1
+bash-n: 0
+
+=== 12: Error in if condition with compound test
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after
+
+=== 13: Error in while condition
+status: 0
+bash-n: 0
+--- stdout
+|after while
+
+=== 14: Error in while body
+status: 1
+bash-n: 0
+
+=== 15: Error in until condition
+status: 0
+bash-n: 0
+--- stdout
+|after until
+
+=== 16: Error in until body
+status: 1
+bash-n: 0
+
+=== 17: Error on right side of &&
+status: 1
+bash-n: 0
+
+=== 18: Error on left side of &&
+status: 0
+bash-n: 0
+--- stdout
+|after &&
+
+=== 19: Error on left side of && as the last command of a for loop
+status: 0
+bash-n: 0
+--- stdout
+|after for
+
+=== 20: Error on both sides of ||
+status: 1
+bash-n: 0
+
+=== 21: Error on left side of ||
+status: 0
+bash-n: 0
+--- stdout
+|after ||
+
+=== 22: Error on right side of ||
+status: 0
+bash-n: 0
+--- stdout
+|after ||
+
+=== 23: Error after && chain
+status: 1
+bash-n: 0
+
+=== 24: Complex boolean expression
+status: 0
+bash-n: 0
+--- stdout
+|after complex expression
+
+=== 25: Negated command with failure
+status: 0
+bash-n: 0
+--- stdout
+|after negation
+
+=== 26: Negated command with success
+status: 0
+bash-n: 0
+--- stdout
+|after negation
+
+=== 27: Error after negated command
+status: 1
+bash-n: 0
+
+=== 28: Error in first command of pipeline (without pipefail)
+status: 0
+bash-n: 0
+--- stdout
+|after pipeline
+
+=== 29: Error in first command of pipeline (without pipefail, negated)
+status: 0
+bash-n: 0
+--- stdout
+|after pipeline
+
+=== 30: Error in first command of pipeline (with pipefail)
+status: 1
+bash-n: 0
+
+=== 31: Error in first command of pipeline (with pipefail, negated)
+status: 0
+bash-n: 0
+--- stdout
+|after pipeline
+
+=== 32: Error in middle of pipeline (without pipefail)
+status: 0
+bash-n: 0
+--- stdout
+|after pipeline
+
+=== 33: Error in middle of pipeline (without pipefail, negated)
+status: 0
+bash-n: 0
+--- stdout
+|after pipeline
+
+=== 34: Error in middle of pipeline (with pipefail)
+status: 1
+bash-n: 0
+
+=== 35: Error in middle of pipeline (with pipefail, negated)
+status: 0
+bash-n: 0
+--- stdout
+|after pipeline
+
+=== 36: Error in last command of pipeline (without pipefail)
+status: 1
+bash-n: 0
+
+=== 37: Error in last command of pipeline (without pipefail, negated)
+status: 0
+bash-n: 0
+--- stdout
+|after pipeline
+
+=== 38: Error in last command of pipeline (with pipefail)
+status: 1
+bash-n: 0
+
+=== 39: Error in last command of pipeline (with pipefail, negated)
+status: 0
+bash-n: 0
+--- stdout
+|after pipeline
+
+=== 40: Errors in multiple commands of pipeline (without pipefail)
+status: 3
+bash-n: 0
+
+=== 41: Errors in multiple commands of pipeline (without pipefail, negated)
+status: 0
+bash-n: 0
+
+=== 42: Errors in multiple commands of pipeline (with pipefail)
+status: 3
+bash-n: 0
+
+=== 43: Errors in multiple commands of pipeline (with pipefail, negated)
+status: 0
+bash-n: 0
+
+=== 44: Pipeline in conditional
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after
+
+=== 45: Negated pipeline
+status: 0
+bash-n: 0
+--- stdout
+|after
+
+=== 46: Error in function body exits function and script
+status: 1
+bash-n: 0
+--- stdout
+|in function
+
+=== 47: Function returning error in conditional
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after
+
+=== 48: Function called with &&
+status: 1
+bash-n: 0
+
+=== 49: Function called with ||
+status: 1
+bash-n: 0
+
+=== 50: Function called with negation
+status: 0
+bash-n: 0
+--- stdout
+|after
+
+=== 51: Error in function body with set -e inside function
+status: 1
+bash-n: 0
+--- stdout
+|before error
+
+=== 52: Function with explicit return still respects set -e
+status: 1
+bash-n: 0
+
+=== 53: Error in subshell exits subshell but not parent
+status: 1
+bash-n: 0
+--- stdout
+|before subshell
+|in subshell
+
+=== 54: Subshell with set -e exits on error
+status: 0
+bash-n: 0
+--- stdout
+|before
+|after subshell
+
+=== 55: Subshell failure in conditional
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after
+
+=== 56: Subshell with &&
+status: 1
+bash-n: 0
+
+=== 57: Error in command substitution
+status: 1
+bash-n: 0
+
+=== 58: Error in command substitution with assignment
+status: 0
+bash-n: 0
+--- stdout
+|var is: value
+|after
+
+=== 59: Command substitution in conditional
+status: 0
+bash-n: 0
+--- stdout
+|matched
+|after
+
+=== 60: set +e disables error exit
+status: 0
+bash-n: 0
+--- stdout
+|with -e
+|after false with +e
+
+=== 61: set -e can be re-enabled
+status: 1
+bash-n: 0
+--- stdout
+|after false with +e
+
+=== 62: set +e in function
+status: 0
+bash-n: 0
+--- stdout
+|in function after false
+|should not print
+
+=== 63: Non-zero exit status triggers exit
+status: 1
+bash-n: 0
+
+=== 64: Specific non-zero exit status
+status: 42
+bash-n: 0
+
+=== 65: Zero exit status
+status: 0
+bash-n: 0
+--- stdout
+|after exit 0
+
+=== 66: Assignment from failing command
+status: 0
+bash-n: 0
+--- stdout
+|after assignment
+
+=== 67: Local variable assignment with failing command
+status: 0
+bash-n: 0
+--- stdout
+|after local
+|after function
+
+=== 68: Error after successful conditional
+status: 1
+bash-n: 0
+--- stdout
+|in if
+
+=== 69: Nested conditionals with error
+status: 0
+bash-n: 0
+--- stdout
+|inner else
+|after inner if
+|after outer if
+
+=== 70: Error in case branch
+status: 0
+bash-n: 0
+--- stdout
+|after case
+
+=== 71: Error in case statement body
+status: 1
+bash-n: 0
+--- stdout
+|matched
+
+=== 72: case pattern matching on non-match
+status: 0
+bash-n: 0
+--- stdout
+|after case
+
+=== 73: Error in ; list
+status: 1
+bash-n: 0
+
+=== 74: Semicolon separated commands respect set -e
+status: 1
+bash-n: 0
+--- stdout
+|first
+|second
+
+=== 75: Error in background job
+status: 0
+bash-n: 0
+--- stdout
+|after wait
+
+=== 76: set -e with set -o pipefail
+status: 1
+bash-n: 0
+
+=== 77: set -e without pipefail allows pipeline errors
+status: 0
+bash-n: 0
+--- stdout
+|after pipeline
+
+=== 78: test builtin false result in conditional
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after
+
+=== 79: test builtin false result standalone
+status: 1
+bash-n: 0
+
+=== 80: [ builtin false result in conditional
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after
+
+=== 81: [ builtin false result standalone
+status: 1
+bash-n: 0
+
+=== 82: trap ERR
+status: 1
+bash-n: 0
+--- stdout
+|error trapped
+
+=== 83: trap EXIT
+status: 1
+bash-n: 0
+--- stdout
+|exit trapped
+
+=== 84: Error in function in conditional
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after
+
+=== 85: Negated function call
+status: 0
+bash-n: 0
+--- stdout
+|in function
+|after
+
+=== 86: Function in pipeline on internal error
+status: 0
+bash-n: 0
+--- stdout
+|after
+
+=== 87: Error after function in boolean context
+status: 1
+bash-n: 0
+
+=== 88: Arithmetic command (( )) standalone with false result
+status: 1
+bash-n: 0
+
+=== 89: Arithmetic command (( )) standalone with true result
+status: 0
+bash-n: 0
+--- stdout
+|after arithmetic
+
+=== 90: Arithmetic command (( )) in if condition
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after
+
+=== 91: Arithmetic command (( )) with &&
+status: 0
+bash-n: 0
+--- stdout
+|after
+
+=== 92: Arithmetic for loop condition false
+status: 0
+bash-n: 0
+--- stdout
+|after for loop
+
+=== 93: Arithmetic for loop with errexit in body
+status: 1
+bash-n: 0
+--- stdout
+|iteration 0
+
+=== 94: Extended test [[ ]] standalone with false result
+status: 1
+bash-n: 0
+
+=== 95: Extended test [[ ]] standalone with true result
+status: 0
+bash-n: 0
+--- stdout
+|after test
+
+=== 96: Extended test [[ ]] in if condition
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after
+
+=== 97: Extended test [[ ]] with &&
+status: 0
+bash-n: 0
+--- stdout
+|after
+
+=== 98: Extended test [[ ]] with ||
+status: 0
+bash-n: 0
+--- stdout
+|not matched
+|after
+
+=== 99: Brace group in pipeline with errexit
+status: 0
+bash-n: 0
+--- stdout
+|after pipeline
+
+=== 100: Brace group in pipeline with pipefail
+status: 1
+bash-n: 0
+
+=== 101: Brace group with internal error and errexit
+status: 1
+bash-n: 0
+--- stdout
+|in brace
+
+=== 102: Nested subshells with errexit
+status: 1
+bash-n: 0
+
+=== 103: Deeply nested subshells with errexit
+status: 1
+bash-n: 0
+
+=== 104: Functions calling functions with errexit
+status: 1
+bash-n: 0
+
+=== 105: Nested function call in conditional
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after inner call
+|after
+
+=== 106: if with && and pipeline
+status: 0
+bash-n: 0
+--- stdout
+|then
+|after
+
+=== 107: if with || and pipeline failure
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after
+
+=== 108: Negated pipeline in conditional
+status: 0
+bash-n: 0
+--- stdout
+|then
+|after
+
+=== 109: Command substitution in argument with errexit
+status: 0
+bash-n: 0
+--- stdout
+|value: result
+|after echo
+
+=== 110: PIPESTATUS with pipefail and multiple failures
+status: 0
+bash-n: 0
+--- stdout
+|Exit: 3; PIPESTATUS: 2 3 0
+
+=== 111: PIPESTATUS preserved correctly with pipefail
+status: 0
+bash-n: 0
+--- stdout
+|Exit: 5; PIPESTATUS: 0 5 0
+
+=== 112: pipefail in conditional
+status: 0
+bash-n: 0
+--- stdout
+|else
+|Exit: 0
+
+=== 113: eval with failing command
+status: 1
+bash-n: 0
+
+=== 114: eval with successful command
+status: 0
+bash-n: 0
+--- stdout
+|after eval
+
+=== 115: eval with && chain
+status: 1
+bash-n: 0
+
+=== 116: eval with || chain
+status: 0
+bash-n: 0
+--- stdout
+|after eval
+
+=== 117: eval in conditional
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after
+
+=== 118: eval with multiple commands
+status: 1
+bash-n: 0
+--- stdout
+|first
+
+=== 119: source script with failing command
+status: 1
+bash-n: 0
+--- stdout
+|in sourced
+
+=== 120: source script with successful commands
+status: 0
+bash-n: 0
+--- stdout
+|in sourced
+|after source
+
+=== 121: dot operator with failing command
+status: 1
+bash-n: 0
+
+=== 122: source in conditional
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after
+
+=== 123: trap DEBUG with errexit
+status: 1
+bash-n: 0
+--- stdout
+|DEBUG
+|first
+|DEBUG
+
+=== 124: trap DEBUG in conditional with errexit
+status: 0
+bash-n: 0
+--- stdout
+|DEBUG
+|DEBUG
+|else
+|DEBUG
+|after
+
+=== 125: BASH_COMMAND set during errexit
+status: 1
+bash-n: 0
+--- stdout
+|failed: false
+
+=== 126: BASH_COMMAND in function with errexit
+status: 1
+bash-n: 0
+--- stdout
+|failed: false
+
+=== 127: Division by zero in arithmetic expansion
+status: 0
+bash-n: 0
+--- stdout
+|before
+|should not print
+--- stderr
+|bash: line 3: 1/0: division by 0 (error token is "0")
+
+=== 128: Division by zero in (( ))
+status: 1
+bash-n: 0
+--- stdout
+|before
+--- stderr
+|bash: line 3: ((: 1/0 : division by 0 (error token is "0 ")
+
+=== 129: Division by variable zero
+status: 0
+bash-n: 0
+--- stdout
+|should not print
+--- stderr
+|bash: line 3: 1/x: division by 0 (error token is "x")
+
+=== 130: Multiple assignments with middle failure
+status: 0
+bash-n: 0
+--- stdout
+|a=a b= c=c
+|after
+
+=== 131: Multiple assignments all succeed
+status: 0
+bash-n: 0
+--- stdout
+|a=a b=b c=c
+|after
+
+=== 132: Multiple assignments first fails
+status: 0
+bash-n: 0
+--- stdout
+|a= b=b c=c
+|after
+
+=== 133: time with failing command
+status: 1
+bash-n: 0
+--- stderr
+|
+|real	0m0.000s
+|user	0m0.000s
+|sys	0m0.000s
+
+=== 134: time with successful command
+status: 0
+bash-n: 0
+--- stdout
+|after time
+--- stderr
+|
+|real	0m0.000s
+|user	0m0.000s
+|sys	0m0.000s
+
+=== 135: time in conditional
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after
+--- stderr
+|
+|real	0m0.000s
+|user	0m0.000s
+|sys	0m0.000s
+
+=== 136: time with pipeline
+status: 1
+bash-n: 0
+--- stderr
+|
+|real	0m0.001s
+|user	0m0.001s
+|sys	0m0.001s
+
+=== 137: Extended test with valid regex
+status: 0
+bash-n: 0
+--- stdout
+|matched
+|after
+
+=== 138: Extended test regex no match
+status: 0
+bash-n: 0
+--- stdout
+|no match
+|after
+
+=== 139: case with extglob pattern
+status: 0
+bash-n: 2
+--- stdout
+|matched
+|after
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `  a*(b)c) echo "matched" ;;'
+
+=== 140: case with extglob no match
+status: 0
+bash-n: 2
+--- stdout
+|after
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `  a*(b)c) echo "matched" ;;'
+
+=== 141: EXIT trap runs before errexit terminates
+status: 1
+bash-n: 0
+--- stdout
+|EXIT trap: 1
+
+=== 142: Multiple traps with errexit
+status: 1
+bash-n: 0
+--- stdout
+|ERR: 1
+|EXIT: 1
+
+=== 143: coproc with failing command
+status: 5
+bash-n: 0
+
+=== 144: coproc with successful command
+status: 0
+bash-n: 0
+--- stdout
+|from coproc
+|after coproc
+
+=== 145: coproc in conditional
+status: 0
+bash-n: 0
+--- stdout
+|else
+|after
+
+=== 146: coproc with name and brace group
+status: 0
+bash-n: 0
+
+=== 147: Subshell in assignment with errexit
+status: 0
+bash-n: 0
+--- stdout
+|should not print
+--- stderr
+|bash: line 2: exit 5 : arithmetic syntax error in expression (error token is "5 ")
+
+=== 148: Arithmetic in condition of && chain
+status: 0
+bash-n: 0
+--- stdout
+|not matched
+|after
+
+=== 149: Nested eval with errexit
+status: 1
+bash-n: 0
+
+=== 150: Command group with errexit
+status: 1
+bash-n: 0
+--- stdout
+|first
+
+=== 151: Empty command with errexit
+status: 0
+bash-n: 0
+--- stdout
+|after colon
+
+=== 152: true command with errexit
+status: 0
+bash-n: 0
+--- stdout
+|after true
+
+=== 153: break in errexit context
+status: 0
+bash-n: 0
+--- stdout
+|i=1
+|after loop
+
+=== 154: continue in errexit context
+status: 0
+bash-n: 0
+--- stdout
+|i=1
+|i=3
+|after loop
+
+=== 155: Complex nested structure
+status: 1
+bash-n: 0
+--- stdout
+|inner else
+
+=== 156: with -u
+status: 1
+bash-n: 0
+--- stdout
+|before
+--- stderr
+|bash: line 3: unset: unbound variable
+
+=== 157: with -x and if/else ending in assignment
+status: 0
+bash-n: 0
+--- stdout
+|after else
+--- stderr
+|+ false
+|+ E=else
+|+ echo 'after else'
+
+=== 158: with -x and assignment after exempted failing command
+status: 0
+bash-n: 0
+--- stdout
+|after value
+--- stderr
+|+ false
+|+ E=value
+|+ echo 'after value'
+
+=== 159: syntax error
+status: 2
+bash-n: 2
+--- stdout
+|before
+--- stderr
+|bash: line 3: syntax error near unexpected token `done'
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `done'
+|bash: line 3: `if false; then echo hi; done'

@@ -1,0 +1,204 @@
+# Goldens for tests/oils/spec/background.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: wait with nothing to wait for
+status: 0
+bash-n: 0
+
+=== 1: wait -n with arguments - arguments are respected
+status: 0
+bash-n: 0
+--- stdout
+|x
+|status=0
+|status=0
+|
+--- file err.txt
+
+=== 2: wait -n with nothing to wait for
+status: 127
+bash-n: 0
+
+=== 3: wait with jobspec syntax %nonexistent
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: wait: %nonexistent: no such job
+
+=== 4: wait with invalid PID
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: wait: pid 12345678 is not a child of this shell
+
+=== 5: wait with invalid arg
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: wait: `zzz': not a pid or valid job spec
+
+=== 6: wait for N parallel jobs
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 7: wait for N parallel jobs and check failure
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|status=3
+|status=2
+|status=1
+
+=== 8: Builtin in background
+status: 0
+bash-n: 0
+--- stdout
+|async
+
+=== 9: External command in background
+status: 0
+bash-n: 0
+
+=== 10: Start background pipeline, wait $pid
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=99
+|--
+|status=3
+|status=2
+|status=1
+
+=== 11: Start background pipeline, wait %job_spec
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=99
+
+=== 12: Wait for job and PIPESTATUS
+status: 0
+bash-n: 0
+--- stdout
+|fore status=1 pipestatus=55 1
+|back status=0 pipestatus=0
+|wait status=1 pipestatus=1
+
+=== 13: Wait for job and PIPESTATUS - cat
+status: 0
+bash-n: 0
+--- stdout
+|fore status=99 pipestatus=55 99
+|back status=0 pipestatus=0
+|wait status=88 pipestatus=88
+|
+|wait status=77 pipestatus=77
+
+=== 14: Brace group in background, wait all
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 15: Wait on background process PID
+status: 0
+bash-n: 0
+--- stdout
+|status=7
+|status=9
+
+=== 16: Wait on multiple specific IDs returns last status
+status: 0
+bash-n: 0
+--- stdout
+|status=7
+
+=== 17: wait -n
+status: 0
+bash-n: 0
+--- stdout
+|status=3
+|status=9
+
+=== 18: Async for loop
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 19: Background process doesn't affect parent
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+|2
+|
+
+=== 20: Background process and then a singleton pipeline
+status: 0
+bash-n: 0
+--- stdout
+|begin
+|end
+|status=42
+
+=== 21: jobs prints one line per job
+status: 0
+bash-n: 0
+--- stdout
+|2
+
+=== 22: jobs -p prints one line per job
+status: 0
+bash-n: 0
+--- stdout
+|2
+|2
+--- file tmp.txt
+|5339
+|5340
+
+=== 23: No stderr spew when shell is not interactive
+status: 0
+bash-n: 0
+
+=== 24: YSH wait --all
+status: 0
+bash-n: 0
+--- stdout
+|wait 0
+|wait --all 2
+--- stderr
+|bash: line 12: wait: --: invalid option
+|wait: usage: wait [-fn] [-p var] [id ...]
+
+=== 25: YSH wait --verbose
+status: 0
+bash-n: 0
+--- stdout
+|wait 2
+|wait --all 2
+--- stderr
+|bash: line 5: wait: --: invalid option
+|wait: usage: wait [-fn] [-p var] [id ...]
+|bash: line 10: wait: --: invalid option
+|wait: usage: wait [-fn] [-p var] [id ...]
+
+=== 26: Signal message for killed background job
+status: 0
+bash-n: 0
+--- stdout
+|status=129
+|Hangup
+--- file err.txt
+|bash: line 5:  5384 Hangup                     sleep 1

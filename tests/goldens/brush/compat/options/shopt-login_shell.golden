@@ -1,0 +1,15 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/options/shopt-login_shell.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: login_shell is on for login shells
+status: 0
+bash-n: 0
+
+=== 1: login_shell is off for non-login shells
+status: 1
+bash-n: 0
+
+=== 2: login_shell is on for -l
+status: 0
+bash-n: 0

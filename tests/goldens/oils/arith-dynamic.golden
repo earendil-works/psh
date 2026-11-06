@@ -1,0 +1,36 @@
+# Goldens for tests/oils/spec/arith-dynamic.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Double quotes
+status: 0
+bash-n: 0
+--- stdout
+|7
+|7
+
+=== 1: Single quotes
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|bash: line 1: '1' + '2' * 3 : arithmetic syntax error: operand expected (error token is "'1' + '2' * 3 ")
+|bash: line 4: '1 + 2' * 3 : arithmetic syntax error: operand expected (error token is "'1 + 2' * 3 ")
+
+=== 2: Substitutions
+status: 0
+bash-n: 0
+--- stdout
+|7
+|7
+
+=== 3: Variable references
+status: 0
+bash-n: 0
+--- stdout
+|7
+|status=0
+|9
+|status=0

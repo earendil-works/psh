@@ -1,0 +1,240 @@
+# Goldens for tests/oils/spec/command-sub.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: case
+status: 0
+bash-n: 0
+--- stdout
+|letter
+
+=== 1: case in subshell
+status: 0
+bash-n: 0
+--- stdout
+|letter
+
+=== 2: Command sub word part
+status: 0
+bash-n: 0
+--- stdout
+|FOObarFOO
+
+=== 3: Backtick
+status: 0
+bash-n: 0
+--- stdout
+|FOObarFOO
+
+=== 4: Backtick 2
+status: 0
+bash-n: 0
+--- stdout
+|ls
+
+=== 5: Nested backticks
+status: 0
+bash-n: 0
+--- stdout
+|000000-first
+--- file 000000-first
+|X
+
+=== 6: Making command out of command sub should work
+status: 0
+bash-n: 0
+--- stdout
+|split builtin
+
+=== 7: Making keyword out of command sub should NOT work
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `do'
+|bash: line 1: `$(echo f)$(echo or) i in a b c; do echo $i; done'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `do'
+|bash: line 1: `$(echo f)$(echo or) i in a b c; do echo $i; done'
+
+=== 8: Command sub with here doc
+status: 0
+bash-n: 0
+--- stdout
+|two one
+
+=== 9: Here doc with pipeline
+status: 0
+bash-n: 0
+--- stdout
+|twoXoneX
+~ no newline at end
+
+=== 10: Command Sub word split
+status: 0
+bash-n: 0
+--- stdout
+|['hi', 'there', 'hi there']
+
+=== 11: Command Sub trailing newline removed
+status: 0
+bash-n: 0
+--- stdout
+|['']
+--- stderr
+|bash: line 1: python2: command not found
+
+=== 12: Command Sub trailing whitespace not removed
+status: 0
+bash-n: 0
+--- stdout
+|['']
+--- stderr
+|bash: line 1: python2: command not found
+
+=== 13: Command Sub and exit code
+status: 0
+bash-n: 0
+--- stdout
+|x
+|0
+|33
+
+=== 14: Command Sub in local sets exit code
+status: 0
+bash-n: 0
+--- stdout
+|x
+|0
+|0
+
+=== 15: Double Quotes in Command Sub in Double Quotes
+status: 0
+bash-n: 0
+--- stdout
+|x hi
+|x hi
+|x "hi"
+|x hi
+|x hi
+|x hi
+
+=== 16: Escaped quote in [[ ]]
+status: 0
+bash-n: 0
+--- stdout
+|123  456
+|"
+--- file command-sub-dbracket
+|"
+
+=== 17: Quoting " within ``
+status: 0
+bash-n: 0
+--- stdout
+|1 "
+
+=== 18: Quoting $ within ``
+status: 0
+bash-n: 0
+--- stdout
+|1 $
+|2 $
+|3 $
+|4 $
+|5 \$
+
+=== 19: Quoting $ within `` within double quotes
+status: 0
+bash-n: 0
+--- stdout
+|1 $
+|2 $
+|3 $
+|4 $
+|5 \$
+
+=== 20: Quoting \ within ``
+status: 0
+bash-n: 0
+--- stdout
+|[1 ]
+|[2 ]
+|[3 \]
+
+=== 21: Quoting \ within `` within double quotes
+status: 0
+bash-n: 0
+--- stdout
+|[1  ]
+|[2  ]
+|[3 \]
+
+=== 22: Quoting ( within ``
+status: 0
+bash-n: 0
+--- stdout
+|1 (
+|2 (
+|3 (
+
+=== 23: Quoting ( within `` within double quotes
+status: 0
+bash-n: 0
+--- stdout
+|1 (
+|2 (
+|3  (
+
+=== 24: Quoting non-special characters within ``
+status: 0
+bash-n: 0
+--- stdout
+|[1 z]
+|[2 z]
+|[3 \z]
+|[4 \z]
+
+=== 25: Quoting non-special characters within `` within double quotes
+status: 0
+bash-n: 0
+--- stdout
+|[1 z]
+|[2 z]
+|[3 \z]
+|[4 \z]
+
+=== 26: Quoting double quotes within backticks
+status: 0
+bash-n: 0
+--- stdout
+|"foo"
+|"foo"
+|"foo"
+
+=== 27: More levels of double quotes in backticks
+status: 0
+bash-n: 0
+--- stdout
+|\foo\ -
+|\foo\ -
+|\"foo\" -
+
+=== 28: Syntax errors with double quotes within backticks
+status: 0
+bash-n: 0
+--- stdout
+|
+|status=0
+|
+|status=0
+--- stderr
+|<sh>: command substitution: line 1: unexpected EOF while looking for matching `"'
+|<sh>: command substitution: line 1: unexpected EOF while looking for matching `"'
+
+=== 29: Empty command sub $() (command::NoOp)
+status: 0
+bash-n: 0
+--- stdout
+|-- ..
+--- stderr
+|bash: line 1: shopt: command_sub_errexit: invalid shell option name

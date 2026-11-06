@@ -1,0 +1,178 @@
+# Goldens for tests/oils/spec/array-literal.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Tilde expansions in RHS of [k]=v (BashArray)
+status: 0
+bash-n: 0
+--- stdout
+|/home/user
+|/home/user:/home/user:/home/user
+
+=== 1: Tilde expansions in RHS of [k]=v (BashAssoc)
+status: 0
+bash-n: 0
+--- stdout
+|/home/user
+|/home/user:/home/user:/home/user
+
+=== 2: index increments without [k]= (BashArray)
+status: 0
+bash-n: 0
+--- stdout
+|keys: ['100', '101', '102', '103']
+|vals: ['1', '2', '3', '4']
+|keys: ['5', '6', '7', '8', '100', '101', '102', '103']
+|vals: ['a', 'b', 'c', 'd', '1', '2', '3', '4']
+
+=== 3: [k]=$v and [k]="$@" (BashArray)
+status: 0
+bash-n: 0
+--- stdout
+|keys: ['0', '1', '2', '5']
+|vals: ['1', '2', '3', '1 2 3']
+|keys: ['0', '1', '2', '5']
+|vals: ['1', '2', '3', '3 5 7']
+|keys: ['0', '1', '2', '5']
+|vals: ['1', '2', '3', '3 5 7']
+|keys: ['0', '1', '2', '5']
+|vals: ['1', '2', '3', '3 5 7']
+|keys: ['0', '1', '2', '5']
+|vals: ['1', '2', '3', '3 5 7']
+
+=== 4: [k]=$v and [k]="$@" (BashAssoc)
+status: 0
+bash-n: 0
+--- stdout
+|keys: ['i']
+|vals: ['1 2 3']
+|keys: ['i']
+|vals: ['3 5 7']
+|keys: ['i']
+|vals: ['3 5 7']
+|keys: ['i']
+|vals: ['3 5 7']
+|keys: ['i']
+|vals: ['3 5 7']
+
+=== 5: append to element (BashArray)
+status: 0
+bash-n: 0
+--- stdout
+|keys: ['100']
+|vals: ['12']
+|keys: ['100']
+|vals: ['12:34:56']
+
+=== 6: append to element (BashAssoc)
+status: 0
+bash-n: 0
+--- stdout
+|keys: ['hello']
+|vals: ['2']
+|keys: ['hello']
+|vals: ['2:34:56']
+
+=== 7: non-index forms of element (BashAssoc)
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|keys: ['j']
+|vals: ['1']
+--- stderr
+|bash: line 2: a: 2: must use subscript when assigning associative array
+
+=== 8: Evaluation order (1)
+status: 0
+bash-n: 0
+--- stdout
+|keys: ['104', '205', '306']
+|vals: ['1', '2', '3']
+
+=== 9: Evaluation order (2)
+status: 0
+bash-n: 0
+--- stdout
+|keys: ['0', '6', '10']
+|vals: ['1+2+3', '10', 'hello']
+
+=== 10: Evaluation order (3)
+status: 0
+bash-n: 0
+--- stdout
+|keys: ['0', '1', '2', '3', '4']
+|vals: ['old3', 'old1', 'old2', 'old3', 'old1']
+|keys: ['0', '1', '2', '5', '201', '202']
+|vals: ['new1', 'new2', 'new3', 'old3', 'old1', 'old2']
+
+=== 11: [k1]=v1 (BashArray)
+status: 0
+bash-n: 0
+--- stdout
+|v2
+|v2
+
+=== 12: [k1]=v1 (BashAssoc)
+status: 0
+bash-n: 0
+--- stdout
+|v1
+|v2
+
+=== 13: [k1]=v1 looking like brace expansions (BashAssoc)
+status: 0
+bash-n: 0
+--- stdout
+|-{a,b}-
+
+=== 14: [k1]=v1 looking like brace expansions (BashArray)
+status: 0
+bash-n: 0
+--- stdout
+|-{a,b}-
+
+=== 15: BashArray cannot be changed to BashAssoc and vice versa
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|['1', '2', '3', '4']
+|status=1
+|['x', 'y', 'z']
+--- stderr
+|bash: line 2: eval: a: cannot convert indexed to associative array
+|bash: line 7: eval: A: cannot convert associative to indexed array
+
+=== 16: (strict_array) s+=()
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|declare -a s1=([0]="1" [1]="2" [2]="3" [3]="4")
+|status=0
+|declare -a s2=([0]="world" [1]="1" [2]="2" [3]="3" [4]="4")
+--- stderr
+|bash: line 1: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]
+
+=== 17: (strict_array) declare -A s+=()
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|declare -A s1=([b]="y" [a]="x" )
+|status=0
+|declare -A s2=([0]="world" [b]="y" [a]="x" )
+--- stderr
+|bash: line 1: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]
+
+=== 18: (strict_array) assoc=(key value ...) is not allowed
+status: 0
+bash-n: 0
+--- stdout
+|declare -A a=([3]="4" [1]="2" )
+--- stderr
+|bash: line 1: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]

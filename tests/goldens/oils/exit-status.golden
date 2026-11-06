@@ -1,0 +1,111 @@
+# Goldens for tests/oils/spec/exit-status.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Truncating 'exit' status
+status: 0
+bash-n: 0
+--- stdout
+|status=255
+|status=0
+|status=1
+|===
+|status=255
+|status=254
+
+=== 1: Truncating 'return' status
+status: 0
+bash-n: 0
+--- stdout
+|status=255
+|status=0
+|status=1
+|===
+|status=255
+|status=254
+
+=== 2: subshell OverflowError https://github.com/oilshell/oil/issues/996
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+|return: can only
+|status=2
+|return: can only
+|status=2
+|return: can only
+|
+|--- negative ---
+|status=2
+|return: can only
+|status=2
+|return: can only
+--- file err.txt
+|<sh>: line 1: return: can only `return' from a function or sourced script
+
+=== 3: func subshell OverflowError https://github.com/oilshell/oil/issues/996
+status: 0
+bash-n: 0
+--- stdout
+|status=255
+|status=0
+|status=1
+--- file err.txt
+
+=== 4: If empty command
+status: 0
+bash-n: 0
+--- stdout
+|FALSE
+--- stderr
+|bash: line 1: : command not found
+
+=== 5: If subshell true
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+
+=== 6: If subshell true WITH OUTPUT is different
+status: 0
+bash-n: 0
+--- stdout
+|FALSE
+--- stderr
+|bash: line 1: X: command not found
+
+=== 7: If subshell true WITH ARGUMENT
+status: 0
+bash-n: 0
+--- stdout
+|FALSE
+--- stderr
+|bash: line 1: X: command not found
+
+=== 8: If subshell false -- exit code is propagated in a weird way (strict_argv prevents)
+status: 0
+bash-n: 0
+--- stdout
+|FALSE
+
+=== 9: Exit code when command sub evaluates to empty str, e.g. `false` (#2416)
+status: 0
+bash-n: 0
+--- stdout
+|0
+|1
+|0
+|1
+|---
+|0
+|1
+|0
+|1
+
+=== 10: More test cases with empty argv
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=42
+|status=43

@@ -1,0 +1,243 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/ulimit.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: ulimit -c
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 1: ulimit -d
+status: 0
+bash-n: 0
+--- stdout
+|unlimited
+
+=== 2: ulimit -f
+status: 0
+bash-n: 0
+--- stdout
+|unlimited
+
+=== 3: ulimit -l
+status: 0
+bash-n: 0
+--- stdout
+|unlimited
+
+=== 4: ulimit -m
+status: 0
+bash-n: 0
+--- stdout
+|unlimited
+
+=== 5: ulimit -n
+status: 0
+bash-n: 0
+--- stdout
+|1048576
+
+=== 6: ulimit -s
+status: 0
+bash-n: 0
+--- stdout
+|8192
+
+=== 7: ulimit -t
+status: 0
+bash-n: 0
+--- stdout
+|unlimited
+
+=== 8: ulimit -u
+status: 0
+bash-n: 0
+--- stdout
+|unlimited
+
+=== 9: ulimit -v
+status: 0
+bash-n: 0
+--- stdout
+|unlimited
+
+=== 10: ulimit -p
+status: 0
+bash-n: 0
+--- stdout
+|8
+
+=== 11: ulimit -d unlimited
+status: 0
+bash-n: 0
+
+=== 12: ulimit -f unlimited
+status: 0
+bash-n: 0
+
+=== 13: ulimit -m unlimited
+status: 0
+bash-n: 0
+
+=== 14: ulimit with an invalid number fails with status 1
+status: 0
+bash-n: 0
+--- stdout
+|ulimit: 1
+--- stderr
+|bash: line 1: ulimit: abc: invalid number
+
+=== 15: ulimit in a subshell stays there
+status: 0
+bash-n: 0
+--- stdout
+|after a subshell: 512
+|after a pipeline stage: 512
+
+=== 16: ulimit with no options reports the file size limit
+status: 0
+bash-n: 0
+--- stdout
+|unlimited
+
+=== 17: ulimit -S and -H report the soft and hard limits
+status: 0
+bash-n: 0
+--- stdout
+|1048576
+|1048576
+|1048576
+
+=== 18: ulimit sets a limit given as a separate or attached value
+status: 0
+bash-n: 0
+--- stdout
+|100
+|99
+|98
+|0
+
+=== 19: ulimit sets the file size limit from an operand
+status: 0
+bash-n: 0
+--- stdout
+|100000000
+|ulimit -- 90000000: 0
+|90000000
+
+=== 20: ulimit sets a limit to its soft limit
+status: 0
+bash-n: 0
+--- stdout
+|ulimit -n soft: 0
+|1048576
+
+=== 21: ulimit sets several limits at once
+status: 0
+bash-n: 0
+--- stdout
+|100
+|0
+
+=== 22: ulimit ignores operands after the first value
+status: 0
+bash-n: 0
+--- stdout
+|ulimit -n 100 200: 0
+|100
+
+=== 23: ulimit rejects an unknown option and a negative limit
+status: 0
+bash-n: 0
+--- stdout
+|ulimit -Z: 2
+|ulimit -n -1: 2
+--- stderr
+|bash: line 1: ulimit: -Z: invalid option
+|ulimit: usage: ulimit [-SHabcdefiklmnpqrstuvxPRT] [limit]
+|bash: line 2: ulimit: -1: invalid option
+|ulimit: usage: ulimit [-SHabcdefiklmnpqrstuvxPRT] [limit]
+
+=== 24: ulimit lists several resources in the order given
+status: 0
+bash-n: 0
+--- stdout
+|open files                          (-n) 1048576
+|core file size              (blocks, -c) 0
+|stack size                  (kbytes, -s) 8192
+|cpu time                   (seconds, -t) unlimited
+
+=== 25: ulimit labels a resource it reports alongside one it sets
+status: 0
+bash-n: 0
+--- stdout
+|open files                          (-n) 1048576
+
+=== 26: ulimit takes a limit's value after --
+status: 0
+bash-n: 0
+--- stdout
+|ulimit -n -- 100: 0
+|100
+
+=== 27: ulimit rejects a resource this platform lacks with status 2
+status: 0
+bash-n: 0
+--- stdout
+|ulimit -b: 2
+|ulimit -k: 2
+|ulimit -P: 2
+|ulimit -T: 2
+--- stderr
+|bash: line 1: ulimit: -b: invalid option
+|ulimit: usage: ulimit [-SHabcdefiklmnpqrstuvxPRT] [limit]
+|bash: line 2: ulimit: -k: invalid option
+|ulimit: usage: ulimit [-SHabcdefiklmnpqrstuvxPRT] [limit]
+|bash: line 3: ulimit: -P: invalid option
+|ulimit: usage: ulimit [-SHabcdefiklmnpqrstuvxPRT] [limit]
+|bash: line 4: ulimit: -T: invalid option
+|ulimit: usage: ulimit [-SHabcdefiklmnpqrstuvxPRT] [limit]
+
+=== 28: ulimit --help fails with status 2
+status: 0
+bash-n: 0
+--- stdout
+|ulimit --help: 2
+
+=== 29: ulimit rejects an unknown long option with status 2
+status: 0
+bash-n: 0
+--- stdout
+|ulimit --bogus: 2
+--- stderr
+|bash: line 1: ulimit: --: invalid option
+|ulimit: usage: ulimit [-SHabcdefiklmnpqrstuvxPRT] [limit]
+
+=== 30: ulimit -a lists every limit
+status: 0
+bash-n: 0
+--- stdout
+|real-time non-blocking time  (microseconds, -R) unlimited
+|core file size              (blocks, -c) 0
+|data seg size               (kbytes, -d) unlimited
+|scheduling priority                 (-e) 0
+|file size                   (blocks, -f) unlimited
+|pending signals                     (-i) 31328
+|max locked memory           (kbytes, -l) unlimited
+|max memory size             (kbytes, -m) unlimited
+|open files                          (-n) 1048576
+|pipe size                (512 bytes, -p) 8
+|POSIX message queues         (bytes, -q) 819200
+|real-time priority                  (-r) 0
+|stack size                  (kbytes, -s) 8192
+|cpu time                   (seconds, -t) unlimited
+|max user processes                  (-u) unlimited
+|virtual memory              (kbytes, -v) unlimited
+|file locks                          (-x) unlimited
+
+=== 31: ulimit -a with another resource lists each limit once
+status: 0
+bash-n: 0
+--- stdout
+|same

@@ -1,0 +1,49 @@
+# Goldens for tests/oils/spec/whitespace.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Parsing shell words \r \v
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 1: python2: command not found
+|bash: line 2: python2: command not found
+|bash: line 3: python2: command not found
+|bash: line 4: python2: command not found
+
+=== 1: \r in arith expression is allowed by some shells, but not most!
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 1: python2: command not found
+|bash: line 2: python2: command not found
+
+=== 2: whitespace in string to integer conversion
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+--- stderr
+|bash: line 1: python2: command not found
+|bash: line 2: python2: command not found
+
+=== 3: \r at end of line is not special
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 1: python2: command not found
+
+=== 4: Default IFS does not include \r \v \f
+status: 0
+bash-n: 0
+--- stdout
+|[]
+|[]
+|[]
+|[]
+--- stderr
+|bash: line 1: python2: command not found
+|bash: line 2: python2: command not found
+|bash: line 3: python2: command not found
+|bash: line 4: python2: command not found

@@ -1,0 +1,198 @@
+# Goldens for tests/oils/spec/globignore.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Don't glob flags on file system with GLOBIGNORE
+status: 0
+bash-n: 0
+--- stdout
+|-* hello zzzz?
+--- stderr
+|touch: cannot touch '_tmp/-n': No such file or directory
+|touch: cannot touch '_tmp/zzzzz': No such file or directory
+|bash: line 2: cd: _tmp: No such file or directory
+
+=== 1: Ignore *.txt
+status: 0
+bash-n: 0
+--- stdout
+|one.md foo/two.md foo/two.txt
+--- dir foo
+--- file foo/two.md
+--- file foo/two.txt
+--- file one.md
+--- file one.txt
+
+=== 2: Ignore ?.txt
+status: 0
+bash-n: 0
+--- stdout
+|10.txt foo/2.txt foo/20.txt
+--- file 1.txt
+--- file 10.txt
+--- dir foo
+--- file foo/2.txt
+--- file foo/20.txt
+
+=== 3: Ignore *.o:*.h
+status: 0
+bash-n: 0
+--- stdout
+|hello hello.c
+--- file hello
+--- file hello.c
+--- file hello.h
+--- file hello.o
+
+=== 4: Ignore single file src/__main__.py
+status: 0
+bash-n: 0
+--- stdout
+|src/__main__.py
+--- dir src
+--- file src/__init__.py
+--- file src/__main__.py
+
+=== 5: Ignore dirs dist/*:node_modules/*
+status: 0
+bash-n: 0
+--- stdout
+|compose/base.compose.yaml compose/dev.compose.yaml src/a.js src/b.js
+--- dir compose
+--- file compose/base.compose.yaml
+--- file compose/dev.compose.yaml
+--- dir dist
+--- file dist/index.js
+--- dir node_modules
+--- file node_modules/package.js
+--- dir src
+--- file src/a.js
+--- file src/b.js
+
+=== 6: find files in subdirectory but not the ignored pattern
+status: 0
+bash-n: 0
+--- stdout
+|dir1/a.txt dir2/a.txt
+--- dir dir1
+--- file dir1/a.txt
+--- file dir1/ignore.txt
+--- dir dir2
+--- file dir2/a.txt
+--- file dir2/ignore.txt
+
+=== 7: Ignore globs with char patterns like [!ab]
+status: 0
+bash-n: 0
+--- stdout
+|A B C D c d
+|D a b c d
+|a b
+--- file A
+--- file B
+--- file C
+--- file D
+--- file a
+--- file b
+--- file c
+--- file d
+
+=== 8: Ignore globs with char classes like [[:alnum:]]
+status: 0
+bash-n: 0
+--- stdout
+|.env _testing.py
+|20231114.log has space.docx pyproject.toml
+|.env 20231114.log _testing.py pyproject.toml
+|has space.docx pyproject.toml
+--- file .env
+--- file 20231114.log
+--- file _testing.py
+--- file has space.docx
+--- file pyproject.toml
+
+=== 9: Ignore *
+status: 0
+bash-n: 0
+--- stdout
+|*
+--- file 1.txt
+--- file 2.log
+--- file 3.md
+
+=== 10: treat escaped patterns literally
+status: 0
+bash-n: 0
+--- stdout
+|escape-10.txt
+--- file escape*.txt
+--- file escape-10.txt
+
+=== 11: resetting globignore reverts to default behaviour
+status: 0
+bash-n: 0
+--- stdout
+|*.*
+|reset.txt
+--- file reset.txt
+
+=== 12: Ignore .:..
+status: 0
+bash-n: 0
+--- stdout
+|.env
+|. .. .env
+--- file .env
+
+=== 13: Quoting GLOBIGNORE
+status: 0
+bash-n: 0
+--- stdout
+|*
+|*
+|*
+|*
+--- file image.jpeg
+
+=== 14: . and .. always filtered when GLOBIGNORE is set
+status: 0
+bash-n: 0
+--- stdout
+|.hidden
+|.hidden
+--- file .hidden
+
+=== 15: When GLOBIGNORE is set, glob may become empty (nullglob too)
+status: 0
+bash-n: 0
+--- stdout
+|-foo.txt foo.txt
+|*t
+|nullglob
+--- file -foo.txt
+--- file foo.txt
+
+=== 16: When GLOBIGNORE is set, no_dash_glob isn't respected
+status: 0
+bash-n: 0
+--- stdout
+|-foo.txt foo.txt
+|-foo.txt
+--- stderr
+|bash: line 5: shopt: no_dash_glob: invalid shell option name
+--- file -foo.txt
+--- file foo.txt
+
+=== 17: Extended glob expansion combined with GLOBIGNORE
+status: 0
+bash-n: 2
+--- stdout
+|bar.cc bar.h foo.cc foo.h
+|bar.cc bar.h
+--- file bar.cc
+--- file bar.h
+--- file foo.cc
+--- file foo.h
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `echo @(*.cc|*.h)'

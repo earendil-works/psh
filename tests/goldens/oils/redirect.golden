@@ -1,0 +1,386 @@
+# Goldens for tests/oils/spec/redirect.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: >& and <& are the same
+status: 0
+bash-n: 0
+--- stderr
+|one
+|two
+
+=== 1: <&
+status: 0
+bash-n: 0
+--- stdout
+|[foo51]
+--- file lessamp.txt
+|foo51
+
+=== 2: 2>&1 with no command
+status: 0
+bash-n: 0
+--- stdout
+|status=42
+|status=0
+
+=== 3: 2&>1 (is it a redirect or is it like a&>1)
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+--- file 1
+|bash: line 1: 2: command not found
+
+=== 4: Nonexistent file
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: <case>/nonexistent.txt: No such file or directory
+
+=== 5: Descriptor redirect with spaces
+status: 0
+bash-n: 0
+--- stderr
+|one
+|two 1
+|three
+
+=== 6: Filename redirect with spaces
+status: 0
+bash-n: 0
+--- stdout
+|two
+--- file file-redir1.txt
+|two
+
+=== 7: Quoted filename redirect with spaces
+status: 0
+bash-n: 0
+--- stdout
+|two 1
+--- file file-redir2.txt
+|two 1
+
+=== 8: Descriptor redirect with filename
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+--- file nonexistent-filename__
+|one
+
+=== 9: Redirect echo to stderr, and then redirect all of stdout somewhere.
+status: 0
+bash-n: 0
+--- stdout
+|10
+--- stderr
+|foo52
+--- file block-stdout.txt
+|012345789
+
+=== 10: Named file descriptor
+status: 0
+bash-n: 0
+--- stdout
+|named-fd-contents
+--- file named-fd.txt
+|named-fd-contents
+
+=== 11: Double digit fd (20> file)
+status: 0
+bash-n: 0
+--- stdout
+|hello20
+--- file double-digit-fd.txt
+|hello20
+
+=== 12: : 9> fdleak (OSH regression)
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 2: 9: Bad file descriptor
+--- file fd.txt
+
+=== 13: : 3>&3 (OSH regression)
+status: 0
+bash-n: 0
+--- stdout
+|hello
+
+=== 14: : 3>&3-
+status: 0
+bash-n: 0
+--- stdout
+|hello
+
+=== 15: 3>&- << EOF (OSH regression: fail to restore fds)
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|world
+--- file fd.txt
+|world
+
+=== 16: Open file on descriptor 3 and write to it many times
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|world
+--- file fd3.txt
+|hello
+|world
+
+=== 17: Open file on descriptor 4 and write to it many times
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|world
+--- file fd4.txt
+|hello
+|world
+
+=== 18: Redirect to empty string
+status: 1
+bash-n: 0
+--- stdout
+|result=1
+--- stderr
+|bash: line 2: : No such file or directory
+|bash: line 5: : No such file or directory
+
+=== 19: Redirect to file descriptor that's not open
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 8: 7: Bad file descriptor
+
+=== 20: Open descriptor with exec
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 21: Open multiple descriptors with exec
+status: 0
+bash-n: 0
+--- stdout
+|three
+|four
+
+=== 22: >| to clobber
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|XX
+|ZZ
+--- stderr
+|bash: line 5: <case>/c.txt: cannot overwrite existing file
+--- file c.txt
+|ZZ
+
+=== 23: &> redirects stdout and stderr
+status: 0
+bash-n: 0
+--- stdout
+|STDOUT
+|STDERR
+--- file bash-24083.txt
+|STDERR
+|STDOUT
+
+=== 24: >&word redirects stdout and stderr when word is not a number or -
+status: 0
+bash-n: 0
+--- stdout
+|STDOUT
+|STDERR
+--- file bash-24078.txt
+|STDERR
+|STDOUT
+
+=== 25: 1>&- to close file descriptor
+status: 0
+bash-n: 0
+--- stdout
+|hello
+--- stderr
+|bash: line 4: 5: Bad file descriptor
+--- file f.txt
+|hello
+
+=== 26: 1>&2- to move file descriptor
+status: 0
+bash-n: 0
+--- stdout
+|hello5
+|world6
+--- stderr
+|bash: line 4: 5: Bad file descriptor
+--- file f.txt
+|hello5
+|world6
+
+=== 27: 1>&2- (Bash bug: fail to restore closed fd)
+status: 0
+bash-n: 0
+--- stdout
+|hello
+--- stderr
+|bash: line 19: 7: Bad file descriptor
+--- file f.txt
+|hello
+
+=== 28: <> for read/write
+status: 0
+bash-n: 0
+--- stdout
+|line=first
+|CONTENTS
+|first
+|second
+--- file rw.txt
+|first
+|second
+
+=== 29: <> for read/write named pipes
+status: 0
+bash-n: 0
+--- stdout
+|line1=first line2=second
+--- other f.pipe
+
+=== 30: &>> appends stdout and stderr
+status: 0
+bash-n: 0
+--- stdout
+|ok
+|ok
+|ok
+--- file f.txt
+|ok
+|STDERR
+|STDOUT
+
+=== 31: exec redirect then various builtins
+status: 0
+bash-n: 0
+--- stdout
+|done
+--- file log.txt
+|hi
+|allexport      	off
+|braceexpand    	on
+|emacs          	off
+|errexit        	off
+|errtrace       	off
+|functrace      	off
+|hashall        	on
+|histexpand     	off
+|history        	off
+|ignoreeof      	off
+|interactive-comments	on
+|keyword        	off
+|monitor        	off
+|noclobber      	off
+|noexec         	off
+|noglob         	off
+|nolog          	off
+|notify         	off
+|nounset        	off
+|onecmd         	off
+|physical       	off
+|pipefail       	off
+|posix          	off
+|privileged     	off
+|verbose        	off
+|vi             	off
+|xtrace         	off
+
+=== 32: can't mention big file descriptor
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|hi
+|hi
+
+=== 33: : >/dev/null 2> / (OSH regression: fail to pop fd frame)
+status: 0
+bash-n: 0
+--- stdout
+|hello
+--- stderr
+|bash: line 1: /: Is a directory
+
+=== 34: echo foo >&100 (OSH regression: does not fail with invalid fd 100)
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: $fd: Bad file descriptor
+
+=== 35: echo foo >&N where N is first unused fd
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 8: $1: Bad file descriptor
+|bash: line 14: $fd: Bad file descriptor
+
+=== 36: exec {fd}>&- (OSH regression: fails to close fd)
+status: 0
+bash-n: 0
+--- stdout
+|foo55
+--- stderr
+|bash: line 5: $fd: Bad file descriptor
+--- file file1
+|foo55
+
+=== 37: noclobber can still write to non-regular files like /dev/null
+status: 0
+bash-n: 0
+
+=== 38: Parsing of x=1> and related cases
+status: 0
+bash-n: 0
+--- stdout
+|x=1
+|x=1
+|x=
+|+1
+|+1
+|+
+|a1
+
+=== 39: Parsing of x={myvar} and related cases
+status: 0
+bash-n: 0
+--- stdout
+|
+|x={myvar}
+|0
+|x={myvar}
+|0
+|x=
+|1
+|+{myvar}
+|1
+|+{myvar}
+|1
+|+
+|2
+
+=== 40: xtrace not affected by redirects
+status: 0
+bash-n: 0
+--- stderr
+|+ printf aaaa
+|+ set +x
+--- file test_osh

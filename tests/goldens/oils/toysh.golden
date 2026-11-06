@@ -1,0 +1,81 @@
+# Goldens for tests/oils/spec/toysh.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: @Q
+status: 0
+bash-n: 0
+--- stdout
+|'a' 'b' 'c' 'd'
+|'a' 'b' 'c' 'd'
+
+=== 1: extglob $IFS 1
+status: 0
+bash-n: 2
+--- stdout
+|abc)d
+|ab+( ?d)
+|abc)d
+--- file abc)d
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `echo ab+(c?d)'
+
+=== 2: extglob $IFS 2
+status: 0
+bash-n: 2
+--- stdout
+|=+(c=
+|=d)=
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `IFS=x; ABC=cxd; for i in +($ABC); do echo =$i=; done'
+
+=== 3: char class / extglob
+status: 0
+bash-n: 2
+--- stdout
+|[hello]
+|b
+|+
+|[+(])
+--- file +
+--- file b
+--- file l
+--- bash-n stderr
+|bash: line 9: syntax error near unexpected token `('
+|bash: line 9: `echo [+()]'
+
+=== 4: patsub of $* - http://landley.net/notes.html#23-04-2020
+status: 0
+bash-n: 0
+--- stdout
+|a b c d
+
+=== 5: Brace Expansion
+status: 0
+bash-n: 0
+--- stdout
+|/home/foo/pwd /root/pwd
+|{~,~root}/pwd
+|~/pwd ~root/pwd
+
+=== 6: {abc}<<< - http://landley.net/notes-2019.html#09-12-2019
+status: 0
+bash-n: 0
+--- stdout
+|
+|walrus
+
+=== 7: slice of @ and @ - http://landley.net/notes.html#23-04-2020
+status: 0
+bash-n: 0
+--- stdout
+|=ef=
+|=gh=
+|=ij=
+|=kl=
+|=mn=
+|=ef gh ij kl mn=
+--- stderr
+|bash: line 1: b: command not found

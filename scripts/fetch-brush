@@ -9,4 +9,4 @@ set -euo pipefail
 source "$(dirname "$0")/vendor-lib.sh"
 vendor_sync brush https://github.com/reubeno/brush.git \
   943553433ae04f5b3bd55d2cf207e39eb9ef2af7 tests/brush \
-  "LICENSE brush-shell/tests/cases" "${1:-}"
+  "LICENSE brush-shell/tests/cases brush-shell/tests/utils" "${1:-}"

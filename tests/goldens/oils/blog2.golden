@@ -1,0 +1,53 @@
+# Goldens for tests/oils/spec/blog2.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: -a
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 1: -a -a
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 2: -a -a -a
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 3: -a -a -a -a
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 4: -a -a -a -a -a
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 5: -a -a -a -a -a -a
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|bash: line 1: [: argument expected
+
+=== 6: -a -a -a -a -a -a -a
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 7: -a -a -a -a -a -a -a -a
+status: 0
+bash-n: 0
+--- stdout
+|status=1

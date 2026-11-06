@@ -1,0 +1,147 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/help.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Help
+status: 0
+bash-n: 0
+--- stdout
+|GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu)
+|These shell commands are defined internally.  Type `help' to see this list.
+|Type `help name' to find out more about the function `name'.
+|Use `info bash' to find out more about the shell in general.
+|Use `man -k' or `info' to find out more about commands not in this list.
+|
+|A star (*) next to a name means that the command is disabled.
+|
+| ! PIPELINE                              history [-c] [-d offset] [n] or hist>
+| job_spec [&]                            if COMMANDS; then COMMANDS; [ elif C>
+| (( expression ))                        jobs [-lnprs] [jobspec ...] or jobs >
+| . [-p path] filename [arguments]        kill [-s sigspec | -n signum | -sigs>
+| :                                       let arg [arg ...]
+| [ arg... ]                              local [option] name[=value] ...
+| [[ expression ]]                        logout [n]
+| alias [-p] [name[=value] ... ]          mapfile [-d delim] [-n count] [-O or>
+| bg [job_spec ...]                       popd [-n] [+N | -N]
+| bind [-lpsvPSVX] [-m keymap] [-f file>  printf [-v var] format [arguments]
+| break [n]                               pushd [-n] [+N | -N | dir]
+| builtin [shell-builtin [arg ...]]       pwd [-LP]
+| caller [expr]                           read [-Eers] [-a array] [-d delim] [>
+| case WORD in [PATTERN [| PATTERN]...)>  readarray [-d delim] [-n count] [-O >
+| cd [-L|[-P [-e]]] [-@] [dir]            readonly [-aAf] [name[=value] ...] o>
+| command [-pVv] command [arg ...]        return [n]
+| compgen [-V varname] [-abcdefgjksuv] >  select NAME [in WORDS ... ;] do COMM>
+| complete [-abcdefgjksuv] [-pr] [-DEI]>  set [-abefhkmnptuvxBCEHPT] [-o optio>
+| compopt [-o|+o option] [-DEI] [name .>  shift [n]
+| continue [n]                            shopt [-pqsu] [-o] [optname ...]
+| coproc [NAME] command [redirections]    source [-p path] filename [arguments>
+| declare [-aAfFgiIlnrtux] [name[=value>  suspend [-f]
+| dirs [-clpv] [+N] [-N]                  test [expr]
+| disown [-h] [-ar] [jobspec ... | pid >  time [-p] pipeline
+| echo [-neE] [arg ...]                   times
+| enable [-a] [-dnps] [-f filename] [na>  trap [-Plp] [[action] signal_spec ..>
+| eval [arg ...]                          true
+| exec [-cl] [-a name] [command [argume>  type [-afptP] name [name ...]
+| exit [n]                                typeset [-aAfFgiIlnrtux] name[=value>
+| export [-fn] [name[=value] ...] or ex>  ulimit [-SHabcdefiklmnpqrstuvxPRT] [>
+| false                                   umask [-p] [-S] [mode]
+| fc [-e ename] [-lnr] [first] [last] o>  unalias [-a] name [name ...]
+| fg [job_spec]                           unset [-f] [-v] [-n] [name ...]
+| for NAME [in WORDS ... ] ; do COMMAND>  until COMMANDS; do COMMANDS-2; done
+| for (( exp1; exp2; exp3 )); do COMMAN>  variables - Names and meanings of so>
+| function name { COMMANDS ; } or name >  wait [-fn] [-p var] [id ...]
+| getopts optstring name [arg ...]        while COMMANDS; do COMMANDS-2; done
+| hash [-lr] [-p pathname] [-dt] [name >  { COMMANDS ; }
+| help [-dms] [pattern ...]
+
+=== 1: Topic-specific help
+status: 0
+bash-n: 0
+--- stdout
+|echo: echo [-neE] [arg ...]
+|    Write arguments to the standard output.
+|    
+|    Display the ARGs, separated by a single space character and followed by a
+|    newline, on the standard output.
+|    
+|    Options:
+|      -n	do not append a newline
+|      -e	enable interpretation of the following backslash escapes
+|      -E	explicitly suppress interpretation of backslash escapes
+|    
+|    `echo' interprets the following backslash-escaped characters:
+|      \a	alert (bell)
+|      \b	backspace
+|      \c	suppress further output
+|      \e	escape character
+|      \E	escape character
+|      \f	form feed
+|      \n	new line
+|      \r	carriage return
+|      \t	horizontal tab
+|      \v	vertical tab
+|      \\	backslash
+|      \0nnn	the character whose ASCII code is NNN (octal).  NNN can be
+|    		0 to 3 octal digits
+|      \xHH	the eight-bit character whose value is HH (hexadecimal).  HH
+|    		can be one or two hex digits
+|      \uHHHH	the Unicode character whose value is the hexadecimal value HHHH.
+|    		HHHH can be one to four hex digits.
+|      \UHHHHHHHH the Unicode character whose value is the hexadecimal value
+|    		HHHHHHHH. HHHHHHHH can be one to eight hex digits.
+|    
+|    Exit Status:
+|    Returns success unless a write error occurs.
+
+=== 2: Help for unknown topic returns non-zero
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: help: no help topics match `this-is-not-a-real-builtin'.  Try `help help' or `man -k this-is-not-a-real-builtin' or `info this-is-not-a-real-builtin'.
+
+=== 3: Help for known and unknown topics returns zero
+status: 0
+bash-n: 0
+--- stdout
+|echo: echo [-neE] [arg ...]
+|    Write arguments to the standard output.
+|    
+|    Display the ARGs, separated by a single space character and followed by a
+|    newline, on the standard output.
+|    
+|    Options:
+|      -n	do not append a newline
+|      -e	enable interpretation of the following backslash escapes
+|      -E	explicitly suppress interpretation of backslash escapes
+|    
+|    `echo' interprets the following backslash-escaped characters:
+|      \a	alert (bell)
+|      \b	backspace
+|      \c	suppress further output
+|      \e	escape character
+|      \E	escape character
+|      \f	form feed
+|      \n	new line
+|      \r	carriage return
+|      \t	horizontal tab
+|      \v	vertical tab
+|      \\	backslash
+|      \0nnn	the character whose ASCII code is NNN (octal).  NNN can be
+|    		0 to 3 octal digits
+|      \xHH	the eight-bit character whose value is HH (hexadecimal).  HH
+|    		can be one or two hex digits
+|      \uHHHH	the Unicode character whose value is the hexadecimal value HHHH.
+|    		HHHH can be one to four hex digits.
+|      \UHHHHHHHH the Unicode character whose value is the hexadecimal value
+|    		HHHHHHHH. HHHHHHHH can be one to eight hex digits.
+|    
+|    Exit Status:
+|    Returns success unless a write error occurs.
+
+=== 4: help -s frames each synopsis on its own line
+status: 0
+bash-n: 0
+--- stdout
+|true: true
+|false: false
+|:: :

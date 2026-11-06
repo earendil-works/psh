@@ -1,0 +1,68 @@
+# Goldens for tests/oils/spec/unicode.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: OSH source code doesn't have to be valid Unicode (like other shells)
+status: 0
+bash-n: 0
+--- stdout
+|μ μ μ μ
+|--
+| bc 20 bc 20 bc 20 bc 0a
+--- file not-unicode.sh
+\echo \xbc '\xbc' "\xbc" $'\xbc'
+--- file unicode.sh
+|echo μ 'μ' "μ" $'μ'
+
+=== 1: Unicode escapes \u03bc \U000003bc in $'', echo -e, printf
+status: 0
+bash-n: 0
+--- stdout
+|μ μ
+|μ μ
+|μ μ
+
+=== 2: Max code point U+10ffff can escaped with $''  printf  echo -e
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 4: python2: command not found
+|bash: line 4: python2: command not found
+|bash: line 4: python2: command not found
+
+=== 3: $'' does NOT check that 0x110000 is too big at parse time
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 2: python2: command not found
+
+=== 4: $'' does not check for surrogate range at parse time
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 2: python2: command not found
+|bash: line 2: python2: command not found
+
+=== 5: printf / echo -e do NOT check max code point at runtime
+status: 127
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+--- stderr
+|bash: line 4: python2: command not found
+|bash: line 4: python2: command not found
+
+=== 6: printf / echo -e do NOT check surrogates at runtime
+status: 127
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+|status=0
+|status=0
+--- stderr
+|bash: line 4: python2: command not found
+|bash: line 4: python2: command not found
+|bash: line 4: python2: command not found
+|bash: line 4: python2: command not found

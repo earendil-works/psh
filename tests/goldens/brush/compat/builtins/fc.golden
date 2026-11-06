@@ -1,0 +1,465 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/fc.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: fc -l lists recent commands
+status: 0
+bash-n: 0
+--- stdout
+|1	 : cmd1
+|2	 : cmd2
+|3	 : cmd3
+--- file history-file.txt
+|: cmd1
+|: cmd2
+|: cmd3
+|fc -l
+
+=== 1: fc -l with range (positive indices)
+status: 0
+bash-n: 0
+--- stdout
+|2	 : cmd2
+|3	 : cmd3
+|4	 : cmd4
+--- file history-file.txt
+|: cmd1
+|: cmd2
+|: cmd3
+|: cmd4
+|: cmd5
+|fc -l 2 4
+
+=== 2: fc -l with single argument
+status: 0
+bash-n: 0
+--- stdout
+|2	 : cmd2
+|3	 : cmd3
+--- file history-file.txt
+|: cmd1
+|: cmd2
+|: cmd3
+|fc -l 2
+
+=== 3: fc -l with negative indices
+status: 0
+bash-n: 0
+--- stdout
+|3	 : cmd3
+|4	 : cmd4
+|5	 : cmd5
+--- file history-file.txt
+|: cmd1
+|: cmd2
+|: cmd3
+|: cmd4
+|: cmd5
+|fc -l -3 -1
+
+=== 4: fc -l with string search
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 5: fc: no command found
+--- file history-file.txt
+|: cmd1
+|: other
+|: cmd2
+|: something
+|fc -l cmd
+
+=== 5: fc -l with -n (no line numbers)
+status: 0
+bash-n: 0
+--- stdout
+|	 : cmd1
+|	 : cmd2
+|	 : cmd3
+--- file history-file.txt
+|: cmd1
+|: cmd2
+|: cmd3
+|fc -ln
+
+=== 6: fc -l with -r (reverse order)
+status: 0
+bash-n: 0
+--- stdout
+|3	 : cmd3
+|2	 : cmd2
+|1	 : cmd1
+--- file history-file.txt
+|: cmd1
+|: cmd2
+|: cmd3
+|fc -lr
+
+=== 7: fc -l with -n and -r combined
+status: 0
+bash-n: 0
+--- stdout
+|	 : cmd3
+|	 : cmd2
+|	 : cmd1
+--- file history-file.txt
+|: cmd1
+|: cmd2
+|: cmd3
+|fc -lnr
+
+=== 8: fc -l with range and -r
+status: 0
+bash-n: 0
+--- stdout
+|4	 : cmd4
+|3	 : cmd3
+|2	 : cmd2
+--- file history-file.txt
+|: cmd1
+|: cmd2
+|: cmd3
+|: cmd4
+|: cmd5
+|fc -lr 2 4
+
+=== 9: fc -l 0 means -1
+status: 0
+bash-n: 0
+--- stdout
+|3	 : cmd3
+--- file history-file.txt
+|: cmd1
+|: cmd2
+|: cmd3
+|fc -l 0
+
+=== 10: fc -l defaults to last 16 commands
+status: 0
+bash-n: 0
+--- stdout
+|3	 : cmd3
+|4	 : cmd4
+|5	 : cmd5
+|6	 : cmd6
+|7	 : cmd7
+|8	 : cmd8
+|9	 : cmd9
+|10	 : cmd10
+|11	 : cmd11
+|12	 : cmd12
+|13	 : cmd13
+|14	 : cmd14
+|15	 : cmd15
+|16	 : cmd16
+|17	 : cmd17
+|18	 : cmd18
+--- file history-file.txt
+|: cmd1
+|: cmd2
+|: cmd3
+|: cmd4
+|: cmd5
+|: cmd6
+|: cmd7
+|: cmd8
+|: cmd9
+|: cmd10
+|: cmd11
+|: cmd12
+|: cmd13
+|: cmd14
+|: cmd15
+|: cmd16
+|: cmd17
+|: cmd18
+|fc -l
+
+=== 11: fc -s re-executes last command
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|hello
+--- stderr
+|echo hello
+--- file history-file.txt
+|echo hello
+|echo hello
+
+=== 12: fc -s with command argument
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|world
+|world
+--- stderr
+|echo world
+--- file history-file.txt
+|echo hello
+|echo world
+|echo world
+
+=== 13: fc -s with pattern replacement
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|goodbye
+--- stderr
+|echo goodbye
+--- file history-file.txt
+|echo hello
+|echo goodbye
+
+=== 14: fc -s with command number
+status: 0
+bash-n: 0
+--- stdout
+|first
+|second
+|third
+|first
+--- stderr
+|echo first
+--- file history-file.txt
+|echo first
+|echo second
+|echo third
+|echo first
+
+=== 15: fc -s with negative offset
+status: 0
+bash-n: 0
+--- stdout
+|first
+|second
+|third
+|second
+--- stderr
+|echo second
+--- file history-file.txt
+|echo first
+|echo second
+|echo third
+|echo second
+
+=== 16: fc -s with string prefix match
+status: 1
+bash-n: 0
+--- stdout
+|aaa
+|bbb
+|aac
+--- stderr
+|bash: line 4: fc: no command found
+--- file history-file.txt
+|echo aaa
+|echo bbb
+|echo aac
+|fc -s aa
+
+=== 17: fc -s with pattern replacement and command number
+status: 0
+bash-n: 0
+--- stdout
+|first
+|second
+|hello
+|goodbye
+--- stderr
+|echo goodbye
+--- file history-file.txt
+|echo first
+|echo second
+|echo hello
+|echo goodbye
+
+=== 18: fc -s with pattern replacement and string prefix
+status: 0
+bash-n: 0
+--- stdout
+|aaa
+|hello world
+|goodbye world
+--- stderr
+|echo goodbye world
+--- file history-file.txt
+|echo aaa
+|: somecommand
+|echo hello world
+|echo goodbye world
+
+=== 19: fc -s with pattern replacement and negative index
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|hello world
+|goodbye world
+--- stderr
+|echo goodbye world
+--- file history-file.txt
+|echo one
+|echo two
+|echo hello world
+|echo goodbye world
+
+=== 20: fc -s pattern replacement when pattern doesn't match
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|hello
+--- stderr
+|echo hello
+--- file history-file.txt
+|echo hello
+|echo hello
+
+=== 21: fc -s pattern replacement replaces all occurrences
+status: 0
+bash-n: 0
+--- stdout
+|test test test
+|foo foo foo
+--- stderr
+|echo foo foo foo
+--- file history-file.txt
+|echo test test test
+|echo foo foo foo
+
+=== 22: fc -s with empty replacement
+status: 0
+bash-n: 0
+--- stdout
+|hello world
+|world
+--- stderr
+|echo  world
+--- file history-file.txt
+|echo hello world
+|echo  world
+
+=== 23: fc with invalid range
+status: 0
+bash-n: 0
+--- stdout
+|1	 : cmd1
+--- file history-file.txt
+|: cmd1
+|fc -l 100 200
+
+=== 24: fc -s with nonexistent command
+status: 1
+bash-n: 0
+--- stdout
+|hello
+--- stderr
+|bash: line 2: fc: no command found
+--- file history-file.txt
+|echo hello
+|fc -s xyz
+
+=== 25: fc -l with both string and number
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 5: fc: no command found
+--- file history-file.txt
+|: cmd1
+|: cmd2
+|: cmd3
+|: other
+|fc -l cmd 3
+
+=== 26: fc -l numbering after history -d
+status: 0
+bash-n: 0
+--- stdout
+|1	 : b
+|2	 : c
+|3	 history -d 1
+--- file history-file.txt
+|: b
+|: c
+|history -d 1
+|fc -l 1 3
+
+=== 27: history after fc -s
+status: 0
+bash-n: 0
+--- stdout
+|b
+|b
+|    1  : a
+|    2  echo b
+|    3  echo b
+|    4  history
+--- stderr
+|echo b
+--- file history-file.txt
+|: a
+|echo b
+|echo b
+|history
+
+=== 28: fc -s when HISTCONTROL leaves out the fc line
+status: 0
+bash-n: 0
+--- stdout
+|first
+|second
+|second
+|    1  echo first
+|    2  echo second
+|    3  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ echo first
+|test$ echo second
+|test$  fc -s
+|echo second
+|test$ history
+|test$ exit
+--- file history-file.txt
+|echo first
+|echo second
+|history
+
+=== 29: fc -l when HISTCONTROL leaves out the fc line
+status: 0
+bash-n: 0
+--- stdout
+|1	 : a
+|2	 : b
+|1	 : a
+|2	 : b
+|3	 fc -l
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ : a
+|test$ : b
+|test$ fc -l
+|test$ fc -l
+|test$ exit
+--- file history-file.txt
+|: a
+|: b
+|fc -l
+
+=== 30: fc rejects -h and an unknown option with status 2
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|rc=2
+--- stderr
+|bash: line 1: fc: -h: invalid option
+|fc: usage: fc [-e ename] [-lnr] [first] [last] or fc -s [pat=rep] [command]
+|bash: line 2: fc: -z: invalid option
+|fc: usage: fc [-e ename] [-lnr] [first] [last] or fc -s [pat=rep] [command]

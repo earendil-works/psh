@@ -1,0 +1,107 @@
+# Goldens for tests/oils/spec/case_.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Case statement
+status: 0
+bash-n: 0
+--- stdout
+|A
+|loop
+|loop
+
+=== 1: Case statement with ;;&
+status: 0
+bash-n: 0
+--- stdout
+|A
+|star
+|star2
+
+=== 2: Case statement with ;&
+status: 0
+bash-n: 0
+--- stdout
+|aa
+|bb
+|cc
+|--
+|bb
+|cc
+|--
+|cc
+|--
+|dd
+|--
+|--
+
+=== 3: Case with empty condition
+status: 0
+bash-n: 0
+--- stdout
+|match
+
+=== 4: Match a literal with a glob character
+status: 0
+bash-n: 0
+--- stdout
+|match
+
+=== 5: Match a literal with a glob character with a dynamic pattern
+status: 0
+bash-n: 0
+--- stdout
+|match
+
+=== 6: Quoted literal in glob pattern
+status: 0
+bash-n: 0
+--- stdout
+|match
+
+=== 7: Multiple Patterns Match
+status: 0
+bash-n: 0
+--- stdout
+|- X
+
+=== 8: Pattern ? matches 1 code point (many bytes), but not multiple code points
+status: 0
+bash-n: 0
+--- stdout
+|yes
+|yes
+|no
+
+=== 9: matching the byte 0xff against empty string - DISABLED - CI only bug?
+status: 0
+bash-n: 0
+--- stdout
+|b
+|b
+
+=== 10: matching every byte against itself
+status: 0
+bash-n: 0
+--- stdout
+|sum=255
+
+=== 11: \(\) in pattern (regression)
+status: 0
+bash-n: 2
+--- stdout
+|match
+|extglob
+--- bash-n stderr
+|bash: line 12: syntax error near unexpected token `('
+|bash: line 12: `  *(foo|bar)'()') echo 'extglob''
+
+=== 12: case \n bug regression
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `newline'
+|bash: line 1: `case'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `newline'
+|bash: line 1: `case'

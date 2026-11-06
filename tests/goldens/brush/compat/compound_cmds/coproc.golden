@@ -1,0 +1,389 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/compound_cmds/coproc.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Unnamed coproc with brace group
+status: 0
+bash-n: 0
+--- stdout
+|hello from coproc
+--- other _sync
+
+=== 1: Unnamed coproc with subshell
+status: 0
+bash-n: 0
+--- stdout
+|hello from subshell coproc
+--- other _sync
+
+=== 2: Named coproc with brace group
+status: 0
+bash-n: 0
+--- stdout
+|named coproc
+--- other _sync
+
+=== 3: Named coproc with subshell
+status: 0
+bash-n: 0
+--- stdout
+|named subshell coproc
+--- other _sync
+
+=== 4: Coproc with simple command
+status: 0
+bash-n: 0
+--- stdout
+|got: input line
+
+=== 5: Coproc with multi-statement brace group
+status: 0
+bash-n: 0
+--- stdout
+|line1
+|line2
+|line3
+--- other _sync
+
+=== 6: COPROC array read FD is functional
+status: 0
+bash-n: 0
+--- stdout
+|got: via read fd
+--- other _sync
+
+=== 7: Named coproc FDs are functional
+status: 0
+bash-n: 0
+--- stdout
+|got: named fd test
+--- other _sync
+
+=== 8: Read coproc output with cat
+status: 0
+bash-n: 0
+--- stdout
+|output from coproc
+--- other _sync
+
+=== 9: Read coproc output with read builtin
+status: 0
+bash-n: 0
+--- stdout
+|got: readline test
+--- other _sync
+
+=== 10: Read multiple lines from coproc
+status: 0
+bash-n: 0
+--- stdout
+|first
+|second
+|third
+--- other _sync
+
+=== 11: Read multiple lines with read builtin
+status: 0
+bash-n: 0
+--- stdout
+|first=line1
+|second=line2
+--- other _sync
+
+=== 12: Named coproc read
+status: 0
+bash-n: 0
+--- stdout
+|from named
+--- other _sync
+
+=== 13: Write to coproc stdin and read back
+status: 0
+bash-n: 0
+--- stdout
+|got: hello coproc
+
+=== 14: Bidirectional communication
+status: 0
+bash-n: 0
+--- stdout
+|processed: msg1
+|processed: msg2
+
+=== 15: Named coproc bidirectional
+status: 0
+bash-n: 0
+--- stdout
+|echo: test1
+|echo: test2
+
+=== 16: Close write FD to signal EOF
+status: 0
+bash-n: 0
+--- stdout
+|read 3 lines
+
+=== 17: Bidirectional with cat for EOF
+status: 0
+bash-n: 0
+--- stdout
+|processed: msg1
+|processed: msg2
+|DONE
+
+=== 18: Coproc running a for loop
+status: 0
+bash-n: 0
+--- stdout
+|iteration 1
+|iteration 2
+|iteration 3
+--- other _sync
+
+=== 19: Coproc running a while loop
+status: 0
+bash-n: 0
+--- stdout
+|count 1
+|count 2
+|count 3
+--- other _sync
+
+=== 20: Coproc with conditionals
+status: 0
+bash-n: 0
+--- stdout
+|true branch
+--- other _sync
+
+=== 21: Coproc with case statement
+status: 0
+bash-n: 0
+--- stdout
+|matched hello
+--- other _sync
+
+=== 22: Coproc body with pipeline
+status: 0
+bash-n: 0
+--- stdout
+|apple
+|banana
+|cherry
+--- other _sync
+
+=== 23: Coproc body with command substitution
+status: 0
+bash-n: 0
+--- stdout
+|HELLO
+--- other _sync
+
+=== 24: Coproc with arithmetic operations
+status: 0
+bash-n: 0
+--- stdout
+|8
+|15
+--- other _sync
+
+=== 25: Coproc statement returns 0
+status: 0
+bash-n: 0
+--- stdout
+|done
+|exit status: 0
+--- other _sync
+
+=== 26: Coproc with failing body returns 0 immediately
+status: 0
+bash-n: 0
+--- stdout
+|coproc start status: 0
+
+=== 27: Wait with no args waits for coproc
+status: 0
+bash-n: 0
+--- stdout
+|coproc done
+|after wait
+--- other _sync
+
+=== 28: Invalid coproc name
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+--- stderr
+|./test.sh: line 1: `123bad': not a valid identifier
+
+=== 29: Coproc inside a function
+status: 0
+bash-n: 0
+--- stdout
+|from function coproc
+--- other _sync
+
+=== 30: Coproc inside a conditional
+status: 0
+bash-n: 0
+--- stdout
+|conditional coproc
+--- other _sync
+
+=== 31: Coproc inside a loop body
+status: 0
+bash-n: 0
+--- stdout
+|loop coproc 1
+--- other _sync
+
+=== 32: Named coproc inside a function
+status: 0
+bash-n: 0
+--- stdout
+|named in func
+--- other _sync
+
+=== 33: Second unnamed coproc replaces first
+status: 0
+bash-n: 0
+--- stdout
+|first
+|second
+--- other _sync
+
+=== 34: Sequential named coprocs with different names
+status: 0
+bash-n: 0
+--- stdout
+|proc1
+|proc2
+--- other _sync
+
+=== 35: Coproc inherits parent environment
+status: 0
+bash-n: 0
+--- stdout
+|MY_VAR=inherited
+--- other _sync
+
+=== 36: Coproc inherits non-exported variables
+status: 0
+bash-n: 0
+--- stdout
+|LOCAL_VAR=visible
+--- other _sync
+
+=== 37: Coproc cannot modify parent variables
+status: 0
+bash-n: 0
+--- stdout
+|in coproc: modified
+|in parent: original
+--- other _sync
+
+=== 38: Coproc inherits functions
+status: 0
+bash-n: 0
+--- stdout
+|hello world
+--- other _sync
+
+=== 39: Coproc inherits aliases
+status: 0
+bash-n: 0
+--- stdout
+|ALIASED: test
+--- other _sync
+
+=== 40: Coproc body with stderr redirection
+status: 0
+bash-n: 0
+--- stdout
+|stdout msg
+--- stderr
+|stderr msg
+--- other _sync
+
+=== 41: Coproc body writing to a file
+status: 0
+bash-n: 0
+--- stdout
+|wrote file
+|file content
+--- other _sync
+
+=== 42: Coproc producing empty output
+status: 0
+bash-n: 0
+--- stdout
+|after empty coproc
+--- other _sync
+
+=== 43: Coproc producing multiple lines of output
+status: 0
+bash-n: 0
+--- stdout
+|read 10 lines
+--- other _sync
+
+=== 44: Coproc with multiline string output
+status: 0
+bash-n: 0
+--- stdout
+|first line
+|second line
+|third line
+--- other _sync
+
+=== 45: Transform coproc output to uppercase
+status: 0
+bash-n: 0
+--- stdout
+|HELLO
+|WORLD
+--- other _sync
+
+=== 46: Coproc output filtered with case
+status: 0
+bash-n: 0
+--- stdout
+|starts with a: apple
+|starts with a: avocado
+--- other _sync
+
+=== 47: Wait for specific coproc PID
+status: 0
+bash-n: 0
+--- stdout
+|done
+|wait status: 0
+--- file go
+
+=== 48: Coproc with failing body - wait captures exit status
+status: 0
+bash-n: 0
+--- stdout
+|exit status: 42
+--- file go
+
+=== 49: Wait for named coproc PID
+status: 0
+bash-n: 0
+--- stdout
+|done
+|status: 0
+--- file go
+
+=== 50: COPROC_PID names the coprocess for kill and wait
+status: 0
+bash-n: 0
+--- stdout
+|status: 143
+
+=== 51: A coprocess's variables are unset once it's waited for
+status: 0
+bash-n: 0
+--- stdout
+|status: 0 pid: [unset] fds: [unset]

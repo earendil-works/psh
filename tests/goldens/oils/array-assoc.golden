@@ -1,0 +1,349 @@
+# Goldens for tests/oils/spec/array-assoc.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Literal syntax ([x]=y)
+status: 0
+bash-n: 0
+--- stdout
+|b
+|bar
+|c
+
+=== 1: set associative array to indexed array literal (very surprising bash behavior)
+status: 0
+bash-n: 0
+--- stdout
+|declare -A assoc=([k1]="foo" [k2]="spam eggs" )
+|declare -A assoc=([foo]="spam eggs" )
+
+=== 2: Can initialize assoc array with the "(key value ...)" sequence
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|declare -A A=([3]="" [1]="2" )
+
+=== 3: create empty assoc array, put, then get
+status: 0
+bash-n: 0
+--- stdout
+|[]
+|[]
+|bar
+
+=== 4: Empty value (doesn't use EmptyWord?)
+status: 0
+bash-n: 0
+--- stdout
+|['']
+
+=== 5: retrieve keys with !
+status: 0
+bash-n: 0
+--- stdout
+|a+1
+|foo
+|x
+
+=== 6: retrieve values with ${A[@]}
+status: 0
+bash-n: 0
+--- stdout
+|b
+|bar
+|c
+
+=== 7: coerce to string with ${A[*]}, etc.
+status: 0
+bash-n: 0
+--- stdout
+|['xx yy']
+|['X X Y Y']
+|['xx', 'yy']
+|['X', 'X', 'Y', 'Y']
+
+=== 8: ${A[@]/b/B}
+status: 0
+bash-n: 0
+--- stdout
+|BBB
+|ccc
+|ddd
+
+=== 9: ${A[@]#prefix}
+status: 0
+bash-n: 0
+--- stdout
+|hree
+|one
+|wo
+
+=== 10: ${assoc} is like ${assoc[0]}
+status: 0
+bash-n: 0
+--- stdout
+|a=
+|a=zzz
+|a=yyy
+
+=== 11: length ${#a[@]}
+status: 0
+bash-n: 0
+--- stdout
+|3
+
+=== 12: lookup with ${a[0]} -- "0" is a string
+status: 0
+bash-n: 0
+--- stdout
+|0 a 1 b 2 c
+
+=== 13: lookup with double quoted strings "mykey"
+status: 0
+bash-n: 0
+--- stdout
+|b bar c
+
+=== 14: lookup with single quoted string
+status: 0
+bash-n: 0
+--- stdout
+|c
+
+=== 15: lookup with unquoted $key and quoted "$i$i"
+status: 0
+bash-n: 0
+--- stdout
+|bar
+|b
+
+=== 16: lookup by unquoted string doesn't work in OSH because it's a variable
+status: 0
+bash-n: 0
+--- stdout
+|c
+
+=== 17: bash bug: "i+1" and i+1 are the same key
+status: 0
+bash-n: 0
+--- stdout
+|array[i]=6
+|array[i+1]=7
+|assoc[i]=string
+|assoc[i+1]=string+1
+|assoc[i]=string
+|assoc[i+1]=string+1
+
+=== 18: Array stored in associative array gets converted to string (without strict_array)
+status: 0
+bash-n: 0
+--- stdout
+|['1 2 3']
+
+=== 19: Indexed array as key of associative array coerces to string (without shopt -s strict_array)
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|1 2 3
+|42
+
+=== 20: Append to associative array value A['x']+='suffix'
+status: 0
+bash-n: 0
+--- stdout
+|['foobarbar']
+
+=== 21: Slice of associative array doesn't make sense in bash
+status: 0
+bash-n: 0
+--- stdout
+|['4', '1', '3']
+|['4', '1', '3']
+|['1', '3', '5']
+|['3', '5', '2']
+|['5', '2']
+|['2']
+
+=== 22: bash variable can have an associative array part and a string part
+status: 0
+bash-n: 0
+--- stdout
+|1 2
+|1 2 zero
+|1 2 string
+
+=== 23: Associative array expressions inside (( )) with keys that look like numbers
+status: 0
+bash-n: 0
+--- stdout
+|42
+|42
+
+=== 24: (( A[5] += 42 ))
+status: 0
+bash-n: 0
+--- stdout
+|16
+
+=== 25: (( A[5] += 42 )) with empty cell
+status: 0
+bash-n: 0
+--- stdout
+|6
+--- stderr
+|bash: line 1: shopt: strict_arith: invalid shell option name
+
+=== 26: setting key to itself (from bash-bug mailing list)
+status: 0
+bash-n: 0
+--- stdout
+|value1
+|value1 value2
+
+=== 27: readonly associative array can't be modified
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 2: A: readonly variable
+
+=== 28: associative array and brace expansion
+status: 0
+bash-n: 0
+--- stdout
+|v
+|-{a,b}-
+
+=== 29: declare -A A=() allowed
+status: 0
+bash-n: 0
+--- stdout
+|len=0
+|len=1
+|unset len=0
+--- stderr
+|bash: line 2: shopt: strict_arith: invalid shell option name
+
+=== 30: unset -v and assoc array
+status: 0
+bash-n: 0
+--- stdout
+|len=1
+|len=0
+|len=1
+|len=0
+|len=1
+|len=0
+--- stderr
+|bash: line 1: shopt: eval_unsafe_arith: invalid shell option name
+
+=== 31: nameref and assoc array
+status: 0
+bash-n: 0
+--- stdout
+|values: val
+|before val
+|after val2
+|values: val2
+|---
+|before val2
+|after val3
+|values: val3
+
+=== 32: ${!ref} and assoc array
+status: 0
+bash-n: 0
+--- stdout
+|values: val
+|ref val
+|ref val
+
+=== 33: printf -v and assoc array
+status: 0
+bash-n: 0
+--- stdout
+|values: val
+|values: /val2/
+|values: /val3/
+
+=== 34: bash bug: (( A["$key"] = 1 )) doesn't work
+status: 0
+bash-n: 0
+--- stdout
+|['\\']
+|['42']
+
+=== 35: Implicit increment of keys
+status: 0
+bash-n: 0
+--- stdout
+|['30', '31', '40', '41']
+|['a', 'b', 'x', 'y']
+
+=== 36: test -v assoc[key]
+status: 0
+bash-n: 0
+--- stdout
+|no quotes
+|empty=0
+|k=0
+|nonexistent=1
+|
+|quotes
+|empty=0
+|k=0
+|nonexistent=1
+
+=== 37: test -v with dynamic parsing
+status: 0
+bash-n: 0
+--- stdout
+|empty=0
+|k=0
+|nonexistent=1
+
+=== 38: [[ -v assoc[key] ]]
+status: 0
+bash-n: 0
+--- stdout
+|no quotes
+|empty=0
+|k=0
+|nonexistent=1
+|
+|quotes
+|empty=0
+|k=0
+|nonexistent=1
+|
+|vars
+|empty=0
+|k=0
+|nonexistent=1
+
+=== 39: [[ -v assoc[key] ]] syntax errors
+status: 0
+bash-n: 0
+--- stdout
+|empty=0
+|k=0
+|typo=1
+
+=== 40: BashAssoc a+=()
+status: 0
+bash-n: 0
+--- stdout
+|apple is red
+|orange is orange
+|lemon is yellow
+|banana is yellow
+
+=== 41: BashAssoc ${a[@]@Q}
+status: 0
+bash-n: 0
+--- stdout
+|['[]*?' '()<>&|' '"' ''\'''\''']
+|['[]*?' '()<>&|' '"' ''\'''\''']

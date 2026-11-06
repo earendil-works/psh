@@ -1,0 +1,41 @@
+# Goldens for tests/oils/spec/temp-binding.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: More eval 'local v='
+status: 0
+bash-n: 0
+--- stdout
+|x=x
+|y=y
+|z=z
+
+=== 1: Temp bindings with local
+status: 0
+bash-n: 0
+--- stdout
+|x=x
+|tx=tx
+|y=y
+|ty=ty
+
+=== 2: Temp bindings with unset
+status: 0
+bash-n: 0
+--- stdout
+|x=
+|---
+|x=
+|x=
+|---
+|x=42
+|x=42
+|---
+|x=42
+|x=42
+
+=== 3: FOO=bar $unset - temp binding, then empty argv from unquoted unset var (#2411)
+status: 0
+bash-n: 0
+--- stdout
+|alive!

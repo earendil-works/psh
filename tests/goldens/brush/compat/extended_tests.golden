@@ -1,0 +1,730 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/extended_tests.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Extended test with redirect
+status: 0
+bash-n: 0
+--- stdout
+|Result: 1
+
+=== 1: File extended tests
+status: 0
+bash-n: 0
+--- stdout
+|-a correctly checked /tmp
+|-a correctly checked non-existent path
+|-c correctly checked /dev/null
+|-c correctly checked /tmp
+
+=== 2: Existence tests
+status: 0
+bash-n: 0
+--- stdout
+|-e correctly identified empty string as non-existent
+|-e correctly identified non-existent path
+|! -e correctly identified non-existent path
+|-e correctly identified existing non-dir
+|-d correctly identified existing dir
+--- dir test-dir
+--- file test-file
+
+=== 3: Directory tests
+status: 0
+bash-n: 0
+--- stdout
+|-d correctly identified empty string as non-existent
+|-d correctly identified non-existent path
+|! -d correctly identified non-existent path
+|-d correctly identified non-dir file
+|-d correctly identified existing dir
+--- dir test-dir
+--- file test-file
+
+=== 4: File regular tests
+status: 0
+bash-n: 0
+--- stdout
+|-f correctly identified empty string as non-existent
+|-f correctly identified non-existent path
+|! -f correctly identified non-existent path
+|-f correctly identified regular file
+|-f correctly identified directory as non-regular file
+--- dir test-dir
+--- file test-file
+
+=== 5: File symbolic link tests
+status: 0
+bash-n: 0
+--- stdout
+|-L correctly identified non-existent path
+|-L correctly identified non-link file
+|-L correctly identified valid symbolic link
+|-L correctly identified dangling symbolic link
+--- link dangling-link -> non-existent-target
+--- file test-file
+--- link valid-link -> test-file
+
+=== 6: File sticky bit tests
+status: 0
+bash-n: 0
+--- stdout
+|-k correctly identified file without sticky bit
+|-k correctly identified file with sticky bit
+--- file test-file
+
+=== 7: Fifo test
+status: 1
+bash-n: 0
+--- stdout
+|-p correctly identified non-fifo file
+--- other fifo-file
+--- file test-file
+
+=== 8: File executable tests
+status: 1
+bash-n: 0
+--- stdout
+|-x correctly identified non-existent path
+|-x correctly identified non-executable file
+|-x correctly identified link to non-executable file
+|-x correctly identified other-only-executable file
+|-x correctly identified link to other-only-executable file
+--- stderr
+|chmod: cannot operate on dangling symlink 'test-file'
+|chmod: cannot operate on dangling symlink 'test-file'
+--- link test-file -> link
+
+=== 9: File writable tests
+status: 1
+bash-n: 0
+--- stdout
+|-w correctly identified non-existent path
+|-w correctly identified non-writable file
+|-w correctly identified link to non-writable file
+|-w correctly identified other-only-writable file
+|-w correctly identified link to other-only-writable file
+--- stderr
+|chmod: cannot operate on dangling symlink 'test-file'
+|chmod: cannot operate on dangling symlink 'test-file'
+--- link test-file -> link
+
+=== 10: Variable set and nameref tests
+status: 0
+bash-n: 0
+--- stdout
+|-R correctly identified nameref variable that is set
+|-R correctly identified nameref variable that isn't set
+
+=== 11: Files refer to same device and inode tests
+status: 0
+bash-n: 0
+--- stdout
+|-ef correctly identified device and inode numbers
+|-ef correctly identified device and inode numbers that do not match
+
+=== 12: File is newer
+status: 0
+bash-n: 0
+--- stdout
+|-nt correctly identified newer file
+|-nt correctly identified when file2 does not exist
+--- file bar
+--- file foo
+
+=== 13: File is older
+status: 0
+bash-n: 0
+--- stdout
+|-ot correctly identified older file
+|-ot correctly identified when file1 does not exist
+--- file bar
+--- file foo
+
+=== 14: Unary string extended tests
+status: 1
+bash-n: 0
+--- stdout
+|-z: Pass
+|-n: Pass
+
+=== 15: Shell option extended tests
+status: 1
+bash-n: 0
+--- stdout
+|1: option enabled
+
+=== 16: Binary string extended tests
+status: 0
+bash-n: 0
+--- stdout
+|1. Pass
+|2. Pass
+|4. Pass
+|7. Pass
+|12. Pass
+
+=== 17: Binary string matching
+status: 0
+bash-n: 0
+--- stdout
+|1. Pass
+|3. Pass
+
+=== 18: Binary string matching with expansion
+status: 0
+bash-n: 0
+--- stdout
+|2. Pass
+
+=== 19: Quoted pattern binary string matching
+status: 0
+bash-n: 0
+--- stdout
+|2. Matches
+
+=== 20: Tilde binary string matching
+status: 0
+bash-n: 0
+--- stdout
+|1. Matches
+
+=== 21: Arithmetic extended tests
+status: 0
+bash-n: 0
+--- stdout
+|1. Pass
+|4. Pass
+|6. Pass
+|8. Pass
+|9. Pass
+|10. Pass
+|14. Pass
+|17. Pass
+|18. Pass
+
+=== 22: Regex
+status: 1
+bash-n: 0
+--- stdout
+|1. Pass
+|2. Pass
+|3. Pass
+|4. Pass
+
+=== 23: Regex with leading ] in bracket expression
+status: 0
+bash-n: 0
+--- stdout
+|1. Matched
+|2. Matched
+|3. Matched
+|4. Matched
+|5. Not matched
+|6. Not matched
+|7. Matched
+|8. Matched
+|9. Matched
+|10. Not matched
+|11. Matched
+|12. Matched
+|13. Matched
+|14. Not matched
+|15. Not matched
+|done
+
+=== 24: Regex with '-' as a range endpoint
+status: 0
+bash-n: 0
+--- stdout
+|1. matched: +
+|1. matched: ,
+|1. matched: -
+|2. matched: -
+|2. matched: .
+|2. matched: /
+|done
+
+=== 25: Regex with a reversed range
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|bash: line 1: [[: invalid regular expression `^[9-0]$': Invalid range end
+
+=== 26: Regex with stacked quantifiers
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 27: Regex with case insensitivity
+status: 0
+bash-n: 0
+--- stdout
+|1. Pass
+
+=== 28: Regex with capture
+status: 0
+bash-n: 0
+--- stdout
+|Match found!
+|0: 'Hello, world.'
+|1: 'Hello'
+|2: 'world'
+
+=== 29: Regex with capture including optional matches
+status: 0
+bash-n: 0
+--- stdout
+|Match found!
+|0: 'Hello world.'
+|1: 'Hello'
+|2: ''
+|3: 'world'
+
+=== 30: Regex with quoting
+status: 1
+bash-n: 0
+--- stdout
+|5. Matched
+|6. Matched
+
+=== 31: Regex with escaping
+status: 1
+bash-n: 0
+
+=== 32: Regex with double parens
+status: 0
+bash-n: 0
+--- stdout
+|Matches
+
+=== 33: Regex with special chars in parens
+status: 1
+bash-n: 0
+--- stdout
+|1. Matched
+
+=== 34: Regex with spaces inside parens
+status: 0
+bash-n: 0
+--- stdout
+|1. Matched
+|2. Matched: [a ]
+|3. No match
+|4. Matched: [ ]
+
+=== 35: Regex with unescaped open bracket in character class
+status: 0
+bash-n: 0
+--- stdout
+|Matched
+
+=== 36: Empty and space checks
+status: 1
+bash-n: 0
+--- stdout
+|2. Only space
+|3. Only space
+
+=== 37: Newlines in test expression
+status: 0
+bash-n: 0
+--- stdout
+|Succeeded
+
+=== 38: Variable set checks
+status: 0
+bash-n: 0
+--- stdout
+|2. Set with value
+|3. Not set
+
+=== 39: Variable set checks on array elements
+status: 0
+bash-n: 0
+--- stdout
+|1. Indexed element set
+|2. Indexed element unset
+|3. Associative element set
+|4. Associative element unset
+|5. test -v sees the element
+
+=== 40: Variables in extended tests
+status: 0
+bash-n: 0
+--- stdout
+|1. Pass
+|2. Pass
+
+=== 41: Regex with min/max counts
+status: 1
+bash-n: 0
+--- stdout
+|2. Matches
+
+=== 42: Regex with newline
+status: 0
+bash-n: 0
+--- stdout
+|1. Matches
+
+=== 43: Arithmetic comparisons with whitespace in operands
+status: 0
+bash-n: 0
+--- stdout
+|1. leading space
+|2. trailing space
+|3. both spaces
+|4. leading tab
+|5. trailing tab
+|6. newline
+|7. -lt with space
+|8. -gt with space
+|9. -ne with space
+|10. -le with space
+|11. -ge with space
+|12. negative with space
+
+=== 44: Terminal fd check with whitespace
+status: 0
+bash-n: 0
+--- stdout
+|All -t results match
+
+=== 45: Nameref -R with attribute removal
+status: 0
+bash-n: 0
+--- stdout
+|ref is a nameref
+|target is not a nameref
+|no longer a nameref
+
+=== 46: Nameref -v follows nameref
+status: 0
+bash-n: 0
+--- stdout
+|ref is set (via target)
+|ref not set (target gone)
+
+=== 47: Nameref -v to array element treats resolved name literally
+status: 0
+bash-n: 0
+--- stdout
+|unset
+
+=== 48: Nameref -v with explicit subscript on nameref to whole array
+status: 0
+bash-n: 0
+--- stdout
+|set
+
+=== 49: Nameref -v to nonexistent array index
+status: 0
+bash-n: 0
+--- stdout
+|unset
+
+=== 50: Newline after ( in [[ ]]
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 51: Newline after ( before bare word in [[ ]]
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 52: Newline before ) after binary test in [[ ]]
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 53: Newline before ) after unary test in [[ ]]
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 54: Newline before ) after nested parens in [[ ]]
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 55: Multiple newlines before ) in [[ ]]
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 56: Newline after && in [[ ]]
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 57: Newline before && after binary test in [[ ]]
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 58: Newline before || after binary test in [[ ]]
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 59: Leading newline after [[ 
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 60: Newline after ! in [[ ]]
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 61: Newline before ]] after binary test
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 62: Newline before ]] after unary test
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 63: Newline before ]] after parenthesized expression
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 64: Newline before ]] after not of parenthesized expression
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 65: Error: newline before ]] after bare word
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected token `newline', conditional binary operator expected
+|bash: line 1: syntax error near `a'
+|bash: line 1: `[[ a'
+--- bash-n stderr
+|bash: line 1: unexpected token `newline', conditional binary operator expected
+|bash: line 1: syntax error near `a'
+|bash: line 1: `[[ a'
+
+=== 66: Error: newline before ) after bare word
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected token `newline', conditional binary operator expected
+|bash: line 1: expected `)'
+|bash: line 1: syntax error near `a'
+|bash: line 1: `[[ ( a'
+--- bash-n stderr
+|bash: line 1: unexpected token `newline', conditional binary operator expected
+|bash: line 1: expected `)'
+|bash: line 1: syntax error near `a'
+|bash: line 1: `[[ ( a'
+
+=== 67: Error: newline before && after bare word
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected token `newline', conditional binary operator expected
+|bash: line 1: syntax error near `a'
+|bash: line 1: `[[ a'
+--- bash-n stderr
+|bash: line 1: unexpected token `newline', conditional binary operator expected
+|bash: line 1: syntax error near `a'
+|bash: line 1: `[[ a'
+
+=== 68: Error: newline before ) after not of bare word
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected token `newline', conditional binary operator expected
+|bash: line 1: expected `)'
+|bash: line 1: syntax error near `a'
+|bash: line 1: `[[ ( ! a'
+--- bash-n stderr
+|bash: line 1: unexpected token `newline', conditional binary operator expected
+|bash: line 1: expected `)'
+|bash: line 1: syntax error near `a'
+|bash: line 1: `[[ ( ! a'
+
+=== 69: Regex anchors match the whole string, not lines
+status: 0
+bash-n: 0
+--- stdout
+|ok 1
+|ok 2
+|ok 3
+|[ 	
+|abc]
+
+=== 70: Unary operator takes an operator-like word as operand
+status: 0
+bash-n: 0
+--- stdout
+|1: 1
+|2: 0
+|3: 1
+|4: 0
+|5: 1
+|6: 1
+|7: 1
+|8: 0
+|9: 1
+|10: 1
+|11: 0
+
+=== 71: Quoted or expanded unary operator is a plain word
+status: 0
+bash-n: 0
+--- stdout
+|1: 1
+|2: 0
+|3: 0
+|4: 0
+|5: 0
+|6: 1
+|7: 1
+
+=== 72: Error: word after unary operand of [[ ]]
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `x'
+|bash: line 1: syntax error near `x'
+|bash: line 1: `[[ -z == x ]] && echo should-not-print'
+--- bash-n stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `x'
+|bash: line 1: syntax error near `x'
+|bash: line 1: `[[ -z == x ]] && echo should-not-print'
+
+=== 73: Error: unary operator as left side of binary test
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `x'
+|bash: line 1: syntax error near `x'
+|bash: line 1: `[[ -f -nt x ]] && echo should-not-print'
+--- bash-n stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `x'
+|bash: line 1: syntax error near `x'
+|bash: line 1: `[[ -f -nt x ]] && echo should-not-print'
+
+=== 74: Error: unary operator as left side of arithmetic test
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `1'
+|bash: line 1: syntax error near `1'
+|bash: line 1: `[[ -n -eq 1 ]] && echo should-not-print'
+--- bash-n stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `1'
+|bash: line 1: syntax error near `1'
+|bash: line 1: `[[ -n -eq 1 ]] && echo should-not-print'
+
+=== 75: Error: unary operator as left side of < test
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected argument `<' to conditional unary operator
+|bash: line 1: syntax error near `<'
+|bash: line 1: `[[ -z < x ]] && echo should-not-print'
+--- bash-n stderr
+|bash: line 1: unexpected argument `<' to conditional unary operator
+|bash: line 1: syntax error near `<'
+|bash: line 1: `[[ -z < x ]] && echo should-not-print'
+
+=== 76: Error: unary operator as left side of =~ test
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `x'
+|bash: line 1: syntax error near `x'
+|bash: line 1: `[[ -z =~ x ]] && echo should-not-print'
+--- bash-n stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `x'
+|bash: line 1: syntax error near `x'
+|bash: line 1: `[[ -z =~ x ]] && echo should-not-print'
+
+=== 77: Error: unary operator followed by ||
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected argument `||' to conditional unary operator
+|bash: line 1: syntax error near `|'
+|bash: line 1: `[[ -n || x ]] && echo should-not-print'
+--- bash-n stderr
+|bash: line 1: unexpected argument `||' to conditional unary operator
+|bash: line 1: syntax error near `|'
+|bash: line 1: `[[ -n || x ]] && echo should-not-print'
+
+=== 78: Error: unary operator followed by ]]
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected argument `]]' to conditional unary operator
+|bash: line 1: syntax error near `]]'
+|bash: line 1: `[[ -z ]] && echo should-not-print'
+--- bash-n stderr
+|bash: line 1: unexpected argument `]]' to conditional unary operator
+|bash: line 1: syntax error near `]]'
+|bash: line 1: `[[ -z ]] && echo should-not-print'
+
+=== 79: Error: unary operator followed by ) in [[ ]]
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected argument `)' to conditional unary operator
+|bash: line 1: expected `)'
+|bash: line 1: syntax error near `)'
+|bash: line 1: `[[ ( -z ) ]] && echo should-not-print'
+--- bash-n stderr
+|bash: line 1: unexpected argument `)' to conditional unary operator
+|bash: line 1: expected `)'
+|bash: line 1: syntax error near `)'
+|bash: line 1: `[[ ( -z ) ]] && echo should-not-print'
+
+=== 80: Error: negated unary operator followed by ]]
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected argument `]]' to conditional unary operator
+|bash: line 1: syntax error near `]]'
+|bash: line 1: `[[ ! -n ]] && echo should-not-print'
+--- bash-n stderr
+|bash: line 1: unexpected argument `]]' to conditional unary operator
+|bash: line 1: syntax error near `]]'
+|bash: line 1: `[[ ! -n ]] && echo should-not-print'
+
+=== 81: Error: ]] as unary operand
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected argument `]]' to conditional unary operator
+|bash: line 1: syntax error near `]]'
+|bash: line 1: `[[ -z ]] ]] && echo should-not-print'
+--- bash-n stderr
+|bash: line 1: unexpected argument `]]' to conditional unary operator
+|bash: line 1: syntax error near `]]'
+|bash: line 1: `[[ -z ]] ]] && echo should-not-print'

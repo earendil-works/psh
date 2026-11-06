@@ -1,0 +1,97 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/exit.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Exit without code
+status: 0
+bash-n: 0
+
+=== 1: Exit with code
+status: 10
+bash-n: 0
+
+=== 2: Exit with i64 max
+status: 255
+bash-n: 0
+
+=== 3: Exit with i64 min
+status: 0
+bash-n: 0
+
+=== 4: Exit in for loop
+status: 42
+bash-n: 0
+
+=== 5: Exit in arithmetic for loop body
+status: 42
+bash-n: 0
+
+=== 6: Exit in while loop condition
+status: 42
+bash-n: 0
+
+=== 7: Exit in while loop body
+status: 42
+bash-n: 0
+
+=== 8: Exit in sequence
+status: 42
+bash-n: 0
+
+=== 9: Exit in function
+status: 42
+bash-n: 0
+
+=== 10: Exit in subshell
+status: 0
+bash-n: 0
+--- stdout
+|Got past subshell
+
+=== 11: Exit in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|Got past command substitution
+
+=== 12: Exit in and/or
+status: 42
+bash-n: 0
+
+=== 13: Exit in brace group
+status: 42
+bash-n: 0
+
+=== 14: exit with too many arguments abandons the rest of the line
+status: 0
+bash-n: 0
+--- stdout
+|next line: 2
+--- stderr
+|bash: line 1: exit: too many arguments
+
+=== 15: logout outside a login shell fails
+status: 0
+bash-n: 0
+--- stdout
+|logout: 1
+|logout -Z: 1
+--- stderr
+|bash: line 1: logout: not login shell: use `exit'
+|bash: line 3: logout: not login shell: use `exit'
+
+=== 16: exit in an rc file ends the shell
+status: 3
+bash-n: 0
+--- stdout
+|in rc
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+
+=== 17: exit takes -- and a negative status
+status: 0
+bash-n: 0
+--- stdout
+|a=4
+|b=255

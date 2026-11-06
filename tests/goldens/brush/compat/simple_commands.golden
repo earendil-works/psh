@@ -1,0 +1,96 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/simple_commands.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Simple command
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 1: Simple command with reserved word args
+status: 0
+bash-n: 0
+--- stdout
+|then
+
+=== 2: Command that's a directory
+status: 0
+bash-n: 0
+--- stdout
+|Result: 126
+--- stderr
+|bash: line 2: ./test-dir: Is a directory
+--- dir test-dir
+
+=== 3: Non-existent command
+status: 0
+bash-n: 0
+--- stdout
+|Result: 127
+--- stderr
+|bash: line 1: ./non-existent-command: No such file or directory
+
+=== 4: Redirection of errors
+status: 0
+bash-n: 0
+--- stdout
+|Result: 127
+
+=== 5: Simple command with non-existent cwd
+status: 0
+bash-n: 0
+
+=== 6: Command found in PATH is a directory
+status: 0
+bash-n: 0
+--- stdout
+|Result: 127
+--- stderr
+|bash: line 3: prog: command not found
+--- dir pdir
+--- dir pdir/prog
+
+=== 7: Command found in PATH is not executable
+status: 0
+bash-n: 0
+--- stdout
+|Result: 126
+|HIT
+|Result: 0
+--- stderr
+|bash: line 7: <case>/pdir/only: Permission denied
+--- dir pdir
+--- file pdir/both
+--- file pdir/only
+--- dir pdir2
+--- file pdir2/both
+|#!/bin/sh
+|echo HIT
+
+=== 8: Command found in PATH is a directory shadowing a later executable
+status: 0
+bash-n: 0
+--- stdout
+|HIT
+|Result: 0
+--- dir pdir
+--- dir pdir/prog
+--- dir pdir2
+--- file pdir2/prog
+|#!/bin/sh
+|echo HIT
+
+=== 9: Command found in PATH is not executable: search order and hashing
+status: 0
+bash-n: 0
+--- stdout
+|Result: 126
+|d1/only
+|Result: 0
+--- stderr
+|bash: line 6: <case>/d1/only: Permission denied
+--- dir d1
+--- file d1/only
+--- dir d2
+--- file d2/only

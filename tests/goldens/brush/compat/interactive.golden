@@ -1,0 +1,264 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/interactive.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic interactive test
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 1: SIGINT ends the command an interactive shell is running
+status: signal 2
+bash-n: 0
+
+=== 2: Programs inherit an ignored SIGINT after the shell first waits for one
+status: 0
+bash-n: 0
+--- stdout
+|done-4
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|#send:Enter
+|#expect-prompt
+|<INT $$; touch survived.txt'; echo "done-$((2 + 2))"
+|#send:Enter
+|#expect:done-4
+|#expect-prompt
+|#send:Ctrl+D
+|exit
+--- file survived.txt
+
+=== 3: An interactive shell's inherited _ isn't exported by its first prompt
+status: 1
+bash-n: 0
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|#send:Enter
+|#expect-prompt
+|exec printenv _ > out.txt
+--- file out.txt
+
+=== 4: Simple tab completion
+status: 1
+bash-n: 0
+--- stderr
+|cat: test-file.: No such file or directory
+
+=== 5: PROMPT_COMMAND
+status: 0
+bash-n: 0
+--- stdout
+|declare -a calls=([0]="0" [1]="0" [2]="first" [3]="second" [4]="third" [5]="third")
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ declare -a calls=()
+|test$ command=0
+|test$ 
+|test$ PROMPT_COMMAND='calls+=("$command")'
+|test$ 
+|test$ command=first
+|test$ command=second
+|test$ command=third
+|test$ 
+|test$ unset PROMPT_COMMAND
+|test$ 
+|test$ declare -p calls
+|test$ exit
+
+=== 6: PROMPT_COMMAND in a non-interactive shell reading stdin
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+
+=== 7: prompt expansion in a non-interactive shell reading stdin
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+
+=== 8: PS0 expansion in a non-interactive shell reading stdin
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+
+=== 9: PROMPT_COMMAND preserves the last argument in $_
+status: 0
+bash-n: 0
+--- stdout
+|UNDERSCORE[USER-ARG]
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ PROMPT_COMMAND='true PC-ARG'
+|test$ true USER-ARG
+|test$ echo "UNDERSCORE[$_]"
+|test$ unset PROMPT_COMMAND
+|test$ exit
+
+=== 10: PROMPT_COMMAND as an indexed array
+status: 0
+bash-n: 0
+--- stdout
+|INDEXED-0
+|INDEXED-1
+|command-ran
+|INDEXED-0
+|INDEXED-1
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ PROMPT_COMMAND=('echo INDEXED-0' 'echo INDEXED-1')
+|test$ echo command-ran
+|test$ unset PROMPT_COMMAND
+|test$ exit
+
+=== 11: PROMPT_COMMAND array elements each see the last command's status
+status: 0
+bash-n: 0
+--- stdout
+|PC-SAW[0]
+|PC-SAW[6]
+|AFTER[6]
+|PC-SAW[0]
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ PROMPT_COMMAND=('false' 'echo PC-SAW[$?]')
+|test$ (exit 6)
+|test$ echo "AFTER[$?]"
+|test$ unset PROMPT_COMMAND
+|test$ exit
+
+=== 12: exit from PROMPT_COMMAND ends the shell with its status
+status: 7
+bash-n: 0
+--- stdout
+|PC-A
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ PROMPT_COMMAND=('echo PC-A' 'exit 7' 'echo PC-C')
+
+=== 13: PROMPT_COMMAND as an associative array is ignored
+status: 0
+bash-n: 0
+--- stdout
+|command-ran
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ declare -A PROMPT_COMMAND
+|test$ PROMPT_COMMAND[x]='echo ASSOC-X'
+|test$ PROMPT_COMMAND[y]='echo ASSOC-Y'
+|test$ echo command-ran
+|test$ unset PROMPT_COMMAND
+|test$ exit
+
+=== 14: return does not exit the shell, from PROMPT_COMMAND or the prompt
+status: 0
+bash-n: 0
+--- stdout
+|PC-A
+|PC-B
+|STILL-ALIVE
+|PC-A
+|PC-B
+|STILL-ALIVE-AFTER-BARE-RETURN
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ PROMPT_COMMAND=('echo PC-A' 'return' 'echo PC-B')
+|bash: return: can only `return' from a function or sourced script
+|test$ echo STILL-ALIVE
+|bash: return: can only `return' from a function or sourced script
+|test$ unset PROMPT_COMMAND
+|test$ return
+|bash: return: can only `return' from a function or sourced script
+|test$ echo STILL-ALIVE-AFTER-BARE-RETURN
+|test$ exit
+
+=== 15: prompt expansion preserves the last argument in $_
+status: 0
+bash-n: 0
+--- stdout
+|UNDERSCORE[USER-ARG]
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ PS1='$(true PS1-ARG)$ '
+|$ true USER-ARG
+|$ echo "UNDERSCORE[$_]"
+|$ exit
+
+=== 16: prompt expansion preserves $? and PIPESTATUS
+status: 0
+bash-n: 0
+--- stdout
+|AFTER[5][4 5]
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ PS1='$( (exit 9) | (exit 8) )$ '
+|$ (exit 4) | (exit 5)
+|$ echo "AFTER[$?][${PIPESTATUS[*]}]"
+|$ exit
+
+=== 17: Interactive -c running a program
+status: 0
+bash-n: 0
+--- stdout
+|done
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+
+=== 18: A fatal error in a function drops the rest of the interactive line
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 19: A fatal error in a builtin drops the rest of the interactive line
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 20: A fatal error in a builtin ends an interactive shell's subshell
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 21: A fatal expansion error drops the rest of the interactive line
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 22: A fatal expansion error ends an interactive shell's subshell
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 23: A fatal error in eval drops only the eval'd code in an interactive shell
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: unset_var: unbound variable
+
+=== 24: A fatal error in a sourced file drops only that file in an interactive shell
+status: 1
+bash-n: 0
+--- stderr
+|./script.sh: line 1: unset_var: unbound variable

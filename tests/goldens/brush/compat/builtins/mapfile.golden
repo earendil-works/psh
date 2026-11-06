@@ -1,0 +1,305 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/mapfile.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: mapfile basic
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]=$'a\n' [1]=$'b\n' [2]=$'c\n')
+
+=== 1: mapfile -t
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b" [2]="c")
+
+=== 2: readarray -t
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b" [2]="c")
+
+=== 3: mapfile default MAPFILE
+status: 0
+bash-n: 0
+--- stdout
+|declare -a MAPFILE=([0]="a" [1]="b")
+
+=== 4: mapfile -O starts at offset
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([3]="a" [4]="b" [5]="c")
+
+=== 5: mapfile -O 0 preserves existing
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b" [2]="z" [3]="w")
+
+=== 6: mapfile without -O clears existing
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b")
+
+=== 7: mapfile -O preserves sparse array
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="x" [2]="a" [3]="b" [5]="y" [10]="z")
+
+=== 8: mapfile -O large offset
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([100]="a" [101]="b")
+
+=== 9: mapfile -O negative
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+--- stderr
+|bash: line 1: mapfile: -1: invalid array origin
+
+=== 10: mapfile into nonexistent variable
+status: 0
+bash-n: 0
+--- stdout
+|declare -a newvar=([0]="a" [1]="b")
+
+=== 11: mapfile into string variable
+status: 0
+bash-n: 0
+--- stdout
+|declare -a myvar=([0]="a" [1]="b")
+
+=== 12: mapfile -O into string variable
+status: 0
+bash-n: 0
+--- stdout
+|declare -a myvar=([0]="hello" [2]="a" [3]="b")
+
+=== 13: mapfile into associative array
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+--- stderr
+|bash: line 2: mapfile: myassoc: not an indexed array
+
+=== 14: mapfile -d custom delimiter
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="hello" [1]="there" [2]="general" [3]="kenobi")
+
+=== 15: mapfile -d empty string (NUL)
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b" [2]="c")
+
+=== 16: mapfile -n limits count
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b")
+
+=== 17: mapfile -n 0 no limit
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b" [2]="c")
+
+=== 18: mapfile -s
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="c" [1]="d")
+
+=== 19: mapfile -s with -n
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="b" [1]="c")
+
+=== 20: mapfile -u reads from fd
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b" [2]="c")
+
+=== 21: mapfile -u invalid fd
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+--- stderr
+|bash: line 2: mapfile: 99: invalid file descriptor: Bad file descriptor
+
+=== 22: mapfile -O with -s and -n
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([10]="b" [11]="c")
+
+=== 23: mapfile multiple invocations without -O
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="x" [1]="y" [2]="z")
+
+=== 24: mapfile multiple invocations with -O
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b" [2]="x" [3]="y" [4]="z")
+
+=== 25: mapfile empty input
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=()
+
+=== 26: mapfile empty input clears existing
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=()
+
+=== 27: mapfile -O empty input preserves
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="x" [1]="y" [2]="z")
+
+=== 28: mapfile into nameref variable
+status: 0
+bash-n: 0
+--- stdout
+|declare -a target=([0]="a" [1]="b" [2]="c")
+
+=== 29: mapfile -O into nameref variable
+status: 0
+bash-n: 0
+--- stdout
+|declare -a target=([0]="x" [1]="y" [2]="a" [3]="b")
+
+=== 30: A signal that ends the shell ends a mapfile waiting for input
+status: signal 15
+bash-n: 0
+--- stdout
+|exit-trap
+--- other p
+
+=== 31: mapfile options given more than once keep the last
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b")
+|declare -a arr=([0]="a" [1]="b")
+|declare -a arr=([0]="x" [1]="a" [2]="b")
+|declare -a arr=([0]="a" [1]=$'b,c\n')
+
+=== 32: mapfile with combined and attached short options
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b")
+|declare -a arr=([0]="a" [1]=$'b\n')
+|declare -a arr=([0]="a" [1]="b")
+|declare -a arr=([0]="x" [1]="a" [2]="b")
+|declare -a arr=([0]="a" [1]="b")
+|declare -a arr=([0]="a" [1]=$'b\n')
+
+=== 33: mapfile with -- before the array name
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b")
+
+=== 34: mapfile with an unknown option or missing value fails with status 2
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|rc=2
+--- stderr
+|bash: line 1: mapfile: -Z: invalid option
+|mapfile: usage: mapfile [-d delim] [-n count] [-O origin] [-s count] [-t] [-u fd] [-C callback] [-c quantum] [array]
+|bash: line 2: mapfile: -O: option requires an argument
+|mapfile: usage: mapfile [-d delim] [-n count] [-O origin] [-s count] [-t] [-u fd] [-C callback] [-c quantum] [array]
+
+=== 35: mapfile with an invalid count fails with status 1
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|rc=1
+|rc=1
+|rc=1
+|rc=1
+|rc=1
+|rc=1
+|rc=1
+--- stderr
+|bash: line 1: mapfile: abc: invalid line count
+|bash: line 2: mapfile: -1: invalid line count
+|bash: line 3: mapfile: -1: invalid line count
+|bash: line 4: mapfile: abc: invalid line count
+|bash: line 5: mapfile: abc: invalid array origin
+|bash: line 6: mapfile: 0: invalid callback quantum
+|bash: line 7: mapfile: abc: invalid callback quantum
+|bash: line 8: mapfile: -1: invalid file descriptor specification
+
+=== 36: mapfile checks every count, origin and descriptor it is given
+status: 0
+bash-n: 0
+--- stdout
+|failed=1 keep
+|failed=1 keep
+|failed=1 keep
+|failed=1 keep
+|failed=1 keep
+|failed=0 b
+--- stderr
+|bash: line 3: mapfile: -1: invalid line count
+|bash: line 4: mapfile: 0: invalid callback quantum
+|bash: line 5: mapfile: -1: invalid line count
+|bash: line 6: mapfile: -1: invalid array origin
+|bash: line 7: mapfile: 99: invalid file descriptor: Bad file descriptor
+
+=== 37: mapfile -C calls back for each group of lines
+status: 0
+bash-n: 0
+--- stdout
+|cb 0 a
+|cb 1 b
+|declare -a arr=([0]="a" [1]="b")
+
+=== 38: mapfile ignores words after the array name
+status: 0
+bash-n: 0
+--- stdout
+|rc=0
+|declare -a arr=([0]="a" [1]="b")
+
+=== 39: mapfile into an invalid name fails
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|rc=1
+--- stderr
+|bash: line 1: mapfile: `1bad': not a valid identifier
+|bash: line 2: mapfile: `-x': not a valid identifier
+
+=== 40: mapfile option values may begin with a hyphen
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="" [2]=$'b\n')
+|declare -a arr=([0]="a" [1]="b")

@@ -1,0 +1,16 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/compound_cmds/select.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: basic
+status: 0
+bash-n: 0
+--- stdout
+|selected: a
+|after select
+--- stderr
+|1) a
+|2) b
+|3) c
+|#? 
+~ no newline at end

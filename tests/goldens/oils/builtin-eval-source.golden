@@ -1,0 +1,208 @@
+# Goldens for tests/oils/spec/builtin-eval-source.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Eval
+status: 0
+bash-n: 0
+--- stdout
+|3
+
+=== 1: eval accepts/ignores --
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 2: eval usage
+status: 0
+bash-n: 0
+--- stdout
+|127
+|2
+--- stderr
+|bash: line 1: -: command not found
+|bash: line 3: eval: -z: invalid option
+|eval: usage: eval [arg ...]
+
+=== 3: eval string with 'break continue return error'
+status: 1
+bash-n: 0
+--- stdout
+|--- break
+|1
+|end func
+|--- continue
+|1
+|2
+|end func
+|--- return
+|1
+|--- false
+|1
+
+=== 4: eval YSH block with 'break continue return error'
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 3: shopt: ysh:all: invalid shell option name
+|bash: line 5: syntax error near unexpected token `('
+|bash: line 5: `proc proc_that_evals(; ; ;b) {'
+--- bash-n stderr
+|bash: line 5: syntax error near unexpected token `('
+|bash: line 5: `proc proc_that_evals(; ; ;b) {'
+
+=== 5: exit within eval (regression)
+status: 42
+bash-n: 0
+
+=== 6: exit within source (regression)
+status: 42
+bash-n: 0
+--- file lib.sh
+|exit 42
+
+=== 7: Source
+status: 0
+bash-n: 0
+--- stdout
+|libvar
+--- file spec-test-lib.sh
+|LIBVAR=libvar
+
+=== 8: source accepts/ignores --
+status: 0
+bash-n: 0
+--- stdout
+|foo
+--- file foo.sh
+|echo foo
+
+=== 9: Source nonexistent
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: /nonexistent/path: No such file or directory
+
+=== 10: Source with no arguments
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|bash: line 1: source: filename argument required
+|source: usage: source [-p path] filename [arguments]
+
+=== 11: Source with arguments
+status: 0
+bash-n: 0
+--- stdout
+|show-argv: foo bar
+
+=== 12: Source from a function, mutating argv and defining a local var
+status: 0
+bash-n: 0
+--- stdout
+|source-argv: args to func
+|source-argv: args to src
+|to func
+|foo=foo_val
+|foo=
+
+=== 13: Source with syntax error
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|<case>/syntax-error.sh: line 1: syntax error near unexpected token `newline'
+|<case>/syntax-error.sh: line 1: `echo >'
+--- file syntax-error.sh
+|echo >
+
+=== 14: Eval with syntax error
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|bash: eval: line 1: syntax error near unexpected token `newline'
+|bash: eval: line 1: `echo >'
+
+=== 15: Eval in does tilde expansion
+status: 0
+bash-n: 0
+--- stdout
+|FALSE
+|FALSE
+|TRUE
+
+=== 16: Eval in bash does tilde expansion in array
+status: 0
+bash-n: 0
+--- stdout
+|FALSE
+|FALSE
+|TRUE
+
+=== 17: source works for files in current directory (bash only)
+status: 0
+bash-n: 0
+--- stdout
+|current dir
+|status=0
+--- file cmd
+|echo current dir
+
+=== 18: source looks in PATH for files
+status: 0
+bash-n: 0
+--- stdout
+|hi
+--- dir dir
+
+=== 19: source finds files in PATH before current dir
+status: 0
+bash-n: 0
+--- stdout
+|path
+|status=0
+--- file cmd
+|echo current dir
+--- dir dir
+--- file dir/cmd
+|echo path
+
+=== 20: source works for files in subdirectory
+status: 0
+bash-n: 0
+--- stdout
+|path
+--- dir dir
+
+=== 21: source doesn't crash when targeting a directory
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 3: .: ./dir/: is a directory
+--- dir dir
+
+=== 22: sourcing along PATH should ignore directories
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|status=0
+|hi
+|status=0
+--- dir _tmp
+--- dir _tmp/dir
+--- dir _tmp/dir/hello.sh
+--- dir _tmp/shell
+--- file _tmp/shell/hello.sh
+|echo hi
+~ no newline at end

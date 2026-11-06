@@ -1,0 +1,52 @@
+# Goldens for tests/oils/spec/nocasematch-match.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: [[ equality matching
+status: 0
+bash-n: 0
+--- stdout
+|0
+|0
+|0
+|0
+
+=== 1: [[ regex matching
+status: 0
+bash-n: 0
+--- stdout
+|0
+|0
+|0
+|0
+
+=== 2: [ matching
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+
+=== 3: case matching
+status: 0
+bash-n: 0
+--- stdout
+|0
+|0
+|0
+|0
+
+=== 4: file matching
+status: 0
+bash-n: 0
+--- stdout
+|[A] [b]
+--- file B
+--- file a
+
+=== 5: parameter expansion matching
+status: 0
+bash-n: 0
+--- stdout
+|a a
+|A A

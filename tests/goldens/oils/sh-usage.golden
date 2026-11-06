@@ -1,0 +1,358 @@
+# Goldens for tests/oils/spec/sh-usage.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: sh -c
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 1: empty -c input
+status: 0
+bash-n: 0
+
+=== 2: sh +c is accepted
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 3: empty stdin
+status: 0
+bash-n: 0
+
+=== 4: sh - and sh -- stop flag processing
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|-
+|foo
+--- stderr
+|echo foo
+|+ echo foo
+|-
+|echo foo
+|+ echo foo
+--- file foo.sh
+|echo foo
+
+=== 5: shell obeys --help (regression for OSH)
+status: 0
+bash-n: 0
+--- stdout
+|yes
+
+=== 6: args are passed
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'b']
+
+=== 7: args that look like flags are passed after script
+status: 0
+bash-n: 0
+--- stdout
+|['--help', '--help', '-h']
+--- file sh1.sh
+|argv.py "$@"
+
+=== 8: args that look like flags are passed after -c
+status: 0
+bash-n: 0
+--- stdout
+|['--help', '-h']
+
+=== 9: exit with explicit arg
+status: 42
+bash-n: 0
+
+=== 10: exit with no args
+status: 1
+bash-n: 0
+
+=== 11: --rcfile in non-interactive shell prints warnings
+status: 0
+bash-n: 0
+--- stdout
+|rc
+|==> interactive.txt <==
+|bash: cannot set terminal process group (26007): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$ exit
+|
+|==> non-interactive.txt <==
+--- stderr
+|warned=1
+|warned=1
+--- file interactive.txt
+|bash: cannot set terminal process group (26007): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$ exit
+--- file non-interactive.txt
+--- file rc
+|echo rc
+
+=== 12: accepts -l flag
+status: 0
+bash-n: 0
+
+=== 13: accepts --login flag (dash and mksh don't accept long flags)
+status: 0
+bash-n: 0
+
+=== 14: osh --eval
+status: 0
+bash-n: 0
+--- stdout
+|
+|status=2
+--- stderr
+|<sh>: --eval: invalid option
+|Usage:	<sh> [GNU long option] [option] ...
+|	<sh> [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+|<sh>: --eval: invalid option
+|Usage:	<sh> [GNU long option] [option] ...
+|	<sh> [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+--- file fail.sh
+|echo fail "$@"; ( exit 42 )
+--- file one.sh
+|echo one "$@"
+
+=== 15: Set LC_ALL LC_CTYPE LC_COLLATE LANG - affects glob ?
+status: 0
+bash-n: 0
+--- stdout
+|LC_ALL _x_
+|LC_ALL _x_ _μ_
+|
+|LC_CTYPE _x_
+|LC_CTYPE _x_ _μ_
+|
+|LC_COLLATE _x_
+|LC_COLLATE _x_
+|
+|LANG _x_
+|LANG _x_ _μ_
+--- file _x_
+--- file _μ_
+
+=== 16: LC_CTYPE=invalid
+status: 0
+bash-n: 0
+--- stdout
+|LC_CTYPE _x_
+|1 err.txt
+--- file _x_
+--- file _μ_
+--- file err.txt
+|bash: line 6: warning: setlocale: LC_CTYPE: cannot change locale (): No such file or directory
+
+=== 17: sh -c -- 'echo hi' does not run anything (#2637)
+status: 0
+bash-n: 0
+--- stdout
+|z failed
+|
+|three failed
+|
+|two
+|two=0
+|
+|one
+|one=0
+|
+|zero=0
+|
+|aa
+|aa=0
+--- stderr
+|<sh>: -z: invalid option
+|Usage:	<sh> [GNU long option] [option] ...
+|	<sh> [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+|<sh>: --: invalid option
+|Usage:	<sh> [GNU long option] [option] ...
+|	<sh> [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 18: sh -c with multiple -- args
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+|status=127
+|z failed
+--- stderr
+|echo two: line 1: --: command not found
+|--: line 1: --: command not found
+|<sh>: -z: invalid option
+|Usage:	<sh> [GNU long option] [option] ...
+|	<sh> [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 19: sh -c with no arg after --
+status: 0
+bash-n: 0
+--- stdout
+|failed
+|failed
+--- stderr
+|<sh>: -c: option requires an argument
+|<sh>: -c: option requires an argument
+
+=== 20: Other flag parsers are not affected by - rule
+status: 0
+bash-n: 0
+--- stdout
+|reply=foo
+
+=== 21: weird flag parsing -oo errexit noglob
+status: 0
+bash-n: 0
+--- stdout
+|e
+|f
+|e
+|f
+
+=== 22: 'sh -c -z' does not try to run -z
+status: 0
+bash-n: 0
+--- stdout
+|flag-parsing-error
+|0=-z 1=
+|status=0
+|0=foo 1=-z
+|status=0
+--- stderr
+|<sh>: -z: invalid option
+|Usage:	<sh> [GNU long option] [option] ...
+|	<sh> [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 23: sh -c -x 'echo hi' - order is reversed
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|status=127
+--- stderr
+|+ echo hi

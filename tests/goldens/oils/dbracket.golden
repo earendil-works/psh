@@ -1,0 +1,394 @@
+# Goldens for tests/oils/spec/dbracket.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: [[ glob matching, [[ has no glob expansion
+status: 0
+bash-n: 0
+--- stdout
+|true
+|false
+
+=== 1: [[ glob matching with escapes
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 2: equality
+status: 0
+bash-n: 0
+--- stdout
+|true
+|false
+
+=== 3: [[ glob matching with unquoted var
+status: 0
+bash-n: 0
+--- stdout
+|true
+|false
+
+=== 4: [[ regex matching
+status: 0
+bash-n: 0
+--- stdout
+|true
+|false
+
+=== 5: [[ regex syntax error
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 1: [[: invalid regular expression `*': Invalid preceding regular expression
+
+=== 6: [[ has no word splitting
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 7: [[ has quote joining
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 8: [[ empty string is false
+status: 0
+bash-n: 0
+--- stdout
+|true
+|false
+
+=== 9: && chain
+status: 0
+bash-n: 0
+--- stdout
+|false
+
+=== 10: || chain
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 11: [[ compound expressions
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 12: precedence of && and || inside [[
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 13: precedence of && and || in a command context
+status: 0
+bash-n: 0
+--- stdout
+|NO precedence
+
+=== 14: Octal literals with -eq
+status: 0
+bash-n: 0
+--- stdout
+|true
+|false
+--- stderr
+|bash: line 1: shopt: strict_arith: invalid shell option name
+
+=== 15: Hex literals with -eq
+status: 0
+bash-n: 0
+--- stdout
+|true
+|false
+--- stderr
+|bash: line 1: shopt: strict_arith: invalid shell option name
+
+=== 16: > on strings
+status: 0
+bash-n: 0
+--- stdout
+|true
+|false
+
+=== 17: != on strings
+status: 0
+bash-n: 0
+--- stdout
+|true
+|false
+
+=== 18: -eq on strings
+status: 0
+bash-n: 0
+--- stdout
+|true
+|true
+--- stderr
+|bash: line 1: shopt: strict_arith: invalid shell option name
+
+=== 19: [[ compare with literal -f (compare with test-builtin.test.sh)
+status: 0
+bash-n: 0
+--- stdout
+|true
+|true
+
+=== 20: [[ with op variable (compare with test-builtin.test.sh)
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 2: unexpected token `$op', conditional binary operator expected
+|bash: line 2: syntax error near `$op'
+|bash: line 2: `[[ a $op a ]] && echo true'
+--- bash-n stderr
+|bash: line 2: unexpected token `$op', conditional binary operator expected
+|bash: line 2: syntax error near `$op'
+|bash: line 2: `[[ a $op a ]] && echo true'
+
+=== 21: [[ with unquoted empty var (compare with test-builtin.test.sh)
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 22: [[ at runtime doesn't work
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 2: [[: command not found
+
+=== 23: [[ with env prefix doesn't work
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: [[: command not found
+
+=== 24: [[ over multiple lines is OK
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 25: Argument that looks like a real operator
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected argument `<' to conditional unary operator
+|bash: line 1: syntax error near `<'
+|bash: line 1: `[[ -f < ]] && echo 'should be parse error''
+--- bash-n stderr
+|bash: line 1: unexpected argument `<' to conditional unary operator
+|bash: line 1: syntax error near `<'
+|bash: line 1: `[[ -f < ]] && echo 'should be parse error''
+
+=== 26: User array compared to "$@" (broken unless shopt -s strict_array)
+status: 0
+bash-n: 0
+--- stdout
+|true
+|false
+
+=== 27: Array coerces to string (shopt -s strict_array to disallow)
+status: 0
+bash-n: 0
+--- stdout
+|true
+|false
+
+=== 28: (( array1 == array2 )) doesn't work
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+|status=1
+--- stderr
+|bash: line 6: ((: 1 3: arithmetic syntax error in expression (error token is "3")
+|bash: line 9: ((: 1 3: arithmetic syntax error in expression (error token is "3")
+|bash: line 12: ((: 1 3: arithmetic syntax error in expression (error token is "3")
+
+=== 29: Quotes don't matter in comparison
+status: 0
+bash-n: 0
+--- stdout
+|true
+|true
+
+=== 30: -eq does dynamic arithmetic parsing (not supported in OSH)
+status: 0
+bash-n: 0
+--- stdout
+|true
+|true
+
+=== 31: -eq coercion produces weird results
+status: 0
+bash-n: 0
+--- stdout
+|true
+--- stderr
+|bash: line 1: shopt: strict_arith: invalid shell option name
+
+=== 32: [[ '(' ]] is treated as literal
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 33: [[ '(' foo ]] is syntax error
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected token `foo', conditional binary operator expected
+|bash: line 1: syntax error near `foo'
+|bash: line 1: `[[ '(' foo ]]'
+--- bash-n stderr
+|bash: line 1: unexpected token `foo', conditional binary operator expected
+|bash: line 1: syntax error near `foo'
+|bash: line 1: `[[ '(' foo ]]'
+
+=== 34: empty ! is treated as literal
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 35: [[ -z ]] is syntax error
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected argument `]]' to conditional unary operator
+|bash: line 1: syntax error near `]]'
+|bash: line 1: `[[ -z ]]'
+--- bash-n stderr
+|bash: line 1: unexpected argument `]]' to conditional unary operator
+|bash: line 1: syntax error near `]]'
+|bash: line 1: `[[ -z ]]'
+
+=== 36: [[ -z '>' ]]
+status: 0
+bash-n: 0
+--- stdout
+|false
+
+=== 37: [[ -z '>' a ]] is syntax error
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `--'
+|bash: line 1: syntax error near `--'
+|bash: line 1: `[[ -z '>' -- ]]'
+--- bash-n stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `--'
+|bash: line 1: syntax error near `--'
+|bash: line 1: `[[ -z '>' -- ]]'
+
+=== 38: test whether ']]' is empty
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 39: [[ ]] is syntax error
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near `]]'
+|bash: line 1: `[[ ]]'
+--- bash-n stderr
+|bash: line 1: syntax error near `]]'
+|bash: line 1: `[[ ]]'
+
+=== 40: [[ && ]] is syntax error
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected token `&&' in conditional command
+|bash: line 1: syntax error near `&'
+|bash: line 1: `[[ && ]]'
+--- bash-n stderr
+|bash: line 1: unexpected token `&&' in conditional command
+|bash: line 1: syntax error near `&'
+|bash: line 1: `[[ && ]]'
+
+=== 41: [[ a 3< b ]] doesn't work (bug regression)
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected token `3', conditional binary operator expected
+|bash: line 1: syntax error near `3<'
+|bash: line 1: `[[ a 3< b ]]'
+--- bash-n stderr
+|bash: line 1: unexpected token `3', conditional binary operator expected
+|bash: line 1: syntax error near `3<'
+|bash: line 1: `[[ a 3< b ]]'
+
+=== 42: tilde expansion in [[
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+|status=1
+
+=== 43: more tilde expansion
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=1
+|unary=1
+|status=0
+|fnmatch=0
+|fnmatch=0
+
+=== 44: tilde expansion with =~ (confusing)
+status: 0
+bash-n: 0
+--- stdout
+|regex=0
+|regex=0
+|regex=1
+|regex=0
+
+=== 45: [[ ]] with redirect
+status: 0
+bash-n: 0
+--- stdout
+|0
+|--
+|STDERR
+--- file x.txt
+|STDERR
+
+=== 46: special chars
+status: 0
+bash-n: 0
+--- stdout
+|caret 0
+|bang 0
+
+=== 47: \(\) in pattern (regression)
+status: 0
+bash-n: 0
+--- stdout
+|match1
+|match2
+|match1
+|match2
+
+=== 48: negative numbers - zero, decimal, octal, hex, base N
+status: 0
+bash-n: 0
+--- stdout
+|zero=0
+|decimal=0
+|octal=0
+|hex=0
+|baseN=0

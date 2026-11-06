@@ -1,0 +1,395 @@
+# Goldens for tests/oils/spec/interactive.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: 'exit' in oshrc (regression)
+status: 42
+bash-n: 0
+--- stdout
+|one
+--- stderr
+|bash: cannot set terminal process group (20383): Inappropriate ioctl for device
+|bash: no job control in this shell
+--- file oshrc
+|echo one
+|exit 42
+|echo two
+
+=== 1: fatal errors continue
+status: 42
+bash-n: 0
+--- stdout
+|one
+--- stderr
+|bash: cannot set terminal process group (20432): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash: 1 / 0 : division by 0 (error token is "0 ")
+|exit
+
+=== 2: interactive shell loads rcfile (when combined with -c)
+status: 0
+bash-n: 0
+--- stdout
+|1
+|RCFILE
+|2
+--- stderr
+|bash: cannot set terminal process group (20399): Inappropriate ioctl for device
+|bash: no job control in this shell
+--- file rcfile
+|echo RCFILE
+
+=== 3: --rcfile with parse error - shell is executed anyway
+status: 0
+bash-n: 0
+--- stdout
+|flag -c
+|status=0
+--- stderr
+|bash: cannot set terminal process group (20408): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash: <case>/rcfile: line 2: syntax error: unexpected end of file from `(' command on line 1
+--- file rcfile
+|echo RCFILE; ( echo
+
+=== 4: interactive shell loads files in rcdir (when combined with -c)
+status: 2
+bash-n: 0
+--- stdout
+|A
+--- stderr
+|<sh>: --rcdir: invalid option
+|Usage:	<sh> [GNU long option] [option] ...
+|	<sh> [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+|<sh>: --rcdir: invalid option
+|Usage:	<sh> [GNU long option] [option] ...
+|	<sh> [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+--- dir rcdir
+--- file rcdir/file1
+|echo rcdir 1
+--- file rcdir/file2
+|echo rcdir 2
+--- file rcfile
+|echo 'rcfile first'
+
+=== 5: nonexistent --rcdir is ignored
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|<sh>: --rcdir: invalid option
+|Usage:	<sh> [GNU long option] [option] ...
+|	<sh> [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 6: shell doesn't load rcfile/rcdir if --norc is given
+status: 2
+bash-n: 0
+--- stdout
+|A
+|C
+--- stderr
+|<sh>: --rcdir: invalid option
+|Usage:	<sh> [GNU long option] [option] ...
+|	<sh> [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+--- dir rcdir
+--- file rcdir/file1
+|echo rcdir 1
+--- file rcdir/file2
+|echo rcdir 2
+--- file rcfile
+|echo rcfile
+
+=== 7: interactive shell runs PROMPT_COMMAND after each command
+status: 0
+bash-n: 0
+--- stdout
+|PROMPT
+|one
+|PROMPT
+|two
+|PROMPT
+|^D
+--- stderr
+|bash: cannot set terminal process group (20478): Inappropriate ioctl for device
+|bash: no job control in this shell
+|PROMPT_COMMAND='echo PROMPT'
+|echo one
+|echo two
+|exit
+
+=== 8: parse error in PROMPT_COMMAND
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|^D
+--- stderr
+|bash: cannot set terminal process group (20522): Inappropriate ioctl for device
+|bash: no job control in this shell
+|PROMPT_COMMAND=';'
+|bash: PROMPT_COMMAND: line 1: syntax error near unexpected token `;'
+|bash: PROMPT_COMMAND: line 1: `;'
+|echo one
+|bash: PROMPT_COMMAND: line 2: syntax error near unexpected token `;'
+|bash: PROMPT_COMMAND: line 2: `;'
+|echo two
+|bash: PROMPT_COMMAND: line 3: syntax error near unexpected token `;'
+|bash: PROMPT_COMMAND: line 3: `;'
+|exit
+
+=== 9: runtime error in PROMPT_COMMAND
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|^D
+--- stderr
+|bash: cannot set terminal process group (20496): Inappropriate ioctl for device
+|bash: no job control in this shell
+|PROMPT_COMMAND='echo PROMPT $(( 1 / 0 ))'
+|bash: 1 / 0 : division by 0 (error token is "0 ")
+|echo one
+|bash: 1 / 0 : division by 0 (error token is "0 ")
+|echo two
+|bash: 1 / 0 : division by 0 (error token is "0 ")
+|exit
+
+=== 10: Error message with bad oshrc file (currently ignored)
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|status=0
+|bad_oshrc:
+--- file bad_oshrc
+|foo >
+--- file stderr.txt
+|bash: cannot set terminal process group (20502): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash: bad_oshrc: line 1: syntax error near unexpected token `newline'
+|bash: bad_oshrc: line 1: `foo >'
+
+=== 11: PROMPT_COMMAND can see $?, like bash
+status: 0
+bash-n: 0
+--- stdout
+|last_status=0
+|last_status=42
+|last_status=43
+|ok
+|last_status=0
+|^D
+--- stderr
+|bash: cannot set terminal process group (20545): Inappropriate ioctl for device
+|bash: no job control in this shell
+|myfunc() { echo last_status=$?;  }
+|PROMPT_COMMAND='myfunc'
+|( exit 42 )
+|( exit 43 )
+|echo ok
+|exit
+
+=== 12: PROMPT_COMMAND that writes to BASH_REMATCH
+status: 0
+bash-n: 0
+--- stdout
+|---
+|one
+|---
+|---
+|clo c l o
+|---
+|^D
+--- stderr
+|bash: cannot set terminal process group (20549): Inappropriate ioctl for device
+|bash: no job control in this shell
+|PROMPT_COMMAND='[[ clobber =~ (.)(.)(.) ]]; echo ---'
+|echo one
+|[[ bar =~ (.)(.)(.) ]]
+|echo ${BASH_REMATCH[@]}
+|exit
+
+=== 13: NO ASSERTIONS: Are startup files sourced before or after job control?
+status: 0
+bash-n: 0
+--- stdout
+|myrc: pid = 20561
+|  PID  PPID  PGID   SID TPGID COMMAND
+|20561 20526 20526     1    -1 bash
+|main: pid = 20561
+|  PID  PPID  PGID   SID TPGID COMMAND
+|20561 20526 20526     1    -1 bash
+--- stderr
+|bash: cannot set terminal process group (20526): Inappropriate ioctl for device
+|bash: no job control in this shell
+--- file myrc
+|
+|PS_COLS='pid,ppid,pgid,sid,tpgid,comm'
+|
+|show-shell-state() {
+|  local prefix=$1
+|
+|  echo -n "$prefix: "
+|
+|  echo "pid = $$"
+|
+|
+|  ps -o $PS_COLS $$
+|}
+|
+|show-shell-state myrc
+|
+|
+
+=== 14: HISTFILE is written in interactive shell
+status: 0
+bash-n: 0
+--- stdout
+|hist1
+|hist2
+|^D
+|echo hist1; echo hist2
+--- stderr
+|bash: cannot set terminal process group (20580): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$ echo hist1; echo hist2
+|bash-5.3$ exit
+--- file myhist
+|echo hist1; echo hist2
+
+=== 15: HISTFILE default value
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+--- stderr
+|bash: cannot set terminal process group (20568): Inappropriate ioctl for device
+|bash: no job control in this shell
+
+=== 16: HISTFILE=my-history loads history from that file, and writes back to it
+status: 0
+bash-n: 0
+--- stdout
+|2
+|    1  echo 1
+|    2  echo 2
+|    3  history
+|
+|-- after shell exit --
+|echo 1
+|echo 2
+|history
+--- stderr
+|bash: cannot set terminal process group (20603): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$ echo 2
+|bash-5.3$ history
+|bash-5.3$ exit
+--- file my-history
+|echo 1
+|echo 2
+|history
+
+=== 17: HISTFILE=my-history with history -a
+status: 0
+bash-n: 0
+--- stdout
+|2
+|
+|-- after shell exit --
+|echo 1
+|history -a
+|echo 2
+--- stderr
+|bash: cannot set terminal process group (20591): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$ history -a
+|bash-5.3$ echo 2
+|bash-5.3$ exit
+--- file my-history
+|echo 1
+|history -a
+|echo 2

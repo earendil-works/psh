@@ -1,0 +1,84 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/options/bash_xtracefd.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: basic redirection to fd 3
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|world
+|+ echo hello
+|+ echo world
+|+ set +x
+--- file trace.txt
+|+ echo hello
+|+ echo world
+|+ set +x
+
+=== 1: redirection takes effect immediately
+status: 0
+bash-n: 0
+--- stdout
+|before setting BASH_XTRACEFD
+|after setting BASH_XTRACEFD
+|Content of trace file:
+|+ echo 'after setting BASH_XTRACEFD'
+|+ set +x
+--- stderr
+|+ echo 'before setting BASH_XTRACEFD'
+|+ BASH_XTRACEFD=3
+--- file trace.txt
+|+ echo 'after setting BASH_XTRACEFD'
+|+ set +x
+
+=== 2: unsetting BASH_XTRACEFD returns to stderr
+status: 0
+bash-n: 0
+--- stdout
+|redirected
+|back to stderr
+|Content of trace file:
+|+ echo redirected
+|+ unset BASH_XTRACEFD
+--- stderr
+|+ echo 'back to stderr'
+|+ set +x
+--- file trace.txt
+|+ echo redirected
+|+ unset BASH_XTRACEFD
+
+=== 3: invalid fd value falls back to stderr
+status: 0
+bash-n: 0
+--- stdout
+|should go to stderr
+--- stderr
+|bash: line 1: BASH_XTRACEFD: 999: invalid value for trace file descriptor
+|+ echo 'should go to stderr'
+|+ set +x
+
+=== 4: non-numeric value falls back to stderr
+status: 0
+bash-n: 0
+--- stdout
+|should go to stderr
+--- stderr
+|bash: line 1: BASH_XTRACEFD: invalid: invalid value for trace file descriptor
+|+ echo 'should go to stderr'
+|+ set +x
+
+=== 5: empty value falls back to stderr
+status: 0
+bash-n: 0
+--- stdout
+|should go to stderr
+--- stderr
+|+ echo 'should go to stderr'
+
+=== 6: redirect to file that fails writes
+status: 0
+bash-n: 0
+--- stdout
+|first echo
+|first echo result: 0

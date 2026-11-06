@@ -1,0 +1,52 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/compound_cmds/if.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic if
+status: 0
+bash-n: 0
+--- stdout
+|2
+|5
+|6
+|10
+
+=== 1: Multi-line if
+status: 0
+bash-n: 0
+--- stdout
+|2
+|5
+|6
+|10
+
+=== 2: If with return in condition
+status: 0
+bash-n: 0
+--- stdout
+|Exit code: 42
+
+=== 3: If with exit in condition
+status: 42
+bash-n: 0
+
+=== 4: If with return in elif condition
+status: 0
+bash-n: 0
+--- stdout
+|Exit code: 42
+
+=== 5: If with break in condition inside loop
+status: 0
+bash-n: 0
+--- stdout
+|After loop
+
+=== 6: If with continue in condition inside loop
+status: 0
+bash-n: 0
+--- stdout
+|Iteration 1
+|Iteration 2
+|Iteration 3
+|After loop

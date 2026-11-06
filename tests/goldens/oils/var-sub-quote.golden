@@ -1,0 +1,276 @@
+# Goldens for tests/oils/spec/var-sub-quote.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: "${empty:-}"
+status: 0
+bash-n: 0
+--- stdout
+|['']
+
+=== 1: ${empty:-}
+status: 0
+bash-n: 0
+--- stdout
+|[]
+
+=== 2: array with empty values
+status: 0
+bash-n: 0
+--- stdout
+|['', 'x', '', '']
+
+=== 3: substitution of IFS character, quoted and unquoted
+status: 0
+bash-n: 0
+--- stdout
+|['']
+|[':']
+
+=== 4: :-
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'b']
+
+=== 5: -
+status: 0
+bash-n: 0
+--- stdout
+|['b']
+
+=== 6: Inner single quotes
+status: 0
+bash-n: 0
+--- stdout
+|['b']
+
+=== 7: Inner single quotes, outer double quotes
+status: 0
+bash-n: 0
+--- stdout
+|["'b'"]
+
+=== 8: Inner double quotes
+status: 0
+bash-n: 0
+--- stdout
+|['b']
+
+=== 9: Inner double quotes, outer double quotes
+status: 0
+bash-n: 0
+--- stdout
+|['b']
+
+=== 10: Multiple words: no quotes
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'b', 'c']
+
+=== 11: Multiple words: no outer quotes, inner single quotes
+status: 0
+bash-n: 0
+--- stdout
+|['a b c']
+
+=== 12: Multiple words: no outer quotes, inner double quotes
+status: 0
+bash-n: 0
+--- stdout
+|['a b c']
+
+=== 13: Multiple words: outer double quotes, no inner quotes
+status: 0
+bash-n: 0
+--- stdout
+|['a b c']
+
+=== 14: Multiple words: outer double quotes, inner double quotes
+status: 0
+bash-n: 0
+--- stdout
+|['a b c']
+
+=== 15: Multiple words: outer double quotes, inner single quotes
+status: 0
+bash-n: 0
+--- stdout
+|["'a b c'"]
+
+=== 16: Mixed inner quotes
+status: 0
+bash-n: 0
+--- stdout
+|['a b', 'c']
+
+=== 17: Mixed inner quotes with outer quotes
+status: 0
+bash-n: 0
+--- stdout
+|['a b c']
+
+=== 18: part_value tree with multiple words
+status: 0
+bash-n: 0
+--- stdout
+|['1 2', '3 45', '6 7']
+
+=== 19: part_value tree on RHS
+status: 0
+bash-n: 0
+--- stdout
+|['1 2 3 45 6 7']
+
+=== 20: Var with multiple words: no quotes
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'b', 'c']
+
+=== 21: Multiple words: no outer quotes, inner single quotes
+status: 0
+bash-n: 0
+--- stdout
+|['$var']
+
+=== 22: Multiple words: no outer quotes, inner double quotes
+status: 0
+bash-n: 0
+--- stdout
+|['a b c']
+
+=== 23: Multiple words: outer double quotes, no inner quotes
+status: 0
+bash-n: 0
+--- stdout
+|['a b c']
+
+=== 24: Multiple words: outer double quotes, inner double quotes
+status: 0
+bash-n: 0
+--- stdout
+|['a b c']
+
+=== 25: Multiple words: outer double quotes, inner single quotes
+status: 0
+bash-n: 0
+--- stdout
+|["'a b c'"]
+
+=== 26: No outer quotes, Multiple internal quotes
+status: 0
+bash-n: 0
+--- stdout
+|['Aa', 'b', 'c', ' a b cD', 'E', 'F']
+
+=== 27: Strip a string with single quotes, unquoted
+status: 0
+bash-n: 0
+--- stdout
+|["'a", 'b', 'c']
+
+=== 28: Strip a string with single quotes, double quoted
+status: 0
+bash-n: 0
+--- stdout
+|["'a b c "]
+
+=== 29: The string to strip is space sensitive
+status: 0
+bash-n: 0
+--- stdout
+|['a b ', 'a b c d']
+
+=== 30: The string to strip can be single quoted, outer is unquoted
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'b', 'a', 'b', 'c', 'd']
+
+=== 31: Syntax error for single quote in double quote
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 2: unexpected EOF while looking for matching `''
+--- bash-n stderr
+|bash: line 2: unexpected EOF while looking for matching `''
+
+=== 32: "${undef-'c d'}" and "${foo%'c d'}" are parsed differently
+status: 0
+bash-n: 0
+--- stdout
+|["'c d'", "'c  d'"]
+|['c d', 'c  d']
+|---
+|['a b ', 'a b c d']
+|['a b zzz', 'a b c d']
+|['a b zzz', 'a b c d']
+
+=== 33: $'' allowed within VarSub arguments
+status: 0
+bash-n: 0
+--- stdout
+|a
+|a
+
+=== 34: # operator with single quoted arg (dash/ash and bash/mksh disagree, reported by Crestwave)
+status: 0
+bash-n: 0
+--- stdout
+|--
+|--
+|-'a'-
+|-'a'-
+
+=== 35: / operator with single quoted arg (causes syntax error in regex in OSH, reported by Crestwave)
+status: 0
+bash-n: 0
+--- stdout
+|no plus or minus ''''
+|no plus or minus ''''
+
+=== 36: single quotes work inside character classes
+status: 0
+bash-n: 0
+--- stdout
+|a---b
+
+=== 37: comparison: :- operator with single quoted arg
+status: 0
+bash-n: 0
+--- stdout
+|a
+|'a'
+
+=== 38: Right Brace as argument (similar to #702)
+status: 0
+bash-n: 0
+--- stdout
+|}
+|}
+|'}'
+|}
+
+=== 39: Var substitution with newlines (#2492)
+status: 0
+bash-n: 0
+--- stdout
+|a b
+|a
+|b
+|c d
+|c
+|d
+|e f
+|e
+|f
+
+=== 40: Var substitution with \n in value
+status: 0
+bash-n: 0
+--- stdout
+|a\nb
+|c\nd
+|e\nf

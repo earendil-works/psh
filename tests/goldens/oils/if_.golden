@@ -1,0 +1,35 @@
+# Goldens for tests/oils/spec/if_.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: If
+status: 0
+bash-n: 0
+--- stdout
+|if
+
+=== 1: else
+status: 0
+bash-n: 0
+--- stdout
+|else
+
+=== 2: elif
+status: 0
+bash-n: 0
+--- stdout
+|elif
+
+=== 3: Long style
+status: 0
+bash-n: 0
+--- stdout
+|elif
+
+=== 4: if break corner case
+status: 0
+bash-n: 0
+--- stdout
+|hi
+--- stderr
+|bash: line 2: break: only meaningful in a `for', `while', or `until' loop

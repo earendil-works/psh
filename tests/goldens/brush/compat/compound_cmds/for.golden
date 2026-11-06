@@ -1,0 +1,313 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/compound_cmds/for.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Single-line for loop
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 1: Multi-line for loop
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 2: Empty for loop
+status: 0
+bash-n: 0
+
+=== 3: for loop without in
+status: 0
+bash-n: 0
+--- stdout
+|Loop 1
+|a
+|b
+|c
+|Loop 2: no semicolon
+|a
+|b
+|c
+
+=== 4: for loop without in but spaces
+status: 0
+bash-n: 0
+--- stdout
+|Loop 1
+|a
+|b c
+|d
+|Loop 2: no semicolon
+|a
+|b c
+|d
+
+=== 5: Break in for loop
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 6: Break in nested for loop
+status: 0
+bash-n: 0
+--- stdout
+|f=1 g=a
+|Left inner loop
+|f=2 g=a
+|Left inner loop
+|f=3 g=a
+|Left inner loop
+
+=== 7: Break 1 in nested for loops
+status: 0
+bash-n: 0
+--- stdout
+|f=1 g=a
+|f=2 g=a
+|f=3 g=a
+
+=== 8: Break 2 in nested for loops
+status: 0
+bash-n: 0
+--- stdout
+|f=1 g=a
+
+=== 9: Break out of nested for/while loops
+status: 0
+bash-n: 0
+--- stdout
+|f=1
+
+=== 10: Continue in for loop
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 11: Continue with bad N
+status: 1
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|bash: line 3: continue: 0: loop count out of range
+
+=== 12: Continue in nested for loop
+status: 0
+bash-n: 0
+--- stdout
+|f=a g=1
+|f=a g=2
+|f=a g=3
+|Left inner loop
+|f=b g=1
+|f=b g=2
+|f=b g=3
+|Left inner loop
+|f=c g=1
+|f=c g=2
+|f=c g=3
+|Left inner loop
+
+=== 13: Continue in nested for loop with explicit N=1
+status: 0
+bash-n: 0
+--- stdout
+|f=a g=1
+|f=a g=2
+|f=a g=3
+|Left inner loop
+|f=b g=1
+|f=b g=2
+|f=b g=3
+|Left inner loop
+|f=c g=1
+|f=c g=2
+|f=c g=3
+|Left inner loop
+
+=== 14: Continue in nested for loop with explicit N=2
+status: 0
+bash-n: 0
+--- stdout
+|f=a g=1
+|f=b g=1
+|f=c g=1
+
+=== 15: Continue in nested for loop with too large N
+status: 0
+bash-n: 0
+--- stdout
+|f=a g=1
+|f=b g=1
+|f=c g=1
+
+=== 16: Multi-line for loop in a script
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 17: For loop piped
+status: 0
+bash-n: 0
+--- stdout
+|ab
+|bd
+
+=== 18: For loop output redirection
+status: 0
+bash-n: 0
+--- file out.txt
+|a
+|b
+|c
+
+=== 19: For reserved word handling
+status: 0
+bash-n: 0
+--- stdout
+|for
+
+=== 20: For with return in body
+status: 0
+bash-n: 0
+--- stdout
+|Iteration 1
+|Iteration 2
+|Exit code: 42
+
+=== 21: For with exit in body
+status: 42
+bash-n: 0
+--- stdout
+|Iteration 1
+|Iteration 2
+
+=== 22: For loop with nameref variable
+status: 0
+bash-n: 0
+--- stdout
+|loop: target=
+|loop: target=
+|loop: target=
+|final: target=
+
+=== 23: continue with a non-numeric argument aborts the script
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 1: continue: abc: numeric argument required
+
+=== 24: break with a count of zero
+status: 0
+bash-n: 0
+--- stdout
+|after loop: 1
+--- stderr
+|bash: line 1: break: 0: loop count out of range
+
+=== 25: break and continue with a count of zero leave every loop
+status: 0
+bash-n: 0
+--- stdout
+|after break: 1
+|after continue: 1
+--- stderr
+|bash: line 1: break: 0: loop count out of range
+|bash: line 3: continue: -1: loop count out of range
+
+=== 26: break and continue outside a loop
+status: 0
+bash-n: 0
+--- stdout
+|after break: 0
+|after continue: 0
+--- stderr
+|bash: line 1: break: only meaningful in a `for', `while', or `until' loop
+|bash: line 2: continue: only meaningful in a `for', `while', or `until' loop
+
+=== 27: break and continue check for a loop before their options
+status: 0
+bash-n: 0
+--- stdout
+|after break -Z: 0
+|after continue -Z: 0
+--- stderr
+|bash: line 1: break: only meaningful in a `for', `while', or `until' loop
+|bash: line 1: continue: only meaningful in a `for', `while', or `until' loop
+
+=== 28: break and continue act only on the loops of the current function
+status: 0
+bash-n: 0
+--- stdout
+|f went on: 0
+|loop body 1
+|f went on: 0
+|loop body 2
+|g went on
+|loop body 1
+|g went on
+|loop body 2
+|subshell went on
+|after subshell: 0
+--- stderr
+|bash: line 1: break: only meaningful in a `for', `while', or `until' loop
+|bash: line 1: break: only meaningful in a `for', `while', or `until' loop
+|bash: line 5: break: only meaningful in a `for', `while', or `until' loop
+
+=== 29: break and continue in a substitution act on the enclosing loops
+status: 0
+bash-n: 0
+--- stdout
+|captured []
+|captured []
+|[]
+|after process substitution
+
+=== 30: break and continue past the outermost loop
+status: 0
+bash-n: 0
+--- stdout
+|after break: 0
+|1a
+|2a
+|after continue: 0
+
+=== 31: break and continue read their operand as bash does
+status: 0
+bash-n: 0
+--- stdout
+|after --: 0
+|after blanks: 0
+|help: 2
+
+=== 32: break and continue clamp their count to the loop depth
+status: 0
+bash-n: 0
+--- stdout
+|after: 0
+|f end
+|loop 1
+|f end
+|loop 2
+
+=== 33: break and continue report a negative count and fail with status 1
+status: 0
+bash-n: 0
+--- stdout
+|break -1: 1
+|break reported
+|continue -1: 1
+|continue reported

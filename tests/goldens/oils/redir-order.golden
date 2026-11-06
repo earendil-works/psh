@@ -1,0 +1,43 @@
+# Goldens for tests/oils/spec/redir-order.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: echo `cat OSCFLAGS` "world" > OSCFLAGS (from Alpine imap)
+status: 0
+bash-n: 0
+--- stdout
+|hello world
+--- file OSCFLAGS
+|hello world
+
+=== 1: subshell + redirect order
+status: 0
+bash-n: 0
+--- stdout
+|world
+--- file OSCFLAGS
+|world
+
+=== 2: for word + redirect order
+status: 0
+bash-n: 0
+--- stdout
+|world
+--- file OSCFLAGS
+|world
+
+=== 3: case word + redirect order
+status: 0
+bash-n: 0
+--- stdout
+|other
+--- file OSCFLAGS
+|other
+
+=== 4: [[ + redirect order
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=0
+--- file OSCFLAGS

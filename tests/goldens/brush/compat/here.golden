@@ -1,0 +1,671 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/here.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic here doc
+status: 0
+bash-n: 0
+--- stdout
+|Something here...
+|...and here.
+|This is after
+
+=== 1: Basic here doc in a script
+status: 0
+bash-n: 0
+--- stdout
+|Something here...
+|...and here.
+|This is after
+
+=== 2: Here doc in a function
+status: 0
+bash-n: 0
+--- stdout
+|Something here...
+
+=== 3: Here doc with expansions
+status: 0
+bash-n: 0
+--- stdout
+|Something here...
+|...and here.
+|This is after
+
+=== 4: Here doc with expansions but quoted tag
+status: 0
+bash-n: 0
+--- stdout
+|Something here...
+|...and here.
+|$(echo "This is after")
+
+=== 5: Here doc with tab removal
+status: 0
+bash-n: 0
+--- stdout
+|Something here...
+|...and here.
+
+=== 6: Basic here string
+status: 0
+bash-n: 0
+--- stdout
+|Something here.
+|1
+
+=== 7: Empty here doc
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 8: Single-line here doc
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 9: Here doc with other tokens after tag
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 10: Multiple here docs
+status: 0
+bash-n: 0
+--- stdout
+|1 2 3
+
+=== 11: Here doc in a command substitution
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2 3
+|4 5 6
+
+=== 12: Here doc in a double-quoted command substitution
+status: 0
+bash-n: 0
+--- stdout
+|something
+
+=== 13: Here doc in a double-quoted command substitution with spaces
+status: 0
+bash-n: 0
+--- stdout
+|something
+
+=== 14: Here doc in a command substitution with quotes
+status: 0
+bash-n: 0
+--- stdout
+|something "quoted"
+
+=== 15: Here doc with parameter default containing quotes
+status: 0
+bash-n: 0
+--- stdout
+|default value
+
+=== 16: Here doc preserves literal double quotes
+status: 0
+bash-n: 0
+--- stdout
+|"double quoted"
+|she said "hello"
+
+=== 17: Here doc preserves literal single quotes
+status: 0
+bash-n: 0
+--- stdout
+|'single quoted'
+|it's a test
+
+=== 18: Here doc with mixed quotes and expansion
+status: 0
+bash-n: 0
+--- stdout
+|"hello world"
+|"world" and more
+
+=== 19: Here doc does not perform brace expansion
+status: 0
+bash-n: 0
+--- stdout
+|{a,b,c}
+|{1..3}
+
+=== 20: Here doc does not perform tilde expansion
+status: 0
+bash-n: 0
+--- stdout
+|~
+|~/path
+
+=== 21: Here doc escape sequences
+status: 0
+bash-n: 0
+--- stdout
+|$HOME
+|\backslash
+|\n not a newline
+|\"not unquoted\"
+|\'not unquoted\'
+
+=== 22: Here doc line continuation
+status: 0
+bash-n: 0
+--- stdout
+|alphabeta
+|double\
+|backslash
+|singlequotes backquotes
+|alpha\
+|beta
+|alpha\
+|beta $HOME
+|\
+|quoted body starting with a line continuation
+
+=== 23: Here doc backquote escape rules
+status: 0
+bash-n: 0
+--- stdout
+|"q"
+|\z
+
+=== 24: Here doc end tag joined by a line continuation
+status: 0
+bash-n: 0
+--- stdout
+|body
+|after
+|bodyEOF
+
+=== 25: Here doc end tag line continued onto the next line
+status: 0
+bash-n: 0
+--- stdout
+|abc
+|EX
+|done
+
+=== 26: Here doc line continuation with tab stripping
+status: 0
+bash-n: 0
+--- stdout
+|alpha	beta
+
+=== 27: Here doc with command substitution containing quotes
+status: 0
+bash-n: 0
+--- stdout
+|hello world
+|single
+
+=== 28: Here doc with arithmetic expansion
+status: 0
+bash-n: 0
+--- stdout
+|5
+|20
+
+=== 29: Here doc in a command substitution with parentheses
+status: 0
+bash-n: 0
+--- stdout
+|(something)
+
+=== 30: Here doc in a command substitution inside arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|3
+
+=== 31: Here doc body closing paren in a command substitution inside arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|
+|rc=0
+--- stderr
+|bash: line 4: ): command not found
+
+=== 32: Here doc with parentheses
+status: 0
+bash-n: 0
+--- stdout
+|(something)
+
+=== 33: Multiple here docs in a command substitution
+status: 0
+bash-n: 0
+--- stdout
+|D E F
+
+=== 34: Complex here docs in a command substitution
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 35: Here doc with quoted delimiter
+status: 0
+bash-n: 0
+--- stdout
+|something
+
+=== 36: Here doc with quoted delimiter containing backslashes and quotes
+status: 0
+bash-n: 0
+--- stdout
+|single
+|double
+|mixed
+|escaped
+
+=== 37: Here doc with double quoted delimiter
+status: 0
+bash-n: 0
+--- stdout
+|something
+
+=== 38: Here doc with quoted delimiter inside command substitution
+status: 0
+bash-n: 0
+
+=== 39: Here doc with double quoted delimiter inside command substitution
+status: 0
+bash-n: 0
+
+=== 40: Here doc with unpaired single quote in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|it's here
+
+=== 41: Here doc with unpaired backtick in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|a ` b
+
+=== 42: Here doc with three single quotes in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|it's Bob's it's
+
+=== 43: Here doc with unpaired single quote in command substitution (#420)
+status: 0
+bash-n: 0
+--- stdout
+|that's "cool"
+
+=== 44: Here doc with unpaired double quote in command substitution (#1066)
+status: 0
+bash-n: 0
+--- stdout
+|she said "hello
+
+=== 45: Here doc with all three unmatched delimiters in command substitution (#1066)
+status: 0
+bash-n: 0
+--- stdout
+|`hello "world it's
+
+=== 46: Here doc with quoted parens and backticks in command substitution (#1066)
+status: 0
+bash-n: 0
+--- stdout
+|a (b's c) `touch pwned` d's
+
+=== 47: Here doc with unpaired close paren in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|This one: “)”
+
+=== 48: Here doc body starting with close paren in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|x=)
+|) two
+|) three
+
+=== 49: Here doc in command substitution in parameter default
+status: 0
+bash-n: 0
+--- stdout
+|she said "hello ) it's
+
+=== 50: Multiple here docs with unbalanced quotes in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|b )2 it's
+
+=== 51: Tab-stripped here doc with unbalanced quotes in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|tab "stripped )
+
+=== 52: Here doc body containing command substitution with its own here doc
+status: 0
+bash-n: 0
+--- stdout
+|body inner "quote ) it's end
+
+=== 53: Eval of here doc with unbalanced quotes in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|ev "al )
+
+=== 54: Here doc with unterminated command substitution
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+--- stderr
+|bash: command substitution: line 3: unexpected EOF while looking for matching `)'
+
+=== 55: Here doc with unterminated parameter expansion
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+--- stderr
+|bash: line 1: a ${USER b
+|: bad substitution
+
+=== 56: Here doc with command substitution that never closes
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|rc=1
+--- stderr
+|bash: command substitution: line 2: unexpected EOF while looking for matching `''
+|bash: command substitution: line 7: unexpected EOF while looking for matching `)'
+
+=== 57: Here doc with unterminated arithmetic expansions
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|rc=1
+--- stderr
+|bash: line 1: bad substitution: no closing `)' in a $((1 + b
+|
+|bash: line 5: bad substitution: no closing `]' in a $[1 + b
+|
+
+=== 58: Here doc tag containing command substitution
+status: 0
+bash-n: 0
+--- stdout
+|body
+
+=== 59: Here doc tag containing parameter expansion
+status: 0
+bash-n: 0
+--- stdout
+|body
+
+=== 60: Here doc tag containing arithmetic expansion
+status: 0
+bash-n: 0
+--- stdout
+|body
+|body
+
+=== 61: Expansions after here doc tag on the same line
+status: 0
+bash-n: 0
+--- stdout
+|[a]
+|[b]
+|[3]
+|[y]
+|[4]
+
+=== 62: Here doc in command substitution with multiple blanks before tag
+status: 0
+bash-n: 0
+--- stdout
+|two blanks
+|two tabs
+
+=== 63: Here doc in command substitution on the same line as another here doc
+status: 0
+bash-n: 0
+--- stdout
+|outer body
+|inner body
+
+=== 64: Here doc started in command substitution with body after it
+status: 0
+bash-n: 0
+--- stdout
+|[BODY]
+|after
+--- stderr
+|bash: line 1: warning: command substitution: 1 unterminated here-document
+--- bash-n stderr
+|bash: line 1: warning: command substitution: 1 unterminated here-document
+
+=== 65: Here doc started in command substitution while another here doc is pending
+status: 0
+bash-n: 0
+--- stdout
+|a body
+|[b body]
+|[c body] [d body]
+--- stderr
+|bash: line 1: warning: command substitution: 1 unterminated here-document
+|bash: line 6: warning: command substitution: 1 unterminated here-document
+|bash: line 8: warning: command substitution: 1 unterminated here-document
+--- bash-n stderr
+|bash: line 1: warning: command substitution: 1 unterminated here-document
+|bash: line 6: warning: command substitution: 1 unterminated here-document
+|bash: line 8: warning: command substitution: 1 unterminated here-document
+
+=== 66: Here doc started in nested command substitution with body after it
+status: 0
+bash-n: 0
+--- stdout
+|body more
+--- stderr
+|bash: line 1: warning: command substitution: 1 unterminated here-document
+--- bash-n stderr
+|bash: line 1: warning: command substitution: 1 unterminated here-document
+
+=== 67: Here doc started in doubly nested command substitution with body after it
+status: 0
+bash-n: 0
+--- stdout
+|[body]
+--- stderr
+|bash: line 1: warning: command substitution: 1 unterminated here-document
+--- bash-n stderr
+|bash: line 1: warning: command substitution: 1 unterminated here-document
+
+=== 68: Here doc started in command substitution in parameter expansion with body after it
+status: 0
+bash-n: 0
+--- stdout
+|[body]
+--- stderr
+|bash: line 1: warning: command substitution: 1 unterminated here-document
+--- bash-n stderr
+|bash: line 1: warning: command substitution: 1 unterminated here-document
+
+=== 69: Here doc started in command substitution with commands after it and body after it
+status: 0
+bash-n: 0
+--- stdout
+|[BODY]
+|[a
+|b]
+--- stderr
+|bash: line 1: warning: command substitution: 1 unterminated here-document
+|bash: line 4: warning: command substitution: 2 unterminated here-documents
+--- bash-n stderr
+|bash: line 1: warning: command substitution: 1 unterminated here-document
+|bash: line 4: warning: command substitution: 2 unterminated here-documents
+
+=== 70: Here doc started in command substitution in command with its own here doc
+status: 0
+bash-n: 0
+--- stdout
+|arg=[b]
+|a
+--- stderr
+|bash: line 2: warning: command substitution: 1 unterminated here-document
+--- bash-n stderr
+|bash: line 2: warning: command substitution: 1 unterminated here-document
+
+=== 71: Here doc started in command substitution with line continuation after it
+status: 0
+bash-n: 0
+--- stdout
+|[  more
+|body] echo after
+--- stderr
+|bash: line 1: warning: command substitution: 1 unterminated here-document
+--- bash-n stderr
+|bash: line 1: warning: command substitution: 1 unterminated here-document
+
+=== 72: Here doc operator with no tag in command substitution
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `)'
+|bash: line 1: `echo "[$(cat <<)]"'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `)'
+|bash: line 1: `echo "[$(cat <<)]"'
+
+=== 73: Here doc operator inside parameter expansion is literal
+status: 0
+bash-n: 0
+--- stdout
+|<<
+|<< foo
+|a<<b
+|<<-EOF
+|after
+
+=== 74: Blanks and operators inside parameter expansion word
+status: 0
+bash-n: 0
+--- stdout
+|[ | ] [a  b] [a;b] [ #y] [a #b]
+|[(a) && b]
+
+=== 75: Shift operator after nested arithmetic expansion
+status: 0
+bash-n: 0
+--- stdout
+|4
+|8
+|16
+
+=== 76: Here doc after arithmetic command in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|body
+
+=== 77: Here doc after arithmetic command inside command substitution
+status: 0
+bash-n: 0
+--- stdout
+|[a)b]
+
+=== 78: Shift operator after parenthesized arithmetic in arithmetic expansion
+status: 0
+bash-n: 0
+--- stdout
+|4 8
+
+=== 79: Here doc in subshell in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|[BODY
+|X]
+
+=== 80: Here doc pending while a later expansion spans lines
+status: 0
+bash-n: 0
+--- stdout
+|a
+|x
+|y
+|b
+|p
+|q
+|c
+|3
+
+=== 81: Here doc body with command substitution that leaves a here doc open
+status: 0
+bash-n: 0
+--- stdout
+|a  b
+|rc=0
+--- stderr
+|bash: line 2: warning: here-document at line 2 delimited by end-of-file (wanted `EOF')
+|bash: line 1: warning: here-document at line 1 delimited by end-of-file (wanted `EOF')
+
+=== 82: Here doc body with command substitution that doesn't parse
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+--- stderr
+|bash: command substitution: line 2: syntax error near unexpected token `)'
+|bash: command substitution: line 2: `if) b'
+
+=== 83: Here doc tag quote removal with nested quotes and backslashes
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+|after
+
+=== 84: Here doc tag with ANSI-C quoting
+status: 0
+bash-n: 0
+--- stdout
+|a
+|after
+
+=== 85: Here doc delimited by end of input
+status: 0
+bash-n: 0
+--- stdout
+|body
+--- stderr
+|bash: line 2: warning: here-document at line 1 delimited by end-of-file (wanted `EOF')
+--- bash-n stderr
+|bash: line 2: warning: here-document at line 1 delimited by end-of-file (wanted `EOF')
+
+=== 86: Here doc in command substitution closed on its tag line
+status: 0
+bash-n: 0
+--- stdout
+|[body]
+--- stderr
+|bash: line 3: warning: here-document at line 1 delimited by end-of-file (wanted `EOF')
+--- bash-n stderr
+|bash: line 3: warning: here-document at line 1 delimited by end-of-file (wanted `EOF')

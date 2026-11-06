@@ -1,0 +1,100 @@
+# Goldens for tests/oils/spec/builtin-special.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: true is not special; prefix assignments don't persist, it can be redefined
+status: 0
+bash-n: 0
+--- stdout
+|foo=
+|true func
+|foo=
+
+=== 1: Prefix assignments persist after special builtins, like : (set -o posix)
+status: 0
+bash-n: 0
+--- stdout
+|foo=
+|z=
+
+=== 2: Prefix assignments persist after readonly, but NOT exported (set -o posix)
+status: 0
+bash-n: 0
+--- stdout
+|foo=
+|spam=eggs
+|None
+|None
+
+=== 3: Prefix binding for exec is a special case (versus e.g. readonly)
+status: 0
+bash-n: 0
+--- stdout
+|pre1= x= pre2=pre2
+
+=== 4: exec without args is a special case of the special case in some shells
+status: 0
+bash-n: 0
+--- stderr
+|FOO=
+
+=== 5: Which shells allow special builtins to be redefined?
+status: 0
+bash-n: 0
+--- stdout
+|eval func echo hi
+
+=== 6: Special builtins can't be redefined as shell functions (set -o posix)
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|sh func echo hi
+
+=== 7: Non-special builtins CAN be redefined as functions
+status: 0
+bash-n: 0
+--- stdout
+|true func
+|status=0
+
+=== 8: Shift is special and fails whole script
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|<sh>: line 6: shift: 3: shift count out of range
+
+=== 9: set is special and fails whole script, even if using || true
+status: 0
+bash-n: 0
+--- stdout
+|ok
+|should not get here
+--- stderr
+|<sh>: line 6: shopt: invalid_: invalid shell option name
+|<sh>: line 8: set: invalid_: invalid option name
+
+=== 10: bash 'type' gets confused - says 'function', but runs builtin
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|builtin
+|function
+|---
+|EVAL
+|builtin
+|shell function: echo before posix
+|after posix
+|builtin
+
+=== 11: command, builtin - both can be redefined, not special (regression)
+status: 0
+bash-n: 0
+--- stdout
+|b
+|c
+|builtin-redef echo b
+|command-redef echo c

@@ -1,0 +1,38 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/shift.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: shift past the end fails with status 1
+status: 0
+bash-n: 0
+--- stdout
+|shift: 1
+
+=== 1: A non-numeric shift count is misuse, in bash's words
+status: 0
+bash-n: 0
+--- stdout
+|shift x: 2
+|shift: x: numeric argument required
+
+=== 2: shift with a negative count reports it and fails with status 1
+status: 0
+bash-n: 0
+--- stdout
+|shift -1: 1 2
+|reported
+|shift -0: 0 2
+
+=== 3: shift takes --
+status: 0
+bash-n: 0
+--- stdout
+|0 c
+
+=== 4: shift with too many arguments abandons the rest of the line
+status: 0
+bash-n: 0
+--- stdout
+|next line: 2 2
+--- stderr
+|bash: line 2: shift: too many arguments

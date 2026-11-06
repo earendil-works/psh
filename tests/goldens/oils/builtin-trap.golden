@@ -1,0 +1,317 @@
+# Goldens for tests/oils/spec/builtin-trap.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: traps are not active inside subshells $() ()  trap | cat
+status: 0
+bash-n: 0
+--- stdout
+|1 traps.txt
+|( )
+|trap -- 'echo bye' EXIT
+|$(trap)
+|trap -- 'echo bye' EXIT
+|trap | cat
+|trap -- 'echo bye' EXIT
+|bye
+--- file traps.txt
+|trap -- 'echo bye' EXIT
+
+=== 1: trap accepts/ignores --
+status: 0
+bash-n: 0
+--- stdout
+|ok
+|hi
+
+=== 2: Register invalid trap, remove invalid trap
+status: 0
+bash-n: 0
+--- stdout
+|ok
+|ok
+--- stderr
+|bash: line 1: trap: SIGINVALID: invalid signal specification
+|bash: line 6: trap: SIGINVALID: invalid signal specification
+
+=== 3: trap foo gives non-zero error
+status: 0
+bash-n: 0
+--- stdout
+|ok
+--- stderr
+|trap: usage: trap [-Plp] [[action] signal_spec ...]
+
+=== 4: SIGINT and INT are aliases
+status: 0
+bash-n: 0
+--- stdout
+|0
+|0
+
+=== 5: trap without args prints traps
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|trap -- 'echo exit' EXIT
+|status=0
+|exit
+
+=== 6: print trap handler with multiple lines
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo 1
+|echo 2
+|echo 3' SIGINT
+
+=== 7: trap -p is like trap: it prints the handlers and full signal names
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo EXIT' EXIT
+|trap -- 'echo INT' SIGINT
+|EXIT
+
+=== 8: Register the same handler for multiple signals
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo test' EXIT
+|trap -- 'echo test' SIGINT
+|trap -- 'echo test' SIGTERM
+|test
+
+=== 9: Remove multiple handlers with trap -
+status: 0
+bash-n: 0
+--- stdout
+|---
+|ok
+--- stderr
+|bash: line 9: trap: -99: invalid signal specification
+
+=== 10: trap EXIT clears the EXIT trap
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo EXIT' EXIT
+|trap -- 'echo INT' SIGINT
+|---
+|trap -- 'echo INT' SIGINT
+|---
+
+=== 11: trap 0 is equivalent to trap EXIT
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo EXIT' EXIT
+|trap -- 'echo INT' SIGINT
+|---
+|trap -- 'echo INT' SIGINT
+
+=== 12: trap 1 is equivalent to SIGHUP; HUP is equivalent to SIGHUP
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+|status=0
+|status=0
+
+=== 13: trap 0 2 resets EXIT AND SIGINT
+status: 0
+bash-n: 0
+--- stdout
+|---
+|trap -- 'echo EXIT' EXIT
+|---
+|---
+
+=== 14: trap '' EXIT - printing state
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo exit' EXIT
+|
+|trap -- '' EXIT
+|
+|trap -- '# comment' EXIT
+
+=== 15: trap 'echo hi' KILL (regression test, caught by smoosh suite)
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+|status=0
+|status=0
+
+=== 16: exit 1 when trap code string is invalid
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+--- stderr
+|bash: exit trap: line 1: syntax error near unexpected token `newline'
+|bash: exit trap: line 1: `echo <'
+
+=== 17: trap EXIT calling exit
+status: 42
+bash-n: 0
+--- stdout
+|cleanup [x y z]
+
+=== 18: trap EXIT return status ignored
+status: 0
+bash-n: 0
+--- stdout
+|cleanup [x y z]
+
+=== 19: trap EXIT with PARSE error
+status: 2
+bash-n: 2
+--- stdout
+|FAILED
+--- stderr
+|bash: line 2: syntax error near unexpected token `newline'
+|bash: line 2: `for'
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `newline'
+|bash: line 2: `for'
+
+=== 20: trap EXIT with PARSE error and explicit exit
+status: 0
+bash-n: 2
+--- stdout
+|FAILED
+--- stderr
+|bash: line 2: syntax error near unexpected token `newline'
+|bash: line 2: `for'
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `newline'
+|bash: line 2: `for'
+
+=== 21: trap EXIT with explicit exit
+status: 42
+bash-n: 0
+--- stdout
+|IN TRAP
+|FOO
+
+=== 22: trap EXIT sees exit status in $?
+status: 42
+bash-n: 0
+--- stdout
+|status=42
+
+=== 23: trap EXIT saves $?, clears trap, runs a command, then exits with it
+status: 7
+bash-n: 0
+
+=== 24: trap EXIT sees $? of the last command, with sh -c
+status: 0
+bash-n: 0
+--- stdout
+|status=5
+|outer=5
+
+=== 25: bare exit in trap EXIT uses the status from before the trap
+status: 3
+bash-n: 0
+
+=== 26: bare exit in a function called from trap EXIT
+status: 1
+bash-n: 0
+--- stdout
+|cleanup
+
+=== 27: trap EXIT with command sub / subshell / pipeline
+status: 0
+bash-n: 0
+--- stdout
+|command sub
+|subshell
+|pipeline
+|EXIT TRAP
+
+=== 28: eval in the exit trap (regression for issue #293)
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 29: exit codes for traps are isolated
+status: 0
+bash-n: 0
+--- stdout
+|before=0
+|USR1 trap status=0
+|after=0
+
+=== 30: traps are cleared in subshell (started with &)
+status: 0
+bash-n: 0
+--- stdout
+|SIGURG
+|begin child
+|end child
+|wait status 0
+
+=== 31: trap USR1, sleep, SIGINT: non-interactively
+status: 0
+bash-n: 0
+--- stdout
+|usr1
+|status=0
+
+=== 32: trap INT, sleep, SIGINT: non-interactively
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 33: trap EXIT, sleep, SIGINT: non-interactively
+status: 0
+bash-n: 0
+--- stdout
+|on exit
+|status=0
+
+=== 34: Remove trap with an unsigned integer
+status: 0
+bash-n: 0
+--- stdout
+|ok0
+|
+|ok42space
+|
+|ok07
+|
+|trap-exit
+|failure
+--- stderr
+|<sh>: line 1: 42: command not found
+|<sh>: line 3: trap: -1: invalid option
+|trap: usage: trap [-Plp] [[action] signal_spec ...]
+
+=== 35: trap '' sets handler to empty string (SIG_IGN)
+status: 0
+bash-n: 0
+--- stdout
+|trap -- '' SIGUSR1
+
+=== 36: trap '' with multiple signals
+status: 0
+bash-n: 0
+--- stdout
+|trap -- '' SIGUSR1
+|trap -- '' SIGUSR2
+
+=== 37: trap with command.NoOp - check internal invariant
+status: 0
+bash-n: 0
+--- stdout
+|0 zz
+--- file zz

@@ -1,0 +1,95 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/eval.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic eval usage
+status: 0
+bash-n: 0
+--- stdout
+|1 + 1 == 2
+
+=== 1: eval with return in function
+status: 0
+bash-n: 0
+--- stdout
+|Exit code: 42
+
+=== 2: eval with exit
+status: 42
+bash-n: 0
+
+=== 3: eval with break in loop
+status: 0
+bash-n: 0
+--- stdout
+|After loop
+
+=== 4: eval with continue in loop
+status: 0
+bash-n: 0
+--- stdout
+|Iteration 1
+|Iteration 2
+|Iteration 3
+|After loop
+
+=== 5: eval with nested break levels
+status: 0
+bash-n: 0
+--- stdout
+|After outer loop
+
+=== 6: Eval of code with syntax error
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+--- stderr
+|bash: eval: line 1: unexpected EOF while looking for matching `"'
+
+=== 7: eval with a syntax error returns 2
+status: 0
+bash-n: 0
+--- stdout
+|after eval: 2
+--- stderr
+|bash: eval: line 2: syntax error: unexpected end of file from `if' command on line 1
+
+=== 8: eval with an unset variable under set -u ends the shell
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: nope: unbound variable
+
+=== 9: eval with ${x?} on an unset variable ends the shell
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: nope: boom
+
+=== 10: command eval with an unset variable under set -u ends the shell
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: nope: unbound variable
+
+=== 11: builtin eval with an unset variable under set -u ends the shell
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: nope: unbound variable
+
+=== 12: eval passes the evaluated command's options through
+status: 0
+bash-n: 0
+--- stdout
+|a
+|-- b
+|c
+|--help
+
+=== 13: eval rejects an unknown option with status 2
+status: 0
+bash-n: 0
+--- stdout
+|rc=2

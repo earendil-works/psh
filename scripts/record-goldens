@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# Record the goldens: run every case under GNU bash 5.3 in the pinned recording container
+# (docker/Dockerfile) and write tests/goldens/ (TESTING.md "Oracle", "Cases and
+# goldens"). Re-recording is rare and deliberate: commit it on its own and review the
+# diff.
+#
+#   scripts/record-goldens [FILTER...]          record (all cases, or the filtered ones)
+#   scripts/record-goldens --check [FILTER...]  record into a scratch directory and
+#                                               compare with tests/goldens per case
+#
+# --check is the determinism check: a second recording must reproduce the committed
+# goldens. Cases that differ are listed; inherently nondeterministic ones belong in a
+# group in tests/spec.toml.
+#
+# Needs Docker. The first run builds the image (bash from the GNU tarball, slow once).
+# psh-spec is built for Linux in the pinned Rust image. Output goes through
+# work/scratch/record/ and is copied into tests/goldens/ only when the recording
+# succeeded.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+root=$(pwd)
+
+check=0
+if [ "${1:-}" = --check ]; then
+  check=1
+  shift
+fi
+
+rust_image=rust:1.96-trixie@sha256:1f0dbad1df66647807e6952d1db85d0b2bda7606cb2139d82517e4f009967376
+# The image tag follows the Dockerfile's content, so an edit rebuilds it.
+tag=psh-goldens:$(git hash-object docker/Dockerfile | cut -c1-12)
+if ! docker image inspect "$tag" >/dev/null 2>&1; then
+  echo "== building $tag (bash from source; the download can take minutes)"
+  docker build -q -t "$tag" docker/ >/dev/null
+fi
+
+echo "== building psh-spec for Linux"
+mkdir -p target/record
+docker run --rm --user "$(id -u):$(id -g)" -v "$root:/src" -w /src \
+  -e CARGO_HOME=/src/target/record/cargo-home -e CARGO_TARGET_DIR=/src/target/record \
+  "$rust_image" cargo build -q --release --locked -p psh-spec
+
+out=work/scratch/record
+rm -rf "$out"
+mkdir -p "$out"
+# A filtered recording replaces its cases inside the existing golden files.
+if [ $# -gt 0 ] && [ -d tests/goldens ]; then
+  cp -R tests/goldens/. "$out"/
+fi
+chmod -R a+rwX "$out"
+echo "== recording in $tag"
+# The repository is read-only inside; goldens are written to $out. A fixed hostname
+# (normalized to <host> anyway); the
+# image fixes the user, locale, TZ and umask. No network.
+docker run --rm --network none --hostname psh-oracle \
+  -v "$root:/src:ro" -v "$root/$out:/out" \
+  "$tag" /src/target/record/release/psh-spec --root /src --record \
+  --shell /usr/local/bin/bash --goldens /out -j "$(docker run --rm "$tag" nproc)" "$@"
+
+if [ $check = 1 ]; then
+  echo "== comparing with tests/goldens"
+  exec scripts/timeout.sh 600 cargo run -q -p psh-spec -- --diff-goldens tests/goldens "$out"
+fi
+
+rm -rf tests/goldens
+mkdir -p tests/goldens
+cp -R "$out"/. tests/goldens/
+echo "== tests/goldens updated; review with git diff --stat tests/goldens"

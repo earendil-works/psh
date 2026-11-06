@@ -1,0 +1,159 @@
+# Goldens for tests/oils/spec/command_.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Command block
+status: 0
+bash-n: 0
+--- stdout
+|/bin/ls
+
+=== 1: Permission denied
+status: 126
+bash-n: 0
+--- stderr
+|bash: line 2: <case>/text-file: Permission denied
+--- file text-file
+
+=== 2: Not a dir
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: <case>/not-a-dir/text-file: No such file or directory
+
+=== 3: Name too long
+status: 126
+bash-n: 0
+--- stderr
+|bash: line 1: ./0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789: File name too long
+
+=== 4: External programs don't have _OVM in environment
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 5: File with no shebang is executed
+status: 0
+bash-n: 0
+--- stdout
+|hi
+--- file no-shebang
+|echo hi
+
+=== 6: File with relative path and no shebang is executed
+status: 0
+bash-n: 0
+--- stdout
+|hi
+--- file no-shebang
+|echo hi
+
+=== 7: File in relative subdirectory and no shebang is executed
+status: 0
+bash-n: 0
+--- stdout
+|hi
+--- dir test-no-shebang
+--- file test-no-shebang/script
+|echo hi
+
+=== 8: $PATH lookup
+status: 0
+bash-n: 0
+--- stdout
+|one
+--- dir one
+--- file one/mycmd
+|echo one
+--- dir two
+--- file two/mycmd
+|echo two
+
+=== 9: filling $PATH cache, then insert the same command earlier in cache
+status: 0
+bash-n: 0
+--- stdout
+|two
+|two
+|one
+--- dir one
+--- file one/mycmd
+|echo one
+--- dir two
+--- file two/mycmd
+|echo two
+
+=== 10: filling $PATH cache, then deleting command
+status: 0
+bash-n: 0
+--- stdout
+|two
+|status=0
+|status=127
+--- stderr
+|bash: line 14: two/mycmd: No such file or directory
+--- dir one
+--- file one/mycmd
+|echo one
+--- dir two
+
+=== 11: Non-executable on $PATH
+status: 0
+bash-n: 0
+--- stdout
+|two
+|status=0
+--- dir one
+--- file one/mycmd
+|echo one
+--- dir two
+--- file two/mycmd
+|echo two
+
+=== 12: hash without args prints the cache
+status: 0
+bash-n: 0
+--- stdout
+|hits	command
+|   1	/usr/bin/whoami
+|status=0
+
+=== 13: hash with args
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|/whoami
+|status=1
+--- stderr
+|bash: line 4: hash: _nonexistent_: not found
+
+=== 14: hash -r doesn't allow additional args
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 15: Executing command with same name as directory in PATH (#2429)
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|status=0
+|hi
+|status=0
+|hi
+|status=0
+--- dir _tmp
+--- dir _tmp/bin
+--- file _tmp/bin/hello
+|#!/usr/bin/env sh
+|echo hi
+--- dir _tmp/bin2
+--- dir _tmp/dir
+--- dir _tmp/dir/hello
+--- dir _tmp/notbin
+--- file _tmp/notbin/hello
+|#!/usr/bin/env sh
+|echo hi

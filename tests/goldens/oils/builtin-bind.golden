@@ -1,0 +1,115 @@
+# Goldens for tests/oils/spec/builtin-bind.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: bind -l should report readline functions
+status: 0
+bash-n: 0
+--- stdout
+|accept-line
+--- stderr
+|bash: line 1: bind: warning: line editing not enabled
+
+=== 1: bind -p -P to print function names and key bindings
+status: 0
+bash-n: 0
+--- stdout
+|% vi-subst (not bound)
+|
+|vi-subst is not bound to any keys
+--- stderr
+|bash: line 1: bind: warning: line editing not enabled
+|bash: line 4: bind: warning: line editing not enabled
+
+=== 2: bind -s -S accepted
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 1: bind: warning: line editing not enabled
+|bash: line 2: bind: warning: line editing not enabled
+
+=== 3: bind -v -V accepted
+status: 0
+bash-n: 0
+--- stdout
+|set blink-matching-paren off
+|
+|blink-matching-paren is set to 'off'
+--- stderr
+|bash: line 1: bind: warning: line editing not enabled
+|bash: line 4: bind: warning: line editing not enabled
+
+=== 4: bind -q
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|vi-subst is not bound to any keys.
+|status=1
+|yank can be invoked via "\C-y".
+|status=0
+--- stderr
+|bash: line 1: bind: warning: line editing not enabled
+|bash: line 1: bind: `zz-bad': unknown function name
+|bash: line 5: bind: warning: line editing not enabled
+|bash: line 8: bind: warning: line editing not enabled
+
+=== 5: bind -X
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|\C-o\C-s\C-h
+|echo foo
+|status=0
+--- stderr
+|bash: line 1: bind: warning: line editing not enabled
+|bash: line 4: bind: warning: line editing not enabled
+|bash: line 5: bind: warning: line editing not enabled
+|bash: line 6: bind: warning: line editing not enabled
+
+=== 6: bind -m with bind -x/-X
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|emacs
+|status=0
+|vi
+|status=0
+--- stderr
+|bash: line 1: bind: warning: line editing not enabled
+|bash: line 4: bind: warning: line editing not enabled
+|bash: line 5: bind: warning: line editing not enabled
+|bash: line 8: bind: warning: line editing not enabled
+|bash: line 9: bind: warning: line editing not enabled
+
+=== 7: bind -r
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|\C-o\C-s\C-h
+|status=0
+|status=1
+--- stderr
+|bash: line 1: bind: warning: line editing not enabled
+|bash: line 4: bind: warning: line editing not enabled
+|bash: line 5: bind: warning: line editing not enabled
+|bash: line 8: bind: warning: line editing not enabled
+|bash: line 9: bind: warning: line editing not enabled
+
+=== 8: bind -r of bind -x commands
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|\C-o\C-s\C-h
+|status=0
+|status=1
+--- stderr
+|bash: line 1: bind: warning: line editing not enabled
+|bash: line 4: bind: warning: line editing not enabled
+|bash: line 5: bind: warning: line editing not enabled
+|bash: line 8: bind: warning: line editing not enabled
+|bash: line 9: bind: warning: line editing not enabled

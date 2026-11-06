@@ -1,0 +1,123 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/exec.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Exec an invalid path
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: /some/nonexistent/path: No such file or directory
+
+=== 1: Exec with no arguments
+status: 0
+bash-n: 0
+
+=== 2: Exec with no arguments and redirection for new fd
+status: 0
+bash-n: 0
+--- file some-file.txt
+|Hello, fd 3!
+
+=== 3: Exec with no arguments and redirection of stderr
+status: 1
+bash-n: 0
+
+=== 4: Exec with no arguments and redirection in a script
+status: 0
+bash-n: 0
+--- file output-file.txt
+|hi
+
+=== 5: Exec a command
+status: 0
+bash-n: 0
+--- stdout
+|In child shell
+
+=== 6: exec without -c
+status: 0
+bash-n: 0
+--- stdout
+|myvar: value
+
+=== 7: exec -c
+status: 0
+bash-n: 0
+--- stdout
+|myvar: 
+
+=== 8: exec -a
+status: 0
+bash-n: 0
+--- stdout
+|0: shellname
+
+=== 9: exec -c of a command found in the shell's PATH
+status: 0
+bash-n: 0
+--- stdout
+|in myscript
+
+=== 10: exec of a missing command exits the shell
+status: 127
+bash-n: 0
+--- stdout
+|subshell: 127
+--- stderr
+|bash: line 1: exec: nonexistent-command: not found
+|bash: line 3: /nonexistent-command: No such file or directory
+
+=== 11: exec in a subshell ends the subshell
+status: 0
+bash-n: 0
+--- stdout
+|true: 0
+|exit 3: 3
+|argv0: renamed
+|login argv0: -sh
+|hello
+
+=== 12: exec in a subshell runs the program, not a builtin
+status: 0
+bash-n: 0
+--- stdout
+|-v
+~ no newline at end
+--- stderr
+|printf: warning: ignoring excess arguments, starting with 'out'
+
+=== 13: exec of a missing program reports it
+status: 0
+bash-n: 0
+--- stdout
+|status: 127
+|reported
+
+=== 14: exec starts a program by its full path
+status: 0
+bash-n: 0
+--- stdout
+|full path
+
+=== 15: exec -a takes a name that starts with -
+status: 0
+bash-n: 0
+--- stdout
+|0: -shellname
+
+=== 16: exec passes the command's options through
+status: 0
+bash-n: 0
+--- stdout
+|a
+|-a b
+|-- c
+|[a]
+|[-a][b]
+|[--][c]
+
+=== 17: exec rejects an unknown option with status 2
+status: 0
+bash-n: 0
+--- stdout
+|rc=2

@@ -1,0 +1,59 @@
+# Goldens for tests/oils/spec/word-eval.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Evaluation of constant parts
+status: 0
+bash-n: 0
+--- stdout
+|['bare', 'sq']
+
+=== 1: Evaluation of each part
+status: 0
+bash-n: 0
+--- stdout
+|['bare', 'sq', '/home/bob', 's', '-s-', 'a1', 'a2', '3', 'c', 'c']
+
+=== 2: Word splitting
+status: 0
+bash-n: 0
+--- stdout
+|['1', '23', '4', '5 6']
+
+=== 3: Word joining
+status: 0
+bash-n: 0
+--- stdout
+|['1', '2a1', 'a2_x', 'y', 'z']
+
+=== 4: Word elision
+status: 0
+bash-n: 0
+--- stdout
+|['-', '']
+
+=== 5: Default values -- more cases
+status: 0
+bash-n: 0
+--- stdout
+|['hi', 'a b', 'c d', 'e f', "'g h'"]
+
+=== 6: Globbing after splitting
+status: 0
+bash-n: 0
+--- stdout
+|['_tmp/foo.hh', '_tmp/bar.gg', '_tmp/foo.gg']
+--- dir _tmp
+--- file _tmp/bar.gg
+--- file _tmp/foo.gg
+--- file _tmp/foo.hh
+
+=== 7: Globbing escaping
+status: 0
+bash-n: 0
+--- stdout
+|['_tmp/[bc]ar.mm', '-', '_tmp/bar.mm', '_tmp/car.mm']
+--- dir _tmp
+--- file _tmp/[bc]ar.mm
+--- file _tmp/bar.mm
+--- file _tmp/car.mm

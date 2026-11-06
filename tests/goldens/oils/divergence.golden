@@ -1,0 +1,50 @@
+# Goldens for tests/oils/spec/divergence.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: xz package: dirprefix="${line##*([}"
+status: 0
+bash-n: 0
+--- stdout
+|--
+|-foo-
+
+=== 1: !( as negation and subshell versus extended glob - #2463
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+
+=== 2: Changing PATH will invalidate PATH cache
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|status=0
+|hey
+|status=0
+|hi
+|status=0
+|hey
+|status=0
+|hi
+|status=0
+|hey
+|status=0
+--- dir _tmp
+--- dir _tmp/bin
+--- file _tmp/bin/hello
+|#!/usr/bin/env sh
+|echo hi
+--- dir _tmp/bin2
+--- file _tmp/bin2/hello
+|#!/usr/bin/env sh
+|echo hey
+
+=== 3: builtin cat crashes a subshell (#2530)
+status: 0
+bash-n: 0
+--- stdout
+|141
+|141

@@ -1,0 +1,91 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/options/shopt-nullglob.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: nullglob removes unmatched glob
+status: 0
+bash-n: 0
+--- stdout
+|result:
+
+=== 1: nullglob does not affect matching glob
+status: 0
+bash-n: 0
+--- stdout
+|realfile.txt
+--- file realfile.txt
+
+=== 2: nullglob does not affect quoted glob chars
+status: 0
+bash-n: 0
+--- stdout
+|non-existent-*.txt
+
+=== 3: nullglob does not affect literal text without glob chars
+status: 0
+bash-n: 0
+--- stdout
+|hello world
+
+=== 4: nullglob with multiple unmatched patterns
+status: 0
+bash-n: 0
+--- stdout
+|result:
+
+=== 5: nullglob with mix of matched and unmatched
+status: 0
+bash-n: 0
+--- stdout
+|realfile.txt
+--- file realfile.txt
+
+=== 6: nullglob with question mark glob
+status: 0
+bash-n: 0
+--- stdout
+|result:
+
+=== 7: nullglob with bracket glob
+status: 0
+bash-n: 0
+--- stdout
+|result:
+
+=== 8: nullglob disabled by default
+status: 0
+bash-n: 0
+--- stdout
+|*.nonexistent
+
+=== 9: nullglob can be toggled
+status: 0
+bash-n: 0
+--- stdout
+|on:
+|off: *.nonexistent
+
+=== 10: nullglob in subshell
+status: 0
+bash-n: 0
+--- stdout
+|inner:
+|outer:
+
+=== 11: nullglob with for loop
+status: 0
+bash-n: 0
+--- stdout
+|done
+
+=== 12: nullglob with array assignment
+status: 0
+bash-n: 0
+--- stdout
+|count: 0
+
+=== 13: nullglob with directory glob
+status: 0
+bash-n: 0
+--- stdout
+|result:

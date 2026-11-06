@@ -1,0 +1,67 @@
+# Goldens for tests/oils/spec/bool-parse.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: test builtin - Unexpected trailing word '--' (#2409)
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+|status=0
+|status=0
+|status=0
+
+=== 1: test builtin: ( = ) is confusing: equality test or non-empty string test
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=0
+
+=== 2: test builtin: ( == ) is confusing: equality test or non-empty string test
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=0
+
+=== 3: Allowed: [[ = ]] and [[ == ]]
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+
+=== 4: Not allowed: [[ ) ]] and [[ ( ]]
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected token `)' in conditional command
+|bash: line 1: syntax error near `)'
+|bash: line 1: `[[ ) ]]'
+--- bash-n stderr
+|bash: line 1: unexpected token `)' in conditional command
+|bash: line 1: syntax error near `)'
+|bash: line 1: `[[ ) ]]'
+
+=== 5: test builtin: ( x ) behavior is the same in both cases
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+
+=== 6: [ -f = ] and [ -f == ]
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+
+=== 7: [[ -f -f ]] and [[ -f == ]]
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1

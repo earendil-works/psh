@@ -1,0 +1,95 @@
+# Goldens for tests/oils/spec/sh-func.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Locals don't leak
+status: 0
+bash-n: 0
+--- stdout
+|
+
+=== 1: Globals leak
+status: 0
+bash-n: 0
+--- stdout
+|f_var
+
+=== 2: Return statement
+status: 42
+bash-n: 0
+--- stdout
+|one
+
+=== 3: Dynamic Scope
+status: 0
+bash-n: 0
+--- stdout
+|g_var
+
+=== 4: Dynamic Scope Mutation (wow this is bad)
+status: 0
+bash-n: 0
+--- stdout
+|g_var=g_var
+|g_var=f_mutation
+|g_var=
+
+=== 5: Assign local separately
+status: 0
+bash-n: 0
+--- stdout
+|[new-value]
+
+=== 6: Assign a local and global on same line
+status: 0
+bash-n: 0
+--- stdout
+|[L G]
+|[ G]
+
+=== 7: Return without args gives previous
+status: 0
+bash-n: 0
+--- stdout
+|status=42
+
+=== 8: return "" (a lot of disagreement)
+status: 0
+bash-n: 0
+--- stdout
+|f
+|status=2
+--- stderr
+|bash: line 3: return: : numeric argument required
+
+=== 9: return $empty
+status: 0
+bash-n: 0
+--- stdout
+|f
+|status=0
+
+=== 10: Subshell function
+status: 0
+bash-n: 0
+--- stdout
+|status=42
+|status=42
+
+=== 11: Scope of global variable when sourced in function (Shell Functions aren't Closures)
+status: 1
+bash-n: 0
+--- stdout
+|g = global
+--- stderr
+|./tmp.sh: line 7: L: unbound variable
+--- file tmp.sh
+|
+|g="global"
+|local L="local"
+|
+|test_func() {
+|  echo "g = $g"
+|  echo "L = $L"
+|}
+|

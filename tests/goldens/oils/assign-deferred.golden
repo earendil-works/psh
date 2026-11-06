@@ -1,0 +1,75 @@
+# Goldens for tests/oils/spec/assign-deferred.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: typeset a[3]=4
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|['3', '5', '4', '6']
+
+=== 1: typeset -a a[1]=a a[3]=c
+status: 0
+bash-n: 0
+--- stdout
+|['x', 'z']
+
+=== 2: local a[3]=4
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|['3', '5', '4', '6']
+
+=== 3: readonly a[7]=8
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|[]
+--- stderr
+|bash: line 1: readonly: `b[7]': not a valid identifier
+
+=== 4: export a[7]=8
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|[]
+|None
+--- stderr
+|bash: line 1: export: `a[7]': not a valid identifier
+
+=== 5: 'builtin' prefix is allowed on assignments
+status: 0
+bash-n: 0
+--- stdout
+|e=E
+
+=== 6: 'command' prefix is allowed on assignments
+status: 0
+bash-n: 0
+--- stdout
+|r1=R1
+|r2=R2
+
+=== 7: is 'builtin' prefix and array allowed?  OSH is smarter
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `('
+|bash: line 1: `builtin typeset a=(1 2 3)'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `('
+|bash: line 1: `builtin typeset a=(1 2 3)'
+
+=== 8: is 'command' prefix and array allowed?  OSH is smarter
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `('
+|bash: line 1: `command typeset a=(1 2 3)'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `('
+|bash: line 1: `command typeset a=(1 2 3)'

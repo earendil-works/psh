@@ -1,0 +1,97 @@
+# Goldens for tests/oils/spec/for-expr.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: C-style for loop
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|4
+|5
+
+=== 1: For loop with and without semicolon
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|1
+|2
+|3
+
+=== 2: Accepts { } syntax too
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 3: Empty init
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 4: Empty init and cond
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 5: Infinite loop with ((;;))
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 6: Arith lexer mode
+status: 0
+bash-n: 0
+--- stdout
+|3
+|4
+|3
+|4
+--- stderr
+|bash: line 1: ((: i = '3': arithmetic syntax error: operand expected (error token is "'3'")
+|bash: line 3: ((: i = '3': arithmetic syntax error: operand expected (error token is "'3'")
+
+=== 7: Integers near 31, 32, 62 bits
+status: 0
+bash-n: 0
+--- stdout
+|2147483646
+|2147483647
+|2147483648
+|2147483649
+|---
+|4294967294
+|4294967295
+|4294967296
+|4294967297
+|---
+|4611686018427387902
+|4611686018427387903
+|4611686018427387904
+|4611686018427387905
+|---
+
+=== 8: Condition that's greater than 32 bits
+status: 0
+bash-n: 0
+--- stdout
+|4294967296
+|4294967297
+|4294967298
+|4294967299
+|4294967300

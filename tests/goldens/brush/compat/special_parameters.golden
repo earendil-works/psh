@@ -1,0 +1,349 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/special_parameters.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: $_ - initial value matches $0
+status: 0
+bash-n: 0
+--- stdout
+|matches on start
+
+=== 1: $_ - last argument tracked across simple commands
+status: 0
+bash-n: 0
+--- stdout
+|[one]
+|[four]
+|last_echo_arg
+|[last_echo_arg]
+
+=== 2: $_ - zero-arg command uses command name
+status: 0
+bash-n: 0
+--- stdout
+|seed1 seed2
+|after colon: [:]
+|after true: [true]
+|
+|after bare echo: [echo]
+
+=== 3: $_ - args with spaces and special chars
+status: 0
+bash-n: 0
+--- stdout
+|seed last
+|[seed last]
+|arg with spaces arg-with-dashes arg:with:colons
+|[arg:with:colons]
+| trailing
+|[trailing]
+
+=== 4: $_ - builtin dispatch path
+status: 0
+bash-n: 0
+--- stdout
+|seed last
+|[bu3]
+|pf1
+|pf2
+|[pf2]
+
+=== 5: $_ - declaration assignment uses expanded last argument
+status: 0
+bash-n: 0
+--- stdout
+|[declared=world]
+
+=== 6: $_ - wrapper assignments use expanded last argument
+status: 0
+bash-n: 0
+--- stdout
+|builtin=world
+|builtin: [builtin=world]
+|command=world
+|command: [command=world]
+
+=== 7: $_ - external command dispatch path
+status: 0
+bash-n: 0
+--- stdout
+|seed last
+|[ext2]
+|[external_final]
+
+=== 8: $_ - external command exports resolved path via env
+status: 0
+bash-n: 0
+--- stdout
+|_=/usr/bin/env
+
+=== 9: $_ - function dispatch sets to call-site last arg
+status: 0
+bash-n: 0
+--- stdout
+|seed_last
+|[call_b]
+
+=== 10: $_ - function body sees pre-invocation value on entry
+status: 0
+bash-n: 0
+--- stdout
+|pre_seed
+|entry: [pre_seed]
+|new_inner
+|after inner echo: [new_inner]
+|after return: [call_arg]
+
+=== 11: $_ - nested function dispatch
+status: 0
+bash-n: 0
+--- stdout
+|seed
+|innerdone
+|[ob]
+
+=== 12: $_ - assignment-only function body
+status: 0
+bash-n: 0
+--- stdout
+|seed_last
+|[bar]
+
+=== 13: $_ - cleared by assignment-only statements
+status: 0
+bash-n: 0
+--- stdout
+|seed_last
+|after assign: []
+|after second assign: []
+|after colon: [colonarg]
+
+=== 14: $_ - cleared by assignment with command substitution
+status: 0
+bash-n: 0
+--- stdout
+|seed_last
+|after assignment: []
+
+=== 15: $_ - single-stage pipeline does not update parent
+status: 0
+bash-n: 0
+--- stdout
+|prev_a prev_b
+|pipe_a pipe_b
+|[prev_b]
+
+=== 16: $_ - multi-stage pipeline does not update parent
+status: 0
+bash-n: 0
+--- stdout
+|prev_a prev_b
+|pipe_a pipe_b
+|[prev_b]
+
+=== 17: $_ - and-chain tracks last arg of last executed command
+status: 0
+bash-n: 0
+--- stdout
+|seed_last
+|a1 a2
+|[a2]
+|[t2]
+
+=== 18: $_ - or-chain tracks last arg of last executed command
+status: 0
+bash-n: 0
+--- stdout
+|seed_last
+|or1 or2
+|[or2]
+
+=== 19: $_ - command-not-found update
+status: 0
+bash-n: 0
+--- stdout
+|seed_last
+|[fail_b]
+--- stderr
+|bash: line 2: nosuchcmd_xyzzy: command not found
+
+=== 20: $_ - for loop body
+status: 0
+bash-n: 0
+--- stdout
+|seed_last
+|[:]
+|loop a
+|loop b
+|loop c
+|[loop c]
+
+=== 21: $_ - while loop body
+status: 0
+bash-n: 0
+--- stdout
+|seed_last
+|iter 0
+|iter 1
+|[]]
+
+=== 22: $_ - until loop body
+status: 0
+bash-n: 0
+--- stdout
+|seed_last
+|[]]
+
+=== 23: $_ - if/then body
+status: 0
+bash-n: 0
+--- stdout
+|seed_last
+|then_a then_b
+|[then_b]
+
+=== 24: $_ - case body
+status: 0
+bash-n: 0
+--- stdout
+|seed_last
+|match_a match_b
+|[match_b]
+
+=== 25: $_ - eval tracks eval's last arg
+status: 0
+bash-n: 0
+--- stdout
+|seed_last
+|evaled one two
+|[echo evaled one two]
+
+=== 26: $_ - source tracks sourced script's commands
+status: 0
+bash-n: 0
+--- stdout
+|seed_last
+|sourced_a sourced_b
+|[./sourced.sh]
+
+=== 27: $_ - subshell does not leak into parent
+status: 0
+bash-n: 0
+--- stdout
+|outer_a outer_b
+|inner1 inner2
+|sub: [inner2]
+|parent: [outer_b]
+
+=== 28: $_ - background job + wait
+status: 0
+bash-n: 0
+--- stdout
+|seed_last
+|[wait]
+
+=== 29: $_ - exported attribute after update
+status: 1
+bash-n: 0
+--- stdout
+|first last
+|0
+
+=== 30: $_ - declare -p reflects updated value
+status: 0
+bash-n: 0
+--- stdout
+|first last
+|declare -- _="last"
+
+=== 31: $_ - readonly is honored
+status: 0
+bash-n: 0
+--- stdout
+|hi there
+|[frozen]
+--- stderr
+|bash: line 1: _: readonly variable
+|bash: line 2: _: readonly variable
+|bash: line 3: _: readonly variable
+
+=== 32: $_ - exec does not override _ in child env
+status: 1
+bash-n: 0
+
+=== 33: $_ - exec at the top level does not override _ in child env
+status: 0
+bash-n: 0
+--- stdout
+|exec left _ alone
+
+=== 34: $_ - exec passes on the _ the shell inherited
+status: 0
+bash-n: 0
+--- stdout
+|other _: <sh>
+
+=== 35: $_ - without one to inherit, a shell starts with an unexported $0
+status: 0
+bash-n: 0
+--- stdout
+|_ is $0
+|printenv: 1
+
+=== 36: $_ - exec after a command passes no _
+status: 0
+bash-n: 0
+--- stdout
+|printenv: 1
+
+=== 37: $@ and $*
+status: 0
+bash-n: 0
+--- stdout
+|--myfunc called--
+|COUNT: 0
+|AT-SIGN VALUE: ''
+|STAR VALUE: ''
+|DOUBLE-QUOTED STAR ELEMENT: ''
+|--myfunc called--
+|COUNT: 1
+|AT-SIGN VALUE: '1'
+|STAR VALUE: '1'
+|AT-SIGN ELEMENT: '1'
+|STAR ELEMENT: '1'
+|DOUBLE-QUOTED AT-SIGN ELEMENT: '1'
+|DOUBLE-QUOTED STAR ELEMENT: '1'
+|--myfunc called--
+|COUNT: 2
+|AT-SIGN VALUE: '1 2'
+|STAR VALUE: '1 2'
+|AT-SIGN ELEMENT: '1'
+|AT-SIGN ELEMENT: '2'
+|STAR ELEMENT: '1'
+|STAR ELEMENT: '2'
+|DOUBLE-QUOTED AT-SIGN ELEMENT: '1'
+|DOUBLE-QUOTED AT-SIGN ELEMENT: '2'
+|DOUBLE-QUOTED STAR ELEMENT: '1 2'
+|--myfunc called--
+|COUNT: 2
+|AT-SIGN VALUE: 'a b c 2'
+|STAR VALUE: 'a b c 2'
+|AT-SIGN ELEMENT: 'a'
+|AT-SIGN ELEMENT: 'b'
+|AT-SIGN ELEMENT: 'c'
+|AT-SIGN ELEMENT: '2'
+|STAR ELEMENT: 'a'
+|STAR ELEMENT: 'b'
+|STAR ELEMENT: 'c'
+|STAR ELEMENT: '2'
+|DOUBLE-QUOTED AT-SIGN ELEMENT: 'a b c'
+|DOUBLE-QUOTED AT-SIGN ELEMENT: '2'
+|DOUBLE-QUOTED STAR ELEMENT: 'a b c 2'
+
+=== 38: $_ - command and builtin query forms
+status: 0
+bash-n: 0
+--- stdout
+|command -v: [echo]
+|builtin bare: [builtin]
+|command bare: [command]

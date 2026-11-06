@@ -1,0 +1,60 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/let.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic let usage
+status: 0
+bash-n: 0
+--- stdout
+|0 => 1
+|1 => 0
+|0==0 => 0
+|0!=0 => 1
+|1 0 => 1
+|0 1 => 0
+
+=== 1: let with assignment
+status: 0
+bash-n: 0
+--- stdout
+|x=10 => 0; x==10
+
+=== 2: let assignment through nameref
+status: 0
+bash-n: 0
+--- stdout
+|target: 42
+|target: 50
+|target: 51
+
+=== 3: let with no arguments fails with status 1
+status: 0
+bash-n: 0
+--- stdout
+|let: 1
+--- stderr
+|bash: line 1: let: expression expected
+
+=== 4: let with only -- says an expression is expected
+status: 0
+bash-n: 0
+--- stdout
+|let --: 1
+|let: expression expected
+|empty: 1
+
+=== 5: let with an unset variable under set -u ends the shell
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: nope: unbound variable
+
+=== 6: let takes expressions that start with -
+status: 0
+bash-n: 0
+--- stdout
+|a=0
+|b=1
+|c=0
+|d=0 x=4
+|e=0 x=4

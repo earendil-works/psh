@@ -1,0 +1,323 @@
+# Goldens for tests/oils/spec/regex.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: BASH_REMATCH
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|['foo123', 'foo', '123']
+|status=1
+|[]
+
+=== 1: Match is unanchored at both ends
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 2: Failed match
+status: 1
+bash-n: 0
+
+=== 3: Regex quoted with \ -- preferred in bash
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 4: Regex quoted with single quotes
+status: 1
+bash-n: 0
+
+=== 5: Regex quoted with double quotes
+status: 1
+bash-n: 0
+
+=== 6: Fix single quotes by storing in variable
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 7: Fix single quotes by storing in variable
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 8: Double quoting pat variable -- again bash doesn't like it.
+status: 1
+bash-n: 0
+
+=== 9: Mixing quoted and unquoted parts
+status: 0
+bash-n: 0
+--- stdout
+|true
+|true
+
+=== 10: Regex with == and not =~ is parse error, different lexer mode required
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `('
+|bash: line 1: syntax error near `^(a'
+|bash: line 1: `[[ '^(a b)$' == ^(a\ b)$ ]] && echo true'
+--- bash-n stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `('
+|bash: line 1: syntax error near `^(a'
+|bash: line 1: `[[ '^(a b)$' == ^(a\ b)$ ]] && echo true'
+
+=== 11: Omitting ( )
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 12: Malformed regex
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `)'
+|bash: line 1: syntax error near `^)a'
+|bash: line 1: `[[ 'a b' =~ ^)a\ b($ ]] && echo true'
+--- bash-n stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `)'
+|bash: line 1: syntax error near `^)a'
+|bash: line 1: `[[ 'a b' =~ ^)a\ b($ ]] && echo true'
+
+=== 13: Regex with |
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 14: Regex to match literal brackets []
+status: 0
+bash-n: 0
+--- stdout
+|true
+|true
+
+=== 15: Regex to match literals . ^ $ etc.
+status: 0
+bash-n: 0
+--- stdout
+|false
+|true
+|false
+|true
+|false
+|true
+|false
+|true
+
+=== 16: Unquoted { is a regex parse error
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|bash: line 1: [[: invalid regular expression `{': Invalid preceding regular expression
+
+=== 17: Fatal error inside [[ =~ ]]
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: 1 / 0 : division by 0 (error token is "0 ")
+
+=== 18: Quoted { and +
+status: 0
+bash-n: 0
+--- stdout
+|yes {
+|yes +
+|yes *
+|yes ?
+|yes ^
+|yes $
+|yes (
+|yes )
+|yes |
+|yes \
+|---
+|yes .
+|no .
+|---
+|a 0
+|- 1
+|b 0
+|z 0
+|status=0
+
+=== 19: Escaped {
+status: 0
+bash-n: 0
+--- stdout
+|['$PA', '$', 'PA']
+
+=== 20: Escaped { stored in variable first
+status: 0
+bash-n: 0
+--- stdout
+|['$PA', '$', 'PA']
+
+=== 21: regex with ?
+status: 0
+bash-n: 0
+--- stdout
+|true
+|true
+
+=== 22: regex with unprintable characters
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=1
+
+=== 23: pattern $f(x)  -- regression
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=1
+
+=== 24: pattern a=(1)
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=1
+
+=== 25: pattern @f(x)
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=1
+--- stderr
+|bash: line 1: shopt: parse_at: invalid shell option name
+
+=== 26: Bug: Nix idiom with closing ) next to pattern
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+
+=== 27: unquoted (a  b) as pattern, (a  b|c)
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|three
+
+=== 28: Multiple adjacent () groups
+status: 0
+bash-n: 0
+--- stdout
+|['a-b-c-d', 'b', 'd']
+|['ff', '', '']
+|['zz', 'zz', '']
+|['zz', 'z', 'z', '']
+
+=== 29: unquoted [a  b] as pattern, [a  b|c]
+status: 0
+bash-n: 0
+--- stdout
+|yes
+|[ab]=0
+|[a b]=2
+|yes
+|[a b]=0
+--- stderr
+|<sh>: line 1: syntax error in conditional expression: unexpected token `b]'
+|<sh>: line 1: syntax error near `b]'
+|<sh>: line 1: `[[ a =~ [a b] ]] && echo yes'
+
+=== 30: c|a unquoted
+status: 0
+bash-n: 0
+--- stdout
+|one
+
+=== 31: Operator chars ; & but not |
+status: 0
+bash-n: 0
+--- stdout
+|semi=2
+|semi paren
+|semi paren=0
+|
+|amp=2
+|pipe1
+|pipe2
+|pipe=0
+|four
+|pipe=0
+|angle=2
+|newline=2
+--- stderr
+|<sh>: line 1: syntax error in conditional expression: unexpected token `;'
+|<sh>: line 1: syntax error near `;'
+|<sh>: line 1: `[[ ';' =~ ; ]] && echo semi'
+|<sh>: line 1: syntax error in conditional expression: unexpected token `&'
+|<sh>: line 1: syntax error near `&'
+|<sh>: line 1: `[[ '&' =~ & ]] && echo amp'
+|<sh>: line 1: syntax error in conditional expression: unexpected token `<>'
+|<sh>: line 1: syntax error near `<>'
+|<sh>: line 1: `[[ '<>' =~ <> ]] && echo angle'
+|<sh>: line 1: syntax error in conditional expression: unexpected token `b'
+|<sh>: line 2: syntax error near `b'
+|<sh>: line 2: `b ]] && echo newline'
+
+=== 32: Quotes '' "" $'' $"" in pattern
+status: 0
+bash-n: 0
+--- stdout
+|sq
+|sq=0
+|dq
+|dq=0
+|dollar-sq
+|dollar-sq=0
+|dollar-dq
+|dollar-dq=0
+
+=== 33: Unicode in pattern
+status: 0
+bash-n: 0
+--- stdout
+|mu
+|mu=0
+
+=== 34: Parse error with 2 words
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `a'
+|bash: line 1: syntax error near `a'
+|bash: line 1: `if [[ a =~ c a ]]; then'
+--- bash-n stderr
+|bash: line 1: syntax error in conditional expression: unexpected token `a'
+|bash: line 1: syntax error near `a'
+|bash: line 1: `if [[ a =~ c a ]]; then'
+
+=== 35: make a lisp example
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|m=(
+
+=== 36: Operators and space lose meaning inside ()
+status: 0
+bash-n: 0
+--- stdout
+|true

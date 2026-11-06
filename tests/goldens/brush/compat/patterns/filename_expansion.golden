@@ -1,0 +1,353 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/patterns/filename_expansion.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Single file expansion
+status: 0
+bash-n: 0
+--- stdout
+|file1.txt
+
+=== 1: Expansion with noglob
+status: 0
+bash-n: 0
+--- stdout
+|*.txt: *.txt
+
+=== 2: Multiple file expansion
+status: 0
+bash-n: 0
+--- stdout
+|file1.txt file2.txt
+|file1.txt file2.txt
+
+=== 3: File expansion with nocaseglob
+status: 0
+bash-n: 0
+--- stdout
+|*.txt: FILE1.TXT file2.txt
+|*.TXT: FILE1.TXT file2.txt
+
+=== 4: Nested directory expansion
+status: 0
+bash-n: 0
+--- stdout
+|dir/file1.txt
+
+=== 5: Multiple level directory expansion
+status: 0
+bash-n: 0
+--- stdout
+|dir/subdir/file1.txt
+
+=== 6: Expansion with no matches
+status: 0
+bash-n: 0
+--- stdout
+|*.jpg
+
+=== 7: Expansion with no matches + nullglob
+status: 0
+bash-n: 0
+--- stdout
+|*.jpg:
+
+=== 8: Expansion with matches and non-matches in directory
+status: 0
+bash-n: 0
+--- stdout
+|dir/file.jpg
+
+=== 9: Expansion with matches and non-matches in directory + nullglob
+status: 0
+bash-n: 0
+--- stdout
+|dir/*.jpg: dir/file.jpg
+
+=== 10: Expansion with special characters
+status: 0
+bash-n: 0
+--- stdout
+|file1.txt file2.txt
+
+=== 11: Expansion with brackets
+status: 0
+bash-n: 0
+--- stdout
+|file1.txt file2.txt
+
+=== 12: Expansion with range
+status: 0
+bash-n: 0
+--- stdout
+|file1.txt file2.txt
+
+=== 13: Expansion with negation
+status: 0
+bash-n: 0
+--- stdout
+|file1.txt
+
+=== 14: Expansion with tilde
+status: 0
+bash-n: 0
+--- stdout
+|/some/dir/file1.txt
+|/some/dir/file1.txt:~/file1.txt
+
+=== 15: Expansion with dots
+status: 0
+bash-n: 0
+--- stdout
+|./file1.txt
+|../file1.txt
+
+=== 16: Expansion with mixed patterns
+status: 0
+bash-n: 0
+--- stdout
+|dir/subdir/file1.txt
+
+=== 17: Expansion with escaped characters
+status: 0
+bash-n: 0
+--- stdout
+|file*.txt
+
+=== 18: Pathname expansion: extglob disabled
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `echo !(a*)'
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `echo !(a*)'
+
+=== 19: Pathname expansion: Inverted patterns
+status: 0
+bash-n: 2
+--- stdout
+|1:  def.txt
+|2:  abd.txt def.txt
+|3:  abc.txt abd.txt def.txt
+|4:  !(*)
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `echo "1: " !(a*)'
+
+=== 20: Pathname expansion: Degenerate inverted pattern
+status: 0
+bash-n: 2
+--- stdout
+|abc.txt abd.txt def.txt
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `echo !()'
+
+=== 21: Pathname expansion: Extended patterns
+status: 0
+bash-n: 2
+--- stdout
+|1:  abc.txt abd.txt
+|2:  abc.txt
+|3:  @(abc)
+|4:  abc.txt
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `echo "1: " @(abc|abd).txt'
+
+=== 22: Pathname expansion: Optional patterns
+status: 0
+bash-n: 2
+--- stdout
+|ab.txt abc.txt
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `echo ab?(c).txt'
+
+=== 23: Pathname expansion: Star patterns
+status: 0
+bash-n: 2
+--- stdout
+|ab.txt abadac.txt
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `echo *(ab|ad|ac).txt'
+
+=== 24: Pathname expansion: Plus patterns
+status: 0
+bash-n: 2
+--- stdout
+|fabadac.txt
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `echo f+(ab|ad|ac).txt'
+
+=== 25: Pathname expansion: quoting
+status: 0
+bash-n: 0
+--- stdout
+|./test.txt
+|subdir/test.txt
+|test.*
+
+=== 26: Pathname expansion: dot files (no dotglob)
+status: 0
+bash-n: 0
+--- stdout
+|*   :  *
+|*i* :  *i*
+|./* :  ./*
+|.*  :  .dir .file
+|./.*:  ./.dir ./.file
+--- file .dir
+--- file .file
+
+=== 27: Pathname expansion: dot files after empty quotes (no dotglob)
+status: 0
+bash-n: 0
+--- stdout
+|"".* :  .file
+|''.* :  .file
+|$e"".*:  .file
+|sub/"".*:  sub/.hidden
+|""*  :  sub
+--- file .file
+--- dir sub
+--- file sub/.hidden
+
+=== 28: Glob results are sorted
+status: 0
+bash-n: 0
+--- stdout
+|apple.txt banana.txt cherry.txt
+
+=== 29: Multiple globs on one command line
+status: 0
+bash-n: 0
+--- stdout
+|a.txt b.txt x.log y.log
+
+=== 30: Glob does not expand in variable assignment
+status: 0
+bash-n: 0
+--- stdout
+|*.txt
+
+=== 31: Glob expands in unquoted variable use
+status: 0
+bash-n: 0
+--- stdout
+|file1.txt file2.txt
+
+=== 32: Glob with trailing slash matches directories
+status: 0
+bash-n: 0
+--- stdout
+|mydir/
+
+=== 33: Trailing path filters glob results
+status: 0
+bash-n: 0
+--- stdout
+|b/banana.txt
+|a/apple.txt b/banana.txt
+
+=== 34: Trailing literal keeps dangling symlinks but drops missing
+status: 0
+bash-n: 0
+--- stdout
+|link.txt: a/link.txt
+|real.txt: a/real.txt b/real.txt
+--- link a/link.txt -> nonexistent-target
+
+=== 35: Trailing literal with directory symlinks
+status: 0
+bash-n: 0
+--- stdout
+|*/file.txt: linkdir/file.txt realdir/file.txt
+--- link danglingdir -> nonexistent
+--- link linkdir -> realdir
+
+=== 36: Globstar disabled by default
+status: 0
+bash-n: 0
+--- stdout
+|**/c.txt
+
+=== 37: Globstar recursive matching
+status: 0
+bash-n: 0
+--- stdout
+|a/b/c.txt a/d.txt e.txt
+
+=== 38: GLOBIGNORE filters glob results
+status: 0
+bash-n: 0
+--- stdout
+|a.txt c.txt
+
+=== 39: GLOBIGNORE with multiple patterns
+status: 0
+bash-n: 0
+--- stdout
+|a.txt
+|d.log
+
+=== 40: GLOBIGNORE implicitly enables dotglob
+status: 0
+bash-n: 0
+--- stdout
+|.hidden.txt
+
+=== 41: Unsetting GLOBIGNORE restores behavior
+status: 0
+bash-n: 0
+--- stdout
+|b.txt
+|a.txt b.txt
+
+=== 42: Star does not match slash in path
+status: 0
+bash-n: 0
+--- stdout
+|top.txt
+
+=== 43: Pathname expansion: dot files (with dotglob)
+status: 0
+bash-n: 0
+--- stdout
+|*   :  .dir .file
+|*i* :  .dir .file
+|./* :  ./.dir ./.file
+|.*  :  .dir .file
+|./.*:  ./.dir ./.file
+--- file .dir
+--- file .file
+
+=== 44: Pathname expansion: extglob containing parameter expansion
+status: 0
+bash-n: 2
+--- stdout
+|x x x x
+--- file x
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `echo @($u) @(a|$u) @(a|${u:-y}) @(a|${v:-x})'
+
+=== 45: Backslash from a variable in a path component without glob characters
+status: 0
+bash-n: 0
+--- stdout
+|sub/file
+|sub/file
+|a*b/f
+|x/f
+|\x/*
+--- dir a*b
+--- file a*b/f
+--- dir sub
+--- file sub/file
+--- dir x
+--- file x/f

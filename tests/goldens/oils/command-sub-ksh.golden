@@ -1,0 +1,49 @@
+# Goldens for tests/oils/spec/command-sub-ksh.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: ${ echo hi;}
+status: 0
+bash-n: 0
+--- stdout
+|[hi]
+|
+|[one
+|two]
+|
+|[ 3 
+| 4 5 ]
+|
+|[ 3 
+| 4 5 ]
+--- stderr
+|bash: line 18: ${myfunc;}: bad substitution
+
+=== 1: ${ echo hi }  without semi-colon
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 10: unexpected EOF while looking for matching `}'
+--- bash-n stderr
+|bash: line 10: unexpected EOF while looking for matching `}'
+
+=== 2: ${|REPLY=hi}
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 11: syntax error near unexpected token `|' while looking for matching `}'
+|bash: line 11: `x=${ |REPLY=zz}'
+--- bash-n stderr
+|bash: line 11: syntax error near unexpected token `|' while looking for matching `}'
+|bash: line 11: `x=${ |REPLY=zz}'
+
+=== 3: for loop / case
+status: 0
+bash-n: 0
+--- stdout
+|-a-
+|-b-
+|-a--b-
+|
+|sh-case
+|sh-case

@@ -1,0 +1,217 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/unset.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic unset usage
+status: 0
+bash-n: 0
+--- stdout
+|var: 
+
+=== 1: Unset multiple variables
+status: 0
+bash-n: 0
+--- stdout
+|var1: , var2: 
+
+=== 2: Unset function
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 5: myfunc: command not found
+
+=== 3: Unset -f function
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 5: myfunc: command not found
+
+=== 4: Unset indexed array element
+status: 0
+bash-n: 0
+--- stdout
+|declare -a myarray=([1]="b" [2]="c")
+|declare -a myarray=([1]="b" [2]="c")
+|declare -a myarray=([1]="b")
+|declare -a myarray=()
+
+=== 5: Unset associative array element
+status: 0
+bash-n: 0
+--- stdout
+|[1]
+|declare -A myarray=()
+|[2]
+|declare -A myarray=()
+|[3]
+|declare -A myarray=()
+
+=== 6: Unset array element with interesting expression
+status: 0
+bash-n: 0
+--- stdout
+|Initial array:
+|declare -a myarray=([0]="a" [1]="b" [2]="c" [3]="d" [4]="e")
+|
+|After removing element at index 4:
+|declare -a myarray=([0]="a" [1]="b" [2]="c" [3]="d")
+|
+|After removing element at index 3:
+|declare -a myarray=([0]="a" [1]="b" [2]="c")
+|
+
+=== 7: Unset array element with negative index
+status: 0
+bash-n: 0
+--- stdout
+|Initial array:
+|declare -a myarray=([0]="a" [1]="b" [2]="c" [3]="d" [4]="e")
+|
+|After removing last element (index -1):
+|declare -a myarray=([0]="a" [1]="b" [2]="c" [3]="d")
+|
+|After removing new last element (index -1 again):
+|declare -a myarray=([0]="a" [1]="b" [2]="c")
+|
+|After removing second-to-last element (index -2):
+|declare -a myarray=([0]="a" [2]="c")
+|
+
+=== 8: Unset array element with negative index out of bounds
+status: 0
+bash-n: 0
+--- stdout
+|Initial array:
+|declare -a myarray=([0]="a" [1]="b" [2]="c")
+|
+|After attempting to remove with index -4 (out of bounds):
+|declare -a myarray=([0]="a" [1]="b" [2]="c")
+|Return code: 0
+--- stderr
+|bash: line 7: unset: [-4]: bad array subscript
+
+=== 9: Unset array element with variable negative index
+status: 0
+bash-n: 0
+--- stdout
+|Initial array:
+|declare -a myarray=([0]="10" [1]="20" [2]="30" [3]="40" [4]="50")
+|
+|After removing with variable index i=-1:
+|declare -a myarray=([0]="10" [1]="20" [2]="30" [3]="40")
+|
+|After removing with variable index i=-2:
+|declare -a myarray=([0]="10" [1]="20" [3]="40")
+|
+
+=== 10: Unset local in same function
+status: 0
+bash-n: 0
+--- stdout
+|Before call: var=global
+|In myfunc
+|declare -i var="10"
+|After unset
+|declare -- var
+|After call: var=global
+
+=== 11: Unset locals in callers
+status: 0
+bash-n: 0
+--- stdout
+|before calls: var=global
+|entered firstfunc: var=first
+|entered secondfunc: var=second
+|entered thirdfunc: var=second
+|after first unset: var=first
+|   ...and updated: var=first:updated
+|after second unset: var=global
+|   ...and updated: var=global:updated
+|after third unset: var=
+|   ...and updated: var=:updated
+|leaving firstfunc: var=:updated
+|leaving secondfunc: var=:updated
+|leaving firstfunc: var=:updated
+|after calls: var=:updated
+
+=== 12: Unset with nameref
+status: 0
+bash-n: 0
+--- stdout
+|[Before unset]
+|ref: value
+|var: value
+|[After unset]
+|ref: 
+|var: 
+
+=== 13: Unset -n removes nameref itself
+status: 0
+bash-n: 0
+--- stdout
+|before: target=value ref=value
+|after unset -n: target=value
+|ref is gone
+|declare -- target="value"
+|target still declared
+
+=== 14: Unset array element through nameref
+status: 0
+bash-n: 0
+--- stdout
+|declare -a target=([0]="a" [1]="b" [3]="d" [4]="e")
+|declare -a target=([1]="b" [3]="d" [4]="e")
+
+=== 15: Unset odd function names
+status: 0
+bash-n: 0
+--- stdout
+|[Checking existing]
+|[ is a shell builtin
+|[Defining function]
+|[Checking defined]
+|[ is a function
+|[ () 
+|{ 
+|    :
+|}
+|[Unsetting function]
+|unset result: 0
+|[Checking after unset]
+|[ is a shell builtin
+
+=== 16: unset -f with -v is an error
+status: 0
+bash-n: 0
+--- stdout
+|result: 1
+|result: 1
+|x=1
+--- stderr
+|bash: line 2: unset: cannot simultaneously unset a function and a variable
+|bash: line 4: unset: cannot simultaneously unset a function and a variable
+
+=== 17: unset does not evaluate an associative key arithmetically
+status: 0
+bash-n: 0
+--- stdout
+|declare -A zz_m=([2]="numeric" )
+
+=== 18: unset with a star or at subscript leaves an associative array alone
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|declare -A zz_m=([k]="v" )
+|status: 0
+|declare -A zz_m=([k]="v" )
+
+=== 19: unset -v rejects a name that isn't a variable's
+status: 0
+bash-n: 0
+--- stdout
+|unset -v: 1 1
+|unset: `1x': not a valid identifier
+|unset: `a[1': not a valid identifier
+|unset: `b c': not a valid identifier
+|unset: 0

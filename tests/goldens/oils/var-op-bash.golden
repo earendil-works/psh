@@ -1,0 +1,263 @@
+# Goldens for tests/oils/spec/var-op-bash.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Lower Case with , and ,,
+status: 0
+bash-n: 0
+--- stdout
+|aBC DEF
+|abc def
+|empty=
+|empty=
+
+=== 1: Upper Case with ^ and ^^
+status: 0
+bash-n: 0
+--- stdout
+|Abc def
+|ABC DEF
+|empty=
+|empty=
+
+=== 2: Case folding - Unicode characters
+status: 0
+bash-n: 0
+--- stdout
+|u ÀÈ
+|U ÀÈ
+|l àÈ
+|L àè
+|u Áé
+|U ÁÉ
+|l áé
+|L áé
+
+=== 3: Case folding - multi code point
+status: 0
+bash-n: 0
+--- stdout
+|shell
+|u ß
+|U ß
+|l ß
+|L ß
+|
+|python2
+|
+--- stderr
+|bash: line 11: python2: command not found
+
+=== 4: Case folding that depends on locale (not enabled, requires Turkish locale)
+status: 0
+bash-n: 0
+--- stdout
+|u I
+|U I
+|l i
+|L i
+
+=== 5: Lower Case with constant string (VERY WEIRD)
+status: 0
+bash-n: 0
+--- stdout
+|aAA ABC DEF
+|aaa aBC DEF
+
+=== 6: Lower Case glob
+status: 0
+bash-n: 0
+--- stdout
+|ABC DEF
+|ABC DEF
+
+=== 7: ${x@u} U L - upper / lower case (bash 5.1 feature)
+status: 0
+bash-n: 0
+--- stdout
+|Abc DEF
+|ABC DEF
+|abc def
+
+=== 8: ${x@Q}
+status: 0
+bash-n: 0
+--- stdout
+|OK
+
+=== 9: ${array@Q} and ${array[@]@Q}
+status: 0
+bash-n: 0
+--- stdout
+|'x' 'y\nz'
+|'x'
+|'x'
+
+=== 10: ${!prefix@} ${!prefix*} yields sorted array of var names
+status: 0
+bash-n: 0
+--- stdout
+|['Z', 'ZIP', 'ZOO', 'ZOOM']
+|['Z', 'ZIP', 'ZOO', 'ZOOM']
+|['Z ZIP ZOO ZOOM']
+|['Z', 'ZIP', 'ZOO', 'ZOOM']
+|['Z', 'ZIP', 'ZOO', 'ZOOM']
+|['Z', 'ZIP', 'ZOO', 'ZOOM']
+|['Z', 'ZIP', 'ZOO', 'ZOOM']
+|['Z', 'ZIP', 'ZOO', 'ZOOM']
+|['Z ZIP ZOO ZOOM']
+|['Z ZIP ZOO ZOOM']
+|['Z', 'ZIP', 'ZOO', 'ZOOM']
+|['Z', 'ZIP', 'ZOO', 'ZOOM']
+
+=== 11: ${!prefix@} matches var name (regression)
+status: 0
+bash-n: 0
+--- stdout
+|hello1 hello2 hello3
+|hello hello1 hello2 hello3
+
+=== 12: ${var@a} for attributes
+status: 0
+bash-n: 0
+--- stdout
+|a
+|ar
+|rx
+
+=== 13: ${var@a} error conditions
+status: 0
+bash-n: 0
+--- stdout
+|[]
+
+=== 14: undef and @P @Q @a
+status: 0
+bash-n: 0
+--- stdout
+|
+|status=0
+|
+|status=0
+|
+|status=0
+
+=== 15: argv array and @P @Q @a
+status: 0
+bash-n: 0
+--- stdout
+|a b c
+|status=0
+|'a' 'b\nc'
+|status=0
+|
+|status=0
+
+=== 16: assoc array and @P @Q @a
+status: 0
+bash-n: 0
+--- stdout
+|- y
+|status=0
+|- 'y'
+|status=0
+|A - A
+|status=0
+
+=== 17: ${!var[@]@X}
+status: 0
+bash-n: 0
+--- stdout
+|
+|
+|
+
+=== 18: ${#var@X} is a parse error
+status: 0
+bash-n: 0
+--- stdout
+|fail
+|fail
+|fail
+--- stderr
+|<sh>: line 1: ${#A[@]@P}: bad substitution
+|<sh>: line 1: ${#A[@]@Q}: bad substitution
+|<sh>: line 1: ${#A[@]@a}: bad substitution
+
+=== 19: ${!A@a} and ${!A[@]@a}
+status: 0
+bash-n: 0
+--- stdout
+|x=
+|invalid=
+
+=== 20: undef vs. empty string in var ops
+status: 0
+bash-n: 0
+--- stdout
+|'x' '' 'x'
+|'x' '' 'x'
+|'x' '' 'x'
+|x='x' empty='' x='x'
+|r r
+
+=== 21: -o nounset with var ops
+status: 0
+bash-n: 0
+--- stdout
+|stat: 1
+|stat: 1
+|stat: 1
+--- stderr
+|bash: line 2: undef: unbound variable
+|bash: line 3: undef: unbound variable
+|bash: line 4: undef: unbound variable
+
+=== 22: ${a[0]@a} and ${a@a}
+status: 0
+bash-n: 0
+--- stdout
+|attr = 'a'
+|attr = 'a'
+
+=== 23: ${!r@a} with r='a[0]' (attribute for indirect expansion of an array element)
+status: 0
+bash-n: 0
+--- stdout
+|a
+|a
+|A
+|A
+
+=== 24: Array expansion with nullary var op @Q
+status: 0
+bash-n: 0
+--- stdout
+|["'1'", "'2'", "'3'", "'4'", "'5'", "'6'", "'7'", "'8'", "'9'"]
+|["'1' '2' '3' '4' '5' '6' '7' '8' '9'"]
+|["'ysh'", "'osh'", "'world'", "'hello'"]
+|["'ysh' 'osh' 'world' 'hello'"]
+|[]
+|['']
+
+=== 25: Array expansion with nullary var op @P
+status: 0
+bash-n: 0
+--- stdout
+|['1', '2', '3', '4', '5', '6', '7', '8', '9']
+|['1 2 3 4 5 6 7 8 9']
+|['ysh', 'osh', 'world', 'hello']
+|['ysh osh world hello']
+|[]
+|['']
+
+=== 26: Array expansion with nullary var op @a
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a']
+|['a a a a a a a a a']
+|['A', 'A', 'A', 'A']
+|['A A A A']
+|[]
+|['']

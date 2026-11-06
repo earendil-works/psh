@@ -1,0 +1,104 @@
+# Groups of the conformance cases (TESTING.md "Groups"). Rules are tried in order; the
+# first that matches a case decides its group:
+#
+#   skip    psh will never do this, or bash's own result is not reproducible. Left out
+#           of the denominator and not run.
+#   later   on the roadmap but outside the current milestone; run and reported apart.
+#   active  everything else: the ratchet applies.
+#
+# Every rule has a reason. `match` takes globs on case ids (`*` within one part, `**`
+# across parts: oils/alias/*, brush/compat/builtins/**); `tag` matches case tags (pty,
+# interactive). Moving cases between groups is a coordinator decision.
+
+# --- Never: interactive shell features (D002) ---------------------------------------
+
+[[skip]]
+tag = ["pty", "interactive"]
+reason = "needs a terminal or an interactive shell (D002)"
+
+[[skip]]
+match = [
+  "oils/interactive/*",
+  "oils/prompt/*",
+  "brush/compat/interactive/*",
+  "brush/compat/prompt/*",
+]
+reason = "interactive shell and prompt rendering (D002)"
+
+[[skip]]
+match = [
+  "oils/history-expand/*",
+  "oils/builtin-history/*",
+  "oils/builtin-fc/*",
+  "brush/compat/builtins/history/*",
+  "brush/compat/builtins/fc/*",
+]
+reason = "history (D002)"
+
+[[skip]]
+match = [
+  "oils/builtin-completion/*",
+  "oils/builtin-bind/*",
+  "brush/compat/completion/*",
+  "brush/compat/builtins/compgen/*",
+  "brush/compat/builtins/complete/*",
+  "brush/compat/builtins/bind/*",
+]
+reason = "completion and line editing (D002)"
+
+[[skip]]
+match = [
+  "brush/compat/compound_cmds/select/*",
+  "brush/compat/builtins/suspend/*",
+]
+reason = "select and job suspension are interactive features (D002)"
+
+[[skip]]
+match = ["oils/zsh-assoc/*", "oils/zsh-idioms/*"]
+reason = "zsh-only idioms; psh has no zsh mode (D002)"
+
+[[skip]]
+match = [
+  "brush/brush/brushctl/*",
+  "brush/brush/cli/*",
+  "brush/brush/completion/*",
+  "brush/brush/help/*",
+  "brush/brush/zsh_hooks/*",
+  "brush/compat/builtins/help/*",
+]
+reason = "brush's own command line, help text and extensions, not bash behavior to match"
+
+# --- Never: bash's own result is not reproducible -----------------------------------
+# Found by `scripts/record-goldens --check` (four recordings): process ids, clock
+# times, $RANDOM, or races between processes decide stdout or status.
+
+[[skip]]
+match = [
+  "oils/background/12",
+  "oils/background/22",
+  "oils/background/26",
+  "oils/bugs/11",
+  "oils/builtin-process/9",
+  "oils/builtin-process/16",
+  "oils/posix/12",
+  "oils/redirect/23",
+  "oils/redirect/24",
+  "oils/sh-usage/11",
+  "oils/vars-special/6",
+  "oils/vars-special/17",
+  "brush/compat/builtins/read/17",
+  "brush/compat/builtins/read/18",
+  "brush/compat/builtins/times/0",
+  "brush/compat/builtins/trap/61",
+  "brush/compat/builtins/trap/62",
+  "brush/compat/builtins/wait/4",
+  "brush/compat/compound_cmds/coproc/15",
+  "brush/compat/options/set-e/144",
+]
+reason = "nondeterministic in bash itself (pids, clock, $RANDOM, timing)"
+
+# --- Later ---------------------------------------------------------------------------
+
+[[later]]
+match = ["brush/compat/compound_cmds/coproc/*"]
+reason = "coproc: bash feature outside the first milestone"

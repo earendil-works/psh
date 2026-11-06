@@ -1,0 +1,380 @@
+# Goldens for tests/oils/spec/alias.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Usage of builtins
+status: 127
+bash-n: 0
+--- stdout
+|status=0
+|x
+--- stderr
+|bash: line 6: foo: command not found
+
+=== 1: Basic alias
+status: 0
+bash-n: 0
+--- stdout
+|hello world
+|hi
+|expected failure
+--- stderr
+|bash: line 5: hi: command not found
+
+=== 2: define and use alias on a single line
+status: 0
+bash-n: 0
+--- stdout
+|two
+|three
+--- stderr
+|bash: line 2: e: command not found
+
+=== 3: alias can override builtin
+status: 0
+bash-n: 0
+--- stdout
+|foo bar
+
+=== 4: defining multiple aliases, then unalias
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|x X
+|y Y
+|status=0
+|undefined
+|undefined
+--- stderr
+|bash: line 10: echo-x: command not found
+|bash: line 11: echo-y: command not found
+
+=== 5: alias not defined
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: alias: nonexistentZ: not found
+
+=== 6: unalias not defined
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 2: unalias: nonexistentZ: not found
+
+=== 7: unalias -a
+status: 0
+bash-n: 0
+--- stdout
+|2
+|status=0
+
+=== 8: List aliases by providing names
+status: 0
+bash-n: 0
+--- stdout
+|alias e='echo'
+|alias ll='ls -l'
+
+=== 9: alias without args lists all aliases
+status: 0
+bash-n: 0
+--- stdout
+|alias ex='exit'
+|alias ll='ls -l'
+|status=0
+
+=== 10: unalias without args is a usage error
+status: 0
+bash-n: 0
+--- stdout
+|usage-error
+--- stderr
+|unalias: usage: unalias [-a] name [name ...]
+
+=== 11: alias with trailing space causes alias expansion on second word
+status: 0
+bash-n: 0
+--- stdout
+|hello world !!!
+|hello world punct
+
+=== 12: Recursive alias expansion of first word
+status: 0
+bash-n: 0
+--- stdout
+|__ hello world
+
+=== 13: Recursive alias expansion of SECOND word
+status: 0
+bash-n: 0
+--- stdout
+|one TWO hello world
+
+=== 14: Expansion of alias with variable
+status: 0
+bash-n: 0
+--- stdout
+|y hi
+
+=== 15: Alias must be an unquoted word, no expansions allowed
+status: 0
+bash-n: 0
+--- stdout
+|X
+|status=127
+--- stderr
+|bash: line 5: echo_alias_: command not found
+
+=== 16: first and second word are the same alias, but no trailing space
+status: 0
+bash-n: 0
+--- stdout
+|x echo-x
+
+=== 17: first and second word are the same alias, with trailing space
+status: 0
+bash-n: 0
+--- stdout
+|x echo x
+
+=== 18: Invalid syntax of alias
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 2: alias: echo --; echo: not found
+|bash: line 3: x: command not found
+
+=== 19: Dynamic alias definition
+status: 0
+bash-n: 0
+--- stdout
+|X
+
+=== 20: Alias name with punctuation
+status: 0
+bash-n: 0
+--- stdout
+|X
+
+=== 21: Syntax error after expansion
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 3: syntax error near unexpected token `;;'
+|bash: line 3: `;; oops'
+
+=== 22: Loop split across alias and arg works
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 23: Loop split across alias in another way
+status: 0
+bash-n: 2
+--- stdout
+|1
+|2
+|3
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `done'
+|bash: line 3: `e_ $i; done'
+
+=== 24: Loop split across both iterative and recursive aliases
+status: 0
+bash-n: 2
+--- stdout
+|1
+|2
+|3
+--- bash-n stderr
+|bash: line 9: syntax error near unexpected token `do'
+|bash: line 9: `FOR2 eye2 IN onetwo 3; do echo $i; done'
+
+=== 25: Alias with a quote in the middle is a syntax error
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 4: unexpected EOF while looking for matching `''
+
+=== 26: Alias with internal newlines
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3 echo foo
+
+=== 27: Alias trailing newline
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|foo
+
+=== 28: Two aliases in pipeline
+status: 0
+bash-n: 0
+--- stdout
+|3
+
+=== 29: Alias not respected inside $()
+status: 127
+bash-n: 0
+--- stdout
+|
+--- stderr
+|bash: line 3: sayhi: command not found
+
+=== 30: Alias can be defined and used on a single line
+status: 0
+bash-n: 0
+--- stdout
+|hello other line
+--- stderr
+|bash: line 2: sayhi: command not found
+
+=== 31: Alias is respected inside eval
+status: 0
+bash-n: 0
+--- stdout
+|hello inside
+|hello outside
+
+=== 32: alias with redirects works
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+--- file alias1.txt
+|1
+--- file alias2.txt
+|2
+--- file alias3.txt
+|3
+
+=== 33: alias with environment bindings works
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+
+=== 34: alias with line continuation in the middle
+status: 0
+bash-n: 0
+--- stdout
+|ONE TWO ONE TWO THREE two one
+
+=== 35: alias for left brace
+status: 0
+bash-n: 2
+--- stdout
+|one
+|two
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `}'
+|bash: line 3: `LEFT echo one; echo two; }'
+
+=== 36: alias for left paren
+status: 0
+bash-n: 2
+--- stdout
+|one
+|two
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `)'
+|bash: line 3: `LEFT echo one; echo two )'
+
+=== 37: alias used in subshell and command sub
+status: 0
+bash-n: 0
+--- stdout
+|[ subshell
+|[ commandsub
+
+=== 38: alias used in here doc
+status: 0
+bash-n: 0
+--- stdout
+|[ ]
+
+=== 39: here doc inside alias
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 40: Corner case: alias inside LHS array arithmetic expression
+status: 0
+bash-n: 0
+--- stdout
+|['ZERO', 'ONE']
+
+=== 41: Alias that is pipeline
+status: 0
+bash-n: 0
+--- stdout
+|3
+
+=== 42: Alias that is && || ;
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|1
+|four
+
+=== 43: Alias and command sub (bug regression)
+status: 0
+bash-n: 0
+--- stdout
+|['foo', 'bar']
+--- file tmp.txt
+|foo bar
+
+=== 44: Alias and arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|['3']
+
+=== 45: Alias and PS4
+status: 0
+bash-n: 0
+--- stdout
+|['foo', 'bar']
+--- stderr
+|+ PS4='+$(echo trace) '
+|+trace shopt -s expand_aliases
+|+trace alias a=argv.py
+|+trace argv.py foo bar
+
+=== 46: alias with keywords
+status: 0
+bash-n: 2
+--- stdout
+|done
+--- bash-n stderr
+|bash: line 5: syntax error near unexpected token `('
+|bash: line 5: `a (( var = 0 ))'
+
+=== 47: alias with word of multiple lines
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|ls: cannot access '1'$'\n''  2'$'\n''  3': No such file or directory

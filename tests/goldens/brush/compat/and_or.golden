@@ -1,0 +1,87 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/and_or.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic &&
+status: 0
+bash-n: 0
+--- stdout
+|2
+
+=== 1: Basic ||
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 2: Longer chains
+status: 0
+bash-n: 0
+--- stdout
+|Got to the end
+|1
+|2
+|3
+|4
+
+=== 3: Mixed chains
+status: 0
+bash-n: 0
+--- stdout
+|1. Got to the end
+|2. Got to the end
+|3. Got to the end
+
+=== 4: And with return in function
+status: 0
+bash-n: 0
+--- stdout
+|Before
+|Exit code: 42
+
+=== 5: And with exit
+status: 42
+bash-n: 0
+--- stdout
+|Before
+
+=== 6: And with break in loop
+status: 0
+bash-n: 0
+--- stdout
+|Iteration 1
+|After loop
+
+=== 7: And with continue in loop
+status: 0
+bash-n: 0
+--- stdout
+|Iteration 1
+|Iteration 2
+|Iteration 3
+|After loop
+
+=== 8: Or with return in function
+status: 0
+bash-n: 0
+--- stdout
+|Exit code: 42
+
+=== 9: Or with exit
+status: 42
+bash-n: 0
+
+=== 10: Or with break in loop
+status: 0
+bash-n: 0
+--- stdout
+|After loop
+
+=== 11: Or with continue in loop
+status: 0
+bash-n: 0
+--- stdout
+|Iteration 1
+|Iteration 2
+|Iteration 3
+|After loop

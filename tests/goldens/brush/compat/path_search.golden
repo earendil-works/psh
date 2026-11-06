@@ -1,0 +1,192 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/path_search.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: empty PATH entry is reported as the working directory
+status: 0
+bash-n: 0
+--- stdout
+|[type]
+|prog is ./prog
+|rc=0
+|[type -p]
+|./prog
+|rc=0
+|[type -P]
+|./prog
+|rc=0
+|[type -a]
+|prog is ./prog
+|rc=0
+|[command -v]
+|./prog
+|rc=0
+--- file prog
+|#!/bin/sh
+|echo ran
+
+=== 1: empty PATH entry is reported the same wherever it appears
+status: 0
+bash-n: 0
+--- stdout
+|[leading]
+|./prog
+|rc=0
+|[trailing]
+|./prog
+|rc=0
+|[middle]
+|./prog
+|rc=0
+--- file prog
+|#!/bin/sh
+|echo ran
+
+=== 2: empty PATH entry is hashed as the working directory
+status: 0
+bash-n: 0
+--- stdout
+|rc=0
+|./prog
+|rc=0
+--- file prog
+|#!/bin/sh
+|echo ran
+
+=== 3: empty PATH entry is passed to the command as the working directory
+status: 0
+bash-n: 0
+--- stdout
+|_=./env
+--- bigfile env 68464 84227509f65b0d6d
+
+=== 4: relative PATH entry is relative to the working directory
+status: 0
+bash-n: 0
+--- stdout
+|prog is bin/prog
+|prog is bin/prog
+|bin/prog
+|hash: 0
+|ran prog
+|command: 0
+|ran prog
+|exec in a subshell: 0
+|ran prog
+
+=== 5: script run by a relative path sees that path as its $0
+status: 0
+bash-n: 0
+--- stdout
+|0=./prog
+|0=bin/prog
+
+=== 6: empty PATH entry runs the program in the working directory
+status: 0
+bash-n: 0
+--- stdout
+|id in the working directory
+|only here
+|only-here is hashed (./only-here)
+
+=== 7: command found through an empty PATH entry is searched for again after cd
+status: 0
+bash-n: 0
+--- stdout
+|prog in a
+|./prog
+|prog is hashed (./prog)
+|prog in fallback
+|status: 0
+|prog in a
+|./prog
+|prog is hashed (./prog)
+|prog in a
+|./prog
+|prog is hashed (./prog)
+|prog in fallback
+|status: 0
+|prog in a
+|./prog
+|prog is hashed (./prog)
+
+=== 8: PATH entry for the working directory written another way
+status: 0
+bash-n: 0
+--- stdout
+|prog in fallback
+|prog in a
+|./prog
+|prog in fallback
+|prog in a
+|./prog
+|prog in fallback
+|prog in a
+|./prog
+|prog in fallback
+|prog in a
+|./prog
+
+=== 9: command found through a PATH entry is run by the path that entry gives it
+status: 0
+bash-n: 0
+--- stdout
+|0=./bin//prog
+|0=.//bin/prog
+
+=== 10: PATH entry starting with a dot is the working directory only if it's the same
+status: 0
+bash-n: 0
+--- stdout
+|[./sub]
+|prog in fallback
+|prog in fallback
+|[.hidden]
+|prog in fallback
+|prog in fallback
+|[.nosuch]
+|prog in fallback
+|prog in fallback
+|[./self]
+|prog in fallback
+|prog in a
+--- link b/self -> .
+
+=== 11: command hashed with hash -p is kept with an empty PATH entry
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+
+=== 12: with PATH unset, a command in the working directory is run by its name
+status: 0
+bash-n: 0
+--- stdout
+|0=prog
+
+=== 13: relative PATH entry is hashed as bash hashes it
+status: 0
+bash-n: 0
+--- stdout
+|ran prog
+|./bin/prog
+
+=== 14: a command found through an empty PATH entry is runnable
+status: 0
+bash-n: 0
+--- stdout
+|ran
+|rc=0
+--- file prog
+|#!/bin/sh
+|echo ran
+
+=== 15: command -V absolutizes a command found through an empty PATH entry
+status: 0
+bash-n: 0
+--- stdout
+|prog is <TMPDIR>/prog
+|rc=0
+--- file prog
+|#!/bin/sh
+|echo ran

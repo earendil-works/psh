@@ -1,0 +1,69 @@
+# Goldens for tests/brush/brush-shell/tests/cases/brush/brushctl.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Events are enabled and disabled by name or alias
+status: 0
+bash-n: 0
+--- stdout
+|done
+--- stderr
+|bash: line 1: brushctl: command not found
+|bash: line 2: brushctl: command not found
+|bash: line 3: brushctl: command not found
+|bash: line 4: brushctl: command not found
+
+=== 1: An unknown event is a usage error
+status: 0
+bash-n: 0
+--- stdout
+|status: 127
+--- stderr
+|bash: line 1: brushctl: command not found
+
+=== 2: A subcommand's help lists its own subcommands
+status: 0
+bash-n: 0
+--- stdout
+|brushctl doesn't
+--- stderr
+|bash: line 1: brushctl: command not found
+|bash: line 2: brushctl: command not found
+
+=== 3: -h and the help subcommand give help too
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: brushctl: command not found
+|bash: line 2: brushctl: command not found
+|bash: line 3: brushctl: command not found
+
+=== 4: A group without a subcommand is a usage error
+status: 0
+bash-n: 0
+--- stdout
+|status: 127 stdout: 0
+|status: 127 stdout: 0
+--- stderr
+|bash: line 1: brushctl: command not found
+|bash: line 3: brushctl: command not found
+
+=== 5: Completions for a line
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 2: brushctl: command not found
+|bash: line 3: brushctl: command not found
+
+=== 6: Process IDs
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: brushctl: command not found
+|bash: line 2: brushctl: command not found
+
+=== 7: Call stack names the calling function
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: brushctl: command not found

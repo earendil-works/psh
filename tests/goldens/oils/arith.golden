@@ -1,0 +1,573 @@
+# Goldens for tests/oils/spec/arith.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Side Effect in Array Indexing
+status: 0
+bash-n: 0
+--- stdout
+|6 b=2
+
+=== 1: Add one to var
+status: 0
+bash-n: 0
+--- stdout
+|2
+
+=== 2: $ is optional
+status: 0
+bash-n: 0
+--- stdout
+|2
+
+=== 3: SimpleVarSub within arith
+status: 0
+bash-n: 0
+--- stdout
+|42
+
+=== 4: BracedVarSub within ArithSub
+status: 0
+bash-n: 0
+--- stdout
+|6
+
+=== 5: Arith word part
+status: 0
+bash-n: 0
+--- stdout
+|2bar2
+
+=== 6: Arith sub with word parts
+status: 0
+bash-n: 0
+--- stdout
+|14
+
+=== 7: Constant with quotes like '1'
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: '1' + 2: arithmetic syntax error: operand expected (error token is "'1' + 2")
+
+=== 8: Arith sub within arith sub
+status: 0
+bash-n: 0
+--- stdout
+|10
+
+=== 9: Backticks within arith sub
+status: 0
+bash-n: 0
+--- stdout
+|3
+
+=== 10: Invalid string to int
+status: 0
+bash-n: 0
+--- stdout
+|5
+--- stderr
+|bash: line 1: shopt: strict_arith: invalid shell option name
+
+=== 11: Invalid string to int with strict_arith
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|5
+|should not get here
+--- stderr
+|bash: line 1: shopt: strict_arith: invalid shell option name
+
+=== 12: Integer constant parsing
+status: 0
+bash-n: 0
+--- stdout
+|298
+|10
+|511
+|8
+|6151
+
+=== 13: Integer constant validation
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+|status=1
+|status=1
+--- stderr
+|<sh>: line 1: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]
+|<sh>: line 1: 0x1X: value too great for base (error token is "0x1X")
+|<sh>: line 1: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]
+|<sh>: line 1: 09: value too great for base (error token is "09")
+|<sh>: line 1: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]
+|<sh>: line 1: 2#A: value too great for base (error token is "2#A")
+|<sh>: line 1: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]
+|<sh>: line 1: 02#0110: invalid number (error token is "02#0110")
+
+=== 14: Newline in the middle of expression
+status: 0
+bash-n: 0
+--- stdout
+|3
+
+=== 15: Ternary operator
+status: 0
+bash-n: 0
+--- stdout
+|10
+
+=== 16: Preincrement
+status: 0
+bash-n: 0
+--- stdout
+|5
+|5
+
+=== 17: Postincrement
+status: 0
+bash-n: 0
+--- stdout
+|4
+|5
+
+=== 18: Increment undefined variables
+status: 0
+bash-n: 0
+--- stdout
+|[1][1]
+--- stderr
+|bash: line 1: shopt: strict_arith: invalid shell option name
+
+=== 19: Increment and decrement array elements
+status: 0
+bash-n: 0
+--- stdout
+|6 7 6 7 - 1 1 -1 -1
+--- stderr
+|bash: line 1: shopt: strict_arith: invalid shell option name
+
+=== 20: Increment undefined variables with nounset
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: undef1: unbound variable
+
+=== 21: Comma operator (borrowed from C)
+status: 0
+bash-n: 0
+--- stdout
+|3
+
+=== 22: Augmented assignment
+status: 0
+bash-n: 0
+--- stdout
+|5
+|5
+
+=== 23: Comparison Ops
+status: 0
+bash-n: 0
+--- stdout
+|1
+|0
+|0
+|1
+|0
+|1
+
+=== 24: Logical Ops
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+|0
+
+=== 25: Logical Ops Short Circuit
+status: 0
+bash-n: 0
+--- stdout
+|11
+|33
+|33
+|55
+
+=== 26: Bitwise ops
+status: 0
+bash-n: 0
+--- stdout
+|3
+|0
+|3
+|-4
+
+=== 27: Unary minus and plus
+status: 0
+bash-n: 0
+--- stdout
+|2
+
+=== 28: No floating point
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: 1 + 2.3: arithmetic syntax error: invalid arithmetic operator (error token is ".3")
+
+=== 29: Array indexing in arith
+status: 0
+bash-n: 0
+--- stdout
+|11
+
+=== 30: Constants in base 36
+status: 0
+bash-n: 0
+--- stdout
+|10-35
+
+=== 31: Constants in bases 2 to 64
+status: 0
+bash-n: 0
+--- stdout
+|10-35, 36-61, 62, 63
+
+=== 32: Multiple digit constants with base N
+status: 0
+bash-n: 0
+--- stdout
+|123, 27
+
+=== 33: Dynamic base constants
+status: 0
+bash-n: 0
+--- stdout
+|10
+
+=== 34: Octal constant
+status: 0
+bash-n: 0
+--- stdout
+|9
+
+=== 35: Dynamic octal constant
+status: 0
+bash-n: 0
+--- stdout
+|9
+
+=== 36: Dynamic hex constants
+status: 0
+bash-n: 0
+--- stdout
+|171
+
+=== 37: Hex constant with capital X
+status: 0
+bash-n: 0
+--- stdout
+|170
+
+=== 38: Dynamic var names - result of runtime parse/eval
+status: 0
+bash-n: 0
+--- stdout
+|11
+
+=== 39: Recursive name evaluation is a result of runtime parse/eval
+status: 0
+bash-n: 0
+--- stdout
+|6 6 6 6
+
+=== 40: nounset with arithmetic
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: y: unbound variable
+
+=== 41: 64-bit integer doesn't overflow
+status: 0
+bash-n: 0
+--- stdout
+|2147483648
+|4294967296
+|6442450944
+|max positive = 9223372036854775807
+
+=== 42: More 64-bit ops
+status: 0
+bash-n: 0
+--- stdout
+|eq=1
+|eq=0
+|greater=0
+|greater=0
+|ge=0
+|ge=0
+|le=1
+|le=0
+
+=== 43: Invalid LValue
+status: 0
+bash-n: 0
+--- stdout
+|9
+--- stderr
+|bash: line 2: ((: (a + 2) = 3 : attempted assignment to non-variable (error token is "= 3 ")
+
+=== 44: Invalid LValue that looks like array
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: ((: 1[2] = 3 : arithmetic syntax error: invalid arithmetic operator (error token is "[2] = 3 ")
+
+=== 45: Invalid LValue: two sets of brackets
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: ((: a[1][2] = 3 : arithmetic syntax error: invalid arithmetic operator (error token is "[2] = 3 ")
+
+=== 46: Operator Precedence
+status: 0
+bash-n: 0
+--- stdout
+|3
+
+=== 47: Exponentiation with **
+status: 0
+bash-n: 0
+--- stdout
+|1
+|3
+|9
+
+=== 48: Exponentiation operator has buggy precedence
+status: 0
+bash-n: 0
+--- stdout
+|9
+
+=== 49: Negative exponent
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: 2**-1 * 5 : exponent less than 0 (error token is "* 5 ")
+
+=== 50: Comment not allowed in the middle of multiline arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|6
+|[]
+--- stderr
+|bash: line 6: 
+|1 + 2  # not a comment
+|: arithmetic syntax error: invalid arithmetic operator (error token is "# not a comment
+|")
+|bash: line 10: ((: a = 3 + 4  # comment
+|: arithmetic syntax error: invalid arithmetic operator (error token is "# comment
+|")
+
+=== 51: Add integer to indexed array (a[0] decay)
+status: 0
+bash-n: 0
+--- stdout
+|6
+
+=== 52: Add integer to associative array (a[0] decay)
+status: 0
+bash-n: 0
+--- stdout
+|47
+
+=== 53: Double subscript
+status: 1
+bash-n: 0
+--- stdout
+|2
+--- stderr
+|bash: line 3: a[1][1] : arithmetic syntax error: invalid arithmetic operator (error token is "[1] ")
+
+=== 54: result of ArithSub -- array[0] decay
+status: 0
+bash-n: 0
+--- stdout
+|declared
+|4
+
+=== 55: result of ArithSub -- assoc[0] decay
+status: 0
+bash-n: 0
+--- stdout
+|declared
+|0
+
+=== 56: comma operator
+status: 0
+bash-n: 0
+--- stdout
+|42
+|last=6
+
+=== 57: assignment with dynamic var name
+status: 0
+bash-n: 0
+--- stdout
+|42
+|xbar=42
+
+=== 58: array assignment with dynamic array name
+status: 0
+bash-n: 0
+--- stdout
+|42
+|xbar[5]=42
+
+=== 59: unary assignment with dynamic var name
+status: 0
+bash-n: 0
+--- stdout
+|42
+|xbar=43
+
+=== 60: unary array assignment with dynamic var name
+status: 0
+bash-n: 0
+--- stdout
+|42
+|xbar[5]=43
+
+=== 61: Dynamic parsing of arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|6
+|true
+|status=2
+--- stderr
+|bash: line 4: [: e: integer expected
+
+=== 62: Dynamic parsing on empty string
+status: 0
+bash-n: 0
+--- stdout
+|0
+|0
+
+=== 63: nested ternary (bug fix)
+status: 0
+bash-n: 0
+--- stdout
+|3
+
+=== 64: 1 ? a=1 : b=2 ( bug fix)
+status: 0
+bash-n: 0
+--- stdout
+|1
+|a=1
+
+=== 65: Invalid constant
+status: 0
+bash-n: 0
+--- stdout
+|0
+|status=0
+|status=1
+|status=1
+--- stderr
+|<sh>: line 1: a + 42x: value too great for base (error token is "42x")
+|bash: line 7: a + 42x: value too great for base (error token is "42x")
+
+=== 66: Negative numbers with integer division /
+status: 0
+bash-n: 0
+--- stdout
+|3
+|-3
+|-3
+|3
+|---
+|6
+|-6
+|-6
+|6
+
+=== 67: Negative numbers with %
+status: 0
+bash-n: 0
+--- stdout
+|1
+|-1
+|1
+|-1
+
+=== 68: Negative numbers with bit shift
+status: 0
+bash-n: 0
+--- stdout
+|10
+|5
+|-9223372036854775808
+|---
+|8
+|16
+|0
+|0
+|---
+
+=== 69: undef[0]
+status: 0
+bash-n: 0
+--- stdout
+|ARITH 0
+|status=0
+|
+|status=1
+|
+|UNDEF
+|status=0
+
+=== 70: undef[0] with nounset
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 4: undef: unbound variable
+
+=== 71: s[0] with string abc
+status: 0
+bash-n: 0
+--- stdout
+|abc 0 0
+|status=0
+|
+|status=1
+|
+
+=== 72: s[0] with string 42
+status: 0
+bash-n: 0
+--- stdout
+|42 42 0
+|status=0
+
+=== 73: s[0] with string '12 34'
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 2: 12 34: arithmetic syntax error in expression (error token is "34")

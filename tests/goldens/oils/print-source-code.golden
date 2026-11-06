@@ -1,0 +1,28 @@
+# Goldens for tests/oils/spec/print-source-code.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: typeset -f prints function source code
+status: 0
+bash-n: 0
+--- stdout
+|serialized
+
+=== 1: typeset -f with function keyword (ksh style)
+status: 0
+bash-n: 0
+--- stdout
+|serialized
+
+=== 2: typeset -f prints function source code - nested functions
+status: 0
+bash-n: 0
+--- stdout
+|outer
+|inner
+
+=== 3: non-{ } function bodies can be serialized (rare)
+status: 0
+bash-n: 0
+--- stdout
+|subshell body

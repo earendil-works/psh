@@ -1,0 +1,682 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/printf.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: One-variable printf
+status: 0
+bash-n: 0
+--- stdout
+|0
+~ no newline at end
+
+=== 1: Basic printf
+status: 0
+bash-n: 0
+--- stdout
+|Hello, world
+~ no newline at end
+
+=== 2: printf -v
+status: 0
+bash-n: 0
+--- stdout
+|myvar: 'Hello, world'
+
+=== 3: printf -v with array index
+status: 0
+bash-n: 0
+--- stdout
+|myarray=([5]="Hello, world")
+
+=== 4: printf with -v as a format arg
+status: 0
+bash-n: 0
+--- stdout
+|-v
+
+=== 5: printf -v with attached value
+status: 0
+bash-n: 0
+--- stdout
+|a: ''
+|myvar: 'Hello, world'
+
+=== 6: printf -vv with attached value
+status: 0
+bash-n: 0
+--- stdout
+|va: 'value'
+
+=== 7: printf with no-consuming format and extra arguments
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|no specifiers
+
+=== 8: printf format string starting with hyphen via --
+status: 0
+bash-n: 0
+--- stdout
+|-5
+|-v
+
+=== 9: printf with hyphen-prefixed format arguments
+status: 0
+bash-n: 0
+--- stdout
+|-5
+|-5
+|-a -b
+|-v
+|--foo
+|-
+|x-abcy
+|-1 -2
+|-3 -4
+
+=== 10: printf with option-like format arguments and attached values
+status: 0
+bash-n: 0
+--- stdout
+|-v
+|-va
+|-vva
+
+=== 11: printf with -- among format arguments
+status: 0
+bash-n: 0
+--- stdout
+|--
+|-x
+|a|--
+|b|
+|--
+|x
+
+=== 12: printf with hyphen-prefixed format string (invalid option)
+status: 0
+bash-n: 0
+--- stdout
+|Result: 2
+--- stderr
+|bash: line 1: printf: -x: invalid option
+|printf: usage: printf [-v var] format [arguments]
+
+=== 13: printf %q
+status: 0
+bash-n: 0
+--- stdout
+|[1]
+|TEXT
+|[2]
+|\$VAR
+|[3]
+|\"
+
+=== 14: printf ~%q
+status: 0
+bash-n: 0
+--- stdout
+|[1]
+|~TEXT
+|[2]
+|~\$VAR
+|[3]
+|~\"
+
+=== 15: printf %d with integers
+status: 0
+bash-n: 0
+--- stdout
+|42
+|-17
+|0
+
+=== 16: printf %o (octal)
+status: 0
+bash-n: 0
+--- stdout
+|52
+|10
+|377
+
+=== 17: printf %x and %X (hex)
+status: 0
+bash-n: 0
+--- stdout
+|ff
+|FF
+|2a
+
+=== 18: printf %f (float)
+status: 0
+bash-n: 0
+--- stdout
+|3.141590
+|3.14
+|  3.14
+
+=== 19: printf %e and %E (scientific)
+status: 0
+bash-n: 0
+--- stdout
+|1.234500e+03
+|1.234500E+03
+
+=== 20: printf %g and %G (general)
+status: 0
+bash-n: 0
+--- stdout
+|1234.5
+|0.00012345
+
+=== 21: printf %c (character)
+status: 0
+bash-n: 0
+--- stdout
+|6
+|9
+|711
+
+=== 22: printf width formatting
+status: 0
+bash-n: 0
+--- stdout
+|   hi|
+|hi   |
+|00042|
+
+=== 23: printf precision with strings
+status: 0
+bash-n: 0
+--- stdout
+|hel
+|       hel
+
+=== 24: printf argument reuse
+status: 0
+bash-n: 0
+--- stdout
+|one two 
+|1 2 0
+
+=== 25: printf with escape sequences
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|world
+|tab	here
+|quote: "
+
+=== 26: printf with backslash escapes
+status: 0
+bash-n: 0
+--- stdout
+|
+\	\x0d\\
+
+=== 27: printf missing arguments
+status: 0
+bash-n: 0
+--- stdout
+|only_one 
+
+=== 28: printf with empty format
+status: 0
+bash-n: 0
+
+=== 29: printf with just format string
+status: 0
+bash-n: 0
+--- stdout
+|just text
+
+=== 30: printf valid string to number conversion
+status: 0
+bash-n: 0
+--- stdout
+|42
+|0
+
+=== 31: printf with percent literal
+status: 0
+bash-n: 0
+--- stdout
+|100% complete
+|%q
+
+=== 32: printf %b (backslash escape expansion)
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|world
+|tab	here
+|quote\"here
+
+=== 33: printf %b with field width
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|world|
+|tab	here  |
+
+=== 34: printf %T (date/time formatting)
+status: 0
+bash-n: 0
+--- stdout
+|2009-02-13
+
+=== 35: printf %q argument reuse
+status: 0
+bash-n: 0
+--- stdout
+|one\ with\ spaces two ''
+
+=== 36: printf %b argument reuse
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two three 
+
+=== 37: printf with quoted character arguments
+status: 0
+bash-n: 0
+--- stdout
+|65
+|0
+
+=== 38: printf with plus/minus signs in numeric arguments
+status: 0
+bash-n: 0
+--- stdout
+|42
+|-17
+
+=== 39: printf %i (signed integer)
+status: 0
+bash-n: 0
+--- stdout
+|42
+|-17
+
+=== 40: printf %u (unsigned integer)
+status: 0
+bash-n: 0
+--- stdout
+|42
+|4294967295
+
+=== 41: printf with asterisk width and precision
+status: 0
+bash-n: 0
+--- stdout
+|     hello|
+|hel|
+|       hel|
+
+=== 42: printf with zero precision and zero arg
+status: 0
+bash-n: 0
+--- stdout
+|
+
+=== 43: printf with zero precision
+status: 0
+bash-n: 0
+--- stdout
+|42
+
+=== 44: printf with flag characters
+status: 0
+bash-n: 0
+--- stdout
+|+42
+| 42
+|0xff
+|0100
+
+=== 45: printf left justification
+status: 0
+bash-n: 0
+--- stdout
+|left      |
+|42        |
+
+=== 46: printf zero padding
+status: 0
+bash-n: 0
+--- stdout
+|0000000042
+|0000003.14
+
+=== 47: printf combining flags
+status: 0
+bash-n: 0
+--- stdout
+|+000000042
+|+42       |
+
+=== 48: printf precision with integers
+status: 0
+bash-n: 0
+--- stdout
+|00042
+|00052
+|0002a
+
+=== 49: printf with large numbers
+status: 0
+bash-n: 0
+--- stdout
+|2147483647
+|4294967295
+|ffffffff
+
+=== 50: printf with special characters
+status: 0
+bash-n: 0
+--- stdout
+|0
+|3
+|1
+
+=== 51: printf negative numbers
+status: 0
+bash-n: 0
+--- stdout
+|-1
+|1777777777777777777777
+|ffffffffffffffff
+|18446744073709551615
+
+=== 52: printf with empty strings
+status: 0
+bash-n: 0
+--- stdout
+||
+|     |
+||
+
+=== 53: printf with empty strings for numbers
+status: 1
+bash-n: 0
+--- stdout
+|00
+~ no newline at end
+--- stderr
+|bash: line 1: printf: : invalid number
+|bash: line 2: printf: : invalid number
+
+=== 54: printf scientific notation edge cases
+status: 0
+bash-n: 0
+--- stdout
+|0.000000e+00
+|0.000000E+00
+|1e-07
+|1E+06
+
+=== 55: printf mixed formats in one string
+status: 0
+bash-n: 0
+--- stdout
+|Dec: 65, Hex: 41, Oct: 101, Char: 6
+
+=== 56: printf wide fields
+status: 0
+bash-n: 0
+--- stdout
+|               short|
+|                  42|
+
+=== 57: printf return value
+status: 0
+bash-n: 0
+--- stdout
+|test exit: 0
+
+=== 58: printf with invalid format
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: printf: `\': invalid format character
+
+=== 59: printf with no arguments
+status: 0
+bash-n: 0
+--- stdout
+|Result: 2
+--- stderr
+|printf: usage: printf [-v var] format [arguments]
+
+=== 60: printf string to number conversion with invalid input
+status: 0
+bash-n: 0
+--- stdout
+|0
+|Result: 1
+--- stderr
+|bash: line 1: printf: abc: invalid number
+
+=== 61: printf %q with empty string
+status: 0
+bash-n: 0
+--- stdout
+|''
+|~''
+
+=== 62: printf -v through nameref
+status: 0
+bash-n: 0
+--- stdout
+|target: formatted 42
+|ref: formatted 42
+
+=== 63: printf %q with multiple args and mixed specs
+status: 0
+bash-n: 0
+--- stdout
+|foo\ bar
+|a\ b '' x\'y a\,b /tmp/x-\[1\]/y $'a\nb' 
+|k=v\ w
+|m=n\$o
+|~a\ b
+
+=== 64: printf %q shell-sensitive characters
+status: 0
+bash-n: 0
+--- stdout
+|\~
+|x:\~
+|x=\~
+|\#
+|x#y
+|\~
+|x:\~
+|x=\~
+|\#
+|x#y
+
+=== 65: printf %Q
+status: 0
+bash-n: 0
+--- stdout
+|foo\ bar
+
+=== 66: printf %q with ignored modifier
+status: 0
+bash-n: 0
+--- stdout
+|<foo\ bar>
+
+=== 67: printf %q width and precision semantics
+status: 0
+bash-n: 0
+--- stdout
+|<    foo\ bar>
+|<foo\ >
+|<foo\ b>
+
+=== 68: printf %q dynamic and positional modifiers
+status: 1
+bash-n: 0
+--- stdout
+|<    foo\ bar>
+|<foo\ b>
+|<
+~ no newline at end
+--- stderr
+|bash: line 3: printf: `$': invalid format character
+
+=== 69: printf %q alternate form
+status: 0
+bash-n: 0
+--- stdout
+|<'foo bar'>
+|<'foo bar'>
+
+=== 70: printf %q alternate form edge cases
+status: 0
+bash-n: 0
+--- stdout
+|<'foo'>
+|<   'foo bar'>
+
+=== 71: printf %q escapes commas
+status: 0
+bash-n: 0
+--- stdout
+|a\,b
+|\,
+|\{a\,b\}
+
+=== 72: printf -v followed by --
+status: 0
+bash-n: 0
+--- stdout
+|x=ho
+|y=---a-
+
+=== 73: printf -v given more than once keeps the last
+status: 0
+bash-n: 0
+--- stdout
+|x=[] y=[z] rc=0
+|p=[] q=[r] rc=0
+
+=== 74: printf -v leaves later option-like words as data
+status: 0
+bash-n: 0
+--- stdout
+|x=[-v,y,--,-x,] y=[]
+|x=[--]
+
+=== 75: printf -v with no format fails
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|rc=2
+|rc=2
+--- stderr
+|printf: usage: printf [-v var] format [arguments]
+|printf: usage: printf [-v var] format [arguments]
+|bash: line 3: printf: -v: option requires an argument
+|printf: usage: printf [-v var] format [arguments]
+
+=== 76: printf -v with an invalid name fails with status 2
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|rc=2
+|rc=2
+|rc=2
+|rc=2
+|rc=2
+|rc=2
+|rc=2
+|a unset
+|rc=2
+--- stderr
+|bash: line 1: printf: `1bad': not a valid identifier
+|bash: line 2: printf: `-x': not a valid identifier
+|bash: line 3: printf: `--': not a valid identifier
+|bash: line 4: printf: `-x': not a valid identifier
+|bash: line 5: printf: `a b': not a valid identifier
+|bash: line 6: printf: `': not a valid identifier
+|bash: line 7: printf: `a[': not a valid identifier
+|bash: line 8: printf: `a[]': not a valid identifier
+|bash: line 11: printf: `1bad': not a valid identifier
+
+=== 77: printf -v rejects a subscript with text after its closing bracket
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|rc=2
+|a unset
+|nested: rc=0
+|quoted: rc=0 x
+--- stderr
+|bash: line 1: printf: `a[0]]': not a valid identifier
+|bash: line 2: printf: `a[0]junk]': not a valid identifier
+
+=== 78: printf -v checks every name it is given
+status: 0
+bash-n: 0
+--- stdout
+|rc=2 x=old
+|rc=2 x=old
+|rc=2 x=old
+|rc=0 x=last y=unset
+--- stderr
+|bash: line 1: printf: `-x': not a valid identifier
+|bash: line 2: printf: `1bad': not a valid identifier
+|bash: line 3: printf: `1bad': not a valid identifier
+
+=== 79: printf -v doesn't evaluate a subscript to check the name
+status: 0
+bash-n: 0
+--- stdout
+|rc=0 x=new
+|rc=0 x=new
+|rc=0 x=new
+|rc=2 x=old
+--- stderr
+|bash: line 4: printf: `a["x]': not a valid identifier
+
+=== 80: printf -v checks a subscript's brackets as an assignment does
+status: 0
+bash-n: 0
+--- stdout
+|rc=0 x=new
+|rc=2 x=old
+--- stderr
+|bash: line 2: printf: `a[[]': not a valid identifier
+
+=== 81: printf -v takes a[@] and a[*] as names but can't assign to them
+status: 0
+bash-n: 0
+--- stdout
+|rc=0 x=new
+|rc=0 x=new
+|rc=1 unset
+|rc=1 unset
+--- stderr
+|bash: line 3: a[@]: bad array subscript
+|bash: line 4: a[*]: bad array subscript
+
+=== 82: printf --help prints help on stdout
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|help on stdout
+|after -v: rc=2
+|--help after --: rc=0

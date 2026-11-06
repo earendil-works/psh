@@ -1,0 +1,202 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/functions.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic function invocation
+status: 0
+bash-n: 0
+--- stdout
+|Calling myfunc()...
+|In myfunc().
+|Returned.
+
+=== 1: Function invocation with args
+status: 0
+bash-n: 0
+--- stdout
+|Calling myfunc()...
+|In myfunc()
+|1: a
+|*: a b c
+|Returned.
+
+=== 2: Function invocation with empty arg
+status: 0
+bash-n: 0
+--- stdout
+|count: 3
+|$1: a
+|$2: b
+|$3: c
+|count: 3
+|$1: a
+|$2: 
+|$3: c
+
+=== 3: Function definition with output redirection
+status: 0
+bash-n: 0
+--- file test.txt
+|In myfunc()
+|In myfunc()
+
+=== 4: Function call with env variables
+status: 0
+bash-n: 0
+--- stdout
+|default
+|overridden
+|default
+
+=== 5: Function definition without braces
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 6: Function with extended test body
+status: 0
+bash-n: 0
+--- stdout
+|hello is a thing
+|empty string is not a thing
+
+=== 7: Function with extended test body and redirect
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+
+=== 8: Nested function definition
+status: 0
+bash-n: 0
+--- stdout
+|Calling outer from toplevel
+|Entered outer
+|Invoking inner
+|In inner
+|Returning from outer
+|Calling inner from toplevel
+|In inner
+
+=== 9: Exporting functions to child instance
+status: 0
+bash-n: 0
+--- stdout
+|In mytestfunc
+
+=== 10: Function names with interesting characters
+status: 0
+bash-n: 0
+--- stdout
+|In my/func
+
+=== 11: Functions shadowing builtins
+status: 0
+bash-n: 0
+--- stdout
+|Func result: 0
+|In custom dot function
+|Call result: 0
+
+=== 12: Reserved words cannot be used as function names without function keyword
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `('
+|bash: line 1: `for (){ :; }'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `('
+|bash: line 1: `for (){ :; }'
+
+=== 13: Reserved words can be used as function names with function keyword
+status: 0
+bash-n: 0
+--- stdout
+|normal for: 1
+
+=== 14: Reserved words can be used as function names with function keyword and parens
+status: 0
+bash-n: 0
+--- stdout
+|done
+
+=== 15: Functions shadowing builtins (POSIX mode)
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 5: `.': is a special builtin
+
+=== 16: Empty string arguments preserved with nullglob
+status: 0
+bash-n: 0
+--- stdout
+|arg count: 5
+|arg: '3'
+|arg: '-'
+|arg: '2'
+|arg: ''
+|arg: '1.2.3b_alpha4'
+
+=== 17: Multiple empty string arguments
+status: 0
+bash-n: 0
+--- stdout
+|count: 4
+|1: ''
+|2: 'non-empty'
+|3: ''
+|4: 'last'
+
+=== 18: Prefix assignment in a function leaves the caller's prefix assignment alone
+status: 0
+bash-n: 0
+--- stdout
+|[1]
+|h: 2
+|[1]
+
+=== 19: Prefix assignments to one variable build on each other
+status: 0
+bash-n: 0
+--- stdout
+|[12]
+
+=== 20: Prefix assignment with += appends to the value where it's visible
+status: 0
+bash-n: 0
+--- stdout
+|BAR=ab
+|N=8
+|g: 12
+|[1]
+|[a] [5]
+
+=== 21: Prefix assignment can't override a readonly variable
+status: 0
+bash-n: 0
+--- stdout
+|g: 1
+|f: 1 rc=0
+|k: 1
+|h: rc=0
+|B=3
+|R=1
+--- stderr
+|bash: line 2: FOO: readonly variable
+|bash: line 5: L: readonly variable
+|bash: line 8: R: readonly variable
+
+=== 22: A function definition's redirection applies to the function's errors
+status: 0
+bash-n: 0
+--- stdout
+|after f: 1 0
+|after g: 1
+
+=== 23: A compound command's redirection applies to errors in it
+status: 0
+bash-n: 0
+--- stdout
+|after group: 1
+|after job

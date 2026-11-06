@@ -1,0 +1,371 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/test.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: test: = operator
+status: 1
+bash-n: 0
+--- stdout
+|ab = ab
+|ab = ab
+
+=== 1: test: == operator
+status: 1
+bash-n: 0
+--- stdout
+|ab == ab
+|ab == ab
+
+=== 2: test: files refer to same device and inode
+status: 0
+bash-n: 0
+--- stdout
+|-ef correctly identified device and inode numbers
+|-ef correctly identified device and inode numbers that do not match
+
+=== 3: test: file is newer
+status: 0
+bash-n: 0
+--- stdout
+|-nt correctly identified newer file
+|-nt correctly identified when file2 does not exist
+--- file bar
+--- file foo
+
+=== 4: test: file is older
+status: 0
+bash-n: 0
+--- stdout
+|-ot correctly identified older file
+|-ot correctly identified when file1 does not exist
+--- file bar
+--- file foo
+
+=== 5: test: parens
+status: 0
+bash-n: 0
+--- stdout
+|Parens work
+
+=== 6: test: -- string
+status: 0
+bash-n: 0
+--- stdout
+|Result(test): 0
+|Result([): 0
+
+=== 7: test: invalid operators
+status: 0
+bash-n: 0
+--- stdout
+|Result: 2
+--- stderr
+|bash: line 1: test: -: unary operator expected
+
+=== 8: test: != operator
+status: 0
+bash-n: 0
+--- stdout
+|ab != cd
+|empty != x
+
+=== 9: test: -z operator (zero length)
+status: 0
+bash-n: 0
+--- stdout
+|-z empty
+|-z unset
+
+=== 10: test: -n operator (non-zero length)
+status: 0
+bash-n: 0
+--- stdout
+|-n x
+|-n set
+
+=== 11: test: < operator (string sort before)
+status: 1
+bash-n: 0
+--- stdout
+|a < b
+|abc < abd
+
+=== 12: test: > operator (string sort after)
+status: 1
+bash-n: 0
+--- stdout
+|b > a
+|abd > abc
+
+=== 13: test: -eq operator
+status: 0
+bash-n: 0
+--- stdout
+|5 -eq 5
+|-1 -eq -1
+|0 -eq 0
+
+=== 14: test: -ne operator
+status: 0
+bash-n: 0
+--- stdout
+|5 -ne 6
+|-1 -ne 1
+
+=== 15: test: -lt operator
+status: 0
+bash-n: 0
+--- stdout
+|3 -lt 5
+|-2 -lt -1
+
+=== 16: test: -le operator
+status: 0
+bash-n: 0
+--- stdout
+|3 -le 5
+|5 -le 5
+|-2 -le -2
+
+=== 17: test: -gt operator
+status: 0
+bash-n: 0
+--- stdout
+|5 -gt 3
+|-1 -gt -2
+
+=== 18: test: -ge operator
+status: 0
+bash-n: 0
+--- stdout
+|5 -ge 3
+|5 -ge 5
+|-1 -ge -1
+
+=== 19: test: -e operator (file exists)
+status: 0
+bash-n: 0
+--- stdout
+|-e existing file
+|-e existing dir
+--- dir testdir
+--- file testfile
+
+=== 20: test: -a operator (file exists, deprecated)
+status: 1
+bash-n: 0
+--- stdout
+|-a existing file
+--- file testfile
+
+=== 21: test: -f operator (regular file)
+status: 1
+bash-n: 0
+--- stdout
+|-f regular file
+--- dir testdir
+--- file testfile
+
+=== 22: test: -d operator (directory)
+status: 1
+bash-n: 0
+--- stdout
+|-d directory
+--- dir testdir
+--- file testfile
+
+=== 23: test: -h and -L operators (symbolic link)
+status: 1
+bash-n: 0
+--- stdout
+|-h symlink
+|-L symlink
+--- link symlink -> target
+--- file target
+
+=== 24: test: -p operator (named pipe/FIFO)
+status: 1
+bash-n: 0
+--- file testfile
+
+=== 25: test: -S operator (socket)
+status: 1
+bash-n: 0
+--- file testfile
+
+=== 26: test: -b operator (block device)
+status: 1
+bash-n: 0
+--- file testfile
+
+=== 27: test: -c operator (character device)
+status: 1
+bash-n: 0
+--- file testfile
+
+=== 28: test: -r operator (readable)
+status: 1
+bash-n: 0
+--- stdout
+|-r readable
+--- file testfile
+
+=== 29: test: -w operator (writable)
+status: 1
+bash-n: 0
+--- stdout
+|-w writable
+--- file testfile
+
+=== 30: test: -x operator (executable)
+status: 1
+bash-n: 0
+--- file testfile
+
+=== 31: test: -s operator (size greater than zero)
+status: 1
+bash-n: 0
+--- stdout
+|-s nonempty
+--- file empty
+--- file nonempty
+|content
+
+=== 32: test: -v operator (variable is set)
+status: 0
+bash-n: 0
+--- stdout
+|-v set variable
+|-v empty variable
+
+=== 33: test: -R operator (nameref variable)
+status: 0
+bash-n: 0
+--- stdout
+|-R nameref
+
+=== 34: test: -o operator (shell option)
+status: 1
+bash-n: 0
+--- stdout
+|-o errexit enabled
+
+=== 35: test: ! operator (negation)
+status: 1
+bash-n: 0
+--- stdout
+|! a=b
+|! -e nonexistent
+
+=== 36: test: -a operator (logical AND)
+status: 1
+bash-n: 0
+--- stdout
+|true -a true
+
+=== 37: test: -o operator (logical OR)
+status: 1
+bash-n: 0
+--- stdout
+|true -o true
+|true -o false
+|false -o true
+
+=== 38: test: complex logical expressions
+status: 0
+bash-n: 0
+--- stdout
+|complex 1
+|complex 2
+|complex 3
+
+=== 39: test: single argument (non-empty string is true)
+status: 0
+bash-n: 0
+--- stdout
+|non-empty is true
+|zero string is true
+
+=== 40: test: no arguments
+status: 0
+bash-n: 0
+--- stdout
+|no args: 1
+
+=== 41: test: special characters in strings
+status: 0
+bash-n: 0
+--- stdout
+|spaces match
+|tabs match
+|quotes match
+|single quotes match
+
+=== 42: test: arithmetic comparison with spaces/tabs in operand
+status: 0
+bash-n: 0
+--- stdout
+|leading space: 0
+|trailing space: 0
+|both spaces: 0
+|leading tab: 0
+|trailing tab: 0
+
+=== 43: test: arithmetic comparison with newline in operand
+status: 0
+bash-n: 0
+--- stdout
+|newline trailing: 0
+
+=== 44: test: -t operator with whitespace in fd
+status: 0
+bash-n: 0
+--- stdout
+|All -t results match
+
+=== 45: test with a non-integer operand fails with status 2
+status: 0
+bash-n: 0
+--- stdout
+|test: 2
+|[: 2
+--- stderr
+|bash: line 1: test: a: integer expected
+|bash: line 3: [: b: integer expected
+
+=== 46: test reports a non-integer operand anywhere in the expression
+status: 0
+bash-n: 0
+--- stdout
+|empty: 2
+|trailing junk: 2
+|two numbers: 2
+|too large: 2
+|negated: 2
+|or: 2
+|and: 2
+|or list: 2
+|valid operands still work
+--- stderr
+|bash: line 1: [: : integer expected
+|bash: line 2: [: 1x: integer expected
+|bash: line 3: [: 1 2: integer expected
+|bash: line 4: [: 99999999999999999999: integer expected
+|bash: line 5: [: abc: integer expected
+|bash: line 6: [: abc: integer expected
+|bash: line 7: [: abc: integer expected
+|bash: line 8: [: abc: integer expected
+
+=== 47: test and [ take words that look like options as operands
+status: 0
+bash-n: 0
+--- stdout
+|a=0
+|b=0
+|c=0
+|d=0
+|e=0
+|f=0
+|g=0
+|h=1
+|i=0

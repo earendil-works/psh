@@ -1,0 +1,33 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/local.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic local usage
+status: 0
+bash-n: 0
+--- stdout
+|before call: x==5
+|in myfunc: x==10
+|after call: x==5
+
+=== 1: Local with empty array
+status: 0
+bash-n: 0
+--- stdout
+|declare -a x=()
+|x[0]: 
+
+=== 2: Multiple local operands expand before assignments are applied
+status: 0
+bash-n: 0
+--- stdout
+|declare -- first="one"
+|declare -- second=""
+
+=== 3: local outside a function is refused before its options are read
+status: 0
+bash-n: 0
+--- stdout
+|local: 1
+--- stderr
+|bash: line 1: local: can only be used in a function

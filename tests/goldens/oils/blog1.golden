@@ -1,0 +1,57 @@
+# Goldens for tests/oils/spec/blog1.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: ${##}
+status: 0
+bash-n: 0
+--- stdout
+|2
+
+=== 1: ${###}
+status: 0
+bash-n: 0
+--- stdout
+|25
+
+=== 2: ${####}
+status: 0
+bash-n: 0
+--- stdout
+|25
+
+=== 3: ${##2}
+status: 0
+bash-n: 0
+--- stdout
+|5
+
+=== 4: ${###2}
+status: 0
+bash-n: 0
+--- stdout
+|5
+
+=== 5: ${1####}
+status: 0
+bash-n: 0
+--- stdout
+|##
+
+=== 6: ${1#'###'}
+status: 0
+bash-n: 0
+--- stdout
+|#
+
+=== 7: ${#1#'###'}
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: ${#1#'###'}: bad substitution
+
+=== 8: Julia example from spec/oil-user-feedback
+status: 0
+bash-n: 0
+--- stdout
+|git branch -D foo baz

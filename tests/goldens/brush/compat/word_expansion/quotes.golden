@@ -1,0 +1,95 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/word_expansion/quotes.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Single quotes
+status: 0
+bash-n: 0
+--- stdout
+|Quoted string
+|abc ${var} def
+
+=== 1: Double quotes
+status: 0
+bash-n: 0
+--- stdout
+|"
+
+=== 2: Double quotes: escaping
+status: 0
+bash-n: 0
+--- stdout
+|\n
+--- stderr
+|bash: line 1: hexdump: command not found
+|bash: line 2: hexdump: command not found
+
+=== 3: ANSI-C quotes
+status: 127
+bash-n: 0
+--- stdout
+|Single quoted len: 2
+|ANSI-C quoted len: 1
+--- stderr
+|bash: line 3: hexdump: command not found
+|bash: line 7: hexdump: command not found
+
+=== 4: ANSI-C quotes with escape sequences
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: hexdump: command not found
+|bash: line 2: hexdump: command not found
+|bash: line 3: hexdump: command not found
+|bash: line 4: hexdump: command not found
+|bash: line 5: hexdump: command not found
+|bash: line 6: hexdump: command not found
+|bash: line 7: hexdump: command not found
+|bash: line 8: hexdump: command not found
+|bash: line 9: hexdump: command not found
+|bash: line 10: hexdump: command not found
+|bash: line 11: hexdump: command not found
+|bash: line 12: hexdump: command not found
+|bash: line 13: hexdump: command not found
+|bash: line 14: hexdump: command not found
+|bash: line 15: hexdump: command not found
+|bash: line 16: hexdump: command not found
+|bash: line 17: hexdump: command not found
+|bash: line 18: hexdump: command not found
+|bash: line 19: hexdump: command not found
+|bash: line 20: hexdump: command not found
+|bash: line 21: hexdump: command not found
+|bash: line 22: hexdump: command not found
+|bash: line 23: hexdump: command not found
+|bash: line 24: hexdump: command not found
+|bash: line 25: hexdump: command not found
+|bash: line 26: hexdump: command not found
+|bash: line 27: hexdump: command not found
+|bash: line 28: hexdump: command not found
+|bash: line 29: hexdump: command not found
+|bash: line 30: hexdump: command not found
+|bash: line 31: hexdump: command not found
+|bash: line 32: hexdump: command not found
+|bash: line 33: hexdump: command not found
+|bash: line 34: hexdump: command not found
+|bash: line 35: hexdump: command not found
+|bash: line 36: hexdump: command not found
+|bash: line 37: hexdump: command not found
+|bash: line 38: hexdump: command not found
+|bash: line 39: hexdump: command not found
+|bash: line 40: hexdump: command not found
+
+=== 5: ANSI-C quote syntax inside double quotes (literal, not processed)
+status: 0
+bash-n: 0
+--- stdout
+|$'\t'
+|$'\'abcd\''
+|len: 5
+|$'\n'
+
+=== 6: gettext style quotes
+status: 0
+bash-n: 0
+--- stdout
+|Content: [Hello, world]

@@ -1,0 +1,788 @@
+# Goldens for tests/brush/brush-shell/tests/cases/brush/cli.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic echo
+status: 0
+bash-n: 0
+--- stdout
+|hello world
+
+=== 1: Exit code propagates
+status: 42
+bash-n: 0
+
+=== 2: Exit code propagates from an interactive session
+status: 42
+bash-n: 0
+
+=== 3: Echo via args
+status: 0
+bash-n: 0
+--- stdout
+|from args
+
+=== 4: Version flag succeeds
+status: 0
+bash-n: 0
+--- stdout
+|GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu)
+|Copyright (C) 2025 Free Software Foundation, Inc.
+|License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+|
+|This is free software; you are free to change and redistribute it.
+|There is NO WARRANTY, to the extent permitted by law.
+
+=== 5: Version goes to stdout and names the shell
+status: 0
+bash-n: 0
+--- stdout
+|GNU
+
+=== 6: Completion script callback answers from the CLI spec
+status: 127
+bash-n: 0
+--- stderr
+|<sh>: __complete_word__: No such file or directory
+
+=== 7: Completion callback completes a flag value after other flags
+status: 127
+bash-n: 0
+--- stderr
+|<sh>: __complete_word__: No such file or directory
+
+=== 8: Completion callback completes an attached flag value
+status: 127
+bash-n: 0
+--- stderr
+|<sh>: __complete_word__: No such file or directory
+
+=== 9: Completion callback completes a long flag name
+status: 127
+bash-n: 0
+--- stderr
+|<sh>: __complete_word__: No such file or directory
+
+=== 10: Completion callback offers files, not flag values, after a script
+status: 127
+bash-n: 0
+--- stderr
+|<sh>: __complete_word__: No such file or directory
+
+=== 11: Completion callback offers files, not attached flag values, after a script
+status: 127
+bash-n: 0
+--- stderr
+|<sh>: __complete_word__: No such file or directory
+
+=== 12: Completion callback offers files, not flag names, after a script
+status: 127
+bash-n: 0
+--- stderr
+|<sh>: __complete_word__: No such file or directory
+
+=== 13: Completion callback offers files, not flag values, after a -c command
+status: 127
+bash-n: 0
+--- stderr
+|<sh>: __complete_word__: No such file or directory
+
+=== 14: Completion callback offers files, not flag names, after a -c command
+status: 127
+bash-n: 0
+--- stderr
+|<sh>: __complete_word__: No such file or directory
+
+=== 15: Completion callback offers files, not flag names, after --
+status: 127
+bash-n: 0
+--- stderr
+|<sh>: __complete_word__: No such file or directory
+
+=== 16: Help flag succeeds
+status: 0
+bash-n: 0
+--- stdout
+|GNU bash, version 5.3.9(1)-release-(aarch64-unknown-linux-gnu)
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+|Type `bash -c "help set"' for more information about shell options.
+|Type `bash -c help' for more information about shell builtin commands.
+|Use the `bashbug' command to report bugs.
+|
+|bash home page: <http://www.gnu.org/software/bash>
+|General help using GNU software: <http://www.gnu.org/gethelp/>
+
+=== 17: Help ends without a blank line
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 18: Invalid option fails
+status: 2
+bash-n: 0
+--- stderr
+|bash: --unknown-argument-here: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 19: Explicit config file not found fails
+status: 2
+bash-n: 0
+--- stderr
+|bash: --config: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 20: Explicit config file valid
+status: 2
+bash-n: 0
+--- stderr
+|bash: --config: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 21: Config file with unknown fields succeeds
+status: 2
+bash-n: 0
+--- stderr
+|bash: --config: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 22: --input-backend selects the minimal backend
+status: 2
+bash-n: 0
+--- stderr
+|bash: --input-backend: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 23: --input-backend takes an attached value
+status: 2
+bash-n: 0
+--- stderr
+|bash: --input-backend=minimal: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 24: --input-backend selects the basic backend
+status: 2
+bash-n: 0
+--- stderr
+|bash: --input-backend: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 25: --input-backend selects the vt backend
+status: 2
+bash-n: 0
+--- stderr
+|bash: --input-backend: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 26: --input-backend selects the reedline backend
+status: 2
+bash-n: 0
+--- stderr
+|bash: --input-backend: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 27: --input-backend rejects an unknown backend
+status: 2
+bash-n: 0
+--- stderr
+|bash: --input-backend: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 28: --input-backend needs a value
+status: 2
+bash-n: 0
+--- stderr
+|bash: --input-backend: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 29: --debug enables an event class
+status: 127
+bash-n: 0
+--- stderr
+|bash: commands: No such file or directory
+
+=== 30: --debug takes an attached event class
+status: 2
+bash-n: 0
+--- stderr
+|bash: --debug=commands: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 31: --log-enable is another name for --debug
+status: 2
+bash-n: 0
+--- stderr
+|bash: --log-enable: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 32: --debug rejects an unknown event class
+status: 127
+bash-n: 0
+--- stderr
+|bash: nosuch: No such file or directory
+
+=== 33: --disable-event disables an event class
+status: 2
+bash-n: 0
+--- stderr
+|bash: --disable-event: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 34: --log-disable is another name for --disable-event
+status: 2
+bash-n: 0
+--- stderr
+|bash: --log-disable: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 35: --disable-event rejects an unknown event class
+status: 2
+bash-n: 0
+--- stderr
+|bash: --disable-event: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 36: The caller's environment is inherited
+status: 0
+bash-n: 0
+--- stdout
+|set
+
+=== 37: --noenv starts without the caller's environment
+status: 2
+bash-n: 0
+--- stderr
+|bash: --noenv: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 38: --sh turns on the posix option
+status: 2
+bash-n: 0
+--- stderr
+|bash: --sh: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 39: --inherit-fd hands the shell a descriptor
+status: 2
+bash-n: 0
+--- stderr
+|<sh>: --inherit-fd: invalid option
+|Usage:	<sh> [GNU long option] [option] ...
+|	<sh> [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 40: --inherit-fd rejects a descriptor that is not a number
+status: 2
+bash-n: 0
+--- stderr
+|bash: --inherit-fd: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 41: --enable-highlighting runs a -c command
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-highlighting: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 42: --enable-terminal-integration runs a -c command
+status: 2
+bash-n: 0
+--- stderr
+|bash: --enable-terminal-integration: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 43: --version wins over a later -c
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|GNU
+
+=== 44: --version wins over a later short option missing its value
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|GNU

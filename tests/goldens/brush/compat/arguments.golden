@@ -1,0 +1,896 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/arguments.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: -c mode arguments without --
+status: 0
+bash-n: 0
+--- stdout
+|"1" "-2" "3" "-2 3"
+
+=== 1: -c mode arguments with --
+status: 0
+bash-n: 0
+--- stdout
+|"--" "1" "2" "1 2 3"
+
+=== 2: -c mode and arguments with +O
+status: 0
+bash-n: 0
+--- stdout
+|"--" "1" "2" "1 2 3"
+
+=== 3: -o enables an option disabled with +o
+status: 0
+bash-n: 0
+--- stdout
+|ehBc
+
+=== 4: +O disables a shopt option enabled with -O
+status: 1
+bash-n: 0
+--- stdout
+|extglob             	off
+
+=== 5: -c mode -- torture
+status: 0
+bash-n: 0
+--- stdout
+|"--" "--" "-&-1" "-- -&-1 --! "-2" ''--'' 3--*"
+
+=== 6: -c modeonly one --
+status: 0
+bash-n: 0
+--- stdout
+|"--" "" "" ""
+
+=== 7: script arguments without --
+status: 0
+bash-n: 0
+--- stdout
+|"script.sh" "-1" "-2" "-1 -2 -3"
+
+=== 8: script arguments with --
+status: 0
+bash-n: 0
+--- stdout
+|"script.sh" "--" "--1" "-- --1 -2 3"
+
+=== 9: script -- torture
+status: 0
+bash-n: 0
+--- stdout
+|"script.sh" "--" "--" "-- -- -- -!-1* "-2" -- 3--"
+
+=== 10: script only one --
+status: 0
+bash-n: 0
+--- stdout
+|"script.sh" "--" "" "--"
+
+=== 11: -c with -- separator and command
+status: 0
+bash-n: 0
+--- stdout
+|"1" "-2" "3" "-2 3"
+
+=== 12: -c with -- separator only
+status: 2
+bash-n: 0
+--- stderr
+|bash: -c: option requires an argument
+
+=== 13: -c with -- separator where command is --
+status: 127
+bash-n: 0
+--- stderr
+|echo: line 1: --: command not found
+
+=== 14: -c with option before command
+status: 0
+bash-n: 0
+--- stdout
+|"1" "-2" "3" "-2 3"
+
+=== 15: -c with value-taking option before command
+status: 0
+bash-n: 0
+--- stdout
+|"1" "2" "2"
+
+=== 16: -c with option before command and no command
+status: 2
+bash-n: 0
+--- stderr
+|bash: -c: option requires an argument
+
+=== 17: -c with option then -- separator
+status: 0
+bash-n: 0
+--- stdout
+|"1" "2" "2"
+
+=== 18: -ec with -- separator and command
+status: 0
+bash-n: 0
+--- stdout
+|"1" "-2" "3" "-2 3"
+
+=== 19: -c grouped with a later flag
+status: 0
+bash-n: 0
+--- stdout
+|* "name" "1"
+
+=== 20: -c with no command string
+status: 2
+bash-n: 0
+--- stderr
+|bash: -c: option requires an argument
+
+=== 21: -c with an empty command string
+status: 0
+bash-n: 0
+
+=== 22: -c with -- separator and a later --
+status: 0
+bash-n: 0
+--- stdout
+|"--" "more" "more"
+
+=== 23: -c after -- is a script path, not a flag
+status: 1
+bash-n: 0
+--- stderr
+|bash: -c: No such file or directory
+
+=== 24: -o with -- is not an option terminator
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 0: bash: --: invalid option name
+
+=== 25: -oc with -- takes its option name from the next word
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 0: bash: --: invalid option name
+
+=== 26: no args reads commands from stdin
+status: 0
+bash-n: 0
+--- stdout
+|count=[0] all=[]
+|not-interactive
+|stdin-flag
+
+=== 27: -s with no positional args
+status: 0
+bash-n: 0
+--- stdout
+|count=[0] all=[]
+|stdin-flag
+
+=== 28: -s with one positional arg
+status: 0
+bash-n: 0
+--- stdout
+|count=[1] one=[myarg] all=[myarg]
+
+=== 29: -s with multiple positional args
+status: 0
+bash-n: 0
+--- stdout
+|count=[3] one=[a] two=[b] three=[c] all=[a b c] star=[a b c]
+
+=== 30: -s with -- separator followed by literal --
+status: 0
+bash-n: 0
+--- stdout
+|count=[2] one=[--] two=[a]
+
+=== 31: -s -e with -- separator
+status: 0
+bash-n: 0
+--- stdout
+|count=[1] one=[a]
+
+=== 32: -s with hyphen-leading positional args
+status: 0
+bash-n: 0
+--- stdout
+|count=[3] one=[a] two=[-2] three=[c] all=[a -2 c]
+
+=== 33: -s does not run a script named among its positional args
+status: 0
+bash-n: 0
+--- stdout
+|count=[1] one=[announce.sh]
+
+=== 34: -s leaves $0 alone rather than consuming the first positional
+status: 0
+bash-n: 0
+--- stdout
+|OK: $0 untouched
+|one=[myarg]
+
+=== 35: -s reports the stdin flag in \$-
+status: 0
+bash-n: 0
+--- stdout
+|stdin-flag
+
+=== 36: -s with positional args on a non-terminal is not interactive
+status: 0
+bash-n: 0
+--- stdout
+|not-interactive
+|one=[myarg]
+
+=== 37: -i -s with positional args is interactive
+status: 0
+bash-n: 0
+--- stdout
+|interactive
+|count=[1] one=[myarg]
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ case $- in *i*) echo "interactive";; *) echo "not-interactive";; esac
+|test$ echo "count=[$#] one=[$1]"
+|test$ exit
+
+=== 38: -si with positional args
+status: 0
+bash-n: 0
+--- stdout
+|interactive
+|count=[1] one=[myarg]
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ case $- in *i*) echo "interactive";; *) echo "not-interactive";; esac
+|test$ echo "count=[$#] one=[$1]"
+|test$ exit
+
+=== 39: -is with positional args
+status: 0
+bash-n: 0
+--- stdout
+|interactive
+|count=[1] one=[myarg]
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ case $- in *i*) echo "interactive";; *) echo "not-interactive";; esac
+|test$ echo "count=[$#] one=[$1]"
+|test$ exit
+
+=== 40: -s with positional args is interactive on a terminal
+status: 0
+bash-n: 0
+--- stdout
+|FLAGS[] ARG[myarg]
+
+=== 41: -s with positional args loads the rc file on a terminal
+status: 127
+bash-n: 0
+--- stdout
+|RC[] ARG[myarg]
+--- stderr
+|bash: line 6: aliascheck: command not found
+
+=== 42: the rc file is not loaded when -s reads from a pipe
+status: 127
+bash-n: 0
+--- stdout
+|RC[] ARG[myarg]
+--- stderr
+|bash: line 2: aliascheck: command not found
+
+=== 43: the rc file is not loaded for a -c command
+status: 0
+bash-n: 0
+--- stdout
+|RC[]
+
+=== 44: the rc file is not loaded for a named script
+status: 0
+bash-n: 0
+--- stdout
+|RC[]
+
+=== 45: a named script runs and stdin is not read as commands
+status: 0
+bash-n: 0
+--- stdout
+|RAN-SCRIPT count=[2] one=[a] two=[b]
+|not-interactive
+|no-stdin-flag
+
+=== 46: -i with a named script still runs the script
+status: 0
+bash-n: 0
+--- stdout
+|RAN-SCRIPT count=[0] one=[] two=[]
+|interactive
+|no-stdin-flag
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+
+=== 47: a script sees stdin as data, not commands
+status: 0
+bash-n: 0
+--- stdout
+|read=[first-line]
+|read=[second-line]
+
+=== 48: -c runs its command and stdin is not read as commands
+status: 0
+bash-n: 0
+--- stdout
+|from-c
+
+=== 49: -s followed by -c runs the -c command
+status: 0
+bash-n: 0
+--- stdout
+|from-c
+
+=== 50: -c with -i is interactive but still runs the -c command
+status: 0
+bash-n: 0
+--- stdout
+|from-c
+|interactive
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+
+=== 51: -s with -- before positional args
+status: 0
+bash-n: 0
+--- stdout
+|count=[1] one=[myarg] all=[myarg]
+
+=== 52: -s with a lone --
+status: 0
+bash-n: 0
+--- stdout
+|count=[0] one=[] all=[]
+
+=== 53: -s with a lone -
+status: 0
+bash-n: 0
+--- stdout
+|count=[0] one=[] all=[]
+
+=== 54: -- before a script path
+status: 0
+bash-n: 0
+--- stdout
+|RAN-SCRIPT count=[0] one=[] two=[]
+|not-interactive
+|no-stdin-flag
+
+=== 55: -- before a script path with a later --
+status: 0
+bash-n: 0
+--- stdout
+|"script.sh" "--" "x" "-- x"
+
+=== 56: - before a script path
+status: 0
+bash-n: 0
+--- stdout
+|RAN-SCRIPT count=[0] one=[] two=[]
+|not-interactive
+|no-stdin-flag
+
+=== 57: -c with an option-like word as $0
+status: 0
+bash-n: 0
+--- stdout
+|0=[-s] 1=[]
+
+=== 58: -c with -i as $0
+status: 0
+bash-n: 0
+--- stdout
+|0=[-i] 1=[]
+
+=== 59: +o disables an option enabled with -o
+status: 0
+bash-n: 0
+--- stdout
+|after false: hBc
+
+=== 60: repeated -s
+status: 0
+bash-n: 0
+--- stdout
+|count=[0] all=[]
+
+=== 61: --posix turns on the posix option
+status: 0
+bash-n: 0
+
+=== 62: --noediting runs a -c command
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 63: repeated --norc and --noprofile
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 64: --init-file names the rc file of an interactive shell
+status: 0
+bash-n: 0
+--- stdout
+|RC[loaded]
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+
+=== 65: --rcfile names the rc file of an interactive -c shell
+status: 0
+bash-n: 0
+--- stdout
+|RC[loaded]
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+
+=== 66: --rcfile with no file name
+status: 2
+bash-n: 0
+--- stderr
+|bash: rcfile: option requires an argument
+
+=== 67: --rcfile does not take an attached file name
+status: 2
+bash-n: 0
+--- stderr
+|bash: --rcfile=testrc: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 68: an abbreviated long option is rejected
+status: 2
+bash-n: 0
+--- stderr
+|bash: --nor: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 69: a value attached to a long switch is rejected
+status: 2
+bash-n: 0
+--- stderr
+|bash: --norc=1: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 70: an unknown long option is rejected
+status: 2
+bash-n: 0
+--- stderr
+|bash: --bogus: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 71: an unknown short option is rejected
+status: 2
+bash-n: 0
+--- stderr
+|bash: -Z: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 72: --version with an unknown long option is rejected
+status: 2
+bash-n: 0
+--- stderr
+|bash: --bogus: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 73: --version after the -c command is a positional
+status: 0
+bash-n: 0
+--- stdout
+|0=[--version]
+
+=== 74: --debug takes no value
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 75: -o with an unknown option name
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 0: bash: nosuch: invalid option name
+
+=== 76: -O with an unknown option name
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 0: nosuch: invalid shell option name
+
+=== 77: -o with no option name lists the options
+status: 0
+bash-n: 0
+--- stdout
+|allexport      	off
+|braceexpand    	on
+|emacs          	on
+|errexit        	off
+|errtrace       	off
+|functrace      	off
+|hashall        	on
+|histexpand     	off
+|history        	off
+|ignoreeof      	off
+|interactive-comments	on
+|keyword        	off
+|monitor        	off
+|noclobber      	off
+|noexec         	off
+|noglob         	off
+|nolog          	off
+|notify         	off
+|nounset        	off
+|onecmd         	off
+|physical       	off
+|pipefail       	off
+|posix          	off
+|privileged     	off
+|verbose        	off
+|vi             	off
+|xtrace         	off
+
+=== 78: -O with no option name lists the shopt options
+status: 0
+bash-n: 0
+--- stdout
+|array_expand_once   	off
+|assoc_expand_once   	off
+|autocd              	off
+|bash_source_fullpath	off
+|cdable_vars         	off
+|cdspell             	off
+|checkhash           	off
+|checkjobs           	off
+|checkwinsize        	on
+|cmdhist             	on
+|compat31            	off
+|compat32            	off
+|compat40            	off
+|compat41            	off
+|compat42            	off
+|compat43            	off
+|compat44            	off
+|complete_fullquote  	on
+|direxpand           	off
+|dirspell            	off
+|dotglob             	off
+|execfail            	off
+|expand_aliases      	off
+|extdebug            	off
+|extglob             	off
+|extquote            	on
+|failglob            	off
+|force_fignore       	on
+|globasciiranges     	on
+|globskipdots        	on
+|globstar            	off
+|gnu_errfmt          	off
+|histappend          	off
+|histreedit          	off
+|histverify          	off
+|hostcomplete        	on
+|huponexit           	off
+|inherit_errexit     	off
+|interactive_comments	on
+|lastpipe            	off
+|lithist             	off
+|localvar_inherit    	off
+|localvar_unset      	off
+|login_shell         	off
+|mailwarn            	off
+|no_empty_cmd_completion	off
+|nocaseglob          	off
+|nocasematch         	off
+|noexpand_translation	off
+|nullglob            	off
+|patsub_replacement  	on
+|progcomp            	on
+|progcomp_alias      	off
+|promptvars          	on
+|restricted_shell    	off
+|shift_verbose       	off
+|sourcepath          	on
+|varredir_close      	off
+|xpg_echo            	off
+
+=== 79: -o followed by -c
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 0: bash: -c: invalid option name
+
+=== 80: -O followed by -c
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 0: -c: invalid shell option name
+
+=== 81: -O takes its option name from the next word
+status: 2
+bash-n: 0
+--- stderr
+|bash: -g: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 82: +O disables extglob
+status: 1
+bash-n: 0
+--- stdout
+|extglob             	off
+
+=== 83: +e disables errexit enabled with -e
+status: 0
+bash-n: 0
+--- stdout
+|after
+
+=== 84: -v prints input as it is read
+status: 0
+bash-n: 0
+--- stdout
+|hi
+--- stderr
+|echo hi
+
+=== 85: --verbose prints input as it is read
+status: 0
+bash-n: 0
+--- stdout
+|hi
+--- stderr
+|echo hi
+
+=== 86: -a on the command line
+status: 0
+bash-n: 0
+--- stdout
+|ahBc
+
+=== 87: -b on the command line
+status: 0
+bash-n: 0
+--- stdout
+|bhBc
+
+=== 88: -h on the command line
+status: 0
+bash-n: 0
+--- stdout
+|hBc
+
+=== 89: -k on the command line
+status: 0
+bash-n: 0
+--- stdout
+|hkBc
+
+=== 90: -m on the command line
+status: 0
+bash-n: 0
+--- stdout
+|hBc
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+
+=== 91: -p on the command line
+status: 0
+bash-n: 0
+--- stdout
+|hpBc
+
+=== 92: -r on the command line
+status: 0
+bash-n: 0
+--- stdout
+|hrBc
+
+=== 93: -B on the command line
+status: 0
+bash-n: 0
+--- stdout
+|hBc
+
+=== 94: -D on the command line
+status: 0
+bash-n: 0
+--- stdout
+|"hi"
+
+=== 95: -E on the command line
+status: 0
+bash-n: 0
+--- stdout
+|hBEc
+
+=== 96: -H on the command line
+status: 0
+bash-n: 0
+--- stdout
+|hBHc
+
+=== 97: -P on the command line
+status: 0
+bash-n: 0
+--- stdout
+|hBPc
+
+=== 98: -T on the command line
+status: 0
+bash-n: 0
+--- stdout
+|hBTc
+
+=== 99: a child shell inherits open file descriptors
+status: 0
+bash-n: 0
+--- stdout
+|via3

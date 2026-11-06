@@ -1,0 +1,38 @@
+# Goldens for tests/oils/spec/command-parsing.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Prefix env on assignment
+status: 0
+bash-n: 0
+--- stdout
+|var
+
+=== 1: Redirect on assignment (enabled 7/2019)
+status: 0
+bash-n: 0
+--- stdout
+|REDIRECTED
+--- file _tmp/r.txt
+
+=== 2: Prefix env on control flow
+status: 0
+bash-n: 0
+--- stdout
+|a
+
+=== 3: Redirect on control flow (ignored in OSH)
+status: 0
+bash-n: 0
+--- stdout
+|REDIRECTED
+--- file _tmp/r.txt
+
+=== 4: Redirect on control flow with ysh:all (no_parse_ignored)
+status: 0
+bash-n: 0
+--- stdout
+|REDIRECTED
+--- stderr
+|bash: line 1: shopt: ysh:all: invalid shell option name
+--- file _tmp/r.txt

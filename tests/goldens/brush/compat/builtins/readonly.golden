@@ -1,0 +1,77 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/readonly.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: making var readonly
+status: 0
+bash-n: 0
+--- stdout
+|Invoking declare -p...
+|declare -r my_var="value"
+
+=== 1: using readonly with value
+status: 0
+bash-n: 0
+--- stdout
+|Invoking declare -p...
+|declare -r my_var="my_value"
+
+=== 2: readonly array after append
+status: 0
+bash-n: 0
+--- stdout
+|2
+
+=== 3: Multiple readonly operands expand before assignments are applied
+status: 0
+bash-n: 0
+--- stdout
+|declare -r first="one"
+|declare -r second=""
+
+=== 4: readonly on nameref makes nameref readonly
+status: 0
+bash-n: 0
+--- stdout
+|declare -n ref="target"
+|declare -r target="value"
+|exit: 0
+|target: value
+--- stderr
+|bash: line 10: target: readonly variable
+
+=== 5: readonly target through nameref assignment
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+|target: value
+--- stderr
+|bash: line 4: target: readonly variable
+
+=== 6: a failed readonly assignment inside a pipeline reports its status
+status: 0
+bash-n: 0
+--- stdout
+|pipeline: 1
+--- stderr
+|bash: line 2: r: readonly variable
+
+=== 7: readonly -a with an assignment converts and types the variable
+status: 0
+bash-n: 0
+--- stdout
+|value_status=0
+|declare -ar e5=([0]="y")
+|assoc_status=0
+|declare -Ar na=([k]="v" )
+
+=== 8: readonly -f marks a function readonly rather than displaying it
+status: 1
+bash-n: 0
+--- stdout
+|status: 0
+|original
+--- stderr
+|bash: line 4: g: readonly function
+|bash: line 6: readonly: nosuchfn: not a function

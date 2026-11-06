@@ -1,0 +1,25 @@
+# Goldens for tests/oils/spec/zsh-idioms.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: git-completion snippet
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 1: asdf snippet
+status: 0
+bash-n: 0
+
+=== 2: zsh var sub is rejected at runtime
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+|status=1
+--- stderr
+|bash: line 1: ${(m)foo}: bad substitution
+|bash: line 4: ${(m)foo}: bad substitution
+|bash: line 7: ${(m)foo}: bad substitution

@@ -1,0 +1,130 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/word_expansion/param_transformation.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Parameter case transformation
+status: 0
+bash-n: 0
+--- stdout
+|HELLO WORLD
+|HElLo WoRlD
+|hello world
+|HELLO WORLD
+|HElLo WoRlD
+|hello world
+|HELLO WORLD
+|HElLo WoRlD
+|hello world
+|HELLO WORLD
+|HElLo WoRlD
+|hello world
+
+=== 1: Parameter quote transformations - Q
+status: 0
+bash-n: 0
+--- stdout
+|${var@Q}: '""'
+|${var@Q}: 'Hello'
+|${var@Q}: 'Hello, world!'
+|${var@Q}: 'a '\''b c'\'' d'
+|${arr1@Q}: 'a'
+|${arr2@Q}: 
+
+=== 2: Parameter quote transformations - K
+status: 0
+bash-n: 0
+--- stdout
+|${var@K}: '""'
+|${var@K}: 'Hello'
+|${var@K}: 'Hello, world!'
+|${var@K}: 'a '\''b c'\'' d'
+|${arr1@K}: 'a'
+|${arr1[1]@K}: 'b'
+|${arr1[@]@K}: 0 "a" 1 "b" 2 "c"
+|${arr1[*]@K}: 0 "a" 1 "b" 2 "c"
+|${arr2@K}: 
+|${arr2[b]@K}: '2'
+|${arr2[@]@K}: b "2" a "1" 
+|${arr2[*]@K}: b "2" a "1" 
+
+=== 3: Parameter quote transformations - k
+status: 0
+bash-n: 0
+--- stdout
+|${var@k}: '""'
+|${var@k}: 'Hello'
+|${var@k}: 'Hello, world!'
+|${arr1@k}: 'a'
+|${arr2@k}: 
+
+=== 4: Parameter transformations: expand escapes
+status: 0
+bash-n: 0
+--- stdout
+|${var@E}: a
+|"b
+
+=== 5: Parameter transformation: assignment
+status: 0
+bash-n: 0
+--- stdout
+|${var@A}: var='hello'
+|${arr@A}: declare -ai arr='1'
+|${arr[1]@A}: declare -ai arr='2'
+|${arr[@]@A}: declare -ai arr=([0]="1" [1]="2" [2]="3")
+|${arr[*]@A}: declare -ai arr=([0]="1" [1]="2" [2]="3")
+|${arr2@A}: declare -A arr2
+|${arr2[@]@A}: declare -A arr2=([a]="b" )
+|${arr2[*]@A}: declare -A arr2=([a]="b" )
+
+=== 6: Parameter transformation: attributes
+status: 0
+bash-n: 0
+--- stdout
+|${var@a}: 
+|${arr@a}: ai
+|${!ref@a}: ai
+
+=== 7: Parameter transformation @a through nameref
+status: 0
+bash-n: 0
+--- stdout
+|ref @a: i
+|target @a: i
+
+=== 8: Parameter transformation @Q through nameref
+status: 0
+bash-n: 0
+--- stdout
+|ref @Q: 'hello world'
+
+=== 9: Parameter transformation @A through nameref
+status: 0
+bash-n: 0
+--- stdout
+|ref @A: target='hello'
+|target @A: target='hello'
+
+=== 10: Parameter quote transformations - Q with embedded single quotes
+status: 0
+bash-n: 0
+--- stdout
+|[a'b] 'a'\''b'
+|[a''b] 'a'\'''\''b'
+|['] \'
+|[''] ''\'''\'''
+|['a] ''\''a'
+|[a'] 'a'\'''
+|['''] ''\'''\'''\'''
+|[] ''
+|[a 'b c' d] 'a '\''b c'\'' d'
+|arr@: 'a'\''b' 'a'\'''\''b' \'
+|arr*: 'a'\''b' 'a'\'''\''b' \'
+|assoc: 'a'\'''\''b'
+
+=== 11: Parameter quote transformations - Q upgrades for control characters
+status: 0
+bash-n: 0
+--- stdout
+|tab: $'a\tb'
+|newline: $'a\nb'

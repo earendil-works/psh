@@ -1,0 +1,462 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/word_expansion/command_substitution.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Command substitution
+status: 0
+bash-n: 0
+--- stdout
+|1:
+|hi
+|2:
+|hi
+|3:
+|hi
+|4:
+|updated
+|var=value
+
+=== 1: Command substitution with embedded parens
+status: 0
+bash-n: 0
+--- stdout
+|$x: 1
+|hi
+
+=== 2: Command substitution with subshell
+status: 0
+bash-n: 0
+--- stdout
+|$x: hi
+
+=== 3: Command substitution exit code
+status: 0
+bash-n: 0
+--- stdout
+|2. Made it past true
+
+=== 4: Command substitution with exec
+status: 0
+bash-n: 0
+--- stdout
+|x: hi
+
+=== 5: Backtick command substitution
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 6: Backtick command substitution with escaping
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 7: Backtick command substitution with backslashes
+status: 0
+bash-n: 0
+--- stdout
+|\
+
+=== 8: Backtick command substitution with trailing backslashes
+status: 0
+bash-n: 0
+--- stdout
+|two: <\> len=1
+|four: <\> len=1
+|six: <\\> len=2
+
+=== 9: Backtick command substitution escape rules
+status: 0
+bash-n: 0
+--- stdout
+|<\2>
+|abc
+|$HOME
+|"q"
+|a\"b
+
+=== 10: Backtick command substitution escape rules in double quotes
+status: 0
+bash-n: 0
+--- stdout
+|\a
+|abc $HOME
+|"q"
+
+=== 11: Backtick command substitution unescaping double quotes in double quotes
+status: 0
+bash-n: 0
+--- stdout
+|q
+|a"b
+
+=== 12: Backtick command substitution line continuations
+status: 0
+bash-n: 0
+--- stdout
+|echo
+|ab
+|ab
+
+=== 13: Backtick command substitution in double quotes
+status: 0
+bash-n: 0
+--- stdout
+|First line
+| Second line 
+|Thirdlinehere
+
+=== 14: Ignore single quote in comment in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|Batman
+
+=== 15: Ignore double quote in comment in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|parsed
+
+=== 16: Ignore parentheses in comment in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|Sad
+
+=== 17: Ignore dollar in comment in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|Mr. Crabs ^
+
+=== 18: Positional parameter count not mistaken for comment
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 19: Comment after blanks in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|0 blanks: hi
+|1 blank: hi
+|2 blanks: hi
+|3 blanks: hi
+
+=== 20: Comment after tabs in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|1 tab: hi
+|2 tabs: hi
+|blank and tab: hi
+
+=== 21: Hash after blanks that is not a comment in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|1: a#b
+|2: a # b
+|3: one
+|two
+|4:  # not a comment
+
+=== 22: Ignore single quote in comment in command substitution (backticks)
+status: 0
+bash-n: 0
+--- stdout
+|Batman
+
+=== 23: Ignore double quote in comment in command substitution (backticks)
+status: 0
+bash-n: 0
+--- stdout
+|parsed
+
+=== 24: Ignore parentheses in comment in command substitution (backticks)
+status: 0
+bash-n: 0
+--- stdout
+|Sad
+
+=== 25: Ignore dollar in comment in command substitution (backticks)
+status: 0
+bash-n: 0
+--- stdout
+|Mr. Crabs ^
+
+=== 26: Positional parameter count not mistaken for comment (backticks)
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 27: Command substitution with only input redir
+status: 0
+bash-n: 0
+--- stdout
+|x: Some text
+--- file file.txt
+|Some text
+
+=== 28: Command substitution with only input redir in pipeline
+status: 0
+bash-n: 0
+--- stdout
+|$?: 0
+|x: File Contents
+--- stderr
+|bash: line 1: non-existent-file.txt: No such file or directory
+
+=== 29: Backquote with only input redir
+status: 0
+bash-n: 0
+--- stdout
+|x: Some text
+--- file file.txt
+|Some text
+
+=== 30: Command substitution as simple command preserves exit code
+status: 0
+bash-n: 0
+--- stdout
+|exit code: 1
+|exit code: 0
+|exit code: 42
+
+=== 31: Backtick substitution as simple command preserves exit code
+status: 0
+bash-n: 0
+--- stdout
+|exit code: 1
+|exit code: 0
+
+=== 32: Command substitution with exec as simple command
+status: 0
+bash-n: 0
+--- stdout
+|exit code: 0
+|exit code: 1
+
+=== 33: Command substitution strips null bytes
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: hexdump: command not found
+|bash: line 1: warning: command substitution: ignored null byte in input
+
+=== 34: Backtick substitution strips null bytes
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: hexdump: command not found
+|bash: line 1: warning: command substitution: ignored null byte in input
+
+=== 35: Command substitution strips multiple null bytes
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: hexdump: command not found
+|bash: line 1: warning: command substitution: ignored null byte in input
+
+=== 36: Command substitution with only null bytes produces empty string
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: hexdump: command not found
+|bash: line 1: warning: command substitution: ignored null byte in input
+
+=== 37: Variable assignment from command substitution strips null bytes
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: warning: command substitution: ignored null byte in input
+|bash: line 2: hexdump: command not found
+
+=== 38: Input redirection substitution strips null bytes
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 2: warning: command substitution: ignored null byte in input
+|bash: line 3: hexdump: command not found
+--- file file.txt
+\a\x00b
+~ no newline at end
+
+=== 39: Nested command substitution strips null bytes
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: hexdump: command not found
+|bash: line 1: warning: command substitution: ignored null byte in input
+
+=== 40: Nested command substitution exit code
+status: 0
+bash-n: 0
+--- stdout
+|exit code: 1
+|exit code: 0
+
+=== 41: Syntax error inside command substitution
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `)'
+|bash: line 1: `x="[$(if)]"'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `)'
+|bash: line 1: `x="[$(if)]"'
+
+=== 42: Case statement with unparenthesized pattern in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|matched
+
+=== 43: Case statement with unparenthesized pattern in command substitution in here doc
+status: 0
+bash-n: 0
+--- stdout
+|matched
+
+=== 44: Command substitution with embedded extglob
+status: 0
+bash-n: 2
+--- stdout
+|abc xyz
+|xyz
+--- file abc
+--- file abd
+--- file xyz
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `(' while looking for matching `)'
+|bash: line 3: `echo "$(echo @(abc|xyz))"'
+
+=== 45: Command substitution with quoted paren in extglob
+status: 0
+bash-n: 2
+--- stdout
+|@()) @(a|)|b)x @())
+|@())
+|@(a|)|b)x
+|@(')x @(a')|b) @($a\)x @())x
+|@(')x
+|@(PIDa\)x @(PID')x
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `echo @(")") @(a|')'|b)x @(\))'
+
+=== 46: Extglob containing backquotes or command substitution in quotes
+status: 0
+bash-n: 2
+--- stdout
+|@())x @(()x
+|@())x @(\))x
+|@())x
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `echo @(`echo ")"`)x @(`echo "("`)x'
+
+=== 47: Extglob containing parameter expansion with blanks in quotes
+status: 0
+bash-n: 2
+--- stdout
+|match
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `case 'a  b' in @("${u:-a  b}")) echo match;; *) echo no match;; esac'
+
+=== 48: Extglob containing dollar and single quote in double quotes
+status: 0
+bash-n: 2
+--- stdout
+|match
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `('
+|bash: line 3: `case "$v" in @("$'x'")) echo match;; *) echo no match;; esac'
+
+=== 49: Escaped backslash in backquoted command
+status: 0
+bash-n: 2
+--- stdout
+|"
+|@(")x
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `('
+|bash: line 3: `echo @(`echo \\"`)x'
+
+=== 50: Extglob containing backquoted command that fails
+status: 0
+bash-n: 2
+--- stdout
+|@(})x
+|@()x
+--- stderr
+|bash: command substitution: line 2: unexpected EOF while looking for matching `''
+|bash: command substitution: line 3: unexpected EOF while looking for matching `''
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `echo @(}`'`)x'
+
+=== 51: Extglob with unquoted command substitution containing a comment
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 3: syntax error near unexpected token `)'
+|bash: line 3: `))y'
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `echo @($(echo x # )'
+
+=== 52: Extglob with unterminated construct inside quotes
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 3: unexpected EOF while looking for matching `"'
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `echo @("$(\$"\))x'
+
+=== 53: Single quote after escaped or doubled dollar sign
+status: 0
+bash-n: 0
+--- stdout
+|$a\x
+|PIDa\x
+
+=== 54: Extglob containing backquoted command with close paren
+status: 0
+bash-n: 2
+--- stdout
+|x
+--- file x
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `(' while looking for matching `)'
+|bash: line 3: `echo $(echo @(`case x in x) echo x;; esac`))'
+
+=== 55: Pathname expansion of extglob containing backquoted command
+status: 0
+bash-n: 2
+--- stdout
+|x
+--- file x
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `('
+|bash: line 3: `echo @(`case x in x) echo x;; esac`)'
+
+=== 56: Large builtin output after a nested command substitution
+status: 0
+bash-n: 0
+--- stdout
+|131072
+
+=== 57: Function substitution
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|x=hi

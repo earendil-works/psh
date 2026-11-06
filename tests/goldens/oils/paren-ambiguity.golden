@@ -1,0 +1,85 @@
+# Goldens for tests/oils/spec/paren-ambiguity.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: (( closed with ) ) after multiple lines is command - #2337
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 1: $(( closed with ) ) after multiple lines is command - #2337
+status: 0
+bash-n: 0
+--- stdout
+|1 2 3
+
+=== 2: (( closed with )) after multiple lines is parse error - #2337
+status: 0
+bash-n: 0
+--- stdout
+|ok
+--- stderr
+|<sh>: line 7: ((: echo 1
+|echo 2
+|(( x ))
+|: 0
+|echo 3
+|: arithmetic syntax error in expression (error token is "1
+|echo 2
+|(( x ))
+|: 0
+|echo 3
+|")
+
+=== 3: $(( closed with )) after multiple lines is parse error - #2337
+status: 0
+bash-n: 0
+--- stdout
+|ok
+--- stderr
+|<sh>: line 2: echo 1
+|echo 2
+|(( x ))
+|: 0
+|echo 3
+|: arithmetic syntax error in expression (error token is "1
+|echo 2
+|(( x ))
+|: 0
+|echo 3
+|")
+
+=== 4: (((grep example - 4+ instances in regtest/aports - #2337
+status: 0
+bash-n: 0
+
+=== 5: ((gzip example - zdiff package - #2337
+status: 0
+bash-n: 0
+--- stdout
+|bye
+--- stderr
+|bash: line 9: 3: Bad file descriptor
+|gzip: .gz: No such file or directory
+|gzip: .gz: No such file or directory
+
+=== 6: ((pkg-config example - postfix package - #2337
+status: 0
+bash-n: 0
+--- stdout
+|bye
+
+=== 7: ((test example - liblo package - #2337
+status: 0
+bash-n: 0
+--- stdout
+|bye
+
+=== 8: $((which example - command sub versus arith sub - gnunet-gtk package
+status: 0
+bash-n: 0
+--- stdout
+|bye

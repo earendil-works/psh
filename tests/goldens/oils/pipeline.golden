@@ -1,0 +1,181 @@
+# Goldens for tests/oils/spec/pipeline.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Brace group in pipeline
+status: 0
+bash-n: 0
+--- stdout
+|two
+|one
+
+=== 1: For loop starts pipeline
+status: 0
+bash-n: 0
+--- stdout
+|two
+|one
+
+=== 2: While Loop ends pipeline
+status: 0
+bash-n: 0
+--- stdout
+|.1
+|.2
+|.3
+
+=== 3: Redirect in Pipeline
+status: 0
+bash-n: 0
+--- stdout
+|0
+--- stderr
+|hi
+
+=== 4: Pipeline comments
+status: 0
+bash-n: 0
+--- stdout
+|ABCD
+
+=== 5: Exit code is last status
+status: 1
+bash-n: 0
+
+=== 6: Initial value of PIPESTATUS is empty string
+status: 0
+bash-n: 0
+--- stdout
+|pipestatus
+
+=== 7: PIPESTATUS
+status: 0
+bash-n: 0
+--- stdout
+|1 2 3
+
+=== 8: PIPESTATUS is set on simple commands
+status: 0
+bash-n: 0
+--- stdout
+|pipestatus 1
+|pipestatus 55 44
+|pipestatus 0
+
+=== 9: PIPESTATUS with shopt -s lastpipe
+status: 0
+bash-n: 0
+--- stdout
+|1 2 3
+
+=== 10: |&
+status: 0
+bash-n: 0
+--- stdout
+|STDERR
+|STDOUT
+
+=== 11: ! turns non-zero into zero
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 12: ! turns zero into 1
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 13: ! in if
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|FALSE
+
+=== 14: ! with ||
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|FAILED
+
+=== 15: ! with { }
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|FAILED
+
+=== 16: ! with ( )
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|FAILED
+
+=== 17: ! is not a command
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 2: !: command not found
+
+=== 18: Evaluation of argv[0] in pipeline occurs in child
+status: 0
+bash-n: 0
+--- stdout
+|1
+|cmd=
+
+=== 19: bash/dash/mksh run the last command is run in its own process
+status: 0
+bash-n: 0
+--- stdout
+|line=
+
+=== 20: shopt -s lastpipe (always on in OSH)
+status: 0
+bash-n: 0
+--- stdout
+|line=hi
+
+=== 21: shopt -s lastpipe (always on in OSH)
+status: 0
+bash-n: 0
+--- stdout
+|i=3
+
+=== 22: SIGPIPE causes pipeline to die (regression for issue #295)
+status: 0
+bash-n: 0
+--- stdout
+|141 0
+
+=== 23: Nested pipelines
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|10
+
+=== 24: Pipeline in eval
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 25: shopt -s lastpipe and shopt -s no_last_fork interaction
+status: 0
+bash-n: 0
+--- stdout
+|0
+|status=1
+|0
+|status=1
+--- stderr
+|<sh>: line 3: shopt: no_fork_last: invalid shell option name

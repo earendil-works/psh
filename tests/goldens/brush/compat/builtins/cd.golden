@@ -1,0 +1,181 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/cd.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic cd usage
+status: 0
+bash-n: 0
+--- stdout
+|cd /
+|0
+|pwd: /
+|cd usr
+|0
+|pwd: /usr
+|cd
+|0
+|pwd: <home>
+
+=== 1: cd to file
+status: 0
+bash-n: 0
+--- stdout
+|file
+|1
+|file
+--- stderr
+|bash: line 2: cd: file: Not a directory
+
+=== 2: cd -
+status: 0
+bash-n: 0
+--- stdout
+|pwd: /
+|pwd: /usr
+|oldpwd: /
+|/
+|0
+|pwd: /
+
+=== 3: cd ~
+status: 0
+bash-n: 0
+--- stdout
+|Set HOME: my_home
+|Subshell 1: HOME=my_home
+|pwd: my_home
+|Subshell 2: HOME=my_home
+|pwd: my_home
+|Subshell 3: HOME=my_home
+|pwd: my_home
+--- dir my_home
+
+=== 4: cd with symlink
+status: 0
+bash-n: 0
+--- stdout
+|symlink
+|level1
+--- dir level1
+--- dir level1/level2
+--- dir level1/level2/level3
+--- link level1/symlink -> ./level2/level3
+
+=== 5: cd -L
+status: 0
+bash-n: 0
+--- stdout
+|[Case 1]
+|symlink
+|level1
+|[Case 2]
+|symlink
+|level1
+|[Case 3]
+|symlink
+|level1
+|[Case 4]
+|symlink
+--- dir level1
+--- dir level1/level2
+--- dir level1/level2/level3
+--- link level1/symlink -> ./level2/level3
+
+=== 6: cd -P
+status: 0
+bash-n: 0
+--- stdout
+|[Case 1]
+|cd ./symlink => symlink
+|cd -P .. => level2
+|[Case 2]
+|cd -P ./symlink => level3
+|cd .. => level2
+--- dir level1
+--- dir level1/level2
+--- dir level1/level2/level3
+--- link level1/symlink -> ./level2/level3
+
+=== 7: OLDPWD
+status: 1
+bash-n: 0
+--- stdout
+|[0]
+|
+|[1]
+|NOTSET
+|[2]
+|declare -x OLDPWD
+|[3]
+|NOT_IN_ENV
+|
+|[Unsetting + cd'ing...]
+|[4]
+|[5]
+--- dir subdir
+
+=== 8: cd .. from a deleted directory
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|back at the start
+
+=== 9: cd --help prints help on stdout
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|help on stdout
+|nothing on stderr
+
+=== 10: cd takes -- and both of -L and -P
+status: 0
+bash-n: 0
+--- stdout
+|-d
+|/
+--- dir -d
+
+=== 11: cd takes the last of -L and -P
+status: 0
+bash-n: 0
+--- stdout
+|real
+|link
+--- link link -> real
+--- dir real
+
+=== 12: cd --help prints what help cd prints
+status: 0
+bash-n: 0
+--- stdout
+|same
+
+=== 13: cd -h is an invalid option and prints nothing on stdout
+status: 0
+bash-n: 0
+--- stdout
+|rc=2 len=0
+|error on stderr
+
+=== 14: cd --help after an operand is an operand
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+--- stderr
+|bash: line 1: cd: too many arguments
+
+=== 15: cd --help with stdout closed or read-only fails quietly
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|rc=2
+
+=== 16: cd --help with stdout full fails quietly
+status: 0
+bash-n: 0
+--- stdout
+|rc=2

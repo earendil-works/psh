@@ -1,0 +1,460 @@
+# Goldens for tests/oils/spec/builtin-bracket.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: zero args: [ ]
+status: 0
+bash-n: 0
+--- stdout
+|false
+
+=== 1: one arg: [ x ] where x is one of '=' '!' '(' ']'
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+|status=0
+|status=0
+
+=== 2: one arg: empty string is false.  Equivalent to -n.
+status: 0
+bash-n: 0
+--- stdout
+|true
+|false
+
+=== 3: -a as unary operator (alias of -e)
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=1
+
+=== 4: two args: -z with = ! ( ]
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+|status=1
+|status=1
+
+=== 5: three args
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+|status=0
+|status=0
+|status=0
+
+=== 6: four args
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+
+=== 7: test with extra args is syntax error
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+|status=2
+--- stderr
+|bash: line 1: test: x: binary operator expected
+|bash: line 3: test: x: binary operator expected
+
+=== 8: ] syntax errors
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+|status=1
+|status=2
+|status=2
+|status=2
+--- stderr
+|bash: line 1: [: missing `]'
+|bash: line 5: [: missing `]'
+|bash: line 7: [: missing `]'
+|bash: line 9: [: missing `]'
+
+=== 9: -n
+status: 0
+bash-n: 0
+--- stdout
+|true
+|false
+
+=== 10: ! -a
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 11: -o
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 12: ( )
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 13: ( ) ! -a -o with system version of [
+status: 0
+bash-n: 0
+--- stdout
+|true
+--- stderr
+|bash: line 1: [: missing `]'
+
+=== 14: == is alias for =
+status: 0
+bash-n: 0
+--- stdout
+|true
+|true
+
+=== 15: == and = does not do glob
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+
+=== 16: [ with op variable
+status: 0
+bash-n: 0
+--- stdout
+|true
+|false
+
+=== 17: [ with unquoted empty var
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 2: [: =: unary operator expected
+
+=== 18: [ compare with literal -f
+status: 0
+bash-n: 0
+--- stdout
+|true
+|true
+
+=== 19: [ '(' foo ] is runtime syntax error
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|bash: line 1: [: (: unary operator expected
+
+=== 20: -z '>' implies two token lookahead
+status: 0
+bash-n: 0
+--- stdout
+|true
+|false
+|true
+
+=== 21: operator/operand ambiguity with ]
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 22: operator/operand ambiguity with -a
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 23: -d
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=1
+
+=== 24: -x
+status: 0
+bash-n: 0
+--- stdout
+|no
+|yes
+|bad
+--- file x
+|echo hi
+
+=== 25: -r
+status: 0
+bash-n: 0
+--- stdout
+|yes
+|no
+--- other testr_no
+--- file testr_yes
+|1
+
+=== 26: -w
+status: 0
+bash-n: 0
+--- stdout
+|yes
+|no
+--- file testw_no
+|2
+--- file testw_yes
+|1
+
+=== 27: -k for sticky bit
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=1
+
+=== 28: -h and -L test for symlink
+status: 0
+bash-n: 0
+--- stdout
+|no
+|no
+|is-file
+|symlink
+|symlink
+|dangling
+|dangling
+|dangling is not file
+--- dir builtin-test-1
+--- link builtin-test-1/dangling -> <case>/builtin-test-1/__nonexistent_ZZ__
+--- link builtin-test-1/symlink -> <case>/builtin-test-1/zz
+--- file builtin-test-1/zz
+
+=== 29: -t 1 for stdout
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 30: [ -t invalid ]
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|bash: line 1: [: invalid: integer expected
+
+=== 31: -ot and -nt
+status: 0
+bash-n: 0
+--- stdout
+|older
+|not newer
+|not older than itself
+|not newer than itself
+--- stderr
+|touch: missing file operand
+|Try 'touch --help' for more information.
+--- file x
+--- file y
+
+=== 32: [ a -eq b ]
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|bash: line 1: [: a: integer expected
+
+=== 33: test -s
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+|status=0
+--- file empty
+--- file nonempty
+|nonempty
+
+=== 34: test -b -c -S (block, character, socket)
+status: 0
+bash-n: 0
+--- stdout
+|-b
+|status=1
+|status=1
+|status=1
+|-c
+|status=1
+|status=1
+|-S
+|status=1
+|status=1
+
+=== 35: test -p named pipe
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=1
+--- other fifo
+
+=== 36: -G and -O for effective user ID and group ID
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=1
+|status=0
+|status=1
+--- dir bin
+
+=== 37: -u for setuid, -g too
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=1
+|status=1
+|status=0
+--- file setgid
+--- file setuid
+
+=== 38: -v to test variable (bash)
+status: 0
+bash-n: 0
+--- stdout
+|global=1
+|global=0
+|dynamic=0
+|dynamic=0
+|dynamic=1
+
+=== 39: test -o for options
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=0
+|status=1
+
+=== 40: -nt -ot
+status: 1
+bash-n: 0
+
+=== 41: -ef
+status: 0
+bash-n: 0
+--- stdout
+|same
+|same
+|different
+|different
+--- file hardlink
+--- file left
+--- file right
+
+=== 42: Overflow error
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 43: Bug regression
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 44: test -c
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 45: test -S
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 46: bug from pnut: negative number $((-1))
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+|
+|status=0
+|status=0
+|
+|status=0
+|status=0
+
+=== 47: negative octal numbers, etc.
+status: 0
+bash-n: 0
+--- stdout
+|zero=0
+|octal=1
+|hex=2
+|baseN=2
+--- stderr
+|bash: line 7: [: -0xff: integer expected
+|bash: line 10: [: -64#a: integer expected
+
+=== 48: More negative numbers
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+
+=== 49: No octal, hex, base N conversion - leading 0 is a regular decimal
+status: 0
+bash-n: 0
+--- stdout
+|59
+|-59
+|
+|status=0
+|status=0
+|
+|hex=2
+|baseN=2
+--- stderr
+|bash: line 14: [: 0xff: integer expected
+|bash: line 16: [: 64#a: integer expected
+
+=== 50: Looks like octal, but digit is too big
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+|
+|status=0
+|status=0
+--- stderr
+|bash: line 1: 083: value too great for base (error token is "083")
+|bash: line 4: -083: value too great for base (error token is "083")
+
+=== 51: no recursive arith [ 1+2 -eq 3 ]
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+|status=2
+--- stderr
+|bash: line 1: [: 1+2: integer expected
+|bash: line 5: [: 1+2: integer expected

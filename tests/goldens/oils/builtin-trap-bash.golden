@@ -1,0 +1,280 @@
+# Goldens for tests/oils/spec/builtin-trap-bash.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: trap -l
+status: 0
+bash-n: 0
+
+=== 1: trap -p
+status: 0
+bash-n: 0
+--- stdout
+|shown
+|exit
+--- file parent.txt
+|trap -- 'echo exit' EXIT
+
+=== 2: trap -p in child is BUGGY in bash
+status: 0
+bash-n: 0
+--- stdout
+|shown
+|exit
+--- file child.txt
+|trap -- 'echo exit' EXIT
+
+=== 3: trap DEBUG ignores $?
+status: 0
+bash-n: 0
+--- stdout
+|  [8]
+|status=0
+|  [9]
+|A
+|  [10]
+|status=0
+|  [11]
+|B
+|  [12]
+|status=0
+
+=== 4: but trap DEBUG respects errexit
+status: 42
+bash-n: 0
+--- stdout
+|  [10]
+
+=== 5: trap DEBUG with 'return'
+status: 0
+bash-n: 0
+--- stdout
+|  [7]
+|status=0
+|  [8]
+|A
+|  [9]
+|status=0
+|  [10]
+|B
+|  [11]
+|status=0
+--- stderr
+|bash: line 7: return: can only `return' from a function or sourced script
+|bash: line 8: return: can only `return' from a function or sourced script
+|bash: line 9: return: can only `return' from a function or sourced script
+|bash: line 10: return: can only `return' from a function or sourced script
+|bash: line 11: return: can only `return' from a function or sourced script
+
+=== 6: trap DEBUG with 'exit'
+status: 42
+bash-n: 0
+--- stdout
+|  [7]
+
+=== 7: trap DEBUG with non-compound commands
+status: 0
+bash-n: 0
+--- stdout
+|  [8]
+|a
+|  [9]
+|b
+|  [9]
+|c
+|  [11]
+|d
+|  [11]
+|e
+|  [12]
+|f
+|  [14]
+|  [15]
+|  [17]
+|  [19]
+
+=== 8: trap DEBUG and control flow
+status: 0
+bash-n: 0
+--- stdout
+|  [6]
+|  [7]
+|hello
+|  [8]
+
+=== 9: trap DEBUG and command sub / subshell
+status: 0
+bash-n: 0
+--- stdout
+|  [8]
+|result = command sub
+|two
+|subshell
+|two
+|  [12]
+|done
+
+=== 10: trap DEBUG not run in forked interpreter for first pipeline part
+status: 0
+bash-n: 0
+--- stdout
+|  LINENO=8
+|pipe1
+|pipe2
+|  LINENO=9
+|ok
+
+=== 11: One 'echo' in first pipeline part - why does bash behave differently from case above?
+status: 0
+bash-n: 0
+--- stdout
+|  LINENO=6
+|  LINENO=7
+|pipeline
+|  LINENO=8
+|ok
+
+=== 12: trap DEBUG and pipeline (lastpipe difference)
+status: 0
+bash-n: 0
+--- stdout
+|  [6]
+|a
+|  [6]
+|b
+|  [8]
+|2
+|  [10]
+|  [10]
+|  [10]
+|1
+|  [12]
+|  [13]
+|  [14]
+|1
+
+=== 13: trap DEBUG function call
+status: 0
+bash-n: 0
+--- stdout
+|  [13]
+|i=A
+|i=B
+|  [15]
+|next
+|  [17]
+|i=X
+|i=Y
+|  [19]
+|ok
+
+=== 14: trap DEBUG case
+status: 0
+bash-n: 0
+--- stdout
+|  [6]
+|  [8]
+|  [10]
+|python
+|  [16]
+|ok
+
+=== 15: trap DEBUG for each
+status: 0
+bash-n: 0
+--- stdout
+|  [6]
+|  [7]
+|x=1
+|  [6]
+|  [7]
+|x=2
+|  [10]
+|ok
+
+=== 16: trap DEBUG for expr
+status: 0
+bash-n: 0
+--- stdout
+|  [6]
+|  [6]
+|  [7]
+|i=3
+|  [6]
+|  [6]
+|  [7]
+|i=4
+|  [6]
+|  [6]
+|  [10]
+|ok
+
+=== 17: trap DEBUG if while
+status: 0
+bash-n: 0
+--- stdout
+|  [6]
+|  [7]
+|if
+|  [10]
+
+=== 18: trap RETURN
+status: 42
+bash-n: 0
+--- stdout
+|--
+|f
+|--
+|--
+|g
+|--
+|return-helper.sh
+|profile [x y]
+
+=== 19: Compare trap DEBUG vs. trap ERR
+status: 0
+bash-n: 0
+--- stdout
+|dbg 3
+|dbg 3
+|dbg 3
+|dbg 5
+|dbg 5
+|dbg 5
+|dbg 7
+|dbg 9
+|err 14
+|err 16
+|ok
+
+=== 20: Combine DEBUG trap and USR1 trap
+status: 0
+bash-n: 0
+--- stdout
+|6 dbg
+|1 dbg
+|1 dbg
+|1 usr1
+|7 dbg
+|after=0
+
+=== 21: Combine ERR trap and USR1 trap
+status: 0
+bash-n: 0
+--- stdout
+|1 err
+|1 usr1
+|after=0
+
+=== 22: Combine DEBUG trap and ERR trap
+status: 0
+bash-n: 0
+--- stdout
+|6 err
+|6 debug
+|6 debug
+|6 debug
+|6 err
+|7 err
+|7 debug
+|after=1

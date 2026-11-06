@@ -1,0 +1,369 @@
+# Goldens for tests/oils/spec/sh-options.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: $- with -c
+status: 0
+bash-n: 0
+--- stdout
+|huBc
+
+=== 1: $- with pipefail
+status: 0
+bash-n: 0
+--- stdout
+|huBs
+
+=== 2: $- and more options
+status: 0
+bash-n: 0
+--- stdout
+|yes
+|yes
+|yes
+|yes
+
+=== 3: $- with interactive shell
+status: 0
+bash-n: 0
+--- stdout
+|FALSE
+|TRUE
+--- stderr
+|bash: cannot set terminal process group (25361): Inappropriate ioctl for device
+|bash: no job control in this shell
+
+=== 4: pass short options like sh -e
+status: 1
+bash-n: 0
+
+=== 5: pass long options like sh -o errexit
+status: 1
+bash-n: 0
+
+=== 6: pass shopt options like sh -O nullglob
+status: 0
+bash-n: 0
+--- stdout
+|foo *.nonexistent bar
+|foo bar
+
+=== 7: set -o vi/emacs
+status: 0
+bash-n: 0
+--- stdout
+|0
+|0
+
+=== 8: vi and emacs are mutually exclusive
+status: 0
+bash-n: 0
+--- stdout
+|set +o emacs
+|set +o vi
+|___
+|set -o emacs
+|set +o vi
+|___
+|set +o emacs
+|set -o vi
+|___
+
+=== 9: interactive shell starts with emacs mode on
+status: 0
+bash-n: 0
+--- stdout
+|non-interactive
+|1
+|1
+|interactive
+|0
+|1
+--- stderr
+|bash: cannot set terminal process group (25422): Inappropriate ioctl for device
+|bash: no job control in this shell
+
+=== 10: nounset
+status: 1
+bash-n: 0
+--- stdout
+|[]
+--- stderr
+|bash: line 3: unset: unbound variable
+
+=== 11: -u is nounset
+status: 1
+bash-n: 0
+--- stdout
+|[]
+--- stderr
+|bash: line 3: unset: unbound variable
+
+=== 12: -n for no execution (useful with --ast-output)
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 13: pipefail
+status: 0
+bash-n: 0
+--- stdout
+|0
+|2
+
+=== 14: shopt -p -o prints 'set' options
+status: 0
+bash-n: 0
+--- stdout
+|set +o nounset
+|set -o nounset
+|--
+|errexit
+|noglob
+|nounset
+
+=== 15: shopt -o prints 'set' options
+status: 0
+bash-n: 0
+--- stdout
+|errexit
+|noglob
+|nounset
+|--
+
+=== 16: shopt -p prints 'shopt' options
+status: 0
+bash-n: 0
+--- stdout
+|shopt -u nullglob
+|shopt -s nullglob
+
+=== 17: shopt with no flags prints options
+status: 0
+bash-n: 0
+--- stdout
+|2 one.txt
+|nullglob
+|failglob
+|1
+--- file one.txt
+|nullglob            	off
+|failglob            	off
+
+=== 18: noclobber off
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+|status=0
+|foo
+--- file can-clobber
+|foo
+
+=== 19: noclobber on
+status: 0
+bash-n: 0
+--- stdout
+|create=0
+|overwrite=1
+|force=0
+|force
+--- stderr
+|bash: line 7: no-clobber: cannot overwrite existing file
+--- file no-clobber
+|force
+
+=== 20: noclobber on <>
+status: 0
+bash-n: 0
+--- stdout
+|f.o
+--- file no-clobber
+|f.o
+
+=== 21: noclobber on >>
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|foo
+--- file no-clobber
+|foo
+
+=== 22: noclobber on &> >
+status: 0
+bash-n: 0
+--- stdout
+|stdout=0
+|again=1
+|foo
+|both=0
+|again=1
+|baz
+--- stderr
+|bash: line 8: <case>/no-clobber: cannot overwrite existing file
+|bash: line 15: <case>/no-clobber: cannot overwrite existing file
+--- file no-clobber
+|baz
+
+=== 23: noclobber on &>> >>
+status: 0
+bash-n: 0
+--- stdout
+|stdout=0
+|again=0
+|foo
+|bar
+|both=0
+|again=0
+|baz
+|foo
+--- file no-clobber
+|baz
+|foo
+
+=== 24: set without args lists variables
+status: 0
+bash-n: 0
+--- stdout
+|__GLOBAL=mutated
+|__OTHERLOCAL=L
+|__mylocal=L
+|__var_in_parent_scope=D
+
+=== 25: set without args and array variables
+status: 0
+bash-n: 0
+--- stdout
+|__array=([0]="1" [1]="2" [2]="3 4")
+
+=== 26: set without args and assoc array variables (not in OSH)
+status: 0
+bash-n: 0
+--- stdout
+|__assoc=([a]="b" ["k e y"]="v a l" )
+
+=== 27: shopt -q
+status: 0
+bash-n: 0
+--- stdout
+|nullglob=1
+|nullglob=0
+|nullglob,failglob=1
+|nullglob,failglob=0
+
+=== 28: shopt -q invalid
+status: 0
+bash-n: 0
+--- stdout
+|invalidZZ=1
+--- stderr
+|bash: line 1: shopt: invalidZZ: invalid shell option name
+
+=== 29: shopt -s strict:all
+status: 0
+bash-n: 0
+--- stdout
+|-
+|-
+|-
+--- stderr
+|bash: line 9: shopt: strict:all: invalid shell option name
+|bash: line 11: shopt: strict_argv: invalid shell option name
+
+=== 30: shopt allows for backward compatibility like bash
+status: 0
+bash-n: 0
+--- stdout
+|shopt -u nullglob
+|status=0
+|shopt -s nullglob
+
+=== 31: shopt -p validates option names
+status: 0
+bash-n: 0
+--- stdout
+|shopt -u nullglob
+|shopt -u failglob
+|status=1
+|nullglob off
+|failglob off
+|status=1
+--- stderr
+|bash: line 1: shopt: invalid: invalid shell option name
+|bash: line 3: shopt: invalid: invalid shell option name
+--- file out.txt
+|nullglob            	off
+|failglob            	off
+
+=== 32: shopt -p -o validates option names
+status: 0
+bash-n: 0
+--- stdout
+|set +o errexit
+|set +o nounset
+|status=1
+--- stderr
+|bash: line 1: shopt: invalid: invalid option name
+
+=== 33: stubbed out bash options
+status: 0
+bash-n: 0
+--- stdout
+|1
+|0
+|0
+|0
+--- stderr
+|bash: line 1: shopt: ignore_shopt_not_impl: invalid shell option name
+|bash: line 3: shopt: foo: invalid shell option name
+
+=== 34: shopt -s nounset works in YSH, not in bash
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|nounset off
+--- stderr
+|bash: line 7: shopt: nounset: invalid shell option name
+
+=== 35: Unimplemented options - print, query, set, unset
+status: 0
+bash-n: 0
+--- stdout
+|shopt -u xpg_echo
+|q=1
+|shopt -s xpg_echo
+|shopt -u xpg_echo
+|p=1
+|noflag=1
+|set=1
+
+=== 36: Unimplemented options - OSH shopt -s ignore_shopt_not_impl
+status: 0
+bash-n: 0
+--- stdout
+|shopt -u xpg_echo
+|q=1
+|shopt -s xpg_echo
+|shopt -u xpg_echo
+|p=1
+|noflag=1
+|set=1
+--- stderr
+|bash: line 3: shopt: ignore_shopt_not_impl: invalid shell option name
+
+=== 37: shopt -p exit code (regression)
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 38: no-ops not shown by shopt -p
+status: 0
+bash-n: 0
+--- stdout
+|shopt -u xpg_echo
+|--

@@ -1,0 +1,27 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/list.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Ignore single quote in comment in list
+status: 0
+bash-n: 0
+--- stdout
+|Batman
+
+=== 1: Ignore double quote in comment in list
+status: 0
+bash-n: 0
+--- stdout
+|parsed
+
+=== 2: Ignore parentheses in comment in list
+status: 0
+bash-n: 0
+--- stdout
+|Sad
+
+=== 3: Ignore dollar in comment in list
+status: 0
+bash-n: 0
+--- stdout
+|Mr. Crabs ^

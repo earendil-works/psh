@@ -1,0 +1,123 @@
+# Goldens for tests/brush/brush-shell/tests/cases/brush/redirection.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Write, append, and read back a file
+status: 0
+bash-n: 0
+--- stdout
+|read: one
+|read: two
+--- file out.txt
+|one
+|two
+
+=== 1: > truncates
+status: 0
+bash-n: 0
+--- stdout
+|second
+--- file f.txt
+|second
+
+=== 2: stderr to a file
+status: 0
+bash-n: 0
+--- stdout
+|captured: to-err
+--- file err.txt
+|to-err
+
+=== 3: &> and &>> send both streams
+status: 0
+bash-n: 0
+--- stdout
+|4: o e o2 e2
+--- file both.txt
+|o
+|e
+|o2
+|e2
+
+=== 4: Duplicated file descriptors
+status: 0
+bash-n: 0
+--- stdout
+|moved
+|to-file
+--- file fd4.txt
+|to-file
+
+=== 5: Reading test files
+status: 0
+bash-n: 0
+--- stdout
+|3: gamma
+|ALPHA BETA GAMMA
+--- file upper.txt
+|ALPHA
+|BETA
+|GAMMA
+
+=== 6: noclobber
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|a
+|c
+--- file c.txt
+|c
+--- file err.txt
+|bash: line 3: c.txt: cannot overwrite existing file
+
+=== 7: Redirecting a whole loop
+status: 0
+bash-n: 0
+--- stdout
+|1 2 3
+--- file loop.txt
+|1
+|2
+|3
+
+=== 8: Redirecting a function's output
+status: 0
+bash-n: 0
+--- stdout
+|from f / err from f
+--- file f-err.txt
+|err from f
+--- file f-out.txt
+|from f
+
+=== 9: Missing input file
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+--- stderr
+|bash: line 1: missing.txt: No such file or directory
+
+=== 10: Sourcing a file
+status: 0
+bash-n: 0
+--- stdout
+|loaded
+|lib_fn: arg
+|sourced twice
+
+=== 11: Process substitution as input
+status: 0
+bash-n: 0
+--- stdout
+|got hi
+|got there
+|x=hello
+
+=== 12: Redirecting to /dev/null
+status: 0
+bash-n: 0
+--- stdout
+|write status: 0
+|read status: 1

@@ -1,0 +1,647 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/command.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic command usage
+status: 127
+bash-n: 0
+--- stdout
+|Executing echo built-in
+|Hello
+|Executing ls using name
+|/
+|Executing ls using absolute path
+|/
+|Executing non-existent command by name
+|Executing non-existent command by path
+--- stderr
+|bash: line 11: non-existent: command not found
+|bash: line 14: /usr/bin/non-existent: No such file or directory
+
+=== 1: Non-executable command
+status: 0
+bash-n: 0
+--- stdout
+|Before executing
+|After executing: result=126
+|Before and-or list execution
+|After and-or list execution: result=0
+--- stderr
+|bash: line 4: ./subdir: Is a directory
+|bash: line 8: ./subdir: Is a directory
+--- dir subdir
+
+=== 2: command -v
+status: 0
+bash-n: 0
+--- stdout
+|PATH: <bin>:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+|[echo]
+|echo
+|[non-existent]
+|1. Not found
+|[/usr/bin/non-existent]
+|2. Not found
+
+=== 3: command -v -p
+status: 0
+bash-n: 0
+--- stdout
+|[no -p]
+|[-p]
+|/bin/cat
+
+=== 4: command -v with full paths
+status: 0
+bash-n: 0
+--- stdout
+|[cat]
+|/usr/bin/cat
+|[$(command -v cat)]
+|/usr/bin/cat
+
+=== 5: command -v with multiple operands
+status: 0
+bash-n: 0
+--- stdout
+|[resolved builtins]
+|echo
+|true
+|pwd
+|rc=0
+|[skipped miss]
+|echo
+|pwd
+|rc=0
+|[all misses]
+|rc=1
+
+=== 6: command -V with multiple operands
+status: 0
+bash-n: 0
+--- stdout
+|echo is a shell builtin
+|true is a shell builtin
+|rc=0
+|not found
+--- stderr
+|bash: line 4: command: non-existent: not found
+
+=== 7: command -V
+status: 0
+bash-n: 0
+--- stdout
+|echo is a shell builtin
+|ls is /usr/bin/ls
+|/usr/bin/ls is /usr/bin/ls
+|1. Not found
+|2. Not found
+--- stderr
+|bash: line 5: command: non-existent: not found
+|bash: line 6: command: /usr/bin/non-existent: not found
+
+=== 8: command with --
+status: 0
+bash-n: 0
+
+=== 9: command with --help
+status: 0
+bash-n: 0
+--- stdout
+|Usage: ls [OPTION]... [FILE]...
+|List information about the FILEs (the current directory by default).
+|Sort entries alphabetically if none of -cftuvSUX nor --sort is specified.
+|
+|Mandatory arguments to long options are mandatory for short options too.
+|  -a, --all                  do not ignore entries starting with .
+|  -A, --almost-all           do not list implied . and ..
+|      --author               with -l, print the author of each file
+|  -b, --escape               print C-style escapes for nongraphic characters
+|      --block-size=SIZE      with -l, scale sizes by SIZE when printing them;
+|                             e.g., '--block-size=M'; see SIZE format below
+|
+|  -B, --ignore-backups       do not list implied entries ending with ~
+|  -c                         with -lt: sort by, and show, ctime (time of last
+|                             change of file status information);
+|                             with -l: show ctime and sort by name;
+|                             otherwise: sort by ctime, newest first
+|
+|  -C                         list entries by columns
+|      --color[=WHEN]         color the output WHEN; more info below
+|  -d, --directory            list directories themselves, not their contents
+|  -D, --dired                generate output designed for Emacs' dired mode
+|  -f                         same as -a -U
+|  -F, --classify[=WHEN]      append indicator (one of */=>@|) to entries WHEN
+|      --file-type            likewise, except do not append '*'
+|      --format=WORD          across,horizontal (-x), commas (-m), long (-l),
+|                             single-column (-1), verbose (-l), vertical (-C)
+|
+|      --full-time            like -l --time-style=full-iso
+|  -g                         like -l, but do not list owner
+|      --group-directories-first
+|                             group directories before files
+|  -G, --no-group             in a long listing, don't print group names
+|  -h, --human-readable       with -l and -s, print sizes like 1K 234M 2G etc.
+|      --si                   likewise, but use powers of 1000 not 1024
+|  -H, --dereference-command-line
+|                             follow symbolic links listed on the command line
+|      --dereference-command-line-symlink-to-dir
+|                             follow each command line symbolic link
+|                             that points to a directory
+|
+|      --hide=PATTERN         do not list implied entries matching shell PATTERN
+|                             (overridden by -a or -A)
+|
+|      --hyperlink[=WHEN]     hyperlink file names WHEN
+|      --indicator-style=WORD
+|                             append indicator with style WORD to entry names:
+|                             none (default), slash (-p),
+|                             file-type (--file-type), classify (-F)
+|
+|  -i, --inode                print the index number of each file
+|  -I, --ignore=PATTERN       do not list implied entries matching shell PATTERN
+|  -k, --kibibytes            default to 1024-byte blocks for file system usage;
+|                             used only with -s and per directory totals
+|
+|  -l                         use a long listing format
+|  -L, --dereference          when showing file information for a symbolic
+|                             link, show information for the file the link
+|                             references rather than for the link itself
+|
+|  -m                         fill width with a comma separated list of entries
+|  -n, --numeric-uid-gid      like -l, but list numeric user and group IDs
+|  -N, --literal              print entry names without quoting
+|  -o                         like -l, but do not list group information
+|  -p, --indicator-style=slash
+|                             append / indicator to directories
+|  -q, --hide-control-chars   print ? instead of nongraphic characters
+|      --show-control-chars   show nongraphic characters as-is (the default,
+|                             unless program is 'ls' and output is a terminal)
+|
+|  -Q, --quote-name           enclose entry names in double quotes
+|      --quoting-style=WORD   use quoting style WORD for entry names:
+|                             literal, locale, shell, shell-always,
+|                             shell-escape, shell-escape-always, c, escape
+|                             (overrides QUOTING_STYLE environment variable)
+|
+|  -r, --reverse              reverse order while sorting
+|  -R, --recursive            list subdirectories recursively
+|  -s, --size                 print the allocated size of each file, in blocks
+|  -S                         sort by file size, largest first
+|      --sort=WORD            change default 'name' sort to WORD:
+|                               none (-U), size (-S), time (-t),
+|                               version (-v), extension (-X), name, width
+|
+|      --time=WORD            select which timestamp used to display or sort;
+|                               access time (-u): atime, access, use;
+|                               metadata change time (-c): ctime, status;
+|                               modified time (default): mtime, modification;
+|                               birth time: birth, creation;
+|                             with -l, WORD determines which time to show;
+|                             with --sort=time, sort by WORD (newest first)
+|
+|      --time-style=TIME_STYLE
+|                             time/date format with -l; see TIME_STYLE below
+|  -t                         sort by time, newest first; see --time
+|  -T, --tabsize=COLS         assume tab stops at each COLS instead of 8
+|  -u                         with -lt: sort by, and show, access time;
+|                             with -l: show access time and sort by name;
+|                             otherwise: sort by access time, newest first
+|
+|  -U                         do not sort directory entries
+|  -v                         natural sort of (version) numbers within text
+|  -w, --width=COLS           set output width to COLS.  0 means no limit
+|  -x                         list entries by lines instead of by columns
+|  -X                         sort alphabetically by entry extension
+|  -Z, --context              print any security context of each file
+|      --zero                 end each output line with NUL, not newline
+|  -1                         list one file per line
+|      --help        display this help and exit
+|      --version     output version information and exit
+|
+|The SIZE argument is an integer and optional unit (example: 10K is 10*1024).
+|Units are K,M,G,T,P,E,Z,Y,R,Q (powers of 1024) or KB,MB,... (powers of 1000).
+|Binary prefixes can be used, too: KiB=K, MiB=M, and so on.
+|
+|The TIME_STYLE argument can be full-iso, long-iso, iso, locale, or +FORMAT.
+|FORMAT is interpreted like in date(1).  If FORMAT is FORMAT1<newline>FORMAT2,
+|then FORMAT1 applies to non-recent files and FORMAT2 to recent files.
+|TIME_STYLE prefixed with 'posix-' takes effect only outside the POSIX locale.
+|Also the TIME_STYLE environment variable sets the default style to use.
+|
+|The WHEN argument defaults to 'always' and can also be 'auto' or 'never'.
+|
+|Using color to distinguish file types is disabled both by default and
+|with --color=never.  With --color=auto, ls emits color codes only when
+|standard output is connected to a terminal.  The LS_COLORS environment
+|variable can change the settings.  Use the dircolors(1) command to set it.
+|
+|Exit status:
+| 0  if OK,
+| 1  if minor problems (e.g., cannot access subdirectory),
+| 2  if serious trouble (e.g., cannot access command-line argument).
+|
+|GNU coreutils online help: <https://www.gnu.org/software/coreutils/>
+|Report any translation bugs to <https://translationproject.org/team/>
+|Full documentation <https://www.gnu.org/software/coreutils/ls>
+|or available locally via: info '(coreutils) ls invocation'
+
+=== 10: command forwards expanded declaration assignments
+status: 0
+bash-n: 0
+--- stdout
+|declare -- declared="world"
+|declare -x exported="world"
+
+=== 11: nested wrappers resolve ordinary and declaration targets
+status: 0
+bash-n: 0
+--- stdout
+|ordinary=world
+|reverse=world
+|declare -- declared="world"
+
+=== 12: command expands assignment-looking argument for ordinary builtin
+status: 0
+bash-n: 0
+--- stdout
+|argument=world
+
+=== 13: command expands assignment-looking argument for external command
+status: 0
+bash-n: 0
+--- stdout
+|<argument=world>
+
+=== 14: command expands assignment-looking command name
+status: 0
+bash-n: 0
+--- stdout
+|status=127 last=<missing=world>
+
+=== 15: command with -p
+status: 0
+bash-n: 0
+
+=== 16: command does not preserve assignment splitting semantics
+status: 0
+bash-n: 0
+--- stdout
+|declare -- b="x"
+|declare -- y
+
+=== 17: command forwards a value with no field separators intact
+status: 0
+bash-n: 0
+--- stdout
+|declare -- declared="world"
+|declare -r fixed="world"
+
+=== 18: Function shadowing command receives its arguments
+status: 0
+bash-n: 0
+--- stdout
+|shadow command: [echo hi] count=2
+
+=== 19: command -v finds aliases, keywords, and functions
+status: 0
+bash-n: 0
+--- stdout
+|alias al='echo hi'
+|rc=0
+|if
+|rc=0
+|f
+|rc=0
+|echo
+|rc=0
+
+=== 20: command -V describes aliases, keywords, and functions
+status: 0
+bash-n: 0
+--- stdout
+|al is aliased to `echo hi'
+|rc=0
+|if is a shell keyword
+|rc=0
+|f is a function
+|f () 
+|{ 
+|    :
+|}
+|rc=0
+|echo is a shell builtin
+|rc=0
+
+=== 21: command -v/-V with multiple names
+status: 0
+bash-n: 0
+--- stdout
+|[all found]
+|alias al='echo hi'
+|f
+|if
+|echo
+|rc=0
+|al is aliased to `echo hi'
+|f is a function
+|f () 
+|{ 
+|    :
+|}
+|if is a shell keyword
+|echo is a shell builtin
+|rc=0
+|[some found]
+|f
+|rc=0
+|f
+|rc=0
+|f is a function
+|f () 
+|{ 
+|    :
+|}
+|command: nonexistent: not found
+|rc=0
+|[none found]
+|rc=1
+|command: nope1: not found
+|command: nope2: not found
+|rc=1
+
+=== 22: command -v/-V output is reusable/quoted for odd alias values
+status: 0
+bash-n: 0
+--- stdout
+|alias q='echo '\''it'\''\'\'''\''s'
+|alias q2='a "b" $c'
+|alias q3=\'
+|alias q4='a'\'''\''b'
+|q is aliased to `echo 'it'\''s'
+
+=== 23: command -v/-V honors expand_aliases
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|command: za: not found
+|rc=1
+|alias za='ls'
+|rc=0
+
+=== 24: command -v/-V: last of -v/-V wins
+status: 0
+bash-n: 0
+--- stdout
+|echo is a shell builtin
+|echo
+|echo is a shell builtin
+|echo
+|rc=1
+
+=== 25: command options given more than once
+status: 0
+bash-n: 0
+--- stdout
+|echo
+|rc=0
+|echo
+|rc=0
+|hi
+|rc=0
+|echo
+|rc=0
+
+=== 26: command with an unknown option fails with status 2
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|rc=2
+|rc=2
+--- stderr
+|bash: line 1: command: -Z: invalid option
+|command: usage: command [-pVv] command [arg ...]
+|bash: line 2: command: -Z: invalid option
+|command: usage: command [-pVv] command [arg ...]
+|bash: line 3: command: --: invalid option
+|command: usage: command [-pVv] command [arg ...]
+
+=== 27: command passes options after the command name on
+status: 0
+bash-n: 0
+--- stdout
+|-v x
+|-v
+|echo
+|rc=0
+|echo
+|rc=0
+
+=== 28: command -V reports hashed commands
+status: 0
+bash-n: 0
+--- stdout
+|<TMPDIR>/bin/mytool
+|mytool is hashed (<TMPDIR>/bin/mytool)
+--- dir bin
+--- file bin/mytool
+|#!/bin/sh
+|:
+
+=== 29: command -v/-V report path names as given
+status: 0
+bash-n: 0
+--- stdout
+|./prog
+|rc=0
+|./prog is ./prog
+|rc=0
+--- file prog
+|#!/bin/sh
+|echo hi
+
+=== 30: command -v with non-executable and non-file path names
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|command: ./subdir: not found
+|rc=1
+|rc=1
+--- file plainfile
+--- dir subdir
+
+=== 31: command -v with empty name
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|command: : not found
+|rc=1
+
+=== 32: command -p searches the default path
+status: 0
+bash-n: 0
+--- stdout
+|[builtins are still found]
+|echo
+|rc=0
+|echo is a shell builtin
+|rc=0
+|[externals come from the default path]
+|<dir>/sh
+|rc=0
+|sh is <dir>/sh
+|rc=0
+|[PATH is ignored]
+|rc=0
+|rc=1
+|[missing name]
+|command: not found
+|rc=1
+--- dir bin
+--- file bin/mytool
+|#!/bin/sh
+|:
+
+=== 33: command -V reports a PATH-found command with an absolute path
+status: 0
+bash-n: 0
+--- stdout
+|[a non-executable in PATH is still reported]
+|d1/only
+|rc=0
+|only is <TMPDIR>/d1/only
+|rc=0
+|d1/ex
+|rc=0
+|ex is <TMPDIR>/d1/ex
+|rc=0
+|[a "." entry contributes no "./" to the absolute path]
+|./here
+|rc=0
+|here is <TMPDIR>/here
+|rc=0
+|[...but explicit and hashed paths are left alone]
+|./prog is ./prog
+|rc=0
+|hp is hashed (rel/path)
+|rc=0
+--- dir d1
+--- file d1/ex
+|#!/bin/sh
+|:
+--- file d1/only
+--- file here
+|#!/bin/sh
+|:
+--- file prog
+|#!/bin/sh
+|:
+
+=== 34: command -v/-V with no operands
+status: 0
+bash-n: 0
+--- stdout
+|rc=0
+|rc=0
+
+=== 35: command -v/-V skips a disabled builtin
+status: 0
+bash-n: 0
+--- stdout
+|<TMPDIR>/bin/echo
+|echo is <TMPDIR>/bin/echo
+|rc=0 rc=0
+|echo
+|rc=0
+--- dir bin
+--- file bin/echo
+|#!/bin/sh
+|:
+
+=== 36: command -v/-V reports an alias ahead of a same-named function
+status: 0
+bash-n: 0
+--- stdout
+|alias f='echo A'
+|rc=0
+|f is aliased to `echo A'
+|rc=0
+
+=== 37: command -p -v/-V still honors the hash table
+status: 0
+bash-n: 0
+--- stdout
+|/nonexistent/cat
+|rc=0
+|/nonexistent/cat
+|rc=0
+|cat is hashed (/nonexistent/cat)
+|rc=0
+
+=== 38: command passes on declaration expansion in POSIX mode
+status: 0
+bash-n: 0
+--- stdout
+|declare -- b="x y"
+|declare -- c="x y"
+
+=== 39: command passes on declaration expansion only to the next word
+status: 0
+bash-n: 0
+--- stdout
+|declare -- d="x"
+|declare -- e="x"
+
+=== 40: command -v runs nothing, so expands no declarations
+status: 0
+bash-n: 0
+--- stdout
+|printf
+|rc=0
+
+=== 41: command drops a special builtin's fatal errors in POSIX mode
+status: 0
+bash-n: 0
+--- stdout
+|still running: 2
+--- stderr
+|bash: line 2: export: --: invalid option
+|export: usage: export [-fn] [name[=value] ...] or export -p [-f]
+
+=== 42: command reports a forwarded builtin's errors as the builtin's own
+status: 0
+bash-n: 0
+--- stdout
+|export: -Z: invalid option
+
+=== 43: command's program that stops becomes a job
+status: 0
+bash-n: 0
+--- stdout
+|command: 147
+|named: 1
+|resumed
+|fg: 0
+
+=== 44: command drops a special builtin's special properties for the errors it returns
+status: 0
+bash-n: 0
+--- stdout
+|after .: 1
+|after source: 1
+|after trap: 1
+--- stderr
+|bash: line 2: /nonexistent: No such file or directory
+|bash: line 4: /nonexistent: No such file or directory
+|bash: line 6: trap: BOGUS: invalid signal specification
+
+=== 45: command passes --help on to the builtin it runs
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|same as help cd

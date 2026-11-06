@@ -1,0 +1,39 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/umask.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: umask with an out-of-range mode fails with status 1
+status: 0
+bash-n: 0
+--- stdout
+|umask: 1
+--- stderr
+|bash: line 1: umask: 999: octal number out of range
+
+=== 1: umask in a subshell stays there
+status: 0
+bash-n: 0
+--- stdout
+|after a subshell: 0022
+|after a pipeline stage: 0022
+
+=== 2: umask -S, -p and --
+status: 0
+bash-n: 0
+--- stdout
+|u=rwx,g=rx,o=rx
+|umask 0022
+|0077
+
+=== 3: umask -p -S prints a reusable symbolic command
+status: 0
+bash-n: 0
+--- stdout
+|umask -S u=rwx,g=rx,o=rx
+
+=== 4: umask takes a symbolic mode
+status: 0
+bash-n: 0
+--- stdout
+|0027
+|0067

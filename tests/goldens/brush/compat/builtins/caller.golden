@@ -1,0 +1,43 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/caller.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: caller in function
+status: 1
+bash-n: 0
+--- stdout
+|In outer
+|In inner
+|[Calling caller 0]
+|3 outer script.sh
+|[Calling caller 1]
+
+=== 1: caller no args
+status: 0
+bash-n: 0
+--- stdout
+|In myfunc
+|2 NULL
+
+=== 2: caller no args (nested)
+status: 0
+bash-n: 0
+--- stdout
+|In myouterfunc
+|In myfunc
+|8 script.sh
+
+=== 3: caller invalid expr
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 1: caller: x: invalid number
+|caller: usage: caller [expr]
+
+=== 4: caller out of range
+status: 1
+bash-n: 0
+
+=== 5: caller not in function
+status: 1
+bash-n: 0

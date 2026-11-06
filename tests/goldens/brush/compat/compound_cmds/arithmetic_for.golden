@@ -1,0 +1,231 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/compound_cmds/arithmetic_for.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Single-line arithmetic for loop
+status: 0
+bash-n: 0
+--- stdout
+|0
+|1
+|2
+|3
+|4
+|Result: 0
+
+=== 1: Arithmetic for loop without separator
+status: 0
+bash-n: 0
+--- stdout
+|0
+|1
+|2
+|3
+|4
+|Result: 0
+
+=== 2: Arithmetic for loop with empty condition
+status: 0
+bash-n: 0
+--- stdout
+|In loop; status: 0
+
+=== 3: Arithmetic for loop with ;;
+status: 0
+bash-n: 0
+--- stdout
+|In loop; status: 0
+
+=== 4: Arithmetic for loop with initializer and ;;
+status: 0
+bash-n: 0
+--- stdout
+|i=0
+|Result: 0
+
+=== 5: Arithmetic for loop with ;; and updater
+status: 0
+bash-n: 0
+--- stdout
+|i=
+|i=1
+|i=2
+|Result: 0
+
+=== 6: Arithmetic for loop with initializer, ;; and updater
+status: 0
+bash-n: 0
+--- stdout
+|i=0
+|i=1
+|i=2
+|Result: 0
+
+=== 7: Arithmetic for loop with ;; and spaces around it
+status: 0
+bash-n: 0
+--- stdout
+|i=0
+|i=1
+|i=2
+|Result: 0
+
+=== 8: Arithmetic for loop with parenthesized parts and ;;
+status: 0
+bash-n: 0
+--- stdout
+|i=0
+|i=1
+|i=2
+|Result: 0
+
+=== 9: Arithmetic for loop with ;; and do on the next line
+status: 0
+bash-n: 0
+--- stdout
+|In loop
+|Result: 0
+
+=== 10: Arithmetic for loop with ;; and alternate syntax
+status: 0
+bash-n: 0
+--- stdout
+|In loop
+|Result: 0
+
+=== 11: Arithmetic for loop with ;; and a newline before the closing parens
+status: 0
+bash-n: 0
+--- stdout
+|i=0
+|Result: 0
+
+=== 12: Arithmetic for loop with ;; inside a case item
+status: 0
+bash-n: 0
+--- stdout
+|i=0
+|Result: 0
+
+=== 13: Arithmetic for loop with ;; right after the condition
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error: `;' unexpected
+|bash: line 1: syntax error: `((i = 0; i < 3;;))'
+--- bash-n stderr
+|bash: line 1: syntax error: `;' unexpected
+|bash: line 1: syntax error: `((i = 0; i < 3;;))'
+
+=== 14: Arithmetic for loop with three semicolons
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error: `;' unexpected
+|bash: line 1: syntax error: `((;;;))'
+--- bash-n stderr
+|bash: line 1: syntax error: `;' unexpected
+|bash: line 1: syntax error: `((;;;))'
+
+=== 15: Arithmetic for loop with four semicolons
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error: `;' unexpected
+|bash: line 1: syntax error: `((;;;;))'
+--- bash-n stderr
+|bash: line 1: syntax error: `;' unexpected
+|bash: line 1: syntax error: `((;;;;))'
+
+=== 16: Arithmetic for loop with ;; in the updater position
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error: `;' unexpected
+|bash: line 1: syntax error: `((i = 0; i < 3; ;;))'
+--- bash-n stderr
+|bash: line 1: syntax error: `;' unexpected
+|bash: line 1: syntax error: `((i = 0; i < 3; ;;))'
+
+=== 17: Break in arithmetic for loop
+status: 0
+bash-n: 0
+--- stdout
+|0
+|Result: 0
+
+=== 18: Continue in arithmetic for loop
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+
+=== 19: Arithmetic for with break in condition inside outer loop
+status: 0
+bash-n: 0
+--- stdout
+|Outer iteration 1
+|After inner for
+|Outer iteration 2
+|After inner for
+|Outer iteration 3
+|After inner for
+|After outer loop
+
+=== 20: Arithmetic for with continue in condition inside outer loop
+status: 0
+bash-n: 0
+--- stdout
+|Outer iteration 1
+|After inner for
+|Outer iteration 2
+|After inner for
+|Outer iteration 3
+|After inner for
+|After outer loop
+
+=== 21: Arithmetic for with return in body
+status: 0
+bash-n: 0
+--- stdout
+|Iteration 0
+|Iteration 1
+|Iteration 2
+|Exit code: 42
+
+=== 22: Arithmetic for with exit in body
+status: 42
+bash-n: 0
+--- stdout
+|Iteration 0
+|Iteration 1
+|Iteration 2
+
+=== 23: Arithmetic for with alternate syntax
+status: 0
+bash-n: 0
+--- stdout
+|Iteration 0
+|Iteration 1
+|Iteration 2
+|Iteration 3
+|Iteration 4
+
+=== 24: Arithmetic for with alternate syntax (one line)
+status: 0
+bash-n: 0
+--- stdout
+|Iteration 0
+|Iteration 1
+|Iteration 2
+|Iteration 3
+|Iteration 4
+
+=== 25: Arithmetic for loop with nameref
+status: 0
+bash-n: 0
+--- stdout
+|ref=1 target=1
+|ref=2 target=2
+|ref=3 target=3
+|final target=4

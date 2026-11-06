@@ -1,0 +1,131 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/status.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic status
+status: 0
+bash-n: 0
+--- stdout
+|[1] Status: 1; pipe status: 1
+--- stderr
+|cat: /non/existent: No such file or directory
+
+=== 1: Parse error status
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 2: syntax error near unexpected token `done'
+|bash: line 2: `for f done'
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `done'
+|bash: line 2: `for f done'
+
+=== 2: Pipeline status
+status: 0
+bash-n: 0
+--- stdout
+|Status: 0; pipe status: 127 0
+
+=== 3: Command substitution status
+status: 0
+bash-n: 0
+--- stdout
+|[1] Status: 0; pipe status: 0
+|[2] Status: 1; pipe status: 1
+
+=== 4: Subshell status
+status: 0
+bash-n: 0
+--- stdout
+|1
+|[1] Status: 0; pipe status: 0
+|[2] Status: 1; pipe status: 1
+
+=== 5: Stored status
+status: 0
+bash-n: 0
+--- stdout
+|Stored status from false: 1
+|Stored status from true: 0
+
+=== 6: Status from assignment
+status: 0
+bash-n: 0
+--- stdout
+|Status after assignment: 0
+
+=== 7: Status from assignment with xtrace
+status: 0
+bash-n: 0
+--- stdout
+|Status after scalar assignment: 0
+|Status after array assignment: 0
+|Status after appending assignment: 0
+|Status after multiple assignments: 0
+|Status after expanded assignment: 0
+--- stderr
+|+ false
+|+ scalar=value
+|+ echo 'Status after scalar assignment: 0'
+|+ false
+|+ arr=(1 2)
+|+ echo 'Status after array assignment: 0'
+|+ false
+|+ appended+=more
+|+ echo 'Status after appending assignment: 0'
+|+ false
+|+ first=1
+|+ second=2
+|+ echo 'Status after multiple assignments: 0'
+|+ false
+|+ expanded=fallback
+|+ echo 'Status after expanded assignment: 0'
+
+=== 8: Status from assignment with command substitution and xtrace
+status: 0
+bash-n: 0
+--- stdout
+|Status after substitution assignment: 42
+|Status after substitution assignment: 42
+--- stderr
+|++ f 42
+|++ echo out42
+|++ return 42
+|+ captured=out42
+|+ echo 'Status after substitution assignment: 42'
+|+ true
+|++ f 42
+|++ echo out42
+|++ return 42
+|+ captured=out42
+|+ echo 'Status after substitution assignment: 42'
+
+=== 9: Status within assignments
+status: 0
+bash-n: 0
+--- stdout
+|x: ; y: 0; z: 42; w: 42
+
+=== 10: Status in for loop
+status: 0
+bash-n: 0
+--- stdout
+|Loop entry: 0
+|Loop 1: 1
+|Loop 2: 2
+|Loop entry: 0
+|Loop 1: 1
+|Loop 2: 2
+|After loop: 0
+
+=== 11: Status in arithmetic for loop
+status: 0
+bash-n: 0
+--- stdout
+|Loop entry: 0
+|Loop 1: 1
+|Loop 2: 2
+|Loop entry: 0
+|Loop 1: 1
+|Loop 2: 2
+|After loop: 0

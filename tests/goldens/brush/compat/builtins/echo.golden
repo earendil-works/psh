@@ -1,0 +1,81 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/echo.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: echo with only --
+status: 0
+bash-n: 0
+--- stdout
+|--
+
+=== 1: echo with -- and args
+status: 0
+bash-n: 0
+--- stdout
+|-- -1 --aaa ?^1as-
+
+=== 2: echo -e
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: hexdump: command not found
+|bash: line 2: hexdump: command not found
+
+=== 3: echo options after an operand are operands
+status: 0
+bash-n: 0
+--- stdout
+|hi -n
+|a -e x\ty
+|a -n
+|a -n
+
+=== 4: echo with repeated options
+status: 0
+bash-n: 0
+--- stdout
+|a rc=0
+|b rc=0
+|c	d
+|e	f
+
+=== 5: echo uses the last of -e and -E
+status: 0
+bash-n: 0
+--- stdout
+|a\tb
+|c	d
+|e\tf
+|g	h
+
+=== 6: echo words that are not options
+status: 0
+bash-n: 0
+--- stdout
+|- a
+|-nx b
+|-x c-- d	e
+
+=== 7: echo interprets escapes with xpg_echo
+status: 0
+bash-n: 0
+--- stdout
+|a	b
+|c\td
+
+=== 8: echo takes no options in POSIX mode with xpg_echo
+status: 0
+bash-n: 0
+--- stdout
+|-n a	b
+|-e c
+
+=== 9: echo takes --help, -h and a word of unknown letters as operands
+status: 0
+bash-n: 0
+--- stdout
+|--help
+|-h
+|-enx a\tb
+|-- a
+|-- -n

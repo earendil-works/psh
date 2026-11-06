@@ -1,0 +1,193 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/pipeline.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic pipe
+status: 0
+bash-n: 0
+--- stdout
+|(standard input)
+
+=== 1: Longer pipe
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 2: Invert result
+status: 0
+bash-n: 0
+--- stdout
+|! false: 0
+|! true: 1
+
+=== 3: Standalone negation (no command)
+status: 0
+bash-n: 0
+--- stdout
+|After !: 1
+|After ! !: 0
+
+=== 4: Exit codes for piped commands
+status: 33
+bash-n: 0
+--- stdout
+|-> 10-> 0-> 33
+~ no newline at end
+
+=== 5: Side effects in pipe commands
+status: 0
+bash-n: 0
+--- stdout
+|var: 0
+|var: 1
+|hi
+|var: 1
+|hi
+|var: 1
+
+=== 6: pipeline extension
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+|0
+
+=== 7: Possible broken pipe case
+status: 0
+bash-n: 0
+
+=== 8: printf broken pipe returns 141 in PIPESTATUS
+status: 0
+bash-n: 0
+--- stdout
+|Last: 0, PIPESTATUS: 141 0
+
+=== 9: Function stage writing more than a pipe buffer before the next stage is spawned
+status: 0
+bash-n: 0
+--- stdout
+|5000
+|Last: 0, PIPESTATUS: 0 0
+
+=== 10: Builtin that fails in a pipeline stage
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|got an error message: yes
+
+=== 11: Exit in a pipeline's last stage
+status: 0
+bash-n: 0
+--- stdout
+|status: 3
+
+=== 12: Break and return in a pipeline's last stage
+status: 0
+bash-n: 0
+--- stdout
+|i=1
+|i=2
+|after return
+|f: 0
+
+=== 13: Compound command writing more than a pipe holds
+status: 0
+bash-n: 0
+--- stdout
+|256
+|256
+|last
+
+=== 14: Endless producer into head
+status: 0
+bash-n: 0
+--- stdout
+|y
+
+=== 15: Compound writer exceeds pipe capacity
+status: 0
+bash-n: 0
+--- stdout
+|4096
+
+=== 16: Control flow in a pipeline stage stays in its subshell
+status: 0
+bash-n: 0
+--- stdout
+|after exit: 3
+|x
+|after exec: 0
+|after group: 6
+|f still running: 4
+|loop body 1
+|loop body 2
+
+=== 17: A special builtin's fatal error in a pipeline stage ends only that stage
+status: 0
+bash-n: 0
+--- stdout
+|after usage error: 2
+|after exit: 1
+--- stderr
+|bash: line 2: export: -Z: invalid option
+|export: usage: export [-fn] [name[=value] ...] or export -p [-f]
+|bash: line 4: exit: too many arguments
+
+=== 18: An expansion error in a pipeline stage ends only that stage
+status: 0
+bash-n: 0
+--- stdout
+|after ${x?}: 1 0
+|after f: 1 0
+|after group: 1 0
+|last stage: 0 1
+|after set -u: 1 0
+--- stderr
+|bash: line 1: x: boom
+|bash: line 3: y: b
+|bash: line 6: y: b
+|bash: line 8: y: b
+|bash: line 11: zz: unbound variable
+
+=== 19: An expansion error in a pipeline stage's prefix assignment ends only that stage
+status: 0
+bash-n: 0
+--- stdout
+|last: 0 1
+|first: 1 0
+|assignment only: 0 1
+|function: 0 1
+--- stderr
+|bash: line 1: x: b
+|bash: line 3: x: b
+|bash: line 5: x: b
+|bash: line 8: x: b
+
+=== 20: An error turned into a result in a pipeline stage ends only that stage
+status: 0
+bash-n: 0
+--- stdout
+|eval: 0 1
+|function: 0 1
+|group: 0 1
+|eval exit: 0 8
+--- stderr
+|bash: line 1: x: boom
+|bash: line 3: x: boom
+|bash: line 6: x: boom
+
+=== 21: Control flow in the last stage applies with lastpipe
+status: 5
+bash-n: 0
+--- stdout
+|f returned 4
+
+=== 22: time reports a subshell's timing on the subshell's stderr
+status: 0
+bash-n: 0
+--- stdout
+|status: 3
+|status: 0

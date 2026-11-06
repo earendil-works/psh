@@ -1,0 +1,152 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/background_jobs.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Single background job via -c without explicit wait
+status: 0
+bash-n: 0
+--- file bg_done
+
+=== 1: Single background job via stdin without explicit wait
+status: 0
+bash-n: 0
+--- file bg_done
+
+=== 2: Background compound command via -c without explicit wait
+status: 0
+bash-n: 0
+--- file a_done
+--- file b_done
+
+=== 3: Background compound command via stdin without explicit wait
+status: 0
+bash-n: 0
+--- file a_done
+--- file b_done
+
+=== 4: Multiple background jobs via -c without explicit wait
+status: 0
+bash-n: 0
+--- file one
+--- file three
+--- file two
+
+=== 5: Multiple background jobs via stdin without explicit wait
+status: 0
+bash-n: 0
+--- file one
+--- file three
+--- file two
+
+=== 6: Background and foreground via -c without explicit wait
+status: 0
+bash-n: 0
+--- file bg_done
+--- file fg_done
+
+=== 7: Background and foreground via stdin without explicit wait
+status: 0
+bash-n: 0
+--- file bg_done
+--- file fg_done
+
+=== 8: Background job side effect observed after wait via -c
+status: 0
+bash-n: 0
+--- stdout
+|exists
+--- file bg_done
+
+=== 9: Background job side effect observed after wait via stdin
+status: 0
+bash-n: 0
+--- stdout
+|exists
+--- file bg_done
+
+=== 10: Single background job with explicit wait via -c
+status: 0
+bash-n: 0
+--- stdout
+|hello
+
+=== 11: Single background job with explicit wait via stdin
+status: 0
+bash-n: 0
+--- stdout
+|hello
+
+=== 12: Two sequential background jobs with explicit wait via -c
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+
+=== 13: Two sequential background jobs with explicit wait via stdin
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+
+=== 14: Kill a background pipeline by job spec
+status: 0
+bash-n: 0
+--- stdout
+|status: 143
+
+=== 15: $! names the last background job's process
+status: 0
+bash-n: 0
+--- stdout
+|running
+
+=== 16: Background job started in a pipeline stage
+status: timeout
+bash-n: 0
+--- stdout
+|done
+
+=== 17: A background program stops on writing to the terminal, with tostop set
+status: 1
+bash-n: 0
+--- stdout
+|to-terminal
+--- stderr
+|stty: 'standard input': Inappropriate ioctl for device
+|stty: 'standard input': Inappropriate ioctl for device
+--- file written.txt
+
+=== 18: A background job started in a command substitution runs during it
+status: 0
+bash-n: 0
+--- stdout
+|x=ran during the loop
+--- file ran.txt
+|ran
+
+=== 19: A program can signal a job by its $!
+status: 0
+bash-n: 0
+--- stdout
+|signaled
+
+=== 20: A signal to a compound job's $! leaves its program running
+status: 0
+bash-n: 0
+--- stdout
+|job: 143
+|then
+|got-term
+
+=== 21: An error or exit in a background job ends only that job
+status: 0
+bash-n: 0
+--- stdout
+|after error: 0
+|after eval: 0
+|after exit: 0
+--- stderr
+|bash: line 1: y: b
+|bash: line 4: y: b

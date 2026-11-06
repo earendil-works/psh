@@ -1,0 +1,85 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/pwd.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic pwd usage
+status: 0
+bash-n: 0
+--- stdout
+|/
+|Result: 0
+|/usr
+|Result: 0
+
+=== 1: pwd -LP
+status: 0
+bash-n: 0
+--- stdout
+|symlink
+|symlink
+|level3
+|symlink
+|symlink
+|level3
+|symlink
+|symlink
+|level3
+|<home>
+|<home>
+|<home>
+--- dir level1
+--- dir level1/level2
+--- dir level1/level2/level3
+--- link level1/symlink -> ./level2/level3
+
+=== 2: pwd with moved dir
+status: 0
+bash-n: 0
+--- stdout
+|pwd -L: subdir
+|pwd -P: renamed
+--- dir renamed
+
+=== 3: pwd with removed dir
+status: 0
+bash-n: 0
+--- stdout
+|pwd -L: subdir
+|pwd -P: 
+--- stderr
+|pwd: error retrieving current directory: getcwd: cannot access parent directories: No such file or directory
+|basename: missing operand
+|Try 'basename --help' for more information.
+
+=== 4: pwd takes -- and both of -L and -P
+status: 0
+bash-n: 0
+--- stdout
+|/
+
+=== 5: pwd takes the last of -L and -P
+status: 0
+bash-n: 0
+--- stdout
+|real
+|link
+--- link link -> real
+--- dir real
+
+=== 6: pwd ignores operands
+status: 0
+bash-n: 0
+--- stdout
+|/
+|rc=0
+
+=== 7: pwd takes options only before the first operand
+status: 0
+bash-n: 0
+--- stdout
+|real
+|link
+|link
+|rc=0
+--- link link -> real
+--- dir real

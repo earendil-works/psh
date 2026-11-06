@@ -1,0 +1,49 @@
+# Goldens for tests/oils/spec/ble-unset.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: [bash_unset] nested context by tempenv-eval
+status: 0
+bash-n: 0
+--- stdout
+|[global,tempenv1,local1] v: local1
+|[global,tempenv1,local1,tempenv2,(eval)] v: tempenv2
+|[global,tempenv1,local1,tempenv2,(eval),local2] v: local2
+|[global,tempenv1,local1] v: local1 (after)
+
+=== 1: [bash_unset] local-unset / dynamic-unset for localvar on nested-context
+status: 0
+bash-n: 0
+--- stdout
+|[global,tempenv1,local1,tempenv2,(eval),local2,(unset)] v: (unset)
+|[global,tempenv1,local1,tempenv2,(eval),local2,(unlocal)] v: local1
+
+=== 2: [bash_unset] dynamic-unset for nested localvars
+status: 0
+bash-n: 0
+--- stdout
+|[global,tempenv1/local1,tempenv2/local2,tempenv3/local3] v: local3
+|[global,tempenv1/local1,tempenv2/local2,tempenv3/local3] v: local2 (unlocal 1)
+|[global,tempenv1/local1,tempenv2/local2,tempenv3/local3] v: local1 (unlocal 2)
+|[global,tempenv1/local1,tempenv2/local2,tempenv3/local3] v: global (unlocal 3)
+|[global,tempenv1/local1,tempenv2/local2,tempenv3/local3] v: (unset) (unlocal 4)
+
+=== 3: [bash_unset] dynamic-unset for nested tempenvs
+status: 0
+bash-n: 0
+--- stdout
+|[global,tempenv1,tempenv2,tempenv3] v: tempenv3
+|[global,tempenv1,tempenv2,tempenv3] v: tempenv2 (unlocal 1)
+|[global,tempenv1,tempenv2,tempenv3] v: tempenv1 (unlocal 2)
+|[global,tempenv1,tempenv2,tempenv3] v: global (unlocal 3)
+|[global,tempenv1,tempenv2,tempenv3] v: (unset) (unlocal 4)
+
+=== 4: [bash_unset] local-unset for nested tempenvs
+status: 0
+bash-n: 0
+--- stdout
+|[global,tempenv1,tempenv2,tempenv3] v: tempenv3
+|[global,tempenv1,tempenv2,tempenv3] v: tempenv2 (unset 1)
+|[global,tempenv1,tempenv2,tempenv3] v: tempenv1 (unset 2)
+|[global,tempenv1,tempenv2,tempenv3] v: global (unset 3)
+|[global,tempenv1,tempenv2,tempenv3] v: (unset) (unset 4)

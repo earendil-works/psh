@@ -1,0 +1,217 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/type.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Test type with no arguments
+status: 0
+bash-n: 0
+
+=== 1: Test type with a valid command
+status: 0
+bash-n: 0
+--- stdout
+|ls is /usr/bin/ls
+
+=== 2: Test type with an invalid command
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: type: invalid_command: not found
+
+=== 3: Test type with -t option and a builtin command
+status: 0
+bash-n: 0
+--- stdout
+|builtin
+
+=== 4: Test type with -t option and an external command
+status: 0
+bash-n: 0
+--- stdout
+|file
+
+=== 5: Test type with -t option and non-existent command
+status: 1
+bash-n: 0
+
+=== 6: Test type with -a option and non-existent command
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: type: non-existent: not found
+
+=== 7: Test type with -a option and a command with multiple definitions
+status: 0
+bash-n: 0
+--- stdout
+|true is a shell builtin
+|true is /usr/bin/true
+|true is /bin/true
+
+=== 8: Test type with -p option and a builtin command
+status: 0
+bash-n: 0
+
+=== 9: Test type with -p option and an external command
+status: 0
+bash-n: 0
+--- stdout
+|/usr/bin/ls
+
+=== 10: Test type with -p option and non-existent command
+status: 1
+bash-n: 0
+
+=== 11: Test type with -P option and a builtin command
+status: 1
+bash-n: 0
+
+=== 12: Test type with -P option and an external command
+status: 0
+bash-n: 0
+--- stdout
+|/usr/bin/ls
+
+=== 13: Test type with -P option and non-existent command
+status: 1
+bash-n: 0
+
+=== 14: Test type with -f option and a function
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: type: myfunc: not found
+
+=== 15: Test type with -f option and a command
+status: 0
+bash-n: 0
+--- stdout
+|ls is /usr/bin/ls
+
+=== 16: Test type with -a option and a function
+status: 0
+bash-n: 0
+--- stdout
+|myfunc is a function
+|myfunc () 
+|{ 
+|    echo "Hello, world!"
+|}
+
+=== 17: Test type with hashed path
+status: 0
+bash-n: 0
+--- stdout
+|ls is hashed (/some/ls)
+
+=== 18: Test type -a with hashed path
+status: 0
+bash-n: 0
+--- stdout
+|ls is /usr/bin/ls
+|ls is /bin/ls
+
+=== 19: Test type -P with hashed path
+status: 0
+bash-n: 0
+--- stdout
+|/some/ls
+
+=== 20: Test type -P -a with hashed path
+status: 0
+bash-n: 0
+--- stdout
+|/some/ls
+|/usr/bin/ls
+|/bin/ls
+
+=== 21: Test type -p -a with hashed path
+status: 0
+bash-n: 0
+--- stdout
+|/usr/bin/ls
+|/bin/ls
+
+=== 22: Test type honors expand_aliases
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|rc=1
+|rc=1
+|za is aliased to `ls'
+|rc=0
+|alias
+|rc=0
+--- stderr
+|bash: line 4: type: za: not found
+|bash: line 6: type: za: not found
+
+=== 23: Test type and execution skip a directory found in PATH
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|rc=1
+|rc=127
+--- stderr
+|bash: line 4: type: prog: not found
+|bash: line 5: type: prog: not found
+|bash: line 6: prog: command not found
+--- dir pdir
+--- dir pdir/prog
+
+=== 24: Test type reports a missing name
+status: 0
+bash-n: 0
+--- stdout
+|type: nonexistent: not found
+|rc=1
+|type: nonexistent: not found
+|echo is a shell builtin
+|rc=1
+
+=== 25: Test type reports a non-executable file found in PATH
+status: 0
+bash-n: 0
+--- stdout
+|[an executable later in PATH beats a non-executable earlier]
+|nx is d2/nx
+|rc=0
+|nx is d2/nx
+|rc=0
+|D2
+|run rc=0
+|[only a non-executable exists]
+|only is d1/only
+|rc=0
+|file
+|rc=0
+|d1/only
+|rc=0
+|d1/only
+|rc=0
+|type: only: not found
+|rc=1
+|run rc=126
+|[the fallback keeps searching the rest of PATH]
+|only2 is d2/only2
+|rc=0
+--- dir d1
+--- file d1/nx
+--- file d1/only
+--- dir d2
+--- file d2/nx
+|#!/bin/sh
+|echo D2
+--- file d2/only2
+
+=== 26: type takes -- and combined options
+status: 0
+bash-n: 0
+--- stdout
+|builtin
+|builtin
+|file
+|file
+|rc=1

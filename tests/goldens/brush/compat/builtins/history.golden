@@ -1,0 +1,954 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/history.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: basic history saving
+status: 0
+bash-n: 0
+--- stdout
+|something
+|else
+--- file history-file.txt
+|echo something
+|echo else
+
+=== 1: existing history file
+status: 0
+bash-n: 0
+--- file history-output.txt
+
+=== 2: existing history file with timestamps
+status: 0
+bash-n: 0
+--- file history-output.txt
+
+=== 3: existing history file with timestamps and HISTTIMEFORMAT
+status: 0
+bash-n: 0
+
+=== 4: history N
+status: 0
+bash-n: 0
+--- stdout
+|    2  : cmd2
+|    3  history 2
+--- file history-file.txt
+|: cmd1
+|: cmd2
+|history 2
+
+=== 5: history with duplicates
+status: 0
+bash-n: 0
+--- stdout
+|    1  : cmd1
+|    2  : cmd1
+|    3  : cmd1
+|    4  : cmd2
+|    5  : cmd1
+|    6  history
+--- file history-file.txt
+|: cmd1
+|: cmd1
+|: cmd1
+|: cmd2
+|: cmd1
+|history
+
+=== 6: history -c
+status: 0
+bash-n: 0
+--- stdout
+|    1  history
+--- file history-file.txt
+|history
+
+=== 7: history -d
+status: 0
+bash-n: 0
+--- stdout
+|    1  history -d 1
+|    2  history
+--- file history-file.txt
+|history -d 1
+|history
+
+=== 8: history -d: negative offset
+status: 0
+bash-n: 0
+--- stdout
+|    1  : cmd1
+|    2  history -d -2
+|    3  history
+--- file history-file.txt
+|: cmd1
+|history -d -2
+|history
+
+=== 9: history -a
+status: 0
+bash-n: 0
+--- stdout
+|[histfile]
+|[histfile after -a]
+|echo "[histfile]"
+|cat $HISTFILE
+|history -a
+|[histfile after second -a]
+|echo "[histfile]"
+|cat $HISTFILE
+|history -a
+|echo "[histfile after -a]"
+|cat $HISTFILE
+|history -a
+--- stderr
+|cat: history-file.txt: No such file or directory
+--- file history-file.txt
+|echo "[histfile]"
+|cat $HISTFILE
+|history -a
+|echo "[histfile after -a]"
+|cat $HISTFILE
+|history -a
+|echo "[histfile after second -a]"
+|cat $HISTFILE
+
+=== 10: history -w
+status: 0
+bash-n: 0
+--- stdout
+|[histfile]
+|[histfile after -w]
+|echo "[histfile]"
+|cat $HISTFILE
+|history -w
+|[histfile after second -w]
+|echo "[histfile]"
+|cat $HISTFILE
+|history -w
+|echo "[histfile after -w]"
+|cat $HISTFILE
+|history -w
+--- stderr
+|cat: history-file.txt: No such file or directory
+--- file history-file.txt
+|echo "[histfile]"
+|cat $HISTFILE
+|history -w
+|echo "[histfile after -w]"
+|cat $HISTFILE
+|history -w
+|echo "[histfile]"
+|cat $HISTFILE
+|history -w
+|echo "[histfile after -w]"
+|cat $HISTFILE
+|history -w
+|echo "[histfile after second -w]"
+|cat $HISTFILE
+
+=== 11: history -w with explicit file
+status: 0
+bash-n: 0
+--- file history-file.txt
+|: cmd1
+|history -w some-file.txt
+--- file some-file.txt
+|: cmd1
+|history -w some-file.txt
+
+=== 12: history -s
+status: 0
+bash-n: 0
+--- stdout
+|    1  a b c
+|    2  history
+--- file history-file.txt
+|a b c
+|history
+
+=== 13: HISTCMD
+status: 0
+bash-n: 0
+--- stdout
+|2
+|4
+|6
+--- file history-file.txt
+|: cmd1
+|echo $HISTCMD
+|: cmd2
+|echo $HISTCMD
+|: cmd3
+|echo $HISTCMD
+
+=== 14: HISTTIMEFORMAT
+status: 0
+bash-n: 0
+--- stdout
+|    1  century=20 : cmd1
+|    2  century=20 : cmd2
+|    3  century=20 history
+--- file history-file.txt
+|: cmd1
+|: cmd2
+|history
+
+=== 15: history file with unreadable lines
+status: 0
+bash-n: 0
+--- stdout
+|hi
+--- file history-file.txt
+\\xff\xfe\xfd
+~ no newline at end
+
+=== 16: HISTFILE loaded from environment
+status: 0
+bash-n: 0
+--- stdout
+|    1  a b c
+|    2  1 2 3
+|    3  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ history
+|test$ exit
+--- file history-file.txt
+|a b c
+|1 2 3
+|history
+
+=== 17: HISTFILE changed by .bashrc
+status: 0
+bash-n: 0
+--- stdout
+|    1  x y z
+|    2  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ history
+|test$ exit
+--- file other-history-file.txt
+|x y z
+|history
+
+=== 18: HISTFILE emptied by .bashrc
+status: 0
+bash-n: 0
+--- stdout
+|    1  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ history
+|test$ exit
+
+=== 19: empty HISTFILE in environment
+status: 0
+bash-n: 0
+--- stdout
+|    1  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ history
+|test$ exit
+
+=== 20: history -w with empty HISTFILE
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ history -w; echo "status: $?"
+|bash: history: HISTFILE: parameter null or not set
+|test$ exit
+
+=== 21: history -s in .bashrc suppresses loading HISTFILE
+status: 0
+bash-n: 0
+--- stdout
+|    1  marker
+|    2  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ history
+|test$ exit
+--- file history-file.txt
+|a b c
+|1 2 3
+|marker
+|history
+
+=== 22: history -s then -c in .bashrc still loads HISTFILE
+status: 0
+bash-n: 0
+--- stdout
+|    1  a b c
+|    2  1 2 3
+|    3  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ history
+|test$ exit
+--- file history-file.txt
+|a b c
+|1 2 3
+|history
+
+=== 23: history -s then -d in .bashrc still loads HISTFILE
+status: 0
+bash-n: 0
+--- stdout
+|    1  a b c
+|    2  1 2 3
+|    3  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ history
+|test$ exit
+--- file history-file.txt
+|a b c
+|1 2 3
+|history
+
+=== 24: loaded history entries without timestamps are stamped with load time
+status: 0
+bash-n: 0
+--- stdout
+|    1  [stamped] a b c
+|    2  [stamped] 1 2 3
+|    3  [stamped] history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ history
+\test$ \x0d<o no wall-clock timestamp gets written to the file.
+|test$ unset HISTFILE
+|test$ exit
+
+=== 25: history -d from the middle renumbers later entries
+status: 0
+bash-n: 0
+--- stdout
+|    1  : a
+|    2  : c
+|    3  history -d 2
+|    4  : d
+|    5  history
+--- file history-file.txt
+|: a
+|: c
+|history -d 2
+|: d
+|history
+
+=== 26: history -d of the last entry
+status: 0
+bash-n: 0
+--- stdout
+|    1  : a
+|    2  : b
+|    3  history
+--- file history-file.txt
+|: a
+|: b
+|history
+
+=== 27: history -d repeatedly
+status: 0
+bash-n: 0
+--- stdout
+|    1  : c
+|    2  history -d 1
+|    3  history -d 1
+|    4  history -d 2
+|    5  history
+--- file history-file.txt
+|: c
+|history -d 1
+|history -d 1
+|history -d 2
+|history
+
+=== 28: history -d range
+status: 0
+bash-n: 0
+--- stdout
+|    1  : a
+|    2  : d
+|    3  history -d 2-3
+|    4  history
+--- file history-file.txt
+|: a
+|: d
+|history -d 2-3
+|history
+
+=== 29: history numbering after history -c
+status: 0
+bash-n: 0
+--- stdout
+|    1  : c
+|    2  : d
+|    3  history
+--- file history-file.txt
+|: c
+|: d
+|history
+
+=== 30: HISTCMD after history -d
+status: 0
+bash-n: 0
+--- stdout
+|4
+|6
+--- file history-file.txt
+|: b
+|: c
+|history -d 1
+|echo $HISTCMD
+|: d
+|echo $HISTCMD
+
+=== 31: history -a after history -d
+status: 0
+bash-n: 0
+--- stdout
+|[histfile]
+|: a
+|history -a
+|: b
+|history -d -2
+|history -a
+--- file history-file.txt
+|: a
+|history -a
+|: b
+|history -d -2
+|history -a
+|echo "[histfile]"
+|cat $HISTFILE
+
+=== 32: history -a after history -d of an entry already appended
+status: 0
+bash-n: 0
+--- stdout
+|[histfile]
+|: a
+|: b
+|history -a
+|: c
+|history -a
+--- file history-file.txt
+|: a
+|: b
+|history -a
+|: c
+|history -a
+|echo "[histfile]"
+|cat $HISTFILE
+
+=== 33: history -w after history -d
+status: 0
+bash-n: 0
+--- stdout
+|[histfile]
+|: a
+|: c
+|history -d 2
+|history -w
+--- file history-file.txt
+|: a
+|: c
+|history -d 2
+|history -w
+|: a
+|: c
+|history -d 2
+|history -w
+|echo "[histfile]"
+|cat $HISTFILE
+
+=== 34: history -d in history loaded from HISTFILE
+status: 0
+bash-n: 0
+--- stdout
+|    1  one
+|    2  three
+|    3  history -d 2
+|    4  : four
+|    5  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ history -d 2
+|test$ : four
+|test$ history
+|test$ # Unset HISTFILE before exit so the shell doesn't write it back.
+|test$ unset HISTFILE
+|test$ exit
+
+=== 35: HISTCONTROL=ignoredups
+status: 0
+bash-n: 0
+--- stdout
+|    1  : a
+|    2  : b
+|    3  : a
+|    4  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ : a
+|test$ : b
+|test$ : b
+|test$ : a
+|test$ history
+|test$ exit
+--- file history-file.txt
+|: a
+|: b
+|: a
+|history
+
+=== 36: HISTCONTROL=ignorespace
+status: 0
+bash-n: 0
+--- stdout
+|    1  : shown
+|    2  : shown
+|    3  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ : shown
+|test$  : hidden
+|test$ : shown
+|test$ history
+|test$ exit
+--- file history-file.txt
+|: shown
+|: shown
+|history
+
+=== 37: HISTCONTROL=ignoreboth
+status: 0
+bash-n: 0
+--- stdout
+|    1  : a
+|    2  : b
+|    3  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ : a
+|test$  : hidden
+|test$ : a
+|test$ : b
+|test$ history
+|test$ exit
+--- file history-file.txt
+|: a
+|: b
+|history
+
+=== 38: HISTCONTROL=erasedups
+status: 0
+bash-n: 0
+--- stdout
+|    1  : b
+|    2  : c
+|    3  : a
+|    4  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ : a
+|test$ : b
+|test$ : a
+|test$ : c
+|test$ : a
+|test$ history
+|test$ exit
+--- file history-file.txt
+|: b
+|: c
+|: a
+|history
+
+=== 39: HISTCONTROL with unknown values in its list
+status: 0
+bash-n: 0
+--- stdout
+|    1  : a
+|    2  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ : a
+|test$ : a
+|test$ history
+|test$ exit
+--- file history-file.txt
+|: a
+|history
+
+=== 40: History keeps a command's surrounding whitespace
+status: 0
+bash-n: 0
+--- stdout
+|    1  : first
+|    2    : indented
+|    3  : trailing  
+|    4  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ : first
+|test$   : indented
+|test$ : trailing  
+|test$ history
+|test$ exit
+--- file history-file.txt
+|: first
+|  : indented
+|: trailing  
+|history
+
+=== 41: HISTCONTROL=ignoredups tells apart lines differing in whitespace
+status: 0
+bash-n: 0
+--- stdout
+|    1  : same
+|    2  : same 
+|    3   : same
+|    4  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ : same
+|test$ : same 
+|test$  : same
+|test$ history
+|test$ exit
+--- file history-file.txt
+|: same
+|: same 
+| : same
+|history
+
+=== 42: HISTCONTROL=erasedups tells apart lines differing in whitespace
+status: 0
+bash-n: 0
+--- stdout
+|    1  : same 
+|    2   : same
+|    3  : other
+|    4  : same
+|    5  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ : same
+|test$ : same 
+|test$  : same
+|test$ : other
+|test$ : same
+|test$ history
+|test$ exit
+--- file history-file.txt
+|: same 
+| : same
+|: other
+|: same
+|history
+
+=== 43: set +o history stops recording
+status: 0
+bash-n: 0
+--- stdout
+|    1  : a
+|    2  set +o history
+|    3  : b
+|    4  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ : a
+|test$ set +o history
+|test$ : hidden
+|test$ set -o history
+|test$ : b
+|test$ history
+|test$ exit
+--- file history-file.txt
+|: a
+|set +o history
+|: b
+|history
+
+=== 44: HISTIGNORE
+status: 0
+bash-n: 0
+--- stdout
+|skip
+|    1  : a
+|    2  : b
+|    3  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ : a
+|test$ ls >/dev/null
+|test$ : a
+|test$ echo skip
+|test$ : b
+|test$ history
+|test$ exit
+--- file history-file.txt
+|: a
+|: b
+|history
+
+=== 45: cmdhist saves a multi-line command as one line
+status: 0
+bash-n: 0
+--- stdout
+|    1  for x in 1; do   : inside; done
+|    2  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ for x in 1; do
+|>   : inside
+|> done
+|test$ history
+|test$ exit
+--- file history-file.txt
+|for x in 1; do   : inside; done
+|history
+
+=== 46: History expansion
+status: 0
+bash-n: 0
+--- stdout
+|one
+|one
+|    1  echo one
+|    2  echo one
+|    3  history
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ echo one
+|test$ !!
+|echo one
+|test$ history
+|test$ exit
+--- file history-file.txt
+|echo one
+|echo one
+|history
+
+=== 47: history rejects an unknown option with status 2
+status: 0
+bash-n: 0
+--- stdout
+|history -z: 2
+--- stderr
+|bash: line 1: history: -z: invalid option
+|history: usage: history [-c] [-d offset] [n] or history -anrw [filename] or history -ps arg [arg...]
+
+=== 48: history --help fails with status 2
+status: 0
+bash-n: 0
+--- stdout
+|history --help: 2
+
+=== 49: history rejects an unknown long option with status 2
+status: 0
+bash-n: 0
+--- stdout
+|history --bogus: 2
+--- stderr
+|bash: line 1: history: --: invalid option
+|history: usage: history [-c] [-d offset] [n] or history -anrw [filename] or history -ps arg [arg...]
+
+=== 50: history -s takes words that look like options after --
+status: 0
+bash-n: 0
+--- stdout
+|-x y
+
+=== 51: history -s keeps a -- after its first word
+status: 0
+bash-n: 0
+--- stdout
+|a -- b
+
+=== 52: history -s rejects an unknown option with status 2
+status: 0
+bash-n: 0
+--- stdout
+|history -s -x: 2
+--- stderr
+|bash: line 1: history: -x: invalid option
+|history: usage: history [-c] [-d offset] [n] or history -anrw [filename] or history -ps arg [arg...]
+--- file history-file.txt
+|history -s -x
+|echo "history -s -x: $?"
+
+=== 53: history -d takes an attached negative offset
+status: 0
+bash-n: 0
+--- stdout
+|history -d-1: 0
+--- file history-file.txt
+|echo "history -d-1: $?"
+
+=== 54: history -w takes its file name after --
+status: 0
+bash-n: 0
+--- stdout
+|one
+--- file written.txt
+|echo one
+|history -w -- written.txt
+
+=== 55: history -w takes its file name after other options
+status: 0
+bash-n: 0
+--- stdout
+|one
+--- file written.txt
+
+=== 56: history -w in a bundle takes the next word as its file name
+status: 0
+bash-n: 0
+--- stdout
+|one
+--- file written.txt
+
+=== 57: history -w rejects an attached file name
+status: 0
+bash-n: 0
+--- stdout
+|one
+|history -wwritten.txt: 2
+--- stderr
+|bash: line 2: history: -i: invalid option
+|history: usage: history [-c] [-d offset] [n] or history -anrw [filename] or history -ps arg [arg...]
+
+=== 58: history rejects more than one of -anrw with status 1
+status: 0
+bash-n: 0
+--- stdout
+|history -a -w: 1
+|history -aw: 1
+--- stderr
+|bash: line 1: history: cannot use more than one of -anrw
+|bash: line 3: history: cannot use more than one of -anrw
+
+=== 59: history -s with -p stores its arguments
+status: 0
+bash-n: 0
+--- stdout
+|history -sp: 0
+|a b
+|history -ps: 0
+|c d
+
+=== 60: history -s stops reading options at its first argument
+status: 0
+bash-n: 0
+--- stdout
+|a -x
+
+=== 61: history -s rejects a negative number as an option
+status: 0
+bash-n: 0
+--- stdout
+|history -s -1: 2
+--- stderr
+|bash: line 1: history: -1: invalid option
+|history: usage: history [-c] [-d offset] [n] or history -anrw [filename] or history -ps arg [arg...]
+
+=== 62: history -d -- -1 is an error
+status: 0
+bash-n: 0
+--- stdout
+|one
+|history -d -- -1: 2
+|    1  echo one
+|    2  history -d -- -1; echo "history -d -- -1: $?"
+|    3  history
+--- stderr
+|bash: line 2: history: -1: invalid option
+|history: usage: history [-c] [-d offset] [n] or history -anrw [filename] or history -ps arg [arg...]
+
+=== 63: history -d requires an offset
+status: 0
+bash-n: 0
+--- stdout
+|history -d: 2
+--- stderr
+|bash: line 1: history: -d: option requires an argument
+|history: usage: history [-c] [-d offset] [n] or history -anrw [filename] or history -ps arg [arg...]
+
+=== 64: history -d rejects a non-numeric offset with status 1
+status: 0
+bash-n: 0
+--- stdout
+|history -d abc: 1
+--- stderr
+|bash: line 1: history: abc: invalid number
+
+=== 65: history takes its count after --
+status: 0
+bash-n: 0
+--- stdout
+|one
+|    2  history -- 1
+
+=== 66: history rejects a negative or non-numeric count with status 2
+status: 0
+bash-n: 0
+--- stdout
+|history -1: 2
+|history abc: 2
+--- stderr
+|bash: line 1: history: -1: invalid option
+|history: usage: history [-c] [-d offset] [n] or history -anrw [filename] or history -ps arg [arg...]
+|bash: line 2: history: abc: numeric argument required
+
+=== 67: history rejects more than one count
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 1: history: too many arguments
+
+=== 68: history -w ignores arguments after its file name
+status: 0
+bash-n: 0
+--- stdout
+|one
+|3
+--- file written.txt
+|echo one
+|history -w written.txt -c
+
+=== 69: history -c with -s only clears the history
+status: 0
+bash-n: 0
+--- stdout
+|one
+|    1  history

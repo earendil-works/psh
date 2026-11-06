@@ -1,0 +1,141 @@
+# Goldens for tests/oils/spec/append.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Append string to string
+status: 0
+bash-n: 0
+--- stdout
+|abcd
+
+=== 1: Append array to array
+status: 0
+bash-n: 0
+--- stdout
+|['x', 'y', 't', 'u v']
+
+=== 2: Append string to undefined variable
+status: 0
+bash-n: 0
+--- stdout
+|s=foo
+|t=foo
+|t=foofoo
+
+=== 3: Append to array to undefined variable
+status: 0
+bash-n: 0
+--- stdout
+|['c', 'd']
+
+=== 4: error: s+=(my array)
+status: 0
+bash-n: 0
+--- stdout
+|['abc', 'd', 'e', 'f']
+
+=== 5: error: myarray+=s
+status: 0
+bash-n: 0
+--- stdout
+|['xz', 'y']
+
+=== 6: typeset s+=(my array)
+status: 0
+bash-n: 0
+--- stdout
+|abc
+|status=0
+|['abc', 'd', 'e', 'f']
+
+=== 7: error: typeset myarray+=s
+status: 0
+bash-n: 0
+--- stdout
+|['x', 'y']
+|['xs', 'y']
+
+=== 8: error: append used like env prefix
+status: 0
+bash-n: 0
+--- stdout
+|aa
+
+=== 9: myarray[1]+=s - Append to element
+status: 0
+bash-n: 0
+--- stdout
+|['x', 'yz']
+
+=== 10: myarray[-1]+=s - Append to last element
+status: 0
+bash-n: 0
+--- stdout
+|['1', '2 3 4']
+
+=== 11: Try to append list to element
+status: 0
+bash-n: 0
+--- stdout
+|['1', '2 3']
+--- stderr
+|bash: line 2: a[-1]: cannot assign list to array member
+
+=== 12: Strings have value semantics, not reference semantics
+status: 0
+bash-n: 0
+--- stdout
+|abcd abc
+
+=== 13: typeset s+=
+status: 0
+bash-n: 0
+--- stdout
+|s=foo
+|t=foo
+|t=foofoo
+
+=== 14: typeset s${dyn}+=
+status: 0
+bash-n: 0
+--- stdout
+|sx=foo
+|tx=foo
+|tx=foofoo
+
+=== 15: export readonly +=
+status: 0
+bash-n: 0
+--- stdout
+|e=foo
+|r=bar
+|e=foofoo
+
+=== 16: local +=
+status: 0
+bash-n: 0
+--- stdout
+|s=foo
+|s=foofoo
+
+=== 17: assign builtin appending array: declare d+=(d e)
+status: 0
+bash-n: 0
+--- stdout
+|d e
+|d e c l
+|r e
+|l o
+|l o c a
+
+=== 18: export+=array disallowed (strict_array)
+status: 0
+bash-n: 0
+--- stdout
+|e x
+--- stderr
+|bash: line 1: shopt: strict_array: invalid shell option name
+
+=== 19: Type mismatching of lhs+=rhs should not cause a crash
+status: 0
+bash-n: 0

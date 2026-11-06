@@ -1,0 +1,105 @@
+# Goldens for tests/oils/spec/tilde.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: ~ expansion in assignment
+status: 0
+bash-n: 0
+--- stdout
+|/home/bob/src
+
+=== 1: ~ expansion in readonly assignment
+status: 0
+bash-n: 0
+--- stdout
+|/home/bob/src
+
+=== 2: No ~ expansion in dynamic assignment
+status: 0
+bash-n: 0
+--- stdout
+|~/src
+
+=== 3: No tilde expansion in word that looks like assignment but isn't
+status: 0
+bash-n: 0
+--- stdout
+|x=/home/bob
+
+=== 4: tilde expansion of word after redirect
+status: 0
+bash-n: 0
+--- stdout
+|3
+--- file tilde1.txt
+|hi
+
+=== 5: other user
+status: 0
+bash-n: 0
+--- stdout
+|~nonexistent
+
+=== 6: ${undef:-~}
+status: 0
+bash-n: 0
+--- stdout
+|/home/bar
+|/home/bar/z
+|~
+|~
+
+=== 7: ${x//~/~root}
+status: 0
+bash-n: 0
+--- stdout
+|/root
+|/root
+|[/root]
+
+=== 8: x=foo:~ has tilde expansion
+status: 0
+bash-n: 0
+--- stdout
+|foo:/home/bar
+|foo:/home/bar
+|foo:~
+|foo:~,
+|/home/bar:foo
+|foo:~
+
+=== 9: a[x]=foo:~ has tilde expansion
+status: 0
+bash-n: 0
+--- stdout
+|foo:/home/bar
+|foo:/home/bar
+
+=== 10: tilde expansion an assignment keyword
+status: 0
+bash-n: 0
+--- stdout
+|foo:/home/bar
+
+=== 11: x=${undef-~:~}
+status: 0
+bash-n: 0
+--- stdout
+|/home/bar:/home/bar:/home/bar
+
+=== 12: strict tilde
+status: 0
+bash-n: 0
+--- stdout
+|~nonexistent
+|~nonexistent
+|status=0
+--- stderr
+|bash: line 3: shopt: strict_tilde: invalid shell option name
+
+=== 13: temp assignment x=~ env
+status: 0
+bash-n: 0
+--- stdout
+|xx=/home/bar
+|xx=/root:/home/bar:/home/bar

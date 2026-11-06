@@ -1,0 +1,60 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/options/inherit-errexit.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: inherit_errexit disabled by default
+status: 0
+bash-n: 0
+--- stdout
+|disabled
+
+=== 1: inherit_errexit disabled - command substitution ignores errexit
+status: 0
+bash-n: 0
+--- stdout
+|result: still running
+|after
+
+=== 2: inherit_errexit enabled - command substitution inherits errexit
+status: 1
+bash-n: 0
+
+=== 3: inherit_errexit with nested command substitution
+status: 0
+bash-n: 0
+--- stdout
+|should not print
+
+=== 4: inherit_errexit disabled - nested substitution continues
+status: 0
+bash-n: 0
+--- stdout
+|result: outer: inner
+|after
+
+=== 5: inherit_errexit with backtick substitution
+status: 1
+bash-n: 0
+
+=== 6: inherit_errexit with assignment
+status: 1
+bash-n: 0
+
+=== 7: inherit_errexit in function
+status: 0
+bash-n: 0
+--- stdout
+|after local
+|should not print
+
+=== 8: inherit_errexit toggling
+status: 1
+bash-n: 0
+
+=== 9: inherit_errexit with multiple commands in substitution
+status: 0
+bash-n: 0
+--- stdout
+|result: start
+|after false
+|after

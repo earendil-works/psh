@@ -1,0 +1,456 @@
+# Goldens for tests/oils/spec/word-split.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: IFS is scoped
+status: 0
+bash-n: 0
+--- stdout
+|['ab', 'd']
+|['a', 'cd']
+
+=== 1: Tilde sub is not split, but var sub is
+status: 0
+bash-n: 0
+--- stdout
+|['foo bar']
+|['foo', 'bar']
+
+=== 2: Word splitting
+status: 0
+bash-n: 0
+--- stdout
+|['1', '23 4']
+
+=== 3: Word splitting 2
+status: 0
+bash-n: 0
+--- stdout
+|['1', '23 45', '67 8']
+
+=== 4: $*
+status: 0
+bash-n: 0
+--- stdout
+|['-a', '1', 'b', '2', 'c', '3-']
+
+=== 5: "$*"
+status: 0
+bash-n: 0
+--- stdout
+|['-a 1 b 2 c 3-']
+
+=== 6: $@
+status: 0
+bash-n: 0
+--- stdout
+|['-a', '1', 'b', '2', 'c', '3-']
+
+=== 7: "$@"
+status: 0
+bash-n: 0
+--- stdout
+|['-a 1', 'b 2', 'c 3-']
+
+=== 8: empty argv
+status: 0
+bash-n: 0
+--- stdout
+|['1', '2', '3', '', '4', '5']
+
+=== 9: $* with empty IFS
+status: 0
+bash-n: 0
+--- stdout
+|['1 2', '3  4']
+|['1 23  4']
+
+=== 10: Word elision with space
+status: 0
+bash-n: 0
+--- stdout
+|[]
+
+=== 11: Word elision with non-whitespace IFS
+status: 0
+bash-n: 0
+--- stdout
+|['']
+|[' ']
+|[]
+
+=== 12: Leading/trailing word elision with non-whitespace IFS
+status: 0
+bash-n: 0
+--- stdout
+|['', 'a', 'b']
+
+=== 13: Leading ' ' vs leading ' _ '
+status: 0
+bash-n: 0
+--- stdout
+|['', 'a', 'b']
+|['a', 'b']
+
+=== 14: Multiple non-whitespace IFS chars.
+status: 0
+bash-n: 0
+--- stdout
+|['a', '', 'b', '', '', 'c', 'd']
+
+=== 15: IFS with whitespace and non-whitepace.
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'b', '', '', 'c', 'd', 'e']
+
+=== 16: empty $@ and $* is elided
+status: 0
+bash-n: 0
+--- stdout
+|['1', '2']
+
+=== 17: unquoted empty arg is elided
+status: 0
+bash-n: 0
+--- stdout
+|['1', '2']
+
+=== 18: unquoted whitespace arg is elided
+status: 0
+bash-n: 0
+--- stdout
+|['1', '2']
+
+=== 19: empty literals are not elided
+status: 0
+bash-n: 0
+--- stdout
+|['1', '', '2']
+
+=== 20: no splitting when IFS is empty
+status: 0
+bash-n: 0
+--- stdout
+|['a b']
+
+=== 21: default value can yield multiple words
+status: 0
+bash-n: 0
+--- stdout
+|['1', '2 3', '4 5', '6']
+
+=== 22: default value can yield multiple words with part joining
+status: 0
+bash-n: 0
+--- stdout
+|['12 3', '4 56']
+
+=== 23: default value with unquoted IFS char
+status: 0
+bash-n: 0
+--- stdout
+|['12_3x', 'x4_56']
+
+=== 24: IFS empty doesn't do splitting
+status: 0
+bash-n: 0
+--- stdout
+|[]
+--- stderr
+|bash: line 2: python2: command not found
+
+=== 25: IFS unset behaves like $' \t\n'
+status: 0
+bash-n: 0
+--- stdout
+|[]
+--- stderr
+|bash: line 2: python2: command not found
+
+=== 26: IFS='\'
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'b']
+
+=== 27: IFS='\ '
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'b', '', 'c', 'd']
+
+=== 28: IFS characters are glob metacharacters
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'b', 'c']
+|['', 'x', 'y', 'z']
+|['', 'x', 'y', 'z']
+
+=== 29: Trailing space
+status: 0
+bash-n: 0
+--- stdout
+|['Xec  ho ']
+|['Xec  ho ']
+|['Xec  ho ']
+
+=== 30: Empty IFS (regression for bug)
+status: 0
+bash-n: 0
+--- stdout
+|[]
+|[abc]
+
+=== 31: Unset IFS (regression for bug)
+status: 0
+bash-n: 0
+--- stdout
+|[a b c]
+
+=== 32: IFS=o (regression for bug)
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 33: IFS and joining arrays
+status: 0
+bash-n: 0
+--- stdout
+|['x', 'y z']
+|['x', 'y z']
+|['x:y z']
+|['x', 'y z']
+
+=== 34: IFS and joining arrays by assignments
+status: 0
+bash-n: 0
+--- stdout
+|['x y z']
+|['x y z']
+|['x:y z']
+|['x:y z']
+
+=== 35: TODO
+status: 0
+bash-n: 0
+
+=== 36: IFS='' with $@ and $* (bug #627)
+status: 0
+bash-n: 0
+--- stdout
+|['at', 'a', 'b c']
+|['star', 'a', 'b c']
+
+=== 37: IFS='' with $@ and $* and printf (bug #627)
+status: 0
+bash-n: 0
+--- stdout
+|[a]
+|[b c]
+|[a]
+|[b c]
+
+=== 38: IFS='' with ${a[@]} and ${a[*]} (bug #627)
+status: 0
+bash-n: 0
+--- stdout
+|['at', 'a', 'b c']
+|['star', 'a', 'b c']
+
+=== 39: IFS='' with ${!prefix@} and ${!prefix*} (bug #627)
+status: 0
+bash-n: 0
+--- stdout
+|['at', 'gLwbmGzS_var1', 'gLwbmGzS_var2']
+|['star', 'gLwbmGzS_var1gLwbmGzS_var2']
+
+=== 40: IFS='' with ${!a[@]} and ${!a[*]} (bug #627)
+status: 0
+bash-n: 0
+--- stdout
+|['at', '0', '1', '2']
+|['star', '0 1 2']
+
+=== 41: Bug #628 split on : with : in literal word
+status: 0
+bash-n: 0
+--- stdout
+|['a', ':b']
+|['a', ':']
+|---
+|['a', 'zb']
+|['a', 'z']
+
+=== 42: Bug #698, similar crash
+status: 0
+bash-n: 0
+--- stdout
+|\
+
+=== 43: Bug #1664, \\ with noglob
+status: 0
+bash-n: 0
+--- stdout
+|['[\\]_']
+|['[\\]_']
+|noglob
+|['[\\]_']
+|['[\\]_']
+
+=== 44: Empty IFS bug #2141 (from pnut)
+status: 0
+bash-n: 0
+--- stdout
+|12 + 30 = 42
+|12 + 30 = 42
+|12 + 30 = 42
+|12 + 30 = 42
+|12 + 30 = 42
+
+=== 45: Unicode in IFS
+status: 0
+bash-n: 0
+--- stdout
+|<>
+|<x>
+--- stderr
+|bash: line 1: setopt: command not found
+
+=== 46: 4 x 3 table: (default IFS, IFS='', IFS=zx) x ( $* "$*" $@ "$@" )
+status: 0
+bash-n: 0
+--- stdout
+|['  $*  ', 'a', 'b', 'c']
+|[' "$*" ', 'a b c ']
+|['  $@  ', 'a', 'b', 'c']
+|[' "$@" ', 'a b', 'c', '']
+|
+|['  $*  ', 'a b', 'c']
+|[' "$*" ', 'a bc']
+|['  $@  ', 'a b', 'c']
+|[' "$@" ', 'a b', 'c', '']
+|
+|['  $*  ', 'a b', 'c']
+|[' "$*" ', 'a bzcz']
+|['  $@  ', 'a b', 'c']
+|[' "$@" ', 'a b', 'c', '']
+--- stderr
+|bash: line 1: setopt: command not found
+
+=== 47: 4 x 3 table - with for loop
+status: 0
+bash-n: 0
+--- stdout
+|  $*   -a- -b- -c-
+| "$*"  -a b c -
+|  $@   -a- -b- -c-
+| "$@"  -a b- -c- --
+|
+|  $*   -a b- -c-
+| "$*"  -a bc-
+|  $@   -a b- -c-
+| "$@"  -a b- -c- --
+|
+|  $*   -a b- -c-
+| "$*"  -a b c -
+|  $@   -a b- -c-
+| "$@"  -a b- -c- --
+--- stderr
+|bash: line 3: setopt: command not found
+
+=== 48: IFS=x and '' and $@ - same bug as spec/toysh-posix case #12
+status: 0
+bash-n: 0
+--- stdout
+|  $*   -one- -- -two-
+| "$*"  -one  two-
+|  $@   -one- -- -two-
+| "$@"  -one- -- -two-
+|['  $*  ', 'one', '', 'two']
+|[' "$*" ', 'onezztwo']
+|['  $@  ', 'one', '', 'two']
+|[' "$@" ', 'one', '', 'two']
+--- stderr
+|bash: line 3: setopt: command not found
+
+=== 49: IFS=x and '' and $@ (#2)
+status: 0
+bash-n: 0
+--- stdout
+|['=', '=']
+|['=', '=']
+|
+|['=', '=']
+|['=', '=']
+|
+|['=', '', '', '', '=']
+|['=', '', '', '', '=']
+--- stderr
+|bash: line 1: setopt: command not found
+
+=== 50: IFS=x and '' and $@ (#3)
+status: 0
+bash-n: 0
+--- stdout
+|['', '', '', '']
+|['', '', '']
+|['', '']
+|['']
+|[]
+--- stderr
+|bash: line 1: setopt: command not found
+
+=== 51: ""$A"" - empty string on both sides - derived from spec/toysh-posix #15
+status: 0
+bash-n: 0
+--- stdout
+|['abc', 'def']
+|['', 'abc', 'def', '']
+|['abc', 'def']
+|['', 'abc', 'def', '']
+|
+|=abc=
+|=def=
+|
+|==
+|=abc=
+|=def=
+|==
+|
+|=abc=
+|=def=
+|
+|==
+|=abc=
+|=def=
+|==
+
+=== 52: Regression: "${!v*}"x should not be split
+status: 0
+bash-n: 0
+--- stdout
+|axb
+|axbx
+
+=== 53: Regression: ${!v} should be split
+status: 0
+bash-n: 0
+--- stdout
+|
+|5
+
+=== 54: Regression: "${v:-AxBxC}"x should not be split
+status: 0
+bash-n: 0
+--- stdout
+|AxBxC
+|AxBxCx
+|A B C
+|A B Cx
+|AxBxC
+|AxBxCx
+|AxBxC
+|AxBxCx

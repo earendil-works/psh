@@ -1,0 +1,341 @@
+# Goldens for tests/oils/spec/extglob-files.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: @() matches exactly one of the patterns
+status: 0
+bash-n: 2
+--- stdout
+|bar.cc bar.h baz.h foo.cc foo.h
+--- dir 0
+--- file 0/bar.cc
+--- file 0/bar.h
+--- file 0/baz.h
+--- file 0/foo.cc
+--- file 0/foo.h
+--- bash-n stderr
+|bash: line 5: syntax error near unexpected token `('
+|bash: line 5: `echo @(*.cc|*.h)'
+
+=== 1: ?() matches 0 or 1
+status: 0
+bash-n: 2
+--- stdout
+|foo. foo.cc foo.h
+--- dir 1
+--- file 1/bar.cc
+--- file 1/bar.h
+--- file 1/baz.h
+--- file 1/foo.
+--- file 1/foo.cc
+--- file 1/foo.h
+--- file 1/foo.hh
+--- bash-n stderr
+|bash: line 6: syntax error near unexpected token `('
+|bash: line 6: `echo foo.?($ext|h)'
+
+=== 2: *() matches 0 or more
+status: 0
+bash-n: 2
+--- stdout
+|eg1/_ eg1/_One eg1/_OneOne eg1/_OneTwo eg1/_TwoTwo
+--- dir eg1
+--- file eg1/_
+--- file eg1/_One
+--- file eg1/_OneOne
+--- file eg1/_OneTwo
+--- file eg1/_TwoTwo
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `echo eg1/_*(One|Two)'
+
+=== 3: +() matches 1 or more
+status: 0
+bash-n: 2
+--- stdout
+|eg2/_One eg2/_OneOne eg2/_OneTwo eg2/_TwoTwo
+--- dir eg2
+--- file eg2/_
+--- file eg2/_One
+--- file eg2/_OneOne
+--- file eg2/_OneTwo
+--- file eg2/_TwoTwo
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `echo eg2/_+(One|$(echo Two))'
+
+=== 4: !(*.h|*.cc) to match everything except C++
+status: 0
+bash-n: 2
+--- stdout
+|extglob2/bar.py extglob2/baz.py extglob2/foo.py
+--- dir extglob2
+--- file extglob2/bar.cc
+--- file extglob2/bar.h
+--- file extglob2/bar.py
+--- file extglob2/baz.h
+--- file extglob2/baz.py
+--- file extglob2/foo.cc
+--- file extglob2/foo.h
+--- file extglob2/foo.py
+--- bash-n stderr
+|bash: line 5: syntax error near unexpected token `('
+|bash: line 5: `echo extglob2/!(*.h|*.cc)'
+
+=== 5: Two adjacent alternations
+status: 0
+bash-n: 2
+--- stdout
+|2/ab 2/ac 2/cb 2/cc
+|2/ab 2/ac 2/bb 2/bc 2/cb 2/cc
+|2/ab 2/ac
+--- dir 2
+--- file 2/aa
+--- file 2/ab
+--- file 2/ac
+--- file 2/ba
+--- file 2/bb
+--- file 2/bc
+--- file 2/ca
+--- file 2/cb
+--- file 2/cc
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `echo 2/!(b)@(b|c)'
+
+=== 6: Nested extended glob pattern
+status: 0
+bash-n: 2
+--- stdout
+|eg6/ab eg6/az
+|eg6/ac eg6/ad eg6/az
+--- dir eg6
+--- file eg6/ab
+--- file eg6/ac
+--- file eg6/ad
+--- file eg6/az
+--- file eg6/bc
+--- file eg6/bd
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `echo eg6/a@(!(c|d))'
+
+=== 7: Extended glob patterns with spaces
+status: 0
+bash-n: 2
+--- stdout
+|['eg4/a b', 'eg4/foo']
+--- dir eg4
+--- file eg4/a
+--- file eg4/a b
+--- file eg4/foo
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `argv.py eg4/@(a b|foo)'
+
+=== 8: Filenames with spaces
+status: 0
+bash-n: 2
+--- stdout
+|['eg5/a bcd', 'eg5/a bde']
+--- dir eg5
+--- file eg5/a bcd
+--- file eg5/a bde
+--- file eg5/a bef
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `argv.py eg5/'a '@(bcd|bde|zzz)'
+
+=== 9: nullglob with extended glob
+status: 0
+bash-n: 2
+--- stdout
+|['eg6/@(no|matches)']
+|[]
+--- dir eg6
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `('
+|bash: line 3: `argv.py eg6/@(no|matches)  # no matches'
+
+=== 10: Glob other punctuation chars (lexer mode)
+status: 0
+bash-n: 2
+--- stdout
+|['__#', '__&&', '__<>', '__aa', '__{}']
+--- dir eg5
+--- file eg5/__#
+--- file eg5/__&&
+--- file eg5/__<>
+--- file eg5/__aa
+--- file eg5/__{}
+--- bash-n stderr
+|bash: line 5: syntax error near unexpected token `('
+|bash: line 5: `argv.py @(__aa|'__<>'|__{}|__#|__&&|)'
+
+=== 11: More glob escaping
+status: 0
+bash-n: 2
+--- stdout
+|['_*', '_?', '_[:]']
+|['_*', '_?', '_[:]']
+--- dir eg7
+--- file eg7/_*
+--- file eg7/_?
+--- file eg7/_[:]
+--- bash-n stderr
+|bash: line 5: syntax error near unexpected token `('
+|bash: line 5: `argv.py @('_[:]'|'_*'|'_?')'
+
+=== 12: Escaping of pipe (glibc bug, see demo/glibc_fnmatch.c)
+status: 0
+bash-n: 2
+--- stdout
+|['__|', 'foo']
+|['__|', 'foo']
+--- dir extpipe
+--- file extpipe/__|
+--- file extpipe/foo
+--- bash-n stderr
+|bash: line 7: syntax error near unexpected token `('
+|bash: line 7: `argv.py @('foo'|__\||bar)'
+
+=== 13: Extended glob as argument to ${undef:-} (dynamic globbing)
+status: 0
+bash-n: 0
+--- stdout
+|bar.py foo.py spam.py
+|bar.py foo.py
+--- dir eg8
+--- file eg8/bar.py
+--- file eg8/foo.py
+--- file eg8/spam.py
+
+=== 14: Extended glob in assignment builtin
+status: 0
+bash-n: 2
+--- stdout
+|status=2
+--- stderr
+|bash: line 5: typeset: -@: invalid option
+|typeset: usage: typeset [-aAfFgiIlnrtux] name[=value] ... or typeset -p [-aAfFilnrtux] [name ...]
+--- dir eg9
+--- file eg9/bar.py
+--- file eg9/foo.py
+--- bash-n stderr
+|bash: line 5: syntax error near unexpected token `('
+|bash: line 5: `typeset -@(*.py) myvar'
+
+=== 15: Extended glob in same word as array
+status: 0
+bash-n: 2
+--- stdout
+|['a b', 'c']
+|['star', 'glob', 'a b c.py']
+|['star', 'extglob', 'a b c.cc', 'a b c.py']
+|['at', 'extglob', 'a b', 'cee.cc', 'cee.py']
+--- dir eg10
+--- file eg10/a b c.cc
+--- file eg10/a b c.py
+--- file eg10/bee.cc
+--- file eg10/bee.py
+--- file eg10/cee.cc
+--- file eg10/cee.py
+--- bash-n stderr
+|bash: line 11: syntax error near unexpected token `('
+|bash: line 11: `argv.py star extglob "$*"*@(.py|cc)'
+
+=== 16: Extended glob with word splitting
+status: 0
+bash-n: 2
+--- stdout
+|['a', 'bar.cc', 'bar.h']
+--- dir 3
+--- file 3/bar.cc
+--- file 3/bar.h
+--- bash-n stderr
+|bash: line 8: syntax error near unexpected token `('
+|bash: line 8: `argv.py $x*.@(cc|h)'
+
+=== 17: In Array Literal and for loop
+status: 0
+bash-n: 2
+--- stdout
+|bar.py
+|foo.py
+|---
+|zzz bar.py foo.py
+--- dir eg11
+--- file eg11/bar.py
+--- file eg11/foo.py
+--- file eg11/spam.py
+--- bash-n stderr
+|bash: line 5: syntax error near unexpected token `('
+|bash: line 5: `for x in @(fo*|bar).py; do'
+
+=== 18: No extended glob with simple_word_eval (YSH evaluation)
+status: 1
+bash-n: 2
+--- stderr
+|bash: line 1: shopt: ysh:all: invalid shell option name
+|bash: line 6: builtin: write: not a shell builtin
+|bash: line 7: builtin: write: not a shell builtin
+--- dir eg12
+--- file eg12/bar.py
+--- file eg12/foo.py
+--- file eg12/spam.py
+--- bash-n stderr
+|bash: line 6: syntax error near unexpected token `('
+|bash: line 6: `builtin write -- x@(fo*|bar).py'
+
+=== 19: no match
+status: 0
+bash-n: 2
+--- stdout
+|@(__nope__)
+|@(__nope__*|__nope__?|*|?|[:alpha:]||)
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `echo @(__nope__)'
+
+=== 20: no_dash_glob
+status: 0
+bash-n: 2
+--- stdout
+|-dash bar foo
+|-dash bar foo
+--- stderr
+|bash: line 8: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]
+--- dir opts
+--- file opts/-dash
+--- file opts/bar
+--- file opts/foo
+--- bash-n stderr
+|bash: line 6: syntax error near unexpected token `('
+|bash: line 6: `echo @(*)'
+
+=== 21: noglob
+status: 0
+bash-n: 2
+--- stdout
+|@(*)
+|@(__nope__*|__nope__?|*|?|[:alpha:]||)
+--- dir _noglob
+--- bash-n stderr
+|bash: line 6: syntax error near unexpected token `('
+|bash: line 6: `echo @(*)'
+
+=== 22: failglob
+status: 0
+bash-n: 2
+--- stdout
+|status=1
+|foo
+|status=0
+--- stderr
+|bash: line 8: no match: @(*)
+--- dir _failglob
+--- file _failglob/foo
+--- bash-n stderr
+|bash: line 8: syntax error near unexpected token `('
+|bash: line 8: `echo @(*)'

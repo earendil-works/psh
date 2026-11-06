@@ -1,0 +1,233 @@
+# Goldens for tests/brush/brush-shell/tests/cases/brush/scripting.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|3 3 -2 1024 31 15
+|25
+|15
+|status: 1
+
+=== 1: Indexed arrays
+status: 0
+bash-n: 0
+--- stdout
+|4 two three 0 1 2 3
+|zero two three / 0 2 3
+|two three
+
+=== 2: Associative arrays
+status: 0
+bash-n: 0
+--- stdout
+|a=1 b=2 c=3 
+|3
+|has a
+|no a
+
+=== 3: Parameter expansion
+status: 0
+bash-n: 0
+--- stdout
+|hello, world HELLO, WORLD 12
+|World Hello rld
+|Hello, There HeLLo, WorLd
+|World Hello rld Hell
+|default assigned assigned alt
+
+=== 4: Functions, locals, and dynamic scope
+status: 0
+bash-n: 0
+--- stdout
+|g sees inner
+|status: 3 after: global
+
+=== 5: case statements
+status: 0
+bash-n: 0
+--- stdout
+|apple: starts with a
+|Banana: banana
+|cherry: double r
+|cherry: falls through or digits
+|42: falls through or digits
+|empty
+
+=== 6: Loops with break and continue
+status: 0
+bash-n: 0
+--- stdout
+|0 2 4 6 
+|3 2 1 
+|a1
+|b1
+
+=== 7: Extended tests
+status: 0
+bash-n: 0
+--- stdout
+|glob
+|123
+|empty and nonempty
+|compare
+
+=== 8: -ef tells files apart
+status: 0
+bash-n: 0
+--- stdout
+|a.txt isn't b.txt
+|a.txt is ./a.txt
+
+=== 9: test and [
+status: 0
+bash-n: 0
+--- stdout
+|lt
+|nonempty
+|file
+|missing
+|status: 1
+
+=== 10: getopts
+status: 0
+bash-n: 0
+--- stdout
+|flag a
+|b=val
+|rest: one two
+
+=== 11: printf
+status: 0
+bash-n: 0
+--- stdout
+|builtin
+|answer=42| 3.14|ff
+|hi, world
+|from callee
+|second
+
+=== 12: set -e stops at the first failure
+status: 1
+bash-n: 0
+--- stdout
+|before
+
+=== 13: EXIT trap
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|bye
+
+=== 14: eval and indirect expansion
+status: 0
+bash-n: 0
+--- stdout
+|value
+|42
+
+=== 15: Brace expansion
+status: 0
+bash-n: 0
+--- stdout
+|a1 a2 b1 b2 1 2 3 4 5 10 5 0 a b c d e
+
+=== 16: Globbing
+status: 0
+bash-n: 0
+--- stdout
+|a.txt b.txt
+|log: c.log
+|none: *.xyz
+|none:
+
+=== 17: Quoting
+status: 0
+bash-n: 0
+--- stdout
+|single $x double val 2 ansi	tab esc "q" $x
+
+=== 18: Subshells isolate state
+status: 0
+bash-n: 0
+--- stdout
+|inner 2
+|outer 1
+
+=== 19: Aliases
+status: 0
+bash-n: 0
+--- stdout
+|hello world
+
+=== 20: Positional parameters and shift
+status: 0
+bash-n: 0
+--- stdout
+|2 c c d
+|2: x y | z
+
+=== 21: read options
+status: 0
+bash-n: 0
+--- stdout
+|q
+|1+2
+|abc
+|x
+
+=== 22: mapfile options
+status: 0
+bash-n: 0
+--- stdout
+|a b
+
+=== 23: type and command -v
+status: 0
+bash-n: 0
+--- stdout
+|builtin
+|keyword
+|function
+|echo
+
+=== 24: type and command -v of a missing command
+status: 0
+bash-n: 0
+--- stdout
+|type: 1
+|command -v: 1
+|test -x: 1
+
+=== 25: test -r and -w of a missing file
+status: 0
+bash-n: 0
+--- stdout
+|test -r: 1
+|test -w: 1
+
+=== 26: $$ expands to the shell's process ID
+status: 0
+bash-n: 0
+--- stdout
+|pid set: yes
+|numeric: 1
+
+=== 27: An unknown command exits with 127
+status: 0
+bash-n: 0
+--- stdout
+|status: 127
+--- file err.txt
+|bash: line 1: no_such_command_xyz: command not found
+
+=== 28: Self-referencing variable in arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+--- stderr
+|bash: line 2: a: expression recursion level exceeded (error token is "a")

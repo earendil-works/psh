@@ -1,0 +1,504 @@
+# Goldens for tests/oils/spec/builtin-completion.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: complete with no args and complete -p both print completion spec
+status: 0
+bash-n: 0
+--- stdout
+|complete -W 'foo bar' mycommand
+|complete -W 'foo bar' mycommand
+|complete -F myfunc other
+
+=== 1: complete -F f is usage error
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=2
+--- stderr
+|complete: usage: complete [-abcdefgjksuv] [-pr] [-DEI] [-o option] [-A action] [-G globpat] [-W wordlist] [-F function] [-C command] [-X filterpat] [-P prefix] [-S suffix] [name ...]
+
+=== 2: complete with nonexistent function
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 3: complete with no action
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 4: -A function prints functions
+status: 0
+bash-n: 0
+--- stdout
+|__ec
+|_ab
+|add
+|div
+|ek
+|--
+|__ec
+|_ab
+
+=== 5: Invalid syntax
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|bash: line 1: compgen: foo: invalid action name
+
+=== 6: how compgen calls completion functions
+status: 0
+bash-n: 0
+--- stdout
+|['argv', 'compgen', 'foo', '']
+|['COMP_WORDS']
+|['COMP_CWORD', '-1']
+|['COMP_LINE', '']
+|['COMP_POINT', '0']
+|one
+|two
+|three
+--- stderr
+|bash: line 9: compgen: warning: -F option may not work as you expect
+
+=== 7: complete -o -F (git)
+status: 0
+bash-n: 0
+
+=== 8: compopt with invalid syntax
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|bash: line 1: compopt: invalid: invalid option name
+
+=== 9: compopt fails when not in completion function
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: compopt: not currently executing completion function
+
+=== 10: compgen -f on invalid  dir
+status: 1
+bash-n: 0
+
+=== 11: compgen -f
+status: 0
+bash-n: 0
+--- stdout
+|one
+|three
+|two
+|--
+|three
+|two
+--- dir compgen
+--- file compgen/one
+--- file compgen/three
+--- file compgen/two
+
+=== 12: compgen -v with local vars
+status: 0
+bash-n: 0
+--- stdout
+|v1_global
+|v2_local
+
+=== 13: compgen -v on unknown var
+status: 1
+bash-n: 0
+
+=== 14: compgen -v P
+status: 0
+bash-n: 0
+--- stdout
+|PATH
+|PWD
+
+=== 15: compgen -e with global/local exported vars
+status: 0
+bash-n: 0
+--- stdout
+|v1_global
+|v2_local
+
+=== 16: compgen -e on known, but unexported, var
+status: 1
+bash-n: 0
+
+=== 17: compgen -e on unknown var
+status: 1
+bash-n: 0
+
+=== 18: compgen -e P
+status: 0
+bash-n: 0
+--- stdout
+|PATH
+|PWD
+
+=== 19: compgen with actions: function / variable / file
+status: 0
+bash-n: 0
+--- stdout
+|PA_FUNC
+|PATH
+|PA_FILE
+--- dir compgen2
+--- file compgen2/PA_FILE
+--- file compgen2/Q_FILE
+
+=== 20: compgen with actions: alias, setopt
+status: 0
+bash-n: 0
+--- stdout
+|v_alias
+|v_alias2
+|verbose
+|vi
+
+=== 21: compgen with actions: shopt
+status: 0
+bash-n: 0
+--- stdout
+|[nullglob]
+
+=== 22: compgen with action and suffix: helptopic
+status: 0
+bash-n: 0
+--- stdout
+|false___
+
+=== 23: compgen -A directory
+status: 0
+bash-n: 0
+
+=== 24: compgen -A file
+status: 0
+bash-n: 0
+
+=== 25: compgen -A user
+status: 0
+bash-n: 0
+--- stdout
+|root
+|daemon
+|bin
+|sys
+|sync
+|games
+|man
+|lp
+|mail
+|news
+|uucp
+|proxy
+|www-data
+|backup
+|list
+|irc
+|_apt
+|nobody
+|spec
+
+=== 26: compgen -A command completes external commands
+status: 0
+bash-n: 0
+--- stdout
+|xargs
+|status=0
+
+=== 27: compgen -A command completes functions and aliases
+status: 0
+bash-n: 0
+--- stdout
+|our_alias
+|our_func
+|our_func2
+|status=0
+|our_alias
+|our_func
+|our_func2
+|our_func3
+|status=0
+
+=== 28: compgen -A command completes builtins and keywords
+status: 0
+bash-n: 0
+--- stdout
+|eval
+|status=0
+|while
+|status=0
+
+=== 29: compgen -k shows the same keywords as bash
+status: 0
+bash-n: 0
+--- stdout
+|!
+|[[
+|]]
+|case
+|do
+|done
+|elif
+|else
+|esac
+|fi
+|for
+|function
+|if
+|in
+|then
+|time
+|until
+|while
+|{
+|}
+--- file bash.txt
+|!
+|[[
+|]]
+|case
+|coproc
+|do
+|done
+|elif
+|else
+|esac
+|fi
+|for
+|function
+|if
+|in
+|select
+|then
+|time
+|until
+|while
+|{
+|}
+--- file this-shell.txt
+|!
+|[[
+|]]
+|case
+|coproc
+|do
+|done
+|elif
+|else
+|esac
+|fi
+|for
+|function
+|if
+|in
+|select
+|then
+|time
+|until
+|while
+|{
+|}
+
+=== 30: compgen -k shows Oils keywords too
+status: 0
+bash-n: 0
+--- stdout
+|--
+
+=== 31: compgen -k completes reserved shell keywords
+status: 0
+bash-n: 0
+--- stdout
+|do
+|done
+|status=0
+|elif
+|else
+|status=0
+
+=== 32: -o filenames and -o nospace have no effect with compgen
+status: 0
+bash-n: 0
+--- stdout
+|bin
+|build
+
+=== 33: -o plusdirs and -o dirnames with compgen
+status: 0
+bash-n: 0
+--- stdout
+|b1
+|b2
+|---
+
+=== 34: compgen -o default completes files and dirs
+status: 0
+bash-n: 0
+--- stdout
+|spec/temp-binding.test.sh
+|spec/testdata
+|spec/tilde.test.sh
+|spec/toysh-posix.test.sh
+|spec/toysh.test.sh
+|spec/type-compat.test.sh
+
+=== 35: compgen doesn't respect -X for user-defined functions
+status: 0
+bash-n: 0
+--- stdout
+|one
+|three
+|--
+|two
+|bin
+--- stderr
+|bash: cannot set terminal process group (8535): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash: compgen: warning: -F option may not work as you expect
+|bash: compgen: warning: -F option may not work as you expect
+
+=== 36: compgen -W words -X filter
+status: 0
+bash-n: 0
+--- stdout
+|one
+|three
+--- stderr
+|bash: cannot set terminal process group (8558): Inappropriate ioctl for device
+|bash: no job control in this shell
+
+=== 37: compgen -f -X filter -- $cur
+status: 0
+bash-n: 0
+--- stdout
+|spam.py
+|spam.sh
+|--
+|spam.py
+--- stderr
+|bash: cannot set terminal process group (8560): Inappropriate ioctl for device
+|bash: no job control in this shell
+--- file spam.py
+--- file spam.sh
+
+=== 38: compgen doesn't need shell quoting
+status: 0
+bash-n: 0
+--- stdout
+|foo bar
+|foo'bar
+--- file foo bar
+--- file foo'bar
+
+=== 39: compgen -W 'one two three'
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|three
+|--
+|v1
+|v2
+|--
+|v1
+|v2
+
+=== 40: compgen -W evaluates code in $()
+status: 0
+bash-n: 0
+--- stdout
+|spam
+|eggs
+|ham cheese
+
+=== 41: compgen -W uses IFS, and delimiters are escaped with \
+status: 0
+bash-n: 0
+--- stdout
+|spam
+|eggs
+|ham cheese:colon
+
+=== 42: Parse errors for compgen -W and complete -W
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=0
+--- stderr
+|bash: line 1: ${: bad substitution
+
+=== 43: Runtime errors for compgen -W
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: 1 / 0 : division by 0 (error token is "0 ")
+
+=== 44: Runtime errors for compgen -F func
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 5: compgen: warning: -F option may not work as you expect
+|bash: line 3: 1 / 0 : division by 0 (error token is "0 ")
+
+=== 45: compgen -W '' cmd is not a usage error
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 46: compgen -A builtin
+status: 0
+bash-n: 0
+--- stdout
+|getopts
+
+=== 47: complete -C vs. compgen -C
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|bar
+|compgen=0
+|complete=0
+--- stderr
+|bash: line 4: compgen: warning: -C option may not work as you expect
+
+=== 48: compadjust with empty COMP_ARGV
+status: 0
+bash-n: 0
+--- stdout
+|[]
+--- stderr
+|bash: line 4: compadjust: command not found
+
+=== 49: compadjust with sparse COMP_ARGV
+status: 0
+bash-n: 0
+--- stdout
+|[]
+--- stderr
+|bash: line 5: compadjust: command not found
+
+=== 50: compgen -F with scalar COMPREPLY
+status: 0
+bash-n: 0
+--- stdout
+|hello
+--- stderr
+|bash: line 5: compgen: warning: -F option may not work as you expect

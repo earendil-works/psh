@@ -1,0 +1,304 @@
+# Goldens for tests/oils/spec/glob.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: glob double quote escape
+status: 0
+bash-n: 0
+--- stdout
+|*.sh
+
+=== 1: glob single quote escape
+status: 0
+bash-n: 0
+--- stdout
+|*.sh
+
+=== 2: glob backslash escape
+status: 0
+bash-n: 0
+--- stdout
+|*.sh
+
+=== 3: 1 char glob
+status: 0
+bash-n: 0
+--- stdout
+|[b]in
+
+=== 4: 0 char glob -- does NOT work
+status: 0
+bash-n: 0
+--- stdout
+|[]bin
+
+=== 5: looks like glob at the start, but isn't
+status: 0
+bash-n: 0
+--- stdout
+|[bin
+
+=== 6: looks like glob plus negation at the start, but isn't
+status: 0
+bash-n: 0
+--- stdout
+|[!bin
+
+=== 7: glob can expand to command and arg
+status: 0
+bash-n: 0
+--- stdout
+|spec/testdata/echo.sz
+
+=== 8: glob after var expansion
+status: 0
+bash-n: 0
+--- stdout
+|_tmp/a.A _tmp/aa.A _tmp/b.B
+--- file _tmp/a.A
+--- file _tmp/aa.A
+--- file _tmp/b.B
+
+=== 9: quoted var expansion with glob meta characters
+status: 0
+bash-n: 0
+--- stdout
+|[ _tmp/*.A ]
+--- file _tmp/a.A
+--- file _tmp/aa.A
+--- file _tmp/b.B
+
+=== 10: glob after "$@" expansion
+status: 0
+bash-n: 0
+--- stdout
+|_tmp/*.B
+
+=== 11: glob after $@ expansion
+status: 0
+bash-n: 0
+--- stdout
+|_tmp/b.B
+--- file _tmp/b.B
+
+=== 12: no glob after ~ expansion
+status: 0
+bash-n: 0
+--- stdout
+|*/*.py
+
+=== 13: store literal globs in array then expand
+status: 0
+bash-n: 0
+--- stdout
+|_tmp/a.A _tmp/aa.A _tmp/b.B
+--- file _tmp/a.A
+--- file _tmp/aa.A
+--- file _tmp/b.B
+
+=== 14: glob inside array
+status: 0
+bash-n: 0
+--- stdout
+|_tmp/a.A _tmp/aa.A _tmp/b.B
+--- file _tmp/a.A
+--- file _tmp/aa.A
+--- file _tmp/b.B
+
+=== 15: glob with escaped - in char class
+status: 0
+bash-n: 0
+--- stdout
+|_tmp/c.C _tmp/c.C _tmp/foo.-
+--- file _tmp/c.C
+--- file _tmp/foo.-
+
+=== 16: glob with char class expression
+status: 0
+bash-n: 0
+--- stdout
+|_tmp/e.E _tmp/foo.-
+--- file _tmp/e.E
+--- file _tmp/foo.-
+
+=== 17: glob double quotes
+status: 0
+bash-n: 0
+--- stdout
+|_tmp/"quoted.py"
+--- file _tmp/"quoted.py"
+
+=== 18: glob escaped
+status: 0
+bash-n: 0
+--- stdout
+|_tmp/[abc] _tmp/?
+--- file _tmp/?
+--- file _tmp/[abc]
+
+=== 19: : escaped
+status: 0
+bash-n: 0
+--- stdout
+|_tmp/foo.- _tmp/foo.-
+--- file _tmp/foo.-
+
+=== 20: Glob after var manipulation
+status: 0
+bash-n: 0
+--- stdout
+|_tmp/*.zzzZ _tmp/bar.zzz _tmp/foo.zzz
+--- file _tmp/bar.zzz
+--- file _tmp/foo.zzz
+
+=== 21: Glob after part joining
+status: 0
+bash-n: 0
+--- stdout
+|_tmp/*.yy _tmp/bar.yyy _tmp/foo.yyy
+--- file _tmp/bar.yyy
+--- file _tmp/foo.yyy
+
+=== 22: Glob flags on file system
+status: 0
+bash-n: 0
+--- stdout
+|hello zzzzz
+~ no newline at end
+--- file _tmp/-n
+--- file _tmp/zzzzz
+
+=== 23: set -o noglob
+status: 0
+bash-n: 0
+--- stdout
+|_tmp/spec-tmp/*.zz
+|_tmp/spec-tmp/*.zz
+--- stderr
+|touch: cannot touch '_tmp/spec-tmp/a.zz': No such file or directory
+|touch: cannot touch '_tmp/spec-tmp/b.zz': No such file or directory
+
+=== 24: set -o noglob (bug #698)
+status: 0
+bash-n: 0
+--- stdout
+|\z
+
+=== 25: Splitting/Globbing doesn't happen on local assignment
+status: 0
+bash-n: 0
+--- stdout
+|void *
+
+=== 26: Glob of unescaped [[] and []]
+status: 0
+bash-n: 0
+--- stdout
+|[ ]
+|[ ]
+--- file [
+--- file ]
+
+=== 27: Glob of negated unescaped [[] and []]
+status: 0
+bash-n: 0
+--- stdout
+|_G _G
+|_G _G
+--- file _G
+
+=== 28: PatSub of unescaped [[] and []]
+status: 0
+bash-n: 0
+--- stdout
+|<foo]
+|[foo>
+|<foo]
+|[foo>
+
+=== 29: PatSub of negated unescaped [[] and []]
+status: 0
+bash-n: 0
+--- stdout
+|[<<<<
+|>>>>]
+|[<<<<
+
+=== 30: Glob unicode char
+status: 0
+bash-n: 0
+--- stdout
+|__a__ __μ__
+--- file __a__
+--- file __μ__
+
+=== 31: Glob ordering respects LC_COLLATE (zsh respects this too)
+status: 0
+bash-n: 0
+--- stdout
+|hello hello-test.sh hello.py hello_preamble.sh
+|hello hello_preamble.sh hello.py hello-test.sh
+|hello hello_preamble.sh hello.py hello-test.sh
+--- file hello
+--- file hello-test.sh
+--- file hello.py
+--- file hello_preamble.sh
+
+=== 32: \ in unquoted substitutions does not match a backslash
+status: 0
+bash-n: 0
+--- stdout
+|['x/*\\*.txt']
+|["x/test.ifs.'.txt"]
+|['x/test.ifs.a.txt']
+|['x/test.ifs.\\b.txt']
+--- dir x
+--- file x/test.ifs.'.txt
+--- file x/test.ifs.\.txt
+--- file x/test.ifs.\b.txt
+--- file x/test.ifs.a.txt
+
+=== 33: \ in unquoted substitutions is preserved
+status: 0
+bash-n: 0
+--- stdout
+|\*\*.txt
+|\*\*.txt
+
+=== 34: \ in unquoted substitutions is preserved with set -o noglob
+status: 0
+bash-n: 0
+--- stdout
+|*\*.txt
+
+=== 35: \ in unquoted substitutions is preserved without glob matching
+status: 0
+bash-n: 0
+--- stdout
+|['x/unmatching.*\\*.txt']
+--- dir x
+--- file x/test.ifs.*.txt
+--- file x/test.ifs.\.txt
+
+=== 36: \ in unquoted substitutions escapes globchars
+status: 0
+bash-n: 0
+--- stdout
+|['x/test.ifs.*.txt']
+|['x/test.ifs.*.txt']
+|['x/test.ifs.*.txt']
+--- dir x
+--- file x/test.ifs.*.txt
+--- file x/test.ifs.\.txt
+
+=== 37: pattern starting with . does not return . and ..
+status: 0
+bash-n: 0
+--- stdout
+|hi .*
+
+=== 38: shopt -u globskipdots shows . and ..
+status: 0
+bash-n: 0
+--- stdout
+|hi . ..

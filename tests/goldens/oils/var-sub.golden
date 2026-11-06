@@ -1,0 +1,43 @@
+# Goldens for tests/oils/spec/var-sub.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Bad var sub
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: ${a&}: bad substitution
+
+=== 1: Braced block inside ${}
+status: 0
+bash-n: 0
+--- stdout
+|/bin/ls
+
+=== 2: Nested ${}
+status: 0
+bash-n: 0
+--- stdout
+|ZZ
+
+=== 3: Filename redirect with "$@"
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: "$@": ambiguous redirect
+
+=== 4: Descriptor redirect to bad "$@"
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: "$@": ambiguous redirect
+
+=== 5: Here doc with bad "$@" delimiter
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 6: warning: here-document at line 2 delimited by end-of-file (wanted `$@')
+|bash: line 7: syntax error: unexpected end of file from `{' command on line 1
+--- bash-n stderr
+|bash: line 6: warning: here-document at line 2 delimited by end-of-file (wanted `$@')
+|bash: line 7: syntax error: unexpected end of file from `{' command on line 1

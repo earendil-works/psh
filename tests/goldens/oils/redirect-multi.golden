@@ -1,0 +1,143 @@
+# Goldens for tests/oils/spec/redirect-multi.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: File redirects with glob args (bash and zsh only)
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|escaped
+--- file one-*
+|escaped
+--- file one-bar
+|hi
+
+=== 1: File redirect without matching any file
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|zz-*-xx
+--- file zz-*-xx
+|hi
+
+=== 2: ysh behavior when glob doesn't match
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|qq-*-zz
+--- stderr
+|bash: line 1: shopt: ysh:upgrade: invalid shell option name
+--- file qq-*-zz
+|hi
+
+=== 3: File redirect without matching any file, with failglob
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|bash: line 3: no match: zz-*-xx
+|bash: line 6: no match: zz*
+
+=== 4: Redirect to $empty (in function body)
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 2: $empty: ambiguous redirect
+
+=== 5: Redirect to ''
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: : No such file or directory
+
+=== 6: File redirect to $var with glob char
+status: 1
+bash-n: 0
+--- stdout
+|status=0
+|==> two-bar <==
+|hi
+--- stderr
+|head: cannot open 'two-*' for reading: No such file or directory
+--- file two-bar
+|hi
+
+=== 7: File redirect that globs to more than one file (bash and zsh only)
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|==> foo-bar <==
+|
+|==> foo-spam <==
+--- stderr
+|bash: line 4: foo-*: ambiguous redirect
+--- file foo-bar
+--- file foo-spam
+
+=== 8: File redirect with extended glob
+status: 0
+bash-n: 2
+--- stdout
+|status=0
+|hi
+--- file foo-bar
+|hi
+--- bash-n stderr
+|bash: line 5: syntax error near unexpected token `('
+|bash: line 5: `echo hi > @(*-bar|other)'
+
+=== 9: Extended glob that doesn't match anything
+status: 0
+bash-n: 2
+--- stdout
+|status=0
+|bad_@(*.cc|*.h)
+|status=1
+--- stderr
+|rm: cannot remove 'bad_*': No such file or directory
+|bash: line 12: no match: bad_@(*.cc|*.h)
+--- file bad_@(*.cc|*.h)
+|foo
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `echo foo > bad_@(*.cc|*.h)'
+
+=== 10: Non-file redirects don't respect glob args (we differe from bash)
+status: 0
+bash-n: 0
+--- stdout
+|should-not-be-on-stdout
+|stdout
+--- stderr
+|stderr
+--- file 10
+
+=== 11: Redirect with brace expansion isn't allowed
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|bash: line 1: a-{one,two}: ambiguous redirect
+|head: cannot open 'a-*' for reading: No such file or directory
+
+=== 12: File redirects have word splitting too!
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|bash: line 3: $file: ambiguous redirect
+|cat: 'foo bar': No such file or directory

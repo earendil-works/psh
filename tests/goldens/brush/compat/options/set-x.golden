@@ -1,0 +1,307 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/options/set-x.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: basic
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|1
+|0
+|1
+|2
+|some_output
+--- stderr
+|+ ls
+|+ for f in 1 2 3
+|+ echo 1
+|+ for f in 1 2 3
+|+ echo 2
+|+ for f in 1 2 3
+|+ echo 3
+|+ case 1 in
+|+ echo 1
+|+ false
+|++ echo new
+|+ newvar=new
+|+ x=10
+|+ [[ x == 10 ]]
+|+ var=x
+|+ [[ -n x ]]
+|+ [[ -n x ]]
+|+ (( i = 0 ))
+|+ (( i < 3 ))
+|+ echo 0
+|+ (( i++ ))
+|+ (( i < 3 ))
+|+ echo 1
+|+ (( i++ ))
+|+ (( i < 3 ))
+|+ echo 2
+|+ (( i++ ))
+|+ (( i < 3 ))
+|+ (( x = 3 ))
+|+ override=value
+|+ echo some_output
+
+=== 1: sourced script
+status: 0
+bash-n: 0
+--- stdout
+|About to source script
+|Entered script
+|a
+|b
+|c
+|Exiting script
+|Back from script
+--- stderr
+|+ echo 'About to source script'
+|+ source script.sh
+|++ echo 'Entered script'
+|++ for f in a b c
+|++ echo a
+|++ for f in a b c
+|++ echo b
+|++ for f in a b c
+|++ echo c
+|++ echo 'Exiting script'
+|+ echo 'Back from script'
+
+=== 2: functions
+status: 0
+bash-n: 0
+--- stdout
+|Before function call
+|In myfunc
+|i is 1
+|i is 2
+|After function call
+--- stderr
+|+ echo 'Before function call'
+|+ myfunc
+|+ echo 'In myfunc'
+|+ for i in 1 2
+|+ echo 'i is 1'
+|+ for i in 1 2
+|+ echo 'i is 2'
+|+ echo 'After function call'
+
+=== 3: declaration assignments show expanded values
+status: 0
+bash-n: 0
+--- stderr
+|+ declare declared=world
+|+ export exported=world
+|+ exported=world
+|+ readonly fixed=world
+|+ fixed=world
+|+ f
+|+ local local_value=world
+|+ set +x
+
+=== 4: wrapper assignment arguments show expanded values
+status: 0
+bash-n: 0
+--- stdout
+|builtin=world
+|command=world
+--- stderr
+|+ builtin echo builtin=world
+|+ command echo command=world
+|+ set +x
+
+=== 5: command line
+status: 0
+bash-n: 0
+--- stdout
+|In command line script
+|x
+|y
+|z
+--- stderr
+|+ echo 'In command line script'
+|+ for n in x y z
+|+ echo x
+|+ for n in x y z
+|+ echo y
+|+ for n in x y z
+|+ echo z
+
+=== 6: trap
+status: 0
+bash-n: 0
+--- stdout
+|In trap
+|Doing something
+--- stderr
+|+ trap 'echo "In trap"' DEBUG
+|++ echo 'In trap'
+|+ echo 'Doing something'
+
+=== 7: declaration builtins trace their display and query forms
+status: 0
+bash-n: 0
+--- stderr
+|+ declare -p PWD
+|+ declare
+|+ export
+|+ readonly
+|+ readonly -p
+|+ declare -f f
+|+ set +x
+
+=== 8: command and builtin trace their query forms
+status: 0
+bash-n: 0
+--- stderr
+|+ command -v echo
+|+ command -V echo
+|+ builtin
+|+ command
+|+ set +x
+
+=== 9: command traces its own options
+status: 0
+bash-n: 0
+--- stderr
+|+ command -p echo hi
+|+ set +x
+
+=== 10: wrappers trace the full invocation for declaration targets
+status: 0
+bash-n: 0
+--- stderr
+|+ command declare a=world
+|+ builtin declare b=world
+|+ command builtin declare c=world
+|+ builtin command declare d=world
+|+ command export e=world
+|+ e=world
+|+ set +x
+
+=== 11: export and readonly echo assignments but not bare names
+status: 0
+bash-n: 0
+--- stderr
+|+ export a=1 b=2
+|+ a=1
+|+ b=2
+|+ readonly c=3 d
+|+ c=3
+|+ declare e=4
+|+ typeset t=5
+|+ f
+|+ local g=6 h
+|+ set +x
+
+=== 12: export and readonly echo assignments recognized from strings
+status: 0
+bash-n: 0
+--- stderr
+|+ readonly q=1
+|+ q=1
+|+ command export w=2
+|+ w=2
+|+ set +x
+
+=== 13: assignment operands are traced as single quoted words
+status: 0
+bash-n: 0
+--- stderr
+|+ declare 'sp=a b'
+|+ export 'esp=a b'
+|+ esp='a b'
+|+ readonly 'rsp=a b'
+|+ rsp='a b'
+|+ set +x
+
+=== 14: invalid export target is not echoed as an assignment
+status: 0
+bash-n: 0
+--- stderr
+|+ export 'ea[0]=1'
+|bash: line 2: export: `ea[0]': not a valid identifier
+|+ set +x
+
+=== 15: options following an operand keep their position in the trace
+status: 0
+bash-n: 0
+--- stderr
+|+ declare a=1 -i
+|bash: line 2: declare: `-i': not a valid identifier
+|+ set +x
+
+=== 16: compound assignment operands are traced as two lines
+status: 0
+bash-n: 0
+--- stderr
+|+ b=('1' '2')
+|+ declare -a b
+|+ c=(['k']='v')
+|+ declare -A c
+|+ ea=('1' '2')
+|+ export ea
+|+ ra=('1' '2')
+|+ readonly ra
+|+ set +x
+
+=== 17: DEBUG trap fires for a bare assignment statement
+status: 0
+bash-n: 0
+--- stdout
+|<x=1>
+|<echo done>
+|done
+|<trap - DEBUG>
+
+=== 18: Words starting with # or ~ are quoted in traces
+status: 0
+bash-n: 0
+--- stderr
+|+ : '~' '#a' b# x~
+
+=== 19: [[ ]] traces show unary operands starting with # or ~ like bash
+status: 0
+bash-n: 0
+--- stderr
+|+ [[ -n ~ ]]
+|+ [[ -n #a ]]
+|+ [[ -n a=~ ]]
+
+=== 20: [[ ]] traces show patterns starting with # or ~ like bash
+status: 0
+bash-n: 0
+--- stderr
+|+ [[ a == ~ ]]
+|+ [[ a == ~/x ]]
+|+ [[ a != \#a ]]
+
+=== 21: Traces leave commas unquoted, like bash
+status: 0
+bash-n: 0
+--- stderr
+|+ : a,b '{a,b}' ,
+
+=== 22: Traces of assignments leave commas unquoted, like bash
+status: 0
+bash-n: 0
+--- stderr
+|+ t=a,b
+|+ t+=c,d
+|+ arr=(a,b '{c,d}')
+
+=== 23: [[ ]] traces leave commas in unary operands unquoted, like bash
+status: 0
+bash-n: 0
+--- stderr
+|+ [[ -n a,b ]]
+
+=== 24: [[ ]] traces leave commas in patterns unquoted, like bash
+status: 1
+bash-n: 0
+--- stderr
+|+ [[ x == a,b ]]

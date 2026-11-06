@@ -1,0 +1,219 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/options/extdebug.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: extdebug implies functrace - DEBUG inherited in functions
+status: 0
+bash-n: 0
+--- stdout
+|[debug: echo "before"]
+|before
+|[debug: myfunc]
+|[debug: myfunc]
+|[debug: echo "in func"]
+|in func
+|[debug: echo "after"]
+|after
+
+=== 1: extdebug implies functrace - DEBUG inherited in subshells
+status: 0
+bash-n: 0
+--- stdout
+|[debug: echo "before"]
+|before
+|[debug: echo "in subshell"]
+|in subshell
+|[debug: echo "after"]
+|after
+
+=== 2: DEBUG trap - returns 0 command executes normally
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 3: return: can only `return' from a function or sourced script
+|bash: line 4: return: can only `return' from a function or sourced script
+|bash: line 5: return: can only `return' from a function or sourced script
+
+=== 3: DEBUG trap - returns 1 command is skipped
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 15: return: can only `return' from a function or sourced script
+|bash: line 16: return: can only `return' from a function or sourced script
+|bash: line 17: return: can only `return' from a function or sourced script
+|bash: line 18: return: can only `return' from a function or sourced script
+
+=== 4: DEBUG trap - returns 2 simulates return from function
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 17: return: can only `return' from a function or sourced script
+|bash: line 18: return: can only `return' from a function or sourced script
+
+=== 5: DEBUG trap - return value ignored without extdebug
+status: 0
+bash-n: 0
+--- stdout
+|line 1
+|line 2
+|line 3
+--- stderr
+|bash: line 3: return: can only `return' from a function or sourced script
+|bash: line 4: return: can only `return' from a function or sourced script
+|bash: line 5: return: can only `return' from a function or sourced script
+
+=== 6: Skip simple command
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 3: return: can only `return' from a function or sourced script
+|bash: line 4: return: can only `return' from a function or sourced script
+|bash: line 4: return: can only `return' from a function or sourced script
+|bash: line 5: return: can only `return' from a function or sourced script
+
+=== 7: Skip in loop - iteration skipped but loop continues
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 3: return: can only `return' from a function or sourced script
+|bash: line 3: return: can only `return' from a function or sourced script
+|bash: line 3: return: can only `return' from a function or sourced script
+|bash: line 8: return: can only `return' from a function or sourced script
+
+=== 8: Skip in conditional
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 3: return: can only `return' from a function or sourced script
+|bash: line 4: return: can only `return' from a function or sourced script
+|bash: line 5: return: can only `return' from a function or sourced script
+|bash: line 5: return: can only `return' from a function or sourced script
+|bash: line 6: return: can only `return' from a function or sourced script
+|bash: line 6: return: can only `return' from a function or sourced script
+|bash: line 8: return: can only `return' from a function or sourced script
+
+=== 9: Return 2 in nested function - unwinds to caller
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 22: return: can only `return' from a function or sourced script
+|bash: line 23: return: can only `return' from a function or sourced script
+
+=== 10: BASH_ARGC - contains argument counts per call frame
+status: 0
+bash-n: 0
+--- stdout
+|BASH_ARGC: 0 3 0
+
+=== 11: BASH_ARGV - contains arguments in reverse order
+status: 0
+bash-n: 0
+--- stdout
+|BASH_ARGV: c b a
+
+=== 12: BASH_ARGC/ARGV - in nested calls
+status: 0
+bash-n: 0
+--- stdout
+|inner ARGC: 2 3 0
+|inner ARGV: y x c b a
+
+=== 13: BASH_ARGC/ARGV - empty when no arguments
+status: 0
+bash-n: 0
+--- stdout
+|BASH_ARGC: '0 0'
+|BASH_ARGV: ''
+
+=== 14: declare -F - shows function name only without extdebug
+status: 0
+bash-n: 0
+--- stdout
+|myfunc
+
+=== 15: declare -F - shows filename and line number with extdebug
+status: 0
+bash-n: 0
+--- stdout
+|Nmyfunc 1 ./funcs.sh
+
+=== 16: extdebug with errexit - skipped command doesn't trigger errexit
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 4: return: can only `return' from a function or sourced script
+
+=== 17: extdebug disabled after being enabled
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 3: return: can only `return' from a function or sourced script
+|bash: line 4: return: can only `return' from a function or sourced script
+|bash: line 5: return: can only `return' from a function or sourced script
+|bash: line 6: return: can only `return' from a function or sourced script
+
+=== 18: extdebug with set -T - both affect DEBUG inheritance
+status: 0
+bash-n: 0
+--- stdout
+|[debug: myfunc]
+|[debug: myfunc]
+|[debug: echo "in func"]
+|in func
+|[debug: echo "done"]
+|done
+
+=== 19: DEBUG trap with extdebug in function
+status: 0
+bash-n: 0
+--- stdout
+|debug 1: myfunc
+--- stderr
+|bash: line 15: return: can only `return' from a function or sourced script
+
+=== 20: DEBUG trap with extdebug controls command execution
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 17: return: can only `return' from a function or sourced script
+|bash: line 18: return: can only `return' from a function or sourced script
+|bash: line 19: return: can only `return' from a function or sourced script
+|bash: line 20: return: can only `return' from a function or sourced script
+
+=== 21: extdebug with recursive function
+status: 0
+bash-n: 0
+--- stdout
+|depth: 0
+|depth: 1
+|depth: 1
+|depth: 1
+|depth: 1
+|depth: 2
+|depth: 2
+|depth: 2
+|depth: 2
+|depth: 3
+|depth: 3
+|depth: 3
+|depth: 3
+|depth: 4
+|depth: 4
+|depth: 4
+
+=== 22: BASH_COMMAND shows compound command
+status: 0
+bash-n: 0
+--- stdout
+|cmd: true
+|cmd: echo "in if"
+|in if
+
+=== 23: DEBUG trap can modify variables
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 4: return: can only `return' from a function or sourced script
+|bash: line 5: return: can only `return' from a function or sourced script
+|bash: line 6: return: can only `return' from a function or sourced script
+|bash: line 7: return: can only `return' from a function or sourced script

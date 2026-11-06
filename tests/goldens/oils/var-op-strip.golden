@@ -1,0 +1,234 @@
+# Goldens for tests/oils/spec/var-op-strip.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Remove const suffix
+status: 0
+bash-n: 0
+--- stdout
+|abc ab
+
+=== 1: Remove const prefix
+status: 0
+bash-n: 0
+--- stdout
+|bcd cd
+
+=== 2: Remove const suffix is vectorized on user array
+status: 0
+bash-n: 0
+--- stdout
+|['1', '2', '3']
+
+=== 3: Remove const suffix is vectorized on $@ array
+status: 0
+bash-n: 0
+--- stdout
+|['1', '2', '3']
+
+=== 4: Remove const suffix from undefined
+status: 0
+bash-n: 0
+--- stdout
+|
+
+=== 5: Remove shortest glob suffix
+status: 0
+bash-n: 0
+--- stdout
+|aabbc
+
+=== 6: Remove longest glob suffix
+status: 0
+bash-n: 0
+--- stdout
+|aabb
+
+=== 7: Remove shortest glob prefix
+status: 0
+bash-n: 0
+--- stdout
+|bccdd
+
+=== 8: Remove longest glob prefix
+status: 0
+bash-n: 0
+--- stdout
+|ccdd
+
+=== 9: Strip char class
+status: 0
+bash-n: 0
+--- stdout
+|ab
+
+=== 10: Strip unicode prefix
+status: 0
+bash-n: 0
+--- stdout
+|   -  \n
+|  2d  0a
+|
+|   -  \n
+|  2d  0a
+|
+|   -  \n
+|  2d  0a
+|
+|   -  \n
+|  2d  0a
+
+=== 11: Bug fix: Test that you can remove everything with glob
+status: 0
+bash-n: 0
+--- stdout
+|['', '--x-', '-x--', '']
+
+=== 12: Test that you can remove everything with const
+status: 0
+bash-n: 0
+--- stdout
+|['', '', '', '']
+|['abcd', 'abcd', 'abcd', 'abcd']
+
+=== 13: Prepend using replacement of #
+status: 0
+bash-n: 0
+--- stdout
+|['prefix-aa', 'prefix-bb', 'prefix-']
+
+=== 14: Append using replacement of %
+status: 0
+bash-n: 0
+--- stdout
+|['aa-suffix', 'bb-suffix', '-suffix']
+
+=== 15: strip unquoted and quoted [
+status: 0
+bash-n: 0
+--- stdout
+|foo]
+|foo]
+|foo]
+|foo]
+
+=== 16: strip unquoted and quoted []
+status: 0
+bash-n: 0
+--- stdout
+|foo[]
+|foo[]
+|foo[]
+|foo[]
+
+=== 17: strip unquoted and quoted ?
+status: 0
+bash-n: 0
+--- stdout
+|foo]
+|[foo]
+|foo]
+|[foo]
+
+=== 18: strip unquoted and quoted [a]
+status: 0
+bash-n: 0
+--- stdout
+|[a]foo[]
+|foo[]
+|[a]foo[]
+|foo[]
+
+=== 19: Nested % and # operators (bug reported by Crestwave)
+status: 0
+bash-n: 0
+--- stdout
+|['']
+|['\n']
+|['\n']
+|['']
+|['a']
+|['a']
+
+=== 20: strip * (bug regression)
+status: 0
+bash-n: 0
+--- stdout
+|['abc']
+|['']
+|['abc']
+|['']
+
+=== 21: strip ?
+status: 0
+bash-n: 0
+--- stdout
+|['bc']
+|['bc']
+|['ab']
+|['ab']
+
+=== 22: strip all
+status: 0
+bash-n: 0
+--- stdout
+|['']
+|['']
+|['']
+|['']
+
+=== 23: strip none
+status: 0
+bash-n: 0
+--- stdout
+|['abc']
+|['abc']
+|['abc']
+|['abc']
+
+=== 24: strip all unicode
+status: 0
+bash-n: 0
+--- stdout
+|
+|
+|
+|
+
+=== 25: strip none unicode
+status: 0
+bash-n: 0
+--- stdout
+|['\xce\xbcabc\xce\xbc']
+|['\xce\xbcabc\xce\xbc']
+|['\xce\xbcabc\xce\xbc']
+|['\xce\xbcabc\xce\xbc']
+
+=== 26: Strip Right Brace (#702)
+status: 0
+bash-n: 0
+--- stdout
+|1 $foo
+|2 
+|10 }}
+|11 
+|12 
+|13 
+
+=== 27: \(\) in pattern (regression)
+status: 0
+bash-n: 0
+--- stdout
+|1 foo
+|2
+|3
+|4
+
+=== 28: extglob in pattern
+status: 0
+bash-n: 0
+--- stdout
+|1 foo
+|2
+|3
+|4

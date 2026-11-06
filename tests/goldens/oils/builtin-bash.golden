@@ -1,0 +1,208 @@
+# Goldens for tests/oils/spec/builtin-bash.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: help
+status: 0
+bash-n: 0
+--- stdout
+|GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu)
+|These shell commands are defined internally.  Type `help' to see this list.
+|Type `help name' to find out more about the function `name'.
+|Use `info bash' to find out more about the shell in general.
+|Use `man -k' or `info' to find out more about commands not in this list.
+|
+|A star (*) next to a name means that the command is disabled.
+|
+| ! PIPELINE                              history [-c] [-d offset] [n] or hist>
+| job_spec [&]                            if COMMANDS; then COMMANDS; [ elif C>
+| (( expression ))                        jobs [-lnprs] [jobspec ...] or jobs >
+| . [-p path] filename [arguments]        kill [-s sigspec | -n signum | -sigs>
+| :                                       let arg [arg ...]
+| [ arg... ]                              local [option] name[=value] ...
+| [[ expression ]]                        logout [n]
+| alias [-p] [name[=value] ... ]          mapfile [-d delim] [-n count] [-O or>
+| bg [job_spec ...]                       popd [-n] [+N | -N]
+| bind [-lpsvPSVX] [-m keymap] [-f file>  printf [-v var] format [arguments]
+| break [n]                               pushd [-n] [+N | -N | dir]
+| builtin [shell-builtin [arg ...]]       pwd [-LP]
+| caller [expr]                           read [-Eers] [-a array] [-d delim] [>
+| case WORD in [PATTERN [| PATTERN]...)>  readarray [-d delim] [-n count] [-O >
+| cd [-L|[-P [-e]]] [-@] [dir]            readonly [-aAf] [name[=value] ...] o>
+| command [-pVv] command [arg ...]        return [n]
+| compgen [-V varname] [-abcdefgjksuv] >  select NAME [in WORDS ... ;] do COMM>
+| complete [-abcdefgjksuv] [-pr] [-DEI]>  set [-abefhkmnptuvxBCEHPT] [-o optio>
+| compopt [-o|+o option] [-DEI] [name .>  shift [n]
+| continue [n]                            shopt [-pqsu] [-o] [optname ...]
+| coproc [NAME] command [redirections]    source [-p path] filename [argument>
+| declare [-aAfFgiIlnrtux] [name[=value>  suspend [-f]
+| dirs [-clpv] [+N] [-N]                  test [expr]
+| disown [-h] [-ar] [jobspec ... | pid >  time [-p] pipeline
+| echo [-neE] [arg ...]                   times
+| enable [-a] [-dnps] [-f filename] [na>  trap [-Plp] [[action] signal_spec ..>
+| eval [arg ...]                          true
+| exec [-cl] [-a name] [command [argume>  type [-afptP] name [name ...]
+| exit [n]                                typeset [-aAfFgiIlnrtux] name[=value>
+| export [-fn] [name[=value] ...] or ex>  ulimit [-SHabcdefiklmnpqrstuvxPRT] [>
+| false                                   umask [-p] [-S] [mode]
+| fc [-e ename] [-lnr] [first] [last] o>  unalias [-a] name [name ...]
+| fg [job_spec]                           unset [-f] [-v] [-n] [name ...]
+| for NAME [in WORDS ... ] ; do COMMAND>  until COMMANDS; do COMMANDS-2; done
+| for (( exp1; exp2; exp3 )); do COMMAN>  variables - Names and meanings of so>
+| function name { COMMANDS ; } or name >  wait [-fn] [-p var] [id ...]
+| getopts optstring name [arg ...]        while COMMANDS; do COMMANDS-2; done
+| hash [-lr] [-p pathname] [-dt] [name >  { COMMANDS ; }
+| help [-dms] [pattern ...]
+|help: help [-dms] [pattern ...]
+|    Display information about builtin commands.
+|    
+|    Displays brief summaries of builtin commands.  If PATTERN is
+|    specified, gives detailed help on all commands matching PATTERN,
+|    otherwise the list of help topics is printed.
+|    
+|    Options:
+|      -d	output short description for each topic
+|      -m	display usage in pseudo-manpage format
+|      -s	output only a short usage synopsis for each topic matching
+|    		PATTERN
+|    
+|    Arguments:
+|      PATTERN	Pattern specifying a help topic
+|    
+|    Exit Status:
+|    Returns success unless PATTERN is not found or an invalid option is given.
+|help: help [-dms] [pattern ...]
+|    Display information about builtin commands.
+|    
+|    Displays brief summaries of builtin commands.  If PATTERN is
+|    specified, gives detailed help on all commands matching PATTERN,
+|    otherwise the list of help topics is printed.
+|    
+|    Options:
+|      -d	output short description for each topic
+|      -m	display usage in pseudo-manpage format
+|      -s	output only a short usage synopsis for each topic matching
+|    		PATTERN
+|    
+|    Arguments:
+|      PATTERN	Pattern specifying a help topic
+|    
+|    Exit Status:
+|    Returns success unless PATTERN is not found or an invalid option is given.
+--- stderr
+|status=0
+|status=0
+|status=0
+
+=== 1: bad help topic
+status: 0
+bash-n: 0
+--- stdout
+|help=1
+|grep=0
+--- file err.txt
+|bash: line 1: help: no help topics match `ZZZ'.  Try `help help' or `man -k ZZZ' or `info ZZZ'.
+
+=== 2: mapfile
+status: 0
+bash-n: 0
+--- stdout
+|n=3
+|[1
+|]
+|[3
+|]
+|[5
+|]
+
+=== 3: readarray (synonym for mapfile)
+status: 0
+bash-n: 0
+--- stdout
+|n=3
+|[1
+|]
+|[3
+|]
+|[5
+|]
+
+=== 4: mapfile (array name): arr
+status: 0
+bash-n: 0
+--- stdout
+|n=3
+|[1
+|]
+|[3
+|]
+|[5
+|]
+
+=== 5: mapfile (delimiter): -d delim
+status: 0
+bash-n: 0
+--- stdout
+|n=3
+|[1:]
+|[3:]
+|[5:]
+
+=== 6: mapfile (delimiter): -d '' (null-separated)
+status: 0
+bash-n: 0
+--- stdout
+|n=3
+|[1]
+|[3]
+|[5]
+
+=== 7: mapfile (truncate delim): -t
+status: 0
+bash-n: 0
+--- stdout
+|n=3
+|[1]
+|[3]
+|[5]
+
+=== 8: mapfile -t doesn't remove \r
+status: 0
+bash-n: 0
+--- stdout
+|['1\r', '3\r', '5\r']
+
+=== 9: mapfile -t bugs (ble.sh)
+status: 0
+bash-n: 0
+--- stdout
+|len=3
+|len=2
+|len=2
+
+=== 10: mapfile (store position): -O start
+status: 0
+bash-n: 0
+--- stdout
+|n=5
+|[x]
+|[y]
+|[a0]
+|[a1]
+|[a2]
+
+=== 11: mapfile (input range): -s start -n count
+status: 0
+bash-n: 0
+--- stdout
+|n=3
+|[a5]
+|[a6]
+|[a7]
+
+=== 12: mapfile / readarray stdin  TODO: Fix me.
+status: 0
+bash-n: 0
+--- stdout
+|2
+|3

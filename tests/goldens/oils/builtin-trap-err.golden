@@ -1,0 +1,215 @@
+# Goldens for tests/oils/spec/builtin-trap-err.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: trap can use original $LINENO
+status: 0
+bash-n: 0
+--- stdout
+|line=3
+|line=4
+|ok
+
+=== 1: trap ERR and set -o errexit
+status: 1
+bash-n: 0
+--- stdout
+|line=3
+|a
+|b
+|line=9
+
+=== 2: trap ERR and errexit disabled context
+status: 0
+bash-n: 0
+--- stdout
+|line=3
+|a
+|b
+|c
+
+=== 3: trap ERR and if statement
+status: 0
+bash-n: 0
+
+=== 4: trap ERR and || conditional
+status: 0
+bash-n: 0
+--- stdout
+|line=3
+|ok
+|ok
+
+=== 5: trap ERR and pipeline
+status: 0
+bash-n: 0
+--- stdout
+|line=3
+|line=5
+
+=== 6: trap ERR pipelines without simple commands
+status: 0
+bash-n: 0
+--- stdout
+|assign
+|dparen
+|dbracket
+|subshell
+|subshell
+|subshell2
+|subshell2
+|group
+|ok
+
+=== 7: Pipeline group quirk
+status: 0
+bash-n: 0
+--- stdout
+|group2
+|ok
+
+=== 8: trap ERR does not run in errexit situations
+status: 0
+bash-n: 0
+--- stdout
+|until
+|line=16
+|line=20
+|line=20
+|line=20
+|ok
+
+=== 9: trap ERR doesn't run in subprograms - subshell, command sub, async
+status: 0
+bash-n: 0
+--- stdout
+|subshell
+|async
+|line=11
+|ok
+
+=== 10: set -o errtrace: trap ERR runs in subprograms
+status: 0
+bash-n: 0
+--- stdout
+|line=6
+|subshell
+|line=10
+|ok
+
+=== 11: trap ERR doesn't run with &
+status: 0
+bash-n: 0
+--- stdout
+|async
+
+=== 12: set -o errtrace: trap ERR with &
+status: 0
+bash-n: 0
+--- stdout
+|line=8
+|async
+
+=== 13: trap ERR not active in shell functions in (bash behavior)
+status: 0
+bash-n: 0
+
+=== 14: set -o errtrace - trap ERR runs in shell functions
+status: 0
+bash-n: 0
+--- stdout
+|err
+|now with errtrace
+|err
+|err
+|err
+|ok
+
+=== 15: set -o errtrace - trap ERR runs in shell functions (LINENO)
+status: 0
+bash-n: 0
+--- stdout
+|line=14
+|now with errtrace
+|line=4
+|line=10
+|line=20
+|ok
+
+=== 16: trap ERR with "atoms": assignment (( [[
+status: 0
+bash-n: 0
+--- stdout
+|line=3
+|line=5
+|line=7
+|ok
+
+=== 17: trap ERR with for,  case, { }
+status: 0
+bash-n: 0
+--- stdout
+|line=4
+|line=4
+|line=8
+|line=12
+|line=12
+|line=12
+|ok
+
+=== 18: trap ERR with redirect
+status: 0
+bash-n: 0
+--- stdout
+|line=3
+|line=3
+|ok
+--- stderr
+|bash: line 7: /zz: Permission denied
+
+=== 19: trap ERR with YSH proc
+status: 2
+bash-n: 2
+--- stdout
+|err
+--- stderr
+|bash: line 4: shopt: ysh:upgrade: invalid shell option name
+|bash: line 6: proc: command not found
+|bash: line 8: syntax error near unexpected token `}'
+|bash: line 8: `}'
+--- bash-n stderr
+|bash: line 8: syntax error near unexpected token `}'
+|bash: line 8: `}'
+
+=== 20: trap ERR
+status: 99
+bash-n: 0
+--- stdout
+|A
+|err [x y] 1
+|B
+|err [x y] 42
+|C
+|D
+|after errexit 99
+
+=== 21: trap ERR and pipelines - PIPESTATUS difference
+status: 0
+bash-n: 0
+--- stdout
+|A
+|err [] status=1 [1]
+|B
+|err [] status=1 [0 1]
+|err [] status=1 [0 1 0]
+|ok
+
+=== 22: error in trap ERR (recursive)
+status: 1
+bash-n: 0
+--- stdout
+|A
+|err status 1
+|err 2
+|B
+|err status 1

@@ -1,0 +1,80 @@
+# Goldens for tests/oils/spec/ble-features.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: [bash_unset] local-unset / dynamic-unset for localvar
+status: 0
+bash-n: 0
+--- stdout
+|[global,local,(unset)] v: (unset)
+|[global,local,(unlocal)] v: global
+
+=== 1: [bash_unset] local-unset / dynamic-unset for localvar (mutated from tempenv)
+status: 0
+bash-n: 0
+--- stdout
+|[global,tempenv,local,(unset)] v: (unset)
+|[global,tempenv,local,(unlocal)] v: global
+
+=== 2: [bash_unset] local-unset / dynamic-unset for tempenv
+status: 0
+bash-n: 0
+--- stdout
+|[global,tempenv,(unset)] v: global
+|[global,tempenv,(unlocal)] v: global
+
+=== 3: [bash_unset] function call with tempenv vs tempenv-eval
+status: 0
+bash-n: 0
+--- stdout
+|[global] v: global
+|[global,local] v: (unset)
+|[global,local+unset] v: (unset)
+|[global,local+unlocal] v: global
+|[global,tempenv] v: tempenv
+|[global,tempenv,local] v: tempenv
+|[global,tempenv,local+unset] v: (unset)
+|[global,tempenv,local+unlocal] v: global
+|[global,tempenv,(eval)] v: tempenv
+|[global,tempenv,(eval),local] v: tempenv
+|[global,tempenv,(eval),local+unset] v: (unset)
+|[global,tempenv,(eval),local+unlocal] v: tempenv
+
+=== 4: [bash_unset] localvar-inherit from tempenv
+status: 0
+bash-n: 0
+--- stdout
+|[global,(local)] v: (unset)
+|[global,tempenv,(local)] v: tempenv
+|[xglobal,(local)] v: (unset)
+|[global,(func),(local)] v: (unset)
+|[global,tempenv,(func),(local)] v: tempenv
+|[xglobal,(func),(local)] v: (unset)
+|[global,local,(func),(local)] v: (unset)
+
+=== 5: [compat_array] ${arr} is ${arr[0]}
+status: 0
+bash-n: 0
+--- stdout
+|['foo', 'foo']
+
+=== 6: [compat_array] scalar write to arrays
+status: 0
+bash-n: 0
+--- stdout
+|['2', '0', '0']
+
+=== 7: [compat_array] scalar write to associative arrays
+status: 0
+bash-n: 0
+--- stdout
+|['2', 'hello', 'world']
+
+=== 8: [compat_array] ${alpha@a}
+status: 0
+bash-n: 0
+--- stdout
+|type=A
+|type=A
+--- stderr
+|bash: line 3: shopt: compat_array: invalid shell option name

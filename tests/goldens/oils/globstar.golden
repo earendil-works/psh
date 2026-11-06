@@ -1,0 +1,64 @@
+# Goldens for tests/oils/spec/globstar.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: globstar is off -> ** is treated like *
+status: 0
+bash-n: 0
+--- stdout
+|c/leaf.md
+--- dir c
+--- file c/leaf.md
+--- dir c/subdir
+--- file c/subdir/leaf.md
+--- file leaf.md
+
+=== 1: each occurrence of ** recurses through all depths
+status: 0
+bash-n: 0
+--- stdout
+|c/leaf.md
+|c/subdir/leaf.md
+|leaf.md
+|
+|c/leaf.md
+|c/subdir/leaf.md
+|leaf.md
+--- dir c
+--- file c/leaf.md
+--- dir c/subdir
+--- file c/subdir/leaf.md
+--- file leaf.md
+
+=== 2: within braces, globstar works when there is a comma
+status: 0
+bash-n: 0
+--- stdout
+|c/subdir/leaf.md
+--- dir c
+--- dir c/subdir
+--- file c/subdir/leaf.md
+
+=== 3: ** behaves like * if adjacent to anything other than /
+status: 0
+bash-n: 0
+--- stdout
+|directory/leaf.md leaf.md
+|directory/leaf.md
+|directory/leaf.md
+|directory/leaf.md
+|directory/leaf.md
+--- dir directory
+--- file directory/leaf.md
+--- file leaf.md
+
+=== 4: in zsh, ***/ follows symlinked directories, while **/ does not
+status: 0
+bash-n: 0
+--- stdout
+|directory-2/leaf-2.md
+|directory-2/leaf-2.md
+--- dir directory-1
+--- link directory-1/symlink -> ../directory-2
+--- dir directory-2
+--- file directory-2/leaf-2.md

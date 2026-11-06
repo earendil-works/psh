@@ -1,0 +1,168 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/pushd_popd_dirs.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic pushd usage
+status: 0
+bash-n: 0
+--- stdout
+|/ /
+|0
+|/
+|/usr / /
+|/usr / /
+|0
+|/usr
+|/ /
+|0
+|/
+|/
+|0
+
+=== 1: pushd without dir change
+status: 0
+bash-n: 0
+--- stdout
+|/ /usr
+|/ /usr
+
+=== 2: popd without dir change
+status: 0
+bash-n: 0
+--- stdout
+|/ /
+|/usr / /
+|/usr /
+|/usr /
+
+=== 3: popd with empty stack
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: popd: directory stack empty
+
+=== 4: pushd to non-existent dir
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: pushd: /non-existent-dir: No such file or directory
+
+=== 5: basic dirs usage
+status: 0
+bash-n: 0
+--- stdout
+|/
+
+=== 6: dirs with tilde replacement
+status: 0
+bash-n: 0
+--- stdout
+|HOME: /usr
+|New PWD: /usr
+|~
+|/usr
+
+=== 7: dirs to clear
+status: 0
+bash-n: 0
+--- stdout
+|/usr /usr
+|/ /usr /usr
+|/
+
+=== 8: Directory stack errors fail with status 1
+status: 0
+bash-n: 0
+--- stdout
+|pushd: 1
+|dirs: 1
+--- stderr
+|bash: line 1: pushd: no other directory
+|bash: line 3: dirs: directory stack empty
+
+=== 9: pushd and popd succeed when the stack listing can't be written
+status: 0
+bash-n: 0
+--- stdout
+|pushd rc=0
+|popd rc=0
+--- stderr
+|bash: line 2: pushd: write error: No space left on device
+|bash: line 3: popd: write error: No space left on device
+
+=== 10: pushd -n and popd -n may be repeated
+status: 0
+bash-n: 0
+--- stdout
+|pushd: 0 /usr
+|/
+|popd: 0 /usr
+|1
+
+=== 11: pushd with no directory swaps the top two
+status: 0
+bash-n: 0
+--- stdout
+|rc=0
+|/
+
+=== 12: pushd with no directory swaps only the top two
+status: 0
+bash-n: 0
+--- stdout
+|/tmp / /usr
+|rc=0
+|/tmp
+|/ /tmp /usr
+|rc=0
+|/
+|/ /tmp /usr
+
+=== 13: pushd with no directory and an empty stack
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|/
+|/
+--- stderr
+|bash: line 2: pushd: no other directory
+
+=== 14: dirs takes +N and -N
+status: 0
+bash-n: 0
+--- stdout
+|/tmp
+|rc=0
+|/usr
+|rc=0
+|rc=1
+--- stderr
+|bash: line 4: dirs: 5: directory stack index out of range
+
+=== 15: pushd takes +N and -N
+status: 0
+bash-n: 0
+--- stdout
+|rc=0 /tmp /usr /
+|rc=0 / /tmp /usr
+|rc=1
+--- stderr
+|bash: line 4: pushd: +9: directory stack index out of range
+
+=== 16: popd takes +N and -N
+status: 0
+bash-n: 0
+--- stdout
+|rc=0 / /usr
+|rc=0 / /usr
+|rc=1
+--- stderr
+|bash: line 4: popd: +9: directory stack index out of range
+
+=== 17: DIRSTACK includes the current directory
+status: 0
+bash-n: 0
+--- stdout
+|empty=1
+|after_pushd=2

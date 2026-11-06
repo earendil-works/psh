@@ -1,0 +1,183 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/patterns/patterns.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Expansion with escaped characters
+status: 0
+bash-n: 0
+--- stdout
+|file*.txt
+
+=== 1: Basic pattern matching
+status: 0
+bash-n: 0
+--- stdout
+|Matched: abc using a*
+|No match: abc using b*
+|No match: ?bc using abc
+|No match: ?bc using aabc
+|Matched: ac using [ab]c
+|Matched: bc using [ab]c
+|No match: cc using [ab]c
+|Matched: ad using [a-c]d
+|Matched: bd using [a-c]d
+|No match: dd using [a-c]d
+|No match: 1 using [[:alpha:]]
+|Matched: a using [[:alpha:]]
+|Matched: a/b using *b
+|Matched: a/b using a/b
+|Matched: a/b using */*
+
+=== 2: Extglob pattern matching
+status: 0
+bash-n: 0
+--- stdout
+|No match: aabc using !(a*)
+|No match: abc using !(a*)
+|Matched: def using !(a*)
+|No match: a.foo.tar.gz using a.!(foo|bar).tar.gz
+|No match: a.bar.tar.gz using a.!(foo|bar).tar.gz
+|Matched: a.baz.tar.gz using a.!(foo|bar).tar.gz
+|Matched: a.tar.tar.gz using a.!(foo|bar).tar.gz
+|Matched: a..tar.gz using a.!(foo|bar).tar.gz
+|No match: a.tar.gz using a.!(foo|bar).tar.gz
+|Matched: abc using @(abc|def)
+|Matched: def using @(abc|def)
+|No match: ghi using @(abc|def)
+|Matched: abc using ab?(c)
+|Matched: ab using ab?(c)
+|No match: abd using ab?(c)
+|Matched:  using *(ab|ac)
+|Matched: ab using *(ab|ac)
+|Matched: abab using *(ab|ac)
+|No match: ad using *(ab|ac)
+|No match:  using +(ab|ac)
+|Matched: ab using +(ab|ac)
+|Matched: abab using +(ab|ac)
+|No match: ad using +(ab|ac)
+
+=== 3: Extglob with escaping
+status: 1
+bash-n: 0
+--- stdout
+|1. Matched
+|3. Matched
+
+=== 4: Patterns: quoting
+status: 1
+bash-n: 0
+--- stdout
+|1. Matched
+
+=== 5: Patterns: escaped special characters
+status: 0
+bash-n: 0
+--- stdout
+|Did *not* match: 'abc'
+|Did *not* match: '*'
+
+=== 6: Pattern matching: character ranges
+status: 0
+bash-n: 0
+--- stdout
+|1. Matched
+|3. Matched
+|4. Matched
+|6. Matched
+
+=== 7: Pattern matching: invalid character ranges
+status: 1
+bash-n: 0
+
+=== 8: Pattern matching: escaped hyphen in bracket
+status: 0
+bash-n: 0
+--- stdout
+|1. Matched
+|2. Matched
+|3. Matched
+|5. Matched
+|7. Matched
+
+=== 9: Pattern matching: character sets
+status: 0
+bash-n: 0
+--- stdout
+|2. Matched
+|5. Matched
+|6. Matched
+|7. Matched
+|8. Matched
+|9. Matched
+
+=== 10: Pattern matching: character classes
+status: 1
+bash-n: 0
+--- stdout
+|1. Matched
+
+=== 11: Pattern matching: case sensitivity
+status: 1
+bash-n: 0
+--- stdout
+|3. Matched
+
+=== 12: Pattern matching: stars in negative extglobs
+status: 0
+bash-n: 0
+--- stdout
+|1. Matched
+
+=== 13: Pattern matching: quotes in character class
+status: 0
+bash-n: 0
+--- stdout
+|1. Matched
+
+=== 14: Pattern matching: leading ] in bracket expression
+status: 0
+bash-n: 0
+--- stdout
+|1. Matched
+|2. Matched
+|3. Matched
+|4. Matched
+|5. Not matched
+|a_b_c
+|[|hello
+|]
+
+=== 15: Pattern matching: ranges starting at a leading ] in bracket expression
+status: 0
+bash-n: 0
+--- stdout
+|in-range: ]
+|in-range: a
+|in-range: ^
+|inverted reversed range matched: ]
+|inverted reversed range matched: a
+|inverted reversed range matched: A
+|inverted reversed range matched: ^
+|inverted reversed range matched: -
+|done
+
+=== 16: Pattern matching: invalid range leaving a leading ^ member
+status: 0
+bash-n: 0
+--- stdout
+|1. matched: ^
+|1. matched: a
+|2. matched: ^
+|done
+
+=== 17: Pattern matching: '-' as a range endpoint
+status: 0
+bash-n: 0
+--- stdout
+|1. matched: +
+|1. matched: ,
+|1. matched: -
+|2. matched: -
+|2. matched: .
+|2. matched: /
+|done

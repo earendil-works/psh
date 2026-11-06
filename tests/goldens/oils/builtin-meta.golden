@@ -1,0 +1,166 @@
+# Goldens for tests/oils/spec/builtin-meta.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: command -v
+status: 0
+bash-n: 0
+--- stdout
+|echo
+|0
+|myfunc
+|0
+|nonexistent=1
+|empty=1
+|for
+|0
+
+=== 1: command -v executable, builtin
+status: 0
+bash-n: 0
+--- stdout
+|/grep
+|/ls
+|
+|true
+|eval
+
+=== 2: command -v with multiple names
+status: 0
+bash-n: 0
+--- stdout
+|echo
+|myfunc
+|for
+|status=0
+
+=== 3: command -v doesn't find non-executable file
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|_tmp/executable
+|status=0
+--- dir _tmp
+--- file _tmp/executable
+--- file _tmp/non-executable
+
+=== 4: command -v doesn't find executable dir
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|/usr/bin/cat
+|status=0
+--- dir _tmp
+--- dir _tmp/cat
+
+=== 5: command -V
+status: 0
+bash-n: 0
+--- stdout
+|ll is aliased to 'ls -l'
+|status=0
+|echo is a shell builtin
+|status=0
+|myfunc is a function
+|myfunc () 
+|{ 
+|    echo x
+|}
+|status=0
+|status=1
+|for is a shell keyword
+|status=0
+--- stderr
+|bash: line 16: command: nonexistent: not found
+
+=== 6: command -V nonexistent
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|nonexistent: not found
+--- file err.txt
+|bash: line 1: command: nonexistent: not found
+
+=== 7: command skips function lookup
+status: 0
+bash-n: 0
+--- stdout
+|3
+|1
+|2
+|3
+|1
+|2
+|3
+
+=== 8: command command seq 3
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 9: command command -v seq
+status: 0
+bash-n: 0
+--- stdout
+|seq
+
+=== 10: command -p (override existing program)
+status: 0
+bash-n: 0
+--- stdout
+|wrong
+|bbb
+--- dir bin
+
+=== 11: command -p (hide tool in custom path)
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 5: hello: command not found
+--- dir bin
+--- file bin/hello
+|echo hello
+
+=== 12: command -p (find hidden tool in default path)
+status: 0
+bash-n: 0
+
+=== 13: $(command type ls)
+status: 0
+bash-n: 0
+--- stdout
+|FUNCTION
+|status=0
+
+=== 14: builtin
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|/
+
+=== 15: builtin ls not found
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: builtin: ls: not a shell builtin
+
+=== 16: builtin usage
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+|status=1
+
+=== 17: builtin command echo hi
+status: 0
+bash-n: 0
+--- stdout
+|hi

@@ -1,0 +1,33 @@
+# Goldens for tests/oils/spec/array-basic.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: "${a[@]}" and "${a[*]}"
+status: 0
+bash-n: 0
+--- stdout
+|['1', '2 3', '1 2 3']
+
+=== 1: ${a[@]} and ${a[*]}
+status: 0
+bash-n: 0
+--- stdout
+|['1', '2', '3', '1', '2', '3']
+
+=== 2: 4 ways to interpolate empty array
+status: 0
+bash-n: 0
+--- stdout
+|['1', '2', '3', '', '4', '5']
+
+=== 3: empty array
+status: 0
+bash-n: 0
+--- stdout
+|[]
+
+=== 4: Empty array with :-
+status: 0
+bash-n: 0
+--- stdout
+|['not', 'one', 'not one']

@@ -1,0 +1,1703 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/nameref.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Nameref basic read
+status: 0
+bash-n: 0
+--- stdout
+|ref: hello world
+|target: hello world
+
+=== 1: Nameref write through reference
+status: 0
+bash-n: 0
+--- stdout
+|before: original
+|after: modified
+|ref: modified
+
+=== 2: Nameref append with +=
+status: 0
+bash-n: 0
+--- stdout
+|target: hello world
+|ref: hello world
+
+=== 3: Nameref to unset variable
+status: 0
+bash-n: 0
+--- stdout
+|ref: ''
+|ref set: ''
+|ref: now exists
+|nonexistent: now exists
+
+=== 4: Nameref reassignment - change target
+status: 0
+bash-n: 0
+--- stdout
+|ref -> var1: first
+|var1 after: var2
+|ref -> var2: second
+
+=== 5: Nameref chained (A -> B -> C)
+status: 0
+bash-n: 0
+--- stdout
+|top: final_value
+|middle: final_value
+|ultimate: changed
+
+=== 6: Nameref circular reference
+status: 0
+bash-n: 0
+--- stdout
+|a: ''
+|done
+--- stderr
+|bash: line 3: warning: a: circular name reference
+
+=== 7: Nameref self-reference
+status: 0
+bash-n: 0
+--- stdout
+|self: ''
+|done
+--- stderr
+|bash: line 1: declare: self: nameref variable self references not allowed
+
+=== 8: Nameref in function - pass by reference
+status: 0
+bash-n: 0
+--- stdout
+|before: original
+|after: modified by function
+
+=== 9: Nameref in function scope - local nameref to outer var
+status: 0
+bash-n: 0
+--- stdout
+|before: outer_value
+|inside func: outer_value
+|after: modified_by_func
+
+=== 10: Nameref in function - multiple namerefs (swap)
+status: 0
+bash-n: 0
+--- stdout
+|before: a=alpha b=beta
+|after: a=beta b=alpha
+
+=== 11: Nameref with export
+status: 0
+bash-n: 0
+--- stdout
+|x
+
+=== 12: Nameref unset through ref removes target
+status: 0
+bash-n: 0
+--- stdout
+|before: target=value ref=value
+|after: target='' ref=''
+|declare -n ref="target"
+|ref still declared
+|target is gone
+
+=== 13: Nameref unset target directly
+status: 0
+bash-n: 0
+--- stdout
+|ref: exists
+|ref after unset: ''
+
+=== 14: Nameref array append with +=
+status: 0
+bash-n: 0
+--- stdout
+|target: a b c d
+|count: 4
+|declare -a target=([0]="a" [1]="b" [2]="c" [3]="d")
+
+=== 15: Nameref array element unset
+status: 0
+bash-n: 0
+--- stdout
+|declare -a target=([0]="a" [1]="b" [3]="d")
+
+=== 16: Nameref array slicing
+status: 0
+bash-n: 0
+--- stdout
+|slice: b c
+|all: a b c d e
+|count: 5
+
+=== 17: Nameref to array element
+status: 0
+bash-n: 0
+--- stdout
+|ref: two
+|arr[2]: changed
+
+=== 18: Nameref in subshell
+status: 0
+bash-n: 0
+--- stdout
+|inside: subshell_value
+|outside: original
+
+=== 19: Nameref in command substitution
+status: 0
+bash-n: 0
+--- stdout
+|result: cmd_sub_value
+|target: original
+
+=== 20: Nameref with integer attribute
+status: 0
+bash-n: 0
+--- stdout
+|target: 0
+|target: 0
+|declare -- ref="42"
+|declare -- target="0"
+
+=== 21: Nameref with set -u and unset target
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: ref: unbound variable
+
+=== 22: Nameref to empty string target name
+status: 0
+bash-n: 0
+--- stdout
+|ref: ''
+|done
+--- stderr
+|bash: line 1: declare: `': not a valid identifier
+
+=== 23: Multiple namerefs to same target
+status: 0
+bash-n: 0
+--- stdout
+|ref2: from_ref1
+|target: from_ref1
+|ref1: from_ref2
+|target: from_ref2
+
+=== 24: Circular reference in assignment context
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+|done
+--- stderr
+|bash: line 3: warning: a: circular name reference
+
+=== 25: Nameref with prefix enumeration
+status: 0
+bash-n: 0
+--- stdout
+|prefix: ref_one ref_two
+
+=== 26: Nameref with local in nested functions
+status: 0
+bash-n: 0
+--- stdout
+|ref sees: outer_value
+|after inner: modified_by_inner
+
+=== 27: Nameref for-in loop changes target
+status: 0
+bash-n: 0
+--- stdout
+|ref=a
+|ref=b
+|ref=c
+|var1=a var2=b var3=c
+
+=== 28: Nameref to array element - arithmetic increment
+status: 0
+bash-n: 0
+--- stdout
+|before: 30
+|after: 31
+|arr[2]: 31
+
+=== 29: Nameref to array element - arithmetic compound assign
+status: 0
+bash-n: 0
+--- stdout
+|before: 200
+|after: 250
+|arr[1]: 250
+
+=== 30: Nameref to array element - arithmetic expression
+status: 0
+bash-n: 0
+--- stdout
+|arr[2]: 600
+
+=== 31: Nameref to array element - string append
+status: 0
+bash-n: 0
+--- stdout
+|arr[0]: hello there
+
+=== 32: Nameref to array element - length
+status: 0
+bash-n: 0
+--- stdout
+|len: 20
+
+=== 33: Nameref to array element - parameter transformations
+status: 0
+bash-n: 0
+--- stdout
+|upper: HELLO WORLD
+|Q: 'hello world'
+
+=== 34: Nameref to array element - substring
+status: 0
+bash-n: 0
+--- stdout
+|sub: bcd
+
+=== 35: Nameref to array element - pattern substitution
+status: 0
+bash-n: 0
+--- stdout
+|first: bye world hello
+|all: bye world bye
+
+=== 36: Nameref to array element - default value
+status: 0
+bash-n: 0
+--- stdout
+|default: fallback
+
+=== 37: Nameref to array element - negative index
+status: 0
+bash-n: 0
+--- stdout
+|ref: e
+
+=== 38: Nameref to associative array element
+status: 0
+bash-n: 0
+--- stdout
+|ref: bar
+|map_foo: changed
+
+=== 39: Nameref to array element - unset through ref
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b" [3]="d")
+
+=== 40: Nameref chain 4 levels
+status: 0
+bash-n: 0
+--- stdout
+|a: deep
+|final: changed
+
+=== 41: Nameref 3-level chain to array element
+status: 0
+bash-n: 0
+--- stdout
+|top: B
+|arr[1]: CHANGED
+
+=== 42: Nameref to associative array - keys and values
+status: 0
+bash-n: 0
+--- stdout
+|x: 1
+|z: 3
+|key=x
+|key=y
+|key=z
+
+=== 43: Nameref - declare -p shows nameref attribute
+status: 0
+bash-n: 0
+--- stdout
+|declare -n ref="target"
+|declare -- target="hello"
+
+=== 44: Nameref - test -v follows nameref
+status: 0
+bash-n: 0
+--- stdout
+|unset
+|set
+
+=== 45: Nameref to array - length and keys
+status: 0
+bash-n: 0
+--- stdout
+|len: 5
+|keys: 0 1 2 3 4
+|elem0len: 1
+
+=== 46: Nameref with printf -v
+status: 0
+bash-n: 0
+--- stdout
+|formatted: num=42
+
+=== 47: Nameref - declare +n removes attribute
+status: 0
+bash-n: 0
+--- stdout
+|before: value
+|after: target
+|declare -- ref="target"
+
+=== 48: Nameref to IFS
+status: 0
+bash-n: 0
+--- stdout
+|ifs: ':'
+
+=== 49: Nameref to array - whole array assignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -a myarr=([0]="x" [1]="y" [2]="z")
+
+=== 50: Nameref local -n recursive function
+status: 0
+bash-n: 0
+--- stdout
+|result: 3 2 1 
+
+=== 51: Nameref to array - negative index access
+status: 0
+bash-n: 0
+--- stdout
+|last: e
+
+=== 52: Nameref in eval
+status: 0
+bash-n: 0
+--- stdout
+|eval: eval_val
+
+=== 53: Nameref in here-string
+status: 0
+bash-n: 0
+--- stdout
+|here_data
+
+=== 54: Nameref in extended test operators
+status: 0
+bash-n: 0
+--- stdout
+|eq ok
+|regex ok
+|lt ok
+
+=== 55: Nameref to sparse array
+status: 0
+bash-n: 0
+--- stdout
+|keys: 5 10
+|len: 2
+|elem5: five
+
+=== 56: Nameref concurrent writes through two refs
+status: 0
+bash-n: 0
+--- stdout
+|target: init_one_two
+
+=== 57: Nameref to array element - ternary in arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|ternary: 100
+
+=== 58: Nameref chain to assoc array element
+status: 0
+bash-n: 0
+--- stdout
+|top: v
+
+=== 59: Nameref to array element - set test
+status: 0
+bash-n: 0
+--- stdout
+|set: SET
+|unset: 
+
+=== 60: Nameref local -n overrides outer nameref
+status: 0
+bash-n: 0
+--- stdout
+|inner: B
+|outer: A
+
+=== 61: Nameref target lowercase transform
+status: 0
+bash-n: 0
+--- stdout
+|target: hello
+
+=== 62: Nameref export -n unexports target
+status: 0
+bash-n: 0
+
+=== 63: Nameref to array - push via index
+status: 0
+bash-n: 0
+--- stdout
+|arr: a b c
+|len: 3
+
+=== 64: Nameref with readonly target - write fails
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+|target: immutable
+--- stderr
+|bash: line 4: target: readonly variable
+
+=== 65: Nameref - declare -a through nameref applies to target
+status: 0
+bash-n: 0
+--- stdout
+|declare -a myarr=([0]="1" [1]="2" [2]="3")
+
+=== 66: Nameref - declare -A through nameref applies to target
+status: 0
+bash-n: 0
+--- stdout
+|a: 1
+|b: 2
+
+=== 67: Nameref to array element - test -v treats resolved name literally
+status: 0
+bash-n: 0
+--- stdout
+|ref expands to: c
+|unset
+|unset
+
+=== 68: Nameref to array element - test -v with nonexistent index
+status: 0
+bash-n: 0
+--- stdout
+|unset
+
+=== 69: Nameref to arr[@] expands all elements
+status: 0
+bash-n: 0
+--- stdout
+|ref: x y z
+
+=== 70: Nameref circular with 3 nodes
+status: 0
+bash-n: 0
+--- stdout
+|c1: ''
+|exit: 0
+--- stderr
+|bash: line 4: warning: c1: circular name reference
+
+=== 71: Nameref in case pattern
+status: 0
+bash-n: 0
+--- stdout
+|matched hello
+
+=== 72: Nameref local shadowing in nested functions
+status: 0
+bash-n: 0
+--- stdout
+|g ref: B
+|f ref: A
+|a=A b=modified_B
+
+=== 73: Nameref to special variable RANDOM
+status: 0
+bash-n: 0
+--- stdout
+|different (dynamic)
+
+=== 74: Nameref for-in loop retargets through iteration
+status: 0
+bash-n: 0
+--- stdout
+|ref=A
+|ref=B
+|ref=C
+|var1=A var2=B var3=C
+
+=== 75: Nameref declared without value - bare declare -n
+status: 0
+bash-n: 0
+--- stdout
+|ref: ''
+|declare -n ref
+|ref after assign: ''
+|declare -n ref="value"
+
+=== 76: Nameref declared without value - expansion behavior
+status: 0
+bash-n: 0
+--- stdout
+|set: 
+|default: fallback
+|length: 0
+
+=== 77: Nameref to numeric-only target name
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+|ref: ''
+|done
+--- stderr
+|bash: line 1: declare: `123': invalid variable name for name reference
+
+=== 78: Nameref to name with special characters
+status: 0
+bash-n: 0
+--- stdout
+|exit1: 1
+|exit2: 1
+|exit3: 1
+|done
+--- stderr
+|bash: line 1: declare: `a-b': invalid variable name for name reference
+|bash: line 3: declare: `a.b': invalid variable name for name reference
+|bash: line 5: declare: `a+b': invalid variable name for name reference
+
+=== 79: Nameref to name with spaces
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+|done
+--- stderr
+|bash: line 1: declare: `a b': invalid variable name for name reference
+
+=== 80: Nameref to positional parameter name
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+|done
+--- stderr
+|bash: line 1: declare: `1': invalid variable name for name reference
+
+=== 81: Nameref to @ or *
+status: 0
+bash-n: 0
+--- stdout
+|exit1: 1
+|exit2: 1
+|done
+--- stderr
+|bash: line 1: declare: `@': invalid variable name for name reference
+|bash: line 3: declare: `*': invalid variable name for name reference
+
+=== 82: Nameref assignment writes to target not retargets
+status: 0
+bash-n: 0
+--- stdout
+|var1: var2
+|ref: var2
+|declare -n ref="var1"
+|declare -- var1="var2"
+
+=== 83: Unset -n on non-nameref variable
+status: 0
+bash-n: 0
+--- stdout
+|var: 'value'
+|declare -- var="value"
+
+=== 84: Unset vs unset -n on same nameref
+status: 0
+bash-n: 0
+--- stdout
+|before: target=value ref=value
+|after unset ref: target='' ref=''
+|target restored: ref=restored
+
+=== 85: Unset -n then recreate nameref
+status: 0
+bash-n: 0
+--- stdout
+|before: hello
+|after unset -n:
+|ref gone
+|recreated: hello
+
+=== 86: Unset nameref where target is already unset
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0
+|declare -n ref="nonexistent"
+|ref still exists
+
+=== 87: Unset -n nameref where target is already unset
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0
+|ref gone
+
+=== 88: Unset -v on nameref removes target
+status: 0
+bash-n: 0
+--- stdout
+|target: ''
+|declare -n ref="target"
+|ref exists
+|target gone
+
+=== 89: Unset nameref in function scope
+status: 0
+bash-n: 0
+--- stdout
+|inside f: target=''
+|outside: target=''
+
+=== 90: Nameref with uppercase attribute -u
+status: 0
+bash-n: 0
+--- stdout
+|target: HELLO WORLD
+|ref: HELLO WORLD
+
+=== 91: Nameref combined -nx export
+status: 0
+bash-n: 0
+--- stdout
+|MYVAR: exported_value
+|declare -nx ref="MYVAR"
+|declare -- MYVAR="exported_value"
+
+=== 92: Nameref combined -na conflict
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0
+|declare -a ref=([0]="target")
+
+=== 93: Nameref combined -nA conflict
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0
+|declare -A ref=([0]="target" )
+
+=== 94: Declare -rn readonly nameref
+status: 0
+bash-n: 0
+--- stdout
+|ref: val
+|retarget exit: 1
+|unset -n exit: 1
+|declare -nr ref="target"
+
+=== 95: Readonly nameref - cannot unset -n
+status: 1
+bash-n: 0
+--- stdout
+|exit: 0
+--- stderr
+|bash: line 5: declare: ref: not found
+
+=== 96: Make target readonly through nameref
+status: 0
+bash-n: 0
+--- stdout
+|declare -r target="value"
+|target write exit: 1
+--- stderr
+|bash: line 5: target: readonly variable
+
+=== 97: Export through nameref - child sees it
+status: 0
+bash-n: 0
+--- stdout
+|child: exported_value
+
+=== 98: Unexport through nameref with declare +x
+status: 0
+bash-n: 0
+--- stdout
+|not exported
+|target: was_exported
+
+=== 99: Nameref with := assign default creates target
+status: 0
+bash-n: 0
+--- stdout
+|before: ''
+|assign: created
+|after: created
+|declare -- brand_new="created"
+
+=== 100: Nameref with :? error on unset
+status: 0
+bash-n: 0
+--- stdout
+|bash: line 2: ref: variable is required
+|outer continues
+
+=== 101: Nameref with @E escape
+status: 0
+bash-n: 0
+--- stdout
+|E: hello	world
+|
+
+=== 102: Nameref substring with negatives
+status: 0
+bash-n: 0
+--- stdout
+|offset 3: defghij
+|offset 3 len 4: defg
+|negative offset: hij
+|negative offset len: hi
+
+=== 103: Nameref with case modification operators
+status: 0
+bash-n: 0
+--- stdout
+|^: Hello world
+|^^: HELLO WORLD
+|,: hello world
+|,,: hello world
+
+=== 104: Nameref with pattern removal prefix and suffix anchors
+status: 0
+bash-n: 0
+--- stdout
+|prefix: bye hello hello
+|suffix: hello hello bye
+
+=== 105: Nameref indirection on chain
+status: 0
+bash-n: 0
+--- stdout
+|!top: ultimate
+|!middle: ultimate
+|top: deep_value
+
+=== 106: Nameref indirection - ${!ref} on non-nameref
+status: 0
+bash-n: 0
+--- stdout
+|!ref (not nameref): value
+|!nref (nameref): target
+
+=== 107: Nameref indirection with array nameref keys
+status: 0
+bash-n: 0
+--- stdout
+|!ref[@]: 0 1 2
+
+=== 108: Nameref indirection on nameref to array element
+status: 0
+bash-n: 0
+--- stdout
+|!ref: arr[1]
+
+=== 109: Nameref in (( )) comparison
+status: 0
+bash-n: 0
+--- stdout
+|equal
+|greater
+|less
+
+=== 110: Nameref in $((ref)) expression
+status: 0
+bash-n: 0
+--- stdout
+|expr: 10
+|expr2: 49
+
+=== 111: Nameref array element in arithmetic for loop
+status: 0
+bash-n: 0
+--- stdout
+|ref=1 arr[0]=1
+|ref=2 arr[0]=2
+|ref=3 arr[0]=3
+|ref=4 arr[0]=4
+|ref=5 arr[0]=5
+
+=== 112: Nameref in arithmetic assignment chain
+status: 0
+bash-n: 0
+--- stdout
+|a=42 b=42
+
+=== 113: Nameref in pipe components
+status: 0
+bash-n: 0
+--- stdout
+|pipe_test
+|pipe read: pipe_test
+
+=== 114: Nameref in trap handler
+status: 0
+bash-n: 0
+--- stdout
+|trap: ref=after_trap target=after_trap
+
+=== 115: Nameref in brace group
+status: 0
+bash-n: 0
+--- stdout
+|inside: modified
+|outside: modified
+
+=== 116: Nameref in while loop
+status: 0
+bash-n: 0
+--- stdout
+|loop: ref=0
+|loop: ref=1
+|loop: ref=2
+|final target: 3
+
+=== 117: Nameref in until loop
+status: 0
+bash-n: 0
+--- stdout
+|until: ref=3
+|until: ref=2
+|until: ref=1
+|final target: 0
+
+=== 118: Nameref in here-doc
+status: 0
+bash-n: 0
+--- stdout
+|ref is: heredoc_value
+|target is: heredoc_value
+
+=== 119: Nameref in condition of if statement
+status: 0
+bash-n: 0
+--- stdout
+|greater
+|string match
+
+=== 120: Nameref in background job
+status: 0
+bash-n: 0
+--- stdout
+|bg ref: bg_test
+|main target: bg_test
+
+=== 121: Nameref in function - target name same as local in caller
+status: 0
+bash-n: 0
+--- stdout
+|after g: val=modified
+
+=== 122: Nameref scope - same name different targets in nested calls
+status: 0
+bash-n: 0
+--- stdout
+|outer before: A
+|inner: B
+|outer after: A
+|a=A b=B_modified
+
+=== 123: Nameref in function - ref to caller local
+status: 0
+bash-n: 0
+--- stdout
+|revealed: hidden
+|after: secret=exposed
+
+=== 124: Nameref in function - local var shadows nameref target
+status: 0
+bash-n: 0
+--- stdout
+|ref: local_target
+|local target: modified
+|global target: global_target
+
+=== 125: Nameref - return value pattern via nameref
+status: 0
+bash-n: 0
+--- stdout
+|answer: 42
+
+=== 126: Nameref - multiple out params via namerefs
+status: 0
+bash-n: 0
+--- stdout
+|17/5 = 3 remainder 2
+
+=== 127: Nameref with declare -g in function
+status: 0
+bash-n: 0
+--- stdout
+|global_target: from_function
+|declare -n ref="global_target"
+|ref exists globally
+
+=== 128: Nameref global pointing to local
+status: 0
+bash-n: 0
+--- stdout
+|gref in f: local_value
+|gref outside: ''
+
+=== 129: Circular nameref - 4 node cycle
+status: 0
+bash-n: 0
+--- stdout
+|a: ''
+|done
+--- stderr
+|bash: line 5: warning: a: circular name reference
+
+=== 130: Chain where intermediate target is unset
+status: 0
+bash-n: 0
+--- stdout
+|top: value
+|top after: ''
+
+=== 131: Nameref chain - declare -p at each level
+status: 0
+bash-n: 0
+--- stdout
+|declare -n a="b"
+|declare -n b="val"
+|declare -- val="hello"
+
+=== 132: Nameref self-reference - write attempt
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0
+|done
+--- stderr
+|bash: line 1: declare: self: nameref variable self references not allowed
+
+=== 133: Nameref self-reference - declare -p
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: declare: self: nameref variable self references not allowed
+|bash: line 2: declare: self: not found
+
+=== 134: Circular nameref - write attempt
+status: 0
+bash-n: 0
+--- stdout
+|write exit: 1
+|done
+--- stderr
+|bash: line 3: warning: x: circular name reference
+
+=== 135: Nameref to SECONDS
+status: 0
+bash-n: 0
+--- stdout
+|type check: 1
+
+=== 136: Nameref to FUNCNAME in function
+status: 0
+bash-n: 0
+--- stdout
+|funcname[0]: f
+
+=== 137: Nameref to BASH_REMATCH
+status: 0
+bash-n: 0
+--- stdout
+|match: 123
+|group1: 123
+
+=== 138: Nameref to REPLY
+status: 0
+bash-n: 0
+--- stdout
+|REPLY: input_data
+
+=== 139: Nameref to OPTIND
+status: 0
+bash-n: 0
+--- stdout
+|optind: 1
+|OPTIND: 5
+
+=== 140: Nameref -v with nameref chain
+status: 0
+bash-n: 0
+--- stdout
+|set
+|unset
+
+=== 141: Nameref -R on regular variable
+status: 0
+bash-n: 0
+--- stdout
+|not nameref
+
+=== 142: Nameref -R on unset variable
+status: 0
+bash-n: 0
+--- stdout
+|not nameref
+
+=== 143: Nameref in test -z / -n
+status: 0
+bash-n: 0
+--- stdout
+|empty: yes
+|nonempty: no
+|empty: no
+|nonempty: yes
+
+=== 144: Nameref compound array assignment to nonexistent
+status: 0
+bash-n: 0
+--- stdout
+|declare -a newarray=([0]="alpha" [1]="beta" [2]="gamma")
+
+=== 145: Nameref compound assignment replaces
+status: 0
+bash-n: 0
+--- stdout
+|declare -a target=([0]="new1" [1]="new2")
+
+=== 146: Nameref += integer append on integer var
+status: 0
+bash-n: 0
+--- stdout
+|target: 15
+|target: 18
+
+=== 147: Nameref to array - copy array
+status: 0
+bash-n: 0
+--- stdout
+|declare -a dst=([0]="1" [1]="2" [2]="3")
+
+=== 148: Nameref to array - declare -p shows array type
+status: 0
+bash-n: 0
+--- stdout
+|declare -n ref="arr"
+|declare -a arr=([0]="x" [1]="y" [2]="z")
+
+=== 149: Nameref to assoc array - declare -p shows assoc type
+status: 0
+bash-n: 0
+--- stdout
+|declare -n ref="map"
+|declare -A map=([a]="1" )
+
+=== 150: Nameref to array - string operations on element 0
+status: 0
+bash-n: 0
+--- stdout
+|upper: HELLO WORLD
+|length: 11
+|sub: hello
+
+=== 151: Nameref to array - append to specific index
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="bX" [2]="c")
+
+=== 152: Nameref to associative array - delete key
+status: 0
+bash-n: 0
+--- stdout
+|x=1
+|z=3
+
+=== 153: Nameref to associative array - key existence
+status: 0
+bash-n: 0
+--- stdout
+|x set: yes
+|y set: yes
+|z set: 
+
+=== 154: Nameref to array element - computed index
+status: 0
+bash-n: 0
+--- stdout
+|ref: 40
+|arr[3]: 99
+
+=== 155: Nameref to array element - out of bounds
+status: 0
+bash-n: 0
+--- stdout
+|ref: ''
+|declare -a arr=([0]="a" [1]="b" [2]="c" [10]="new")
+
+=== 156: Nameref to assoc array - missing key then assign
+status: 0
+bash-n: 0
+--- stdout
+|ref: ''
+|map[missing]: new
+
+=== 157: Nameref to arr[@] - write attempt
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+|declare -a arr=([0]="a" [1]="b" [2]="c")
+--- stderr
+|bash: line 3: arr[@]: bad array subscript
+
+=== 158: Nameref to arr[*] expansion
+status: 0
+bash-n: 0
+--- stdout
+|ref: a b c
+
+=== 159: Declare -i through nameref adds integer to target
+status: 0
+bash-n: 0
+--- stdout
+|myvar: 0
+|myvar: 42
+|declare -i myvar="42"
+
+=== 160: Declare -u through nameref adds uppercase to target
+status: 0
+bash-n: 0
+--- stdout
+|myvar: HELLO
+|declare -u myvar="HELLO"
+
+=== 161: Declare -x through nameref exports target
+status: 0
+bash-n: 0
+--- stdout
+|declare -x target="value"
+
+=== 162: Typeset -n creates nameref
+status: 0
+bash-n: 0
+--- stdout
+|ref: typeset_val
+|declare -n ref="target"
+
+=== 163: Typeset +n removes nameref attribute
+status: 0
+bash-n: 0
+--- stdout
+|before: value
+|after: target
+|declare -- ref="target"
+
+=== 164: For loop nameref - modify each target
+status: 0
+bash-n: 0
+--- stdout
+|a=10 b=20 c=30
+
+=== 165: Nameref to variable with empty string value
+status: 0
+bash-n: 0
+--- stdout
+|ref: ''
+|set: SET
+|default: DEFAULT
+|nocolon default: 
+
+=== 166: Nameref to variable with newline value
+status: 0
+bash-n: 0
+--- stdout
+|ref: line1
+|line2
+|---
+|2
+
+=== 167: Nameref to set empty var with set -u
+status: 0
+bash-n: 0
+--- stdout
+|ref: ''
+|survived
+
+=== 168: Nameref with set -u and default expansion
+status: 0
+bash-n: 0
+--- stdout
+|default: safe
+|survived
+
+=== 169: Nameref with set -u - ${ref+x} does not error
+status: 0
+bash-n: 0
+--- stdout
+|set test: 
+|survived
+
+=== 170: Nameref multiple declare -n retargets
+status: 0
+bash-n: 0
+--- stdout
+|first: A
+|second: B
+
+=== 171: Nameref in array subscript context
+status: 0
+bash-n: 0
+--- stdout
+|arr[ref]: c
+
+=== 172: Two namerefs to same target - unset via one access via other
+status: 0
+bash-n: 0
+--- stdout
+|ref2: ''
+|target: ''
+
+=== 173: Nameref with word splitting
+status: 0
+bash-n: 0
+--- stdout
+|word: one
+|word: two
+|word: three
+|---
+|word: one two three
+
+=== 174: Nameref to _ (underscore variable)
+status: 0
+bash-n: 0
+--- stdout
+|ref: ref=_
+
+=== 175: Nameref preserves target type across reassignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b" [2]="c")
+
+=== 176: Nameref with command in value is literal
+status: 0
+bash-n: 0
+--- stdout
+|ref: $(echo injected)
+
+=== 177: Nameref target created by assignment
+status: 0
+bash-n: 0
+--- stdout
+|brand_new_var: created
+|declare -- brand_new_var="created"
+
+=== 178: Nameref array index assignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="X" [1]="b" [2]="Z")
+
+=== 179: Nameref assoc array assignment
+status: 0
+bash-n: 0
+--- stdout
+|key1=val1
+|key2=val2
+
+=== 180: Nameref in source command
+status: 0
+bash-n: 0
+--- stdout
+|target: from_source
+
+=== 181: Nameref to integer variable - arithmetic coercion
+status: 0
+bash-n: 0
+--- stdout
+|num: 25
+|num after expr: 12
+
+=== 182: Nameref with declare giving value
+status: 0
+bash-n: 0
+--- stdout
+|target: value
+|declare -- target="value"
+|declare -n ref="target"
+
+=== 183: Read -r into nameref
+status: 0
+bash-n: 0
+--- stdout
+|result: hello\tworld
+
+=== 184: Nameref in process substitution
+status: 0
+bash-n: 0
+--- stdout
+|proc_sub
+
+=== 185: Nameref in environment prefix assignment
+status: 0
+bash-n: 0
+--- stdout
+|new
+|target after: old
+
+=== 186: Local non-nameref shadows outer nameref
+status: 0
+bash-n: 0
+--- stdout
+|g ref: plain
+|f ref: T
+|target: T
+
+=== 187: Local -n referencing same-scope local
+status: 0
+bash-n: 0
+--- stdout
+|ref: local_val
+|target: changed
+
+=== 188: Nameref with array slice reassignment
+status: 0
+bash-n: 0
+--- stdout
+|before: 1 2 3
+|after: 2 3
+
+=== 189: Declare -p -n lists only namerefs
+status: 0
+bash-n: 0
+--- stdout
+|declare -n r1="a"
+|declare -n r2="b"
+
+=== 190: Integer variable evaluates arithmetic on assignment
+status: 0
+bash-n: 0
+--- stdout
+|x: 25
+|x: 12
+|x: 3
+|x: 10
+
+=== 191: Integer variable with variable references in expression
+status: 0
+bash-n: 0
+--- stdout
+|x: 15
+|x: 20
+
+=== 192: Integer variable += with arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|x: 15
+|x: 21
+
+=== 193: Integer variable through nameref evaluates arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|num: 25
+|num: 12
+|num: 22
+
+=== 194: Expansion :? error with regular variable
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+
+=== 195: Expansion :? with no message
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+
+=== 196: Nameref retarget to self after creation is rejected
+status: 0
+bash-n: 0
+--- stdout
+|ref: val
+|exit: 1
+|ref: val
+|declare -n ref="target"
+--- stderr
+|bash: line 4: declare: ref: nameref variable self references not allowed
+
+=== 197: Circular via retarget
+status: 0
+bash-n: 0
+--- stdout
+|a: value
+|a after: ''
+|done
+--- stderr
+|bash: line 7: warning: a: circular name reference
+
+=== 198: Self-reference by adding -n to existing var
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0
+|declare -n x="x"
+|val: ''
+--- stderr
+|bash: line 5: warning: x: circular name reference
+
+=== 199: Array assignment through nameref-to-subscript errors
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+|declare -a arr=([0]="1" [1]="2" [2]="3")
+--- stderr
+|bash: line 3: `arr[2]': not a valid identifier
+
+=== 200: Integer array element via nameref with +=
+status: 0
+bash-n: 0
+--- stdout
+|arr[1]: 25
+
+=== 201: Nameref in select loop
+status: 0
+bash-n: 0
+--- stdout
+|target=banana ref=banana
+--- stderr
+|1) apple
+|2) banana
+|3) cherry
+|#? 
+~ no newline at end
+
+=== 202: Nameref to LINENO
+status: 0
+bash-n: 0
+--- stdout
+|ref: 2
+
+=== 203: Nameref to BASH_SOURCE
+status: 0
+bash-n: 0
+--- stdout
+|ref0: ''
+
+=== 204: Compound array append through subscripted nameref errors
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+|arr: a b c
+--- stderr
+|bash: line 3: `arr[0]': not a valid identifier
+
+=== 205: Readonly propagates through 2-level nameref chain
+status: 0
+bash-n: 0
+--- stdout
+|declare -r target="original"
+|exit: 1
+|exit: 1
+|exit: 1
+|target: original
+--- stderr
+|bash: line 6: target: readonly variable
+|bash: line 8: target: readonly variable
+|bash: line 10: target: readonly variable
+
+=== 206: Export -n (remove export) through nameref
+status: 0
+bash-n: 0
+--- stdout
+|target=exported_value
+|target no longer exported
+
+=== 207: Declare -n with invalid target name containing spaces
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+|exit: 1
+|done
+
+=== 208: Declare -n with invalid target name special chars
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+|exit: 1
+|done
+
+=== 209: Env var lookup through subscripted nameref
+status: 0
+bash-n: 0
+--- stdout
+|ref: two
+|ref length: 3
+
+=== 210: Subscripted nameref with [@] returns empty
+status: 0
+bash-n: 0
+--- stdout
+|ref[@]: 
+|count: 0
+
+=== 211: Subscripted nameref with explicit subscript returns empty
+status: 0
+bash-n: 0
+--- stdout
+|ref[0]: ''
+|ref[1]: ''
+
+=== 212: Subscripted nameref - member keys returns empty
+status: 0
+bash-n: 0
+--- stdout
+|keys: ''
+
+=== 213: Let assignment through subscripted nameref
+status: 0
+bash-n: 0
+--- stdout
+|arr[1]: 42
+|arr[1]: 50
+
+=== 214: Arithmetic (( )) with subscripted nameref
+status: 0
+bash-n: 0
+--- stdout
+|arr[0]: 150
+|expr: 300
+
+=== 215: String length through subscripted nameref
+status: 0
+bash-n: 0
+--- stdout
+|len: 20
+
+=== 216: Long nameref chain (8 levels - at bash max)
+status: 0
+bash-n: 0
+--- stdout
+|c1: deep_value
+|final_target: changed
+
+=== 217: Nameref chain exceeds max depth
+status: 0
+bash-n: 0
+--- stdout
+|c1: ''
+|done
+--- stderr
+|bash: line 11: warning: c1: maximum nameref depth (8) exceeded
+
+=== 218: Declare -x through subscripted nameref applies to base
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 219: Exported nameref passes literal value to child
+status: 0
+bash-n: 0
+--- stdout
+|myref: target
+|target: value
+
+=== 220: Subscripted nameref with set -u when element is set
+status: 0
+bash-n: 0
+--- stdout
+|ref: b
+
+=== 221: Subscripted nameref with set -u when element is unset
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 4: ref: unbound variable
+
+=== 222: Nameref with := default creates target through nameref
+status: 0
+bash-n: 0
+--- stdout
+|before: ''
+|result: hello
+|new_var: hello
+
+=== 223: Nameref with := default when target exists but is empty
+status: 0
+bash-n: 0
+--- stdout
+|result: fallback
+|target: fallback
+
+=== 224: Readonly nameref in for-in loop fails
+status: 0
+bash-n: 0
+--- stdout
+|should not print: 
+|should not print: 
+|should not print: 
+|exit: 0
+|done
+
+=== 225: Circular nameref with set -e does not abort script
+status: 0
+bash-n: 0
+--- stdout
+|val: ''
+|script continues
+--- stderr
+|bash: line 4: warning: a: circular name reference
+
+=== 226: Nameref to unset variable with set -eu errors and exits
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: ref: unbound variable
+
+=== 227: Export through subscripted nameref is rejected by bash
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0
+
+=== 228: Readonly through subscripted nameref makes base readonly
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a" [1]="b" [2]="c")
+|exit: 0
+--- stderr
+|bash: line 3: readonly: `arr[1]': not a valid identifier
+
+=== 229: Declare -p on subscripted nameref shows nameref itself
+status: 0
+bash-n: 0
+--- stdout
+|declare -n ref="arr[1]"
+|ref value: b

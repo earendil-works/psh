@@ -1,0 +1,373 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/word_expansion/braces.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Expansion with curly braces: commas
+status: 0
+bash-n: 0
+--- stdout
+|{a,b} =>
+|a b
+|
+|{a} =>
+|{a}
+|
+|{a} =>
+|{a}
+|
+|a{,}b =>
+|ab ab
+|
+|{} =>
+|{}
+|
+|1{a,b}2 =>
+|1a2 1b2
+|
+|1{a,b}2{c,d}3 =>
+|1a2c3 1a2d3 1b2c3 1b2d3
+|
+|{a,b}{1,2} =>
+|a1 a2 b1 b2
+|
+|W\{1,2}X =>
+|W{1,2}X
+|
+|W{1,2\}X =>
+|W{1,2}X
+|
+|"W{1,2}X" =>
+|W{1,2}X
+|
+|{$var,$ba}r =>
+|value other
+|
+|\${a,b} =>
+|$a $b
+|
+
+=== 1: Expansion with curly braces: alpha ranges
+status: 0
+bash-n: 0
+--- stdout
+|{a..f} =>
+|a b c d e f
+|
+|{a..f..2} =>
+|a c e
+|
+|{a..f..0} =>
+|a b c d e f
+|
+|{m..f} =>
+|m l k j i h g f
+|
+
+=== 2: Expansion with curly braces: numeric ranges
+status: 0
+bash-n: 0
+--- stdout
+|{2..9} =>
+|2 3 4 5 6 7 8 9
+|
+|{+2..+9} =>
+|2 3 4 5 6 7 8 9
+|
+|{2..2} =>
+|2
+|
+|{2..1} =>
+|2 1
+|
+|{10..2..0} =>
+|10 9 8 7 6 5 4 3 2
+|
+|{10..2..2} =>
+|10 8 6 4 2
+|
+|{10..2..-2} =>
+|10 8 6 4 2
+|
+|{2..9..2} =>
+|2 4 6 8
+|
+|{2..9..0} =>
+|2 3 4 5 6 7 8 9
+|
+|{-1..-10} =>
+|-1 -2 -3 -4 -5 -6 -7 -8 -9 -10
+|
+|{-10..-1} =>
+|-10 -9 -8 -7 -6 -5 -4 -3 -2 -1
+|
+|{-1..-10..2} =>
+|-1 -3 -5 -7 -9
+|
+
+=== 3: Expansion with curly braces: nested
+status: 0
+bash-n: 0
+--- stdout
+|W{{1..3},a,x}Y =>
+|W1Y W2Y W3Y WaY WxY
+|
+
+=== 4: Iterate through modified array
+status: 0
+bash-n: 0
+--- stdout
+|With quotes:
+|Element: 'a'
+|Element: 'b'
+|Element: 'c'
+|Without quotes:
+|Element: 'a'
+|Element: 'b'
+|Element: 'c'
+
+=== 5: Expansion with curly braces: zero-padded numeric sequences
+status: 0
+bash-n: 0
+--- stdout
+|01 02 03 04 05
+|01 02 03 04 05
+|001 002 003
+|09 10 11
+|00 01 02 03
+|0009 0010 0011
+|05 04 03 02 01
+|010 007 004 001
+|01 03 05 07 09
+|x01y x02y x03y
+
+=== 6: Expansion with curly braces: a lone zero does not pad
+status: 0
+bash-n: 0
+--- stdout
+|0 1 2 3
+|0 1 2 3 4 5 6 7 8 9 10
+|10 9 8 7 6 5 4 3 2 1 0
+|0 1 2 3
+|1 2 3 4 5
+
+=== 7: Expansion with curly braces: zero padding with signs
+status: 0
+bash-n: 0
+--- stdout
+|-01 000 001
+|005 004 003 002 001 000 -01 -02
+|-1 00 01
+|-001 0000 0001 0002
+|01 00 -1
+|-01 -02 -03 -04 -05
+|00 -1 -2 -3
+|1 2 3
+|001 002 003 004 005
+
+=== 8: Expansion with curly braces: numeric bound too large for the sequence
+status: 0
+bash-n: 0
+--- stdout
+|{99999999999999999999..1}
+|{1..99999999999999999999}
+|{-9223372036854775809..-9223372036854775807}
+
+=== 9: Expansion with curly braces: increment too large for the sequence
+status: 0
+bash-n: 0
+--- stdout
+|{1..5..99999999999999999999}
+|{1..5..-99999999999999999999}
+|{1..5..9223372036854775808}
+|{a..e..99999999999999999999}
+|x{1..5..99999999999999999999}y
+|still running
+
+=== 10: Expansion with curly braces: increment at the edge of the range
+status: 0
+bash-n: 0
+--- stdout
+|1
+|5
+|{1..5..-9223372036854775808}
+|a
+|{a..e..-9223372036854775808}
+
+=== 11: Expansion with curly braces: decreasing sequence with an increment of i64::MIN
+status: 0
+bash-n: 0
+--- stdout
+|{5..1..-9223372036854775808}
+|{3..3..-9223372036854775808}
+|{e..a..-9223372036854775808}
+
+=== 12: Expansion with curly braces: decreasing sequence stepping past the end of the range
+status: 0
+bash-n: 0
+--- stdout
+|-9223372036854775807
+|-9223372036854775806
+|z
+|z
+|Z
+
+=== 13: Expansion with curly braces: increasing sequence stepping past the end of the range
+status: 0
+bash-n: 0
+--- stdout
+|9223372036854775800 9223372036854775805
+|9223372036854775806
+|1
+|1
+|a
+|a
+
+=== 14: Expansion with curly braces: numeric bounds at the edge of the range
+status: 0
+bash-n: 0
+--- stdout
+|-9223372036854775808 -9223372036854775807 -9223372036854775806
+|9223372036854775805 9223372036854775806 9223372036854775807
+
+=== 15: Expansion with curly braces: unquoted array[@] inside the list
+status: 0
+bash-n: 0
+--- stdout
+|Count: 3
+|[x1]
+|[2]
+|[xy]
+
+=== 16: Expansion with curly braces: quoted array[@] inside the list
+status: 0
+bash-n: 0
+--- stdout
+|Count: 3
+|[x1 1]
+|[2]
+|[xy]
+
+=== 17: Expansion with curly braces: empty array inside the list
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|[x]
+|[xy]
+
+=== 18: Expansion with curly braces: empty array and positional elements survive
+status: 0
+bash-n: 0
+--- stdout
+|Array count: 4
+|[]
+|[2a]
+|[]
+|[2b]
+|Trailing empty count: 2
+|[a2]
+|[b2]
+|Positional count: 4
+|[]
+|[2a]
+|[]
+|[2b]
+
+=== 19: Expansion with curly braces: quoted $@ inside the list
+status: 0
+bash-n: 0
+--- stdout
+|Count: 3
+|[prep p]
+|[q]
+|[prez]
+
+=== 20: Expansion with curly braces: unquoted $* inside the list
+status: 0
+bash-n: 0
+--- stdout
+|Count: 4
+|[p]
+|[p]
+|[q]
+|[z]
+
+=== 21: Expansion with curly braces: empty alternative yields no word
+status: 0
+bash-n: 0
+--- stdout
+|Count: 1
+|[a]
+|Count: 0
+|Count: 3
+
+=== 22: Expansion with curly braces: empty alternative with a prefix keeps the prefix
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|[x]
+|[x]
+
+=== 23: Expansion with curly braces: quoted empty string in the list survives
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|[]
+|[]
+|Count: 2
+|[]
+|[a]
+
+=== 24: Expansion with curly braces: empty alternative next to an empty expansion
+status: 0
+bash-n: 0
+--- stdout
+|Count: 0
+|Count: 1
+|[a]
+
+=== 25: No brace expansion in assignments
+status: 0
+bash-n: 0
+--- stdout
+|[a{b,c}]
+|[{a,b}]
+|[{a,b}{c,d}]
+|{k,l}
+|[a{b,c}]
+
+=== 26: No brace expansion in here-strings
+status: 0
+bash-n: 0
+--- stdout
+|{a,b}
+|{a,b}
+
+=== 27: No brace expansion in case words or patterns
+status: 0
+bash-n: 0
+--- stdout
+|word literal
+|pattern literal
+|pattern is literal
+
+=== 28: No brace expansion in [[ ]] operands
+status: 0
+bash-n: 0
+--- stdout
+|lhs literal
+|rhs literal
+|unary literal
+|regex lhs literal
+
+=== 29: Brace expansion still applies in command words and for lists
+status: 0
+bash-n: 0
+--- stdout
+|[a]
+|[b]
+|[x1]
+|[x2]
+|2

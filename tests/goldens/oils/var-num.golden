@@ -1,0 +1,54 @@
+# Goldens for tests/oils/spec/var-num.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Normal and braced
+status: 0
+bash-n: 0
+--- stdout
+|a b c
+
+=== 1: In function
+status: 0
+bash-n: 0
+--- stdout
+|a b
+
+=== 2: $0 with -c
+status: 0
+bash-n: 0
+--- stdout
+|sh
+
+=== 3: $0 with stdin
+status: 0
+bash-n: 0
+--- stdout
+|sh
+
+=== 4: $0 with -i
+status: 0
+bash-n: 0
+--- stdout
+|sh
+--- stderr
+|bash: cannot set terminal process group (27143): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash-5.3$ echo $0
+|bash-5.3$ exit
+
+=== 5: $0 with filename
+status: 0
+bash-n: 0
+--- stdout
+|dollar0
+--- file dollar0
+|echo $0
+
+=== 6: $@ with filename
+status: 0
+bash-n: 0
+--- stdout
+|a b c
+--- file dollar0
+|echo $@

@@ -1,0 +1,481 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/set.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: set with no args
+status: 0
+bash-n: 0
+--- stdout
+|MYVARIABLE=VALUE
+
+=== 1: Basic set usage
+status: 0
+bash-n: 0
+--- stdout
+|a b c d
+
+=== 2: set with options
+status: 0
+bash-n: 0
+--- stdout
+|[Options: enabled]
+|set options:  ehuBs
+|set -o pipefail
+|*: 
+|[Options: disabled]
+|set options:  hBs
+|set +o pipefail
+|*: 
+
+=== 3: set with multiple combined options
+status: 0
+bash-n: 0
+--- stdout
+|[Options: enabled]
+|set options:  ehuBs
+|set -o pipefail
+|$*: 
+|[Options: disabled]
+|set options:  hBs
+|set +o pipefail
+|$*: 
+
+=== 4: set clearing args
+status: 0
+bash-n: 0
+--- stdout
+|a b c
+|a
+
+=== 5: set with -
+status: 0
+bash-n: 0
+--- stdout
+|args:  a b c
+|args:  a b c
+
+=== 6: set with --
+status: 0
+bash-n: 0
+--- stdout
+|args:  a b c
+|args: 
+
+=== 7: set with option-looking args
+status: 0
+bash-n: 0
+--- stdout
+|a -v
+|a -v
+|a -v
+|a +x
+|a +x
+|a +x
+
+=== 8: function-local set
+status: 0
+bash-n: 0
+--- stdout
+|Before func
+|In func
+|After func
+--- stderr
+|+ echo 'In func'
+
+=== 9: set output quotes values
+status: 0
+bash-n: 0
+--- stdout
+|q1='a'\''b'
+|q2='a'\'''\''b'
+|q3=\'
+|q4=''\'''\'''
+|q5=''\''a'
+|q6='a'\'''
+
+=== 10: set output leaves an empty value unquoted
+status: 0
+bash-n: 0
+--- stdout
+|q1=
+
+=== 11: set quotes values starting with # or ~
+status: 0
+bash-n: 0
+--- stdout
+|w=a~
+|x='~'
+|y='#z'
+|z='a=~'
+
+=== 12: set leaves commas unquoted, like bash
+status: 0
+bash-n: 0
+--- stdout
+|x=a,b
+|y='{a,b}'
+|z=,
+
+=== 13: set and declare -p leave commas in associative array keys unquoted, like bash
+status: 0
+bash-n: 0
+--- stdout
+|m=([a,b]="1" [c]="2" )
+|declare -A m=([a,b]="1" [c]="2" )
+
+=== 14: set applies -o and +o in the order given
+status: 0
+bash-n: 0
+--- stdout
+|1 hBs
+|2 fhBs
+|3 hBCs
+
+=== 15: set applies letters and -o names in the order given
+status: 0
+bash-n: 0
+--- stdout
+|1 hBs
+|2 hBs
+|3 fhBs
+|4 hBs
+|set -o pipefail
+
+=== 16: set -o alone after a name lists the options it just set
+status: 0
+bash-n: 0
+--- stdout
+|noglob         	on
+|set +o noglob
+
+=== 17: set stops at an unknown option name
+status: 0
+bash-n: 0
+--- stdout
+|2 hBs [q]
+--- stderr
+|bash: line 2: set: nosuch: invalid option name
+
+=== 18: set - turns off -x and -v
+status: 0
+bash-n: 0
+--- stdout
+|1 hBs
+|2 ehBs
+|3 hBs [a]
+--- stderr
+|+ set -
+|+ set -e -
+|+ set -- a
+|+ set +xv
+
+=== 19: set -o with an unknown option name
+status: 0
+bash-n: 0
+--- stdout
+|set: bogus: invalid option name
+|set -o: 2
+|set: bogus: invalid option name
+|set +o: 2
+
+=== 20: set takes the letters after -o as more options
+status: 0
+bash-n: 0
+--- stdout
+|xtrace         	off
+|ehBs
+|set +o xtrace
+|hBs
+
+=== 21: set rejects an option it doesn't have
+status: 0
+bash-n: 0
+--- stdout
+|set -Z: 2
+|set +Z: 2
+--- stderr
+|bash: line 1: set: -Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+|bash: line 2: set: +Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+
+=== 22: set accepts -r and +r
+status: 0
+bash-n: 0
+--- stdout
+|+r: 0
+|-r: 0
+
+=== 23: set -r turns on restricted mode
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|restricted
+|cd: 1
+--- stderr
+|bash: line 3: /dev/null: restricted: cannot redirect output
+
+=== 24: set skips a lone +
+status: 0
+bash-n: 0
+--- stdout
+|2 a b
+|0
+|2 x y
+|[eB]
+|2 x y
+|[eB]
+|1 z
+|[uB]
+|1 w
+|1 +
+|1 +
+|[B]
+|3 v + -e
+
+=== 25: set rejects an unknown letter after a lone + with status 1
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+--- stderr
+|bash: line 1: set: -Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+
+=== 26: set applies the options before a lone + when a later one is unknown
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|[fB]
+|status: 1
+|[fuB]
+|status: 1
+|[fB]
+|2 a b
+|status: 2
+|[B]
+--- stderr
+|bash: line 2: set: -Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+|bash: line 3: set: -Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+|bash: line 4: set: -Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+|bash: line 6: set: -Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+
+=== 27: set applies the options after a lone + up to an unknown one
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+|[uB]
+|status: 1
+|[uB]
+|status: 1
+|[B]
+--- stderr
+|bash: line 2: set: -Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+|bash: line 3: set: -Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+|bash: line 4: set: -Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+
+=== 28: set -o and +o list the options as they stand at that point
+status: 0
+bash-n: 0
+--- stdout
+|errexit        	on
+|errexit        	off
+|errexit        	on
+|errexit        	off
+|set +o errexit
+|set -o errexit
+|nounset        	on
+|errexit        	off
+|set +o errexit
+|set +o errexit
+|errexit        	off
+
+=== 29: set -o takes an empty word as its first operand
+status: 0
+bash-n: 0
+--- stdout
+|hBs 2 [ -e]
+|2 [ x]
+
+=== 30: set applies -x and +x in command-line order
+status: 0
+bash-n: 0
+--- stdout
+|[B]
+|[eB]
+|[eB]
+|[B]
+|[eB]
+|[]
+|[B]
+|[BC]
+|zzglob
+|zzg*
+|[eB]
+--- file zzglob
+
+=== 31: set applies -o and +o in order with the letter options
+status: 0
+bash-n: 0
+--- stdout
+|[B]
+|[eB]
+|[eB]
+|set +o pipefail
+|set +o pipefail
+|set -o pipefail
+|[eB]
+|[euB]
+|[B]
+|[B]
+|[B]
+
+=== 32: set -o or +o with no name, then more options or operands
+status: 0
+bash-n: 0
+--- stdout
+|[eB]
+|[uB]
+|[eB]
+|2 a b
+|1 c
+
+=== 33: set stops at an unknown option name among other options and operands
+status: 0
+bash-n: 0
+--- stdout
+|status: 2
+|[B]
+|status: 2
+|[uB]
+|status: 2
+|[eB]
+|2 a b
+|2 a b
+|listed nothing
+
+=== 34: set rejects an unknown letter before applying any option
+status: 0
+bash-n: 0
+--- stdout
+|status: 2
+|[B]
+|status: 2
+|[B]
+|status: 2
+|[B]
+|status: 2
+|[B]
+|[B]
+|status: 2
+|[B]
+|2 a b
+--- stderr
+|bash: line 2: set: -Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+|bash: line 3: set: -Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+|bash: line 4: set: -Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+|bash: line 5: set: -Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+|bash: line 6: set: -Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+|bash: line 7: set: -+: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+|bash: line 8: set: -Z: invalid option
+|set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+
+=== 35: set - turns off -x and -v and ends the options
+status: 0
+bash-n: 0
+--- stdout
+|[]
+|[]
+|1 a
+|[]
+|1 b
+|[]
+|1 -e
+|[]
+|1 -
+
+=== 36: set takes options only before its operands
+status: 0
+bash-n: 0
+--- stdout
+|[B]
+|1 -x
+|[B]
+|2 x -e
+|[eB]
+|2 a -u
+|[eB]
+|1 -a
+|[eB]
+|3 x -o nounset
+|status: 0
+|1 nosuch
+|1 -Z
+|2 -- a
+|2 -- a
+|2 - a
+|3 x -- y
+|3 x - y
+|1
+|[eB]
+|1
+
+=== 37: set leaves the positional parameters alone without operands
+status: 0
+bash-n: 0
+--- stdout
+|3
+|3
+|3
+|3
+|3
+|3
+|0
+
+=== 38: set -o in the middle of a bundle takes the next word
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|[uB]
+|0
+|status: 0
+|[euB]
+|0
+
+=== 39: set -o takes no name that starts with + or is a lone - or +
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|[B]
+|status: 0
+|status: 0
+|1 a
+|status: 0
+|[B]
+
+=== 40: set -o vi and -o emacs turn each other off
+status: 0
+bash-n: 0
+--- stdout
+|emacs          	on
+|vi             	off
+|emacs          	off
+|vi             	on

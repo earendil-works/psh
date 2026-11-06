@@ -1,0 +1,130 @@
+# Goldens for tests/oils/spec/smoke.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: builtin
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 1: command sub
+status: 0
+bash-n: 0
+--- stdout
+|3
+
+=== 2: command sub with builtin
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 3: pipeline
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 4: pipeline with builtin
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 5: and-or chains
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|4
+|--
+|A
+|B
+|C
+|D
+
+=== 6: here doc with var
+status: 0
+bash-n: 0
+--- stdout
+|"two
+|one
+
+=== 7: here doc without var
+status: 0
+bash-n: 0
+--- stdout
+|"two
+|$v
+
+=== 8: here doc with builtin
+status: 0
+bash-n: 0
+--- stdout
+|var = value
+
+=== 9: Redirect external command
+status: 0
+bash-n: 0
+--- stdout
+|3
+--- file expr3.txt
+|3
+
+=== 10: Redirect with builtin
+status: 0
+bash-n: 0
+--- stdout
+|hi
+--- file hi.txt
+|hi
+
+=== 11: Here doc with redirect
+status: 0
+bash-n: 0
+--- stdout
+|8 smoke1.txt
+--- file smoke1.txt
+|one
+|two
+
+=== 12: "$@" "$*"
+status: 0
+bash-n: 0
+--- stdout
+|['a b', 'c d', 'a b c d']
+
+=== 13: $@ $*
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'b', 'c', 'd', 'a', 'b', 'c', 'd']
+
+=== 14: failed command
+status: 2
+bash-n: 0
+--- stderr
+|ls: cannot access '/nonexistent-zzZZ': No such file or directory
+
+=== 15: subshell
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+
+=== 16: for loop
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+
+=== 17: vars
+status: 0
+bash-n: 0
+--- stdout
+|5 5 5 5

@@ -1,0 +1,250 @@
+# Goldens for tests/oils/spec/builtin-type-bash.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: type -t -> function
+status: 0
+bash-n: 0
+--- stdout
+|function
+
+=== 1: type -t -> alias
+status: 0
+bash-n: 0
+--- stdout
+|alias
+
+=== 2: type -t -> builtin
+status: 0
+bash-n: 0
+--- stdout
+|builtin
+|builtin
+|builtin
+|builtin
+|builtin
+|builtin
+
+=== 3: type -t -> keyword
+status: 0
+bash-n: 0
+--- stdout
+|keyword
+|keyword
+|keyword
+|keyword
+|keyword
+|keyword
+
+=== 4: type -t control flow
+status: 0
+bash-n: 0
+--- stdout
+|builtin
+|builtin
+|builtin
+|builtin
+
+=== 5: type -t -> file
+status: 0
+bash-n: 0
+--- stdout
+|file
+|file
+
+=== 6: type -t doesn't find non-executable (like command -v)
+status: 0
+bash-n: 0
+--- stdout
+|file
+--- file non-executable
+
+=== 7: type -t -> not found
+status: 0
+bash-n: 0
+--- stdout
+|builtin
+|file
+|status=1
+
+=== 8: type -p and -P builtin -> file
+status: 0
+bash-n: 0
+--- stdout
+|/tmp/mv
+|/tmp/tar
+|/tmp/grep
+|--
+|/tmp/mv
+|/tmp/tar
+|/tmp/grep
+
+=== 9: type -a -P gives multiple files
+status: 0
+bash-n: 0
+--- stdout
+|_tmp/pwd
+|/bin/pwd
+--- file _tmp/pwd
+
+=== 10: type -p builtin -> not found
+status: 1
+bash-n: 0
+
+=== 11: type -p builtin -> not a file
+status: 0
+bash-n: 0
+
+=== 12: type -P builtin -> not found
+status: 1
+bash-n: 0
+
+=== 13: type -P builtin -> not a file
+status: 1
+bash-n: 0
+
+=== 14: type -P builtin -> not a file but file found
+status: 1
+bash-n: 0
+--- stdout
+|_tmp/mv
+|_tmp/tar
+|_tmp/grep
+--- file _tmp/grep
+--- file _tmp/mv
+--- file _tmp/tar
+
+=== 15: type -f builtin -> not found
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: type: FOO: not found
+|bash: line 1: type: BAR: not found
+|bash: line 1: type: NOT: not found
+|bash: line 1: type: FOUND: not found
+
+=== 16: type -f builtin -> function and file exists
+status: 0
+bash-n: 0
+--- stdout
+|mv is /tmp/mv
+|tar is /tmp/tar
+|grep is /tmp/grep
+
+=== 17: type prints function source code
+status: 0
+bash-n: 0
+--- stdout
+|f is a function
+|f () 
+|{ 
+|    echo
+|}
+|
+|f is a function
+|f () 
+|{ 
+|    echo
+|}
+
+=== 18: type -ap -> function
+status: 0
+bash-n: 0
+
+=== 19: type -a -> alias; prints alias definition
+status: 0
+bash-n: 0
+--- stdout
+|ll is aliased to `ls -lha'
+
+=== 20: type -ap -> alias
+status: 0
+bash-n: 0
+
+=== 21: type -a -> builtin
+status: 0
+bash-n: 0
+--- stdout
+|cd is a shell builtin
+
+=== 22: type -ap -> builtin
+status: 0
+bash-n: 0
+
+=== 23: type -a -> keyword
+status: 0
+bash-n: 0
+--- stdout
+|while is a shell keyword
+
+=== 24: type -a -> file
+status: 0
+bash-n: 0
+--- stdout
+|date is /bin/date
+|date is _tmp/date
+--- file _tmp/date
+
+=== 25: type -ap -> file; abbreviated
+status: 0
+bash-n: 0
+--- stdout
+|/bin/date
+|_tmp/date
+--- file _tmp/date
+
+=== 26: type -a -> builtin and file
+status: 0
+bash-n: 0
+--- stdout
+|pwd is a shell builtin
+|pwd is /bin/pwd
+|pwd is _tmp/pwd
+--- file _tmp/pwd
+
+=== 27: type -a -> builtin and file and shell function
+status: 0
+bash-n: 0
+--- stdout
+|pwd is a shell builtin
+|pwd is /bin/pwd
+|pwd is _tmp/pwd
+|---
+|pwd is a function
+|pwd () 
+|{ 
+|    echo function-too
+|}
+|pwd is a shell builtin
+|pwd is /bin/pwd
+|pwd is _tmp/pwd
+|---
+|pwd is a shell builtin
+|pwd is /bin/pwd
+|pwd is _tmp/pwd
+--- file _tmp/pwd
+
+=== 28: type -ap -> builtin and file; doesn't print builtin or function
+status: 0
+bash-n: 0
+--- stdout
+|/bin/pwd
+|_tmp/pwd
+|---
+--- file _tmp/pwd
+
+=== 29: type -a -> executable not in PATH
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: type: executable: not found
+--- file _tmp/executable
+
+=== 30: type -P does not find directories (regression)
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|/usr/bin/cat
+|status=0
+--- dir _tmp/cat

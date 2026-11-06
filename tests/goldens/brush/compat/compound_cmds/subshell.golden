@@ -1,0 +1,81 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/compound_cmds/subshell.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic subshell usage
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 1: Subshells in sequence
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `('
+|bash: line 1: `(echo hi)(echo there)'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `('
+|bash: line 1: `(echo hi)(echo there)'
+
+=== 2: Subshell env usage
+status: 0
+bash-n: 0
+--- stdout
+|subshell_var: value
+|subshell_var: 
+
+=== 3: Subshell output redirection
+status: 0
+bash-n: 0
+--- stdout
+|Dumping out.txt...
+|Hello
+|world
+--- file out.txt
+|Hello
+|world
+
+=== 4: Piped subshell usage
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 5: Breaks in subshell
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 6: Exec in subshell
+status: 0
+bash-n: 0
+--- stdout
+|Before subshell
+|Hello from exec in subshell
+|After subshell
+
+=== 7: Nested subshells on one line
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|x=hi
+
+=== 8: A subshell starts outside any loop
+status: 0
+bash-n: 0
+--- stdout
+|survived 1: 0
+|continued 1: 0
+|survived 2: 0
+|continued 2: 0
+|done
+--- stderr
+|bash: line 2: break: only meaningful in a `for', `while', or `until' loop
+|bash: line 3: continue: only meaningful in a `for', `while', or `until' loop
+|bash: line 2: break: only meaningful in a `for', `while', or `until' loop
+|bash: line 3: continue: only meaningful in a `for', `while', or `until' loop

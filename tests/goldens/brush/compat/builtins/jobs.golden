@@ -1,0 +1,143 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/jobs.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic async job
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 1: fg resumes a stopped job without a terminal to give it
+status: 0
+bash-n: 0
+--- stdout
+|resumed
+|fg: 0
+
+=== 2: fg resumes every process of a stopped job
+status: 0
+bash-n: 0
+--- stdout
+|child resumed
+|parent resumed
+|fg: 0
+
+=== 3: bg on a job already in the background says so
+status: 0
+bash-n: 0
+--- stdout
+|bg: 0
+|bg: job 1 already in background
+
+=== 4: fg without a current job reports on stderr
+status: 0
+bash-n: 0
+--- stdout
+|fg: 1
+--- stderr
+|bash: line 1: fg: no job control
+
+=== 5: fg and bg report a job that doesn't exist on stderr, naming the builtin first
+status: 0
+bash-n: 0
+--- stdout
+|fg: 1
+|fg: %5: no such job
+|bg: 1
+|bg: %5: no such job
+
+=== 6: fg without job control says so
+status: 0
+bash-n: 0
+--- stdout
+|fg: 1
+|fg: no job control
+
+=== 7: An interactive shell without a terminal has no job control
+status: 0
+bash-n: 0
+--- stdout
+|no job control
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+
+=== 8: Job builtins fail with status 1 for a job that doesn't exist
+status: 0
+bash-n: 0
+--- stdout
+|jobs: 1
+|disown: 1
+--- stderr
+|bash: line 1: jobs: %9: no such job
+|bash: line 3: disown: %9: no such job
+
+=== 9: Job builtins check for job control before their options
+status: 0
+bash-n: 0
+--- stdout
+|fg: 1
+|bg: 1
+|disown: 2
+--- stderr
+|bash: line 1: fg: no job control
+|bash: line 3: bg: no job control
+|bash: line 5: disown: -Z: invalid option
+|disown: usage: disown [-h] [-ar] [jobspec ... | pid ...]
+
+=== 10: wait returns once a job stops, and the job stays stopped
+status: 0
+bash-n: 0
+--- stdout
+|wait: 147
+|stopped: 1
+|resumed
+|fg: 0
+
+=== 11: fg notices a job it continued stopping again
+status: 0
+bash-n: 0
+--- stdout
+|wait: 147
+|fg: 147
+|resumed
+|fg: 0
+
+=== 12: set -m gives a job a process group of its own
+status: 0
+bash-n: 0
+--- stdout
+|own-group
+
+=== 13: wait for every job reports none of them
+status: 0
+bash-n: 0
+--- stdout
+|done
+
+=== 14: wait for a job that's stopped returns at once
+status: 0
+bash-n: 0
+--- stdout
+|first: 147
+|again: 147
+--- stderr
+|bash: line 4: warning: wait_for_job: job 1 is stopped
+
+=== 15: wait for every job leaves out the stopped ones
+status: 0
+bash-n: 0
+--- stdout
+|all: 0
+|stopped: 1
+--- stderr
+|bash: line 5: wait: warning: job 1[45389] stopped
+|bash: line 5: wait: warning: job 1[45389] stopped
+|bash: line 9: 45389 Killed                     sh -c 'kill -STOP $$; echo resumed'
+
+=== 16: jobs in a pipeline lists the shell's jobs
+status: 0
+bash-n: 0
+--- stdout
+|1

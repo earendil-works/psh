@@ -1,0 +1,121 @@
+# Goldens for tests/oils/spec/posix.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Empty for loop is allowed
+status: 0
+bash-n: 0
+
+=== 1: Empty for loop without in.  Do can be on the same line I guess.
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|a
+|hi
+|b
+
+=== 2: Empty case statement
+status: 0
+bash-n: 0
+
+=== 3: Last case without ;;
+status: 0
+bash-n: 0
+--- stdout
+|A
+
+=== 4: Only case without ;;
+status: 0
+bash-n: 0
+--- stdout
+|A
+
+=== 5: Case with optional (
+status: 0
+bash-n: 0
+--- stdout
+|A
+
+=== 6: Empty action for case is syntax error
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 4: syntax error near unexpected token `)'
+|bash: line 4: `  b)'
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `)'
+|bash: line 4: `  b)'
+
+=== 7: Empty action is allowed for last case
+status: 0
+bash-n: 0
+
+=== 8: Case with | pattern
+status: 0
+bash-n: 0
+--- stdout
+|A
+
+=== 9: Bare semi-colon not allowed
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `;'
+|bash: line 1: `;'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `;'
+|bash: line 1: `;'
+
+=== 10: Command substitution in default
+status: 0
+bash-n: 0
+--- stdout
+|/bin
+
+=== 11: Arithmetic expansion
+status: 0
+bash-n: 0
+--- stdout
+|3
+|2
+|1
+
+=== 12: Newlines in compound lists
+status: 0
+bash-n: 0
+--- stdout
+|Fri Nov  6 22:57:26 UTC 2026
+|/bin
+|/bin
+|Fri Nov  6 22:57:26 UTC 2026
+|/bin
+|/bin
+|Fri Nov  6 22:57:26 UTC 2026
+|/bin
+|/bin
+--- stderr
+|cat: tests/hello.txt: No such file or directory
+|bash: line 6: _tmp/posix-compound.txt: No such file or directory
+|cat: tests/hello.txt: No such file or directory
+|cat: tests/hello.txt: No such file or directory
+|bash: line 6: _tmp/posix-compound.txt: No such file or directory
+|cat: tests/hello.txt: No such file or directory
+|cat: tests/hello.txt: No such file or directory
+|bash: line 6: _tmp/posix-compound.txt: No such file or directory
+|cat: tests/hello.txt: No such file or directory
+
+=== 13: Multiple here docs on one line
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+
+=== 14: cat here doc; echo; cat here doc
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|three

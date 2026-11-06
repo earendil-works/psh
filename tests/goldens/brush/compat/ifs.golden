@@ -1,0 +1,782 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/ifs.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Default IFS value
+status: 0
+bash-n: 0
+--- stdout
+|IFS has default value
+
+=== 1: Field splitting with default IFS
+status: 0
+bash-n: 0
+--- stdout
+|Fields: one two three four
+
+=== 2: Field splitting with custom single-char IFS
+status: 0
+bash-n: 0
+--- stdout
+|one two three
+
+=== 3: Field splitting with multi-char IFS
+status: 0
+bash-n: 0
+--- stdout
+|one two three four
+
+=== 4: Empty IFS disables field splitting
+status: 0
+bash-n: 0
+--- stdout
+|[one two	three]
+
+=== 5: Empty IFS with expansion
+status: 0
+bash-n: 0
+--- stdout
+|Count: 1
+|[a b c]
+
+=== 6: Unset IFS uses default splitting
+status: 0
+bash-n: 0
+--- stdout
+|one two three
+
+=== 7: IFS whitespace vs non-whitespace splitting
+status: 0
+bash-n: 0
+--- stdout
+|Count: 4
+|Args:  one  two
+
+=== 8: IFS whitespace splitting ignores leading/trailing
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|Args: one two
+
+=== 9: Mixed whitespace and non-whitespace IFS
+status: 0
+bash-n: 0
+--- stdout
+|Count: 4
+|[one]
+|[two]
+|[three]
+|[four]
+
+=== 10: Mixed IFS leading non-whitespace
+status: 0
+bash-n: 0
+--- stdout
+|Count: 4
+|[]
+|[one]
+|[]
+|[two]
+
+=== 11: Mixed IFS trailing non-whitespace
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|[one]
+|[two]
+
+=== 12: IFS only whitespace multiple chars
+status: 0
+bash-n: 0
+--- stdout
+|Count: 3
+|Args: one two three
+
+=== 13: IFS only non-whitespace multiple chars
+status: 0
+bash-n: 0
+--- stdout
+|Count: 7
+|[]
+|[]
+|[one]
+|[]
+|[]
+|[two]
+|[]
+
+=== 14: IFS only tab character
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|Args: a b
+
+=== 15: IFS only newline character
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|Args: a b
+
+=== 16: IFS affects command substitution
+status: 0
+bash-n: 0
+--- stdout
+|3
+|a b c
+
+=== 17: IFS with command substitution multiline
+status: 0
+bash-n: 0
+--- stdout
+|Count: 3
+|a|b|c
+
+=== 18: IFS affects arithmetic expansion
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|2 4
+
+=== 19: IFS in array expansion
+status: 0
+bash-n: 0
+--- stdout
+|one:two:three
+
+=== 20: IFS with $* vs $@
+status: 0
+bash-n: 0
+--- stdout
+|one:two:three
+|one two three
+
+=== 21: IFS with $* unquoted
+status: 0
+bash-n: 0
+--- stdout
+|Count: 4
+|[a]
+|[b]
+|[c]
+|[d]
+
+=== 22: IFS null char handling
+status: 0
+bash-n: 0
+--- stdout
+|Empty var count: 0
+
+=== 23: IFS preservation across commands
+status: 0
+bash-n: 0
+--- stdout
+|First: :
+|a b
+|After: :
+
+=== 24: IFS in subshell
+status: 0
+bash-n: 0
+--- stdout
+|In subshell: [:]
+|Count: 3
+|Parent: [:]
+
+=== 25: IFS local to command
+status: 0
+bash-n: 0
+--- stdout
+|a:b:c
+|After: [ 	
+|]
+
+=== 26: IFS does not affect for loop literal words
+status: 0
+bash-n: 0
+--- stdout
+|[a:b:c]
+
+=== 27: IFS affects for loop variable expansion
+status: 0
+bash-n: 0
+--- stdout
+|[a]
+|[b]
+|[c]
+
+=== 28: IFS affects for loop command substitution
+status: 0
+bash-n: 0
+--- stdout
+|[x]
+|[y]
+|[z]
+
+=== 29: IFS with quoted vs unquoted expansion
+status: 0
+bash-n: 0
+--- stdout
+|Unquoted: a b c
+|Quoted: a:b:c
+
+=== 30: IFS with partially quoted expansion
+status: 0
+bash-n: 0
+--- stdout
+|Count: 1
+|a:b:c:more
+
+=== 31: IFS whitespace sequence handling
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|Args: a b
+
+=== 32: IFS non-whitespace sequence handling
+status: 0
+bash-n: 0
+--- stdout
+|Count: 5
+|[a]
+|[]
+|[]
+|[]
+|[b]
+
+=== 33: IFS with parameter expansion
+status: 0
+bash-n: 0
+--- stdout
+|3
+|a b c
+
+=== 34: IFS with parameter expansion default value
+status: 0
+bash-n: 0
+--- stdout
+|Count: 3
+|a b c
+
+=== 35: IFS with parameter expansion empty default
+status: 0
+bash-n: 0
+--- stdout
+|Count: 0
+
+=== 36: IFS with parameter length
+status: 0
+bash-n: 0
+--- stdout
+|Count: 1
+|[5]
+
+=== 37: IFS with glob pattern literal
+status: 0
+bash-n: 0
+--- stdout
+|[*.txt:*.sh]
+
+=== 38: IFS newline handling
+status: 0
+bash-n: 0
+--- stdout
+|Count: 3
+|a|b|c
+
+=== 39: IFS tab handling
+status: 0
+bash-n: 0
+--- stdout
+|Count: 3
+|a|b|c
+
+=== 40: IFS with backslash in value
+status: 0
+bash-n: 0
+--- stdout
+|Count: 4
+|[a\]
+|[b]
+|[c\]
+|[d]
+
+=== 41: IFS first char for joining
+status: 0
+bash-n: 0
+--- stdout
+|[a:b:c]
+
+=== 42: IFS first char empty IFS
+status: 0
+bash-n: 0
+--- stdout
+|[abc]
+
+=== 43: IFS multiple whitespace at start
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|a b
+
+=== 44: IFS multiple whitespace at end
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|a b
+
+=== 45: IFS with read builtin integration
+status: 0
+bash-n: 0
+--- stdout
+|x=[a] y=[b] z=[c]
+
+=== 46: IFS whitespace before non-whitespace
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|[]
+|[a]
+
+=== 47: IFS non-whitespace before whitespace
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|[]
+|[a]
+
+=== 48: Array star join in scalar assignment honors IFS
+status: 0
+bash-n: 0
+--- stdout
+|[a:b:c]
+
+=== 49: Array at join in scalar assignment uses space
+status: 0
+bash-n: 0
+--- stdout
+|[a b c]
+
+=== 50: Export assignment from array star honors IFS
+status: 0
+bash-n: 0
+--- stdout
+|[/first/bin:/usr/lib/llvm/21/bin:/usr/bin]
+
+=== 51: Split on IFS then rejoin via star
+status: 0
+bash-n: 0
+--- stdout
+|[x:y:z]
+
+=== 52: Positional star join in scalar assignment honors IFS
+status: 0
+bash-n: 0
+--- stdout
+|[a:b:c]
+
+=== 53: Assign-default array star join honors IFS
+status: 0
+bash-n: 0
+--- stdout
+|[a:b:c]
+
+=== 54: Assign-default array at join uses space
+status: 0
+bash-n: 0
+--- stdout
+|[a b c]
+
+=== 55: Use-default array star join honors IFS
+status: 0
+bash-n: 0
+--- stdout
+|[a:b:c]
+
+=== 56: Assign-default positional star join honors IFS
+status: 0
+bash-n: 0
+--- stdout
+|[a:b:c]
+
+=== 57: Run of non-whitespace delimiters yields empty fields
+status: 0
+bash-n: 0
+--- stdout
+|Count: 5
+|[a]
+|[b]
+|[]
+|[]
+|[c]
+
+=== 58: Leading delimiter yields an empty field, trailing one does not
+status: 0
+bash-n: 0
+--- stdout
+|:a -> 2
+|  []
+|  [a]
+|a: -> 1
+|  [a]
+|:a: -> 2
+|  []
+|  [a]
+|: -> 1
+|  []
+|:: -> 2
+|  []
+|  []
+
+=== 59: Whitespace around a delimiter belongs to the same run
+status: 0
+bash-n: 0
+--- stdout
+|a : b -> 2
+|  [a]
+|  [b]
+|a :: b -> 3
+|  [a]
+|  []
+|  [b]
+|a:  :b -> 3
+|  [a]
+|  []
+|  [b]
+|  a  b   -> 2
+|  [a]
+|  [b]
+
+=== 60: Carriage return, vertical tab and form feed split like whitespace
+status: 0
+bash-n: 0
+--- stdout
+|count=3
+|count=3
+|count=3
+
+=== 61: A delimiter split across two expansions in one word
+status: 0
+bash-n: 0
+--- stdout
+|Count: 3
+|[1]
+|[]
+|[4]
+
+=== 62: Each field of an array expansion splits on its own
+status: 0
+bash-n: 0
+--- stdout
+|Count: 5
+|[a]
+|[b]
+|[c]
+|[]
+|[d]
+
+=== 63: Empty IFS disables splitting of variable expansion
+status: 0
+bash-n: 0
+--- stdout
+|split: 1 elements
+
+=== 64: Unset IFS uses default splitting
+status: 0
+bash-n: 0
+--- stdout
+|split: 3 elements
+
+=== 65: Local IFS=: then unset restores default splitting
+status: 0
+bash-n: 0
+--- stdout
+|split: 3 elements
+|  [0]='a'
+|  [1]='b'
+|  [2]='c'
+
+=== 66: Local IFS='' disables splitting of variable
+status: 0
+bash-n: 0
+--- stdout
+|split: 1 elements
+|  [0]='a b c'
+
+=== 67: Brace expansion with local IFS=: then unset
+status: 0
+bash-n: 0
+--- stdout
+|Count: 4
+|[python3_11]
+|[python3_12]
+|[python3_13]
+|[python3_14]
+
+=== 68: Brace expansion with local IFS=''
+status: 0
+bash-n: 0
+--- stdout
+|Count: 4
+|[python3_11]
+|[python3_12]
+|[python3_13]
+|[python3_14]
+
+=== 69: Mixed variable and brace expansion with local IFS=''
+status: 0
+bash-n: 0
+--- stdout
+|Count: 4
+|[python3_11]
+|[python3_12]
+|[python3_13]
+|[python3_14]
+
+=== 70: Command substitution with local IFS=''
+status: 0
+bash-n: 0
+--- stdout
+|Count: 1
+|[a b c]
+
+=== 71: Arithmetic expansion with local IFS=''
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|[2]
+|[4]
+
+=== 72: Special parameters with local IFS=''
+status: 0
+bash-n: 0
+--- stdout
+|Count: 0
+
+=== 73: Complex mixed variable and brace expansion with local IFS=''
+status: 0
+bash-n: 0
+--- stdout
+|Count: 3
+|[file1.txt]
+|[file2.txt]
+|[file3.txt]
+
+=== 74: Empty IFS with set -- variable splitting
+status: 0
+bash-n: 0
+--- stdout
+|Count: 1
+|[a b c]
+
+=== 75: Empty IFS with for-loop variable splitting
+status: 0
+bash-n: 0
+--- stdout
+|[x y z]
+
+=== 76: Empty IFS with comma brace expansion
+status: 0
+bash-n: 0
+--- stdout
+|Count: 3
+|[a]
+|[b]
+|[c]
+
+=== 77: Empty IFS with sequence brace expansion
+status: 0
+bash-n: 0
+--- stdout
+|Count: 5
+|[1]
+|[2]
+|[3]
+|[4]
+|[5]
+
+=== 78: Empty IFS with parameter default value expansion
+status: 0
+bash-n: 0
+--- stdout
+|Count: 1
+|[a b c]
+
+=== 79: Empty IFS scoping across nested functions
+status: 0
+bash-n: 0
+--- stdout
+|Outer before count: 3
+|Inner count: 1
+|Outer after count: 3
+
+=== 80: Empty IFS with positional parameters expansion
+status: 0
+bash-n: 0
+--- stdout
+|Count: 3
+|[a]
+|[b]
+|[c]
+
+=== 81: Brace expansion preserves array[@] element separation
+status: 0
+bash-n: 0
+--- stdout
+|Count: 6
+|[a1]
+|[2]
+|[3]
+|[b1]
+|[2]
+|[3]
+
+=== 82: Brace expansion with array[*] concatenates elements
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|[a1 2 3]
+|[b1 2 3]
+
+=== 83: Brace expansion with unquoted array[@] splits elements
+status: 0
+bash-n: 0
+--- stdout
+|Count: 6
+|[a1]
+|[2]
+|[3]
+|[b1]
+|[2]
+|[3]
+
+=== 84: Brace expansion stays separate under IFS=:
+status: 0
+bash-n: 0
+--- stdout
+|Count: 4
+|[python3_11]
+|[python3_12]
+|[python3_13]
+|[python3_14]
+
+=== 85: Brace expansion stays separate under IFS=, (the list separator)
+status: 0
+bash-n: 0
+--- stdout
+|Count: 4
+|[ac]
+|[ad]
+|[bc]
+|[bd]
+
+=== 86: Brace expansion under IFS=: still splits the expansions inside it
+status: 0
+bash-n: 0
+--- stdout
+|Count: 3
+|[1]
+|[2]
+|[x]
+
+=== 87: Brace expansion under IFS=: with quoted array[*] inside the list
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|[1:2]
+|[z]
+
+=== 88: Brace expansion under IFS=: with tilde prefix
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|[/h/x]
+|[/h/y]
+
+=== 89: Empty IFS joins "$*" with no separator
+status: 0
+bash-n: 0
+--- stdout
+|[abc]
+|[abc]
+|[123]
+|[123]
+
+=== 90: Unset IFS joins "$*" with a space
+status: 0
+bash-n: 0
+--- stdout
+|[a b c]
+|[1 2 3]
+
+=== 91: Empty IFS join inside a larger double-quoted word
+status: 0
+bash-n: 0
+--- stdout
+|[<abc>]
+|[3]
+|joined
+
+=== 92: Literal word text is not field-split
+status: 0
+bash-n: 0
+--- stdout
+|Count: 1
+|Count: 2
+|[a:b]
+|[c]
+|Count: 1
+
+=== 93: Literal word text still globs under a non-default IFS
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|[a:1]
+|[a:2]
+|Count: 2
+
+=== 94: Expansion result adjacent to literal text
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|[1]
+|[2:3]
+|Count: 2
+|[1]
+|[:3]
+|Count: 1
+|[pre:1]
+
+=== 95: Default and alternate value words are split like any expansion result
+status: 0
+bash-n: 0
+--- stdout
+|Count: 2
+|Count: 1
+|Count: 2
+|[c:d]
+|Count: 2
+
+=== 96: compgen -W splits its word list on IFS
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b c
+|p
+|q

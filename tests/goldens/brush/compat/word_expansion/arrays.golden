@@ -1,0 +1,106 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/word_expansion/arrays.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Array access
+status: 0
+bash-n: 0
+--- stdout
+|a b c
+|a b c
+|${y[@]}: a b c
+|${y[*]}: a b c
+|var1: a b c
+|a b c
+|var2: a b c
+|a b c
+|var3: a b c
+|a b c
+|var4: a b c
+|a b c
+|quoted-@ => Element: a
+|quoted-@ => Element: b
+|quoted-@ => Element: c
+|@ => Element: a
+|@ => Element: b
+|@ => Element: c
+|quoted-* => Element: a b c
+|* => Element: a
+|* => Element: b
+|* => Element: c
+
+=== 1: Empty arrays
+status: 0
+bash-n: 0
+--- stdout
+|Quoted at-sign element: ||
+
+=== 2: Mixing array elements and other words
+status: 0
+bash-n: 0
+--- stdout
+|ELEMENT: a
+|ELEMENT: b
+|ELEMENT: c d e f
+|ELEMENT: a
+|ELEMENT: b
+|ELEMENT: c
+|ELEMENT: d
+|ELEMENT: e
+|ELEMENT: f
+
+=== 3: Passing array elements to func
+status: 0
+bash-n: 0
+--- stdout
+|In function
+|ARG: |a|
+|ARG: |b|
+|ARG: |c|
+|ARG: |e|
+|ARG: |f|
+|In function
+|ARG: |a|
+|ARG: |b|
+|ARG: |c|
+|ARG: |e|
+|ARG: |f|
+
+=== 4: Array length
+status: 0
+bash-n: 0
+--- stdout
+|len(y)    = 1
+|len(y[*]) = 3
+|len(y[@]) = 3
+
+=== 5: Array length: single item
+status: 0
+bash-n: 0
+--- stdout
+|len(z)    = 14
+|len(z[*]) = 1
+|len(z[@]) = 1
+
+=== 6: Array keys: indexed array
+status: 0
+bash-n: 0
+--- stdout
+|@: 0 1 2
+|*: 0 1 2
+|Dumping [@]
+|@i: 0
+|@i: 1
+|@i: 2
+|Dumping [*]
+|*i: 0 1 2
+
+=== 7: Array keys: empty array
+status: 0
+bash-n: 0
+--- stdout
+|@: 
+|*: 
+|Dumping [@]
+|Dumping [*]
+|*i: 

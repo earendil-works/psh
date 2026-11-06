@@ -1,0 +1,93 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/options/shopt-failglob.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: failglob errors on unmatched glob
+status: 0
+bash-n: 0
+--- stdout
+|exit=1
+--- stderr
+|bash: line 2: no match: non-existent-*.txt
+
+=== 1: failglob does not affect matching glob
+status: 0
+bash-n: 0
+--- stdout
+|realfile.txt
+--- file realfile.txt
+
+=== 2: failglob does not affect quoted glob chars
+status: 0
+bash-n: 0
+--- stdout
+|non-existent-*.txt
+
+=== 3: failglob with negation
+status: 0
+bash-n: 0
+--- stdout
+|exit=1
+--- stderr
+|bash: line 2: no match: non-existent-*.txt
+
+=== 4: failglob in subshell
+status: 0
+bash-n: 0
+--- stdout
+|outer=1
+--- stderr
+|bash: line 2: no match: non-existent-*.txt
+
+=== 5: failglob lone ] is not a glob
+status: 0
+bash-n: 0
+--- stdout
+|foo]
+
+=== 6: failglob lone [ is not a glob
+status: 0
+bash-n: 0
+--- stdout
+|[abc
+
+=== 7: failglob aborts compound list
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: no match: *.nomatch
+
+=== 8: failglob in multi-member pipeline
+status: 0
+bash-n: 0
+--- stdout
+|after
+--- stderr
+|bash: line 2: no match: *.nomatch
+
+=== 9: failglob extglob pattern
+status: 0
+bash-n: 2
+--- stdout
+|after
+--- stderr
+|bash: line 3: no match: @(nomatch_pattern_xyz)
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `('
+|bash: line 3: `echo @(nomatch_pattern_xyz)'
+
+=== 10: failglob takes precedence over nullglob
+status: 0
+bash-n: 0
+--- stdout
+|exit=1
+--- stderr
+|bash: line 2: no match: non-existent-*.txt
+
+=== 11: failglob on unquoted variable with glob chars
+status: 0
+bash-n: 0
+--- stdout
+|exit=1
+--- stderr
+|bash: line 3: no match: *.nomatch_xyz

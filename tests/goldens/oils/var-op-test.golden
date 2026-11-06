@@ -1,0 +1,346 @@
+# Goldens for tests/oils/spec/var-op-test.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Lazy Evaluation of Alternative
+status: 0
+bash-n: 0
+--- stdout
+|x
+|0
+|0
+|1
+
+=== 1: Default value when empty
+status: 0
+bash-n: 0
+--- stdout
+|is empty
+
+=== 2: Default value when unset
+status: 0
+bash-n: 0
+--- stdout
+|is unset
+
+=== 3: Unquoted with array as default value
+status: 0
+bash-n: 0
+--- stdout
+|['Xx1', '2', '3', '4xX']
+|['Xx1', '2', '3', '4xX']
+
+=== 4: Quoted with array as default value
+status: 0
+bash-n: 0
+--- stdout
+|['Xx1 2 3 4xX']
+|['Xx1 2 3 4xX']
+
+=== 5: Assign default with array
+status: 0
+bash-n: 0
+--- stdout
+|['Xx1', '2', '3', '4xX']
+|['x1 2 3 4x']
+
+=== 6: Assign default value when empty
+status: 0
+bash-n: 0
+--- stdout
+|is empty
+--- stderr
+|bash: line 2: is: command not found
+
+=== 7: Assign default value when unset
+status: 0
+bash-n: 0
+--- stdout
+|is unset
+--- stderr
+|bash: line 1: is: command not found
+
+=== 8: ${v:+foo} Alternative value when empty
+status: 0
+bash-n: 0
+--- stdout
+|v is not empty
+
+=== 9: ${v+foo} Alternative value when unset
+status: 0
+bash-n: 0
+--- stdout
+|v is not unset
+
+=== 10: "${x+foo}" quoted (regression)
+status: 0
+bash-n: 0
+--- stdout
+|['', '=', 'set']
+
+=== 11: ${s+foo} and ${s:+foo} when set -u
+status: 0
+bash-n: 0
+--- stdout
+|v=foo
+|v=foo
+|v=
+|v=
+
+=== 12: "${array[@]} with set -u (bash is outlier)
+status: 0
+bash-n: 0
+--- stdout
+|empty //
+|undefined //
+
+=== 13: "${undefined[@]+foo}" and "${undefined[@]:+foo}", with set -u
+status: 0
+bash-n: 0
+--- stdout
+|plus //
+|plus colon //
+
+=== 14: "${a[@]+foo}" and "${a[@]:+foo}" - operators are equivalent on arrays?
+status: 0
+bash-n: 0
+--- stdout
+|+  //
+|+: //
+|
+|+  //
+|+: //
+|
+|+  /foo/
+|+: //
+|
+|+  /foo/
+|+: /foo/
+|
+
+=== 15: Nix idiom ${!hooksSlice+"${!hooksSlice}"} - was workaround for obsolete bash 4.3 bug
+status: 0
+bash-n: 0
+--- stdout
+|[]
+|[]
+|['42']
+--- stderr
+|bash: line 4: hooksSlice: invalid indirect expansion
+
+=== 16: ${v-foo} and ${v:-foo} when set -u
+status: 0
+bash-n: 0
+--- stdout
+|v=v
+|v=v
+|v=foo
+|v=foo
+
+=== 17: array and - and +
+status: 0
+bash-n: 0
+--- stdout
+|empty=minus
+|a1=
+|a1[0]=
+|a2= x
+|a3=3 4
+|---
+|empty=
+|a1=plus
+|a1[0]=plus
+|a2=plus
+|a3=plus
+|---
+|empty=
+|a1=plus
+|a2=plus
+|a3=plus
+|---
+|['minus']
+|[]
+|['']
+|['plus']
+|['']
+|['plus']
+|['', 'x']
+|['plus']
+|['3', '4']
+|['plus']
+--- stderr
+|bash: line 3: shopt: compat_array: invalid shell option name
+
+=== 18: $@ (empty) and - and +
+status: 0
+bash-n: 0
+--- stdout
+|argv=minus
+|argv=
+|argv=minus
+|argv=
+
+=== 19: $@ ("") and - and +
+status: 0
+bash-n: 0
+--- stdout
+|argv=
+|argv=plus
+|argv=minus
+|argv=
+
+=== 20: $@ ("" "") and - and +
+status: 0
+bash-n: 0
+--- stdout
+|argv=
+|argv=plus
+|argv=
+|argv=plus
+
+=== 21: $* ("" "") and - and + (IFS=)
+status: 0
+bash-n: 0
+--- stdout
+|argv=
+|argv=plus
+|argv=
+|argv=plus
+
+=== 22: "$*" ("" "") and - and + (IFS=)
+status: 0
+bash-n: 0
+--- stdout
+|argv=
+|argv=plus
+|argv=minus
+|argv=
+
+=== 23: assoc array and - and +
+status: 0
+bash-n: 0
+--- stdout
+|empty=minus
+|empty=
+|assoc=v
+|assoc=plus
+|---
+|empty=minus
+|empty=
+|assoc=v
+|assoc=plus
+
+=== 24: Error when empty
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: empty: is empty
+
+=== 25: Error when unset
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: unset: is empty
+
+=== 26: Error when unset
+status: 0
+bash-n: 0
+--- stdout
+|v is not unset
+
+=== 27: ${var=x} dynamic scope
+status: 0
+bash-n: 0
+--- stdout
+|x
+|hello=x
+|hello=x
+
+=== 28: array ${arr[0]=x}
+status: 0
+bash-n: 0
+--- stdout
+|0
+|1
+
+=== 29: assoc array ${arr["k"]=x}
+status: 0
+bash-n: 0
+--- stdout
+|0
+|1
+
+=== 30: "\z" as arg
+status: 0
+bash-n: 0
+--- stdout
+|$
+|\(
+|\z
+|"
+|`
+|\
+
+=== 31: "\e" as arg
+status: 0
+bash-n: 0
+--- stdout
+|\e
+
+=== 32: op-test for ${a} and ${a[0]}
+status: 0
+bash-n: 0
+--- stdout
+|a   : 'no-colon' 'with-colon'
+|a[0]: 'no-colon' 'with-colon'
+|a   : '' 'with-colon'
+|a[0]: '' 'with-colon'
+|a   : '' 'with-colon'
+|a[0]: '' 'with-colon'
+|a   : '' 'with-colon'
+|a[0]: '' 'with-colon'
+
+=== 33: op-test for ${a[@]} and ${a[*]}
+status: 0
+bash-n: 0
+--- stdout
+|a[@]: 'no-colon' 'with-colon'
+|a[*]: 'no-colon' 'with-colon'
+|a[@]: '' 'with-colon'
+|a[*]: '' 'with-colon'
+|a[@]: ' ' ' '
+|a[*]: ' ' ' '
+|a[@]: ' ' ' '
+|a[*]: '' 'with-colon'
+
+=== 34: op-test for ${!array} with array="a" and array="a[0]"
+status: 0
+bash-n: 0
+--- stdout
+|ref=a   : 'no-colon' 'with-colon'
+|ref=a[0]: 'no-colon' 'with-colon'
+|ref=a   : '' 'with-colon'
+|ref=a[0]: '' 'with-colon'
+|ref=a   : '' 'with-colon'
+|ref=a[0]: '' 'with-colon'
+|ref=a   : '' 'with-colon'
+|ref=a[0]: '' 'with-colon'
+
+=== 35: op-test for ${!array} with array="a[@]" or array="a[*]"
+status: 0
+bash-n: 0
+--- stdout
+|ref=a[@]: 'no-colon' 'with-colon'
+|ref=a[*]: 'no-colon' 'with-colon'
+|ref=a[@]: '' ''
+|ref=a[*]: '' ''
+|ref=a[@]: ' ' ' '
+|ref=a[*]: ' ' ' '
+|ref=a[@]: ' ' ' '
+|ref=a[*]: '' ''
+
+=== 36: op-test for unquoted ${a[*]:-empty} with IFS=
+status: 0
+bash-n: 0
+--- stdout
+|[]

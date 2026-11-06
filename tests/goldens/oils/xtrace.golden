@@ -1,0 +1,195 @@
+# Goldens for tests/oils/spec/xtrace.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: unset PS4
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+--- stderr
+|+ echo 1
+|+ unset PS4
+|echo 2
+
+=== 1: set -o verbose prints unevaluated code
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|bar
+--- stderr
+|x=foo
+|y=bar
+|echo $x
+|echo $(echo $y)
+
+=== 2: xtrace with unprintable chars
+status: 0
+bash-n: 0
+--- stdout
+|STDOUT
+|   a 003   b 004   c  \n
+|  61  03  62  04  63  0a
+|
+|STDERR
+|+ echo $'a\003b\004c'
+--- file stderr
+|+ echo $'a\003b\004c'
+--- file stdout
+\a\x03b\x04c
+
+=== 3: xtrace with unicode chars
+status: 0
+bash-n: 0
+--- stdout
+|[μ] [μ]
+--- stderr
+|+ echo '[μ]' '[μ]'
+
+=== 4: xtrace with paths
+status: 0
+bash-n: 0
+--- stdout
+|my-dir/my_file.cc
+--- stderr
+|+ echo my-dir/my_file.cc
+
+=== 5: xtrace with tabs
+status: 0
+bash-n: 0
+--- stdout
+|[	]
+--- stderr
+|+ echo $'[\t]'
+
+=== 6: xtrace with whitespace, quotes, and backslash
+status: 0
+bash-n: 0
+--- stdout
+|1 2 ' " \
+--- stderr
+|+ echo '1 2' \' '"' '\'
+
+=== 7: xtrace with newlines
+status: 0
+bash-n: 0
+--- stdout
+|[
+|]
+--- stderr
+|+ echo $'[\n]'
+
+=== 8: xtrace written before command executes
+status: 0
+bash-n: 0
+--- stderr
+|+ echo one
+|one
+|+ echo two
+|two
+
+=== 9: Assignments and assign builtins
+status: 0
+bash-n: 0
+--- stdout
+|2
+--- stderr
+|+ x=1
+|+ x=2
+|+ echo 2
+|+ readonly x=3
+|+ x=3
+
+=== 10: [[ ]]
+status: 0
+bash-n: 0
+--- stderr
+|+ dir=/
+|+ [[ -d / ]]
+|+ ((  a = 42  ))
+
+=== 11: PS4 is scoped
+status: 0
+bash-n: 0
+--- stdout
+|one
+|func
+|two
+--- stderr
+|+ echo one
+|+ f
+|+ local 'PS4=- '
+|- echo func
+|+ echo two
+
+=== 12: xtrace with variables in PS4
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+--- stderr
+|+:x=1
+|+1:echo one
+|+1:x=2
+|+2:echo two
+
+=== 13: PS4 with unterminated ${
+status: 0
+bash-n: 0
+--- stdout
+|one
+|status=0
+--- stderr
+|bash: line 4: +${x: bad substitution
+|+${xecho one
+|bash: line 5: +${x: bad substitution
+|+${xecho status=0
+
+=== 14: PS4 with unterminated $(
+status: 0
+bash-n: 0
+--- stdout
+|one
+|status=0
+--- stderr
+|bash: command substitution: line 6: unexpected EOF while looking for matching `)'
+|+echo one
+|bash: command substitution: line 7: unexpected EOF while looking for matching `)'
+|+echo status=0
+
+=== 15: PS4 with runtime error
+status: 0
+bash-n: 0
+--- stdout
+|one
+|status=0
+--- stderr
+|bash: line 4: 1 / 0 : division by 0 (error token is "0 ")
+|+oops $(( 1 / 0 )) \$echo one
+|bash: line 5: 1 / 0 : division by 0 (error token is "0 ")
+|+oops $(( 1 / 0 )) \$echo status=0
+
+=== 16: Reading $? in PS4
+status: 0
+bash-n: 0
+--- stdout
+|ok
+--- stderr
+|[last=0] false
+|[last=1] echo ok
+
+=== 17: Regression: xtrace for "declare -a a+=(v)"
+status: 0
+bash-n: 0
+--- stderr
+|+ a+=('2')
+|+ declare a
+
+=== 18: Regression: xtrace for "a+=(v)"
+status: 0
+bash-n: 0
+--- stderr
+|+ a+=(2)

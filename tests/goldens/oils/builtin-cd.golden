@@ -1,0 +1,247 @@
+# Goldens for tests/oils/spec/builtin-cd.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: cd and $PWD
+status: 0
+bash-n: 0
+--- stdout
+|/
+
+=== 1: cd BAD/..
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: cd: nonexistent_ZZ/..: No such file or directory
+
+=== 2: cd with 2 or more args - with strict_arg_parse
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+|failed with multiple args
+--- stderr
+|bash: line 1: shopt: strict_arg_parse: invalid shell option name
+|bash: line 10: cd: too many arguments
+--- dir foo
+
+=== 3: cd with 2 or more args is allowed (strict_arg_parse disabled)
+status: 2
+bash-n: 0
+--- stderr
+|bash: line 2: cd: too many arguments
+--- dir foo
+
+=== 4: cd - without OLDPWD
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: cd: OLDPWD not set
+
+=== 5: $OLDPWD
+status: 0
+bash-n: 0
+--- stdout
+|old: /
+|OLDPWD=/
+|/
+
+=== 6: pwd
+status: 0
+bash-n: 0
+--- stdout
+|/
+
+=== 7: pwd after cd ..
+status: 0
+bash-n: 0
+--- stdout
+|dir-two
+|dir-one
+--- dir dir-one
+--- dir dir-one/dir-two
+
+=== 8: pwd with symlink and -P
+status: 0
+bash-n: 0
+--- stdout
+|pwd:
+|symlink
+|pwd -P:
+|target
+--- dir builtins-pwd-1
+--- link builtins-pwd-1/symlink -> <case>/builtins-pwd-1/target
+--- dir builtins-pwd-1/target
+
+=== 9: setting $PWD doesn't affect the value of 'pwd' builtin
+status: 0
+bash-n: 0
+--- stdout
+|before foo
+|/tmp/oil-spec-test/pwd
+|after foo
+
+=== 10: unset PWD; then pwd
+status: 0
+bash-n: 0
+--- stdout
+|PWD=
+|/tmp/oil-spec-test/pwd
+|PWD=
+
+=== 11: 'unset PWD; pwd' before any cd (tickles a rare corner case)
+status: 0
+bash-n: 0
+--- stdout
+|/tmp/oil-spec-test/pwd-2
+
+=== 12: lie about PWD; pwd before any cd
+status: 0
+bash-n: 0
+--- stdout
+|/tmp/oil-spec-test/pwd-3
+
+=== 13: remove pwd dir
+status: 0
+bash-n: 0
+--- stdout
+|/tmp/oil-spec-test/pwd
+|status=0
+|/tmp/oil-spec-test/pwd
+|status=0
+
+=== 14: pwd in symlinked dir on shell initialization
+status: 0
+bash-n: 0
+--- stdout
+|symlink
+|target
+--- dir builtins-pwd-2
+--- link builtins-pwd-2/symlink -> <case>/builtins-pwd-2/target
+--- dir builtins-pwd-2/target
+
+=== 15: Test the current directory after 'cd ..' involving symlinks
+status: 0
+bash-n: 0
+--- stdout
+|a
+|c
+--- dir symlinktest
+--- dir symlinktest/a
+--- dir symlinktest/a/b
+--- dir symlinktest/a/b/c
+--- dir symlinktest/a/b/d
+--- link symlinktest/c -> a/b/c
+
+=== 16: cd with no arguments
+status: 0
+bash-n: 0
+--- stdout
+|OK
+--- dir home
+
+=== 17: cd to nonexistent dir
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: cd: /nonexistent/dir: No such file or directory
+
+=== 18: cd away from dir that was deleted
+status: 0
+bash-n: 0
+--- stdout
+|cd-nonexistent
+|status=0
+
+=== 19: cd permits double bare dash
+status: 0
+bash-n: 0
+--- stdout
+|/
+
+=== 20: cd to symlink with -L and -P
+status: 0
+bash-n: 0
+--- stdout
+|OK
+|OK
+|OK
+--- link cd-symlink -> <case>/cd-symtarget
+--- dir cd-symtarget
+
+=== 21: cd to relative path with -L and -P
+status: 0
+bash-n: 0
+--- stdout
+|OK
+|OK
+|OK
+--- link cd-symlink -> <case>/cd-symtarget
+--- dir cd-symtarget
+--- dir cd-symtarget/subdir
+
+=== 22: unset PWD; cd /tmp is allowed (regression)
+status: 0
+bash-n: 0
+--- stdout
+|/tmp
+
+=== 23: CDPATH is respected
+status: 0
+bash-n: 0
+--- stdout
+|/tmp/spam/foo
+|status=0
+|/tmp/spam/foo
+
+=== 24: Change directory in non-shell parent process (make or Python)
+status: 0
+bash-n: 0
+--- stdout
+|
+--- stderr
+|bash: line 9: python2: command not found
+--- dir cpan
+--- dir cpan/Encode
+--- dir cpan/Encode/Byte
+
+=== 25: What happens when inherited $PWD and current dir disagree?
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 18: python2: command not found
+
+=== 26: Survey of getcwd() syscall
+status: 0
+bash-n: 0
+--- stdout
+|1 err.txt
+--- file err.txt
+|bash: line 3: strace: command not found
+
+=== 27: chdir is a synonym for cd - busybox ash
+status: 0
+bash-n: 0
+--- stdout
+|fail
+--- stderr
+|bash: line 1: chdir: command not found
+
+=== 28: arguments to pwd
+status: 0
+bash-n: 0
+--- stdout
+|<case>
+
+=== 29: pwd errors out on args with strict_arg_parse
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 1: shopt: strict_arg_parse: invalid shell option name

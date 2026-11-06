@@ -1,0 +1,590 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/getopts.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic getopts
+status: 0
+bash-n: 0
+--- stdout
+|Beginning of args
+|Option a; OPTARG=
+|OPTIND is now 2
+|OPTERR is now 1
+|----------------
+|Option b; OPTARG=my_b_arg
+|OPTIND is now 4
+|OPTERR is now 1
+|----------------
+|Result: 0
+|option: ?
+|End of args
+|OPTARG: 
+|OPTIND: 4
+
+=== 1: getopts: no args
+status: 0
+bash-n: 0
+--- stdout
+|Result: 1
+|myvar: ?
+|OPTARG: 
+|OPTIND: 1
+|OPTERR: 1
+
+=== 2: getopts: toplevel positional parameters
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: a
+|OPTARG: value
+|OPTIND: 3
+|OPTERR: 1
+
+=== 3: getopts: function positional parameters
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: b
+|OPTARG: value
+|OPTIND: 3
+|OPTERR: 1
+
+=== 4: getopts: function script parameters
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: a
+|OPTARG: value
+|OPTIND: 3
+|OPTERR: 1
+
+=== 5: getopts: no options given
+status: 0
+bash-n: 0
+--- stdout
+|Done; result: 0
+|myvar: ?
+|OPTARG: 
+|OPTIND: 1
+|OPTERR: 1
+
+=== 6: getopts: options and non-options
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: a
+|OPTARG: 
+|OPTIND: 2
+|OPTERR: 1
+|----------------
+|Result: 0
+|myvar: b
+|OPTARG: value
+|OPTIND: 4
+|OPTERR: 1
+|----------------
+|Done; result: 0
+|myvar: ?
+|OPTARG: 
+|OPTIND: 4
+|OPTERR: 1
+
+=== 7: getopts: --
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: a
+|OPTARG: 
+|OPTIND: 2
+|OPTERR: 1
+|----------------
+|Result: 0
+|myvar: b
+|OPTARG: value
+|OPTIND: 4
+|OPTERR: 1
+|----------------
+|Done; result: 0
+|myvar: ?
+|OPTARG: 
+|OPTIND: 5
+|OPTERR: 1
+
+=== 8: getopts: -- as first arg
+status: 0
+bash-n: 0
+--- stdout
+|Done; result: 0
+|myvar: ?
+|OPTARG: 
+|OPTIND: 2
+|OPTERR: 1
+
+=== 9: getopts: invalid option when optstr starts with colon
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: ?
+|OPTARG: b
+|OPTIND: 2
+|OPTERR: 1
+
+=== 10: getopts: invalid option when optstr does not start with colon
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: ?
+|OPTARG: 
+|OPTIND: 2
+|OPTERR: 1
+--- stderr
+|bash: illegal option -- b
+
+=== 11: getopts: multiple options in one token
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: f
+|OPTARG: 
+|OPTIND: 1
+|OPTERR: 1
+|----------------
+|Result: 0
+|myvar: e
+|OPTARG: 
+|OPTIND: 1
+|OPTERR: 1
+|----------------
+|Result: 0
+|myvar: d
+|OPTARG: 
+|OPTIND: 1
+|OPTERR: 1
+|----------------
+|Result: 0
+|myvar: c
+|OPTARG: 
+|OPTIND: 1
+|OPTERR: 1
+|----------------
+|Result: 0
+|myvar: b
+|OPTARG: 
+|OPTIND: 1
+|OPTERR: 1
+|----------------
+|Result: 0
+|myvar: a
+|OPTARG: something
+|OPTIND: 3
+|OPTERR: 1
+|----------------
+|Result: 0
+|myvar: g
+|OPTARG: 
+|OPTIND: 4
+|OPTERR: 1
+|----------------
+|Done; result: 0
+|myvar: ?
+|OPTARG: 
+|OPTIND: 4
+|OPTERR: 1
+
+=== 12: getopts: short option and value in single arg
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: p
+|OPTARG: -
+|OPTIND: 2
+|OPTERR: 1
+
+=== 13: getopts: OPTERR=0 suppresses error for unknown option
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: ?
+|OPTARG: UNSET
+|OPTIND: 2
+
+=== 14: getopts: OPTERR=1 shows error for unknown option
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: ?
+|OPTARG: UNSET
+|OPTIND: 2
+--- stderr
+|bash: illegal option -- x
+
+=== 15: getopts: OPTERR nonzero shows error
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: ?
+|OPTARG: UNSET
+--- stderr
+|bash: illegal option -- x
+
+=== 16: getopts: missing required argument without leading colon
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: ?
+|OPTARG: UNSET
+|OPTIND: 2
+--- stderr
+|bash: option requires an argument -- a
+
+=== 17: getopts: missing required argument with leading colon
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: :
+|OPTARG: a
+|OPTIND: 2
+
+=== 18: getopts: missing required argument with OPTERR=0
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: ?
+|OPTARG: UNSET
+|OPTIND: 2
+
+=== 19: getopts: combined unknown and missing arg errors
+status: 0
+bash-n: 0
+--- stdout
+|a=foo
+|unknown
+|unknown
+|Done: 0
+--- stderr
+|bash: illegal option -- x
+|bash: option requires an argument -- b
+
+=== 20: getopts: bare dash as argument
+status: 0
+bash-n: 0
+--- stdout
+|Result: 1
+|myvar: ?
+|OPTARG: UNSET
+|OPTIND: 1
+
+=== 21: getopts: leading colon with dash-colon option
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: ?
+|OPTARG: :
+|OPTIND: 2
+
+=== 22: getopts: unknown option in middle of combined flags
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: a
+|OPTARG: UNSET
+|OPTIND: 1
+|----------------
+|Result: 0
+|myvar: ?
+|OPTARG: UNSET
+|OPTIND: 1
+|----------------
+|Result: 0
+|myvar: c
+|OPTARG: UNSET
+|OPTIND: 2
+|----------------
+|Done; result: 0
+|myvar: ?
+--- stderr
+|bash: illegal option -- x
+
+=== 23: getopts: missing arg in combined flags
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: b
+|OPTARG: UNSET
+|OPTIND: 1
+|----------------
+|Result: 0
+|myvar: ?
+|OPTARG: UNSET
+|OPTIND: 2
+|----------------
+|Final: 0
+|myvar: ?
+|OPTARG: UNSET
+|OPTIND: 2
+--- stderr
+|bash: option requires an argument -- a
+
+=== 24: getopts: combined flags with arg-taking option consumes next arg
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: b
+|OPTARG: UNSET
+|OPTIND: 1
+|----------------
+|Result: 0
+|myvar: a
+|OPTARG: nextarg
+|OPTIND: 3
+|----------------
+|Done; result: 0
+|myvar: ?
+|OPTIND: 3
+
+=== 25: getopts: OPTIND reset between calls
+status: 0
+bash-n: 0
+--- stdout
+|myvar: b; OPTARG: UNSET; OPTIND: 2
+|myvar: a; OPTARG: foo; OPTIND: 4
+|--- reset ---
+|myvar: b; OPTARG: UNSET; OPTIND: 2
+|myvar: a; OPTARG: bar; OPTIND: 4
+
+=== 26: getopts: empty optstring
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: ?
+|OPTARG: UNSET
+|OPTIND: 2
+--- stderr
+|bash: illegal option -- a
+
+=== 27: getopts: OPTIND=0
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: a
+|OPTARG: value
+|OPTIND: 3
+
+=== 28: getopts: negative OPTIND treated as reset
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: a
+|OPTARG: value
+|OPTIND: 3
+
+=== 29: getopts: bare dash among other args
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: a
+|OPTARG: UNSET
+|OPTIND: 2
+|----------------
+|Done; result: 0
+|myvar: ?
+|OPTIND: 2
+
+=== 30: getopts: OPTIND past end of args
+status: 0
+bash-n: 0
+--- stdout
+|Result: 1
+|myvar: ?
+|OPTARG: UNSET
+|OPTIND: 3
+
+=== 31: getopts: missing arg with leading colon in combined flags
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: b
+|OPTARG: UNSET
+|OPTIND: 1
+|----------------
+|Result: 0
+|myvar: :
+|OPTARG: a
+|OPTIND: 2
+|----------------
+|Done; result: 0
+
+=== 32: getopts: non-numeric OPTIND treated as reset
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: a
+|OPTARG: value
+|OPTIND: 3
+
+=== 33: getopts: option value is empty string
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: a
+|OPTARG: ''
+|OPTIND: 3
+
+=== 34: getopts: option value looks like another option
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: a
+|OPTARG: -b
+|OPTIND: 3
+
+=== 35: getopts: OPTIND=0 resets mid-parse of combined options
+status: 0
+bash-n: 0
+--- stdout
+|first: a
+|after reset: a
+
+=== 36: getopts: OPTERR non-numeric treated as enabled
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: ?
+|OPTARG: UNSET
+|OPTIND: 2
+
+=== 37: getopts: invalid variable name rejected
+status: 0
+bash-n: 0
+--- stdout
+|Result: 1
+--- stderr
+|bash: line 1: getopts: `123abc': not a valid identifier
+
+=== 38: getopts: duplicate option char in optstring uses first definition
+status: 0
+bash-n: 0
+--- stdout
+|myvar: a
+|OPTARG: UNSET
+|OPTIND: 2
+
+=== 39: getopts: optstring is only a colon
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|myvar: ?
+|OPTARG: a
+|OPTIND: 2
+
+=== 40: getopts: empty string argument is not an option
+status: 0
+bash-n: 0
+--- stdout
+|Result: 1
+|myvar: ?
+|OPTIND: 1
+
+=== 41: getopts writes through nameref
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|result: a
+|ref: a
+|OPTARG: value
+
+=== 42: getopts writes through subscripted nameref
+status: 0
+bash-n: 0
+--- stdout
+|Result: 0
+|arr[1]: a
+|ref: a
+
+=== 43: getopts reads a leading -- as the end of its own options
+status: 0
+bash-n: 0
+--- stdout
+|status=0 opt=a
+
+=== 44: getopts --help prints help on stdout
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|help on stdout
+
+=== 45: getopts takes --help after its optstring as an argument
+status: 0
+bash-n: 0
+--- stdout
+|rc=0 opt=?
+|rc=0 opt=b
+
+=== 46: getopts rejects an option before its optstring
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|rc=2
+--- stderr
+|bash: line 1: getopts: -x: invalid option
+|getopts: usage: getopts optstring name [arg ...]
+|bash: line 2: getopts: -x: invalid option
+|getopts: usage: getopts optstring name [arg ...]
+
+=== 47: getopts rejects a name that isn't an identifier
+status: 0
+bash-n: 0
+--- stdout
+|getopts: 1
+|getopts: `1x': not a valid identifier
+
+=== 48: getopts keeps its place in bundled options out of shell variables
+status: 0
+bash-n: 0
+--- stdout
+|opt=a OPTIND=1
+|prefixed: []
+|opt=b OPTIND=2
+
+=== 49: getopts' place in bundled options follows subshell rules
+status: 0
+bash-n: 0
+--- stdout
+|1: opt=a OPTIND=1
+|subshell: opt=b OPTIND=2
+|substitution: opt=b OPTIND=2
+|2: opt=b OPTIND=2
+|3: opt=c OPTIND=3
+|after reset: opt=a OPTIND=1

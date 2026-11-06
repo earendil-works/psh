@@ -1,0 +1,237 @@
+# Goldens for tests/oils/spec/parse-errors.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Long Token - 65535 bytes
+status: 0
+bash-n: 0
+--- stdout
+|0 out
+--- stderr
+|bash: line 1: python2: command not found
+--- file out
+--- file tmp.sh
+
+=== 1: Token that's too long for Oils - 65536 bytes
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|0 out
+--- stderr
+|bash: line 1: python2: command not found
+--- file out
+--- file tmp.sh
+
+=== 2: $% is not a parse error
+status: 0
+bash-n: 0
+--- stdout
+|$%
+
+=== 3: Bad braced var sub -- not allowed
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: ${%}: bad substitution
+
+=== 4: Bad var sub caught at parse time
+status: 0
+bash-n: 0
+--- stdout
+|ok
+
+=== 5: Incomplete while
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 3: syntax error: unexpected end of file from `while' command on line 1
+--- bash-n stderr
+|bash: line 3: syntax error: unexpected end of file from `while' command on line 1
+
+=== 6: Incomplete for
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `newline'
+|bash: line 1: `echo hi; for'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `newline'
+|bash: line 1: `echo hi; for'
+
+=== 7: Incomplete if
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 3: syntax error: unexpected end of file from `if' command on line 1
+--- bash-n stderr
+|bash: line 3: syntax error: unexpected end of file from `if' command on line 1
+
+=== 8: do unexpected
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `do'
+|bash: line 1: `do echo hi'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `do'
+|bash: line 1: `do echo hi'
+
+=== 9: } is a parse error
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `}'
+|bash: line 1: `}'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `}'
+|bash: line 1: `}'
+
+=== 10: { is its own word, needs a space
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `}'
+|bash: line 1: `{ls; }'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `}'
+|bash: line 1: `{ls; }'
+
+=== 11: } on the second line
+status: 127
+bash-n: 2
+--- stderr
+|bash: line 2: {ls: command not found
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `}'
+|bash: line 3: `}'
+
+=== 12: Invalid for loop variable name
+status: 0
+bash-n: 0
+--- stdout
+|done
+--- stderr
+|bash: line 1: `i.j': not a valid identifier
+
+=== 13: bad var name globally isn't parsed like an assignment
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: FOO-BAR=foo: command not found
+
+=== 14: bad var name in export
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: export: `FOO-BAR=foo': not a valid identifier
+
+=== 15: bad var name in local
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: local: `FOO-BAR=foo': not a valid identifier
+
+=== 16: misplaced parentheses are not a subshell
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `('
+|bash: line 1: `echo a(b)'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `('
+|bash: line 1: `echo a(b)'
+
+=== 17: incomplete command sub
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 2: unexpected EOF while looking for matching `)'
+--- bash-n stderr
+|bash: line 2: unexpected EOF while looking for matching `)'
+
+=== 18: incomplete backticks
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected EOF while looking for matching ``'
+--- bash-n stderr
+|bash: line 1: unexpected EOF while looking for matching ``'
+
+=== 19: misplaced ;;
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `;;'
+|bash: line 1: `echo 1 ;; echo 2'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `;;'
+|bash: line 1: `echo 1 ;; echo 2'
+
+=== 20: empty clause in [[
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: unexpected token `||' in conditional command
+|bash: line 1: syntax error near `|'
+|bash: line 1: `[[ || true ]]'
+--- bash-n stderr
+|bash: line 1: unexpected token `||' in conditional command
+|bash: line 1: syntax error near `|'
+|bash: line 1: `[[ || true ]]'
+
+=== 21: interactive parse error (regression)
+status: 2
+bash-n: 0
+--- stderr
+|bash: cannot set terminal process group (22289): Inappropriate ioctl for device
+|bash: no job control in this shell
+|bash: syntax error near unexpected token `)'
+
+=== 22: array literal inside array is a parse error
+status: 0
+bash-n: 1
+--- stdout
+|len=0
+--- stderr
+|bash: line 1: syntax error near unexpected token `('
+|bash: line 1: `a=( inside=() )'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `('
+|bash: line 1: `a=( inside=() )'
+
+=== 23: array literal inside loop is a parse error
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `  for x in a=(); do'
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `  for x in a=(); do'
+
+=== 24: array literal in case
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `  case a=() in'
+--- bash-n stderr
+|bash: line 2: syntax error near unexpected token `('
+|bash: line 2: `  case a=() in'
+
+=== 25: %foo=() is parse error (regression)
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 3: syntax error near unexpected token `}'
+|bash: line 3: `}'
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `}'
+|bash: line 3: `}'
+
+=== 26: echo =word is allowed
+status: 0
+bash-n: 0
+--- stdout
+|=word

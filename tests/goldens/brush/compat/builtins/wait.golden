@@ -1,0 +1,124 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/wait.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: wait for specific failed PID
+status: 0
+bash-n: 0
+--- stdout
+|status: 5
+
+=== 1: wait for successful PID
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+
+=== 2: wait in conditional for failed PID
+status: 0
+bash-n: 0
+--- stdout
+|else
+
+=== 3: wait with no arguments
+status: 0
+bash-n: 0
+--- stdout
+|after wait all
+
+=== 4: wait -n not implemented
+status: 0
+bash-n: 0
+--- stdout
+|first done, status: 5
+|second done, status: 0
+
+=== 5: Background job failure with wait
+status: 0
+bash-n: 0
+--- stdout
+|status: 3
+
+=== 6: wait %job returns the job's status
+status: 0
+bash-n: 0
+--- stdout
+|status: 3
+
+=== 7: wait for several jobs returns the last one's status
+status: 0
+bash-n: 0
+--- stdout
+|status: 4
+|status: 5
+|still here
+
+=== 8: wait %job for a job that already finished
+status: 0
+bash-n: 0
+--- stdout
+|status: 3
+
+=== 9: wait for a job that doesn't exist fails with status 127
+status: 0
+bash-n: 0
+--- stdout
+|wait %9: 127
+|wait -n: 127
+--- stderr
+|bash: line 1: wait: %9: no such job
+
+=== 10: kill and wait take a job's $!
+status: 0
+bash-n: 0
+--- stdout
+|status: 143
+|status: 3
+
+=== 11: wait for a process that isn't the shell's child
+status: 0
+bash-n: 0
+--- stdout
+|status: 127
+|status: 1
+--- stderr
+|bash: line 1: wait: pid 12345 is not a child of this shell
+|bash: line 3: wait: `abc': not a pid or valid job spec
+
+=== 12: wait for a job's $! once it has finished
+status: 0
+bash-n: 0
+--- stdout
+|status: 5
+|status: 5
+
+=== 13: wait %job for a job killed before it
+status: 0
+bash-n: 0
+--- stdout
+|status: 143
+
+=== 14: a job's program that handles the signal sent to its $! is waited for
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+
+=== 15: a job's program that handles the signal sent to its job spec is waited for
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+
+=== 16: a job's program gets a signal sent to its $! once, and the job goes on
+status: 0
+bash-n: 0
+--- stdout
+|status: 0
+|got
+
+=== 17: wait interrupted by a trapped signal as a child ends returns the signal's status
+status: 0
+bash-n: 0
+--- stdout
+|wait: 138

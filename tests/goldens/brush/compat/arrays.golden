@@ -1,0 +1,413 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/arrays.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic indexed array definition and access
+status: 0
+bash-n: 0
+--- stdout
+|var: a
+|var: a
+|var[0]: a
+|var[1]: b
+|var[2]: c
+|var[3]: 
+|var[4]: 
+|var[*]: a b c
+|declare -a var=([0]="a" [1]="b" [2]="c")
+
+=== 1: Negative indexed array access
+status: 0
+bash-n: 0
+--- stdout
+|var[-1]: c
+|var[-2]: b
+|var[-3]: a
+
+=== 2: Too large negative indexed array access
+status: 0
+bash-n: 0
+--- stdout
+|var[-4]: 
+--- stderr
+|bash: line 2: var: bad array subscript
+
+=== 3: Negative indexed array access (set)
+status: 0
+bash-n: 0
+--- stdout
+|var[*]: a b c d z f x
+|declare -a var=([0]="a" [1]="b" [2]="c" [3]="d" [4]="z" [5]="f" [6]="x")
+
+=== 4: Too large negative indexed array access (set)
+status: 0
+bash-n: 0
+--- stdout
+|var[*]: a b c
+|declare -a var=([0]="a" [1]="b" [2]="c")
+--- stderr
+|bash: line 2: var[-4]: bad array subscript
+
+=== 5: Define array with expansion
+status: 0
+bash-n: 0
+--- stdout
+|declare -a var=([0]="a" [1]="b")
+|declare -a var2=([0]="a" [1]="b")
+
+=== 6: Arrays with empty values
+status: 0
+bash-n: 0
+--- stdout
+|declare -a var1=([0]="a" [1]="" [2]="c")
+|declare -a var2=([0]="a" [1]="" [2]="c")
+|declare -a var3=([0]="" [1]="" [2]="")
+
+=== 7: Basic associative array definition and access
+status: 0
+bash-n: 0
+--- stdout
+|var: 99
+|var: 99
+|var[0]: 99
+|var[a]: 3
+|var[b]: 4
+|var[c]: 5
+|var[d]: 
+|var[key]: 3
+
+=== 8: Array updating via index
+status: 0
+bash-n: 0
+--- stdout
+|var[*]: a d c
+|declare -a var=([0]="a" [1]="d" [2]="c")
+
+=== 9: Array index assignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -a y=([2]="11" [3]="10")
+
+=== 10: Arithmetic index assignment on declared-but-unset variable
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([1]="help")
+
+=== 11: Arithmetic index assignment on local declared-but-unset variable
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([1]="help")
+
+=== 12: Arithmetic index assignment on scalar variable
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([0]="foo" [1]="help")
+
+=== 13: Arithmetic index assignment on undeclared variable
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([1]="help")
+
+=== 14: Replacing array with string
+status: 0
+bash-n: 0
+--- stdout
+|var[*]: x b c
+|declare -a var=([0]="x" [1]="b" [2]="c")
+
+=== 15: Array replacing
+status: 0
+bash-n: 0
+--- stdout
+|var[*]: d e f
+|declare -a var=([0]="d" [1]="e" [2]="f")
+
+=== 16: Appending array to indexed array
+status: 0
+bash-n: 0
+--- stdout
+|var[*]: a b c e f g
+|declare -a var=([0]="a" [1]="b" [2]="c" [3]="e" [4]="f" [5]="g")
+|declare -a var=([0]="a" [1]="b" [2]="c" [3]="e" [4]="f" [5]="g" [6]="" [7]="" [8]="")
+|declare -a var=([0]="a" [1]="b" [2]="c" [3]="e" [4]="f" [5]="g" [6]="" [7]="" [8]="" [9]="h" [10]="i" [11]="" [12]="j" [13]="j" [14]="k" [15]="l")
+
+=== 17: Appending array to declared-but-unset indexed array
+status: 0
+bash-n: 0
+--- stdout
+|var[*]: e f g
+|declare -a var=([0]="e" [1]="f" [2]="g")
+
+=== 18: Appending item to indexed array
+status: 0
+bash-n: 0
+--- stdout
+|var[*]: ad b c
+|declare -a var=([0]="ad" [1]="b" [2]="c")
+
+=== 19: Appending item to element of indexed array
+status: 0
+bash-n: 0
+--- stdout
+|var[*]: 1 22 3
+|declare -a var=([0]="1" [1]="22" [2]="3")
+
+=== 20: Appending item to element of int indexed array
+status: 0
+bash-n: 0
+--- stdout
+|var[*]: 1 4 3
+|declare -ai var=([0]="1" [1]="4" [2]="3")
+
+=== 21: Appending items to int indexed array
+status: 0
+bash-n: 0
+--- stdout
+|declare -ai var=([0]="1" [1]="2" [2]="3" [3]="4" [4]="0" [5]="6")
+
+=== 22: Appending array to associative array
+status: 0
+bash-n: 0
+--- stdout
+|"a" => 1
+|"b" => 2
+|"c" => 3
+|"d" => 4
+|"e" => 5
+|"f" => 6
+
+=== 23: Appending array to declared-but-unset associative array
+status: 0
+bash-n: 0
+--- stdout
+|"d" => 4
+|"e" => 5
+|"f" => 6
+
+=== 24: Appending item to associative array
+status: 0
+bash-n: 0
+--- stdout
+|"0" => d
+|"a" => 1
+|"b" => 2
+|"c" => 3
+
+=== 25: Appending item to element of associative array
+status: 0
+bash-n: 0
+--- stdout
+|"a" => 1
+|"b" => 22
+|"c" => 3
+
+=== 26: Appending item to element of int associative array
+status: 0
+bash-n: 0
+--- stdout
+|"a" => 1
+|"b" => 4
+|"c" => 3
+
+=== 27: Appending items to int associative array
+status: 0
+bash-n: 0
+--- stdout
+|"a" => 1
+|"b" => 2
+|"c" => 3
+|"d" => 4
+|"e" => 0
+|"f" => 6
+
+=== 28: Appending array to item
+status: 0
+bash-n: 0
+--- stdout
+|var[*]: x a b c
+|declare -a var=([0]="x" [1]="a" [2]="b" [3]="c")
+
+=== 29: Fill associative array
+status: 0
+bash-n: 0
+--- stdout
+|Setting: myarray[bunzip2]=first
+|Setting: myarray[bzcat]=first
+|Setting: myarray[pbunzip2]=first
+|Setting: myarray[pbzcat]=first
+|Setting: myarray[lbunzip2]=first
+|Setting: myarray[lbzcat]=first
+
+=== 30: Declare via array index
+status: 0
+bash-n: 0
+--- stdout
+|declare -A assoc_array=([key]="value" )
+|declare -a indexed_array=([5]="value")
+|declare -a implicit_array=([5]="value")
+|declare -A no_value_assoc_array
+|declare -a no_value_indexed_array
+
+=== 31: Create array via index update
+status: 0
+bash-n: 0
+--- stdout
+|0: i=1 array=c
+|1: i=2 array=c b
+|2: i=3 array=c b a
+
+=== 32: Expansion of array body
+status: 0
+bash-n: 0
+--- stdout
+|declare -a array1=([0]="a" [1]="b" [2]="c")
+|declare -a array2=([0]="a b c")
+
+=== 33: Copy array
+status: 0
+bash-n: 0
+--- stdout
+|declare -a dest1=([0]="a b c")
+|declare -a dest2=([0]="a" [1]="b" [2]="c")
+|declare -a dest3=([0]="a" [1]="b" [2]="c")
+|declare -a dest4=([0]="a" [1]="b" [2]="c")
+
+=== 34: Multi-line definition of array
+status: 0
+bash-n: 0
+--- stdout
+|declare -a array=([0]="a" [1]="b" [2]="c")
+
+=== 35: Dump values from non-existent array
+status: 0
+bash-n: 0
+--- stdout
+|*-Quoted Key: 
+
+=== 36: Use non-existent var in indexed array index
+status: 0
+bash-n: 0
+--- stdout
+|Value: 10
+
+=== 37: Use non-existent var in associative array index
+status: 0
+bash-n: 0
+--- stdout
+|Value: 
+--- stderr
+|bash: line 2: myarray: bad array subscript
+
+=== 38: Nested array reference
+status: 0
+bash-n: 0
+--- stdout
+|4
+
+=== 39: Append array-resulting expansion to array
+status: 0
+bash-n: 0
+--- stdout
+|declare -a otherarray=([0]="a" [1]="b" [2]="c")
+|declare -a ourarray=([0]="x" [1]="b" [2]="c")
+
+=== 40: Array declaration in a function
+status: 0
+bash-n: 0
+--- stdout
+|true
+
+=== 41: Array element expansion with non-standard IFS
+status: 0
+bash-n: 0
+--- stdout
+|"${myarray[@]}": abc 1 f
+|"${myarray[*]}": abc|1|f
+|${myarray[@]}: abc 1 f
+|${myarray[*]}: abc 1 f
+
+=== 42: Literal text in a compound value is not field-split
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a,b")
+
+=== 43: A compound value field-splits an expansion but not the literal beside it
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a,b" [1]="p" [2]="q" [3]="keep,me")
+
+=== 44: Empty array with newline
+status: 0
+bash-n: 0
+
+=== 45: Parenthesized arithmetic in array index assignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -a c=([1]="x")
+|declare -a d=([4]="y")
+
+=== 46: Compound assignment appends to an element with [key]+=
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([0]="xz" [1]="y")
+|declare -A m=([k]="vw" [j]="u" )
+|declare -a d=([0]="p" [1]="qr")
+
+=== 47: Compound assignment evaluates an indexed array's subscripts
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([2]="x")
+|declare -a b=([2]="y" [5]="z")
+
+=== 48: Index arithmetic is evaluated after the value is expanded
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([0]="0")
+|i=1
+
+=== 49: Append with an arithmetic subscript
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([0]="0" [1]="1")
+|i=2
+
+=== 50: Associative subscripts are not arithmetically evaluated
+status: 0
+bash-n: 0
+--- stdout
+|declare -A m=([i++]="0" )
+|i=0
+
+=== 51: Associative subscript is expanded once in a plain assignment
+status: 0
+bash-n: 0
+--- stdout
+|declare -A m=(["\$(echo expanded-twice)"]="v" )
+
+=== 52: An empty subscript is a bad substitution
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+--- stderr
+|bash: line 2: [${zz_a[]}]: bad substitution
+
+=== 53: Negative index into sparse indexed array
+status: 0
+bash-n: 0
+--- stdout
+|<> <q>
+|declare -a b=([0]="a" [1]="b" [2]="c" [3]="d" [4]="Z" [5]="qr")
+|declare -a b=([0]="a" [1]="b" [2]="c" [4]="Z" [5]="qr")

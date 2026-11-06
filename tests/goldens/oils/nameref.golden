@@ -1,0 +1,278 @@
+# Goldens for tests/oils/spec/nameref.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: pass array by reference
+status: 0
+bash-n: 0
+--- stdout
+|zo
+
+=== 1: mutate array by reference
+status: 0
+bash-n: 0
+--- stdout
+|a ZZZ c d
+
+=== 2: pass assoc array by reference
+status: 0
+bash-n: 0
+--- stdout
+|jam
+
+=== 3: pass local array by reference, relying on DYNAMIC SCOPING
+status: 0
+bash-n: 0
+--- stdout
+|zo
+
+=== 4: flag -n and +n
+status: 0
+bash-n: 0
+--- stdout
+|ref=x
+|ref=foo
+|ref=bar
+|ref=x
+
+=== 5: mutating through nameref: ref=
+status: 0
+bash-n: 0
+--- stdout
+|1 ref=y
+|2 ref=YY
+|3 ref=XXXX
+|4 y=XXXX
+
+=== 6: flag -n combined ${!ref} -- bash INVERTS
+status: 0
+bash-n: 0
+--- stdout
+|ref=x
+|!ref=foo
+|NOW A NAMEREF
+|ref=foo
+|!ref=x
+
+=== 7: named ref with $# doesn't work
+status: 0
+bash-n: 0
+--- stdout
+|ref=#
+|ref=#
+--- stderr
+|bash: line 5: typeset: `#': invalid variable name for name reference
+
+=== 8: named ref with $# and shopt -s strict_nameref
+status: 0
+bash-n: 0
+--- stdout
+|ref=#
+|ref=#
+--- stderr
+|bash: line 1: shopt: strict_nameref: invalid shell option name
+|bash: line 5: typeset: `#': invalid variable name for name reference
+
+=== 9: named ref with 1 $1 etc.
+status: 0
+bash-n: 0
+--- stdout
+|ref=1
+|ref=1
+|ref2=$1
+|ref2=$1
+|ref3=x
+|ref3=foo
+--- stderr
+|bash: line 7: typeset: `1': invalid variable name for name reference
+|bash: line 12: typeset: `$1': invalid variable name for name reference
+
+=== 10: assign to invalid ref
+status: 0
+bash-n: 0
+--- stdout
+|ref=1
+|ref=1
+|ref=foo
+--- stderr
+|bash: line 4: typeset: `1': invalid variable name for name reference
+
+=== 11: assign to invalid ref with strict_nameref
+status: 0
+bash-n: 0
+
+=== 12: name ref on Undef cell
+status: 1
+bash-n: 0
+--- stdout
+|ref=
+|nounset
+--- stderr
+|bash: line 7: ref: unbound variable
+
+=== 13: assign to empty nameref and invalid nameref
+status: 0
+bash-n: 0
+--- stdout
+|ref=
+|ref=
+|ref2=
+|ref2=x
+
+=== 14: -n attribute before it has a value
+status: 0
+bash-n: 0
+--- stdout
+|ref=
+|ref=XX
+
+=== 15: -n attribute on array is hard error, not a warning
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|ref=x
+--- stderr
+|bash: line 5: warning: ref: removing nameref attribute
+
+=== 16: exported nameref
+status: 0
+bash-n: 0
+--- stdout
+|None
+|x
+|---
+|foo
+|x
+
+=== 17: readonly nameref doesn't prevent assigning through it
+status: 0
+bash-n: 0
+--- stdout
+|ref=XX
+|ref=XXXX
+|x=X
+
+=== 18: readonly var can't be assigned through nameref
+status: 0
+bash-n: 0
+--- stdout
+|ref=X
+|ref=XX
+|ref=XX
+|x=XX
+--- stderr
+|bash: line 11: x: readonly variable
+
+=== 19: unset nameref
+status: 0
+bash-n: 0
+--- stdout
+|ref=X
+|ref=
+|x=
+
+=== 20: Chain of namerefs
+status: 0
+bash-n: 0
+--- stdout
+|ref_to_ref=foo
+|ref=foo
+
+=== 21: Mutually recursive namerefs detected on READ
+status: 0
+bash-n: 0
+--- stdout
+|defined
+|ref1=
+|ref2=
+--- stderr
+|bash: line 4: warning: ref1: circular name reference
+|bash: line 5: warning: ref1: circular name reference
+
+=== 22: Mutually recursive namerefs detected on WRITE
+status: 0
+bash-n: 0
+--- stdout
+|defined 0
+|mutated 1
+--- stderr
+|bash: line 4: warning: ref1: circular name reference
+
+=== 23: Dynamic scope with namerefs
+status: 0
+bash-n: 0
+--- stdout
+|F1=F1
+|F1=x
+
+=== 24: change reference itself
+status: 0
+bash-n: 0
+--- stdout
+|ref=XX
+|x=XX
+|y=YY
+|----
+|ref=YY
+|x=XX
+|y=YY
+|----
+|ref=z
+|x=XX
+|y=z
+
+=== 25: a[2] in nameref
+status: 0
+bash-n: 0
+--- stdout
+|ref=two
+
+=== 26: a[expr] in nameref
+status: 0
+bash-n: 0
+--- stdout
+|ref=three
+
+=== 27: a[@] in nameref
+status: 0
+bash-n: 0
+--- stdout
+|['ref', 'A B', 'C']
+|status=1
+|['ref[@]']
+|['ref', 'A B', 'C']
+|['a[@]', 'A B', 'C']
+--- stderr
+|bash: line 4: `a[@]': not a valid identifier
+
+=== 28: mutate through nameref: ref[0]=
+status: 0
+bash-n: 0
+--- stdout
+|xx Y Z
+
+=== 29: bad mutation through nameref: ref[0]= where ref is array[0]
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|X Y Z
+--- stderr
+|bash: line 3: `array[0]': not a valid identifier
+
+=== 30: @ in nameref isn't supported, unlike in ${!ref}
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|ref=
+|status=0
+--- stderr
+|bash: line 2: typeset: `@': invalid variable name for name reference
+
+=== 31: Unquoted assoc reference on RHS
+status: 0
+bash-n: 0
+--- stdout
+|['bar']

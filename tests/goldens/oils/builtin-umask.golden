@@ -1,0 +1,229 @@
+# Goldens for tests/oils/spec/builtin-umask.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: usage: too many args
+status: 0
+bash-n: 0
+
+=== 1: usage: empty input, space input
+status: 0
+bash-n: 0
+--- stdout
+|error
+|error too
+--- stderr
+\bash: line 1: umask: `\x00': invalid symbolic mode operator
+|bash: line 8: umask: ` ': invalid symbolic mode operator
+
+=== 2: symbolic syntax error: b=rwx
+status: 0
+bash-n: 0
+--- stdout
+|error
+|0124
+--- stderr
+|bash: line 3: umask: `b': invalid symbolic mode operator
+
+=== 3: symbolic syntax error: start with -
+status: 0
+bash-n: 0
+--- stdout
+|error
+|124
+|error
+|124
+|error
+|124
+--- stderr
+|bash: line 2: umask: -r: invalid option
+|umask: usage: umask [-p] [-S] [mode]
+|bash: line 7: umask: -w: invalid option
+|umask: usage: umask [-p] [-S] [mode]
+|bash: line 12: umask: -=: invalid option
+|umask: usage: umask [-p] [-S] [mode]
+
+=== 4: symbolic syntax error: empty clause u-r,,u-r
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|0524
+|error
+|0524
+--- stderr
+|bash: line 6: umask: `,': invalid symbolic mode operator
+
+=== 5: usage: invalid octal digits
+status: 0
+bash-n: 0
+--- stdout
+|error
+--- stderr
+|bash: line 1: umask: 089: octal number out of range
+
+=== 6: usage: large octal number
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|0022
+--- stderr
+|bash: line 3: umask: 1234567: octal number out of range
+
+=== 7: 'umask' without args prints the umask
+status: 0
+bash-n: 0
+--- stdout
+|022
+|status=0
+
+=== 8: 'umask -S' prints symbolic umask
+status: 0
+bash-n: 0
+--- stdout
+|u=rwx,g=rx,o=rx
+|status=0
+
+=== 9: 'umask -p' prints a form that can be eval'd
+status: 0
+bash-n: 0
+--- stdout
+|umask 0022
+|status=0
+
+=== 10: 'umask 0002' sets the umask
+status: 0
+bash-n: 0
+--- stdout
+|664
+|644
+--- file umask-one
+|one
+--- file umask-two
+|two
+
+=== 11: set umask with symbolic mode: g-w,o-w
+status: 0
+bash-n: 0
+--- stdout
+|664
+|644
+--- file umask-one
+|one
+--- file umask-two
+|two
+
+=== 12: set umask with symbolic mode: u-rw  ...  u=,g+,o-  ...
+status: 0
+bash-n: 0
+--- stdout
+|status0=0
+|600
+|status1=0
+|300
+|status2=0
+|356
+|status3=0
+|356
+|status4=0
+|421
+|status5=0
+|737
+
+=== 13: umask with too many arguments (i.e. extra spaces)
+status: 0
+bash-n: 0
+--- stdout
+|ok
+|111
+--- stderr
+\bash: line 2: umask: `\x00': invalid symbolic mode operator
+
+=== 14: umask allow overwriting and duplicates
+status: 0
+bash-n: 0
+--- stdout
+|701
+
+=== 15: umask a is valid who
+status: 0
+bash-n: 0
+--- stdout
+|000
+|120
+|564
+
+=== 16: umask X perm
+status: 0
+bash-n: 0
+--- stdout
+|ret0 = 0
+|666
+|ret1 = 0
+|666
+|ret2 = 0
+|357
+
+=== 17: umask s perm
+status: 0
+bash-n: 0
+--- stdout
+|ret0 = 0
+|124
+|ret1 = 0
+|124
+|ret2 = 0
+|777
+
+=== 18: umask t perm
+status: 0
+bash-n: 0
+--- stdout
+|ret0 = 0
+|124
+|ret1 = 0
+|124
+|ret2 = 0
+|777
+
+=== 19: umask default who
+status: 0
+bash-n: 0
+--- stdout
+|777
+|ret = 0
+|222
+|124
+|124
+
+=== 20: umask bare op
+status: 0
+bash-n: 0
+--- stdout
+|777
+|777
+|000
+
+=== 21: umask permcopy
+status: 0
+bash-n: 0
+--- stdout
+|111
+|666
+|444
+
+=== 22: umask permcopy running value
+status: 0
+bash-n: 0
+--- stdout
+|111
+|777
+
+=== 23: umask sequential actions
+status: 0
+bash-n: 0
+--- stdout
+|024
+|002
+|444

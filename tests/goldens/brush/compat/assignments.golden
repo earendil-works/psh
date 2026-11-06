@@ -1,0 +1,71 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/assignments.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: First char is equals sign
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: =x: command not found
+
+=== 1: Basic assignment
+status: 0
+bash-n: 0
+--- stdout
+|x: yz
+
+=== 2: Invalid variable name
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: @=something: command not found
+
+=== 3: Quoted equals sign
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: x=3: command not found
+
+=== 4: Multiple equals signs
+status: 0
+bash-n: 0
+--- stdout
+|x: y=z
+
+=== 5: Assignment with tilde expansion
+status: 0
+bash-n: 0
+--- stdout
+|~/file1.txt: /some/dir/file1.txt
+|~/file1.txt:~/file2.txt: /some/dir/file1.txt:/some/dir/file2.txt
+|~:~/bin:~/local/bin: /some/dir:/some/dir/bin:/some/dir/local/bin
+|PATH-like: /usr/bin:/some/dir:/bin:/some/dir/local
+
+=== 6: Array assignment with tilde expansion
+status: 0
+bash-n: 0
+--- stdout
+|Array elements:
+|  /testhome
+|  /testhome/bin
+|  /root
+|Array with colons:
+|  /testhome:~/bin
+|  /usr/bin:~
+
+=== 7: Append assignment with tilde expansion
+status: 0
+bash-n: 0
+--- stdout
+|After append tilde: /usr/bin:/testhome
+|After append colon-tilde: /usr/bin:/testhome:/testhome/local
+
+=== 8: A compound assignment after an ordinary command is a syntax error
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `('
+|bash: line 1: `echo a=(1 2)'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `('
+|bash: line 1: `echo a=(1 2)'

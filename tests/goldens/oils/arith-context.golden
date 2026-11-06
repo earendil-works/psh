@@ -1,0 +1,113 @@
+# Goldens for tests/oils/spec/arith-context.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Multiple right brackets inside expression
+status: 0
+bash-n: 0
+--- stdout
+|2 3
+
+=== 1: Slicing of string with constants
+status: 0
+bash-n: 0
+--- stdout
+|abcd abcd b
+
+=== 2: Slicing of string with variables
+status: 0
+bash-n: 0
+--- stdout
+|abcd abcd b
+
+=== 3: Array index on LHS of assignment
+status: 0
+bash-n: 0
+--- stdout
+|1 X 3
+
+=== 4: Array index on LHS with indices
+status: 0
+bash-n: 0
+--- stdout
+|1 2 X
+
+=== 5: Slicing of string with expressions
+status: 0
+bash-n: 0
+--- stdout
+|abcd abcd b
+
+=== 6: Ambiguous colon in slice
+status: 0
+bash-n: 0
+--- stdout
+|2
+|c
+
+=== 7: Triple parens should be disambiguated
+status: 0
+bash-n: 0
+--- stdout
+|7 7
+
+=== 8: Quadruple parens should be disambiguated
+status: 0
+bash-n: 0
+--- stdout
+|15 15
+
+=== 9: $[ is a synonym for $((
+status: 0
+bash-n: 0
+--- stdout
+|3 12
+
+=== 10: $[$var is a synonym for $(($var (#2426)
+status: 0
+bash-n: 0
+--- stdout
+|3
+
+=== 11: $[$undefined] is a synonym for $(($undefined (#2566)
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 12: Empty expression (( ))  $(( ))
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|0
+
+=== 13: Empty expression for (( ))
+status: 0
+bash-n: 0
+--- stdout
+|one
+
+=== 14: Empty expression in ${a[@]: : }
+status: 0
+bash-n: 0
+--- stdout
+|slice a b c d e f
+|status=0
+|
+|slice
+|status=0
+|
+|slice
+|status=0
+
+=== 15: Empty expression a[]
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|1 2 3
+|status=1
+--- stderr
+|bash: line 3: a[]: bad array subscript
+|bash: line 7: ${a[]}: bad substitution

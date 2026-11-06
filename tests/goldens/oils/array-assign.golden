@@ -1,0 +1,128 @@
+# Goldens for tests/oils/spec/array-assign.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Indexed LHS without spaces, and +=
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|['x']
+|['x', 'y']
+|['x', 'yz']
+
+=== 1: Indexed LHS with spaces
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|['x', 'z']
+
+=== 2: Nested a[i[0]]=0
+status: 0
+bash-n: 0
+--- stdout
+|['0', '1', '2', '3']
+
+=== 3: Multiple LHS array words
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([0]="0" [1]="" [2]="2")
+|declare -a b=([0]="3" [1]="4" [2]="/home/spec-test/src")
+|---
+|['b[2', '+', '0]=bar']
+|status=0
+|declare -a a=([0]="0" [1]="" [2]="2")
+|declare -a b=([0]="3" [1]="4" [2]="/home/spec-test/src")
+--- stderr
+|bash: line 15: `a[0 + 1]': not a valid identifier
+
+=== 4: LHS array is protected with shopt -s eval_unsafe_arith, e.g. 'a[$(echo 2)]'
+status: 0
+bash-n: 0
+--- stdout
+|declare -a b=([0]="3" [1]="4" [2]="5")
+|get 5
+|set zzz
+|declare -a b=([0]="3" [1]="4" [2]="zzz")
+
+=== 5: file named a[ is  not executed
+status: 1
+bash-n: 0
+--- stdout
+|len=2
+--- stderr
+|bash: line 14: 5 # 1: arithmetic syntax error: invalid arithmetic operator (error token is "# 1")
+--- file a[
+|echo hi from a[: $# args: $@
+--- file a[5
+|echo hi from a[5: $# args: $@
+
+=== 6: More fragments like a[  a[5  a[5 +  a[5 + 3]
+status: 0
+bash-n: 0
+--- stdout
+|a[ status=2
+|a[5 status=2
+|a[5 + status=2
+|a[5 + 3] status=127
+|a[5 + 3]= status=0
+|a[5 + 3]+ status=127
+|a[5 + 3]+= status=0
+--- stderr
+|<sh>: -c: line 1: unexpected EOF while looking for matching `]'
+|<sh>: -c: line 1: unexpected EOF while looking for matching `]'
+|<sh>: -c: line 1: unexpected EOF while looking for matching `]'
+|<sh>: line 1: a[5 + 3]: command not found
+|<sh>: line 1: a[5 + 3]+: command not found
+--- file a[
+|echo hi from a[: $# args: $@
+--- file a[5
+|echo hi from a[5: $# args: $@
+
+=== 7: Are quotes allowed?
+status: 0
+bash-n: 0
+--- stdout
+|status=0 len=1
+|status=1 len=1
+|status=0 len=2
+|status=1 len=2
+--- stderr
+|bash: line 4: '2': arithmetic syntax error: operand expected (error token is "'2'")
+|bash: line 10: 3 + '4': arithmetic syntax error: operand expected (error token is "'4'")
+
+=== 8: Tricky parsing - a[ a[0]=1 ]=X  a[ a[0]+=1 ]+=X
+status: 0
+bash-n: 0
+--- stdout
+|assign=42
+|declare -a a=([0]="1" [1]="X")
+|declare -a a=([0]="1" [1]="X" [2]="3" [3]="Y")
+|---
+|declare -a a=([0]="2" [1]="X" [2]="3X" [3]="Y")
+
+=== 9: argv.py a[1 + 2]=
+status: 0
+bash-n: 0
+--- stdout
+|['a[1', '+', '2]=']
+|status=0
+|['a[1', '+', '2]+=']
+|status=0
+|['a[3', '+', '4]=']
+|['a[3', '+', '4]+=']
+--- stderr
+|bash: line 4: `a[1 + 2]': not a valid identifier
+|bash: line 7: `a[1 + 2]': not a valid identifier
+
+=== 10: declare builtin doesn't allow spaces
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([0]="1" [1]="X")
+|declare -a a=([0]="1" [1]="X" [2]="3")
+--- stderr
+|bash: line 6: declare: `a[': not a valid identifier
+|bash: line 6: declare: `]=Y': not a valid identifier

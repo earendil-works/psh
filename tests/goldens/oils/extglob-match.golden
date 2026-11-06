@@ -1,0 +1,230 @@
+# Goldens for tests/oils/spec/extglob-match.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: @ matches exactly one
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|FALSE
+
+=== 1: @() with variable arms
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|FALSE
+
+=== 2: extglob in variable
+status: 0
+bash-n: 2
+--- stdout
+|TRUE
+|TRUE
+|FALSE
+|FALSE
+|FALSE
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `('
+|bash: line 3: `g=--@(help|verbose)'
+
+=== 3: Matching literal '@(cc)'
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=1
+|status=0
+|status=1
+
+=== 4: nested @()
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|TRUE
+|TRUE
+|FALSE
+
+=== 5: nested @() with quotes and vars
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+
+=== 6: ? matches 0 or 1
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|FALSE
+
+=== 7: + matches 1 or more
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|FALSE
+
+=== 8: * matches 0 or more
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|FALSE
+
+=== 9: simple repetition with *(foo) and +(Foo)
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|TRUE
+
+=== 10: ! matches none
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|FALSE
+
+=== 11: match is anchored
+status: 0
+bash-n: 0
+--- stdout
+|FALSE
+|FALSE
+|TRUE
+
+=== 12: repeated match is anchored
+status: 0
+bash-n: 0
+--- stdout
+|FALSE
+|FALSE
+|TRUE
+
+=== 13: repetition with glob
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|FALSE
+
+=== 14: No brace expansion in ==
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|FALSE
+
+=== 15: adjacent extglob
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|TRUE
+
+=== 16: nested extglob
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|TRUE
+|TRUE
+|FALSE
+
+=== 17: extglob empty string
+status: 0
+bash-n: 0
+--- stdout
+|FALSE
+|TRUE
+
+=== 18: extglob empty pattern
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|TRUE
+|FALSE
+|FALSE
+
+=== 19: case with extglob
+status: 0
+bash-n: 2
+--- stdout
+|A
+|A
+|U
+|B
+|C
+|D
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `    --@(help|verbose) )'
+
+=== 20: [[ $x == !($str) ]]
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|FALSE
+
+=== 21: Turning extglob on changes the meaning of [[ !(str) ]] in bash
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+|FALSE
+|TRUE
+|TRUE
+
+=== 22: With extglob on, !($str) on the left or right of == has different meanings
+status: 0
+bash-n: 0
+--- stdout
+|TRUE
+
+=== 23: extglob inside arg word
+status: 0
+bash-n: 0
+--- stdout
+|rhs
+|rhs arg
+|nope
+
+=== 24: extglob is not detected in regex!
+status: 0
+bash-n: 0
+--- stdout
+|FALSE
+
+=== 25: regular glob of single unicode char
+status: 0
+bash-n: 0
+--- stdout
+|0
+|0
+
+=== 26: extended glob of single unicode char
+status: 0
+bash-n: 0
+--- stdout
+|0
+|0
+
+=== 27: Extended glob in ${x//pat/replace}
+status: 0
+bash-n: 0
+--- stdout
+|foZ
+
+=== 28: Extended glob in ${x%PATTERN}
+status: 0
+bash-n: 0
+--- stdout
+|strip %  foo
+|strip %% foo
+|strip #  .py
+|strip ## .py

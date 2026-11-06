@@ -1,0 +1,142 @@
+# Goldens for tests/oils/spec/introspect.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: ${FUNCNAME[@]} array
+status: 0
+bash-n: 0
+--- stdout
+|['f']
+|['g', 'f']
+|['f']
+
+=== 1: FUNCNAME with source (scalar or array)
+status: 0
+bash-n: 0
+--- stdout
+|['  @', 'source', 'f', 'g']
+|['  0', 'source']
+|['${}', 'source']
+|['  $', 'source']
+|-----
+|['  @']
+|['  0', '']
+|['${}', '']
+|['  $', '']
+|-----
+|[]
+
+=== 2: BASH_SOURCE and BASH_LINENO scalar or array (e.g. for virtualenv)
+status: 0
+bash-n: 0
+--- stdout
+|['']
+|['']
+|['']
+|['']
+|['']
+|['']
+|__
+|['spec/testdata/bash-source-string.sh']
+|['spec/testdata/bash-source-string.sh']
+|['11']
+|['11']
+|____
+|['spec/testdata/bash-source-string2.sh']
+|['spec/testdata/bash-source-string2.sh']
+|['11']
+|['11']
+
+=== 3: ${FUNCNAME} with prefix/suffix operators
+status: 0
+bash-n: 0
+--- stdout
+|['5']
+|['c']
+|['heck']
+
+=== 4: operators on FUNCNAME
+status: 0
+bash-n: 0
+--- stdout
+|['check']
+|['5']
+|['c']
+|['heck']
+
+=== 5: ${FUNCNAME} and "set -u" (OSH regression)
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: FUNCNAME: unbound variable
+
+=== 6: $((BASH_LINENO)) (scalar form in arith)
+status: 0
+bash-n: 0
+--- stdout
+|4
+
+=== 7: ${BASH_SOURCE[@]} with source and function name
+status: 0
+bash-n: 0
+--- stdout
+|[]
+|['spec/testdata/bash-source-simple.sh']
+|['spec/testdata/bash-source-simple.sh']
+
+=== 8: ${BASH_SOURCE[@]} with line numbers
+status: 0
+bash-n: 0
+--- stdout
+|['begin F funcs', 'f', 'main']
+|['begin F files', 'spec/testdata/bash-source.sh', 'spec/testdata/bash-source.sh']
+|['begin F lines', '21', '0']
+|['G funcs', 'g', 'f', 'main']
+|['G files', 'spec/testdata/bash-source-2.sh', 'spec/testdata/bash-source.sh', 'spec/testdata/bash-source.sh']
+|['G lines', '15', '21', '0']
+|['end F funcs', 'f', 'main']
+|['end F', 'spec/testdata/bash-source.sh', 'spec/testdata/bash-source.sh']
+|['end F lines', '21', '0']
+
+=== 9: ${BASH_LINENO[@]} is a stack of line numbers for function calls
+status: 0
+bash-n: 0
+--- stdout
+|[]
+|['begin F', '10']
+|['G', '6', '10']
+|['end F', '10']
+
+=== 10: Locations with temp frame
+status: 0
+bash-n: 0
+--- stdout
+|F
+|G
+|STACK:spec/testdata/bash-source-pushtemp.sh:g:3
+|STACK:spec/testdata/bash-source-pushtemp.sh:f:19
+|STACK:spec/testdata/bash-source-pushtemp.sh:main:0
+
+=== 11: Locations when sourcing
+status: 0
+bash-n: 0
+--- stdout
+|F
+|G
+|STACK:spec/testdata/bash-source-pushtemp.sh:g:3
+|STACK:spec/testdata/bash-source-pushtemp.sh:f:19
+|STACK:spec/testdata/bash-source-pushtemp.sh:source:2
+
+=== 12: Sourcing inside function grows the debug stack
+status: 0
+bash-n: 0
+--- stdout
+|F
+|G
+|STACK:spec/testdata/bash-source-pushtemp.sh:g:3
+|STACK:spec/testdata/bash-source-pushtemp.sh:f:19
+|STACK:spec/testdata/bash-source-pushtemp.sh:source:2
+|STACK:spec/testdata/bash-source-source.sh:mainfunc:6
+|STACK:spec/testdata/bash-source-source.sh:main2:10
+|STACK:spec/testdata/bash-source-source.sh:main1:13
+|STACK:spec/testdata/bash-source-source.sh:main:0

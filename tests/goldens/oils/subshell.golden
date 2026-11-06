@@ -1,0 +1,29 @@
+# Goldens for tests/oils/spec/subshell.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Subshell exit code
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 1: Subshell with redirects
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|1
+|2
+|3
+|4
+|5
+--- file a.txt
+|1
+--- file b.txt
+|2
+--- file c.txt
+|3
+--- file d.txt
+|4
+|5

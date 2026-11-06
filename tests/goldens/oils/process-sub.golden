@@ -1,0 +1,115 @@
+# Goldens for tests/oils/spec/process-sub.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Process sub input
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|2
+|3
+--- file process-sub.txt
+|1
+|2
+|3
+
+=== 1: Process sub from external process to stdin
+status: 0
+bash-n: 0
+--- stdout
+|3
+|2
+|1
+
+=== 2: Process sub from shell to stdin
+status: 0
+bash-n: 0
+--- stdout
+|3
+|2
+|1
+
+=== 3: Non-linear pipeline with >()
+status: 0
+bash-n: 0
+--- stdout
+|OUT
+|warning: e2
+|o2
+|o1
+--- file out.txt
+|warning: e2
+|o2
+|o1
+
+=== 4: $(<file) idiom with process sub
+status: 0
+bash-n: 0
+--- stdout
+|FOO
+|hi
+--- file foo
+|FOO
+
+=== 5: status code is available
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|1
+|2
+|3
+|status @_process_sub_status
+|done
+--- stderr
+|bash: line 1: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]
+
+=== 6: shopt -s process_sub_fail
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|status=0 ps @_process_sub_status
+|__
+|a
+|b
+|status=0 ps @_process_sub_status
+|a
+|b
+|status=0 ps @_process_sub_status
+--- stderr
+|bash: line 3: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]
+|bash: line 9: shopt: process_sub_fail: invalid shell option name
+
+=== 7: process subs and pipelines together
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|1
+|2
+|3
+|status=4
+|process_sub @_process_sub_status
+|pipeline @_pipeline_status
+|__
+--- stderr
+|bash: line 3: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]
+
+=== 8: process sub in background &
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|sync
+|fork

@@ -1,0 +1,307 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/alias.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic alias usage
+status: 0
+bash-n: 0
+--- stdout
+|alias myalias='echo'
+|hello
+
+=== 1: Alias listing
+status: 0
+bash-n: 0
+--- stdout
+|alias a='echo'
+|alias b='ls -l'
+|---
+|alias a='echo'
+|alias b='ls -l'
+|---
+|alias a='echo'
+|exit=0
+
+=== 2: Alias listing is sorted by name
+status: 0
+bash-n: 0
+--- stdout
+|alias a='1'
+|alias b='2'
+|alias c='3'
+|alias d='4'
+|alias e='5'
+|alias f='6'
+
+=== 3: Redefining an alias
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+
+=== 4: Unalias
+status: 0
+bash-n: 0
+--- stdout
+|aliased
+|gone: 127
+
+=== 5: Unalias all
+status: 0
+bash-n: 0
+--- stdout
+|exit=0
+
+=== 6: Unalias non-existent alias
+status: 0
+bash-n: 0
+--- stdout
+|exit=1
+--- stderr
+|bash: line 1: unalias: nosuchalias: not found
+
+=== 7: Alias body with quoted args
+status: 0
+bash-n: 0
+--- stdout
+|[-a]
+|[--format]
+|[table {{.Names}}\t{{.State}}]
+
+=== 8: Alias body with single-quoted args
+status: 0
+bash-n: 0
+--- stdout
+|[a b]
+|[c]
+
+=== 9: Alias body with escaped chars
+status: 0
+bash-n: 0
+--- stdout
+|[a b]
+|[c]
+
+=== 10: Alias body with ANSI-C quoting
+status: 0
+bash-n: 0
+--- stdout
+|[a	b]
+
+=== 11: Alias body with variable expansion
+status: 0
+bash-n: 0
+--- stdout
+|[a]
+|[b]
+|[a b]
+
+=== 12: Alias body with tilde expansion
+status: 0
+bash-n: 0
+--- stdout
+|tilde expanded
+
+=== 13: Alias body with command substitution
+status: 0
+bash-n: 0
+--- stdout
+|inner
+
+=== 14: Alias body with pathname expansion
+status: 0
+bash-n: 0
+--- stdout
+|[aa.txt]
+|[ab.txt]
+--- file aa.txt
+--- file ab.txt
+
+=== 15: Alias body is expanded at use time
+status: 0
+bash-n: 0
+--- stdout
+|first
+|second
+
+=== 16: Alias with empty body
+status: 0
+bash-n: 0
+--- stdout
+|exit=0
+
+=== 17: Args are appended after the alias body
+status: 0
+bash-n: 0
+--- stdout
+|[first]
+|[second]
+|[third fourth]
+
+=== 18: Alias takes precedence over function
+status: 0
+bash-n: 0
+--- stdout
+|alias-version
+|function-version
+
+=== 19: Alias for a command name is not recursively re-expanded
+status: 0
+bash-n: 0
+--- stdout
+|prefix hello
+
+=== 20: Aliases are not expanded when expand_aliases is unset
+status: 0
+bash-n: 0
+--- stdout
+|not-expanded
+
+=== 21: Alias used in a pipeline
+status: 0
+bash-n: 0
+--- stdout
+|HELLO
+
+=== 22: Alias used after && and ||
+status: 0
+bash-n: 0
+--- stdout
+|ran
+|ran
+
+=== 23: Alias used in a function body
+status: 0
+bash-n: 0
+--- stdout
+|from-alias
+
+=== 24: Alias used in a for loop body
+status: 0
+bash-n: 0
+--- stdout
+|item 1
+|item 2
+
+=== 25: Quoting the command name suppresses alias expansion
+status: 0
+bash-n: 0
+--- stdout
+|aliased
+|backslash-suppressed
+|quote-suppressed
+
+=== 26: Alias body containing a pipeline
+status: 0
+bash-n: 0
+--- stdout
+|HELLO
+
+=== 27: Alias body containing a redirection
+status: 0
+bash-n: 0
+--- stdout
+|written
+--- file out.txt
+|written
+
+=== 28: Alias body containing a command separator
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+
+=== 29: Alias defined and used on the same line
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 2: sl: command not found
+
+=== 30: Alias with trailing space
+status: 0
+bash-n: 0
+--- stdout
+|replaced also-replaced
+
+=== 31: Alias referencing to alias
+status: 0
+bash-n: 0
+--- stdout
+|hello
+
+=== 32: Alias to keywords
+status: 0
+bash-n: 2
+--- stdout
+|true
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `then'
+|bash: line 3: `myalias true; then echo "true"; fi'
+
+=== 33: alias display quotes values
+status: 0
+bash-n: 0
+--- stdout
+|alias q1='a'\''b'
+|alias q2=\'
+|alias q3='a'\'''\''b'
+|alias q4='a "b" $c'
+|alias q5='a	b'
+|alias q6='a
+|b'
+|alias q1='a'\''b'
+|alias q2=\'
+|alias q3='a'\'''\''b'
+|alias q4='a "b" $c'
+|alias q5='a	b'
+|alias q6='a
+|b'
+|alias q1='a'\''b'
+|alias q3='a'\'''\''b'
+
+=== 34: alias lists a definition without the alias prefix in POSIX mode
+status: 0
+bash-n: 0
+--- stdout
+|x='y'
+|alias x='y'
+
+=== 35: alias rejects a compound value
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|rc=1
+--- stderr
+|bash: line 1: alias: a: not found
+
+=== 36: alias and unalias take --
+status: 0
+bash-n: 0
+--- stdout
+|alias a='b'
+|rc=1
+
+=== 37: alias prints a name that starts with - after --
+status: 0
+bash-n: 0
+--- stdout
+|alias -- -a='b'
+
+=== 38: alias supplying a declaration builtin still splits its compound operand
+status: 0
+bash-n: 2
+--- stdout
+|declare -a arr=([0]="a" [1]="b")
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `mydecl arr=($v)'
+
+=== 39: alias supplying export assigns and exports
+status: 0
+bash-n: 0
+--- stdout
+|E1=val
+|declare -x E1="val"

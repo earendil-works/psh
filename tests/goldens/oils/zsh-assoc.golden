@@ -1,0 +1,47 @@
+# Goldens for tests/oils/spec/zsh-assoc.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: TODO: SETUP should be shared
+status: 0
+bash-n: 0
+
+=== 1: retrieve key
+status: 0
+bash-n: 0
+--- stdout
+|b
+
+=== 2: set key
+status: 0
+bash-n: 0
+--- stdout
+|['c', 'b', 'XX', 'bar']
+
+=== 3: iterate over keys
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: ${(@k)assoc}: bad substitution
+
+=== 4: iterate over both keys and values
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 3: syntax error near unexpected token `v'
+|bash: line 3: `for k v ("${(@kv)assoc}"); do'
+--- bash-n stderr
+|bash: line 3: syntax error near unexpected token `v'
+|bash: line 3: `for k v ("${(@kv)assoc}"); do'
+
+=== 5: get length
+status: 0
+bash-n: 0
+--- stdout
+|0 2
+
+=== 6: index by integer does not work
+status: 0
+bash-n: 0
+--- stdout
+|['']

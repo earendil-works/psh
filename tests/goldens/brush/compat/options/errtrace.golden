@@ -1,0 +1,163 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/options/errtrace.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: errtrace disabled by default
+status: 0
+bash-n: 0
+--- stdout
+|errtrace test
+
+=== 1: errtrace can be enabled and disabled
+status: 0
+bash-n: 0
+--- stdout
+|E is set
+|E is unset
+
+=== 2: errtrace disabled - functions don't inherit ERR trap
+status: 0
+bash-n: 0
+--- stdout
+|ERR trapped
+|after
+
+=== 3: errtrace enabled - functions inherit ERR trap
+status: 0
+bash-n: 0
+--- stdout
+|ERR trapped
+|ERR trapped
+|after
+
+=== 4: errtrace with nested functions
+status: 0
+bash-n: 0
+--- stdout
+|ERR trapped
+|ERR trapped
+|ERR trapped
+|after
+
+=== 5: errtrace toggling mid-script
+status: 0
+bash-n: 0
+--- stdout
+|ERR trapped
+|ERR trapped
+|after first call
+|ERR trapped
+|after second call
+
+=== 6: errtrace disabled - subshell doesn't inherit ERR trap
+status: 0
+bash-n: 0
+--- stdout
+|trap -- 'echo "ERR"' ERR
+|no ERR trap fired
+|after
+
+=== 7: errtrace enabled - subshell inherits ERR trap
+status: 0
+bash-n: 0
+--- stdout
+|ERR trap inherited
+|ERR
+|after false in subshell
+|after
+
+=== 8: errtrace disabled - command substitution doesn't inherit ERR trap
+status: 0
+bash-n: 0
+--- stdout
+|result: trap -- 'echo "[ERR trapped]" >&2' ERR
+|no trap inherited
+
+=== 9: errtrace enabled - command substitution inherits ERR trap
+status: 0
+bash-n: 0
+--- stdout
+|result: after false in subshell
+--- stderr
+|[ERR in subshell]
+
+=== 10: errtrace with pipeline - last command fails
+status: 0
+bash-n: 0
+--- stdout
+|after pipeline
+--- stderr
+|[ERR: 1]
+
+=== 11: errtrace with pipeline - middle command fails (pipefail)
+status: 0
+bash-n: 0
+--- stdout
+|after pipeline
+--- stderr
+|[ERR: 1]
+
+=== 12: errtrace - ERR trap in pipeline subshells
+status: 0
+bash-n: 0
+--- stdout
+|after false in brace
+|done
+--- stderr
+|[ERR: false]
+
+=== 13: errtrace with errexit - ERR trap fires before exit
+status: 1
+bash-n: 0
+--- stdout
+|ERR trap fired
+
+=== 14: errtrace with errexit in function
+status: 1
+bash-n: 0
+--- stdout
+|ERR trap
+
+=== 15: errtrace - ERR trap in deeply nested function
+status: 0
+bash-n: 0
+--- stdout
+|ERR at level 3
+|ERR at level 2
+|ERR at level 1
+|ERR at level 0
+|after
+
+=== 16: errtrace - ERR trap can be changed inside function
+status: 0
+bash-n: 0
+--- stdout
+|inner ERR
+|inner ERR
+|inner ERR
+|after
+
+=== 17: errtrace - ERR trap can be cleared inside function
+status: 0
+bash-n: 0
+--- stdout
+|no ERR in func
+|after
+
+=== 18: errtrace - ERR trap in background job
+status: 0
+bash-n: 0
+--- stdout
+|bg done
+|main done
+--- stderr
+|ERR
+
+=== 19: errtrace - ERR trap inherited in sourced script
+status: 0
+bash-n: 0
+--- stdout
+|in sourced
+|ERR trapped
+|after false in sourced
+|after source

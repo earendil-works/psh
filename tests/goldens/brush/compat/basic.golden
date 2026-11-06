@@ -1,0 +1,156 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/basic.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic -c usage
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 1: Trailing backslash at end of -c string
+status: 0
+bash-n: 0
+--- stdout
+|<\>
+
+=== 2: Basic -c usage: output
+status: 0
+bash-n: 0
+--- stdout
+|[Character output]
+|hi
+|
+|[Hex output]
+|0000: 68 69 
+
+=== 3: Basic stdin usage
+status: 0
+bash-n: 0
+--- stdout
+|hi
+
+=== 4: Basic sequence
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|there
+
+=== 5: Basic -s usage with -c
+status: 0
+bash-n: 0
+--- stdout
+|hi1 hi2
+
+=== 6: Basic -s usage with positional args
+status: 0
+bash-n: 0
+--- stdout
+|$0 matches $BASH
+|$1: arg1
+|$2: arg2
+|$3: arg3
+
+=== 7: Basic -i usage with commands via stdin
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|there
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|test$ echo hi
+|test$ echo there
+|test$ exit
+
+=== 8: Basic script execution
+status: 22
+bash-n: 0
+--- stdout
+|ARGS: 1 2 3
+
+=== 9: Passing option-like arg to script
+status: 22
+bash-n: 0
+--- stdout
+|ARGS: -v
+
+=== 10: Ensure ~ is resolvable
+status: 0
+bash-n: 0
+
+=== 11: Rc file loading (interactive)
+status: 0
+bash-n: 0
+--- stdout
+|Executing in rc file
+|Executing in main script body
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|echo "Executing in main script body"
+|exit
+
+=== 12: Rc file exit ends the shell (interactive)
+status: 5
+bash-n: 0
+--- stdout
+|Executing in rc file
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+
+=== 13: Rc file loading (non-interactive)
+status: 0
+bash-n: 0
+--- stdout
+|Executing in main script body
+
+=== 14: Missing rc file
+status: 0
+bash-n: 0
+--- stdout
+|Executing in main script body
+--- stderr
+|bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+|bash: no job control in this shell
+|echo "Executing in main script body"
+|exit
+
+=== 15: Unknown option
+status: 2
+bash-n: 0
+--- stderr
+|bash: --unknown-option: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option
+
+=== 16: -f on the command line
+status: 0
+bash-n: 0
+--- stdout
+|a*
+--- file abc
+--- file abd

@@ -1,0 +1,86 @@
+# Goldens for tests/oils/spec/sh-options-bash.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: SHELLOPTS is updated when options are changed
+status: 0
+bash-n: 0
+--- stdout
+|1
+|0
+|1
+--- stderr
+|+ grep -q xtrace
+|+ echo braceexpand:hashall:interactive-comments:xtrace
+|+ echo 0
+|+ set +x
+
+=== 1: SHELLOPTS is readonly
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: SHELLOPTS: readonly variable
+
+=== 2: SHELLOPTS and BASHOPTS are non-empty
+status: 0
+bash-n: 0
+--- stdout
+|shellopts is set
+|bashopts is set
+
+=== 3: SHELLOPTS reflects flags like sh -x
+status: 0
+bash-n: 0
+--- stdout
+|xtrace
+--- stderr
+|+ echo braceexpand:hashall:interactive-comments:xtrace
+
+=== 4: export SHELLOPTS does cross-process tracing
+status: 0
+bash-n: 0
+--- stdout
+|+ echo 1
+|1
+|sh -c 'echo 2'
+|+ echo 2
+|2
+
+=== 5: export SHELLOPTS does cross-process tracing with bash
+status: 0
+bash-n: 0
+--- stdout
+|+ echo 1
+|1
+|sh -c 'echo 2'
+|+ echo 2
+|2
+
+=== 6: OSH calling bash with SHELLOPTS does not change braceexpand
+status: 0
+bash-n: 0
+--- stdout
+|braceexpand on
+|braceexpand on
+
+=== 7: If shopt --set xtrace is allowed, it should update SHELLOPTS, not BASHOPTS
+status: 0
+bash-n: 0
+--- stdout
+|SHELLOPTS=braceexpand:hashall:interactive-comments
+|SHELLOPTS=braceexpand:hashall:interactive-comments:xtrace
+|SHELLOPTS=braceexpand:hashall:interactive-comments
+--- stderr
+|bash: line 3: shopt: --: invalid option
+|shopt: usage: shopt [-pqsu] [-o] [optname ...]
+|+ echo SHELLOPTS=braceexpand:hashall:interactive-comments:xtrace
+|+ set +x
+
+=== 8: shopt -s progcomp hostcomplete are stubs (bash-completion)
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0

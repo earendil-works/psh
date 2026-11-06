@@ -1,0 +1,29 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/complete_commands.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Multi-command sequence
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 1: Semicolon-terminated sequence
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+
+=== 2: Operator followed by an escaped word
+status: 0
+bash-n: 0
+--- stdout
+|pipe
+|or
+|one
+|two
+|quoted $x
+|quoted $x

@@ -1,0 +1,28 @@
+# Goldens for tests/brush/brush-shell/tests/cases/brush/help.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Help printed to a pipe isn't painted
+status: 0
+bash-n: 0
+--- stdout
+|cd: cd [-L|[-P [-e]]] [-@] [dir]
+
+=== 1: Help is painted where color is forced
+status: 0
+bash-n: 0
+--- stdout
+|cd: cd [-L|[-P [-e]]] [-@] [dir]
+|cd: cd [-L|[-P [-e]]] [-@] [dir]
+
+=== 2: NO_COLOR wins over forced color
+status: 0
+bash-n: 0
+--- stdout
+|cd: cd [-L|[-P [-e]]] [-@] [dir]
+
+=== 3: --disable-color turns help colors off
+status: 0
+bash-n: 0
+--- stdout
+|cd: cd [-L|[-P [-e]]] [-@] [dir]

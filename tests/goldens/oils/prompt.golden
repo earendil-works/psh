@@ -1,0 +1,232 @@
+# Goldens for tests/oils/spec/prompt.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: sh -i
+status: 0
+bash-n: 0
+--- stdout
+|match=0
+--- file err.txt
+|bash: cannot set terminal process group (22978): Inappropriate ioctl for device
+|bash: no job control in this shell
+|[prompt] echo foo
+|[prompt] exit
+--- file out.txt
+|foo
+
+=== 1: \[\] are non-printing
+status: 0
+bash-n: 0
+--- stdout
+|foo$
+
+=== 2: literal escapes
+status: 0
+bash-n: 0
+--- stdout
+\\x07\x1b\x0d
+|
+
+=== 3: special case for $
+status: 0
+bash-n: 0
+--- stdout
+|$
+|$
+|$
+|\$
+|\$
+
+=== 4: PS1 evaluation order
+status: 0
+bash-n: 0
+--- stdout
+|\h
+
+=== 5: PS1 evaluation order 2
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+--- dir $foo
+
+=== 6: \1004
+status: 0
+bash-n: 0
+--- stdout
+|@4$
+
+=== 7: \001 octal literals are supported
+status: 0
+bash-n: 0
+--- stdout
+|[%]
+
+=== 8: \555 is beyond max octal byte of \377 and wrapped to m
+status: 0
+bash-n: 0
+--- stdout
+|m$
+
+=== 9: \x55 hex literals not supported
+status: 0
+bash-n: 0
+--- stdout
+|[\x55]
+
+=== 10: Single backslash
+status: 0
+bash-n: 0
+--- stdout
+|\
+
+=== 11: Escaped backslash
+status: 0
+bash-n: 0
+--- stdout
+|\
+
+=== 12: \0001 octal literals are not supported
+status: 0
+bash-n: 0
+--- stdout
+|[%5]
+
+=== 13: \u0001 unicode literals not supported
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 14: constant string
+status: 0
+bash-n: 0
+--- stdout
+|$ 
+
+=== 15: hostname
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+
+=== 16: username
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 17: current working dir
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 18: \W is basename of working dir
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 19: \t for 24h time (HH:MM:SS)
+status: 0
+bash-n: 0
+--- stdout
+|matched=0
+
+=== 20: \T for 12h time (HH:MM:SS)
+status: 0
+bash-n: 0
+--- stdout
+|matched=0
+
+=== 21: \@ for 12h time (HH:MM AM/PM)
+status: 0
+bash-n: 0
+--- stdout
+|matched=0
+
+=== 22: \A for 24h time (HH:MM)
+status: 0
+bash-n: 0
+--- stdout
+|matched=0
+
+=== 23: \d for date
+status: 0
+bash-n: 0
+--- stdout
+|matched=0
+
+=== 24: \D{%H:%M} for strftime
+status: 0
+bash-n: 0
+--- stdout
+|matched=0
+|matched=0
+
+=== 25: \D{} for locale specific strftime
+status: 0
+bash-n: 0
+--- stdout
+|matched=0
+
+=== 26: \s for shell, \v for major.minor version, and \V for full version
+status: 0
+bash-n: 0
+--- stdout
+|match=0
+|match=0
+|match=0
+
+=== 27: \j for number of jobs
+status: 0
+bash-n: 0
+--- stdout
+|matched=0
+|matched=0
+|sleep 5
+|matched=0
+--- stderr
+|Terminated                 sleep 5
+
+=== 28: \l for TTY device basename
+status: 0
+bash-n: 0
+--- stdout
+|matched=0
+
+=== 29: \! for history number
+status: 0
+bash-n: 0
+--- stdout
+|matched=1
+|matched=1
+
+=== 30: \# for command number
+status: 0
+bash-n: 0
+--- stdout
+|matched=0
+
+=== 31: @P with array
+status: 0
+bash-n: 0
+--- stdout
+|a b c
+|status=0
+|a b c
+|status=0
+|x
+|status=0
+
+=== 32: default PS1
+status: 0
+bash-n: 0
+--- stdout
+|_\s-\v\$ _
+--- stderr
+|bash: cannot set terminal process group (23339): Inappropriate ioctl for device
+|bash: no job control in this shell

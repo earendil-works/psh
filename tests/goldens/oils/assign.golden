@@ -1,0 +1,360 @@
+# Goldens for tests/oils/spec/assign.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Env value doesn't persist
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|--
+
+=== 1: Env value with equals
+status: 0
+bash-n: 0
+--- stdout
+|foo=foo
+
+=== 2: Env binding can use preceding bindings, but not subsequent ones
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|[foo][]
+|baz
+
+=== 3: Env value with two quotes
+status: 0
+bash-n: 0
+--- stdout
+|fooadjacent
+
+=== 4: Env value with escaped <
+status: 0
+bash-n: 0
+--- stdout
+|foo<foo
+
+=== 5: FOO=foo echo [foo]
+status: 0
+bash-n: 0
+--- stdout
+|[]
+
+=== 6: FOO=foo fun
+status: 0
+bash-n: 0
+--- stdout
+|[foo]
+
+=== 7: Multiple temporary envs on the stack
+status: 0
+bash-n: 0
+--- stdout
+|f [] [A]
+|--- g() ---
+|f
+|[]
+|[A]
+|None
+|p
+|--- f() ---
+|f
+|None
+|None
+|None
+|None
+
+=== 8: Escaped = in command name
+status: 0
+bash-n: 0
+--- stdout
+|HI
+
+=== 9: Env binding not allowed before compound command
+status: 2
+bash-n: 2
+--- stderr
+|bash: line 1: syntax error near unexpected token `do'
+|bash: line 1: `FOO=bar for i in a b; do printenv.py $FOO; done'
+--- bash-n stderr
+|bash: line 1: syntax error near unexpected token `do'
+|bash: line 1: `FOO=bar for i in a b; do printenv.py $FOO; done'
+
+=== 10: Trying to run keyword 'for'
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 1: for: command not found
+
+=== 11: Empty env binding
+status: 0
+bash-n: 0
+--- stdout
+|
+
+=== 12: Assignment doesn't do word splitting
+status: 0
+bash-n: 0
+--- stdout
+|['one two']
+
+=== 13: Assignment doesn't do glob expansion
+status: 0
+bash-n: 0
+--- stdout
+|['_tmp/*.Z']
+--- stderr
+|touch: cannot touch '_tmp/z.Z': No such file or directory
+|touch: cannot touch '_tmp/zz.Z': No such file or directory
+
+=== 14: Env binding in readonly/declare is NOT exported!  (pitfall)
+status: 0
+bash-n: 0
+--- stdout
+|v=None
+|v2=
+
+=== 15: assignments / array assignments not interpreted after 'echo'
+status: 0
+bash-n: 0
+--- stdout
+|b[0]=2 c=3
+
+=== 16: dynamic local variables (and splitting)
+status: 0
+bash-n: 0
+--- stdout
+|x='y a=b'
+|a=''
+|x='y'
+|a='b'
+
+=== 17: readonly x= gives empty string (regression)
+status: 0
+bash-n: 0
+--- stdout
+|['']
+
+=== 18: 'local x' does not set variable
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 4: x: unbound variable
+
+=== 19: 'local -a x' does not set variable
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 4: x: unbound variable
+
+=== 20: 'local x' and then array assignment
+status: 0
+bash-n: 0
+--- stdout
+|foo
+
+=== 21: 'declare -A' and then dict assignment
+status: 0
+bash-n: 0
+--- stdout
+|value
+
+=== 22: declare in an if statement
+status: 0
+bash-n: 0
+--- stdout
+|bar
+|eggs
+
+=== 23: Modify a temporary binding
+status: 0
+bash-n: 0
+--- stdout
+|x before = 5
+|x after  = 6
+
+=== 24: Reveal existence of "temp frame" (All shells disagree here!!!)
+status: 0
+bash-n: 0
+--- stdout
+|x=temp-binding
+|x=mutated-temp
+|x=local
+|x=
+|x=global
+
+=== 25: Test above without 'local' (which is not POSIX)
+status: 0
+bash-n: 0
+--- stdout
+|x=temp-binding
+|x=mutated-temp
+|x=global
+|x=global
+
+=== 26: Using ${x-default} after unsetting local shadowing a global
+status: 0
+bash-n: 0
+--- stdout
+|x=global
+|x=local
+|- operator = default
+|:- operator = default
+
+=== 27: Using ${x-default} after unsetting a temp binding shadowing a global
+status: 0
+bash-n: 0
+--- stdout
+|x=temp-binding
+|x=local
+|- operator = default
+|:- operator = default
+
+=== 28: static assignment doesn't split
+status: 0
+bash-n: 0
+--- stdout
+|['a b c', 'a b c', 'a b c']
+
+=== 29: aliased assignment doesn't split
+status: 0
+bash-n: 0
+--- stdout
+|['a b c', 'a b c']
+
+=== 30: assignment using dynamic keyword (splits in most shells, not in zsh/osh)
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'a']
+
+=== 31: assignment using dynamic var names doesn't split
+status: 0
+bash-n: 0
+--- stdout
+|['a', 'a']
+|['a b c', 'a b c']
+
+=== 32: assign and glob
+status: 0
+bash-n: 0
+--- stdout
+|['*']
+|['*']
+--- file foo=a
+--- file foo=b
+
+=== 33: declare and glob
+status: 0
+bash-n: 0
+--- stdout
+|['*']
+--- file foo=a
+--- file foo=b
+
+=== 34: readonly $x where x='b c'
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+|status=1
+--- stderr
+|bash: line 4: a: readonly variable
+|bash: line 6: b: readonly variable
+|bash: line 8: c: readonly variable
+
+=== 35: readonly a=(1 2) no_value c=(3 4) makes 'no_value' readonly
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 2: no_value: readonly variable
+
+=== 36: export a=1 no_value c=2
+status: 0
+bash-n: 0
+--- stdout
+|foo
+
+=== 37: local a=loc $var c=loc
+status: 0
+bash-n: 0
+--- stdout
+|global
+|['loc', '', 'loc']
+
+=== 38: redirect after assignment builtin (eval redirects after evaluating arguments)
+status: 0
+bash-n: 0
+--- stdout
+|done
+--- stderr
+|STDERR
+
+=== 39: redirect after command sub (like case above but without assignment builtin)
+status: 0
+bash-n: 0
+--- stdout
+|stdout=STDOUT
+--- stderr
+|STDERR
+
+=== 40: redirect after bare assignment
+status: 0
+bash-n: 0
+--- stdout
+|done
+--- stderr
+|STDERR
+
+=== 41: redirect after declare -p
+status: 0
+bash-n: 0
+--- stderr
+|declare -- foo="bar"
+
+=== 42: declare -a arr does not remove existing arrays (OSH regression)
+status: 0
+bash-n: 0
+--- stdout
+|arr:3
+
+=== 43: declare -A dict does not remove existing arrays (OSH regression)
+status: 0
+bash-n: 0
+--- stdout
+|dict:3
+
+=== 44: "readonly -a arr" and "readonly -A dict" should not not remove existing arrays
+status: 0
+bash-n: 0
+--- stdout
+|arr:3
+|dict:3
+
+=== 45: "declare -a arr" and "readonly -a a" creates an empty array (OSH)
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr1
+|declare -r arr2
+|declare -A dict1
+|declare -r dict2
+
+=== 46: "var d = {}; declare -p d" does not print anything (OSH)
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 4: var: command not found
+|bash: line 5: declare: d: not found
+
+=== 47: readonly array should not be modified by a+=(1)
+status: 0
+bash-n: 0
+--- stdout
+|['1', '2', '3']
+|['1', '2', '3']
+--- stderr
+|bash: line 5: a: readonly variable
+|bash: line 7: r: readonly variable

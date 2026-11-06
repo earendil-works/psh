@@ -1,0 +1,150 @@
+# Goldens for tests/brush/brush-shell/tests/cases/brush/external_commands.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Output goes to the shell's streams
+status: 0
+bash-n: 0
+--- stdout
+|out
+--- stderr
+|err
+
+=== 1: Standard output redirected to the shell's standard error
+status: 0
+bash-n: 0
+--- stderr
+|out
+
+=== 2: Standard error redirected to the shell's standard output
+status: 0
+bash-n: 0
+--- stdout
+|err
+
+=== 3: Standard output and error swapped
+status: 0
+bash-n: 0
+--- stdout
+|err
+--- stderr
+|out
+
+=== 4: Output to files
+status: 0
+bash-n: 0
+--- stdout
+|out: out more; err: err
+--- file err.txt
+|err
+--- file out.txt
+|out
+|more
+
+=== 5: Closed standard output isn't the shell's
+status: 0
+bash-n: 0
+--- stdout
+|after
+--- stderr
+|bash: line 1: echo: write error: Bad file descriptor
+
+=== 6: Closed standard input can't be read
+status: 0
+bash-n: 0
+--- stdout
+|read: 1
+--- stderr
+|bash: line 1: read: 0: read error: Bad file descriptor
+
+=== 7: Input from a here-document, a file, and a pipe
+status: 0
+bash-n: 0
+--- stdout
+|got: from-heredoc
+|got: from-file
+|got: from-pipe
+--- file in.txt
+|from-file
+
+=== 8: Pipeline of external commands
+status: 0
+bash-n: 0
+--- stdout
+|[a]
+|[b]
+
+=== 9: Exported variables reach the command
+status: 0
+bash-n: 0
+--- stdout
+|exported: yes; not: unset
+|prefixed: one
+
+=== 10: Exported functions reach the command
+status: 0
+bash-n: 0
+--- stdout
+|in f
+
+=== 11: _ is the path the command was run by
+status: 0
+bash-n: 0
+--- stdout
+|differs: <sh> vs bash
+
+=== 12: Exit status
+status: 0
+bash-n: 0
+--- stdout
+|status: 7
+
+=== 13: Working directory
+status: 0
+bash-n: 0
+--- stdout
+|sub
+
+=== 14: Missing program
+status: 0
+bash-n: 0
+--- stdout
+|status: 127
+--- stderr
+|bash: line 1: ./no-such-program: No such file or directory
+
+=== 15: Program that isn't executable
+status: 0
+bash-n: 0
+--- stdout
+|status: 126
+--- stderr
+|bash: line 1: ./not-executable: Permission denied
+
+=== 16: Other file descriptors
+status: 2
+bash-n: 0
+--- stderr
+|bash: --inherit-fd=3: invalid option
+|Usage:	bash [GNU long option] [option] ...
+|	bash [GNU long option] [option] script-file ...
+|GNU long options:
+|	--debug
+|	--debugger
+|	--dump-po-strings
+|	--dump-strings
+|	--help
+|	--init-file
+|	--login
+|	--noediting
+|	--noprofile
+|	--norc
+|	--posix
+|	--pretty-print
+|	--rcfile
+|	--restricted
+|	--verbose
+|	--version
+|Shell options:
+|	-ilrsD or -c command or -O shopt_option		(invocation only)
+|	-abefhkmnptuvxBCEHPT or -o option

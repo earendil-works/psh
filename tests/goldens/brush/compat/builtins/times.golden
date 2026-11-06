@@ -1,0 +1,34 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/times.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic usage
+status: 0
+bash-n: 0
+--- stdout
+|0m0.001s 0m0.000s
+|0m0.000s 0m0.000s
+
+=== 1: times ignores its arguments
+status: 0
+bash-n: 0
+--- stdout
+|times: 0
+|times x -x: 0
+|times -- -x: 0
+
+=== 2: times rejects an option
+status: 0
+bash-n: 0
+--- stdout
+|times: 2
+--- stderr
+|bash: line 1: times: -x: invalid option
+|times: usage: times
+
+=== 3: times operands in POSIX mode
+status: 0
+bash-n: 0
+--- stdout
+|after times x: 0
+|after times x -x: 0

@@ -1,0 +1,321 @@
+# Goldens for tests/oils/spec/builtin-vars.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Export sets a global variable
+status: 0
+bash-n: 0
+--- stdout
+|X
+|X
+
+=== 1: Export sets a global variable that persists after export -n
+status: 0
+bash-n: 0
+--- stdout
+|X
+|X
+|X
+|None
+
+=== 2: export -n undefined is ignored
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 3: export -n foo=bar not allowed
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|new
+
+=== 4: Export a global variable and unset it
+status: 0
+bash-n: 0
+--- stdout
+|X
+|X
+|g=
+|None
+
+=== 5: Export existing global variables
+status: 0
+bash-n: 0
+--- stdout
+|g1
+|g2
+
+=== 6: Export existing local variable
+status: 0
+bash-n: 0
+--- stdout
+|local1
+|None
+
+=== 7: Export a local that shadows a global
+status: 0
+bash-n: 0
+--- stdout
+|local1
+|None
+|global
+
+=== 8: Export a variable before defining it
+status: 0
+bash-n: 0
+--- stdout
+|u
+
+=== 9: Unset exported variable, then define it again.  It's NOT still exported.
+status: 0
+bash-n: 0
+--- stdout
+|u
+|None
+|newvalue
+|None
+
+=== 10: Exporting a parent func variable (dynamic scope)
+status: 0
+bash-n: 0
+--- stdout
+|before inner
+|None
+|inner: X
+|X
+|after inner
+|X
+
+=== 11: Dependent export setting
+status: 0
+bash-n: 0
+--- stdout
+|v=None
+
+=== 12: Exporting a variable doesn't change it
+status: 0
+bash-n: 0
+--- stdout
+|not changed
+
+=== 13: can't export array (strict_array)
+status: 0
+bash-n: 0
+--- stdout
+|None
+--- stderr
+|bash: line 1: shopt: strict_array: invalid shell option name
+
+=== 14: can't export associative array (strict_array)
+status: 0
+bash-n: 0
+--- stdout
+|None
+--- stderr
+|bash: line 1: shopt: strict_array: invalid shell option name
+
+=== 15: assign to readonly variable
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 2: foo: readonly variable
+
+=== 16: Make an existing local variable readonly
+status: 0
+bash-n: 0
+--- stdout
+|local
+|status=1
+|global
+--- stderr
+|bash: line 5: x: readonly variable
+
+=== 17: assign to readonly variable - errexit
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: foo: readonly variable
+
+=== 18: Unset a variable
+status: 0
+bash-n: 0
+--- stdout
+|foo=bar
+|foo=
+
+=== 19: Unset exit status
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 20: Unset nonexistent variable
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 21: Unset readonly variable
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 2: unset: R: cannot unset: readonly variable
+
+=== 22: Unset a function without -f
+status: 127
+bash-n: 0
+--- stdout
+|foo
+--- stderr
+|bash: line 6: f: command not found
+
+=== 23: Unset has dynamic scope
+status: 0
+bash-n: 0
+--- stdout
+|foo=bar
+|foo=
+
+=== 24: Unset and scope (bug #653)
+status: 0
+bash-n: 0
+--- stdout
+|level2=yy
+|level2=xx
+|level1=xx
+|level1=global
+|level2=yy
+|level2=global
+
+=== 25: unset of local reveals variable in higher scope
+status: 0
+bash-n: 0
+--- stdout
+|x=foo
+|x=
+
+=== 26: Unset invalid variable name
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 27: Unset nonexistent variable
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 28: Unset -v
+status: 0
+bash-n: 0
+--- stdout
+|foo=
+|function foo
+
+=== 29: Unset -f
+status: 0
+bash-n: 0
+--- stdout
+|foo=bar
+|status=127
+--- stderr
+|bash: line 7: foo: command not found
+
+=== 30: Unset array member
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|x z len=2
+
+=== 31: Unset errors
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|status=0
+|status=0
+
+=== 32: Unset wrong type
+status: 0
+bash-n: 0
+--- stdout
+|undef 1
+|undef 0
+|array 0
+|array 0
+|assoc 0
+|assoc 0
+--- stderr
+|bash: line 4: unset: undef: not an array variable
+
+=== 33: unset -v assoc (related to issue #661)
+status: 0
+bash-n: 0
+--- stdout
+|1
+|keys=1],a[1
+|vals=foo
+|0
+|keys=
+|vals=
+
+=== 34: unset assoc errors
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 35: Unset array member with dynamic parsing
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|x z len=2
+
+=== 36: Use local twice
+status: 0
+bash-n: 0
+--- stdout
+|bar
+
+=== 37: Local without variable is still unset!
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 4: foo: unbound variable
+
+=== 38: local after readonly
+status: 0
+bash-n: 0
+--- stdout
+|y=
+|y=
+--- stderr
+|bash: line 3: local: y: readonly variable
+
+=== 39: unset a[-1] (bf.bash regression)
+status: 0
+bash-n: 0
+--- stdout
+|len=2
+|last=2
+|last=2
+|1 42
+
+=== 40: unset a[-1] in sparse array (bf.bash regression)
+status: 0
+bash-n: 0
+--- stdout
+|len=3 a=0 2 3
+|last=3 second=2 third=
+|---
+|len=2 a=0 2
+|last=2 second= third=0

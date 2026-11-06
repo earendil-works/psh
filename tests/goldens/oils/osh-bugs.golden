@@ -1,0 +1,44 @@
+# Goldens for tests/oils/spec/osh-bugs.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: var x = $(echo bad; false) in OSH
+status: 2
+bash-n: 2
+--- stdout
+|unreachable
+--- stderr
+|bash: line 1: var: command not found
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `pp test_ (x)'
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `pp test_ (x)'
+
+=== 1: var x = $(echo one; false; echo two) in OSH
+status: 2
+bash-n: 2
+--- stdout
+|unreachable
+--- stderr
+|bash: line 1: var: command not found
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `pp test_ (x)'
+--- bash-n stderr
+|bash: line 4: syntax error near unexpected token `('
+|bash: line 4: `pp test_ (x)'
+
+=== 2: YSH $[expr_sub] in OSH should not do dynamic globbing
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 3: shopt: parse_ysh_expr_sub: invalid shell option name
+|bash: line 4: *.txt: arithmetic syntax error: operand expected (error token is "*.txt")
+--- file bar.txt
+--- file foo.txt
+
+=== 3: SHELLOPTS bug with ysh:ugprade
+status: 2
+bash-n: 0
+--- stderr
+|<sh>: line 0: <sh>: ysh:upgrade: invalid option name

@@ -1,0 +1,63 @@
+# Goldens for tests/oils/spec/type-compat.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: declare -i -l -u errors can be silenced - ignore_flags_not_impl
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|foo=5
+|
+|status=0
+|bar=5
+--- stderr
+|bash: line 6: shopt: ignore_flags_not_impl: invalid shell option name
+
+=== 1: declare -i with +=
+status: 0
+bash-n: 0
+--- stdout
+|[1  2 ]
+|[3]
+|[2]
+
+=== 2: declare -i with arithmetic inside strings (Nix, issue 864)
+status: 0
+bash-n: 0
+--- stdout
+|s=3
+|item=3
+
+=== 3: append in arith context
+status: 0
+bash-n: 0
+--- stdout
+|||
+--- stderr
+|bash: line 2: ((: s='1 ': arithmetic syntax error: operand expected (error token is "'1 '")
+|bash: line 3: ((: s+=' 2 ': arithmetic syntax error: operand expected (error token is "' 2 '")
+|bash: line 5: ((: i='1 ' : arithmetic syntax error: operand expected (error token is "'1 ' ")
+|bash: line 6: ((: i+=' 2 ' : arithmetic syntax error: operand expected (error token is "' 2 ' ")
+|bash: line 8: ((: j='x ' : arithmetic syntax error: operand expected (error token is "'x ' ")
+|bash: line 9: ((: j+=' 2 ' : arithmetic syntax error: operand expected (error token is "' 2 ' ")
+
+=== 4: declare array vs. string: mixing -a +a and () ''
+status: 0
+bash-n: 0
+--- stdout
+|['1', '(2 3)', '4', '5', '6']
+
+=== 5: declare array vs. associative array
+status: 0
+bash-n: 0
+--- stdout
+|['1', '0', 'd']
+|['2', 'c', 'a', 'd', 'b']
+
+=== 6: declare -l -u
+status: 0
+bash-n: 0
+--- stdout
+|foo
+|FOO

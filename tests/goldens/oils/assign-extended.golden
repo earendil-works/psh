@@ -1,0 +1,426 @@
+# Goldens for tests/oils/spec/assign-extended.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: local -a
+status: 0
+bash-n: 0
+--- stdout
+|['x', 'y', 'z']
+
+=== 1: declare -a
+status: 0
+bash-n: 0
+--- stdout
+|['x', 'y', 'z']
+
+=== 2: declare -f exit code indicates function existence
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+|0
+
+=== 3: declare -F prints function names
+status: 0
+bash-n: 0
+--- stdout
+|declare -f __ec
+|declare -f _ab
+|declare -f add
+|declare -f div
+|declare -f ek
+
+=== 4: declare -F with shopt -s extdebug prints more info
+status: 0
+bash-n: 0
+--- stdout
+|declare -f add
+|declare -f g
+|
+|add 7 bash
+|g 3 ROOT/spec/testdata/bash-source-2.sh
+
+=== 5: declare -F with shopt -s extdebug and main file
+status: 0
+bash-n: 0
+--- stdout
+|declare -f add
+|declare -f g
+|
+|add 5 ROOT/spec/testdata/extdebug.sh
+|g 3 ROOT/spec/testdata/bash-source-2.sh
+
+=== 6: declare -p var (exit status)
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+|0
+--- stderr
+|bash: line 2: declare: var1: not found
+|bash: line 2: declare: var2: not found
+|bash: line 6: declare: var2: not found
+
+=== 7: declare
+status: 0
+bash-n: 0
+--- stdout
+|[declare]
+|test_var1=111
+|test_var2=222
+|test_var3=333
+|test_var4=test_var1
+|test_var5=555
+|[readonly]
+|declare -r test_var2="222"
+|[export]
+|declare -x test_var3="333"
+|[local]
+|declare -- test_var5="555"
+
+=== 8: declare -p
+status: 0
+bash-n: 0
+--- stdout
+|[declare]
+|declare -- test_var1="111"
+|declare -r test_var2="222"
+|declare -x test_var3="333"
+|declare -n test_var4="test_var1"
+|declare -- test_var5="555"
+|[readonly]
+|declare -r test_var2="222"
+|[export]
+|declare -x test_var3="333"
+|[local]
+|declare -- test_var5="555"
+
+=== 9: declare -p doesn't print binary data, but can be loaded into bash
+status: 0
+bash-n: 0
+--- stdout
+|declare -- s1="foo"
+|declare -- s2="foo bar"
+|declare -- s3=$'\037'
+|declare -- s4=$'\376\377'
+|declare -a a=([0]="foo" [1]="foo bar" [2]=$'\037' [3]=$'\376\377')
+|declare -A A=([$'\037']=$'\376\377' [foo]="foo bar" )
+|---
+|foo foo bar
+| 1f 20 fe ff
+|bash=0
+--- file tmp.bash
+|declare -- s1="foo"
+|declare -- s2="foo bar"
+|declare -- s3=$'\037'
+|declare -- s4=$'\376\377'
+|declare -a a=([0]="foo" [1]="foo bar" [2]=$'\037' [3]=$'\376\377')
+|declare -A A=([$'\037']=$'\376\377' [foo]="foo bar" )
+
+=== 10: declare -p var
+status: 0
+bash-n: 0
+--- stdout
+|[declare]
+|declare -- test_var1="111"
+|declare -r test_var2="222"
+|declare -x test_var3="333"
+|declare -n test_var4="test_var1"
+|declare -- test_var5="555"
+|[readonly]
+|[export]
+|[local]
+|declare -rx test_var5="555"
+--- stderr
+|bash: line 9: declare: test_var0: not found
+|bash: line 15: local: test_var0: not found
+|bash: line 15: local: test_var1: not found
+|bash: line 15: local: test_var2: not found
+|bash: line 15: local: test_var3: not found
+|bash: line 15: local: test_var4: not found
+
+=== 11: declare -p arr
+status: 0
+bash-n: 0
+--- stdout
+|declare -a test_arr1=()
+|declare -a test_arr2=()
+|declare -A test_arr3=()
+|declare -a test_arr4=([0]="1" [1]="2" [2]="3")
+|declare -a test_arr5=([0]="1" [1]="2" [2]="3")
+|declare -A test_arr6=([c]="3" [b]="2" [a]="1" )
+|declare -a test_arr7=([3]="foo")
+
+=== 12: declare -p foo=bar doesn't make sense
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+|declare -- a=b
+--- stderr
+|bash: line 3: declare: foo=bar: not found
+|bash: line 7: declare: foo=bar: not found
+--- file tmp.txt
+|declare -- a="b"
+
+=== 13: declare -pnrx
+status: 0
+bash-n: 0
+--- stdout
+|[declare -pn]
+|declare -n test_var4="test_var1"
+|[declare -pr]
+|declare -r test_var2="222"
+|[declare -px]
+|declare -x test_var3="333"
+
+=== 14: declare -paA
+status: 0
+bash-n: 0
+--- stdout
+|[declare -pa]
+|declare -a test_var6=()
+|[declare -pA]
+|declare -A test_var7=()
+
+=== 15: declare -pnrx var
+status: 0
+bash-n: 0
+--- stdout
+|[declare -pn]
+|declare -- test_var1="111"
+|declare -r test_var2="222"
+|declare -x test_var3="333"
+|declare -n test_var4="test_var1"
+|declare -- test_var5="555"
+|[declare -pr]
+|declare -- test_var1="111"
+|declare -r test_var2="222"
+|declare -x test_var3="333"
+|declare -n test_var4="test_var1"
+|declare -- test_var5="555"
+|[declare -px]
+|declare -- test_var1="111"
+|declare -r test_var2="222"
+|declare -x test_var3="333"
+|declare -n test_var4="test_var1"
+|declare -- test_var5="555"
+--- stderr
+|bash: line 9: declare: test_var0: not found
+|bash: line 11: declare: test_var0: not found
+|bash: line 13: declare: test_var0: not found
+
+=== 16: declare -pg
+status: 0
+bash-n: 0
+--- stdout
+|declare -- test_var1="local"
+
+=== 17: declare -pg var
+status: 0
+bash-n: 0
+--- stdout
+|declare -- test_var1="local"
+
+=== 18: ble.sh: eval -- "$(declare -p var arr)"
+status: 0
+bash-n: 0
+--- stdout
+|sum=21
+|arr[0]=a2
+|arr[1]=a5
+|arr[2]=a8
+|arr[3]=a10
+
+=== 19: declare -p and value.Undef
+status: 0
+bash-n: 0
+--- stdout
+|declare -- x
+|declare -- x
+
+=== 20: eval -- "$(declare -p arr)" (restore arrays w/ unset elements)
+status: 0
+bash-n: 0
+--- stdout
+|arr[0]: unset
+|arr[1]: unset
+|arr[2]: unset
+|arr[3]: set ... []
+|arr[4]: set ... [foo]
+
+=== 21: declare -p UNDEF (and typeset) -- prints something to stderr
+status: 0
+bash-n: 0
+--- stdout
+|declare -rx x="42"
+|declare -rx x="42"
+|  2 de
+|  2 ty
+|  4 total
+--- file de
+|bash: line 5: declare: undef1: not found
+|bash: line 5: declare: undef2: not found
+--- file ty
+|bash: line 7: typeset: undef1: not found
+|bash: line 7: typeset: undef2: not found
+
+=== 22: typeset -f
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+|0
+
+=== 23: typeset -p
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+|0
+--- stderr
+|bash: line 2: typeset: var1: not found
+|bash: line 2: typeset: var2: not found
+|bash: line 6: typeset: var2: not found
+
+=== 24: typeset -r makes a string readonly
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+|status=1
+|status=1
+|status=1
+|status=1
+--- stderr
+|bash: line 4: s1: readonly variable
+|bash: line 6: s2: readonly variable
+|bash: line 9: s1: readonly variable
+|bash: line 11: s2: readonly variable
+|bash: line 14: unset: s1: cannot unset: readonly variable
+|bash: line 16: unset: s2: cannot unset: readonly variable
+
+=== 25: typeset -ar makes it readonly
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+|status=1
+|status=1
+|status=1
+|status=1
+--- stderr
+|bash: line 4: array1: readonly variable
+|bash: line 6: array2: readonly variable
+|bash: line 9: array1: readonly variable
+|bash: line 11: array2: readonly variable
+|bash: line 14: unset: array1: cannot unset: readonly variable
+|bash: line 16: unset: array2: cannot unset: readonly variable
+
+=== 26: typeset -x makes it exported
+status: 0
+bash-n: 0
+--- stdout
+|lib/
+
+=== 27: Multiple assignments / array assignments on a line
+status: 0
+bash-n: 0
+--- stdout
+|1 2 3
+
+=== 28: Env bindings shouldn't contain array assignments
+status: 0
+bash-n: 0
+--- stdout
+|1
+|None
+|3
+--- stderr
+|bash: line 1: `b[0]': not a valid identifier
+
+=== 29: syntax error in array assignment
+status: 0
+bash-n: 0
+--- stdout
+|x
+--- stderr
+|bash: line 1: 0+: arithmetic syntax error: operand expected (error token is "+")
+
+=== 30: declare -g (bash-specific; bash-completion uses it)
+status: 0
+bash-n: 0
+--- stdout
+|['42', '']
+|['bar', '']
+|['ev2']
+
+=== 31: myvar=typeset (another form of dynamic assignment)
+status: 0
+bash-n: 0
+--- stdout
+|a
+
+=== 32: dynamic array parsing is not allowed
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|['1']
+
+=== 33: dynamic flag in array in assign builtin
+status: 0
+bash-n: 0
+--- stdout
+|foo=F
+|bar=B
+|F
+|B
+
+=== 34: typeset +x
+status: 0
+bash-n: 0
+--- stdout
+|E
+|None
+
+=== 35: typeset +r removes read-only attribute (TODO: documented in bash to do nothing)
+status: 0
+bash-n: 0
+--- stdout
+|r=r1
+|r=r1
+|r=r1
+--- stderr
+|bash: line 4: typeset: r: readonly variable
+|bash: line 7: r: readonly variable
+
+=== 36: function name with /
+status: 0
+bash-n: 0
+--- stdout
+|ble/foo
+|status=0
+
+=== 37: invalid var name
+status: 1
+bash-n: 0
+--- stderr
+|bash: line 1: typeset: `foo/bar': not a valid identifier
+
+=== 38: unset and shell funcs
+status: 127
+bash-n: 0
+--- stdout
+|bar
+|declare -f foo
+--- stderr
+|bash: line 11: foo: command not found

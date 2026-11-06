@@ -1,0 +1,663 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/builtins/read.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Basic read usage from file
+status: 0
+bash-n: 0
+--- stdout
+|Hello, a => 1
+|Hello, b => 2
+|Exited loop; name='', num=''
+
+=== 1: Basic read usage from file and no var name
+status: 0
+bash-n: 0
+--- stdout
+|reply: 'a 1'
+|reply: 'b 2'
+|Exited loop; reply=''
+
+=== 2: Basic read usage with empty file
+status: 0
+bash-n: 0
+--- stdout
+|declare -- name=""
+|declare -- num=""
+|declare -- REPLY=""
+|declare -a arr=()
+
+=== 3: Basic read usage from pipe
+status: 0
+bash-n: 0
+--- stdout
+|1.
+|Hello, a
+|Hello, b
+|2.
+|Hello, 1:a b REPLY:
+|3.
+|declare -a arr=([0]="a" [1]="b")
+
+=== 4: read with closed stdin
+status: 0
+bash-n: 0
+--- stdout
+|result: 1
+--- stderr
+|bash: line 1: read: 0: read error: Bad file descriptor
+
+=== 5: read from here string
+status: 0
+bash-n: 0
+--- stdout
+|myvar: hello
+
+=== 6: read from process substitution
+status: 0
+bash-n: 0
+--- stdout
+|myvar: hello
+
+=== 7: read with custom IFS
+status: 0
+bash-n: 0
+--- stdout
+|LINE: '    a    b    c '
+
+=== 8: read text with tabs and custom IFS
+status: 0
+bash-n: 0
+--- stdout
+|myvar1: |a	b|
+|myvar1: |c d	e|
+
+=== 9: read with empty entries
+status: 0
+bash-n: 0
+--- stdout
+|LINE: 'x'
+|LINE: ''
+|LINE: 'y'
+|LINE: ''
+|LINE: ''
+|declare -- READ1="x"
+|declare -- READ2=""
+|declare -- READ3="y"
+|declare -- READ4="z"
+
+=== 10: read -a with empty lines
+status: 0
+bash-n: 0
+--- stdout
+|declare -a READ=([0]="hi")
+|declare -a READ=([0]="hi")
+
+=== 11: read -a with empty interior field
+status: 0
+bash-n: 0
+--- stdout
+|declare -a READ=([0]="hi" [1]="" [2]="there" [3]="" [4]="you")
+|declare -a READ=([0]="hi" [1]="there" [2]="you")
+|declare -a READ=([0]="hi" [1]="there" [2]="you")
+
+=== 12: read -a with empty leading field
+status: 0
+bash-n: 0
+--- stdout
+|declare -a READ=([0]="" [1]="hi" [2]="there" [3]="you")
+
+=== 13: read -a with empty trailing field
+status: 0
+bash-n: 0
+--- stdout
+|declare -a READ=([0]="hi" [1]="there" [2]="you")
+
+=== 14: read -a with empty entries + empty delimiter
+status: 0
+bash-n: 0
+--- stdout
+|declare -a READ=([0]="hi" [1]="there" [2]="you")
+|declare -a READ=([0]="hi" [1]="there" [2]="you")
+
+=== 15: read -a with empty entries + empty delimiter + custom IFS
+status: 0
+bash-n: 0
+--- stdout
+|declare -a READ=([0]="x" [1]="" [2]="y" [3]=$'z\nw' [4]=$'v\n\n\nm\n')
+
+=== 16: read with empty delimiter
+status: 0
+bash-n: 0
+--- stdout
+|declare -- REPLY=$'x\n'
+
+=== 17: read -t 0 with data available in pipe
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+
+=== 18: read -t 0 with no data (empty pipe)
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+
+=== 19: read -t with data immediately available
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0, line: 'hello world'
+
+=== 20: read -t with fractional timeout and data available
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0, var: 'test data'
+
+=== 21: read -t with regular file (always ready)
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0
+|exit: 0, line: 'line1'
+
+=== 22: read -t negative timeout is invalid
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+--- stderr
+|bash: line 1: read: -1: invalid timeout specification
+
+=== 23: read rejects an infinite or NaN timeout
+status: 0
+bash-n: 0
+--- stdout
+|inf: rc=1 v=''
+|-inf: rc=1 v=''
+|+inf: rc=1 v=''
+|Infinity: rc=1 v=''
+|nan: rc=1 v=''
+|NaN: rc=1 v=''
+|1e400: rc=1 v=''
+--- stderr
+|bash: line 2: read: inf: invalid timeout specification
+|bash: line 2: read: -inf: invalid timeout specification
+|bash: line 2: read: +inf: invalid timeout specification
+|bash: line 2: read: Infinity: invalid timeout specification
+|bash: line 2: read: nan: invalid timeout specification
+|bash: line 2: read: NaN: invalid timeout specification
+|bash: line 2: read: 1e400: invalid timeout specification
+
+=== 24: read rejects a timeout that isn't a decimal number
+status: 0
+bash-n: 0
+--- stdout
+|[0x10]: rc=1 v=''
+|[1:2]: rc=1 v=''
+|[1.5.2]: rc=1 v=''
+|[++1]: rc=1 v=''
+|[ 1]: rc=1 v=''
+|[1 ]: rc=1 v=''
+--- stderr
+|bash: line 2: read: 0x10: invalid timeout specification
+|bash: line 2: read: 1:2: invalid timeout specification
+|bash: line 2: read: 1.5.2: invalid timeout specification
+|bash: line 2: read: ++1: invalid timeout specification
+|bash: line 2: read:  1: invalid timeout specification
+|bash: line 2: read: 1 : invalid timeout specification
+
+=== 25: read accepts a timeout too long to represent
+status: 0
+bash-n: 0
+--- stdout
+|9223372036854775807: rc=0 v='x'
+|99999999999999999999: rc=0 v='x'
+
+=== 26: read treats an empty timeout as zero
+status: 0
+bash-n: 0
+--- stdout
+|[]: rc=0 v=''
+|[.]: rc=0 v=''
+
+=== 27: read -t with -n option
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0, var: 'abc'
+
+=== 28: read -t 0 with here string
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0
+|exit: 0, var: 'hello'
+
+=== 29: read -r preserves backslashes
+status: 0
+bash-n: 0
+--- stdout
+|line: 'hello\nworld'
+|line: 'path\\to\\file'
+
+=== 30: read without -r processes escape sequences
+status: 0
+bash-n: 0
+--- stdout
+|line: 'hellonworld'
+|line: 'a\b'
+
+=== 31: read -r with trailing backslash
+status: 0
+bash-n: 0
+--- stdout
+|line: 'line with trailing\'
+
+=== 32: read without -r line continuation
+status: 0
+bash-n: 0
+--- stdout
+|line: 'firstsecond'
+
+=== 33: read -r does not do line continuation
+status: 0
+bash-n: 0
+--- stdout
+|line: 'first\'
+
+=== 34: read -n respects delimiter
+status: 0
+bash-n: 0
+--- stdout
+|var: 'ab:cd'
+
+=== 35: read -N ignores delimiter
+status: 0
+bash-n: 0
+--- stdout
+|var: 'ab:c'
+
+=== 36: read -N does not split by IFS
+status: 0
+bash-n: 0
+--- stdout
+|var: 'a b c'
+
+=== 37: read -N with array
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="a b c")
+
+=== 38: read exit code on success
+status: 0
+bash-n: 0
+--- stdout
+|exit: 0
+
+=== 39: read exit code on EOF
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+
+=== 40: read exit code on EOF with partial data
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1, var: 'partial'
+
+=== 41: read with IFS containing both whitespace and non-whitespace
+status: 0
+bash-n: 0
+--- stdout
+|v1='a' v2='b' v3='c' v4='d'
+
+=== 42: read with consecutive non-whitespace delimiters
+status: 0
+bash-n: 0
+--- stdout
+|v1='a' v2='' v3='b'
+
+=== 43: read assignment to fewer variables than fields
+status: 0
+bash-n: 0
+--- stdout
+|v1='a' v2='b c d e'
+
+=== 44: read assignment to more variables than fields
+status: 0
+bash-n: 0
+--- stdout
+|v1='a' v2='b' v3='' v4=''
+
+=== 45: read last variable preserves original delimiters
+status: 0
+bash-n: 0
+--- stdout
+|a='x' b='y:z:w'
+|a='x' b='y::z:w'
+|v1='a' v2='b  c:d  e'
+
+=== 46: read with consecutive delimiters at field boundary
+status: 0
+bash-n: 0
+--- stdout
+|a='x' b=':y'
+|a='x' b='::y'
+|v1='a' v2='' v3='b:c'
+
+=== 47: read with empty IFS preserves entire line
+status: 0
+bash-n: 0
+--- stdout
+|v1='a b c' v2='' v3=''
+|v1='a:b:c' v2=''
+|declare -a arr=([0]="a b c")
+
+=== 48: read REPLY preserves leading and trailing whitespace
+status: 0
+bash-n: 0
+--- stdout
+|REPLY='  hello  world  '
+|REPLY='	tab	separated	'
+
+=== 49: read -a clears pre-existing array elements
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="new1" [1]="new2")
+
+=== 50: read -N still processes backslashes without -r
+status: 0
+bash-n: 0
+--- stdout
+|var='anb'
+|var='a\b'
+
+=== 51: read -r -N for truly raw fixed-length reads
+status: 0
+bash-n: 0
+--- stdout
+|var='a\nb'
+|var='a\\b'
+
+=== 52: read -u with invalid file descriptor
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+--- stderr
+|bash: line 2: read: 99: invalid file descriptor: Bad file descriptor
+
+=== 53: read into readonly variable
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1, myvar='original'
+--- stderr
+|bash: line 2: myvar: readonly variable
+
+=== 54: read with mixed IFS into fewer variables
+status: 0
+bash-n: 0
+--- stdout
+|a='x' b='y : z : w'
+
+=== 55: read -n counts output chars after escape processing
+status: 0
+bash-n: 0
+--- stdout
+|var='abc'
+|var='\ab'
+
+=== 56: read -n with backslash-newline continuation
+status: 0
+bash-n: 0
+--- stdout
+|var='abc'
+
+=== 57: read trailing backslash discarded on EOF
+status: 0
+bash-n: 0
+--- stdout
+|var='ab'
+|var='ab'
+
+=== 58: read -p reads input correctly
+status: 0
+bash-n: 0
+--- stdout
+|var='hello'
+
+=== 59: read -u with valid file descriptor
+status: 0
+bash-n: 0
+--- stdout
+|var='from fd 3'
+
+=== 60: read -u combined with other options
+status: 0
+bash-n: 0
+--- stdout
+|declare -a arr=([0]="hello" [1]="world" [2]="test")
+
+=== 61: read -s with pipe input
+status: 0
+bash-n: 0
+--- stdout
+|var='secret'
+
+=== 62: read -s with multiple variables
+status: 0
+bash-n: 0
+--- stdout
+|v1='a' v2='b' v3='c'
+
+=== 63: read into nameref variable
+status: 0
+bash-n: 0
+--- stdout
+|result: input_value
+|ref: input_value
+
+=== 64: read -a into nameref array
+status: 0
+bash-n: 0
+--- stdout
+|myarr[0]: one
+|myarr[1]: two
+|myarr[2]: three
+|ref[1]: two
+
+=== 65: read into subscripted nameref
+status: 0
+bash-n: 0
+--- stdout
+|arr[0]: a
+|arr[1]: replaced
+|arr[2]: c
+
+=== 66: read with multi-byte UTF-8 input
+status: 0
+bash-n: 0
+--- stdout
+|[테스트 héllo]
+|[테][b]
+
+=== 67: read -d with a multi-byte delimiter
+status: 0
+bash-n: 0
+--- stdout
+|[ab]
+
+=== 68: read does not swallow bytes after an invalid UTF-8 byte
+status: 0
+bash-n: 0
+--- stdout
+|match
+|one
+|[SECOND]
+
+=== 69: read with a truncated multi-byte sequence at EOF
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|two
+|rc2=1
+
+=== 70: read -n and -N count characters, not bytes
+status: 0
+bash-n: 0
+--- stdout
+|[테스]
+|[테스]
+|[hél]
+|[😀😀]
+|[😀😀]
+|[é테]
+
+=== 71: read into an invalid variable name fails
+status: 0
+bash-n: 0
+--- stdout
+|read: 1
+--- stderr
+|bash: line 1: read: `1x': not a valid identifier
+
+=== 72: read with an invalid timeout fails with status 1
+status: 0
+bash-n: 0
+--- stdout
+|read: 1
+--- stderr
+|bash: line 1: read: abc: invalid timeout specification
+
+=== 73: read takes control characters from a pipe as data
+status: 0
+bash-n: 0
+--- stdout
+|rc=0 len=5
+
+=== 74: read options given more than once keep the last
+status: 0
+bash-n: 0
+--- stdout
+|x=[ab] rc=0
+|x=[a] rc=0
+|declare -a a2=([0]="x" [1]="y")
+|a1 unset
+|rc=0
+
+=== 75: read with combined and attached short options
+status: 0
+bash-n: 0
+--- stdout
+|x=[a]
+|x=[ab]
+|x=[ab]
+|x=[a
+|]
+|x=[a]
+|x=[a]
+|declare -a arr=([0]="a\\b" [1]="c")
+|declare -a arr=([0]="a" [1]="b")
+|x=[fd0]
+|x=[abc]
+|x=[a] rc=0
+
+=== 76: read with -- before the names
+status: 0
+bash-n: 0
+--- stdout
+|x=[a] y=[b c]
+|x=[a\b]
+
+=== 77: read with an unknown option or missing value fails with status 2
+status: 0
+bash-n: 0
+--- stdout
+|rc=2
+|rc=2
+|rc=2
+--- stderr
+|bash: line 1: read: -Z: invalid option
+|read: usage: read [-Eers] [-a array] [-d delim] [-i text] [-n nchars] [-N nchars] [-p prompt] [-t timeout] [-u fd] [name ...]
+|bash: line 2: read: -a: option requires an argument
+|read: usage: read [-Eers] [-a array] [-d delim] [-i text] [-n nchars] [-N nchars] [-p prompt] [-t timeout] [-u fd] [name ...]
+|bash: line 3: read: -n: option requires an argument
+|read: usage: read [-Eers] [-a array] [-d delim] [-i text] [-n nchars] [-N nchars] [-p prompt] [-t timeout] [-u fd] [name ...]
+
+=== 78: read with an invalid count or descriptor fails with status 1
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+|rc=1
+|rc=1
+|rc=1
+|rc=1
+--- stderr
+|bash: line 1: read: abc: invalid number
+|bash: line 2: read: -1: invalid number
+|bash: line 3: read: 1r: invalid number
+|bash: line 4: read: abc: invalid file descriptor specification
+|bash: line 5: read: -1: invalid file descriptor specification
+
+=== 79: read checks every -t and -u it is given
+status: 0
+bash-n: 0
+--- stdout
+|rc=1 x=keep
+|rc=1 x=keep
+|rc=1 x=keep
+|rc=1 x=keep
+|rc=0 x=data
+--- stderr
+|bash: line 2: read: abc: invalid timeout specification
+|bash: line 3: read: inf: invalid timeout specification
+|bash: line 4: read: abc: invalid timeout specification
+|bash: line 5: read: 99: invalid file descriptor: Bad file descriptor
+
+=== 80: read -t with an exponent fails with status 1
+status: 0
+bash-n: 0
+--- stdout
+|rc=1 x=[]
+--- stderr
+|bash: line 1: read: 1e1: invalid timeout specification
+
+=== 81: read -n 0 and -N 0 read nothing
+status: 0
+bash-n: 0
+--- stdout
+|x=[] rc=0
+|x=[] rc=0
+
+=== 82: read option values may begin with a hyphen
+status: 0
+bash-n: 0
+--- stdout
+|x=[a] rc=0
+|x=[a] rc=0
+|x=[a] rc=0
+
+=== 83: read takes words after the first name as names
+status: 0
+bash-n: 0
+--- stdout
+|x=[a] rc=1
+|x=[a] y=[] rc=1
+--- stderr
+|bash: line 1: read: `-r': not a valid identifier
+|bash: line 2: read: `--': not a valid identifier
+
+=== 84: read -h is an invalid option and prints nothing on stdout
+status: 0
+bash-n: 0
+--- stdout
+|rc=2 len=0

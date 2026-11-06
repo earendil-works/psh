@@ -1,0 +1,458 @@
+# Goldens for tests/brush/brush-shell/tests/cases/compat/arithmetic.yaml (layer brush), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Empty expression
+status: 0
+bash-n: 0
+--- stdout
+|0
+
+=== 1: Unquoted arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|2
+
+=== 2: Arithmetic literals
+status: 0
+bash-n: 0
+--- stdout
+|0
+|1
+|10
+|8
+|8
+|16
+|16
+
+=== 3: Arithmetic literals with explicit bases
+status: 0
+bash-n: 0
+--- stdout
+|10
+|14
+|4015
+|4015
+|41323
+|41323
+|10
+|370
+|36
+|36
+|10
+|61
+|35
+|62
+|3915
+|63
+|62
+|4033
+|145635
+
+=== 4: Unary arithmetic operators with space
+status: 0
+bash-n: 0
+--- stdout
+|-1
+|1
+|-11
+|0
+
+=== 5: Parentheses
+status: 0
+bash-n: 0
+--- stdout
+|10
+|10
+|10
+|10
+|3
+|3
+|3
+|3
+|9
+|9
+|9
+|9
+|9
+|9
+
+=== 6: Basic quoted arithmetic
+status: 0
+bash-n: 0
+--- stdout
+| 1  + 1 == 2
+| 2  * 3 == 6
+| 9  / 3 == 3
+|10  % 3 == 1
+| 2 ** 3 == 8
+| 2  | 4 == 6
+| 2  & 4 == 0
+| 2  ^ 3 == 1
+| 1 && 1 == 1
+| 1 && 0 == 0
+| 1 || 0 == 1
+| 0 || 1 == 1
+| 1  , 2 == 2
+
+=== 7: Unary operators
+status: 0
+bash-n: 0
+--- stdout
+|     -1 == -1
+|     +1 == 1
+|    ~10 == -11
+|    !10 == 0
+
+=== 8: Conditional operator
+status: 0
+bash-n: 0
+--- stdout
+|1 ? 2 : 3 == 2
+|0 ? 2 : 3 == 3
+
+=== 9: Arithmetic with spacing
+status: 0
+bash-n: 0
+--- stdout
+|143
+
+=== 10: Divide by zero
+status: 0
+bash-n: 0
+--- stdout
+|Result: 1
+|Result: 1
+--- stderr
+|bash: line 1: 1/0: division by 0 (error token is "0")
+|bash: line 4: 1%0: division by 0 (error token is "0")
+
+=== 11: Shift arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|32 >> 2 == 8
+| 1 << 4 == 16
+
+=== 12: Shift arithmetic in conditional"
+status: 0
+bash-n: 0
+--- stdout
+|2. true
+
+=== 13: Variable references
+status: 0
+bash-n: 0
+--- stdout
+|x => 10
+|x + 1 => 11
+|y => 0
+|y + 1 => 1
+|z => 0
+|z + 1 => 1
+
+=== 14: Complex variable references
+status: 0
+bash-n: 0
+--- stdout
+|z => 30
+|a => 60
+
+=== 15: Nested expressions
+status: 0
+bash-n: 0
+--- stdout
+|1: 49
+|2: 30
+|3: 91
+
+=== 16: Assignment arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|x = 1 => 1
+|x is now 1
+|x += 3 => 4
+|x is now 4
+|x -= 1 => 3
+|x is now 3
+|x *= 2 => 6
+|x is now 6
+|x++ == 6
+|x is now 7
+|++x == 8
+|x is now 8
+|x-- == 8
+|x is now 7
+|--x == 6
+|x is now 6
+|x |= 3 => 7
+|x is now 7
+|x &= 12 => 4
+|x is now 4
+|x %= 8 => 4
+|x is now 4
+|x ^= 7 => 3
+|x is now 3
+
+=== 17: Assignment with references
+status: 0
+bash-n: 0
+--- stdout
+|y = x => 13
+|y is now 13
+
+=== 18: Assignments in logical boolean expressions
+status: 0
+bash-n: 0
+--- stdout
+|0 && x+=1 => 0
+|x: 0
+|1 && x+=1 => 1
+|x: 1
+|0 || x+=1 => 1
+|x: 1
+|1 || x+=1 => 1
+|x: 0
+
+=== 19: Array arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|declare -a a=([0]="1" [1]="2" [2]="3")
+|a[0]: 1
+|a[2]: 3
+|a[3]: 0
+|b[2]: 0
+|a[1]=4 => 4
+|a[1]: 4
+|a[1]+=1 => 5
+|a[1]: 5
+|c[1] += 3 => 3
+
+=== 20: Basic arithmetic comparison
+status: 0
+bash-n: 0
+--- stdout
+|0  < 1: 1
+|0 <= 1: 1
+|0 == 1: 0
+|0 != 1: 1
+|0  > 1: 0
+|0 >= 1: 0
+|0  < 0: 0
+|0 <= 0: 1
+|0 == 0: 1
+|0 != 0: 0
+|0  > 0: 0
+|0 >= 0: 1
+|1  < 0: 0
+|1 <= 0: 0
+|1 == 0: 0
+|1 != 0: 1
+|1  > 0: 1
+|1 >= 0: 1
+
+=== 21: Legacy bracket arithmetic syntax
+status: 0
+bash-n: 0
+--- stdout
+|x after increment: 6
+|Direct: 3
+
+=== 22: Legacy bracket arithmetic in extended test
+status: 0
+bash-n: 0
+--- stdout
+|even
+|odd
+
+=== 23: Legacy bracket arithmetic in double-quoted string
+status: 0
+bash-n: 0
+--- stdout
+|Quoted: result: 6
+
+=== 24: Legacy bracket arithmetic complex expression
+status: 0
+bash-n: 0
+--- stdout
+|Complex: 7
+
+=== 25: Legacy bracket arithmetic with array subscript
+status: 0
+bash-n: 0
+--- stdout
+|Array elem: 25
+
+=== 26: Prefix increment/decrement with space before lvalue
+status: 0
+bash-n: 0
+--- stdout
+|++ x => 6
+|x is now 6
+|-- x => 5
+|x is now 5
+|y after ++ y: 11
+|y after -- y: 10
+
+=== 27: INT64_MIN and wrapping arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|-9223372036854775808
+|-9223372036854775808
+|0
+|-9223372036854775808
+|-9223372036854775808
+
+=== 28: Non-cyclic variable dereference chain
+status: 0
+bash-n: 0
+--- stdout
+|42
+
+=== 29: Self-referencing variable in arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+--- stderr
+|bash: line 2: a: expression recursion level exceeded (error token is "a")
+
+=== 30: Recursive variable evaluation with depth limit
+status: 0
+bash-n: 0
+--- stdout
+|exit: 1
+--- stderr
+|bash: line 4: b: expression recursion level exceeded (error token is "b")
+
+=== 31: Arithmetic with nameref variable
+status: 0
+bash-n: 0
+--- stdout
+|before: 10
+|after ++: 11
+|after +=5: 16
+|expr: 32
+
+=== 32: Legacy arithmetic expansion with array subscripts
+status: 0
+bash-n: 0
+--- stdout
+|7 12 30
+
+=== 33: Unmatched bracket in arithmetic expansion does not execute commands
+status: 0
+bash-n: 0
+--- stdout
+|not reached
+--- stderr
+|bash: line 1: echo unexpected [: arithmetic syntax error: invalid arithmetic operator (error token is "[")
+
+=== 34: Legacy arithmetic expansion containing nested expansions
+status: 0
+bash-n: 0
+--- stdout
+|7 2 2 6
+
+=== 35: Blanks inside array subscripts in arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|2 2
+
+=== 36: Double quotes inside legacy arithmetic expansion in double quotes
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+--- stderr
+|bash: line 1: bad substitution: no closing `]' in [$[ 
+
+=== 37: Shift after nested parentheses in arithmetic command
+status: 0
+bash-n: 0
+--- stdout
+|12
+|4
+|ok
+|body
+
+=== 38: Nested subshell starting with double parentheses
+status: 0
+bash-n: 0
+--- stdout
+|a
+|rc=0
+
+=== 39: Division by zero yields a non-zero status without aborting the list
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+--- stderr
+|bash: line 1: ((: 1 / 0 : division by 0 (error token is "0 ")
+
+=== 40: Arithmetic assignment to a readonly variable does not abort the list
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+--- stderr
+|bash: line 1: a: readonly variable
+
+=== 41: Arithmetic error on its own line leaves the following command reachable
+status: 0
+bash-n: 0
+--- stdout
+|status: 1
+--- stderr
+|bash: line 1: ((: 1 / 0 : division by 0 (error token is "0 ")
+
+=== 42: Arithmetic command with line continuations between opening parentheses
+status: 0
+bash-n: 0
+--- stdout
+|arithmetic
+
+=== 43: An empty arithmetic expression evaluates to 0
+status: 0
+bash-n: 0
+--- stdout
+|[0]
+|[0]
+|[0]
+
+=== 44: A whitespace-only arithmetic expression evaluates to 0
+status: 0
+bash-n: 0
+--- stdout
+|[0]
+|[0]
+|[0]
+|[1]
+
+=== 45: let with an empty or blank expression fails without a diagnostic
+status: 0
+bash-n: 0
+--- stdout
+|empty: 1
+|blank: 1
+|trailing: 0
+
+=== 46: (( )) with a blank expression is false
+status: 0
+bash-n: 0
+--- stdout
+|empty: 1
+|blank: 1
+
+=== 47: A blank array subscript is element 0
+status: 0
+bash-n: 0
+--- stdout
+|declare -a zz_b=([1]="y" [2]="z")
+|[p]

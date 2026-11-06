@@ -1,0 +1,205 @@
+# Goldens for tests/oils/spec/var-op-patsub.test.sh (layer oils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: Pattern replacement
+status: 0
+bash-n: 0
+--- stdout
+|abXX
+
+=== 1: Pattern replacement on unset variable
+status: 1
+bash-n: 0
+--- stdout
+|--
+|status=0
+--- stderr
+|bash: line 4: v: unbound variable
+
+=== 2: Global Pattern replacement with /
+status: 0
+bash-n: 0
+--- stdout
+|yy_xx_xx yy_yy_xx
+
+=== 3: Left Anchored Pattern replacement with #
+status: 0
+bash-n: 0
+--- stdout
+|xx_yy_xx xx_xx_xx
+
+=== 4: Right Anchored Pattern replacement with %
+status: 0
+bash-n: 0
+--- stdout
+|xx_yy_xx xx_xx_yy
+
+=== 5: Replace fixed strings
+status: 0
+bash-n: 0
+--- stdout
+|yy_xx yy_yy yy_xx xx_yy
+
+=== 6: Replace is longest match
+status: 0
+bash-n: 0
+--- stdout
+|begin [] end
+
+=== 7: Replace char class
+status: 0
+bash-n: 0
+--- stdout
+|yy_yy_yy xx-xx-xx
+
+=== 8: Replace hard glob
+status: 0
+bash-n: 0
+--- stdout
+|aa__cc
+
+=== 9: ${v/} is empty search and replacement
+status: 0
+bash-n: 0
+--- stdout
+|-abcde-
+|status=0
+
+=== 10: ${v//} is empty search and replacement
+status: 0
+bash-n: 0
+--- stdout
+|-a/b/c-
+|status=0
+
+=== 11: Confusing unquoted slash matches bash (and ash)
+status: 0
+bash-n: 0
+--- stdout
+|c_c
+|c_c
+
+=== 12: Synthesized ${x///} bug (similar to above)
+status: 0
+bash-n: 0
+--- stdout
+|ambiguous: slash brace } hi
+|quoted:    slash brace } hi
+
+=== 13: ${v/a} is the same as ${v/a/}  -- no replacement string
+status: 0
+bash-n: 0
+--- stdout
+|abb
+|status=0
+
+=== 14: Replacement with special chars (bug fix)
+status: 0
+bash-n: 0
+--- stdout
+|?x
+
+=== 15: Replace backslash
+status: 0
+bash-n: 0
+--- stdout
+|[_]
+|[\_]
+|[\_]
+|[_]
+
+=== 16: Replace right ]
+status: 0
+bash-n: 0
+--- stdout
+|--_--
+|--_--
+
+=== 17: Substitute glob characters in pattern, quoted and unquoted
+status: 0
+bash-n: 0
+--- stdout
+|a-b
+|-
+
+=== 18: Substitute one unicode character (UTF-8)
+status: 0
+bash-n: 0
+--- stdout
+|foo and foo
+|foo and _μ_
+|_μ_ and foo
+
+=== 19: When LC_ALL=C, pattern ? doesn't match multibyte character
+status: 0
+bash-n: 0
+--- stdout
+|_μ_ and _μ_
+|_μ_ and _μ_
+|_μ_ and _μ_
+|
+|foo and foo
+|foo and _y_
+|_x_ and foo
+
+=== 20: ${x/^} regression
+status: 0
+bash-n: 0
+--- stdout
+|abc
+|abc
+|^^
+|^^^
+|!!!
+|!!
+|b!c
+|a^c
+
+=== 21: \(\) in pattern (regression)
+status: 0
+bash-n: 0
+--- stdout
+|1 z
+|2 z
+|3 fooz
+|4 z
+
+=== 22: patsub with single quotes and hyphen in character class (regression)
+status: 0
+bash-n: 0
+--- stdout
+|++--.,<>[]
+
+=== 23: patsub with [^]]
+status: 0
+bash-n: 0
+--- stdout
+|ab^cd^
+
+=== 24: [a-z] Invalid range end is syntax error
+status: 0
+bash-n: 0
+--- stdout
+|fooz
+|status=0
+
+=== 25: Pattern is empty $foo$bar -- regression for infinite loop
+status: 0
+bash-n: 0
+--- stdout
+|-foo-
+
+=== 26: Chromium from http://www.oilshell.org/blog/2016/11/07.html
+status: 0
+bash-n: 0
+--- stdout
+|\/foo\/bar\/baz
+|\/foo\/bar\/baz
+
+=== 27: ${x//~homedir/}
+status: 0
+bash-n: 0
+--- stdout
+|z/git/oilshell
+|z/git/oilshell

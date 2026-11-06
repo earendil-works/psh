@@ -1,7 +1,7 @@
 # 0012: Guide check tool
 
-status: open (later)
-agent: -
+status: in-progress
+agent: shapes
 branch: issue/0012-guide-check
 depends-on: 0001
 touches: crates/psh-docs/ (or scripts/), scripts/gate.sh (one leg), docs/guide/README.md (the Tooling section)

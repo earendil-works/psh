@@ -5,15 +5,16 @@ it means for someone who uses psh, why psh chose it, how it gets there, and what
 or rules out. The other chapters refer to the goals by the names used here.
 
 > **In short.** psh is **agent-first**: it is built for the commands coding agents write,
-> not for people at a prompt. It is **portable** to Windows without any Unix layer, and
-> **consistent**: one shell and one set of utilities everywhere, with **bash's behavior**.
+> not for people at a prompt. It is **portable** to Windows without any Unix layer, has
+> **bash's behavior**, and is **consistent**: one shell and one set of utilities everywhere.
 > A host can **understand commands** before running them, keeps **control of execution**,
 > can **embed** psh with no async runtime, and can run it **sandboxed** over a virtual
 > file system.
 
-The goals are not ranked. Where two of them pull in different directions, the chapter
-that makes the trade-off says which one won and why. Licensing is a requirement under all
-of them.
+When two goals pull in different directions, **agent-first** wins over **portable**, and
+both win over **bash's behavior**; the remaining goals are not ranked among themselves,
+and the chapter that makes such a trade-off says which one won and why. A permissive
+license is a requirement under all of them.
 
 ## The goals
 
@@ -51,6 +52,20 @@ and accepts both `C:\path` and `/c/path`.
 tested on Windows. Some Unix features, such as stopping and continuing a process, have no
 Windows counterpart.
 
+### Bash's behavior
+
+**For you:** a script does what GNU bash 5.3 does with it, prints what bash prints,
+including error messages, and exits with the same status.
+
+**Why:** models are trained on bash and read its messages. A shell that is "like bash"
+but differs in corners is harder to use than one that matches.
+
+**How:** every behavior test compares psh with output recorded from bash 5.3. Each
+deliberate difference has a reason and is listed in one place.
+
+**The cost:** bash's quirks become targets too, and the last part of compatibility is a
+long tail.
+
 ### Consistent
 
 **For you:** one shell and one utility dialect wherever an agent runs: a laptop, a remote
@@ -67,20 +82,6 @@ BSD, with fixed rules where the two conflict.
 **The cost:** a psh utility can differ in a detail from the platform's own tool (column
 padding, for example). Commands that report on the system, such as `uname`, still report
 the real host.
-
-### Bash's behavior
-
-**For you:** a script does what GNU bash 5.3 does with it, prints what bash prints,
-including error messages, and exits with the same status.
-
-**Why:** models are trained on bash and read its messages. A shell that is "like bash"
-but differs in corners is harder to use than one that matches.
-
-**How:** every behavior test compares psh with output recorded from bash 5.3. Each
-deliberate difference has a reason and is listed in one place.
-
-**The cost:** bash's quirks become targets too, and the last part of compatibility is a
-long tail.
 
 ### Understandable commands
 
@@ -147,7 +148,7 @@ In a browser there is no git, Python or Node unless the host supplies them.
 
 ## Under every goal: a permissive license
 
-**For you:** psh can be shipped inside other products under a permissive license.
+**For you:** psh is licensed MIT OR Apache-2.0 and can be shipped inside other products.
 
 **How:** psh uses only MIT, Apache and BSD-style code. It is written without reading GNU
 bash's source or any other GPL implementation; GPL programs serve only as references to
@@ -160,5 +161,6 @@ compare output with.
 psh is not an interactive shell, a login shell or a POSIX `sh`, and has no zsh mode. Its
 utilities never include interpreters, compilers, package managers or database clients
 (`python`, `cargo`, `npm`, `sqlite3`): those stay real programs, which also keeps them
-visible to a classifier. Conformance to a test
+visible to a classifier. Version control and network clients (`git`, `curl`, `ssh`) are
+real programs too; psh does not reimplement them. Conformance to a test
 suite for its own sake is not a target; matching bash on what agents run is.

@@ -1,7 +1,7 @@
 # 0023: Arithmetic parser, bash-format printer, byte-exact sources
 
-status: open
-agent: -
+status: in-progress
+agent: parser
 branch: issue/0023-syntax-arith-printer
 depends-on: 0004
 touches: crates/psh-syntax/, crates/psh/ (--parse JSON for the new nodes), tests/l0/

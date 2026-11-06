@@ -1,7 +1,7 @@
 # 0001: Workspace skeleton and the empty gate
 
-status: open
-agent: -
+status: in-progress
+agent: infra
 branch: issue/0001-workspace-skeleton
 depends-on: -
 touches: Cargo.toml, crates/, scripts/, .gitattributes, .cargo/, NOTICE, LICENSE*

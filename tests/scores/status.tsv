@@ -1,3 +1,6 @@
 # date (UTC)	commit	layer	active	pass	pass+stderr	later	later_pass	skip
 2026-11-06T23:22:31Z	21dc1ab	oils	2511	71	0	0	0	234
 2026-11-06T23:22:31Z	21dc1ab	brush	3171	59	0	51	0	465
+2026-11-06T23:31:33Z	7868e71	oils	2511	71	0	0	0	234
+2026-11-06T23:31:33Z	7868e71	brush	3171	59	0	51	0	465
+2026-11-06T23:31:33Z	7868e71	agent	144	0	0	0	0	0

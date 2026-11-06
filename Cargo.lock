@@ -336,6 +336,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "psh-classify"
+version = "0.0.0"
+dependencies = [
+ "psh-syntax",
+]
+
+[[package]]
 name = "psh-docs"
 version = "0.0.0"
 

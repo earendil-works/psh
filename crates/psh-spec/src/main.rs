@@ -358,7 +358,9 @@ fn run(opts: Options) -> Result<ExitCode, String> {
 
     if opts.status {
         print!("{}", status::render_status(&results, &items, &opts.layers));
-        if !opts.no_append && opts.filters.is_empty() && engine.name() == "psh" {
+        let append = !opts.no_append && opts.filters.is_empty() && engine.name() == "psh";
+        print!("{}", status::l0_section(&root, opts.jobs, append)?);
+        if append {
             status::append_history(&root, &results, &items, &opts.layers)?;
             println!("\n(appended to tests/scores/status.tsv)");
         }

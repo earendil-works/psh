@@ -450,17 +450,7 @@ pub fn append_history(
             "# date (UTC)\tcommit\tlayer\tactive\tpass\tpass+stderr\tlater\tlater_pass\tskip\n",
         );
     }
-    let commit = std::process::Command::new("git")
-        .args(["rev-parse", "--short", "HEAD"])
-        .current_dir(root)
-        .output()
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-        .unwrap_or_default();
-    let date = std::process::Command::new("date")
-        .args(["-u", "+%Y-%m-%dT%H:%M:%SZ"])
-        .output()
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-        .unwrap_or_default();
+    let (date, commit) = stamp(root);
     let counts = crate::report::layer_counts(results, items);
     for layer in layers {
         if let Some(c) = counts.get(layer) {
@@ -517,6 +507,49 @@ pub fn hitlist(results: &[CaseResult], weights: &Weights, n: usize) -> String {
         let _ = writeln!(out, "{w:>8.0}  {:<36}  {:<22}  {}", c.id, why, c.name);
     }
     out
+}
+
+/// L0's scoreboard for `scripts/status`, and its line in `tests/scores/status.tsv`
+/// (layer `l0`: inputs as active, passing inputs as pass).
+pub fn l0_section(root: &Path, jobs: usize, append: bool) -> Result<String, String> {
+    let (_, outcomes) = crate::l0::run_all(root, &[], jobs)?;
+    let mut out = String::from(
+        "\n## l0\n\n| Source | Inputs | Agree with bash -n | Round trip | Pass |\n| --- | ---: | ---: | ---: | ---: |\n",
+    );
+    let mut total = [0usize; 4];
+    for (src, c) in crate::l0::counts(&outcomes) {
+        let _ = writeln!(out, "| {src} | {} | {} | {} | {} |", c[0], c[1], c[2], c[3]);
+        for i in 0..4 {
+            total[i] += c[i];
+        }
+    }
+    if append {
+        let path = root.join("tests/scores/status.tsv");
+        let mut text = std::fs::read_to_string(&path).unwrap_or_default();
+        let (date, commit) = stamp(root);
+        let _ = writeln!(
+            text,
+            "{date}\t{commit}\tl0\t{}\t{}\t-\t0\t0\t0",
+            total[0], total[3]
+        );
+        std::fs::write(&path, text).map_err(|e| format!("{}: {e}", path.display()))?;
+    }
+    Ok(out)
+}
+
+fn stamp(root: &Path) -> (String, String) {
+    let commit = std::process::Command::new("git")
+        .args(["rev-parse", "--short", "HEAD"])
+        .current_dir(root)
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .unwrap_or_default();
+    let date = std::process::Command::new("date")
+        .args(["-u", "+%Y-%m-%dT%H:%M:%SZ"])
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .unwrap_or_default();
+    (date, commit)
 }
 
 #[cfg(test)]

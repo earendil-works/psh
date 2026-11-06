@@ -41,7 +41,7 @@ plan behind this is `research/hillclimb.md`.
 
 | Layer | Source | License / vendoring | What it climbs |
 | --- | --- | --- | --- |
-| L0 parse | every script of L1–L3 plus the shape corpus | ours | `psh --parse` agrees with `bash -n` on parse/no-parse; print → re-parse round trip; spans cover the source |
+| L0 parse | every script of L1–L3, the shape corpus and `tests/l0/syntax.txt` | ours | psh-syntax agrees with `bash -n` on parse/no-parse; print → re-parse round trip (`psh-spec --l0`); spans cover the source |
 | L1 Oils spec | `oils/spec/*.test.sh` at d114978 | Apache-2.0, vendored in `tests/oils/` | the language, per area; ~2.7k cases in the compat set |
 | L2 brush cases | `brush-shell/tests/cases/**/*.yaml` | MIT, vendored in `tests/brush/` | the same, ~3.7k cases; the files hold no expectations, so the goldens come from our recording |
 | L3 agent shapes | our own cases written to the patterns in `research/corpus.md`, in the Oils format, run as `bash -c` | ours, `tests/agent/` | what agents do: `cd X && …`, `\| head`, `2>&1`, quoted here-docs, `timeout`, globs that match nothing; 144 cases, growing toward ~500 |
@@ -79,9 +79,16 @@ reference only, never vendored.
   created or changed in its directory (contents up to 64 KiB, else size and hash;
   directories; symlinks) and `bash -n`'s stderr. Lines are `|text`, or `\text` with
   `\\` and `\xNN` escapes for control characters and invalid UTF-8.
-- `tests/goldens/shapes/bash-n.txt` holds `bash -n`'s verdict for each skeleton of the
-  shape corpus that bash rejects (by line in `tests/shapes/shapes.txt`); every other
-  skeleton parses.
+- `tests/goldens/shapes/bash-n.txt` and `tests/goldens/l0/bash-n.txt` hold `bash -n`'s
+  verdict for each skeleton of the shape corpus (by line in `tests/shapes/shapes.txt`)
+  and each snippet of the parser's `tests/l0/syntax.txt` (by name) that bash rejects;
+  every other input parses. Their header holds the hash of the source they were
+  recorded from; `scripts/record-goldens --l0` re-records just these in seconds.
+- **L0** (`psh-spec --l0`, D1220): every case script, skeleton and snippet is parsed
+  with psh-syntax; an input passes when psh accepts exactly what bash accepts and a
+  parsed tree survives print → reparse unchanged (compared by `psh_syntax::dump`). Ids
+  are `cases/oils/alias/3`, `shapes/12`, `syntax/NAME`; the ratchet is
+  `tests/l0/expected-failures.txt`.
 - A case **passes** when stdout, exit status and the resulting files match the golden
   after normalization. stderr is compared too and counted as its own score, so error
   messages climb without blocking the language work. (Whether stderr mismatches become
@@ -129,7 +136,8 @@ Moving cases between groups is a coordinator decision.
   and per area (Oils file, brush file) as Markdown, and appends one line per layer to
   `tests/scores/status.tsv` (date, commit, active, pass, pass with stderr, later, later
   passing, skip), so progress is visible over time; commit that line with the change that
-  moved the numbers. `--no-append` leaves the file alone. The score is the source of
+  moved the numbers. It also shows L0 per source and appends an `l0` line (inputs,
+  passing). `--no-append` leaves the file alone. The score is the source of
   truth, not the prose.
 - `scripts/status --hitlist [-n N]` ranks the failing active cases, and the areas by
   the summed weight of their failures. A case's weight is the corpus frequency
@@ -184,7 +192,8 @@ reaches `main` (AGENTS.md). Legs, as they come into existence:
    tests of `timeout.sh` and `merge-to-main.sh` pass (0001, D1013).
    `shapes`: the shape corpus passes its privacy check (0003, D1030).
    `guide`: `psh-docs check` holds the guide to its writing rules (0012, D1120).
-4. `spec`: the ratchets of every layer that exists (0002 onward).
+4. `spec`: the ratchets of every layer that exists (0002 onward); `l0`: the L0 ratchet
+   (0022).
 5. `windows`, always last: `fmt`, clippy, `cargo test` (arm64 and x64) and the MSRV
    check on the owner's Windows VM, through `scripts/windows-gate.sh` (0007; D027,
    D1070, D1071). See "Windows" below.

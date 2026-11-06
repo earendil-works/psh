@@ -657,3 +657,15 @@ bodies, backquote bodies, and a literal here-document or here-string fed to a sh
 unknown. Wrapped commands (`env`, `timeout`, `nice`, `nohup`, `command`, `exec`, `sudo`,
 `xargs`, `find -exec`, `uv run`, ...) are commands of their own with the wrapper as
 parent.
+
+## D1220: L0 lives in psh-spec, on psh-syntax as a library
+date: 2026-11-07 · by: infra · issue: 0022
+`psh-spec --l0` parses every L1–L3 case script, every shape skeleton and every snippet of
+`tests/l0/syntax.txt` with psh-syntax and compares against the container's `bash -n`
+verdicts (case goldens; `tests/goldens/{shapes,l0}/bash-n.txt`, whose headers carry the
+source's hash so stale verdicts are refused); a parsed input must also survive print →
+reparse with the same `dump`. A parser panic is a failure. Its ratchet is
+`tests/l0/expected-failures.txt` and its gate leg `92-l0`. psh-spec now depends on
+psh-syntax (a workspace crate, no new external dependency); the `deps` leg allows it.
+`tests/l0/syntax.txt`'s inline `## status:` lines stay the parser's quick check; the
+container verdicts are the oracle (they agree on all 196 snippets today).

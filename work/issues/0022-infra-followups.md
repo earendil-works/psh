@@ -13,7 +13,7 @@ Infrastructure follow-ups from 0001, 0002 and 0003 that make the hill-climb fast
 measure the parser in the gate.
 
 ## Acceptance criteria
-- [ ] **L0 leg** in psh-spec, using psh-syntax as a library: parse agreement with the
+- [x] **L0 leg** in psh-spec, using psh-syntax as a library: parse agreement with the
       recorded container `bash -n` verdicts for every Oils/brush case script, the shape
       corpus (`tests/goldens/shapes/bash-n.txt`) and `tests/l0/syntax.txt`, plus
       print → reparse round-trip. Its own ratchet; shown by `scripts/status`. A gate leg
@@ -37,6 +37,15 @@ measure the parser in the gate.
   psh-spec changes in separate modules to avoid conflicts, and rebase often.
 
 ## Log
+- 2026-11-07, part 1 (L0): `psh-spec --l0` (new module `l0.rs`; shapes recording moved
+  into it), psh-syntax as psh-spec's dependency (D1220), `scripts/record-goldens --l0`
+  records `bash -n` for the shapes and `tests/l0/syntax.txt` in the container (69 of
+  196 snippets rejected, all agreeing with the file's inline statuses), gate leg
+  `92-l0` (under a second), L0 in `scripts/status` and status.tsv. Result: verdicts
+  agree on all 33,006 inputs (6,576 case scripts, 26,234 skeletons, 196 snippets); 23
+  skeletons fail the round trip (print → reparse changes the tree; mostly here-docs
+  whose delimiter line is missing or followed by more commands, plus `F=/w1` and a `2>`
+  case). They start the ratchet; tell the parser agent.
 
 ## Follow-ups
 

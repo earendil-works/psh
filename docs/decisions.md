@@ -113,3 +113,56 @@ date: 2026-11-06 · by: coordinator · issue: -
 Classification, summaries and permission checks run on the AST of the same parser the
 engine executes, built for native and WASM. Reason: a classifier that parses differently
 from the executor can be bypassed (`research/landscape.md` §4).
+
+## D014: Never-builtins: the owner rule and the proposed extensions
+date: 2026-11-06 · by: coordinator · issue: -
+Supersedes the examples in D010's never-builtin sentence. **Owner rule** (never
+builtins): database clients and stateful engines like `sqlite3`, interpreters and language
+runtimes, toolchains and build systems, package and environment managers.
+**Proposed by `research/builtins.md` §4.5, pending owner confirmation:** `git`, `curl`/
+`wget`, `ssh`/`scp`/`rsync` and other network clients, interactive/TTY programs,
+privileged and OS-specific system tools, heavy domain tools, compressors in compress mode
+when a real one exists, `shred`/`mkfs`. Until confirmed, nobody implements any of them
+as a utility. Reason for the proposals: huge flag surfaces, TLS/auth/state, and keeping
+network and VCS effects visible to the classifier as real programs.
+
+## D015: Shadowing modes for utilities
+date: 2026-11-06 · by: coordinator · issue: -
+Every utility has one mode: S (always the builtin), F (builtin only when no program of
+that name is on PATH, or in WASM/sandbox mode), W (S on Windows, F elsewhere: names that
+collide with System32 programs such as `find`, `sort`, `timeout`, `tree`). An explicit
+path always runs the real program; per-session off switches cover all utilities, the
+destructive group (`rm mv cp ln dd`) and single names; `command -v`/`type`/`which`
+report utilities truthfully; `env`, `xargs`, `find -exec` and `timeout` dispatch back
+into the shell. Reason: a builtin that shadows a better real program is the main cost of
+having builtins (just-bash's issue tracker); the modes confine it.
+
+## D016: Utility flag dialect: GNU ∪ BSD with deterministic tie-breaks
+date: 2026-11-06 · by: coordinator · issue: -
+Utilities accept the union of GNU and BSD flags. On conflict, GNU semantics, except where
+agents overwhelmingly use the macOS form (`sed -i ''`, `stat -f FORMAT`). Conflicts are
+resolved by rules on the arguments, never by the host OS: the table in ARCH.md
+"psh-utils" (from `research/builtins.md` §4.6) for `sed -i`, `stat -f`, `date -r`,
+`base64 -i`, `mktemp -t`, `cp -R src/` (GNU), `wc`/`uniq -c` widths (GNU), `find` without
+a path (`.`), and output formats keyed on the name (`md5` vs `md5sum`). Still open: `ls
+-G`/`-T`, `xargs` on empty input, `sort` collation. Host-reporting commands (`uname`,
+`hostname`, `id`) report the real host. Reason: the corpus shows agents mixing dialects
+on the same machine.
+
+## D017: Utility tiers and order of work
+date: 2026-11-06 · by: coordinator · issue: -
+Tier 1 (61 names, listed in ARCH.md) is the first utility milestone, starting with the
+framework and `timeout`; Tier 2 (~45 names) follows; Tier 3 is on demand and mostly F
+mode. Batches are cut by area so that agents work in parallel (one per batch). Reason:
+the corpus ranking plus the consensus of six other shells' sets.
+
+## D018: Utility sources: port mature permissive code onto injected I/O
+date: 2026-11-06 · by: coordinator · issue: -
+Utilities are ported from mature MIT/Apache/BSD code rather than written fresh: uutils
+coreutils/findutils/diffutils/sed, the ripgrep crates, jaq. Ported code is refactored
+onto psh's utility context (stdio, fs, cancel) instead of `std::io::stdout()`/`std::fs`;
+re-executing the binary per utility (brush's approach) is ruled out because it fails in
+WASM and breaks cancellation. `awk` is a port of goawk (MIT), checked against the
+onetrueawk `T.*` and goawk tests, and stays in F mode until it passes them. Wrappers
+(`timeout nice nohup env xargs`), `which`, `xxd`, `tree`, `column` and `strings` are our
+own. Each new crate still needs its own decision (D006).

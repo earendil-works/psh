@@ -197,37 +197,144 @@ pi-env does), or whether it declares its own FFI. Needs a decision before 0006/0
 
 ## psh-utils: in-process utilities
 
-"Builtin utilities" are in-process implementations of external programs (`grep`, `sed`,
-`head`, `jq`, `timeout`, ...), distinct from the shell builtins in the engine. The list
-and its tiers come from `research/builtins.md` (D010).
+"Builtin utilities" (or just utilities) are in-process implementations of external
+programs (`grep`, `sed`, `head`, `jq`, `timeout`, ...), distinct from the shell builtins
+in the engine. The list, its tiers and the policies below come from
+`research/builtins.md` §4 (D010, D014–D018).
 
-- **Interface.** A utility is a synchronous `run(&mut UtilCtx) -> i32` over a small
-  context: stdin/stdout/stderr streams, cwd, env, a cancel flag (which also makes a
-  blocked stdin read return EOF), the host fs, and a command runner for `xargs`,
-  `find -exec`, `env`, `timeout`, `nice`, `nohup`. The engine runs utilities on worker
-  threads (or inline in WASM) and polls them like externals; a utility never detaches a
-  thread that still writes to its fds.
-- **Fall-through policy** (D010). A utility that meets a flag or form it does not
-  implement does not guess: it runs the real program of that name from PATH if there is
-  one, or fails with a clear message naming the unsupported flag. It never silently
-  produces different output.
-- **Shadowing modes**, per utility: *shadow* (always the builtin), *fallback* (the
-  builtin only when no program of that name is on PATH, or in WASM), *Windows-shadow*
-  (shadow on Windows, fallback elsewhere). An explicit path (`/usr/bin/grep`) always
-  means the real program.
-- **Off switches.** All utilities, the destructive group (`rm mv cp ln dd`) or single
-  names can be turned off per session. `command -v`, `type` and `which` report
-  utilities truthfully.
-- **Dialect.** The union of GNU and BSD flags; GNU semantics where they conflict, except
-  where agents overwhelmingly write the BSD form (`sed -i ''`, `stat -f FMT`), with the
-  deterministic tie-break rules of `research/builtins.md` §4.6. `uname` and friends
-  report the real host.
-- **Never builtins:** interpreters, toolchains, package managers, VCS (`git`), network
-  and database clients (`curl`, `ssh`, `sqlite3`), interactive programs. An embedder may
-  supply such commands through the host (WASM), but they are not psh utilities.
-- Sources: ported from uutils and others (MIT/Apache, copied with attribution, D006);
-  `rg` and `fd` on the ripgrep/fd crates. **Open:** whether `grep` and `find` may reuse
-  those crates once they are in the tree, and how `jq` gets jaq (dependency or copy).
+Why have them at all, in order of weight: **portability** (Windows has none of these
+tools and WASM has no processes, so the utility set *is* the toolset there),
+**consistency** (one flag dialect everywhere), and **no fork** (faster, works over a
+virtual fs, cancels cooperatively, and the classifier knows their effects). Their cost
+is size, maintenance, and above all divergence where a builtin shadows a better real
+program, which the policies below exist to contain.
+
+### Interface
+
+A utility is a synchronous `run(&mut UtilCtx) -> i32` over a small context:
+stdin/stdout/stderr streams, cwd, env, the host fs, a cancel flag (which also makes a
+blocked stdin read return EOF), and a command runner for the wrappers (`xargs`,
+`find -exec`, `env`, `timeout`, `nice`, `nohup`). The engine runs utilities on worker
+threads (inline in WASM) and polls them like externals; a utility never detaches a
+thread that still writes to its fds. Ported code (uutils calls `std::io::stdout()` and
+`std::fs` directly) is refactored onto this context, as oh-my-pi did; re-executing the
+psh binary per utility, as brush does, is not an option because it fails in WASM and
+breaks cancellation (D018).
+
+### Shadowing modes (D015)
+
+Each utility has one mode:
+
+| Mode | Meaning | Used for |
+| --- | --- | --- |
+| **S, always** | Always the builtin | Where psh can be at least as good as GNU and BSD for agent use |
+| **F, PATH fallback** | The builtin only if no program of that name is on PATH, or in WASM/sandbox mode | Tools whose real versions are better, or whose exact output is the point (`gzip -9c \| wc -c`, `tar`, `file`) |
+| **W, Windows-only shadow** | S on Windows, F elsewhere | Names that collide with incompatible System32 programs: `find`, `sort`, `timeout`, `tree`, `expand`, `more`, `fc`, `hostname`, `whoami`. On Windows the builtin must win, or `find . -name x` runs the wrong program |
+
+Around the modes:
+
+- An explicit path (`/usr/bin/grep`) always runs the real program.
+- **Fall-through** (D010): a utility that meets a flag or form it does not implement
+  runs the real program of that name from PATH if there is one, or fails with a clear
+  message naming the unsupported flag. It never silently produces different output.
+- **Off switches** per session: all utilities, the destructive group (`rm mv cp ln dd`),
+  or single names.
+- `command -v`, `type` and `which` report utilities truthfully (`jq: shell builtin`).
+- `env NAME`, `xargs NAME`, `find -exec NAME` and `timeout NAME` dispatch back into the
+  shell, so utilities (and `printf`, `echo`, `test`, `true`, `false`, `pwd`, `kill`,
+  which need standalone forms) stay reachable from them.
+
+### Dialect (D016)
+
+- Accept the **union of GNU and BSD** flags where they don't conflict.
+- Where they conflict, **GNU semantics**, except where agents overwhelmingly write the
+  macOS form (`sed -i ''`: 5,307 BSD vs 144 GNU in the corpus; `stat -f FORMAT`). Those
+  are resolved by deterministic rules on the arguments, not by the host OS:
+
+| Command | Rule |
+| --- | --- |
+| `sed -i` | `''` next, or text attached (`-i.bak`): a suffix. Otherwise, if the next argument parses as a script and operands follow: GNU form. A bare `.`-prefixed argument without command characters followed by a script: BSD suffix |
+| `stat -f` | Argument containing `%`: BSD format. `-f` alone with file operands: GNU file-system mode. `-c` and BSD `-f`/`-t` both offered |
+| `date -r` | All digits and not an existing file: BSD epoch seconds; otherwise GNU reference file |
+| `base64 -i` | Followed by a non-option operand: BSD input file; otherwise GNU ignore-garbage |
+| `mktemp -t` | Argument containing `XXX`: GNU template; otherwise BSD prefix |
+| `cp -R src/` | GNU (copies the directory), documented |
+| `wc`, `uniq -c` | GNU column widths |
+| `find` with no path | `.` (GNU) |
+| `head -n -N`, `tail -r` | Single-dialect forms, both accepted |
+| `md5`/`shasum` vs `md5sum`/`sha256sum` | Output format keyed on the name; never unified |
+
+  **Open:** `ls -G`/`-T` (BSD color / full time vs GNU no-group / tab size; research
+  suggests the macOS meaning), `xargs` on empty input (research recommends BSD: don't
+  run, `-r` accepted as a no-op), and `sort`'s default collation (byte order vs locale).
+- `uname`, `hostname`, `id` and friends report the real host. psh never pretends to be
+  Linux.
+
+### Tiers (D017)
+
+- **Tier 0**, shell builtins: part of the engine (`cd`, `export`, `read`, `mapfile`,
+  `printf`, `test`, `kill`, `wait`, `trap`, ...), not up for debate.
+- **Tier 1**, day one, 61 names: the top corpus names that are not excluded, everything
+  the agent read/edit/search loop needs, and the wrappers (which must be builtins so they
+  can wrap builtins and own process trees):
+  `head tail cat ls cp mv rm mkdir rmdir touch ln chmod pwd basename dirname realpath
+  readlink mktemp stat du grep egrep fgrep rg sed awk sort uniq wc cut tr paste nl tee
+  seq comm printf echo test true false sleep find xargs diff cmp jq base64 md5sum
+  sha1sum sha256sum sha512sum shasum md5 date env printenv timeout nice nohup which`.
+  `timeout` comes first: it is the most common "command not found" (389) in the corpus.
+  `find` is W; `awk` is F until conformant; the rest are S.
+- **Tier 2**, soon after (~45 names): process tools (`ps pgrep pkill`, per OS), host
+  info (`uptime nproc id uname whoami hostname df`), `tree column tac rev strings od
+  xxd hexdump expr yes truncate fold expand unexpand join split`, the rest of the
+  checksum family, `shuf patch`, archives in F mode (`tar gzip gunzip zcat unzip`),
+  `sponge ts ifne`, `dos2unix unix2dos iconv`, `install link unlink sync mkfifo logname
+  tty`.
+- **Tier 3**, on demand, mostly F: `file bc dc yq fd` (decompressors as tar codecs),
+  `zip dd numfmt fmt pr csplit tsort factor uuidgen getopt envsubst chown chgrp clear
+  pidwait pidof free`; `ast-grep` only as an optional feature.
+
+### Sources (D018)
+
+Port mature permissive code rather than write new, above all for the four big ones:
+
+- `grep`/`rg` on the ripgrep crates, `sed` from uutils sed, `jq` on jaq, and **`awk`**,
+  which has no mature permissive Rust implementation: port goawk (MIT, passes the
+  onetrueawk tests), with onetrueawk (the macOS awk) and its `T.*` tests as reference.
+  awk runs in F mode until it passes the onetrueawk and goawk suites.
+- Most of the rest (~45 of Tier 1) from uutils coreutils, findutils and diffutils.
+- Ours: the wrappers (`timeout nice nohup env xargs`, on psh's process model), `which`,
+  `xxd` (written from the man page; xxd itself is under vim's license), `tree` (GNU tree
+  is GPL), `column`, `strings`.
+- GPL implementations (GNU coreutils, sed, grep, gawk, tree, patch, busybox, moreutils)
+  are never read (D007); BSD implementations are fine as references.
+
+**Open:** which of the crates these need are allowed (D006): jaq (and whether it is a
+dependency or copied), a `grep -P` backend (`pcre2` or `fancy-regex`), `parse_datetime`
+for `date -d`, `tar`/`flate2`/`zip` for Tier 2 archives, `sysinfo` for `ps`,
+`encoding_rs` for `iconv`, and whether `grep` and `find` reuse the ripgrep crates.
+
+### rg and fd on the ripgrep/fd crates
+
+> **Placeholder.** `research/builtins.md` is getting a section on embedding `rg` and
+> `fd` via the ripgrep/fd crates (`grep-*`, `ignore`, `globset`, `regex`), the standing
+> dependency exception (D006). Fill this in when it lands. Requirements already known:
+> `rg` must match real rg exactly (no smart-case by default, `--no-heading` and line
+> numbers only on a TTY, `-g` brace globs, `.gitignore` semantics including parent
+> directories, early exit under `| head`).
+
+### Never builtins (D014)
+
+- **Owner rule:** database clients and stateful engines (`sqlite3`, `psql`, `mysql`,
+  `redis-cli`, `postgres`), interpreters and language runtimes, toolchains and build
+  systems, package and environment managers.
+- **Proposed, pending owner confirmation:** `git`; `curl` and `wget`; `ssh`, `scp`,
+  `sftp`, `rsync` and other network clients (`nc ping dig openssl gh aws gcloud kubectl
+  docker podman`); interactive/TTY programs (`less vim top watch tmux fzf`); privileged
+  and OS-specific system tools (`sudo launchctl lsof pbcopy`); heavy domain tools
+  (`ffmpeg pandoc 7z`); compressors in compress mode when a real one exists, and
+  benchmarking tools; `shred`, `mkfs`.
+- An embedder may still supply such commands through the host (in WASM, like a
+  fetch-backed `curl`); they are host commands, not psh utilities.
 
 ## The `psh` binary
 
@@ -305,8 +412,12 @@ way for approval and another way for execution.
 4. Minimum supported Rust version: pi-env pins 1.96.0, so psh must build with it if it
    is linked in.
 5. Windows output decoding: where it lives and whether `encoding_rs` is allowed.
-6. Dependencies beyond rg/fd: jaq for `jq`, regex/globset reuse for `grep`/`find`.
+6. Dependencies beyond rg/fd: jaq for `jq`, a `grep -P` backend, `parse_datetime`,
+   archive crates, `sysinfo`, `encoding_rs`, ripgrep-crate reuse for `grep`/`find`.
 7. Where the per-utility effect tables live.
 8. Whether the WASM host is needed before pi-env integration.
 9. License of psh itself (MIT, or MIT/Apache-2.0).
 10. Whether the goals are ranked, and in which order, for when they conflict.
+11. Never-builtins beyond the owner rule: `git`, `curl`/`wget`, `ssh`/`rsync` and the
+    other proposed exclusions (D014).
+12. Dialect points: `ls -G`/`-T`, `xargs` on empty input, `sort` collation.

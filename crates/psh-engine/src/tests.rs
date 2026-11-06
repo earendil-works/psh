@@ -1,0 +1,378 @@
+//! Engine tests on the test host. Every script runs twice, once with latency (every
+//! host operation `Pending` once): both runs must agree.
+
+use std::rc::Rc;
+
+use crate::testhost::TestHost;
+use crate::{Script, Shell, Step};
+
+struct Out {
+    status: i32,
+    stdout: String,
+    stderr: String,
+}
+
+fn run_on(host: Rc<TestHost>, src: &str) -> Out {
+    let mut shell = Shell::new(host.config());
+    shell.start(Script::command(src));
+    let mut steps = 0;
+    let status = loop {
+        steps += 1;
+        assert!(steps < 1_000_000, "no progress");
+        match shell.step(7) {
+            Step::Done(s) => break s,
+            Step::Yield => {}
+            // The test host finishes everything during a step: nothing can wake a
+            // blocked shell later.
+            Step::Blocked => panic!("deadlock running {src:?}"),
+            Step::Idle => panic!("idle"),
+        }
+    };
+    assert_eq!(shell.task_count(), 0, "tasks left after {src:?}");
+    assert_eq!(host.live_procs(), 0, "processes left after {src:?}");
+    assert_eq!(host.live_pipes(), 0, "pipes left after {src:?}");
+    Out {
+        status,
+        stdout: String::from_utf8_lossy(&host.stdout()).into_owned(),
+        stderr: String::from_utf8_lossy(&host.stderr()).into_owned(),
+    }
+}
+
+fn run_setup(src: &str, setup: impl Fn(&TestHost)) -> Out {
+    let a = {
+        let h = Rc::new(TestHost::new());
+        setup(&h);
+        run_on(h, src)
+    };
+    let b = {
+        let h = Rc::new(TestHost::new());
+        h.set_latency(true);
+        setup(&h);
+        run_on(h, src)
+    };
+    assert_eq!(
+        (a.status, &a.stdout, &a.stderr),
+        (b.status, &b.stdout, &b.stderr),
+        "latency changed {src:?}"
+    );
+    a
+}
+
+fn run(src: &str) -> Out {
+    run_setup(src, |_| {})
+}
+
+#[track_caller]
+fn check(src: &str, stdout: &str) {
+    let o = run(src);
+    assert_eq!(o.stdout, stdout, "stdout of {src:?} (stderr: {})", o.stderr);
+}
+
+#[track_caller]
+fn check_status(src: &str, status: i32) {
+    let o = run(src);
+    assert_eq!(o.status, status, "status of {src:?} (stderr: {})", o.stderr);
+}
+
+#[test]
+fn echo_and_status() {
+    check("echo hi", "hi\n");
+    check("echo -n a; echo b", "ab\n");
+    check("echo -e 'a\\tb'", "a\tb\n");
+    check("echo -x", "-x\n");
+    check_status("true", 0);
+    check_status("false", 1);
+    check("false; echo $?; true; echo $?", "1\n0\n");
+    check("! true; echo $?; ! false; echo $?", "1\n0\n");
+    check_status("exit 3", 3);
+    check("(exit 4); echo $?", "4\n");
+}
+
+#[test]
+fn and_or_lists() {
+    check(
+        "true && echo a; false && echo b; false || echo c; true || echo d",
+        "a\nc\n",
+    );
+    check("false && echo a || echo b", "b\n");
+}
+
+#[test]
+fn variables_and_quoting() {
+    check("x=1; echo $x ${x} \"$x\" '$x'", "1 1 1 $x\n");
+    check("x='a  b'; echo $x; echo \"$x\"", "a b\na  b\n");
+    check(
+        "echo ${u:-def} ${u-d2}; u=; echo ${u:-def}x ${u-d2}x",
+        "def d2\ndefx x\n",
+    );
+    check("echo ${u:=set}; echo $u", "set\nset\n");
+    check("x=val; echo ${x:+alt} ${u:+alt}x", "alt x\n");
+    check("echo a\\ b \"c\\\"d\" $'e\\nf'", "a b c\"d e\nf\n");
+    check("x=abc; echo ${#x}", "3\n");
+    check(
+        "x=a.b.c; echo ${x%.*} ${x%%.*} ${x#*.} ${x##*.}",
+        "a.b a b.c c\n",
+    );
+    check(
+        "x=hello; echo ${x/l/L} ${x//l/L} ${x^^}",
+        "heLlo heLLo HELLO\n",
+    );
+    check("a=1 b=$a; echo $b", "1\n");
+}
+
+#[test]
+fn word_splitting() {
+    check("x='a b  c'; argv $x", "[a]\n[b]\n[c]\n");
+    check("x=' a '; argv $x", "[a]\n");
+    check("IFS=:; x='a::b:'; argv $x", "[a]\n[]\n[b]\n");
+    check("e=; argv $e \"$e\"", "[]\n");
+    check(
+        "set -- 'a b' c; argv \"$@\"; argv $@; argv \"$*\"",
+        "[a b]\n[c]\n[a]\n[b]\n[c]\n[a b c]\n",
+    );
+    check("set --; argv \"$@\"; echo $#", "0\n");
+    check("x='a b'; argv x${x}y", "[xa]\n[by]\n");
+}
+
+#[test]
+fn brace_expansion() {
+    check("echo a{b,c}d {1..3} {a..c}", "abd acd 1 2 3 a b c\n");
+    check("echo {01..03}", "01 02 03\n");
+}
+
+#[test]
+fn command_substitution() {
+    check("echo $(echo hi)", "hi\n");
+    check("x=$(echo a; echo b); echo \"$x\"", "a\nb\n");
+    check("echo \"$(echo 'a  b')\" $(echo 'a  b')", "a  b a b\n");
+    check("x=$(exit 3); echo $?", "3\n");
+    check("echo `echo hi`", "hi\n");
+    check("echo $(echo $(echo nested))", "nested\n");
+}
+
+#[test]
+fn pipelines() {
+    check("echo hi | cat", "hi\n");
+    check("echo a | cat | cat | cat", "a\n");
+    check("echo hi | wc", "1\n");
+    check("yes | head -n 2", "y\ny\n");
+    check("{ echo a; echo b; } | cat", "a\nb\n");
+    check("x=1 | true; echo ${x-unset}", "unset\n");
+    check("echo x | false; echo $?", "1\n");
+    check("echo $(echo a | cat)", "a\n");
+}
+
+#[test]
+fn pipe_buffers_do_not_deadlock() {
+    // More than a pipe's capacity through a builtin stage and an external.
+    let src = "x=0123456789012345678901234567890123456789012345678901234567890123456789; \
+               y=$x$x$x$x$x$x$x$x$x$x; z=$y$y$y$y$y$y$y$y$y$y; echo $z$z$z$z$z$z$z$z$z$z | cat | wc";
+    check(src, "1\n");
+}
+
+#[test]
+fn subshells_and_groups() {
+    check("x=1; (x=2; echo $x); echo $x", "2\n1\n");
+    check("x=1; { x=2; echo $x; }; echo $x", "2\n2\n");
+    check("(echo a; exit 3; echo b); echo $?", "a\n3\n");
+}
+
+#[test]
+fn redirections() {
+    let o = run_setup("echo hi > /tmp/f; echo more >> f; cat < f; cat f", |_| {});
+    assert_eq!(o.stdout, "hi\nmore\nhi\nmore\n");
+    check(
+        "echo err 2>&1 >/dev/null; { echo out; echo err >&2; } 2>&1 | cat",
+        "out\nerr\n",
+    );
+    let o = run("echo err >&2");
+    assert_eq!(o.stderr, "err\n");
+    check(
+        "{ echo a; echo b >&2; } &> /tmp/both; cat /tmp/both",
+        "a\nb\n",
+    );
+    check("cat <<EOF\nhello $USER-x\nEOF", "hello -x\n");
+    check("x=1; cat <<'EOF'\n$x\nEOF", "$x\n");
+    check("cat <<< 'here string'", "here string\n");
+    check("cat <<-EOF\n\tindented\n\tEOF", "indented\n");
+    check("exec 3>&1; echo via3 >&3", "via3\n");
+    let o = run("echo x > /dev/stderr 2>&1");
+    assert_eq!((o.stdout.as_str(), o.stderr.as_str()), ("", "x\n"));
+}
+
+#[test]
+fn redirection_errors() {
+    let o = run("cat < /nonexistent; echo $?");
+    assert_eq!(o.stdout, "1\n");
+    assert_eq!(
+        o.stderr,
+        "psh: line 1: /nonexistent: No such file or directory\n"
+    );
+    let o = run("echo hi 1>&7");
+    assert_eq!(o.status, 1);
+    assert_eq!(o.stderr, "psh: line 1: 7: Bad file descriptor\n");
+}
+
+#[test]
+fn large_heredoc_into_external() {
+    let body = "x".repeat(200_000);
+    let src = format!("cat <<EOF | wc\n{body}\nEOF");
+    check(&src, "1\n");
+}
+
+#[test]
+fn externals() {
+    let o = run("nosuch; echo $?");
+    assert_eq!(o.stdout, "127\n");
+    assert_eq!(o.stderr, "psh: line 1: nosuch: command not found\n");
+    check("X=1 env | grep_missing_is_fine; true", "");
+    check(
+        "export A=1; B=2 env",
+        "A=1\nB=2\nHOME=/tmp\nPATH=/bin\nPWD=/tmp\nSHLVL=1\n",
+    );
+    check_status("exit 7 | true; ./missing", 127);
+}
+
+#[test]
+fn builtins_cd_pwd_test() {
+    check("pwd; cd /; pwd; cd /tmp; pwd", "/tmp\n/\n/tmp\n");
+    check("cd /nonexist; echo $?", "1\n");
+    check("mkdir_missing=1; cd ..; pwd; cd -", "/\n/tmp\n");
+    check(
+        "[ a = a ] && echo y; test 1 -lt 2 && echo z; [ -d /tmp ] && echo d; [ -f /tmp ] || echo nf",
+        "y\nz\nd\nnf\n",
+    );
+    check(
+        "[ ! -e /nope ] && echo ok; [ -n '' ] || echo empty; [ \\( a = b \\) -o a = a ] && echo or",
+        "ok\nempty\nor\n",
+    );
+    let o = run("[ a");
+    assert_eq!(o.status, 2);
+    assert_eq!(o.stderr, "psh: line 1: [: missing `]'\n");
+}
+
+#[test]
+fn printf_basics() {
+    check("printf '%s-%d\\n' a 1 b 2", "a-1\nb-2\n");
+    check(
+        "printf '[%5s][%-3d][%03d][%x]\\n' ab 7 5 255",
+        "[   ab][7  ][005][ff]\n",
+    );
+    check("printf '%b' 'a\\tb\\n'", "a\tb\n");
+    check("printf -v v '%s' val; echo $v", "val\n");
+}
+
+#[test]
+fn export_unset_readonly() {
+    check("x=1; unset x; echo ${x-gone}", "gone\n");
+    check("export x=1; export -p | cat | wc; true", "6\n");
+    let o = run("readonly r=1; r=2; echo $?");
+    assert_eq!(o.stdout, "1\n");
+    assert_eq!(o.stderr, "psh: line 1: r: readonly variable\n");
+}
+
+#[test]
+fn syntax_errors() {
+    let o = run("echo a\necho )");
+    assert_eq!(o.status, 2);
+    assert_eq!(o.stdout, "a\n");
+    assert_eq!(
+        o.stderr,
+        "psh: -c: line 2: syntax error near unexpected token `)'\npsh: -c: line 2: `echo )'\n"
+    );
+}
+
+#[test]
+fn expansion_errors_are_fatal() {
+    let o = run("echo ${x:?oops}; echo after");
+    assert_eq!(o.status, 127);
+    assert_eq!(o.stdout, "");
+    assert_eq!(o.stderr, "psh: line 1: x: oops\n");
+}
+
+#[test]
+fn globbing() {
+    let o = run_setup("echo /g/*.txt; echo /g/*.none; cd /g; echo *", |h| {
+        h.fs.write_file("/g/a.txt", b"");
+        h.fs.write_file("/g/b.txt", b"");
+        h.fs.write_file("/g/.hidden.txt", b"");
+        h.fs.write_file("/g/c.md", b"");
+    });
+    assert_eq!(o.stdout, "/g/a.txt /g/b.txt\n/g/*.none\na.txt b.txt c.md\n");
+}
+
+#[test]
+fn sigpipe_in_builtin_stage() {
+    // The writer stage dies of SIGPIPE when the reader is gone.
+    check("{ while_missing=1; echo a; echo b; } | head -n 1", "a\n");
+}
+
+#[test]
+fn budget_yields_and_state_persists() {
+    let host = Rc::new(TestHost::new());
+    let mut shell = Shell::new(host.config());
+    shell.start(Script::command("x=1; echo a; echo b; echo c; echo d"));
+    let mut yields = 0;
+    loop {
+        match shell.step(1) {
+            Step::Done(_) => break,
+            Step::Yield => yields += 1,
+            s => panic!("{s:?}"),
+        }
+    }
+    assert!(yields >= 2);
+    shell.start(Script::command("echo $x"));
+    while !matches!(shell.step(100), Step::Done(_)) {}
+    assert_eq!(host.stdout(), b"a\nb\nc\nd\n1\n");
+}
+
+#[test]
+fn cancel_releases_everything() {
+    let host = Rc::new(TestHost::new());
+    let mut shell = Shell::new(host.config());
+    shell.start(Script::command("echo start; yes | hang | cat; echo never"));
+    assert_eq!(shell.step(1000), Step::Blocked);
+    assert!(host.live_procs() >= 2);
+    let ctl = shell.control();
+    ctl.cancel();
+    assert_eq!(shell.step(1000), Step::Done(143));
+    assert_eq!(shell.task_count(), 0);
+    assert_eq!(host.live_procs(), 0);
+    assert_eq!(host.live_pipes(), 0);
+    assert_eq!(host.stdout(), b"start\n");
+    // The shell is usable again, and the old cancel does not reach the new run.
+    shell.start(Script::command("echo again"));
+    assert_eq!(shell.step(1000), Step::Done(0));
+    assert_eq!(host.stdout(), b"start\nagain\n");
+}
+
+#[test]
+fn pause_and_resume() {
+    let host = Rc::new(TestHost::new());
+    let mut shell = Shell::new(host.config());
+    shell.start(Script::command("echo a; echo b"));
+    let ctl = shell.control();
+    ctl.pause();
+    assert_eq!(shell.step(1000), Step::Blocked);
+    assert_eq!(host.stdout(), b"");
+    ctl.resume();
+    assert_eq!(shell.step(1000), Step::Done(0));
+    assert_eq!(host.stdout(), b"a\nb\n");
+}
+
+#[test]
+fn nesting_limit() {
+    let mut src = String::from("echo deep");
+    for _ in 0..20 {
+        src = format!("$({src})");
+        src = format!("echo {src}");
+    }
+    check(&src, "deep\n");
+    let host = Rc::new(TestHost::new());
+    let mut cfg = host.config();
+    cfg.max_depth = 10;
+    let mut shell = Shell::new(cfg);
+    shell.start(Script::command(&src));
+    while !matches!(shell.step(1000), Step::Done(_)) {}
+    assert!(String::from_utf8_lossy(&host.stderr()).contains("maximum nesting level exceeded"));
+}

@@ -17,8 +17,10 @@ commands and must dispatch back into the shell so utilities stay reachable.
       -type -size -mtime -mmin -newer -newermt -perm -empty -prune -not/! -o -a ( )
       -print -print0 -exec {} \;/+ -execdir -delete -quit -L/-H`, GNU `-printf`, BSD
       `-E`.
-- [ ] `xargs`: `-0 -I{}` (also attached) `-n1 -r -P N -L -d -a -t -o`. Empty input
-      waits for the owner's decision (ARCH.md open question 12; research recommends BSD).
+- [ ] `xargs`: `-0 -I{}` (also attached) `-n1 -r -P N -L -d -a -t -o`. Behavior on empty
+      input is decided in this issue (D034; research recommends BSD: don't run, `-r` a
+      no-op) and recorded in your range; until then, empty input without `-r` falls
+      through.
 - [ ] `find` reuses 0013's walker seam (native `ignore` walker and the virtual-fs walker)
       with all ignore filtering off; `-name`/`-iname`/`-path`/`-ipath` via `globset` in
       fnmatch mode; `-regex` via the BRE/ERE translator (`-E`/`-regextype` choose ERE);

@@ -12,8 +12,9 @@ decisions: D1160–D1169
 The text filters of Tier 1, all S: `sort uniq cut tr paste nl tee seq comm`.
 
 ## Acceptance criteria
-- [ ] `sort`: `-u -n -r -k -t -V -h -s -z -o -R`. Default collation waits for the
-      owner's decision (ARCH.md open question 12); propose one in the log with evidence.
+- [ ] `sort`: `-u -n -r -k -t -V -h -s -z -o -R`. Default collation is decided in
+      this issue (D034): propose it with evidence and record it in your range; until then
+      sorting in a non-C locale falls through.
 - [ ] `uniq`: `-c` with GNU widths, `-d -u -f`.
 - [ ] `cut`: `-c` counts characters, not bytes, on UTF-8 (agents mean characters;
       record it as a deliberate difference from GNU); `-d -f -b`.

@@ -15,8 +15,8 @@ group (off switch).
 
 ## Acceptance criteria
 - [ ] `ls`: `-la -lh -t -d -R -1 -S -F -i -L --time-style`, real mode bits. `-G`/`-T`
-      wait for the owner's dialect decision (ARCH.md open question 12): fall through
-      until then.
+      are decided in this issue (D034): propose the meaning with corpus evidence and
+      record it in your range; they fall through until then.
 - [ ] `cp`: `-R -r -a -p -n -f -L`, GNU `-t --parents`, BSD `-c` as a no-op; `cp -R
       src/` copies the directory (GNU, D016). `mv rm mkdir rmdir touch ln`: `rm
       -rf/-f`, `ln -sfn`, `touch -d` (GNU) and `-t/-r`, `mkdir -p -m`.

@@ -3,8 +3,8 @@
 status: open
 agent: -
 branch: issue/0018-utils-jq
-depends-on: 0008; owner/coordinator decision on jaq (dependency or copy)
-touches: crates/psh-utils/src/jq*, tests/utils/jq/, Cargo.toml if jaq becomes a dependency
+depends-on: 0008 (jaq allowed as a dependency, D028)
+touches: crates/psh-utils/src/jq*, tests/utils/jq/, Cargo.toml (jaq)
 guide: utilities.md (not written yet), utilities reference (not written yet)
 decisions: D1180–D1189
 
@@ -25,6 +25,8 @@ decisions: D1180–D1189
 - [ ] Attribution headers and `NOTICE` entries for ported code.
 
 ## Notes
+- jaq is a dependency (D028). Copying it instead is decided here only if its size
+  demands it; measure and report the size it adds.
 - Goldens come from real jq 1.7+ in the recording container (add it there).
 
 ## Log

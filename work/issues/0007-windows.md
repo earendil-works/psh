@@ -3,7 +3,7 @@
 status: open
 agent: -
 branch: issue/0007-windows
-depends-on: part A: 0001; part B: 0006 and the owner decision on platform bindings
+depends-on: part A: 0001; part B: 0006 (`windows-sys` allowed, D024)
 touches: .github/ or scripts/windows-*, crates/psh-os/ (windows), crates/psh-spec/ (Windows normalization), tests/process/ (Windows cases)
 guide: windows.md (not written yet; list it as a follow-up)
 decisions: D1070–D1079
@@ -15,9 +15,10 @@ psh runs externals there natively with no Git Bash (ARCH.md "psh-os", Windows pa
 
 ## Acceptance criteria
 Part A (can start right after 0001; the coordinator may split it out):
-- [ ] The gate's legs run on Windows (x64; arm64 if available): GitHub Actions or the
-      owner's Parallels VM through `prlctl exec` (owner decision pending, TESTING.md
-      "Windows"). A script runs it locally.
+- [ ] The gate's legs run on Windows (x64; arm64 if available) on the owner's Parallels
+      VM through `prlctl exec` (D027): a script in `scripts/` syncs the tree into the VM,
+      runs the legs there under a timeout and reports. GitHub Actions replaces it once
+      the repository has a remote (a follow-up then).
 - [ ] The spec runner and its normalization table work on Windows against the same
       goldens.
 

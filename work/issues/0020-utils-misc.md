@@ -19,8 +19,8 @@ date env printenv nice nohup which`.
 - [ ] Checksums: each name keeps its native output and `-c` verify mode; `md5` with `-q
       -r -s`; `shasum -a ALG -c -b`.
 - [ ] `date`: GNU `-d STRING -I -R --rfc-3339 +%N`, BSD `-v±N[ymwdHMS] -j -f`, `-u`,
-      `-r` per D016, real local TZ. `-d` parsing needs a decision on `parse_datetime`
-      (ARCH.md open question 6); fall through until then. The date parser is shared:
+      `-r` per D016, real local TZ. `-d` parsing: choose the date parser here (D028:
+      `parse_datetime` or our own) and record it in your range; fall through until then. The date parser is shared:
       `touch -d` (0015), `find -newermt` (0017) and `fd --changed-*` (0013) use it.
 - [ ] `env`/`printenv`: `-i -u -S -C`, `NAME=val cmd`, dispatch into the shell.
 - [ ] `nice -n N cmd` (setpriority; `BELOW_NORMAL_PRIORITY_CLASS` on Windows; no-op

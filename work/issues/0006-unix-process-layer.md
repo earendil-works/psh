@@ -3,7 +3,7 @@
 status: open
 agent: -
 branch: issue/0006-unix-process-layer
-depends-on: 0005; owner decision on platform bindings (ARCH.md "psh-os")
+depends-on: 0005 (`libc` allowed, D024)
 touches: crates/psh-os/ (unix), crates/psh/ (driver, signals), crates/psh-engine/ (Host trait changes, announced), tests/process/
 guide: processes.md (not written yet; list it as a follow-up)
 decisions: D1060–D1069

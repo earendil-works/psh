@@ -3,7 +3,7 @@
 status: open (later)
 agent: -
 branch: issue/0011-wasm
-depends-on: 0005 (0008 for utilities in WASM); owner: is it needed before 0010?
+depends-on: 0005 (0008 for utilities in WASM); coordinator: is it needed before 0010? (ARCH.md open question 3)
 touches: crates/psh-wasm/, js/ (host package)
 guide: wasm.md (not written yet; list it as a follow-up)
 decisions: D1110–D1119

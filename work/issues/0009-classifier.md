@@ -21,8 +21,10 @@ permission checks. Conservative: anything dynamic is `unknown`, never "read-only
 - [ ] Categories: read, mutate, VCS, build, network, install, long-running, unknown;
       effects: paths read and written, output truncated (`| head`).
 - [ ] Per-utility flag tables (e.g. `sed -i` writes) in a place both the classifier and
-      the utilities can use (ARCH.md open question 7; propose and record).
-- [ ] `psh --classify [-c CMD | FILE]` prints JSON.
+      the utilities can use (ARCH.md open question 2; propose and record).
+- [ ] `psh-classify` is `#![no_std]` + `alloc` like the parser (D023).
+- [ ] `psh --classify [-c CMD | FILE]` prints JSON via `deser-json` (D029), outside the
+      no_std crate.
 - [ ] `tests/classify/`: at least 300 labelled cases, including adversarial ones
       (`git commit -m "$(rm -rf /)"`, `x=rm; $x -rf /`, `;` after a safe prefix,
       aliases, functions, redirections to files).

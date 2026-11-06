@@ -3,7 +3,7 @@
 status: open
 agent: -
 branch: issue/0013-utils-search
-depends-on: 0008; D020 confirmed by the owner (crate set)
+depends-on: 0008 (crate set confirmed: D020, D021)
 touches: Cargo.toml (the D020 crates), crates/psh-utils/src/search/ (shared walker seam, matcher, BRE/ERE translator), crates/psh-utils/src/{rg,fd,grep}/, tests/utils/{rg,fd,grep}/, tests/utils/walker/, NOTICE
 guide: utilities.md (not written yet), utilities reference (not written yet)
 decisions: D1130–D1139
@@ -48,7 +48,8 @@ rg (S)
       corpus flags `-n --glob/-g -i -S -C -l --type -o --hidden` covered by cases;
       `--help` text identical to upstream's except for the version line.
 - [ ] Broken pipe ends with status 0, so `rg … | head -1` returns at once on a big tree.
-- [ ] `rg --json` falls through (until JSON output is decided).
+- [ ] `rg --json` writes JSON through `deser-json` (D029), matching real rg's JSON lines
+      (grep-printer's JSON printer needs serde, so it is not used).
 
 fd (S)
 - [ ] CLI re-implemented on psh's argument parser; `filter/size.rs`, `time.rs`,
@@ -74,8 +75,9 @@ grep, egrep, fgrep (S)
 Windows
 - [ ] `/` path separators by default for rg and fd (as `--path-separator /`; an explicit
       flag overrides); ANSI-or-no color from `UtilCtx` TTY state.
-- [ ] CRLF: record what Git for Windows' grep does with `grep 'x$'` on CRLF files and
-      propose a default in the log (ARCH.md open question 14).
+- [ ] CRLF: on Windows, `grep` and `rg` treat CRLF as a line end by default (ripgrep's
+      `--crlf` behavior; D030), so `x$` matches `x\r\n`; explicit flags override; tests
+      on CRLF fixtures, including `-o` and `--color` spans not containing the `\r`.
 
 Common
 - [ ] Each utility registered with its mode; unsupported flags fall through or fail

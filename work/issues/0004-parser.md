@@ -12,7 +12,8 @@ decisions: D1040–D1049
 The bash parser psh, the classifier and every host use (ARCH.md "psh-syntax", D008,
 D013): copied from brush-parser as a starting point, with peg and winnow replaced by a
 hand-written lexer and recursive-descent parser, byte spans on every node, a printer,
-zero dependencies, building for `wasm32-unknown-unknown`. Climbs L0 to ~100%.
+`#![no_std]` + `alloc` with zero dependencies (D023), building for
+`wasm32-unknown-unknown`. Climbs L0 to ~100%.
 
 ## Acceptance criteria
 - [ ] AST covering bash 5.3 syntax: lists, pipelines (`|`, `|&`, `!`, `time`), `&&`
@@ -27,9 +28,11 @@ zero dependencies, building for `wasm32-unknown-unknown`. Climbs L0 to ~100%.
 - [ ] Printer; `parse(print(ast)) == ast` on every L0 input.
 - [ ] Parse errors carry a span and a message; the parse/no-parse verdict agrees with
       `bash -n` on L0 (ratchet in `tests/l0/expected-failures.txt`).
-- [ ] `psh --parse [-c CMD | FILE]` prints the AST as JSON with spans (hand-written JSON,
-      no serde).
-- [ ] Zero dependencies; builds for `wasm32-unknown-unknown` (gate); copied files carry
+- [ ] `psh --parse [-c CMD | FILE]` prints the AST as JSON with spans, written with
+      `deser-json` (D029) in the `psh` crate (or a module outside `psh-syntax`), so the
+      parser stays dependency-free and no_std.
+- [ ] `#![no_std]` + `alloc`, zero dependencies, MSRV 1.96 (D025); builds for
+      `wasm32-unknown-unknown` (gate); copied files carry
       brush's copyright header and are listed in `NOTICE`.
 - [ ] A benchmark note in the Result: parse time for the whole shape corpus or L1+L2,
       and the wasm size of the parser alone (stripped, gzipped).

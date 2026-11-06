@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+"""Privacy check of the shape corpus (python3 standard library only; runs in the gate).
+
+  scripts/shape-corpus-check [tests/shapes/shapes.txt [tests/shapes/vocabulary.txt]]
+
+Every line of shapes.txt is `COUNT<TAB>SKELETON`, the skeleton escaped (`\\\\`, `\\n`,
+`\\t`). Every token of a skeleton must be a vocabulary entry, a placeholder (`w0`, `w1`,
+`v1`, ...) or a single digit. A token is a run of word characters (ASCII letters,
+digits, `_`, and any non-ASCII or control character) joined by `. / @ % + : -`, with up
+to two leading dashes. The token is split at `. / @ % + :`; each part must be an entry
+(options only here), or else every piece of it between dashes must be a word, variable,
+placeholder or digit. So `--release` must be a listed option, `-c:w1` needs `-c`,
+`-w3`, `w1/w2` and `v1-1` pass as placeholders, and `-uroot` fails unless `uroot` is
+listed. Exits 1 on any violation.
+"""
+import os
+import re
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WCH = r"A-Za-z0-9_\u0080-\U0010FFFF\x00-\x08\x0b-\x1f\x7f"
+TOKEN_RE = re.compile(rf"-{{0,2}}[{WCH}]+(?:[./@%+:-]+[{WCH}]+)*")
+SPLIT_RE = re.compile(r"[./@%+:]+")
+PIECE_RE = re.compile(r"[0-9]?(?:[wv][0-9]+)*")
+
+
+def load_vocabulary(path):
+    """Returns (words, options, variables) from the sectioned vocabulary file."""
+    words, opts, variables = set(), set(), set()
+    target = None
+    with open(path, encoding="utf-8") as fh:
+        for n, line in enumerate(fh, 1):
+            line = line.split("#", 1)[0].strip() if not line.startswith("[") else line.strip()
+            if not line:
+                continue
+            if line.startswith("["):
+                name = line[1:line.index("]")]
+                target = {"words": words, "options": opts, "variables": variables}.get(name)
+                if target is None:
+                    raise SystemExit(f"{path}:{n}: unknown section [{name}]")
+                continue
+            if target is None or " " in line:
+                raise SystemExit(f"{path}:{n}: bad vocabulary line")
+            target.add(line)
+    return words, opts, variables
+
+
+def piece_ok(piece, words, variables):
+    return piece in words or piece in variables or PIECE_RE.fullmatch(piece) is not None
+
+
+def part_ok(part, words, opts, variables):
+    if part in opts or piece_ok(part, words, variables):
+        return True
+    # `$v1-a.w7` is `$x` followed by the option `-a`: an option's name passes as a piece.
+    return all(piece_ok(p, words, variables) or "-" + p in opts or "--" + p in opts
+               for p in part.split("-") if p)
+
+
+def violations(skeleton, words, opts, variables):
+    bad = []
+    for m in TOKEN_RE.finditer(skeleton):
+        tok = m.group()
+        if not all(part_ok(p, words, opts, variables) for p in SPLIT_RE.split(tok) if p):
+            bad.append(tok)
+    return bad
+
+
+def escape(s):
+    return s.replace("\\", "\\\\").replace("\n", "\\n").replace("\t", "\\t")
+
+
+def unescape(s):
+    return re.sub(r"\\(.)", lambda m: {"n": "\n", "t": "\t"}.get(m.group(1), m.group(1)), s)
+
+
+def main(argv):
+    shapes = argv[0] if argv else os.path.join(ROOT, "tests", "shapes", "shapes.txt")
+    vocab = argv[1] if len(argv) > 1 else os.path.join(ROOT, "tests", "shapes", "vocabulary.txt")
+    words, opts, variables = load_vocabulary(vocab)
+    errors = 0
+    lines = 0
+    with open(shapes, encoding="utf-8") as fh:
+        for n, line in enumerate(fh, 1):
+            lines += 1
+            count, sep, sk = line.rstrip("\n").partition("\t")
+            if not sep or not count.isdigit():
+                print(f"{shapes}:{n}: malformed line")
+                errors += 1
+                continue
+            bad = violations(unescape(sk), words, opts, variables)
+            if bad:
+                # Print only the offending tokens' shape, never their text.
+                print(f"{shapes}:{n}: {len(bad)} token(s) outside the vocabulary")
+                errors += 1
+    if errors:
+        print(f"shape-corpus-check: {errors} bad line(s) of {lines}")
+        return 1
+    print(f"shape-corpus-check: {lines} skeletons ok")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

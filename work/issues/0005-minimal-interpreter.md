@@ -1,7 +1,7 @@
 # 0005: Minimal interpreter
 
-status: open
-agent: -
+status: in-progress
+agent: engine
 branch: issue/0005-minimal-interpreter
 depends-on: 0002, 0004
 touches: crates/psh-engine/, crates/psh/ (driver), crates/psh-spec/ (in-process engine), tests/**/expected-failures.txt

@@ -211,3 +211,93 @@ confirmed. Source: `research/builtins.md` §5 (measurements at ripgrep `91f5d22`
 Reason: the library route costs about 0.5–0.75 MB over the regex stack psh needs anyway,
 against 3.7–4.7 MB for vendoring both CLIs; it works in WASM except for the walk, which
 the second walker covers; and copying ripgrep's flags keeps rg's full surface and help.
+
+## D021: D020 confirmed
+date: 2026-11-06 · by: owner · issue: -
+The owner confirms D020: the search utilities use exactly that ripgrep crate set and
+approach. Its "proposed, pending owner" status no longer applies.
+
+## D022: VCS and network clients are out of scope, not never-builtins
+date: 2026-11-06 · by: owner · issue: -
+Supersedes the "proposed" part of D014 for these names. `git`, `curl`/`wget`, and
+ssh/rsync-like network and VCS clients are **out of scope for now**: they are not
+utilities and nobody works on them. They are not on the never list, because psh may
+later hook them (host-provided commands, interception). Database clients and stateful
+engines (`sqlite3`-like), interpreters, toolchains and package managers remain
+never-builtins (D014's owner rule). The remaining D014 proposals (interactive/TTY
+programs, privileged system tools, heavy domain tools, compressors when a real one
+exists, `shred`/`mkfs`) stay proposals: not utilities, no work on them.
+
+## D023: psh-syntax is no_std; psh-engine uses std
+date: 2026-11-06 · by: owner · issue: -
+`psh-syntax` is `#![no_std]` + `alloc`, for small, clean wasm builds of the parser
+alone. `psh-engine` uses std; the `wasm32-unknown-unknown` build in the gate guards it
+against OS access. The engine must never force std into the parser: no std-only types in
+`psh-syntax`'s API, and no feature of `psh-syntax` that the engine enables to get std.
+`psh-classify` follows the parser (no_std + alloc).
+
+## D024: psh-os may use libc and windows-sys
+date: 2026-11-06 · by: owner · issue: -
+The OS host crate may depend on `libc` (Unix) and `windows-sys` (Windows), as pi-env
+does. No other platform crates without a decision.
+
+## D025: MSRV 1.96
+date: 2026-11-06 · by: owner · issue: -
+psh builds with Rust 1.96, pi-env's pinned toolchain, because pi-env links it. Local
+development uses the current stable (1.99 at the time). A gate leg that checks 1.96 is a
+follow-up; until it exists, don't use language or library features newer than 1.96.
+
+## D026: pi-env runs a fresh shell per exec; Node goes through the daemon
+date: 2026-11-06 · by: owner · issue: -
+Each pi-env `exec` gets a fresh psh shell; no state (cwd, variables, functions) persists
+across calls for now, which keeps Durable's replay model intact. Node-side execution
+(`NodeExecutionEnv` and friends) uses psh through the pi-env daemon, not a separate psh
+binary or addon.
+
+## D027: Windows CI: Parallels VM now, GitHub Actions once there is a remote
+date: 2026-11-06 · by: owner · issue: -
+Until the repository has a remote, the gate's Windows leg runs on the owner's Parallels
+VM via `prlctl exec`. Once a remote exists, it moves to GitHub Actions.
+
+## D028: Utility crates: jaq allowed; others decided per utility issue
+date: 2026-11-06 · by: owner · issue: -
+`jq` may depend on jaq; whether to copy it instead is decided in its issue only if size
+demands it. Crates for the date parser, tar/zip and process listing (`sysinfo`) are
+decided in the utility issue that needs them (each still recorded as a decision, D006).
+
+## D029: JSON through deser-json
+date: 2026-11-06 · by: owner · issue: -
+All JSON output and input in psh (`rg --json`, `psh --parse`, `psh --classify`, and any
+later JSON) uses the `deser-json` crate (deser 0.10.x). Not serde_json, not a
+hand-written printer. Note for `psh-syntax` (no_std, D023): the AST's JSON form is
+produced outside the parser crate (in `psh` or a separate module) unless deser-json
+works under no_std; the parser itself does not depend on it.
+
+## D030: grep and rg treat CRLF as line ends on Windows
+date: 2026-11-06 · by: owner · issue: -
+On Windows, `grep` and `rg` default to CRLF-aware line terminators (ripgrep's `--crlf`
+behavior), so `x$` matches lines ending in `\r\n`. Explicit flags override it. Elsewhere
+the default stays LF.
+
+## D031: Utilities are a pi-env cargo feature, on by default
+date: 2026-11-06 · by: owner · issue: -
+pi-env builds psh's utilities (and with them the regex stack) behind a cargo feature
+that is on by default, so a size-constrained build can drop them.
+
+## D032: License: MIT OR Apache-2.0
+date: 2026-11-06 · by: owner · issue: -
+psh is licensed MIT OR Apache-2.0, with `LICENSE-MIT` and `LICENSE-APACHE` at the root,
+like djs. Copied code keeps its own notices (`NOTICE`).
+
+## D033: Goal ranking
+date: 2026-11-06 · by: owner · issue: -
+When goals conflict: agent-first, then portable, then bash's behavior, then the rest
+(consistent, understandable commands, control of execution, embeddable, sandboxable),
+which are unranked among themselves; the design that makes such a trade-off says why.
+Licensing holds under all of them.
+
+## D034: Remaining utility dialect points fall through until their issue decides
+date: 2026-11-06 · by: owner · issue: -
+`ls -G`/`-T`, `xargs` on empty input and `sort`'s default collation are decided in the
+utility issues that implement them (0015, 0017, 0016), each as a recorded decision. Until
+then, those flags and cases fall through to the host program (or fail clearly).

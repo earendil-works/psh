@@ -7,7 +7,8 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
 | 0002 | psh-spec runner, vendored cases, recorded goldens, ratchets, status | infra | .worktrees/infra |
-| 0004 | Parser: psh-syntax from brush-parser, hand-written | parser | .worktrees/parser |
+| 0004 | Parser: psh-syntax from brush-parser, hand-written (part 1 merged 6496f61) | parser | .worktrees/parser |
+| 0009 | Classifier | shapes | .worktrees/shapes |
 
 ## Open (ready)
 
@@ -23,7 +24,6 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | 0006 | Unix process layer | 0005 |
 | 0007B | Windows process layer (part B of 0007) | 0006 |
 | 0008 | Utility framework and first batch | 0005, 0006 |
-| 0009 | Classifier | 0004 |
 | 0010 | pi-env integration behind a flag | 0006, 0007, L3 high |
 | 0011 | WASM build and JS host | 0005 |
 | 0013 | Utilities B: rg, fd, grep + shared search layer | 0008 |

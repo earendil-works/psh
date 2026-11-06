@@ -22,6 +22,9 @@ mod printer;
 mod span;
 mod words;
 
+#[cfg(test)]
+mod tests;
+
 pub use ast::*;
 pub use dump::dump;
 pub use error::ParseError;

@@ -21,11 +21,29 @@ fn main() {
                 }
             }
             "-c" => inputs.push(("-c".into(), args.next().expect("-c SCRIPT"))),
+            "--bench" => mode = "bench",
             _ => {
                 let bytes = std::fs::read(&a).expect("read");
                 inputs.push((a, String::from_utf8_lossy(&bytes).into_owned()));
             }
         }
+    }
+    if mode == "bench" {
+        // Parse every input 20 times; report the time per full pass.
+        let bytes: usize = inputs.iter().map(|(_, s)| s.len()).sum();
+        let start = std::time::Instant::now();
+        let mut n = 0usize;
+        for _ in 0..20 {
+            for (_, src) in &inputs {
+                n += psh_syntax::parse(src).map_or(0, |a| a.cmd_count());
+            }
+        }
+        let per_pass = start.elapsed() / 20;
+        println!(
+            "{} inputs, {bytes} bytes: {per_pass:?} per pass ({n} commands)",
+            inputs.len()
+        );
+        return;
     }
     let out = std::io::stdout();
     let mut out = out.lock();

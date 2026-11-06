@@ -34,4 +34,4 @@ SOFTWARE.
 
 Files containing code copied from brush:
 
-(none yet)
+crates/psh-syntax/src/ast.rs (adapted from brush-parser's ast.rs and word.rs)

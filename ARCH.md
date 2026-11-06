@@ -77,6 +77,12 @@ parser crate does not depend on it; the AST's JSON form is produced outside
 - **Byte spans on every node** (`u32` start and end into the source). Line and column
   are computed on demand from a line table. The classifier, the UI and error messages
   all point into the original string.
+- **Arenas** (D1040): an `Ast` owns the source and holds lists, commands and here-docs
+  in arenas addressed by ids; the engine keeps `(Arc<Ast>, id)` pairs. Literal word
+  parts are spans, so parsing copies no text.
+- What `bash -n` does not check is deferred, as in bash (D1041): backquote bodies,
+  arithmetic (kept as text with expansions), invalid `${…}` ("bad substitution") and
+  errors in unquoted here-doc bodies. `$(…)`, `<(…)` and `${ …; }` are parsed in place.
 - Parses bash 5.3 syntax only: no zsh, no POSIX-sh mode. Aliases are not expanded at parse
   time (non-interactive bash leaves `expand_aliases` off); if `shopt -s expand_aliases`
   is used, the engine re-parses after alias definitions, as bash does line by line.
@@ -89,6 +95,8 @@ parser crate does not depend on it; the AST's JSON form is produced outside
 - Parses incrementally, as bash does: the engine parses and runs one complete top-level
   line at a time, so `echo a` on line 1 runs before a syntax error on line 2 is
   reported (status 2). `--parse` and the classifier parse the whole input.
+  `Parser::next_chunk` yields those lines; the parse options (`extglob`) may change
+  between chunks, as `shopt` does in bash (D1043).
 
 ## psh-engine: the interpreter
 

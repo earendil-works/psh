@@ -51,6 +51,43 @@ hand-written lexer and recursive-descent parser, byte spans on every node, a pri
 
 ## Log
 
+### 2026-11-06: part 1, psh-syntax
+- Design (D1040–D1046): arena AST (`Ast` owns `Arc<str>`; lists/commands/here-docs by id;
+  words inline; literal parts are spans), one-cursor recursive descent without a token
+  stream, deferred checks as in bash (backticks, arithmetic, bad `${}`, here-doc bodies),
+  brace expansion as structure, extglob as an option, chunked `Parser` for the engine,
+  nesting limit 100. brush contributed the AST vocabulary (`ast.rs`, attributed); its
+  tokenizer + winnow word parser did not fit (no part spans, no nested parse), so the
+  lexer/parser are new.
+- Probing without 0002: split Oils `spec/*.test.sh` (by `####`) and brush YAML `stdin:`
+  blocks into 7389 scripts, plus the 26234 shape skeletons from the shapes worktree, and
+  ~200 hand-written tricky snippets; recorded `/opt/homebrew/bin/bash -n` verdicts
+  (scratch: `work/scratch/0004/{split.py,verdicts.sh,compare.sh}`).
+- **L0 agreement with `bash -n`: 33819/33819 (100%)** (Oils 2.7k + brush 4.7k cases, 26234
+  shapes, 196 own snippets). All 32.5k parsing inputs round-trip print → reparse with the
+  same `dump`. Error messages: the first line equals bash's for ~95% of the scripts that
+  fail; the rest are `[[ ]]` second lines and here-doc warnings.
+- bash facts found by probing (all in the code and tests): `name=(…)` arguments are
+  accepted after `declare typeset local export readonly alias let eval` only; backtick
+  bodies, `$((…))` contents and `${x@Z}` are not checked by `bash -n`; unquoted here-doc
+  body errors are runtime errors; outer here-doc bodies start after the command line even
+  when a `$(…)` on it spans lines; `${ …; }` (5.3) is a command list; newlines are allowed
+  in `[[ ]]` except between a lone word and its operator; line continuations may split
+  operators (`&\⏎&`, `$\⏎(`); `a=(1 2` gives status 1, not 2.
+- `tests/l0/syntax.txt`: the hand-written snippets with bash's verdicts, checked by
+  `crates/psh-syntax/tests/l0.rs` (verdict + round trip). Unit tests in `src/tests.rs`
+  (structure via `dump`, spans of every node kind, errors and their spans, here-docs,
+  chunks, nesting on a 1 MiB stack).
+- Outside `touches:`: `crates/psh-engine/src/lib.rs` (the stub matched `Ok(())`; now
+  `Ok(_)`), ARCH.md psh-syntax bullets (arenas, deferred checks, chunks), NOTICE.
+- Benchmarks (release, M-series Mac): shape corpus (26234 inputs, 2.3 MB) ≈ 53 ms per
+  pass (~43 MB/s); L1+L2 scripts (7389, 1 MB) ≈ 16 ms. wasm32 cdylib exporting
+  parse+print+dump: 128 KB / 43 KB gzipped (opt-level 3), 81 KB / 32 KB gzipped (opt-level
+  z), stripped, LTO.
+- L0 leg: verdicts for the vendored L1/L2 scripts come from 0002's recorder; the shape
+  corpus verdicts need recording too (0002 or 0003). The ratchet file
+  `tests/l0/expected-failures.txt` would start empty. To agree with infra.
+
 ## Follow-ups
 
 ## Result

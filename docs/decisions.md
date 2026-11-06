@@ -436,3 +436,66 @@ waiting for the guest). Concurrent gates share the VM: each run holds
 `run-NAME.lock` (a refcount with PIDs; dead runs are dropped); a run that wakes a
 suspended or stopped VM records that in `resumed`, and the last run out puts it back only
 then. A VM that was already running (the owner may be using it) stays running.
+## D1040: The AST lives in arenas inside an `Ast` that owns the source
+date: 2026-11-06 · by: parser · issue: 0004
+`psh_syntax::Ast` holds the source (`Arc<str>`) and three arenas: lists (`ListId`),
+commands (`CmdId`) and here-docs (`HereDocId`). Words, redirections, assignments and
+`[[ ]]` expressions are owned inline by their command; literal word parts are byte spans
+whose meaning is fixed by the part kind (`Lit` verbatim, `Escaped`, `Single`, `AnsiC`), so
+parsing copies no text. Reason: the stepped engine keeps `(Arc<Ast>, id)` in its frames and
+function table without self-references or clones, the classifier walks from `root()`, and
+the tree is `Send + Sync`. Alternatives: an owned `Box` tree (the engine cannot hold
+references into it across steps) or `Rc` children everywhere (`!Send`, per-node refcounts).
+The incremental `Parser::next_chunk` (one top-level line at a time, as bash runs scripts)
+returns one `Ast` per chunk sharing the same `Arc<str>`, with absolute spans.
+
+## D1041: The parser checks what `bash -n` checks, and defers the rest
+date: 2026-11-06 · by: parser · issue: 0004
+`$(…)`, `<(…)`, `>(…)` and bash 5.3's `${ …; }`/`${| …; }` are parsed recursively at
+parse time, as bash does. Deferred to expansion, as in bash: backquote bodies
+(`Part::Backtick` keeps the text; `backtick_body` unescapes it for a later parse),
+arithmetic (`$((…))`, `((…))`, `for ((…))`, substring offsets and subscripts are words
+with expansions, because bash evaluates arithmetic on the expanded text), invalid `${…}`
+(`Part::BadSubst`, "bad substitution" at run time) and errors inside unquoted here-doc
+bodies (`HereDoc::error`). Reason: L0 agreement with `bash -n`; an arithmetic expression
+parser over expanded text belongs with the engine's expansion.
+
+## D1042: Brace expansion is structure; tilde and globs stay text
+date: 2026-11-06 · by: parser · issue: 0004
+`{a,b}` and `{x..y[..n]}` become `Part::Brace` in the words bash brace-expands (command
+words including declaration-builtin arguments, `for`/`select` lists, array elements,
+redirection targets other than here-strings), never in assignment values, case words and
+patterns, `[[ ]]` operands or here-strings. A leading `~` and glob characters stay in
+`Part::Lit` text: the engine knows the context (assignment, `:` separators) and Lit text is
+by definition unquoted. Extglob patterns are `Part::ExtGlob` where they change word
+boundaries.
+
+## D1043: extglob is a parse option; chunks follow shopt
+date: 2026-11-06 · by: parser · issue: 0004
+`Options::extglob` (default off, like `bash -n`) makes `?(…)`, `*(…)`, `+(…)`, `@(…)` and
+`!(…)` patterns in words and case patterns; the right side of `==`/`!=` in `[[ ]]` always
+accepts them, as in bash. The engine parses with `Parser::next_chunk` and passes the
+current `shopt -s extglob` state before each chunk, which is how bash behaves line by line.
+
+## D1044: The printer prints words as written
+date: 2026-11-06 · by: parser · issue: 0004
+`psh_syntax::print` lays out commands one per line with indentation and prints words,
+assignments and arithmetic texts verbatim from the source, so quoting, comments inside
+`$(…)` and nested here-docs survive. `parse(print(ast))` is checked through the span-free
+`dump`, which compares structure and text. It is not bash's `declare -f`/`type` format;
+that canonical printer is a follow-up for the engine.
+
+## D1045: A nesting limit instead of a stack overflow
+date: 2026-11-06 · by: parser · issue: 0004
+Nesting (compound lists plus word nesting such as `"$(…${x:-…}…)"`) deeper than 100 is the
+parse error "nesting too deep". 100 fits the 1 MiB default stack of wasm32 in release builds
+with room to spare (tested); real scripts stay far below it. Bash has no such limit.
+
+## D1046: What was taken from brush-parser
+date: 2026-11-06 · by: parser · issue: 0004
+`crates/psh-syntax/src/ast.rs` adapts brush-parser's AST vocabulary (the `[[ ]]` predicate
+names, the parameter-expansion operations), attributed in its header and in NOTICE. The
+lexer and parser are new: brush's tokenizer produces string tokens and re-parses words
+later with winnow, which gives neither spans for word parts nor recursive parses of `$(…)`
+at parse time; a single-cursor recursive descent does both and is what bash's own
+context-dependent lexing needs.

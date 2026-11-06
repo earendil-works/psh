@@ -270,7 +270,7 @@ impl Printer<'_> {
                 if f.keyword {
                     self.s("function ");
                     self.src(f.name.span);
-                    self.s(" ");
+                    self.s("() ");
                 } else {
                     self.src(f.name.span);
                     self.s("() ");

@@ -109,7 +109,11 @@ impl Parser {
     }
 }
 
-const MAX_DEPTH: u32 = 200;
+/// Nesting limit (compound lists plus word nesting), so that hostile input fails with
+/// an error instead of overflowing the stack: 100 fits wasm32's 1 MiB stack with room
+/// to spare in release builds (the `deep_nesting_fits_a_small_stack` test). Real
+/// scripts stay far below it.
+const MAX_DEPTH: u32 = 100;
 
 const RESERVED: &[&str] = &[
     "if", "then", "else", "elif", "fi", "do", "done", "case", "esac", "while", "until", "for",
@@ -469,6 +473,19 @@ impl<'a> P<'a> {
             _ => format!("syntax error near unexpected token `{text}'"),
         };
         self.error_at(s, e, message)
+    }
+
+    /// A redirection without its word: at the end of the input bash names the missing
+    /// token `newline` too.
+    fn missing_word(&self) -> ParseError {
+        if self.at_eof() {
+            return self.error_at(
+                self.pos,
+                self.pos,
+                String::from("syntax error near unexpected token `newline'"),
+            );
+        }
+        self.unexpected()
     }
 
     // ---- blanks, comments, newlines, here-docs ----
@@ -934,13 +951,15 @@ impl<'a> P<'a> {
                 Some("time") if time.is_none() => {
                     let s = self.pos;
                     self.pos += 4;
+                    let mut end = self.pos;
                     self.skip_blanks();
                     let posix = self.run() == b"-p";
                     if posix {
                         self.pos += 2;
+                        end = self.pos;
                     }
                     time = Some(Time {
-                        span: sp(s, self.pos),
+                        span: sp(s, end),
                         posix,
                     });
                     prefix_end = self.pos;
@@ -1583,7 +1602,7 @@ impl<'a> P<'a> {
         let target = match op {
             RedirOp::HereDoc | RedirOp::HereDocStrip => {
                 let Some(delimiter) = self.read_word(Ctx::Word, false)? else {
-                    return Err(self.unexpected());
+                    return Err(self.missing_word());
                 };
                 let (delim, quoted) = self.heredoc_delimiter(&delimiter);
                 let id = HereDocId(self.heredocs.len() as u32);
@@ -1610,7 +1629,7 @@ impl<'a> P<'a> {
             _ => {
                 let brace = op != RedirOp::HereString;
                 let Some(w) = self.read_word(Ctx::Word, brace)? else {
-                    return Err(self.unexpected());
+                    return Err(self.missing_word());
                 };
                 RedirTarget::Word(w)
             }

@@ -1,0 +1,916 @@
+# L0 parser cases: snippets with the verdict of `bash -n` (GNU bash 5.3) on each.
+#
+# Format: `#### N` starts a case; its script runs to the `## status:` line, which holds
+# bash's exit status (0: parses). `## message:` is the first line of bash's message,
+# without the `FILE: line N: ` prefix. psh-syntax's `tests/l0.rs` checks that the parser
+# agrees on every verdict and that every parsed case round-trips through the printer.
+#
+#### 0
+case x in a) ;; esac
+## status: 0
+
+#### 1
+case x in (a|b) echo;; (c) ;& d) ;;& esac
+## status: 0
+
+#### 2
+case x in
+  a)
+    echo
+    ;;
+  *) ;;
+esac
+## status: 0
+
+#### 3
+echo ${x/a/b} ${x//a} ${x/#a/b} ${x/%a/b} ${x:0:1} ${x: -1} ${!x[@]} ${#x[@]} ${x^^} ${x,} ${x@Q}
+## status: 0
+
+#### 4
+a[$i]+=x; a=([0]=x [1]+=y z)
+## status: 0
+
+#### 5
+{ echo; } > f; f() ( echo ); function g() { :; }
+## status: 0
+
+#### 6
+coproc { cat; }
+## status: 0
+
+#### 7
+coproc NAME { cat; }
+## status: 0
+
+#### 8
+coproc NAME cat
+## status: 0
+
+#### 9
+select x in a b; do break; done
+## status: 0
+
+#### 10
+time -p { ls; }
+## status: 0
+
+#### 11
+! { a; }
+## status: 0
+
+#### 12
+echo $'\'' $'a\nb'
+## status: 0
+
+#### 13
+echo "$(echo ")")"
+## status: 0
+
+#### 14
+echo $(echo $(echo a))
+## status: 0
+
+#### 15
+echo $(case x in x) echo y;; esac)
+## status: 0
+
+#### 16
+echo $(case x in (x) echo y;; esac)
+## status: 0
+
+#### 17
+echo $(( (1+2) * 3 )) $(( $(echo 1) + 1 ))
+## status: 0
+
+#### 18
+for ((;;)); do break; done; for ((i=0;i<3;i++)) { echo; }
+## status: 0
+
+#### 19
+[[ $x =~ ^[0-9]+$ ]]
+## status: 0
+
+#### 20
+[[ $x =~ (a b) ]]
+## status: 0
+
+#### 21
+[[ a < b ]]; [[ ( a == b ) ]]; [[ -n $x && ( -z $y || $z ) ]]
+## status: 0
+
+#### 22
+cat <<'EOF' | grep x
+body
+EOF
+## status: 0
+
+#### 23
+cat <<EOF1 <<EOF2
+a
+EOF1
+b
+EOF2
+## status: 0
+
+#### 24
+cat <<$x
+a
+$x
+## status: 0
+
+#### 25
+while read -r line; do echo; done < file
+## status: 0
+
+#### 26
+x=$(cmd) || exit 1
+## status: 0
+
+#### 27
+exec 3>&- {fd}<file 4<&0 5>&1-
+## status: 0
+
+#### 28
+local -a x=(1 2); export A=1 B; readonly C=(a)
+## status: 0
+
+#### 29
+a=(
+  1 # comment
+  2
+)
+## status: 0
+
+#### 30
+echo a#b #c
+## status: 0
+
+#### 31
+echo \# '#' "#"
+## status: 0
+
+#### 32
+echo {a,b}{1..3} {a..z..2} {,x} {x} {} a{b,c{d,e}}f
+## status: 0
+
+#### 33
+echo if then fi do done case esac
+## status: 0
+
+#### 34
+echo "${a[@]:1:2}" $((x++)); ((x+=1)); let x++
+## status: 0
+
+#### 35
+trap 'echo $?' EXIT
+## status: 0
+
+#### 36
+diff <(ls) <(ls) > >(cat)
+## status: 0
+
+#### 37
+cmd 2>&1 | tee x; cmd &> f; cmd &>> f; cmd >| f; cmd <> f
+## status: 0
+
+#### 38
+cat <<< "$x"; echo $(<file)
+## status: 0
+
+#### 39
+echo $((1)) $[2]
+## status: 0
+
+#### 40
+echo héllo "ü$x" 'ß'
+## status: 0
+
+#### 41
+echo )
+## status: 2
+## message: syntax error near unexpected token `)'
+
+#### 42
+fi
+## status: 2
+## message: syntax error near unexpected token `fi'
+
+#### 43
+done
+## status: 2
+## message: syntax error near unexpected token `done'
+
+#### 44
+{
+## status: 2
+## message: syntax error: unexpected end of file from `{' command on line 1
+
+#### 45
+}
+## status: 2
+## message: syntax error near unexpected token `}'
+
+#### 46
+case
+## status: 2
+## message: syntax error near unexpected token `newline'
+
+#### 47
+if; then fi
+## status: 2
+## message: syntax error near unexpected token `;'
+
+#### 48
+for in
+## status: 2
+## message: syntax error: unexpected end of file from `for' command on line 1
+
+#### 49
+a &&
+## status: 2
+## message: syntax error: unexpected end of file
+
+#### 50
+a |
+## status: 2
+## message: syntax error: unexpected end of file
+
+#### 51
+| a
+## status: 2
+## message: syntax error near unexpected token `|'
+
+#### 52
+&& a
+## status: 2
+## message: syntax error near unexpected token `&&'
+
+#### 53
+a ;; b
+## status: 2
+## message: syntax error near unexpected token `;;'
+
+#### 54
+(
+## status: 2
+## message: syntax error: unexpected end of file from `(' command on line 1
+
+#### 55
+()
+## status: 2
+## message: syntax error near unexpected token `)'
+
+#### 56
+f()
+## status: 2
+## message: syntax error: unexpected end of file
+
+#### 57
+[[ a == ]]
+## status: 2
+## message: unexpected argument `]]' to conditional binary operator
+
+#### 58
+[[ ! ]]
+## status: 2
+## message: syntax error near `]]'
+
+#### 59
+[[ a && ]]
+## status: 2
+## message: syntax error near `]]'
+
+#### 60
+((
+## status: 2
+## message: unexpected EOF while looking for matching `)'
+
+#### 61
+echo <(
+## status: 2
+## message: unexpected EOF while looking for matching `)'
+
+#### 62
+echo $(
+## status: 2
+## message: unexpected EOF while looking for matching `)'
+
+#### 63
+f() { :; } > out
+## status: 0
+
+#### 64
+f() { :; } x
+## status: 2
+## message: syntax error near unexpected token `x'
+
+#### 65
+{ :; } x
+## status: 2
+## message: syntax error near unexpected token `x'
+
+#### 66
+(a) b
+## status: 2
+## message: syntax error near unexpected token `b'
+
+#### 67
+a | b |& c && d || e & f; g
+## status: 0
+
+#### 68
+time
+## status: 0
+
+#### 69
+time -p
+## status: 0
+
+#### 70
+time ! true
+## status: 0
+
+#### 71
+! ! true
+## status: 0
+
+#### 72
+if a; then b; elif c; then d; fi
+## status: 0
+
+#### 73
+if a
+then b
+else c
+fi
+## status: 0
+
+#### 74
+while
+true
+do
+:
+done
+## status: 0
+
+#### 75
+until false; do :; done
+## status: 0
+
+#### 76
+for i
+do echo; done
+## status: 0
+
+#### 77
+for i in "$@"; do echo; done
+## status: 0
+
+#### 78
+for i in a b
+do echo; done
+## status: 0
+
+#### 79
+echo ${x:-a b} ${x:=y} ${x:?err msg} ${x:+alt}
+## status: 0
+
+#### 80
+echo ${x#*/} ${x##*/} ${x%/*} ${x%%/*}
+## status: 0
+
+#### 81
+echo "${x//\//\\}"
+## status: 0
+
+#### 82
+echo ${x//[0-9]/}
+## status: 0
+
+#### 83
+echo ${!prefix*} ${!prefix@} ${!ref}
+## status: 0
+
+#### 84
+echo $0 $1 $10 ${10} $# $? $$ $! $- $@ $* $_
+## status: 0
+
+#### 85
+echo `echo \`echo a\``
+## status: 0
+
+#### 86
+echo "a `echo b` c"
+## status: 0
+
+#### 87
+echo $(( 1 ? 2 : 3 ))
+## status: 0
+
+#### 88
+x=${x:-${y:-${z}}}
+## status: 0
+
+#### 89
+echo "${x:-"a b"}"
+## status: 0
+
+#### 90
+echo ${x:-'a'}
+## status: 0
+
+#### 91
+a=1 b=2 c
+## status: 0
+
+#### 92
+VAR=x env | grep VAR
+## status: 0
+
+#### 93
+cd /tmp && ls -la | head -n 5 2>/dev/null
+## status: 0
+
+#### 94
+git log --oneline -n 5 -- . ':!vendor'
+## status: 0
+
+#### 95
+find . -name '*.rs' -exec grep -l foo {} \; | xargs -I{} echo {}
+## status: 0
+
+#### 96
+find . -name '*.rs' -exec grep -l foo {} +
+## status: 0
+
+#### 97
+python3 - <<'PY'
+import sys
+print(sys.argv)
+PY
+## status: 0
+
+#### 98
+cat > file.txt <<'EOF'
+line $x `y` \z
+EOF
+## status: 0
+
+#### 99
+cat <<-EOF
+	indented $x
+	EOF
+## status: 0
+
+#### 100
+echo "unterminated
+## status: 2
+## message: unexpected EOF while looking for matching `"'
+
+#### 101
+echo 'unterminated
+## status: 2
+## message: unexpected EOF while looking for matching `''
+
+#### 102
+echo ${x
+## status: 2
+## message: unexpected EOF while looking for matching `}'
+
+#### 103
+echo $((1 + 2)
+## status: 2
+## message: unexpected EOF while looking for matching `)'
+
+#### 104
+echo $(( 1 + 2 ) )
+## status: 0
+
+#### 105
+echo $( (echo a) )
+## status: 0
+
+#### 106
+[[ -f x ]] && echo yes || echo no
+## status: 0
+
+#### 107
+test -f x && [ -d y ]
+## status: 0
+
+#### 108
+echo a\
+b
+## status: 0
+
+#### 109
+echo a \
+  b
+## status: 0
+
+#### 110
+x=1; y=2
+z=3
+## status: 0
+
+#### 111
+echo $x$y${z}w
+## status: 0
+
+#### 112
+echo "$x"'$y'\$z
+## status: 0
+
+#### 113
+echo ~ ~/x ~user x~ a=~/b
+## status: 0
+
+#### 114
+echo *.txt ?.c [abc]* [!a]x
+## status: 0
+
+#### 115
+echo @(a|b)
+## status: 2
+## message: syntax error near unexpected token `('
+
+#### 116
+shopt -s extglob
+echo @(a|b)
+## status: 2
+## message: syntax error near unexpected token `('
+
+#### 117
+[[ x == +(a|b) ]]
+## status: 0
+
+#### 118
+case x in @(a|b)) ;; esac
+## status: 2
+## message: syntax error near unexpected token `('
+
+#### 119
+echo $"hello $x"
+## status: 0
+
+#### 120
+declare -A m=([a]=1 [b]=2)
+## status: 0
+
+#### 121
+declare -A m; m[key with space]=1
+## status: 0
+
+#### 122
+echo ${m[key with space]}
+## status: 0
+
+#### 123
+a+=(x y)
+## status: 0
+
+#### 124
+arr=("${arr[@]}" x)
+## status: 0
+
+#### 125
+echo $[ 1 + [2] ]
+## status: 0
+
+#### 126
+echo ${#}
+## status: 0
+
+#### 127
+echo ${##} ${#-} ${#?}
+## status: 0
+
+#### 128
+echo ${x[@]/a/b}
+## status: 0
+
+#### 129
+f() {
+  local x=$1
+  shift
+  echo "$@"
+}
+## status: 0
+
+#### 130
+function foo {
+  bar
+}
+## status: 0
+
+#### 131
+foo() bar
+## status: 2
+## message: syntax error near unexpected token `bar'
+
+#### 132
+echo hi >
+## status: 2
+## message: syntax error near unexpected token `newline'
+
+#### 133
+echo hi 2>
+## status: 2
+## message: syntax error near unexpected token `newline'
+
+#### 134
+echo hi <<
+## status: 2
+## message: syntax error near unexpected token `newline'
+
+#### 135
+cat <<EOF
+x
+EOF
+echo after
+## status: 0
+
+#### 136
+cat <<EOF; echo same line
+x
+EOF
+## status: 0
+
+#### 137
+echo $(cat <<EOF
+inner
+EOF
+)
+## status: 0
+
+#### 138
+x=`cat <<EOF
+y
+EOF`
+## status: 0
+
+#### 139
+echo "$(
+  echo multi
+  echo line
+)"
+## status: 0
+
+#### 140
+if [[ "$a" == "b" ]]; then
+  echo
+fi
+## status: 0
+
+#### 141
+[[ $a == "$b"* ]]
+## status: 0
+
+#### 142
+[[ a =~ b|c ]]
+## status: 0
+
+#### 143
+[[ $a =~ ^(foo|bar)baz$ ]]
+## status: 0
+
+#### 144
+[[ a -eq 1 && b -lt 2 ]]
+## status: 0
+
+#### 145
+[[ -v x ]]
+## status: 0
+
+#### 146
+[[ x ]]
+## status: 0
+
+#### 147
+[[ -f ]]
+## status: 2
+## message: unexpected argument `]]' to conditional unary operator
+
+#### 148
+[[ -z ]]
+## status: 2
+## message: unexpected argument `]]' to conditional unary operator
+
+#### 149
+[[ a -nt b ]]
+## status: 0
+
+#### 150
+[[ a b ]]
+## status: 2
+## message: unexpected token `b', conditional binary operator expected
+
+#### 151
+[[ a == b c ]]
+## status: 2
+## message: syntax error in conditional expression: unexpected token `c'
+
+#### 152
+echo \
+## status: 0
+
+#### 153
+echo a;;
+## status: 2
+## message: syntax error near unexpected token `;;'
+
+#### 154
+;;
+## status: 2
+## message: syntax error near unexpected token `;;'
+
+#### 155
+echo a & ; echo b
+## status: 2
+## message: syntax error near unexpected token `;'
+
+#### 156
+echo a &; echo b
+## status: 2
+## message: syntax error near unexpected token `;'
+
+#### 157
+echo a & echo b &
+## status: 0
+
+#### 158
+echo a&&echo b||echo c
+## status: 0
+
+#### 159
+a=1&&b=2
+## status: 0
+
+#### 160
+echo >&2 hi
+## status: 0
+
+#### 161
+>out
+## status: 0
+
+#### 162
+< in cat
+## status: 0
+
+#### 163
+2>/dev/null cmd
+## status: 0
+
+#### 164
+a=b >out
+## status: 0
+
+#### 165
+echo {fd}>x
+## status: 0
+
+#### 166
+echo {1}>x
+## status: 0
+
+#### 167
+exec {fd}>&-
+## status: 0
+
+#### 168
+[[ a == b
+## status: 2
+## message: unexpected EOF while looking for `]]'
+
+#### 169
+[[ a
+## status: 2
+## message: unexpected token `newline', conditional binary operator expected
+
+#### 170
+[[ ! ]]
+## status: 2
+## message: syntax error near `]]'
+
+#### 171
+[[ a && ]]
+## status: 2
+## message: syntax error near `]]'
+
+#### 172
+[[ a && ; ]]
+## status: 2
+## message: unexpected token `;' in conditional command
+
+#### 173
+[[ ( ]]
+## status: 2
+## message: expected `)'
+
+#### 174
+[[ ( a ]]
+## status: 2
+## message: unexpected token `]]', expected `)'
+
+#### 175
+[[ -n < x ]]
+## status: 2
+## message: unexpected argument `<' to conditional unary operator
+
+#### 176
+[[ a == ; ]]
+## status: 2
+## message: unexpected argument `;' to conditional binary operator
+
+#### 177
+[[ a ; ]]
+## status: 2
+## message: unexpected token `;', conditional binary operator expected
+
+#### 178
+[[ a ==
+## status: 2
+## message: unexpected argument `newline' to conditional binary operator
+
+#### 179
+[[ -f
+## status: 2
+## message: unexpected argument `newline' to conditional unary operator
+
+#### 180
+[[
+## status: 2
+## message: unexpected token `EOF' in conditional command
+
+#### 181
+[[ a ) ]]
+## status: 2
+## message: syntax error in conditional expression: unexpected token `)'
+
+#### 182
+[[ a > ]]
+## status: 2
+## message: unexpected argument `]]' to conditional binary operator
+
+#### 183
+[[ a > b > c ]]
+## status: 2
+## message: syntax error in conditional expression: unexpected token `>'
+
+#### 184
+echo $(echo ;; )
+## status: 2
+## message: syntax error near unexpected token `;;' while looking for matching `)'
+
+#### 185
+echo $(if true; then echo; fi; fi)
+## status: 2
+## message: syntax error near unexpected token `fi' while looking for matching `)'
+
+#### 186
+(echo ;;)
+## status: 2
+## message: syntax error near unexpected token `;;'
+
+#### 187
+[[ a =~ (b) ]]
+## status: 0
+
+#### 188
+[[ a =~ ]]
+## status: 2
+## message: unexpected argument `]]' to conditional binary operator
+
+#### 189
+[[ -f <(x) ]]
+## status: 0
+
+#### 190
+[[ a < <(x) ]]
+## status: 0
+
+#### 191
+for ((i=0;i<3;;)); do :; done
+## status: 2
+## message: syntax error: `;' unexpected
+
+#### 192
+for ((i=0;i<3)); do :; done
+## status: 2
+## message: syntax error: arithmetic expression required
+
+#### 193
+((
+## status: 2
+## message: unexpected EOF while looking for matching `)'
+
+#### 194
+echo $((
+## status: 2
+## message: unexpected EOF while looking for matching `)'
+
+#### 195
+echo $((1
+## status: 2
+## message: unexpected EOF while looking for matching `)'

@@ -11,13 +11,13 @@ mod golden;
 mod groups;
 mod helpers;
 mod json;
+mod l0;
 mod normalize;
 mod oils;
 mod ratchet;
 mod report;
 mod runner;
 mod sandbox;
-mod shapes;
 mod status;
 mod yaml;
 
@@ -53,8 +53,10 @@ Modes:
                       filters or another shell)
   --hitlist           with --status: failing cases ranked by corpus weight (-n N rows)
   --diff-goldens A B  compare two golden directories per case (determinism check)
-  --record-shapes     record `bash -n` verdicts for tests/shapes/shapes.txt (L0) with
-                      --shell into <goldens>/shapes/bash-n.txt
+  --record-l0         record `bash -n` verdicts with --shell for the shape corpus and
+                      tests/l0/syntax.txt (L0) into <goldens>/{shapes,l0}/bash-n.txt
+  --l0                L0: psh-syntax against bash -n on every case script, shape and
+                      snippet, plus print/reparse; ratchet tests/l0/expected-failures.txt
   (default)           compare against the goldens and check the ratchets
 
 Options:
@@ -89,6 +91,7 @@ struct Options {
     keep: bool,
     diff_goldens: Option<(PathBuf, PathBuf)>,
     record_shapes: bool,
+    l0: bool,
     status: bool,
     hitlist: bool,
     rows: usize,
@@ -114,6 +117,7 @@ fn parse_args(args: Vec<String>) -> Result<Options, String> {
         keep: false,
         diff_goldens: None,
         record_shapes: false,
+        l0: false,
         status: false,
         hitlist: false,
         rows: 40,
@@ -149,7 +153,8 @@ fn parse_args(args: Vec<String>) -> Result<Options, String> {
             "--add-failures" => o.add_failures = true,
             "--summary" => o.summary = Some(value("--summary")?.into()),
             "--keep" => o.keep = true,
-            "--record-shapes" => o.record_shapes = true,
+            "--record-l0" => o.record_shapes = true,
+            "--l0" => o.l0 = true,
             "--status" => o.status = true,
             "--hitlist" => {
                 o.status = true;
@@ -170,7 +175,7 @@ fn parse_args(args: Vec<String>) -> Result<Options, String> {
         o.layers = Layer::ALL.to_vec();
     }
     if (o.record || o.record_shapes) && o.shell.is_none() {
-        return Err("--record and --record-shapes need --shell PATH".into());
+        return Err("--record and --record-l0 need --shell PATH".into());
     }
     Ok(o)
 }
@@ -252,7 +257,17 @@ fn run(opts: Options) -> Result<ExitCode, String> {
         .unwrap_or_else(|| root.join("tests/goldens"));
     if opts.record_shapes {
         let shell = resolve_shell(opts.shell.as_ref().unwrap())?;
-        return shapes::record(&root, &goldens_dir, &External::new(shell), opts.jobs);
+        return l0::record(&root, &goldens_dir, &External::new(shell), opts.jobs);
+    }
+    if opts.l0 {
+        return l0::main(
+            &root,
+            &opts.filters,
+            opts.jobs,
+            opts.diff,
+            opts.update_ratchet,
+            opts.add_failures,
+        );
     }
     let groups_text = std::fs::read_to_string(root.join("tests/spec.toml"))
         .map_err(|e| format!("tests/spec.toml: {e}"))?;

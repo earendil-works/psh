@@ -1,0 +1,72 @@
+# bash -n verdicts for tests/l0/syntax.txt (fnv1a64 ecdcf43a6795be10, 196 inputs),
+# recorded by scripts/record-goldens with GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# KEY<TAB>STATUS<TAB>STDERR for each input bash rejects; unlisted ones parse.
+41	2	bash: line 1: syntax error near unexpected token `)'\nbash: line 1: `echo )'\n
+42	2	bash: line 1: syntax error near unexpected token `fi'\nbash: line 1: `fi'\n
+43	2	bash: line 1: syntax error near unexpected token `done'\nbash: line 1: `done'\n
+44	2	bash: line 2: syntax error: unexpected end of file from `{' command on line 1\n
+45	2	bash: line 1: syntax error near unexpected token `}'\nbash: line 1: `}'\n
+46	2	bash: line 1: syntax error near unexpected token `newline'\nbash: line 1: `case'\n
+47	2	bash: line 1: syntax error near unexpected token `;'\nbash: line 1: `if; then fi'\n
+48	2	bash: line 2: syntax error: unexpected end of file from `for' command on line 1\n
+49	2	bash: line 2: syntax error: unexpected end of file\n
+50	2	bash: line 2: syntax error: unexpected end of file\n
+51	2	bash: line 1: syntax error near unexpected token `|'\nbash: line 1: `| a'\n
+52	2	bash: line 1: syntax error near unexpected token `&&'\nbash: line 1: `&& a'\n
+53	2	bash: line 1: syntax error near unexpected token `;;'\nbash: line 1: `a ;; b'\n
+54	2	bash: line 2: syntax error: unexpected end of file from `(' command on line 1\n
+55	2	bash: line 1: syntax error near unexpected token `)'\nbash: line 1: `()'\n
+56	2	bash: line 2: syntax error: unexpected end of file\n
+57	2	bash: line 1: unexpected argument `]]' to conditional binary operator\nbash: line 1: syntax error near `]]'\nbash: line 1: `[[ a == ]]'\n
+58	2	bash: line 1: syntax error near `]]'\nbash: line 1: `[[ ! ]]'\n
+59	2	bash: line 1: syntax error near `]]'\nbash: line 1: `[[ a && ]]'\n
+60	2	bash: line 1: unexpected EOF while looking for matching `)'\n
+61	2	bash: line 2: unexpected EOF while looking for matching `)'\n
+62	2	bash: line 2: unexpected EOF while looking for matching `)'\n
+64	2	bash: line 1: syntax error near unexpected token `x'\nbash: line 1: `f() { :; } x'\n
+65	2	bash: line 1: syntax error near unexpected token `x'\nbash: line 1: `{ :; } x'\n
+66	2	bash: line 1: syntax error near unexpected token `b'\nbash: line 1: `(a) b'\n
+100	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+101	2	bash: line 1: unexpected EOF while looking for matching `''\n
+102	2	bash: line 1: unexpected EOF while looking for matching `}'\n
+103	2	bash: line 1: unexpected EOF while looking for matching `)'\n
+115	2	bash: line 1: syntax error near unexpected token `('\nbash: line 1: `echo @(a|b)'\n
+116	2	bash: line 2: syntax error near unexpected token `('\nbash: line 2: `echo @(a|b)'\n
+118	2	bash: line 1: syntax error near unexpected token `('\nbash: line 1: `case x in @(a|b)) ;; esac'\n
+131	2	bash: line 1: syntax error near unexpected token `bar'\nbash: line 1: `foo() bar'\n
+132	2	bash: line 1: syntax error near unexpected token `newline'\nbash: line 1: `echo hi >'\n
+133	2	bash: line 1: syntax error near unexpected token `newline'\nbash: line 1: `echo hi 2>'\n
+134	2	bash: line 1: syntax error near unexpected token `newline'\nbash: line 1: `echo hi <<'\n
+147	2	bash: line 1: unexpected argument `]]' to conditional unary operator\nbash: line 1: syntax error near `]]'\nbash: line 1: `[[ -f ]]'\n
+148	2	bash: line 1: unexpected argument `]]' to conditional unary operator\nbash: line 1: syntax error near `]]'\nbash: line 1: `[[ -z ]]'\n
+150	2	bash: line 1: unexpected token `b', conditional binary operator expected\nbash: line 1: syntax error near `b'\nbash: line 1: `[[ a b ]]'\n
+151	2	bash: line 1: syntax error in conditional expression: unexpected token `c'\nbash: line 1: syntax error near `c'\nbash: line 1: `[[ a == b c ]]'\n
+153	2	bash: line 1: syntax error near unexpected token `;;'\nbash: line 1: `echo a;;'\n
+154	2	bash: line 1: syntax error near unexpected token `;;'\nbash: line 1: `;;'\n
+155	2	bash: line 1: syntax error near unexpected token `;'\nbash: line 1: `echo a & ; echo b'\n
+156	2	bash: line 1: syntax error near unexpected token `;'\nbash: line 1: `echo a &; echo b'\n
+168	2	bash: line 1: unexpected EOF while looking for `]]'\nbash: line 2: syntax error: unexpected end of file from `[[' command on line 1\n
+169	2	bash: line 1: unexpected token `newline', conditional binary operator expected\nbash: line 1: syntax error near `a'\nbash: line 1: `[[ a'\n
+170	2	bash: line 1: syntax error near `]]'\nbash: line 1: `[[ ! ]]'\n
+171	2	bash: line 1: syntax error near `]]'\nbash: line 1: `[[ a && ]]'\n
+172	2	bash: line 1: unexpected token `;' in conditional command\nbash: line 1: syntax error near `;'\nbash: line 1: `[[ a && ; ]]'\n
+173	2	bash: line 1: expected `)'\nbash: line 1: syntax error near `]]'\nbash: line 1: `[[ ( ]]'\n
+174	2	bash: line 1: unexpected token `]]', expected `)'\nbash: line 1: syntax error near `]]'\nbash: line 1: `[[ ( a ]]'\n
+175	2	bash: line 1: unexpected argument `<' to conditional unary operator\nbash: line 1: syntax error near `<'\nbash: line 1: `[[ -n < x ]]'\n
+176	2	bash: line 1: unexpected argument `;' to conditional binary operator\nbash: line 1: syntax error near `;'\nbash: line 1: `[[ a == ; ]]'\n
+177	2	bash: line 1: unexpected token `;', conditional binary operator expected\nbash: line 1: syntax error near `;'\nbash: line 1: `[[ a ; ]]'\n
+178	2	bash: line 1: unexpected argument `newline' to conditional binary operator\nbash: line 1: syntax error near `=='\nbash: line 1: `[[ a =='\n
+179	2	bash: line 1: unexpected argument `newline' to conditional unary operator\nbash: line 1: syntax error near `-f'\nbash: line 1: `[[ -f'\n
+180	2	bash: line 2: unexpected token `EOF' in conditional command\nbash: line 2: syntax error: unexpected end of file from `[[' command on line 1\n
+181	2	bash: line 1: syntax error in conditional expression: unexpected token `)'\nbash: line 1: syntax error near `)'\nbash: line 1: `[[ a ) ]]'\n
+182	2	bash: line 1: unexpected argument `]]' to conditional binary operator\nbash: line 1: syntax error near `]]'\nbash: line 1: `[[ a > ]]'\n
+183	2	bash: line 1: syntax error in conditional expression: unexpected token `>'\nbash: line 1: syntax error near `>'\nbash: line 1: `[[ a > b > c ]]'\n
+184	2	bash: line 1: syntax error near unexpected token `;;' while looking for matching `)'\nbash: line 1: `echo $(echo ;; )'\n
+185	2	bash: line 1: syntax error near unexpected token `fi' while looking for matching `)'\nbash: line 1: `echo $(if true; then echo; fi; fi)'\n
+186	2	bash: line 1: syntax error near unexpected token `;;'\nbash: line 1: `(echo ;;)'\n
+188	2	bash: line 1: unexpected argument `]]' to conditional binary operator\nbash: line 1: syntax error near `]]'\nbash: line 1: `[[ a =~ ]]'\n
+191	2	bash: line 1: syntax error: `;' unexpected\nbash: line 1: syntax error: `((i=0;i<3;;))'\n
+192	2	bash: line 1: syntax error: arithmetic expression required\nbash: line 1: syntax error: `((i=0;i<3))'\n
+193	2	bash: line 1: unexpected EOF while looking for matching `)'\n
+194	2	bash: line 1: unexpected EOF while looking for matching `)'\n
+195	2	bash: line 1: unexpected EOF while looking for matching `)'\n

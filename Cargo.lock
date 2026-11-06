@@ -356,6 +356,9 @@ dependencies = [
 [[package]]
 name = "psh-spec"
 version = "0.0.0"
+dependencies = [
+ "psh-syntax",
+]
 
 [[package]]
 name = "psh-syntax"

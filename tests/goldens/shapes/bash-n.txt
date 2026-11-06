@@ -1,6 +1,6 @@
-# bash -n verdicts for tests/shapes/shapes.txt (fnv1a64 eaa313f91b217739, 26234 skeletons),
+# bash -n verdicts for tests/shapes/shapes.txt (fnv1a64 eaa313f91b217739, 26234 inputs),
 # recorded by scripts/record-goldens with GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
-# LINE<TAB>STATUS<TAB>STDERR for each skeleton bash rejects; unlisted ones parse.
+# KEY<TAB>STATUS<TAB>STDERR for each input bash rejects; unlisted ones parse.
 9792	2	bash: line 1: unexpected EOF while looking for matching ``'\n
 10931	2	bash: line 1: unexpected EOF while looking for matching `''\n
 11124	2	bash: line 6: unexpected EOF while looking for matching `''\n

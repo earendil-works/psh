@@ -7,7 +7,9 @@ version.workspace = true
 license.workspace = true
 publish.workspace = true
 
+# psh-syntax for L0 (the parser against bash -n) and the hit list (D1220).
 [dependencies]
+psh-syntax.workspace = true
 
 [lints]
 workspace = true

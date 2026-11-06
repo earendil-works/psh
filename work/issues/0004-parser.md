@@ -1,6 +1,6 @@
 # 0004: Parser: psh-syntax from brush-parser, hand-written
 
-status: in-progress
+status: done
 agent: parser
 branch: issue/0004-parser
 depends-on: 0001 (0002 for the bash -n verdicts of L0)
@@ -16,25 +16,25 @@ hand-written lexer and recursive-descent parser, byte spans on every node, a pri
 `wasm32-unknown-unknown`. Climbs L0 to ~100%.
 
 ## Acceptance criteria
-- [ ] AST covering bash 5.3 syntax: lists, pipelines (`|`, `|&`, `!`, `time`), `&&`
+- [x] AST covering bash 5.3 syntax: lists, pipelines (`|`, `|&`, `!`, `time`), `&&`
       `||` `;` `&`, simple commands with assignments and redirections (all forms,
       including `{var}>`, `&>`, `<<<`, here-docs with `-` and quoted delimiters),
       compound commands (`{}`, `()`, `if`, `for` both forms, `while`, `until`, `case`
       with `;;`/`;&`/`;;&`, `select`, `[[ ]]`, `(( ))`), functions, coprocs, words with
       their parts (quotes, `$'…'`, `$"…"`, parameter expansions with all operators,
       `$(…)`, backticks, `$((…))`, process substitution, brace expansion, extglob).
-- [ ] Every node has a `u32` byte span into the source; a line table gives line and
+- [x] Every node has a `u32` byte span into the source; a line table gives line and
       column on demand. A test checks spans for every node kind.
-- [ ] Printer; `parse(print(ast)) == ast` on every L0 input.
-- [ ] Parse errors carry a span and a message; the parse/no-parse verdict agrees with
+- [x] Printer; `parse(print(ast)) == ast` on every L0 input.
+- [x] Parse errors carry a span and a message; the parse/no-parse verdict agrees with
       `bash -n` on L0 (ratchet in `tests/l0/expected-failures.txt`).
-- [ ] `psh --parse [-c CMD | FILE]` prints the AST as JSON with spans, written with
+- [x] `psh --parse [-c CMD | FILE]` prints the AST as JSON with spans, written with
       `deser-json` (D029) in the `psh` crate (or a module outside `psh-syntax`), so the
       parser stays dependency-free and no_std.
-- [ ] `#![no_std]` + `alloc`, zero dependencies, MSRV 1.96 (D025); builds for
+- [x] `#![no_std]` + `alloc`, zero dependencies, MSRV 1.96 (D025); builds for
       `wasm32-unknown-unknown` (gate); copied files carry
       brush's copyright header and are listed in `NOTICE`.
-- [ ] A benchmark note in the Result: parse time for the whole shape corpus or L1+L2,
+- [x] A benchmark note in the Result: parse time for the whole shape corpus or L1+L2,
       and the wasm size of the parser alone (stripped, gzipped).
 
 ## Notes
@@ -109,5 +109,42 @@ hand-written lexer and recursive-descent parser, byte spans on every node, a pri
   its own dependency, for the trait): the build pulls deser-core, deser-json, itoa, zmij.
 
 ## Follow-ups
+- Guide page `docs/guide/syntax.md` (not written): what psh parses, spans, `--parse`.
+- The L0 leg and `tests/l0/expected-failures.txt` (infra, 0002): container verdicts for
+  L1/L2 scripts, the shape corpus and `tests/l0/syntax.txt`; with today's parser the
+  ratchet starts empty.
+- Engine (0005): bash's canonical command printer for `declare -f`/`type` (D1044); an
+  arithmetic expression parser over expanded text (D1041); here-doc "delimited by
+  end-of-file" warnings at parse time (`HereDoc::terminated`); the error line echo bash
+  prints after "near unexpected token" (`line N: `…`'), from `ParseError::span`.
+- Scripts that are not UTF-8: psh-syntax takes `&str`; `--parse` converts lossily. The
+  engine needs a decision (bytes in the parser, or lossless mapping).
+- CRLF scripts (ARCH Windows rules say they parse): today `\r` is an ordinary char, as in
+  bash on Linux; a parse option would be needed if Windows wants `\r\n` as a newline.
+- Line continuations are handled between tokens, inside operators and after `$`, not
+  inside a name or a reserved word (`fi\⏎`); no case in L0 needs it.
+- Error message second lines differ from bash in a few `[[ ]]` cases; stderr scoring will
+  show them.
 
 ## Result
+Landed in three merges (6496f61 parser, 7e7418e `--parse`, plus this record).
+
+- `psh-syntax` (no_std + alloc, zero dependencies, wasm32): `parse`/`parse_with(src,
+  Options { extglob })` → `Ast`; `Parser::next_chunk` for line-at-a-time parsing; `print`
+  (source back, words verbatim); `dump` (span-free S-expression for tests); `LineIndex`
+  (line/column on demand); `literal_text`, `backtick_body` helpers. AST in arenas with u32
+  byte spans on every node (D1040); `ParseError { span, message, incomplete }` with bash's
+  message text.
+- `psh --parse [--compact] [-O extglob] [-c CMD | FILE]`: JSON with spans, kinds, word
+  quoting, nested substitutions (D1047; shape documented in `crates/psh/src/parse_json.rs`).
+- L0: agreement with `bash -n` (bash 5.3, macOS) on 33819/33819 inputs: Oils and brush
+  case scripts (7389), the 26234 shape skeletons, 196 own snippets (committed as
+  `tests/l0/syntax.txt`, checked by `crates/psh-syntax/tests/l0.rs`). Every parsing input
+  round-trips print → reparse with the same `dump`.
+- Benchmark (release, Apple Silicon): the shape corpus (26234 inputs, 2.3 MB) parses in
+  ≈ 53 ms (~43 MB/s); L1+L2 scripts (7389, 1 MB) in ≈ 16 ms. wasm32 (stripped, LTO, a
+  cdylib exporting parse + print + dump): 128 KB / **43 KB gzipped** at opt-level 3,
+  81 KB / **32 KB gzipped** at opt-level z (brush's parser: ~146 KB gzipped).
+- Known gaps: see Follow-ups (canonical printer, arithmetic evaluation parser, non-UTF-8
+  input, CRLF, a few message second lines). Deliberate deferrals as in bash: backquote
+  bodies, arithmetic, bad `${}` and here-doc body errors are checked when expanded (D1041).

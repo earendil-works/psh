@@ -30,6 +30,12 @@ pub struct FileEntry {
     pub entry: Entry,
 }
 
+/// Spawning a process holds this for reading, writing a case's files for writing. A
+/// child forked while another thread has a file open for writing inherits that fd until
+/// it execs; executing the file then fails with "Text file busy" (ETXTBSY). The lock
+/// keeps forks and open written files apart.
+pub static SPAWN_LOCK: std::sync::RwLock<()> = std::sync::RwLock::new(());
+
 pub struct Sandbox {
     pub dir: PathBuf,
     pub cwd: PathBuf,
@@ -44,6 +50,7 @@ impl Sandbox {
         let home = dir.join("home");
         std::fs::create_dir_all(&cwd)?;
         std::fs::create_dir_all(&home)?;
+        let _guard = SPAWN_LOCK.write().unwrap_or_else(|e| e.into_inner());
         for d in &case.dirs {
             std::fs::create_dir_all(cwd.join(d))?;
         }

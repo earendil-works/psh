@@ -499,3 +499,88 @@ lexer and parser are new: brush's tokenizer produces string tokens and re-parses
 later with winnow, which gives neither spans for word parts nor recursive parses of `$(…)`
 at parse time; a single-cursor recursive descent does both and is what bash's own
 context-dependent lexing needs.
+
+## D1020: How the conformance cases run
+date: 2026-11-06 · by: infra · issue: 0002
+Each layer runs its cases the way its upstream runner does, so the scripts mean what
+their authors meant: Oils cases get their code on the shell's stdin (`bash` with no
+arguments, as `sh_spec.py` does), brush cases get their `args` and `stdin` (without
+brush's own `--norc --noprofile` defaults, which change nothing for a non-interactive
+bash), our agent cases run as `bash -c CODE`, the way agents' commands run. The
+environment is built from scratch per case (nothing inherited): `PATH` = helper
+directory + system directories, a fresh working directory and `HOME` per case,
+`USER=LOGNAME=spec`, `TZ=UTC`, plus each upstream's variables (Oils: `LC_ALL=C.UTF-8`,
+`TMP`, `SH`, `REPO_ROOT` pointing at a per-run copy of the vendored tree; brush:
+`LC_ALL=C`, `PS1`). Oils files with `legacy_tmp_dir` get the `_tmp` directory Oils
+creates. A case passes on stdout, status and the files it created or changed in its
+directory; stderr is its own score (TESTING.md).
+
+## D1021: Golden format, and bash -n verdicts for L0
+date: 2026-11-06 · by: infra · issue: 0002
+One golden file per source file (`tests/goldens/<layer>/<file>.golden`), a line format:
+case header, `status:`, `bash-n:`, then `|`-prefixed blocks for stdout, stderr, created
+files and `bash -n`'s stderr; lines with control characters or invalid UTF-8 are
+`\`-escaped, a missing final newline is marked. Files over 64 KiB are recorded by size
+and FNV-1a hash, at most 200 entries per case; the case's own unchanged files are left
+out. Every case also records `bash -n` on its script (L0's oracle), and the shape corpus
+gets `tests/goldens/shapes/bash-n.txt`: the skeletons bash rejects, by line, with
+status and message. Reason: readable diffs on re-recording, byte-exact comparison.
+
+## D1022: The recording container
+date: 2026-11-06 · by: infra · issue: 0002
+`docker/Dockerfile`: `debian:stable` pinned by digest (13.x), GNU userland plus
+`gawk`, `procps` and `locales` (`en_US.UTF-8`), bash 5.3 from the GNU tarball with the
+official patches through 5.3.9, each pinned by sha256, run as user `spec` (uid 1000),
+umask 022, hostname `psh-oracle`, `--network none`. 5.3.9 matches the Homebrew bash
+used for local probes, so a probe differs from the goldens by platform only; moving to
+a later patch level is a change of the Dockerfile plus a full re-recording in one
+commit. psh-spec is built for Linux in `rust:1.96-trixie` pinned by digest. The image
+is tagged by the Dockerfile's hash; it is rebuilt from pinned inputs rather than pinned
+itself.
+
+## D1023: Oils' Python helpers are built into psh-spec
+date: 2026-11-06 · by: infra · issue: 0002
+`argv.py`, `printenv.py`, `read_from_fd.py`, `show_fd_table.py` and `stdout_stderr.py`
+(Python 2 programs in Oils' `spec/bin`) are reimplemented in psh-spec with Python 2's
+output (`repr` of byte strings, stderr written before buffered stdout); the run's helper
+directory and its copy of the Oils tree link those names to the psh-spec binary, which
+dispatches on `argv[0]`. Reason: no Python in the container, on Windows or in the gate,
+and identical helper behavior when recording and testing. `read_from_fd.py` reaches the
+fd through `/dev/fd/N`, because std offers no safe way to adopt a raw fd.
+
+## D1024: The normalization table
+date: 2026-11-06 · by: infra · issue: 0002
+Applied to recorded and tested output alike: per-run paths become `<case>`, `<home>`,
+`<repo>`, `<bin>`, `<run>`, `<sh>` (in every spelling, canonical included), and the
+host name (full and short, if at least 4 characters) becomes `<host>`. At comparison
+only, the shell's own name at the start of a message line (`bash: ` / `psh: `) or alone
+on a line becomes `<sh>`. Nothing else is normalized; a case that cannot be made
+deterministic goes into a group instead.
+
+## D1025: Vendored subsets
+date: 2026-11-06 · by: infra · issue: 0002
+Oils at `d114978`: the 134 files of Oils' own SUITE-compat set (OSH spec files minus
+`strict-options`) plus `spec/bin`, `spec/testdata` and `LICENSE.txt`; the YSH and other
+non-bash files are left out. brush at `9435534`: all of
+`brush-shell/tests/cases/` plus `brush-shell/tests/utils/` (a case sources from it) and
+`LICENSE`. Both unmodified, reproduced and verified by `scripts/fetch-oils` /
+`scripts/fetch-brush [--check]` from clones in the primary checkout's `vendor/`.
+
+## D1026: Gate legs are files in scripts/gate.d
+date: 2026-11-06 · by: infra · issue: 0002
+Supersedes the leg list inside `scripts/gate.sh` (D1013). Each leg is
+`scripts/gate.d/NN-name.sh`, run in `NN` order (bash, `set -euo pipefail`, repository
+root) under `scripts/timeout.sh` with the `# timeout: SECONDS` of its first line and an
+optional `# grace: SECONDS`. Adding a leg is adding a file, so issues that add legs in
+parallel never conflict in `gate.sh`. `99-windows` stays last. The legs of 0003, 0012
+and 0007 moved into files unchanged.
+
+## D1027: Ratchets apply to psh only
+date: 2026-11-06 · by: infra · issue: 0002
+`tests/<layer>/expected-failures.txt` lists active case ids (`layer/file/index`) that
+may fail; psh-spec checks it only when the engine is psh (in-process, or a binary named
+`psh`). Runs of another shell, such as the bash self-check, are compared and
+summarized only. `--add-failures` exists for newly added cases; regressions are never
+added. A case "passes" on stdout, status and files, so a few cases already pass with
+the stub engine (bash prints nothing and exits 2 on a syntax error); they stay off the
+ratchet and must keep passing.

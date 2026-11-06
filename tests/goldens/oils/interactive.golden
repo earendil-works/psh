@@ -8,7 +8,7 @@ bash-n: 0
 --- stdout
 |one
 --- stderr
-|bash: cannot set terminal process group (20383): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20389): Inappropriate ioctl for device
 |bash: no job control in this shell
 --- file oshrc
 |echo one
@@ -21,7 +21,7 @@ bash-n: 0
 --- stdout
 |one
 --- stderr
-|bash: cannot set terminal process group (20432): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20427): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash: 1 / 0 : division by 0 (error token is "0 ")
 |exit
@@ -34,7 +34,7 @@ bash-n: 0
 |RCFILE
 |2
 --- stderr
-|bash: cannot set terminal process group (20399): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20457): Inappropriate ioctl for device
 |bash: no job control in this shell
 --- file rcfile
 |echo RCFILE
@@ -46,7 +46,7 @@ bash-n: 0
 |flag -c
 |status=0
 --- stderr
-|bash: cannot set terminal process group (20408): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20461): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash: <case>/rcfile: line 2: syntax error: unexpected end of file from `(' command on line 1
 --- file rcfile
@@ -191,7 +191,7 @@ bash-n: 0
 |PROMPT
 |^D
 --- stderr
-|bash: cannot set terminal process group (20478): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20458): Inappropriate ioctl for device
 |bash: no job control in this shell
 |PROMPT_COMMAND='echo PROMPT'
 |echo one
@@ -206,7 +206,7 @@ bash-n: 0
 |two
 |^D
 --- stderr
-|bash: cannot set terminal process group (20522): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20460): Inappropriate ioctl for device
 |bash: no job control in this shell
 |PROMPT_COMMAND=';'
 |bash: PROMPT_COMMAND: line 1: syntax error near unexpected token `;'
@@ -227,7 +227,7 @@ bash-n: 0
 |two
 |^D
 --- stderr
-|bash: cannot set terminal process group (20496): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20505): Inappropriate ioctl for device
 |bash: no job control in this shell
 |PROMPT_COMMAND='echo PROMPT $(( 1 / 0 ))'
 |bash: 1 / 0 : division by 0 (error token is "0 ")
@@ -247,7 +247,7 @@ bash-n: 0
 --- file bad_oshrc
 |foo >
 --- file stderr.txt
-|bash: cannot set terminal process group (20502): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20506): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash: bad_oshrc: line 1: syntax error near unexpected token `newline'
 |bash: bad_oshrc: line 1: `foo >'
@@ -263,7 +263,7 @@ bash-n: 0
 |last_status=0
 |^D
 --- stderr
-|bash: cannot set terminal process group (20545): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20536): Inappropriate ioctl for device
 |bash: no job control in this shell
 |myfunc() { echo last_status=$?;  }
 |PROMPT_COMMAND='myfunc'
@@ -284,7 +284,7 @@ bash-n: 0
 |---
 |^D
 --- stderr
-|bash: cannot set terminal process group (20549): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20528): Inappropriate ioctl for device
 |bash: no job control in this shell
 |PROMPT_COMMAND='[[ clobber =~ (.)(.)(.) ]]; echo ---'
 |echo one
@@ -296,14 +296,14 @@ bash-n: 0
 status: 0
 bash-n: 0
 --- stdout
-|myrc: pid = 20561
+|myrc: pid = 20546
 |  PID  PPID  PGID   SID TPGID COMMAND
-|20561 20526 20526     1    -1 bash
-|main: pid = 20561
+|20546 20516 20516     1    -1 bash
+|main: pid = 20546
 |  PID  PPID  PGID   SID TPGID COMMAND
-|20561 20526 20526     1    -1 bash
+|20546 20516 20516     1    -1 bash
 --- stderr
-|bash: cannot set terminal process group (20526): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20516): Inappropriate ioctl for device
 |bash: no job control in this shell
 --- file myrc
 |
@@ -333,7 +333,7 @@ bash-n: 0
 |^D
 |echo hist1; echo hist2
 --- stderr
-|bash: cannot set terminal process group (20580): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20565): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ echo hist1; echo hist2
 |bash-5.3$ exit
@@ -346,7 +346,7 @@ bash-n: 0
 --- stdout
 |status=0
 --- stderr
-|bash: cannot set terminal process group (20568): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20562): Inappropriate ioctl for device
 |bash: no job control in this shell
 
 === 16: HISTFILE=my-history loads history from that file, and writes back to it
@@ -363,7 +363,7 @@ bash-n: 0
 |echo 2
 |history
 --- stderr
-|bash: cannot set terminal process group (20603): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20559): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ echo 2
 |bash-5.3$ history
@@ -384,7 +384,7 @@ bash-n: 0
 |history -a
 |echo 2
 --- stderr
-|bash: cannot set terminal process group (20591): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20618): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ history -a
 |bash-5.3$ echo 2

@@ -68,8 +68,8 @@ bash-n: 0
 --- file time-bash.txt
 |
 |real	0m0.035s
-|user	0m0.000s
-|sys	0m0.002s
+|user	0m0.001s
+|sys	0m0.001s
 
 === 10: ulimit with no flags is like -f
 status: 0
@@ -145,8 +145,8 @@ bash-n: 0
 | 17 short.txt
 |  0 long.txt
 | 17 total
-|--- short.txt	2026-11-06 22:57:25.185559013 +0000
-|+++ long.txt	2026-11-06 22:57:25.185559013 +0000
+|--- short.txt	2026-11-06 23:04:17.204219009 +0000
+|+++ long.txt	2026-11-06 23:04:17.205219009 +0000
 |@@ -1,17 +0,0 @@
 |-real-time non-blocking time  (microseconds, -R) unlimited
 |-core file size              (blocks, -c) 0

@@ -44,7 +44,7 @@ bash-n: 0
 |OK
 --- stderr
 |<sh>: line 1: x: unbound variable
-|bash: cannot set terminal process group (12597): Inappropriate ioctl for device
+|bash: cannot set terminal process group (12583): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash: x: unbound variable
 
@@ -58,7 +58,7 @@ bash-n: 0
 |line2
 --- stderr
 |<sh>: line 1: x: unbound variable
-|bash: cannot set terminal process group (12620): Inappropriate ioctl for device
+|bash: cannot set terminal process group (12609): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash: x: unbound variable
 

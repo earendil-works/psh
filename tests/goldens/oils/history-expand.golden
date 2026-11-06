@@ -11,9 +11,9 @@ bash-n: 0
 |two
 |echo two
 --- stderr
-|bash: cannot set terminal process group (20333): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20307): Inappropriate ioctl for device
 |bash: no job control in this shell
-|bash: cannot set terminal process group (20333): Inappropriate ioctl for device
+|bash: cannot set terminal process group (20307): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ echo two

@@ -16,6 +16,7 @@ mod ratchet;
 mod report;
 mod runner;
 mod sandbox;
+mod shapes;
 mod yaml;
 
 use std::collections::{BTreeMap, HashMap};
@@ -39,12 +40,15 @@ glob on case ids (oils/var-*/*). Without filters, every case of the selected lay
 
 Engines:
   (default)           psh in-process
-  --shell PATH        a shell binary as a subprocess (e.g. bash for the self-check)
+  --shell PATH        a shell binary as a subprocess (e.g. bash for the self-check);
+                      the ratchets apply only when it is psh
 
 Modes:
   --record            record goldens with --shell (scripts/record-goldens does this)
   --list              list the selected cases with their group
   --diff-goldens A B  compare two golden directories per case (determinism check)
+  --record-shapes     record `bash -n` verdicts for tests/shapes/shapes.txt (L0) with
+                      --shell into <goldens>/shapes/bash-n.txt
   (default)           compare against the goldens and check the ratchets
 
 Options:
@@ -78,6 +82,7 @@ struct Options {
     summary: Option<PathBuf>,
     keep: bool,
     diff_goldens: Option<(PathBuf, PathBuf)>,
+    record_shapes: bool,
 }
 
 fn parse_args(args: Vec<String>) -> Result<Options, String> {
@@ -98,6 +103,7 @@ fn parse_args(args: Vec<String>) -> Result<Options, String> {
         summary: None,
         keep: false,
         diff_goldens: None,
+        record_shapes: false,
     };
     let mut it = args.into_iter();
     while let Some(a) = it.next() {
@@ -129,6 +135,7 @@ fn parse_args(args: Vec<String>) -> Result<Options, String> {
             "--add-failures" => o.add_failures = true,
             "--summary" => o.summary = Some(value("--summary")?.into()),
             "--keep" => o.keep = true,
+            "--record-shapes" => o.record_shapes = true,
             "--diff-goldens" => {
                 let a = value("--diff-goldens")?;
                 let b = it.next().ok_or("--diff-goldens needs two directories")?;
@@ -141,8 +148,8 @@ fn parse_args(args: Vec<String>) -> Result<Options, String> {
     if o.layers.is_empty() {
         o.layers = Layer::ALL.to_vec();
     }
-    if o.record && o.shell.is_none() {
-        return Err("--record needs --shell PATH".into());
+    if (o.record || o.record_shapes) && o.shell.is_none() {
+        return Err("--record and --record-shapes need --shell PATH".into());
     }
     Ok(o)
 }
@@ -222,6 +229,10 @@ fn run(opts: Options) -> Result<ExitCode, String> {
         .goldens
         .clone()
         .unwrap_or_else(|| root.join("tests/goldens"));
+    if opts.record_shapes {
+        let shell = resolve_shell(opts.shell.as_ref().unwrap())?;
+        return shapes::record(&root, &goldens_dir, &External::new(shell), opts.jobs);
+    }
     let groups_text = std::fs::read_to_string(root.join("tests/spec.toml"))
         .map_err(|e| format!("tests/spec.toml: {e}"))?;
     let groups = Groups::parse(&groups_text)?;
@@ -309,11 +320,16 @@ fn run(opts: Options) -> Result<ExitCode, String> {
         results.push(report::compare(it, golden, obs, engine.name()));
     }
 
-    // Ratchets: per layer, over the cases this run covered.
+    // Ratchets: per layer, over the cases this run covered. They describe psh; another
+    // shell (the bash self-check) is only compared and summarized.
     let mut regressions = Vec::new();
-    let mut stale_total = 0;
     let filtered = !opts.filters.is_empty();
-    for &layer in &opts.layers {
+    let ratchet_layers: &[Layer] = if engine.name() == "psh" {
+        &opts.layers
+    } else {
+        &[]
+    };
+    for &layer in ratchet_layers {
         let path = root.join(layer.ratchet_path());
         let text = std::fs::read_to_string(&path).unwrap_or_default();
         let mut ratchet = Ratchet::parse(&text);
@@ -342,7 +358,6 @@ fn run(opts: Options) -> Result<ExitCode, String> {
                 }
             }
         }
-        stale_total += stale.len();
         let mut changed = false;
         if opts.update_ratchet && !stale.is_empty() {
             for id in &stale {
@@ -410,7 +425,6 @@ fn run(opts: Options) -> Result<ExitCode, String> {
             println!("  ... and {} more", regressions.len() - 50);
         }
     }
-    let _ = stale_total;
     if !broken.is_empty() {
         println!("\n{} cases could not be checked:", broken.len());
         for r in broken.iter().take(20) {

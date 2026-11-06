@@ -165,8 +165,8 @@ bash-n: 0
 |2
 |2
 --- file tmp.txt
-|5339
-|5340
+|5356
+|5357
 
 === 23: No stderr spew when shell is not interactive
 status: 0
@@ -201,4 +201,4 @@ bash-n: 0
 |status=129
 |Hangup
 --- file err.txt
-|bash: line 5:  5384 Hangup                     sleep 1
+|bash: line 5:  5398 Hangup                     sleep 1

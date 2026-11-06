@@ -101,6 +101,9 @@ fn read_limited(mut r: impl Read) -> Vec<u8> {
 #[cfg(unix)]
 fn kill_group(pid: u32) {
     // std has no killpg; kill(1) can signal a process group (`-PGID`).
+    let _guard = crate::sandbox::SPAWN_LOCK
+        .read()
+        .unwrap_or_else(|e| e.into_inner());
     let _ = Command::new("kill")
         .args(["-KILL", "--", &format!("-{pid}")])
         .stdin(Stdio::null())
@@ -136,7 +139,12 @@ impl Engine for External {
             use std::os::unix::process::CommandExt;
             cmd.arg0(&self.name).process_group(0);
         }
-        let mut child = cmd.spawn()?;
+        let mut child = {
+            let _guard = crate::sandbox::SPAWN_LOCK
+                .read()
+                .unwrap_or_else(|e| e.into_inner());
+            cmd.spawn()?
+        };
         let deadline = Instant::now() + req.timeout;
         let stdin_thread = match (child.stdin.take(), req.stdin) {
             (Some(mut pipe), Some(data)) => {

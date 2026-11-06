@@ -89,7 +89,7 @@ bash-n: 0
 status: 0
 bash-n: 0
 --- stdout
-|x=22:57
+|x=23:04
 
 === 12: 'echo' and printf fail on writing to full disk
 status: 0

@@ -78,7 +78,7 @@ bash-n: 0
 --- stdout
 |rc
 |==> interactive.txt <==
-|bash: cannot set terminal process group (26007): Inappropriate ioctl for device
+|bash: cannot set terminal process group (26054): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ exit
 |
@@ -87,7 +87,7 @@ bash-n: 0
 |warned=1
 |warned=1
 --- file interactive.txt
-|bash: cannot set terminal process group (26007): Inappropriate ioctl for device
+|bash: cannot set terminal process group (26054): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ exit
 --- file non-interactive.txt

@@ -132,9 +132,9 @@ bash-n: 0
 |all: 0
 |stopped: 1
 --- stderr
-|bash: line 5: wait: warning: job 1[45389] stopped
-|bash: line 5: wait: warning: job 1[45389] stopped
-|bash: line 9: 45389 Killed                     sh -c 'kill -STOP $$; echo resumed'
+|bash: line 5: wait: warning: job 1[45380] stopped
+|bash: line 5: wait: warning: job 1[45380] stopped
+|bash: line 9: 45380 Killed                     sh -c 'kill -STOP $$; echo resumed'
 
 === 16: jobs in a pipeline lists the shell's jobs
 status: 0

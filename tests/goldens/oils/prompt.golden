@@ -8,7 +8,7 @@ bash-n: 0
 --- stdout
 |match=0
 --- file err.txt
-|bash: cannot set terminal process group (22978): Inappropriate ioctl for device
+|bash: cannot set terminal process group (23010): Inappropriate ioctl for device
 |bash: no job control in this shell
 |[prompt] echo foo
 |[prompt] exit
@@ -228,5 +228,5 @@ bash-n: 0
 --- stdout
 |_\s-\v\$ _
 --- stderr
-|bash: cannot set terminal process group (23339): Inappropriate ioctl for device
+|bash: cannot set terminal process group (23368): Inappropriate ioctl for device
 |bash: no job control in this shell

@@ -15,7 +15,7 @@ bash-n: 0
 |echo 1
 |history -a
 --- stderr
-|bash: cannot set terminal process group (9923): Inappropriate ioctl for device
+|bash: cannot set terminal process group (9926): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ history -c
@@ -107,7 +107,7 @@ bash-n: 0
 --- stdout
 |1
 --- stderr
-|bash: cannot set terminal process group (9959): Inappropriate ioctl for device
+|bash: cannot set terminal process group (10031): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ echo 'foo' > /dev/null
 |bash-5.3$ echo 'bar' > /dev/null
@@ -137,7 +137,7 @@ bash-n: 0
 |status=0
 |status=1
 --- stderr
-|bash: cannot set terminal process group (10015): Inappropriate ioctl for device
+|bash: cannot set terminal process group (10049): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ echo 42
@@ -178,7 +178,7 @@ bash-n: 0
 --- stdout
 |exists
 --- stderr
-|bash: cannot set terminal process group (10026): Inappropriate ioctl for device
+|bash: cannot set terminal process group (10009): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ if test -n $HISTFILE; then echo exists; fi
@@ -191,7 +191,7 @@ bash-n: 0
 --- stdout
 |status=1
 --- stderr
-|bash: cannot set terminal process group (10045): Inappropriate ioctl for device
+|bash: cannot set terminal process group (10048): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ HISTFILE=_tmp/does-not-exist
@@ -206,7 +206,7 @@ bash-n: 0
 --- stdout
 |status=0
 --- stderr
-|bash: cannot set terminal process group (10059): Inappropriate ioctl for device
+|bash: cannot set terminal process group (10047): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ HISTFILE=(a b c)
@@ -225,7 +225,7 @@ bash-n: 0
 --- stdout
 |status=0
 --- stderr
-|bash: cannot set terminal process group (10057): Inappropriate ioctl for device
+|bash: cannot set terminal process group (10090): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ unset HISTFILE
@@ -282,7 +282,7 @@ bash-n: 0
 |status=1
 |status=0
 --- stderr
-|bash: cannot set terminal process group (10090): Inappropriate ioctl for device
+|bash: cannot set terminal process group (10086): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ set +o history
 |bash-5.3$ echo "not recorded" >> /dev/null
@@ -312,7 +312,7 @@ bash-n: 0
 |status=0
 |status=1
 --- stderr
-|bash: cannot set terminal process group (10113): Inappropriate ioctl for device
+|bash: cannot set terminal process group (10084): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$   HISTSIZE=2 # Stifle the history down to 2 commands
 |bash-5.3$   shopt -s histappend
@@ -320,7 +320,7 @@ bash-n: 0
 |bash-5.3$   echo cmd new2 > /dev/null
 |bash-5.3$   echo cmd new3 > /dev/null
 |bash-5.3$ exit
-|bash: cannot set terminal process group (10113): Inappropriate ioctl for device
+|bash: cannot set terminal process group (10084): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$   HISTSIZE=2 # Stifle the history down to 2 commands
 |bash-5.3$   shopt -u histappend

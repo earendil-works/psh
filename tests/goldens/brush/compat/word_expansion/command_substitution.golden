@@ -246,8 +246,8 @@ bash-n: 0
 status: 127
 bash-n: 0
 --- stderr
-|bash: line 1: hexdump: command not found
 |bash: line 1: warning: command substitution: ignored null byte in input
+|bash: line 1: hexdump: command not found
 
 === 34: Backtick substitution strips null bytes
 status: 127

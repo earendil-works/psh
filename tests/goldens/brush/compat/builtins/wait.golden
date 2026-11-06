@@ -30,8 +30,8 @@ bash-n: 0
 status: 0
 bash-n: 0
 --- stdout
-|first done, status: 5
-|second done, status: 0
+|first done, status: 0
+|second done, status: 5
 
 === 5: Background job failure with wait
 status: 0

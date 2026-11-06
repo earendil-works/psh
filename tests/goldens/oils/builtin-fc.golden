@@ -11,7 +11,7 @@ bash-n: 0
 |3	 echo 2
 |4	 echo 3
 --- stderr
-|bash: cannot set terminal process group (9458): Inappropriate ioctl for device
+|bash: cannot set terminal process group (9477): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ HISTFILE=tmp
@@ -37,7 +37,7 @@ bash-n: 0
 |	 echo 2
 |	 echo 3
 --- stderr
-|bash: cannot set terminal process group (9478): Inappropriate ioctl for device
+|bash: cannot set terminal process group (9485): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ HISTFILE=tmp
@@ -63,7 +63,7 @@ bash-n: 0
 |2	 echo 1
 |1	 history -r
 --- stderr
-|bash: cannot set terminal process group (9486): Inappropriate ioctl for device
+|bash: cannot set terminal process group (9476): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ HISTFILE=tmp
@@ -89,7 +89,7 @@ bash-n: 0
 |	 echo 1
 |	 history -r
 --- stderr
-|bash: cannot set terminal process group (9472): Inappropriate ioctl for device
+|bash: cannot set terminal process group (9508): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ HISTFILE=tmp
@@ -127,7 +127,7 @@ bash-n: 0
 |16	 echo 15
 |17	 echo 16
 --- stderr
-|bash: cannot set terminal process group (9545): Inappropriate ioctl for device
+|bash: cannot set terminal process group (9519): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ HISTFILE=tmp
@@ -165,7 +165,7 @@ bash-n: 0
 |3	 echo 2
 |4	 echo 3
 --- stderr
-|bash: cannot set terminal process group (9530): Inappropriate ioctl for device
+|bash: cannot set terminal process group (9510): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ HISTFILE=tmp
@@ -190,7 +190,7 @@ bash-n: 0
 |3	 echo 2
 |4	 echo 3
 --- stderr
-|bash: cannot set terminal process group (9526): Inappropriate ioctl for device
+|bash: cannot set terminal process group (9545): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ HISTFILE=tmp
@@ -214,7 +214,7 @@ bash-n: 0
 |2	 echo 1
 |3	 echo 2
 --- stderr
-|bash: cannot set terminal process group (9566): Inappropriate ioctl for device
+|bash: cannot set terminal process group (9516): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ HISTFILE=tmp
@@ -238,7 +238,7 @@ bash-n: 0
 |2	 echo 1
 |3	 echo 2
 --- stderr
-|bash: cannot set terminal process group (9572): Inappropriate ioctl for device
+|bash: cannot set terminal process group (9552): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ HISTFILE=tmp
@@ -262,7 +262,7 @@ bash-n: 0
 |3	 echo 2
 |2	 echo 1
 --- stderr
-|bash: cannot set terminal process group (9577): Inappropriate ioctl for device
+|bash: cannot set terminal process group (9553): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ HISTFILE=tmp
@@ -286,7 +286,7 @@ bash-n: 0
 |3	 echo 2
 |2	 echo 1
 --- stderr
-|bash: cannot set terminal process group (9579): Inappropriate ioctl for device
+|bash: cannot set terminal process group (9554): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash-5.3$ 
 |bash-5.3$ HISTFILE=tmp

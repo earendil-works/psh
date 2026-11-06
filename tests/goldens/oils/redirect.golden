@@ -192,7 +192,7 @@ bash-n: 0
 --- stdout
 |STDOUT
 |STDERR
---- file bash-24083.txt
+--- file bash-24022.txt
 |STDERR
 |STDOUT
 
@@ -202,7 +202,7 @@ bash-n: 0
 --- stdout
 |STDOUT
 |STDERR
---- file bash-24078.txt
+--- file bash-24105.txt
 |STDERR
 |STDOUT
 

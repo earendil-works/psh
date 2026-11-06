@@ -806,8 +806,8 @@ bash-n: 0
 --- stderr
 |
 |real	0m0.001s
-|user	0m0.001s
-|sys	0m0.001s
+|user	0m0.000s
+|sys	0m0.000s
 
 === 137: Extended test with valid regex
 status: 0

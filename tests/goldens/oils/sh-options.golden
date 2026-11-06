@@ -30,7 +30,7 @@ bash-n: 0
 |FALSE
 |TRUE
 --- stderr
-|bash: cannot set terminal process group (25361): Inappropriate ioctl for device
+|bash: cannot set terminal process group (25317): Inappropriate ioctl for device
 |bash: no job control in this shell
 
 === 4: pass short options like sh -e
@@ -80,7 +80,7 @@ bash-n: 0
 |0
 |1
 --- stderr
-|bash: cannot set terminal process group (25422): Inappropriate ioctl for device
+|bash: cannot set terminal process group (25404): Inappropriate ioctl for device
 |bash: no job control in this shell
 
 === 10: nounset

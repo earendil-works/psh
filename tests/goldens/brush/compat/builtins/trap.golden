@@ -444,10 +444,10 @@ bash-n: 0
 status: 0
 bash-n: 0
 --- stdout
+|trap -- 'echo "[exit]"' EXIT
+|coproc
 |main continues
 |[exit]
---- stderr
-|bash: line 3: ${COPROC[0]}: ambiguous redirect
 
 === 62: coproc - DEBUG trap inheritance
 status: 0

@@ -136,7 +136,7 @@ bash-n: 0
 status: 0
 bash-n: 0
 --- stdout
-|exit: 1
+|exit: 0
 
 === 18: read -t 0 with no data (empty pipe)
 status: 0

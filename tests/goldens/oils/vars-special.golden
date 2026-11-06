@@ -33,7 +33,7 @@ bash-n: 0
 |<home>
 |status=0
 --- stderr
-|bash: cannot set terminal process group (29957): Inappropriate ioctl for device
+|bash: cannot set terminal process group (29978): Inappropriate ioctl for device
 |bash: no job control in this shell
 
 === 4: Vars set interactively only: $HISTFILE
@@ -43,7 +43,7 @@ bash-n: 0
 |histfile=
 |histfile=yes
 --- stderr
-|bash: cannot set terminal process group (29969): Inappropriate ioctl for device
+|bash: cannot set terminal process group (29956): Inappropriate ioctl for device
 |bash: no job control in this shell
 
 === 5: Some vars are set, even without startup file, or env: PATH, PWD
@@ -75,7 +75,7 @@ bash-n: 0
 --- file out.txt
 |uid=1000
 |euid=1000
-|ppid=29975
+|ppid=29985
 
 === 7: HOSTNAME OSTYPE can be changed
 status: 0
@@ -148,7 +148,7 @@ status: 0
 bash-n: 0
 --- stdout
 |0
-|22413
+|27263
 
 === 18: $UID and $EUID
 status: 0

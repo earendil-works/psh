@@ -255,7 +255,7 @@ bash-n: 0
 |ignored-reached
 |ignored=0
 --- stderr
-|bash: line 1: 69337 Quit                       ( kill -QUIT $BASHPID; echo not-reached )
+|bash: line 1: 69333 Quit                       ( kill -QUIT $BASHPID; echo not-reached )
 
 === 35: kill 0 in a pipeline stage ends the stage at once
 status: 1
@@ -272,7 +272,7 @@ bash-n: 0
 --- stderr
 |bash: cannot set terminal process group (-1): Inappropriate ioctl for device
 |bash: no job control in this shell
-|bash: [69329: 1 (255)] tcsetattr: Inappropriate ioctl for device
+|bash: [69331: 1 (255)] tcsetattr: Inappropriate ioctl for device
 
 === 37: SIGTERM ends an interactive shell's subshell, though the shell ignores it
 status: 0
@@ -284,8 +284,8 @@ bash-n: 0
 --- stderr
 |bash: cannot set terminal process group (-1): Inappropriate ioctl for device
 |bash: no job control in this shell
-|bash: [69353: 1 (255)] tcsetattr: Inappropriate ioctl for device
-|bash: [69353: 1 (255)] tcsetattr: Inappropriate ioctl for device
+|bash: [69365: 1 (255)] tcsetattr: Inappropriate ioctl for device
+|bash: [69365: 1 (255)] tcsetattr: Inappropriate ioctl for device
 
 === 38: a subshell has a BASHPID of its own
 status: 0

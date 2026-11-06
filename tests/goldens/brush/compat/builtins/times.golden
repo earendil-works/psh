@@ -6,7 +6,7 @@
 status: 0
 bash-n: 0
 --- stdout
-|0m0.001s 0m0.000s
+|0m0.000s 0m0.000s
 |0m0.000s 0m0.000s
 
 === 1: times ignores its arguments

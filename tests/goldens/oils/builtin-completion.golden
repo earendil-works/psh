@@ -362,7 +362,7 @@ bash-n: 0
 |two
 |bin
 --- stderr
-|bash: cannot set terminal process group (8535): Inappropriate ioctl for device
+|bash: cannot set terminal process group (8482): Inappropriate ioctl for device
 |bash: no job control in this shell
 |bash: compgen: warning: -F option may not work as you expect
 |bash: compgen: warning: -F option may not work as you expect
@@ -374,7 +374,7 @@ bash-n: 0
 |one
 |three
 --- stderr
-|bash: cannot set terminal process group (8558): Inappropriate ioctl for device
+|bash: cannot set terminal process group (8551): Inappropriate ioctl for device
 |bash: no job control in this shell
 
 === 37: compgen -f -X filter -- $cur
@@ -386,7 +386,7 @@ bash-n: 0
 |--
 |spam.py
 --- stderr
-|bash: cannot set terminal process group (8560): Inappropriate ioctl for device
+|bash: cannot set terminal process group (8589): Inappropriate ioctl for device
 |bash: no job control in this shell
 --- file spam.py
 --- file spam.sh

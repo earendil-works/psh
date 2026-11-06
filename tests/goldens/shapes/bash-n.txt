@@ -1,0 +1,161 @@
+# bash -n verdicts for tests/shapes/shapes.txt (fnv1a64 eaa313f91b217739, 26234 skeletons),
+# recorded by scripts/record-goldens with GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# LINE<TAB>STATUS<TAB>STDERR for each skeleton bash rejects; unlisted ones parse.
+9792	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+10931	2	bash: line 1: unexpected EOF while looking for matching `''\n
+11124	2	bash: line 6: unexpected EOF while looking for matching `''\n
+11430	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+11460	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+11470	2	bash: line 1: unexpected EOF while looking for matching `''\n
+11473	2	bash: line 1: syntax error near unexpected token `('\nbash: line 1: `cd ../w1 && rg -n 'w2)?=["'"'][^"'"']*(w3-|w4-|w5-|w6-|w7)' w8 | head -w9'\n
+11873	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+12197	2	bash: line 7: unexpected EOF while looking for matching `''\n
+12198	2	bash: line 7: unexpected EOF while looking for matching `''\n
+12409	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+12640	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+13849	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+13977	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+15464	2	bash: line 14: syntax error near unexpected token `w8'\nbash: line 14: `w5,'w6').w7 '^(w8|w9)' -w10 | head -w11'\n
+15594	2	bash: line 27: syntax error near unexpected token `<'\nbash: line 27: `w22\\w23\\w24\\w25\\w26{w27}<w28>\\\\<w29>\\w30\\w30<w31>\\w32<w31><w33><w34><w35><w12><w36><w37><w31>\\w20'\n
+15651	2	bash: line 4: unexpected EOF while looking for matching ``'\n
+15979	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+16109	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+16153	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+17131	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+18122	2	bash: line 2: unexpected EOF while looking for matching `)'\n
+18153	2	bash: line 1: unexpected EOF while looking for matching `''\n
+18261	2	bash: line 2: syntax error near unexpected token `('\nbash: line 2: `w2'w3 w4 w5 (w6 w7 w8 w9 w10 w11 w12). w13 w14 w15 w16.'\n
+18364	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+19054	2	bash: line 4: unexpected EOF while looking for matching ``'\n
+19126	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+19338	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+19446	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+19528	2	bash: line 4: unexpected EOF while looking for matching ``'\n
+19529	2	bash: line 3: unexpected EOF while looking for matching ``'\n
+19531	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+19571	2	bash: line 2: syntax error: unexpected end of file from `for' command on line 1\n
+19611	2	bash: line 1: unexpected EOF while looking for matching `''\n
+19845	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+19846	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+19852	2	bash: line 1: syntax error near unexpected token `('\nbash: line 1: `find w1 -type w2 | sort && printf '\\w3' && rg -n '^(w4)' w1 --glob '*.w5' && printf '\\w6' && rg -n 'w7 ["'"'][^"'"']*w8(?:/w9\\.ts)?["'"']|w10' w11 --glob '*.{w12}' --glob '!w13/**''\n
+19887	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+19914	2	bash: line 1: syntax error near unexpected token `)'\nbash: line 1: `for v1 in $(find w1 -type w2 -name '*.w3' -print | sort); do if rg -q 'w4\\([^)]*, ["'"']w5'"'"'\\)|w6\\(' "$w7 'JSON\\.w8|w9\\([^)]*, ["'"']w5'"'"'\\)|w6\\(' "$v1"; fi; done'\n
+20345	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+20466	2	bash: line 7: syntax error near unexpected token `('\nbash: line 7: `- w58 w59 `w15` (w60., w61 w62 type) w63 w64 for w65 w12 w62 w66 w49 w67 new `w17` w68 w69 w70.'\n
+20869	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+20928	2	bash: line 1: syntax error near unexpected token `('\nbash: line 1: `git status --short && find w1 -type w2 \\( -name '*.w3' -o -name '*.w4' \\) -print0 | xargs -0 rg -n 'w5)?=[{]?['\\"`][^'\\"`]*(w6))' || true'\n
+21096	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+21283	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+21515	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+21809	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+21810	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+21888	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+21984	2	bash: line 3: syntax error near unexpected token `('\nbash: line 3: ``w13 w14, w15(w16) w17 w16, w15(w18) w17 w19 w20 w21 w22 w23 = \\'w3\\' w4 w5 = \\'w14\\' w4 w7 >= w8 \\'w9\\' w10 w11 w14 w12 w11 w16 w24`,'\n
+22015	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+22110	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+22200	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+22230	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+22232	2	bash: line 1: syntax error near unexpected token `('\nbash: line 1: `printf '%w1' '--- w2'; rg -n -U --glob '*.w3' --glob '*.w4' '^w5+["'"']' w6\\w7 $(find w8 -type w9 -name '*.w3'); w10=$(grep -w11 '^[[:w12:]]*(//.*)?$' "$v1" | wc -l | tr -d ' '); w13 [ "$v2" -w14\\w15' "$v2" "$v1"; w16\\w17 "(?:\\.\\.?/)*w18"|w19 "[^" ]*w20"|w19 "[^" ]*w21"' w22'\n
+22239	2	bash: line 1: unexpected EOF while looking for matching `''\n
+22253	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+22257	2	bash: line 1: unexpected EOF while looking for matching `''\n
+22258	2	bash: line 1: unexpected EOF while looking for matching `''\n
+22269	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+22301	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+22306	2	bash: line 2: unexpected EOF while looking for matching `"'\n
+22308	2	bash: line 2: unexpected EOF while looking for matching `''\n
+22309	2	bash: line 2: unexpected EOF while looking for matching `''\n
+22322	2	bash: line 1: syntax error near unexpected token `('\nbash: line 1: `printf 'w1'; npm ls --workspace=@w2 --omit=dev --depth=0 2>/dev/null; printf '\\w3'; rg -n '^w4 ["'"'][^./]' w5 ["'"']([^"'"']+).*/\\w6/' | sed -E 'w7#' | sort | uniq -c | sort -rn'\n
+22597	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+22622	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+22638	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+22660	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+22688	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+22695	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+22704	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+22705	2	bash: line 1: syntax error near unexpected token `('\nbash: line 1: `rg "w1=\\"[^"]*(w2|link)[^"]*\\"" -n w3 w4'\n
+22716	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+22732	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+22738	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+22739	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+22788	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+22790	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+22811	2	bash: line 1: unexpected EOF while looking for matching `''\n
+22852	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+22882	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+22937	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+22979	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+23053	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23072	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+23078	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23136	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23152	2	bash: line 1: unexpected EOF while looking for matching `''\n
+23153	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23154	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23173	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23174	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23205	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23231	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23280	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23288	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23515	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23547	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+23573	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+23587	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23589	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23653	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23676	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23681	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23749	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23795	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+23806	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23911	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23938	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23939	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+23969	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+24043	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+24046	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+24055	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+24056	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+24057	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+24058	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+24100	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+24125	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+24154	2	bash: line 1: unexpected EOF while looking for matching `''\n
+24193	2	bash: line 1: syntax error near unexpected token `('\nbash: line 1: `rg -n '(?<![w1)["\\']' w2 '\\w3(w4|w5|w6|w7|w8|w9)\\w3' w10 '*.w11' | w12 '(^|:)[^:]+:[w13]+:\\w14*(# w0'\n
+24195	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+24202	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+24221	2	bash: line 1: unexpected EOF while looking for matching `''\n
+24228	2	bash: line 1: unexpected EOF while looking for matching `''\n
+24233	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+24260	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+24336	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+24368	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+24422	2	bash: line 1: unexpected EOF while looking for matching `''\n
+24423	2	bash: line 1: unexpected EOF while looking for matching `''\n
+24424	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+24425	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+24426	2	bash: line 1: syntax error near unexpected token `('\nbash: line 1: `rg -n 'w1 ["'"'][^"'"']*(w2|w3|w4)|vi\\.w5\\(["'"'][^"'"']*(w6|\\w7\\w8'\n
+24428	2	bash: line 1: unexpected EOF while looking for matching `''\n
+24532	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+24539	2	bash: line 1: unexpected EOF while looking for matching `''\n
+24559	2	bash: line 1: unexpected EOF while looking for matching `''\n
+24605	2	bash: line 1: syntax error near unexpected token `('\nbash: line 1: `rg -n 'w1\\('(w2|fish|w3|w4|w5)'|w6)' w7 w8/*.w9'\n
+24610	2	bash: line 1: unexpected EOF while looking for matching `''\n
+24652	2	bash: line 1: unexpected EOF while looking for matching `''\n
+24664	2	bash: line 1: syntax error near unexpected token `)'\nbash: line 1: `rg -n --glob '!**/w1/**' --glob '!**/w2/**' --glob '!w3' --glob '!**/w4' '(w5*\\(?["'"'](@w6\\.w7)(/[^"'"']*)?["'"']' w8 w9 --glob '*.{w10}''\n
+24684	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+24689	2	bash: line 1: unexpected EOF while looking for matching `''\n
+24731	2	bash: line 1: unexpected EOF while looking for matching `"'\n
+24788	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+24793	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+24810	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+24828	2	bash: line 1: syntax error near unexpected token `)'\nbash: line 1: `rg -o '(?:w1*["'"'][^"'"']+["'"']' w2 --glob '*.w3' | sed -E 'w4/.*["'"']([^"'"']+)["'"'].*/\\w5/' | sort -u | head -200'\n
+24835	2	bash: line 1: syntax error near unexpected token `)'\nbash: line 1: `rg -o '[/w1.-]+[^"'"' ]*' /w2 '\\w3:\\w4.-]+)*(?:\\?[^"'"' ]*)?' /w5 /w6 | sort -w7 | head -w8'\n
+24847	2	bash: line 1: unexpected EOF while looking for matching ``'\n
+25212	2	bash: line 5: syntax error near unexpected token `>'\nbash: line 5: `w27 '>=w28' --w29 '.[] | [.w30,.w31,.w32,.w33,.w34,.w35] | @w36''\nbash: line 6: syntax error near unexpected token `done'\nbash: line 6: `done'\n
+25615	2	bash: line 4: unexpected EOF while looking for matching `''\n
+25660	2	bash: line 5: unexpected EOF while looking for matching `''\n
+25753	2	bash: line 19: unexpected EOF while looking for matching ``'\n
+25882	2	bash: line 17: syntax error: unexpected end of file from `if' command on line 14\n
+26021	2	bash: line 1: unexpected EOF while looking for matching `"'\n

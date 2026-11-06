@@ -15,15 +15,25 @@ that issues 0001–0003 build; update them as they land.
   files the case left in its directory into committed golden files. The gate and the
   inner loop compare psh against those files only. That makes the gate fast and
   deterministic, and lets macOS, Linux and Windows compare against the same goldens.
-- **The container** *(planned, 0002)*: Debian stable with GNU coreutils, bash 5.3 built
-  from the release tarball pinned by checksum (building it is fine; nobody reads its
-  source, D007), `LC_ALL=C.UTF-8`, `TZ=UTC`, fixed `HOME`, `USER`, hostname and umask.
-  The image is pinned by digest. The official `bash:5.3` image is Alpine with busybox
-  utilities and is not suitable.
-- **Normalization table**, per platform, for the few legitimate differences: the
-  temporary case directory, the shell's name in messages (`bash:` vs `psh:`, and `$0`),
-  `uname` output, path separators on Windows. Every entry has a comment saying why. A
-  normalization is never used to hide a real difference.
+- **The container** (`docker/Dockerfile`, D1022): Debian stable pinned by digest, with
+  its GNU userland plus `gawk`, `procps` and the `en_US.UTF-8` locale; GNU bash 5.3
+  built from the release tarball and the official patches through 5.3.9, each pinned by
+  sha256 (building it is fine; nobody reads its source, D007). 5.3.9 is the Homebrew
+  bash used for probes. Cases run as the user `spec` (uid 1000), umask 022, hostname
+  `psh-oracle`, no network, `TZ=UTC`. The official `bash:5.3` image is Alpine with
+  busybox utilities and is not suitable.
+- `scripts/record-goldens [FILTER...]` builds the image (once; the GNU download is
+  slow), builds psh-spec for Linux in the pinned Rust image, records every case (about a
+  minute) and replaces `tests/goldens/`. `scripts/record-goldens --check` records again
+  into `work/scratch/record/` and lists the cases that differ: the determinism check.
+- **Normalization table** (`crates/psh-spec/src/normalize.rs`, D1024), for the few
+  legitimate differences: run-specific paths become `<case>` (the working directory,
+  also `$TMP`), `<home>`, `<repo>` (`$REPO_ROOT`), `<bin>` (the helper directory),
+  `<run>` and `<sh>` (the shell binary, `$SH`); the host name becomes `<host>`; at
+  comparison, the shell's name at the start of a message line (`bash:` vs `psh:`) or
+  alone on a line (`$0`) becomes `<sh>`. Still to come: `uname` output and path
+  separators on Windows. Every entry has a comment saying why. A normalization is never
+  used to hide a real difference.
 - For quick probes: `/opt/homebrew/bin/bash` (5.3, macOS), always under
   `scripts/timeout.sh`. It differs from the container in external utilities; the
   goldens win.
@@ -48,23 +58,46 @@ just-bash's recorded GNU fixtures (Apache) for `grep`/`sed`/`awk`/`jq`. Permissi
 may be vendored (check each license); uutils' runs of the GNU test suite are run for
 reference only, never vendored.
 
-## Cases and goldens *(planned, 0002)*
+## Cases and goldens
 
 - A case is a script plus optional stdin, arguments and files. It runs in a fresh temp
-  directory with a fixed environment.
-- Goldens live next to their layer (`tests/goldens/<layer>/…`), one file per case or one
-  per source file, in a plain text format that diffs well.
+  directory (`<case>`) with its own `HOME` (`<home>`) and a fixed environment (D1020):
+  nothing is inherited; `PATH` is the helper directory then the system's;
+  `USER=LOGNAME=spec`, `TZ=UTC`. How each layer runs:
+  - **oils**: the code on stdin of `bash` (as Oils' runner does), `LC_ALL=C.UTF-8`,
+    `TMP=<case>`, `SH=<sh>`, `REPO_ROOT` a per-run copy of `tests/oils/spec/`'s tree.
+  - **brush**: the case's `args` and `stdin`, files and `env` (brush's own default
+    flags dropped), `LC_ALL=C`, `PS1='test$ '`.
+  - **agent**: `bash -c CODE`, empty stdin, `LC_ALL=C.UTF-8`.
+- Oils' Python helpers (`argv.py`, `printenv.py`, `read_from_fd.py`,
+  `show_fd_table.py`, `stdout_stderr.py`) are built into psh-spec with Python 2's
+  output, linked into the helper directory and the `REPO_ROOT` copy (D1023): recording
+  and testing need no Python and see the same helpers everywhere.
+- Goldens are one file per source file, `tests/goldens/<layer>/<file>.golden`, in a
+  line format that diffs well (D1021, `crates/psh-spec/src/golden.rs`): per case its
+  index and name, `status:` (a number, `signal N` or `timeout`), `bash-n:` (the status
+  of `bash -n` on the script, for L0), then blocks for stdout, stderr, the files the case
+  created or changed in its directory (contents up to 64 KiB, else size and hash;
+  directories; symlinks) and `bash -n`'s stderr. Lines are `|text`, or `\text` with
+  `\\` and `\xNN` escapes for control characters and invalid UTF-8.
+- `tests/goldens/shapes/bash-n.txt` holds `bash -n`'s verdict for each skeleton of the
+  shape corpus that bash rejects (by line in `tests/shapes/shapes.txt`); every other
+  skeleton parses.
 - A case **passes** when stdout, exit status and the resulting files match the golden
   after normalization. stderr is compared too and counted as its own score, so error
   messages climb without blocking the language work. (Whether stderr mismatches become
   failures later is a coordinator decision.)
 - Re-recording is rare and deliberate: only when the case set, the container or the
   normalization changes, in its own commit, with the diff of changed goldens reviewed.
+  Cases whose stdout, status or files differ between recordings (pids, clock times,
+  `$RANDOM`, races) are in the `skip` group; about 60 more differ only in stderr (pids
+  in job messages), which only lowers the stderr score.
 
 ## Groups: skip / later / active
 
-`tests/spec.toml` *(planned)* puts every case into one group, each rule with a comment
-saying why:
+`tests/spec.toml` puts every case into one group. Rules match case ids by glob
+(`oils/alias/*`, `brush/compat/**`) or case tags (`pty`, `interactive`); the first
+matching rule decides, unmatched cases are active, and every rule has a reason:
 
 - **skip:** psh will never do this: interactive features, `set -m` job control,
   `select`, history, completion, zsh/mksh/POSIX-mode-only files. Left out of the
@@ -77,9 +110,15 @@ Moving cases between groups is a coordinator decision.
 
 ## Ratchets
 
-- Each layer has an `expected-failures.txt` (`case-id: reason`, sorted). The gate fails
-  when a case not in the file fails (a regression). It reports cases in the file that now
-  pass; `--update-ratchet` removes them. Progress is "lines deleted from the ratchet".
+- Each layer has `tests/<layer>/expected-failures.txt`: one case id per line
+  (`oils/alias/3`), optionally `id: reason`, sorted by file and index. The gate (leg
+  `spec`) fails when an active case not in the file fails (a regression). It reports
+  cases in the file that now pass; `psh-spec --update-ratchet` removes them. Progress is
+  "lines deleted from the ratchet". `psh-spec --add-failures` adds failing cases that
+  are missing, for newly vendored or written cases only.
+- A case's id is `layer/file/index`, its 0-based position in the source file.
+- The ratchets describe psh: a run with another shell (`--shell bash`) is compared and
+  summarized, but not held to them.
 - Ratchets start at 0%: every active case is an expected failure, and the scoreboard is
   red on day one. That is the first milestone.
 - Never add a line to hide a regression your change caused (AGENTS.md). Lines are added
@@ -109,17 +148,21 @@ in two or more sessions plus enough single-session ones to cover every syntax 4-
 that every token is a vocabulary word or a placeholder. The skeletons feed L0 (parser
 at scale) and syntax ranking. Running anything is never involved.
 
-## The runner *(planned, 0002)*
-
 `psh-spec` is our own runner in Rust, with no dependencies:
 
-- Reads the Oils `.test.sh` format and the subset of brush's YAML we need (hand parser).
-- Runs psh **in-process** (new shell, real-fs host, temp cwd) wherever possible; as a
-  subprocess only for L5 and invocation tests. It can also run an external shell binary
-  through the same comparison, which is how the runner itself is checked: bash 5.3 must
-  pass its own goldens except for documented platform differences.
-- Filters by file or case name; `--diff`, `--update-ratchet`, `-j N`, `--timeout`.
-  Cases run in parallel; L1+L2 should take seconds, not minutes.
+- Reads the Oils `.test.sh` format (following Oils' `sh_spec.py` exactly, so each case
+  runs the same bytes) and the subset of brush's YAML the cases use (hand parser).
+- Runs psh **in-process** (new shell, real-fs host, temp cwd; a stub until the engine
+  runs commands) wherever possible; `--shell PATH` runs a shell binary as a subprocess
+  in its own process group, killed with all its children on timeout and after it exits.
+  The same comparison checks the runner itself: bash 5.3 must pass its own goldens
+  except for documented platform differences (on macOS: BSD utilities, libc, a
+  case-insensitive file system; the 0002 log lists them).
+- `psh-spec [FILTER...]`: filters are case id prefixes (`oils/alias`, `oils/alias/3`)
+  or globs; `--layer`, `--diff`, `--update-ratchet`, `--add-failures`, `-j N`,
+  `--timeout`, `--summary FILE` (Markdown per layer and file), `--list`, `--keep`.
+  `--record`, `--record-shapes` and `--diff-goldens` serve `scripts/record-goldens`.
+  All of L1 and L2 (about 5,700 active cases) take seconds.
 
 ## The gate
 
@@ -133,13 +176,15 @@ reaches `main` (AGENTS.md). Legs, as they come into existence:
    tests of `timeout.sh` and `merge-to-main.sh` pass (0001, D1013).
    `shapes`: the shape corpus passes its privacy check (0003, D1030).
    `guide`: `psh-docs check` holds the guide to its writing rules (0012, D1120).
-4. The spec ratchets for every layer that exists (0002 onward).
+4. `spec`: the ratchets of every layer that exists (0002 onward).
 5. `windows`, always last: `fmt`, clippy, `cargo test` (arm64 and x64) and the MSRV
    check on the owner's Windows VM, through `scripts/windows-gate.sh` (0007; D027,
    D1070, D1071). See "Windows" below.
 
-`scripts/gate.sh --list` names the legs; `scripts/gate.sh LEG...` runs a few while
-iterating. Each leg runs under `scripts/timeout.sh`.
+Each leg is a file `scripts/gate.d/NN-name.sh`, run in order under
+`scripts/timeout.sh` with the timeout on its first line (D1026); adding a leg is adding
+a file. `scripts/gate.sh --list` names the legs; `scripts/gate.sh LEG...` runs a few
+while iterating.
 
 Later the gate caches each leg by its inputs, so a docs-only change gates in seconds.
 Never weaken a leg to get green.

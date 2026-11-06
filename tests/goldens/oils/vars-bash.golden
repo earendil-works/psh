@@ -11,7 +11,7 @@ bash-n: 0
 |SHELL is set
 --- stderr
 |SHELL=/bin/sh
-|bash: cannot set terminal process group (29885): Inappropriate ioctl for device
+|bash: cannot set terminal process group (29888): Inappropriate ioctl for device
 |bash: no job control in this shell
 |SHELL=/bin/sh
 |SHELL=/bin/sh

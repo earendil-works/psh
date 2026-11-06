@@ -225,7 +225,7 @@ The corpus `not_found` list includes `mapfile`, which bash 3.2 lacks; we give ba
 
 ### 4.2 Tier 1: must have on day one
 
-The criterion: top-60 corpus names that aren't hard-excluded, plus everything the agent read/edit/search loop needs, plus the command wrappers, which must be builtins so they can wrap builtins and manage process trees. That is **61 names**, counting each checksum name separately. In the table, the Ref column is the permissive implementation to port or consult.
+The criterion: top-60 corpus names that aren't hard-excluded, plus everything the agent read/edit/search loop needs, plus the command wrappers, which must be builtins so they can wrap builtins and manage process trees. That is **62 names**, counting each checksum name separately (`fd` was added at the owner's request; see §5). In the table, the Ref column is the permissive implementation to port or consult.
 
 | Builtin | Mode | Ref | GNU vs BSD notes |
 |---|---|---|---|
@@ -240,8 +240,9 @@ The criterion: top-60 corpus names that aren't hard-excluded, plus everything th
 | `mktemp` | S | uutils | 2,036 uses, `-d` dominant. GNU vs BSD `-t` differ (BSD: prefix; GNU: template in TMPDIR). Default to `$TMPDIR`. Create with 0600/0700, exclusively |
 | `stat` | S | uutils (GNU) + own BSD formatter | **Conflict:** BSD `-f FORMAT` (298 uses) vs GNU `-f` (file-system mode). Rule: `-f` followed by an argument containing `%` means BSD format. `-c`/`--format`/`--printf` are GNU; `-t` is BSD timefmt; `-L` both |
 | `du` | S | uutils | `-sh -h -sk -ch -d N` (BSD) and `--max-depth` (GNU), `--exclude`, `-A`/`--apparent-size` |
-| `grep` (+`egrep`, `fgrep`) | S | ripgrep `grep-regex`/`grep-searcher`/`grep-printer` (MIT/Unlicense) | GNU flag set: `-n -E -F -v -i -r/-R -l -L -c -o -q -s -H -h -I -w -x -A/-B/-C` (attached `-A8`), `--include/--exclude(-dir)`, `-e` (multiple), `-f`, `-z`, `--color`. **`-P`**: BSD lacks it and it failed 19% in the corpus; offer it via the `pcre2` crate (BSD-licensed PCRE2) or `fancy-regex`. Backreferences in BRE (`\(a\)\1`) need a backtracking fallback, unlike just-bash's RE2 |
-| `rg` | S | ripgrep crates (MIT/Unlicense), `ignore`, `globset` | Must match real rg exactly: no smart-case by default (unlike just-bash), `--no-heading`, line numbers only on a TTY, `-g` brace globs, `.gitignore` semantics including parent dirs, early exit under `| head` |
+| `grep` (+`egrep`, `fgrep`) | S | Shares the rg engine (§5): `grep-regex`/`grep-searcher` (MIT/Unlicense), our own GNU-format sink, and a POSIX BRE/ERE → regex-syntax translator | GNU flag set: `-n -E -F -v -i -r/-R -l -L -c -o -q -s -H -h -I -w -x -A/-B/-C` (attached `-A8`), `--include/--exclude(-dir)`, `-e` (multiple), `-f`, `-z`, `--color`. Recursion uses GNU rules, not rg's: hidden files are searched and `.gitignore` is not honored. **`-P`**: BSD lacks it and it failed 19% in the corpus. Support the subset `regex-syntax` accepts and fall through otherwise; no PCRE2 C library (§5.6). Backreferences in BRE (`\(a\)\1`) need our own backtracking matcher, shared with `sed`; until then they fall through (D010) |
+| `rg` | S (owner: always embedded) | ripgrep's library crates plus a copy of ripgrep's flag layer (§5) | Must match real rg exactly: no smart-case by default (unlike just-bash), `--no-heading`, line numbers only on a TTY, `-g` brace globs, `.gitignore` semantics including parent dirs, early exit under `| head` |
+| `fd` | S (owner: always embedded) | `ignore` + `globset` + `regex`, with fd's CLI semantics re-implemented and its filter/exec/format code copied (MIT/Apache) (§5) | 30 corpus uses (rarely installed on macOS), but agents reach for it where it exists. `-e -t -H -I -g -x/-X -E -d -s -p -L -0 -l --changed-within/-before -S -o`. On Windows, fd uses `/` separators only under MSYS; we always use `/` (ARCH) |
 | `sed` | S | uutils sed (MIT) / oh-my-pi's port | **`-i` disambiguation** (§4.6). GNU extensions in BRE (`\+ \? \| \s \w`), `-E`/`-r`, `-z`, `-s`, one-line `a text`/`i`/`c`, `\U\L\E`, `s///Ng`, `-f` files, `-n` |
 | `awk` | S, F until conformant | No mature permissive Rust awk exists. Port [goawk](https://github.com/benhoyt/goawk) (MIT, POSIX and passes the onetrueawk tests) or consult [onetrueawk](https://github.com/onetrueawk/awk) (MIT-style Lucent licence, the macOS awk) and its `T.*` tests; [frawk](https://github.com/ezrosent/frawk) (MIT/Apache, JIT-heavy) as a perf reference; just-bash's TS awk (Apache) | POSIX awk plus the common gawk-isms agents use: `-F` regex and multi-char, `-v`, `-f`, `length(arr)`, `tolower`/`toupper`, `gensub`?, `strftime`/`systime`, `printf` with `%*d`, `getline` from file and command, `system()` and `"cmd" | getline` routed through the shell. **This is the largest single item.** Run it in F mode until it passes the onetrueawk and goawk suites |
 | `sort` | S | uutils | `-u -n -r -k -t -V -h -s -z -o -R`. Locale: default to byte order (`LC_ALL=C` behavior) unless the locale is set? Decide once and document it |
@@ -296,7 +297,6 @@ The criterion: top-60 corpus names that aren't hard-excluded, plus everything th
 | `file` | F | `infer` (MIT); libmagic `file` is **BSD-2**, usable as a reference | 426 uses, mostly `file X` to check a Mach-O arch or text vs binary. Fidelity means libmagic's compiled database (several MB) and its exact output strings. Fallback gives basic types in WASM and Windows |
 | `bc`, `dc` | F | Gavin Howard's bc (BSD-2) as reference | 18 uses. A small language, but standard POSIX. `$(( ))` covers integers |
 | `yq` | F | jaq + `jaq-fmts` (yaml/toml/xml/cbor; MIT) | 0 corpus uses (the corpus records 2 effective uses). **Two incompatible `yq`s exist** (mikefarah Go v4 vs kislyuk's Python jq wrapper). If we ship one, use mikefarah semantics on jaq |
-| `fd` | F | fd (MIT/Apache) and `ignore` | 30 uses. oh-my-pi has it, but it's not standard |
 | `bzip2`/`xz`/`zstd`/`brotli` decompression | F, decompress only, mainly as tar codecs | `bzip2-rs`, `lzma-rs`/`xz2`, `zstd` (MIT/BSD), `brotli` (MIT/BSD) | Compression usage (23 each for zstd and brotli) is benchmarking, where the implementation is the measurement. Never compress via a builtin when a real binary exists |
 | `zip` | F | `zip` crate | 1 use |
 | `dd` | F | uutils dd | 10 uses (`dd if=/dev/zero of=f bs= count=`). Destructive-capable, so it belongs in the kill-switch group |
@@ -354,7 +354,7 @@ The criterion: top-60 corpus names that aren't hard-excluded, plus everything th
 
 ### 4.7 Size and order of work
 
-- **Tier 1 is 61 names.**
+- **Tier 1 is 62 names** (61 plus `fd`, which the owner moved up).
   - Cheap via uutils, findutils and diffutils: about 45 of them.
   - About 4 are the big ones: grep/rg on the ripgrep crates, sed on uutils sed, jq on jaq, and **awk, which has no good permissive Rust source**.
   - The rest are wrappers on our own process code (`timeout nice nohup env xargs`), which need the shell's process model.
@@ -365,6 +365,238 @@ The criterion: top-60 corpus names that aren't hard-excluded, plus everything th
   - jaq ships `jq-tests.jq`.
   - Use the onetrueawk `T.*` tests and goawk's tests for awk, and ripgrep's tests for rg.
   - just-bash's recorded GNU fixtures (Apache) can be reused for grep, sed, awk and jq.
+
+## 5. `rg`, `fd` and the shared search engine
+
+The owner requires `rg` and `fd` to be embedded, built on the upstream crates where possible. This is the one standing exception to near-zero dependencies (D006). This section answers how to do that.
+
+**Measurement setup.** Checkouts: ripgrep `91f5d22` (2026-10-27, ripgrep 15.2.0, `ignore` 0.4.34, `grep-searcher` 0.1.17, `grep-printer` 0.3.1, `grep-regex` 0.1.14, `globset` 0.4.21) and fd `193d0df` (2026-11-04, fd-find 10.5.1). The experiments are in `/tmp/embed`. Sizes are from a release profile with fat LTO, `codegen-units = 1`, `strip`, `panic = "abort"`.
+
+### 5.1 Is there a library entry point?
+
+Neither project has one.
+
+**ripgrep**
+- The `ripgrep` package has only `[[bin]] name = "rg", path = "crates/core/main.rs"`, with no `[lib]` target.
+- `crates/core/README.md`: "Currently, there are no plans to make ripgrep core available as an independent library. However, much of the heavy lifting of ripgrep is done via its constituent crates".
+- `crates/core` is **13.1k lines**, split as:
+
+  | File | Lines | What it is |
+  |---|--:|---|
+  | `flags/defs.rs` | 7.8k | Every flag's definition and documentation |
+  | `flags/hiargs.rs` | 1.5k | |
+  | `flags/lowargs.rs` | 0.7k | |
+  | `flags/parse.rs` | 0.5k | Uses `lexopt` |
+  | `main.rs` | 0.5k | |
+  | `search.rs` | 0.45k | |
+  | rest | | Help, man and completion generators |
+
+- The libraries are all MIT OR Unlicense:
+  - `grep-matcher`: the matcher trait
+  - `grep-regex`: a Rust-regex matcher with line-oriented optimisations
+  - `grep-searcher`: line search over readers, slices or files, with context, binary detection, encoding/BOM handling and an optional mmap
+  - `grep-printer`: standard, summary and JSON printers
+  - `grep-cli`: TTY, stdin and decompression helpers
+  - `grep-pcre2`
+  - `ignore`: walker plus gitignore, overrides and types
+  - `globset`
+  - `grep`: a facade over the above
+
+**fd**
+- `fd-find` has only `[[bin]] name = "fd", path = "src/main.rs"`. There is no `lib.rs`, so the crate cannot be depended on.
+- `src/` is **5.6k lines**.
+- Its runtime dependencies beyond `ignore`/`globset`/`regex`: `clap` (derive), `lscolors`, `nu-ansi-term`, `jiff`, `etcetera`, `normpath`, `faccess`, `argmax`, `ctrlc`, `crossbeam-channel`, `anyhow`, `aho-corasick`, `nix`/`libc` (unix).
+
+So the choice is *how* we build an `rg` and an `fd` from the library crates, and how much CLI code we copy.
+
+### 5.2 How oh-my-pi does it
+
+- **`pi-builtins/src/rg.rs` (2.6k lines) and `grep.rs` (2.4k lines).**
+  - Each is a `clap` argument model written from scratch. The rg model has 111 long names against ripgrep's 146, counting negations. Missing are mostly `--pre/--pre-glob`, `--hyperlink-format`, the `--field-*-separator` and `--context-separator` flags, `--mmap`, size limits, `--debug`/`--trace` and `--generate`.
+  - Both run over `grep-regex` + `grep-searcher`, plus `grep-pcre2` for `-P`.
+  - rg uses `grep-printer`'s JSON builder but its own sinks for standard output.
+  - From `ignore` they use only `overrides` (`-g`) and `types` (`-t`).
+- **`grep` shares the matcher**, the exit-status rules and the record layout with `rg`.
+  - `bre.rs` (0.7k lines) translates POSIX BRE into the syntax of `regex` and `fancy-regex`.
+  - Backreferences are not supported in `grep` (the regex crate lacks them); `sed` uses `fancy-regex`.
+- **`fd.rs` (1.5k lines)** is `clap` + `globset` + `regex` over `pi-walker`. It has 52 long names; fd has 47, and the only real ones missing are `--max-buffer-time` and `--no-global-ignore-file`.
+- **`pi-walker` (14.3k lines)** is a parallel walker and ignore-rule chain of oh-my-pi's own, over `pi-vfs`. It has native fast paths (`openat`, bulk directory reads on Windows) and serves `rg`, `grep`, `fd`, `find` and the agent's own glob/grep tools.
+  - It is built on **tokio, flume and futures**, so under D005 (no async runtime) we cannot reuse it as is. It is MIT and fine to read.
+- **Lesson:** oh-my-pi kept the ripgrep *libraries* but rewrote the CLI layers and the walker, so that every path goes through its VFS (`skill://…` URLs) and cancellation. Its rg reports version 15.1.0 and implements most flags. Its fidelity cost is the flag gaps above.
+
+### 5.3 Options measured
+
+Sizes are **aarch64-apple-darwin**, with x86_64 musl in brackets where measured. The baseline is a 0.30 MB hello-world that lists a directory [0.39 MB].
+
+| Option | What it is | Added binary size over baseline | Transitive crates (mac / win / linux-musl / wasm) | WASM |
+|---|---|---|---|---|
+| **R0** | `regex` alone, for comparison | +1.16 MB [+1.43 MB] (gz +0.47 MB) | 4 | yes |
+| **A1: vendor ripgrep core verbatim** | `crates/core` copied as a module, with `main` made `pub` | **+2.80 MB** (rg 3.10 MB) | 36 / 39 / 37 / 34 | wasip1: builds and runs (3.0 MB, 1.03 MB gz). unknown-unknown: builds, but `std::fs` is unsupported, so it is useless |
+| **A2: vendor fd verbatim** | `src/` as a module | **+2.31 MB** (fd 2.61 MB) | 55 / 57 / 51 / 51, including `clap`, the `syn` derive stack, `jiff`, `nix`, `ctrlc` | **No.** `ctrlc` doesn't build, `filesystem.rs`/`cli.rs` assume `unix` or `windows`, and it **requires threads**: with those three patched it builds on wasip1 and panics with "failed to spawn thread" |
+| **A1+A2** | both, in one multicall binary | **+3.69 MB** (4.00 MB) [**+4.74 MB**, 5.13 MB] (gz 1.80 MB) | 75 / 78 / 72 / 70 | |
+| **B: libraries + our own CLI** | `grep-matcher/regex/searcher/printer` (printer without the `serde` feature) + `ignore` + `globset` + `regex`, a minimal rg front end, and an fd-like front end on the same walker | **+1.67 MB** for rg-like alone; **+1.69 MB** for rg-like + fd-like [+2.19 MB]. That is **+0.5–0.75 MB above R0** (gz +0.32 MB) | **27 / 30 / 28 / 25** | wasip1: builds and runs (1.87 MB, 0.68 MB gz). unknown-unknown: `grep-*` and `ignore` compile, but the `ignore` walker can't see a virtual fs |
+
+**Where the size goes** (cargo-bloat `.text`, A1+A2):
+
+| Crate | `.text` |
+|---|--:|
+| `regex-automata` | 354 KB |
+| `regex-syntax` | 147 KB |
+| `aho-corasick` | 96 KB |
+| `grep-searcher` | 206 KB |
+| `grep-printer` | 97 KB |
+| `ignore` | 82 KB |
+| `globset` | 37 KB |
+| ripgrep core | 275 KB, mostly flag docs |
+| `clap_builder` | 189 KB (fd only) |
+| fd core | 151 KB |
+| `jiff` + `jiff-core` | 132 KB (fd only) |
+| `lscolors` | 21 KB (fd only) |
+| `encoding_rs` | 29 KB, plus tables |
+
+The regex stack, about 600 KB of `.text` and 1.2–1.4 MB of binary, is a sunk cost. psh needs it anyway for `grep`, `sed`, `[[ =~ ]]` and `find -regex`. The *marginal* cost of `rg` + `fd` on the library route is about 0.5–0.75 MB.
+
+**The 27–30 crates of option B** (`cargo tree --target all`):
+
+| Group | Crates |
+|---|---|
+| BurntSushi's (the D006 exception) | `grep-matcher grep-regex grep-searcher grep-printer ignore globset regex regex-automata regex-syntax aho-corasick memchr bstr walkdir same-file termcolor winapi-util` |
+| `ignore`'s parallel walker | `crossbeam-deque crossbeam-epoch crossbeam-utils` |
+| `grep-searcher`'s encoding/BOM support | `encoding_rs encoding_rs_io simdutf8 core_detect multiversion_no_op` |
+| `grep-searcher`'s mmap, optional at runtime | `memmap2` |
+| Others | `log`, `libc`, `cfg-if`, `scopeguard`, and `windows-sys`/`windows-link` on Windows |
+
+`encoding_rs` also answers half of ARCH's open question about code-page decoding: it arrives with `grep-searcher` anyway.
+
+**Build time** (clean release, 18 cores): option B 12 s, A1+A2 22 s.
+
+### 5.4 Seams that matter for an in-process utility
+
+Running inside psh means a **different cwd, env and stdio per invocation**, **concurrent invocations in one process**, **cancellation**, and on WASM **no `std::fs` and no threads**. What each layer does today:
+
+**ripgrep core (A1)**
+- *Process-global state*:
+  - `messages.rs` keeps `static MESSAGES/IGNORE_MESSAGES/ERRORED: AtomicBool`, so two concurrent `rg` runs see each other's error flag.
+  - `--debug`/`--trace` set the global `log` logger.
+  - Help paths call `std::process::exit`.
+- *Process I/O*: `std::env::args_os`, `RIPGREP_CONFIG_PATH` from the process environment, `std::env::current_dir` (with a `$PWD` fallback), `stdout().is_terminal()`, `io::stdin()`, `grep_cli::is_readable_stdin` (winapi on Windows).
+- *Spawning*: `--pre` and `-z` use `std::process::Command`, which must go through psh's command runner.
+
+  All of these are few and centralised (the message macros, `HiArgs::new`, `search.rs`). Patching them is mechanical. The structure of `flags/` is the valuable part: the `Flag` trait, negations, aliases, and docs that double as `--help`.
+- *Walker*: `ignore::WalkBuilder` over `std::fs`.
+  - `WalkBuilder::current_dir()` exists, but parent-directory ignore discovery canonicalises the root against the **process** cwd (`dir.rs:211`). So psh must pass absolute roots and map paths back for display.
+  - Global gitignore discovery reads `HOME`, `XDG_CONFIG_HOME` and `GIT_CONFIG_*` from the process environment, not the shell's.
+
+**fd (A2)**
+- `env::set_current_dir` for `--base-directory`. This changes the cwd of the whole process.
+- `ctrlc::set_handler`, which installs a process-wide signal handler, once.
+- `process::exit`.
+- A mandatory receiver thread and a parallel walk.
+- The `clap` and `jiff` dependencies.
+
+  **Verdict:** fd can't be used verbatim even natively. Copy its *logic*, not its `main`.
+
+**Libraries (B)**
+- `grep-searcher` and `grep-printer` are I/O-agnostic. `search_reader`, `search_slice`, any `Sink`, and printers over `io::Write`/`termcolor::WriteColor` fit `UtilCtx` streams directly.
+- Cancellation: a `Sink` returns `Ok(false)` to stop, and walker visitors return `WalkState::Quit`.
+- Broken pipe is surfaced as an `io::Error`. ripgrep's convention is exit 0, which gives the "stop when `head` closes" behavior (just-bash #415).
+
+**Threads**
+- Natively, ARCH runs utilities on worker threads, so `WalkParallel` (scoped threads, always joined) satisfies "a utility never detaches a thread that still writes to its fds".
+- On WASM, only the single-threaded `Walk` or our own walker can be used.
+
+**`ignore` and a virtual filesystem**
+- These parts work on in-memory data: `gitignore::GitignoreBuilder::add_line` and `Gitignore::matched`, `overrides`, and `types` (the `-t` type table).
+- These are welded to `std::fs`: the hierarchical chain (`dir::Ignore`: `.ignore` > `.gitignore` > `.git/info/exclude` > global, parent directories, `.git` detection) and the walkers.
+- The new `IncrementalIgnore` (2026-07) reproduces the chain for single paths but still reads ignore files from disk, and is "not for traversal".
+
+### 5.5 Recommendation
+
+1. **Use option B, with ripgrep's flag layer copied (call it B+).**
+
+   **rg**
+   - Copy `crates/core/flags/*` (defs, lowargs, hiargs, parse) and the glue in `search.rs`/`main.rs` into `psh-utils` with attribution. It is MIT OR Unlicense, so this is allowed under D007.
+   - Patch the seams listed in §5.4: per-invocation message state, `UtilCtx` env/cwd/stdio/TTY, the command runner for `--pre`/`-z`, and no `exit`.
+   - Keep `lexopt`, or copy it: it is about 1k lines with no dependencies, so copying probably makes more sense than a decision for one more crate.
+   - Search and print with `grep-searcher` + `grep-printer`.
+   - This gives the **whole** rg flag surface and its help text with a mechanical diff to upstream, for about +0.3–0.5 MB over the minimal front end.
+   - Leave `grep-printer`'s `serde` feature off at first. `rg --json` falls through (D010) until we decide on `serde_json` (4 more crates) or hand-write the JSON printer.
+
+   **fd**
+   - Re-implement fd's CLI on psh's own argument parser. Copy fd's filter code (`filter/size.rs`, `filter/time.rs`, `filter/owner.rs`), `exec/` (the `-x`/`-X` templates, run through the command runner), `fmt/` (`{}`, `{/}`, `{//}`, `{.}`, `{/.}`) and its output rules, all MIT/Apache with attribution.
+   - Drop `clap`, `jiff`, `lscolors`, `ctrlc`, `nix`, `etcetera`, `normpath`, `faccess`, `argmax` and `crossbeam-channel`.
+   - Use our date parsing for `--changed-within`/`--changed-before`, the same one `date`/`touch`/`find -newermt` need.
+   - fd's tests and its documented flags are the conformance target, alongside oh-my-pi's `fd.rs` as an MIT reference.
+
+2. **One walker seam, two implementations.**
+   - **Native:** `ignore::WalkBuilder`/`WalkParallel`, with absolute roots, `current_dir(cwd)`, display paths mapped back to the user's spelling, and a cancel check in each visitor. This is exact ripgrep semantics on the code path millions use, including Windows.
+   - **WASM/virtual fs:** our own single-threaded walker over `UtilCtx` fs. It reuses `ignore::gitignore`/`overrides`/`types` for matching and re-implements only the ignore *chain*, about 600–800 lines, copying from `ignore/src/dir.rs` with attribution.
+   - A parity test runs both walkers over the same fixture trees natively, with the same flags.
+   - **Rejected alternative:** a pi-walker-style replacement walker for both targets. It is more consistent, but it is about 14k lines in oh-my-pi, and it gives up ripgrep's tested traversal for a gain we don't need natively.
+   - **Default to deterministic, path-sorted output** when rg/fd run with more than one thread. Real rg's order is arbitrary, so sorted output is a valid real-rg output, and it keeps goldens and replay stable. Measure the cost; ripgrep's `--sort path` forces one thread, so we need ordered merging, as oh-my-pi's `grep` does.
+
+3. **`grep` shares the engine but not the rg front end.**
+
+   Shared:
+   - the `grep-regex` matcher
+   - `grep-searcher` (context, binary detection, `-z`, encodings)
+   - the walker
+   - the exit-status rules (0/1/2, `-q` beats errors)
+
+   GNU-specific:
+   - **A POSIX BRE/ERE → regex-syntax translator**, with oh-my-pi's `bre.rs` as an MIT reference. It covers `\( \) \{ \}`, the GNU `\+ \? \|`, a leading `*` as a literal, `[[:class:]]` and bracket rules.
+   - **GNU output through our own `Sink`**:
+     - `file:line:text`
+     - context lines as `file-line-text`, with `--` between groups
+     - `Binary file X matches`
+     - `-c`, `-l`, `-L` and `-H`/`-h` defaults
+
+     `grep-printer`'s standard printer is rg-shaped. Its separators are configurable, but the binary-file message and the defaults are not GNU's.
+   - **GNU recursion:** `-r` with no path means `.`; hidden files are searched; `.gitignore` is ignored; `-r` doesn't follow symlinks but `-R` does. `--include`, `--exclude` and `--exclude-dir` are fnmatch on the basename, done with `globset` using `literal_separator(false)`.
+
+   The two regex-semantics gaps that remain (§5.6), backreferences and leftmost-longest, are shared with `sed`.
+
+   `find` uses the same walker with all filtering off. Its `-name`/`-path` go through `globset` in fnmatch mode, and `-regex` through the translator. That answers ARCH's open question: yes, `grep` and `find` should reuse the crates once they are in the tree.
+
+4. **Record a D-entry that pins the exact crate set of the exception** (§5.3, 27–30 crates), the features (`grep-printer` with `default-features = false`), and the rule for adding to it.
+   - `grep-cli` is **not** needed: its helpers are process-centric, and we own TTY, stdin and decompression.
+   - `grep-pcre2` is **excluded**: it is C code via `pcre2-sys`, and it breaks the zero-C-toolchain WASM build.
+
+5. **Size budget.**
+   - On the library route, rg + fd + grep + find add about **0.5–0.75 MB** on top of the regex stack (+1.2–1.4 MB), which any regex-using utility pays anyway.
+   - Vendoring both cores verbatim would add about **3.7 MB (macOS) / 4.7 MB (linux-musl)**, nearly 2–3× the whole pi-env daemon (1.9 MB).
+   - If pi-env must stay small, utilities (and so the regex stack) can be a cargo feature of the daemon build.
+
+### 5.6 Regex-semantics gaps when GNU tools run on Rust `regex`
+
+| Gap | Effect | Plan |
+|---|---|---|
+| **No backreferences** (`\(a\)\1` in BRE; `\1` in `sed` patterns) | Patterns using them can't compile | A small backtracking matcher of our own that implements `grep_matcher::Matcher`, used only when the translator sees a backreference, and shared with `sed`. Until it exists, fall through to the host program (D010), or fail clearly on Windows/WASM. No new crate (`fancy-regex` would need a decision) |
+| **Leftmost-first, not POSIX leftmost-longest** | Same line selection, but `grep -o`, `--color`, `-b` and `sed s///` can pick a different span. Example: `echo abcd | grep -o 'ab\|abcd'` gives `abcd` with POSIX grep (verified with macOS grep; GNU behaves the same) and `ab` with rg/Rust (verified) | `regex-automata` (already in the tree) can find longest matches with `MatchKind::All` and a forward search to the last match end. Use that mode for `-o`/`--color`/`sed`. Needs a spike |
+| **`-P` lookaround and other PCRE-only syntax** | `grep -P '(?<=x)y'` | Accept what `regex-syntax` parses. Anything else falls through. No PCRE2 |
+| **Locale classes and collation** | `[[:alpha:]]` on non-ASCII, `[a-z]` ranges | Use UTF-8 Unicode semantics (`(?u)`), documented. This matches GNU in a UTF-8 locale for agent use |
+
+### 5.7 Windows notes
+
+- ripgrep and `ignore` are first-class on Windows. `ignore` treats `FILE_ATTRIBUTE_HIDDEN` as hidden as well as dotfiles. The Windows-only crates are `winapi-util`, `windows-sys` and `windows-link`.
+- **Path separators:** rg prints `\` by default, and fd prints `/` only when `MSYSTEM` is set. psh's rule is forward slashes internally (ARCH, "Windows rules"), so default both to `/`. That is equivalent to `--path-separator /`, and an explicit flag overrides it.
+- **Long paths:** ripgrep's `build.rs` embeds a `longPathAware` manifest for MSVC builds. `psh.exe` needs the same manifest, or `\\?\` paths as ARCH already says.
+- **Color:** `termcolor` uses the console API only for a real console. A utility writes to psh's pipes, so use ANSI or no color, decided from `UtilCtx` TTY state, never from the process's handles.
+- **CRLF:** ripgrep's `--crlf` is off by default, so `grep 'x$'` misses CRLF lines. Consider turning on `--crlf`-style line terminators by default on Windows for `grep`/`rg`, and test it against Git-for-Windows grep's behavior.
+- **Case:** Windows file systems are case-insensitive, but gitignore matching is case-sensitive unless `--ignore-file-case-insensitive` is given. Keep ripgrep's default, which matches git's `core.ignorecase=false` default.
+- **Process-global state:** a Windows in-process utility must never call `set_current_dir`; this is fd's `--base-directory` problem. This reinforces copying fd's logic rather than its `main`.
+
+### 5.8 WASM summary
+
+| Piece | wasm32-wasip1 | wasm32-unknown-unknown (psh's browser target) |
+|---|---|---|
+| `grep-matcher/regex/searcher/printer`, `globset`, `regex` | builds and runs | builds. Search over `UtilCtx` readers works |
+| `ignore` walker | builds and runs single-threaded (rg auto-detects one thread) | builds, but every fs call returns `Unsupported`. The optimiser dropped our minimal search binary to 16 KB because the walk could never yield anything |
+| `ignore` matchers (`gitignore`, `overrides`, `types`) | yes | yes, fed by our walker |
+| ripgrep core verbatim | builds and runs (3.0 MB) | builds. Useless without our walker |
+| fd verbatim | builds only after 3 patches, then panics without threads | no |
+
+Ripgrep's library crates are therefore WASM-ready except for the walk, and the walk is what §5.5 point 2 replaces.
 
 ---
 
@@ -588,3 +820,8 @@ Rows: every name in any implementation set, plus selected externals, filtered to
 - brush: `brush-builtins/src/*.rs` and the `uu_*` dependencies in `brush-coreutils-builtins/Cargo.toml`.
 - Bun: `src/runtime/shell/builtin/` and `docs/runtime/shell.mdx`. deno_task_shell: `src/shell/commands/mod.rs`.
 - Corpus recount: `names`, `eff`, `flags` and `not_found` from `~/.cache/psh-corpus/features.jsonl` (private, aggregates only). The working files are in `/tmp/bi/`.
+- rg/fd embedding (§5): `/tmp/embed`, a workspace with:
+  - `rgcore` (ripgrep `crates/core` as a lib) and `fdcore` (fd `src/` as a lib, with the wasm patches)
+  - `bins/{base,regexonly,rglibs,libsboth,libset,rgonly,fdonly,both}`
+
+  Commands used: `cargo build --release`, `cargo tree -e normal --prefix none --target <t>`, `cargo bloat --crates`, and `wasmtime run --dir .` for wasip1.

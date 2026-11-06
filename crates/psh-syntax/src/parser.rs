@@ -226,6 +226,9 @@ struct P<'a> {
     depth: u32,
     /// Nesting of `$(…)`, for here-doc delimiters followed by `)`.
     comsub: u32,
+    /// The closing token of the innermost `$(…)`, `<(…)` or `${ …; }`, for "while
+    /// looking for matching" in error messages.
+    closer: Option<&'static str>,
 }
 
 fn is_blank(c: u8) -> bool {
@@ -302,6 +305,7 @@ impl<'a> P<'a> {
             pending: Vec::new(),
             depth: 0,
             comsub: 0,
+            closer: None,
         })
     }
 
@@ -454,7 +458,17 @@ impl<'a> P<'a> {
         } else {
             &self.src[s..e]
         };
-        self.error_at(s, e, format!("syntax error near unexpected token `{text}'"))
+        // Inside a substitution bash names what it was looking for, unless the
+        // unexpected token is that closer itself.
+        let message = match self.closer {
+            Some(c) if c != text => {
+                format!(
+                    "syntax error near unexpected token `{text}' while looking for matching `{c}'"
+                )
+            }
+            _ => format!("syntax error near unexpected token `{text}'"),
+        };
+        self.error_at(s, e, message)
     }
 
     // ---- blanks, comments, newlines, here-docs ----
@@ -1083,7 +1097,7 @@ impl<'a> P<'a> {
     /// `(( … ))`, or `None` if the parentheses do not close with `))` (then it is a
     /// nested subshell).
     fn parse_arith_command(&mut self) -> R<Option<CommandKind>> {
-        let Some(close) = self.scan_arith(self.pos + 2) else {
+        let Some(close) = self.scan_arith(self.pos + 2)? else {
             return Ok(None);
         };
         let word = self.parse_arith_text(self.pos + 2, close)?;
@@ -1092,8 +1106,9 @@ impl<'a> P<'a> {
     }
 
     /// Finds the `))` closing an arithmetic expression starting at `from`: the index of
-    /// its first `)`. `None` if a `)` at depth zero is not followed by another one.
-    fn scan_arith(&self, from: usize) -> Option<usize> {
+    /// its first `)`. `Ok(None)` if a `)` at depth zero is not followed by another one
+    /// (then the parentheses are nested subshells), an error at the end of the input.
+    fn scan_arith(&self, from: usize) -> R<Option<usize>> {
         let mut depth = 0usize;
         let mut i = from;
         while i < self.end {
@@ -1126,11 +1141,11 @@ impl<'a> P<'a> {
                 b'(' => depth += 1,
                 b')' => {
                     if depth == 0 {
-                        return if i + 1 < self.end && self.b[i + 1] == b')' {
+                        return Ok(if i + 1 < self.end && self.b[i + 1] == b')' {
                             Some(i)
                         } else {
                             None
-                        };
+                        });
                     }
                     depth -= 1;
                 }
@@ -1138,7 +1153,7 @@ impl<'a> P<'a> {
             }
             i += 1;
         }
-        None
+        Err(self.unterminated(")"))
     }
 
     /// Parses `[from, to)` as arithmetic text.
@@ -1283,7 +1298,7 @@ impl<'a> P<'a> {
 
     fn parse_arith_for(&mut self, opener: Opener) -> R<CommandKind> {
         let open = self.pos;
-        let Some(close) = self.scan_arith(open + 2) else {
+        let Some(close) = self.scan_arith(open + 2)? else {
             return Err(self.unterminated(")"));
         };
         let saved_end = self.end;
@@ -1291,13 +1306,15 @@ impl<'a> P<'a> {
         self.pos = open + 2;
         let mut clauses = Vec::new();
         let result = self.arith_for_clauses(close, &mut clauses);
+        let extra_semi = self.peek() == Some(b';');
         self.end = saved_end;
         if !result? {
-            return Err(self.error_at(
-                open,
-                close + 2,
-                String::from("syntax error: arithmetic expression required"),
-            ));
+            let message = if extra_semi {
+                "syntax error: `;' unexpected"
+            } else {
+                "syntax error: arithmetic expression required"
+            };
+            return Err(self.error_at(open, close + 2, String::from(message)));
         }
         self.pos = close + 2;
         self.skip_blanks();
@@ -1814,35 +1831,84 @@ impl<'a> P<'a> {
     // ---- [[ ]] ----
 
     fn parse_cond_command(&mut self) -> R<CommandKind> {
+        let open = self.pos;
         self.pos += 2;
-        let expr = self.parse_cond_or()?;
+        let expr = self.parse_cond_or(open)?;
         self.skip_linebreaks()?;
         if !self.at_reserved("]]") {
-            return Err(self.cond_error());
+            if self.at_eof() {
+                return Err(self.eof_error(format!(
+                    "unexpected EOF while looking for `]]'\nsyntax error: unexpected end of file from `[[' command on line {}",
+                    self.line_of(open)
+                )));
+            }
+            let (s, e, text) = self.cond_token();
+            return Err(self.error_at(
+                s,
+                e,
+                format!(
+                    "syntax error in conditional expression: unexpected token `{text}'\nsyntax error near `{text}'"
+                ),
+            ));
         }
         self.pos += 2;
         Ok(CommandKind::Cond(expr))
     }
 
-    fn cond_error(&self) -> ParseError {
-        if self.at_eof() {
-            return self.eof_error(String::from("unexpected EOF while looking for `]]'"));
+    /// The token at the cursor inside `[[ ]]`, as bash names it in messages.
+    fn cond_token(&self) -> (usize, usize, String) {
+        let s = self.pos;
+        match self.peek() {
+            None => (s, s, String::from("EOF")),
+            Some(b'\n') => (s, s + 1, String::from("newline")),
+            Some(_) => {
+                let e = if self.at(b"&&") || self.at(b"||") {
+                    s + 2
+                } else {
+                    let run = self.run().len();
+                    s + run.max(1)
+                };
+                (s, e, String::from(&self.src[s..e]))
+            }
         }
-        let (s, e) = self.token_text();
-        let text = if self.b[s] == b'\n' {
-            "newline"
+    }
+
+    /// A primary was expected at the cursor.
+    fn cond_primary_error(&self, open: usize) -> ParseError {
+        let (s, e, text) = self.cond_token();
+        if self.at_eof() {
+            return self.eof_error(format!(
+                "unexpected token `EOF' in conditional command\nsyntax error: unexpected end of file from `[[' command on line {}",
+                self.line_of(open)
+            ));
+        }
+        let message = if text == "]]" {
+            String::from("syntax error near `]]'")
         } else {
-            &self.src[s..e]
+            format!("unexpected token `{text}' in conditional command\nsyntax error near `{text}'")
+        };
+        self.error_at(s, e, message)
+    }
+
+    /// The argument of a unary or binary operator is missing.
+    fn cond_arg_error(&self, kind: &str, op: &str) -> ParseError {
+        let (s, e, text) = self.cond_token();
+        let near = if text == "newline" || text == "EOF" {
+            op
+        } else {
+            &text
         };
         self.error_at(
             s,
             e,
-            format!("unexpected token `{text}' in conditional command"),
+            format!(
+                "unexpected argument `{text}' to conditional {kind} operator\nsyntax error near `{near}'"
+            ),
         )
     }
 
-    fn parse_cond_or(&mut self) -> R<CondExpr> {
-        let mut lhs = self.parse_cond_and()?;
+    fn parse_cond_or(&mut self, open: usize) -> R<CondExpr> {
+        let mut lhs = self.parse_cond_and(open)?;
         // Newlines may separate the operands and operators of `[[ ]]`, except between a
         // word and its binary operator.
         loop {
@@ -1852,7 +1918,7 @@ impl<'a> P<'a> {
             }
             self.pos += 2;
             self.skip_linebreaks()?;
-            let rhs = self.parse_cond_and()?;
+            let rhs = self.parse_cond_and(open)?;
             lhs = CondExpr {
                 span: lhs.span.to(rhs.span),
                 kind: CondKind::Or(Box::new(lhs), Box::new(rhs)),
@@ -1860,8 +1926,8 @@ impl<'a> P<'a> {
         }
     }
 
-    fn parse_cond_and(&mut self) -> R<CondExpr> {
-        let mut lhs = self.parse_cond_not()?;
+    fn parse_cond_and(&mut self, open: usize) -> R<CondExpr> {
+        let mut lhs = self.parse_cond_not(open)?;
         loop {
             self.skip_linebreaks()?;
             if !self.at(b"&&") {
@@ -1869,7 +1935,7 @@ impl<'a> P<'a> {
             }
             self.pos += 2;
             self.skip_linebreaks()?;
-            let rhs = self.parse_cond_not()?;
+            let rhs = self.parse_cond_not(open)?;
             lhs = CondExpr {
                 span: lhs.span.to(rhs.span),
                 kind: CondKind::And(Box::new(lhs), Box::new(rhs)),
@@ -1877,38 +1943,42 @@ impl<'a> P<'a> {
         }
     }
 
-    fn parse_cond_not(&mut self) -> R<CondExpr> {
+    fn parse_cond_not(&mut self, open: usize) -> R<CondExpr> {
         self.skip_linebreaks()?;
         if self.run() == b"!" {
             let start = self.pos;
             self.pos += 1;
-            let inner = self.parse_cond_not()?;
+            let inner = self.parse_cond_not(open)?;
             return Ok(CondExpr {
                 span: sp(start, inner.span.end as usize),
                 kind: CondKind::Not(Box::new(inner)),
             });
         }
-        self.parse_cond_primary()
+        self.parse_cond_primary(open)
     }
 
-    fn cond_word(&mut self, ctx: Ctx) -> R<Option<Word>> {
-        self.skip_blanks();
-        if self.run() == b"]]" {
-            return Ok(None);
-        }
-        self.read_word(ctx, false)
+    /// The cursor is at a token that can be an operand word.
+    fn at_cond_word(&self) -> bool {
+        !self.at_eof() && self.run() != b"]]" && self.peek().is_some_and(|c| !is_meta(c))
+            || self.at(b"<(")
+            || self.at(b">(")
     }
 
-    fn parse_cond_primary(&mut self) -> R<CondExpr> {
+    fn parse_cond_primary(&mut self, open: usize) -> R<CondExpr> {
         self.enter()?;
         self.skip_linebreaks()?;
         let start = self.pos;
         if self.peek() == Some(b'(') {
             self.pos += 1;
-            let inner = self.parse_cond_or()?;
+            let inner = self.parse_cond_or(open)?;
             self.skip_linebreaks()?;
             if self.peek() != Some(b')') {
-                return Err(self.cond_error());
+                let (s, e, text) = self.cond_token();
+                return Err(self.error_at(
+                    s,
+                    e,
+                    format!("unexpected token `{text}', expected `)'\nsyntax error near `{text}'"),
+                ));
             }
             self.pos += 1;
             self.leave();
@@ -1918,32 +1988,21 @@ impl<'a> P<'a> {
             });
         }
         let plain = Ctx::Pattern { ext: false };
-        let Some(first) = self.cond_word(plain)? else {
-            return Err(self.cond_error());
+        if !self.at_cond_word() {
+            return Err(self.cond_primary_error(open));
+        }
+        let Some(first) = self.read_word(plain, false)? else {
+            return Err(self.cond_primary_error(open));
         };
         let first_text = &self.src[first.span.range()];
         let first_plain = first.parts.len() == 1 && matches!(first.parts[0].kind, Part::Lit);
         if first_plain && let Some(op) = UnaryTest::from_op(first_text) {
             self.skip_blanks();
-            let arg_ok = !self.at_eof()
-                && self.peek() != Some(b'\n')
-                && self.run() != b"]]"
-                && self.peek_op().is_none();
-            if !arg_ok {
-                let (s, e) = self.token_text();
-                let text = if self.at_eof() || self.b[s] == b'\n' {
-                    "newline"
-                } else {
-                    &self.src[s..e]
-                };
-                return Err(self.error_at(
-                    s,
-                    e,
-                    format!("unexpected argument `{text}' to conditional unary operator"),
-                ));
+            if !self.at_cond_word() {
+                return Err(self.cond_arg_error("unary", first_text));
             }
             let Some(arg) = self.read_word(plain, false)? else {
-                return Err(self.cond_error());
+                return Err(self.cond_arg_error("unary", first_text));
             };
             self.leave();
             return Ok(CondExpr {
@@ -1958,11 +2017,11 @@ impl<'a> P<'a> {
         self.skip_blanks();
         let op_start = self.pos;
         let op = match self.peek() {
-            Some(b'<') => {
+            Some(b'<') if !self.at(b"<(") => {
                 self.pos += 1;
                 Some(BinaryTest::LeftSortsBeforeRight)
             }
-            Some(b'>') => {
+            Some(b'>') if !self.at(b">(") => {
                 self.pos += 1;
                 Some(BinaryTest::LeftSortsAfterRight)
             }
@@ -1990,19 +2049,18 @@ impl<'a> P<'a> {
                     kind: CondKind::Word(first),
                 });
             }
-            let (s, e) = self.token_text();
-            let text = if self.b[s] == b'\n' {
-                "newline"
-            } else {
-                &self.src[s..e]
-            };
+            let (s, e, text) = self.cond_token();
             return Err(self.error_at(
                 s,
                 e,
-                format!("unexpected token `{text}', conditional binary operator expected"),
+                format!(
+                    "unexpected token `{text}', conditional binary operator expected\nsyntax error near `{}'",
+                    if text == "newline" { first_text } else { &text }
+                ),
             ));
         };
         let op_span = sp(op_start, self.pos);
+        let op_text = &self.src[op_span.range()];
         self.skip_blanks();
         let rhs_ctx = match op {
             BinaryTest::StringMatchesRegex => Ctx::Regex,
@@ -2010,23 +2068,14 @@ impl<'a> P<'a> {
             | BinaryTest::StringDoesNotExactlyMatchPattern => Ctx::Pattern { ext: true },
             _ => plain,
         };
-        let rhs = if self.at_eof() || self.peek() == Some(b'\n') {
-            None
-        } else {
-            self.read_word(rhs_ctx, false)?
-        };
-        let Some(rhs) = rhs else {
-            let (s, e) = self.token_text();
-            let text = if self.at_eof() || self.b[s] == b'\n' {
-                "newline"
-            } else {
-                &self.src[s..e]
-            };
-            return Err(self.error_at(
-                s,
-                e,
-                format!("unexpected argument `{text}' to conditional binary operator"),
-            ));
+        // The right side of `=~` may start with `(`; other operands may not.
+        let rhs_ok = self.at_cond_word()
+            || (op == BinaryTest::StringMatchesRegex && self.peek() == Some(b'('));
+        if !rhs_ok {
+            return Err(self.cond_arg_error("binary", op_text));
+        }
+        let Some(rhs) = self.read_word(rhs_ctx, false)? else {
+            return Err(self.cond_arg_error("binary", op_text));
         };
         self.leave();
         Ok(CondExpr {
@@ -2156,7 +2205,10 @@ impl<'a> P<'a> {
                     });
                 }
                 b'$' => self.parse_dollar(ctx, out)?,
-                b'<' | b'>' if self.peek_at(1) == Some(b'(') && ctx == Ctx::Word => {
+                b'<' | b'>'
+                    if self.peek_at(1) == Some(b'(')
+                        && matches!(ctx, Ctx::Word | Ctx::Pattern { .. }) =>
+                {
                     self.pos += 2;
                     let list = self.parse_nested_list(start, ")")?;
                     out.push(WordPart {
@@ -2304,6 +2356,7 @@ impl<'a> P<'a> {
     fn parse_nested_list(&mut self, start: usize, what: &'static str) -> R<ListId> {
         self.comsub += 1;
         let outer = self.stash_pending();
+        let closer = self.closer.replace(")");
         let r = self.parse_compound_list(
             Term::Paren,
             Opener {
@@ -2315,6 +2368,7 @@ impl<'a> P<'a> {
         );
         self.unstash_pending(outer);
         self.comsub -= 1;
+        self.closer = closer;
         let list = r?;
         self.skip_blanks();
         if self.peek() != Some(b')') {
@@ -2350,7 +2404,7 @@ impl<'a> P<'a> {
         match self.peek_at(1) {
             Some(b'(') => {
                 if self.peek_at(2) == Some(b'(')
-                    && let Some(close) = self.scan_arith(start + 3)
+                    && let Some(close) = self.scan_arith(start + 3)?
                 {
                     let word = self.parse_arith_text(start + 3, close)?;
                     self.pos = close + 2;
@@ -2483,6 +2537,7 @@ impl<'a> P<'a> {
             // current shell.
             self.pos = if c == b'|' { p + 1 } else { p };
             let outer = self.stash_pending();
+            let closer = self.closer.replace("}");
             let r = self.parse_compound_list(
                 Term::Words(&["}"]),
                 Opener {
@@ -2493,6 +2548,7 @@ impl<'a> P<'a> {
                 false,
             );
             self.unstash_pending(outer);
+            self.closer = closer;
             let list = r?;
             self.expect_reserved("}")?;
             return Ok(WordPart {

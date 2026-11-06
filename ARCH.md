@@ -515,15 +515,14 @@ way for approval and another way for execution.
   non-literal, `source`, functions or aliases defined earlier, unknown programs, inline
   interpreters) is `unknown`, never "read-only". Redirections to files, `sed -i`, `tee`
   are writes.
-- Per-utility knowledge (which flags write) lives in tables next to the utilities, and
-  `psh-classify` reads them without depending on `psh-utils`. **Open:** where these
-  tables live so both crates share them.
+- Per-utility knowledge (which flags write, which options take a value, what the
+  operands are) lives in `psh_classify::utils` (D1090): no_std data that the utilities
+  depend on and check their own option parsing against in their tests.
 
 ## Open questions
 
 1. Where Windows output decoding lives (engine output layer or host).
-2. Where the per-utility effect tables live, so the classifier and the utilities share
-   them.
+2. *(Decided, D1090: in `psh_classify::utils`.)*
 3. Whether the WASM host is needed before pi-env integration, and whether a WASI build
    is wanted at all.
 

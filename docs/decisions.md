@@ -607,3 +607,53 @@ no expansion, else `null`), `quoted` and typed `parts`; substitutions carry thei
 JSON is built in the `psh` crate on deser-json (D029; `default-features = false`, `std`),
 so psh-syntax stays dependency-free. Reason: the classifier (0009) and pi's UI need
 kinds, spans, quoting and nested commands without re-deriving them from source text.
+## D1090: Per-utility effect tables live in psh-classify
+date: 2026-11-06 · by: shapes · issue: 0009
+`psh_classify::utils::UTILITIES` (no_std data) says per utility: its category, the short
+and long options that take a value, what its operands are (read, written, script then
+files, ...) and which options change the effect (`sed -i` writes its operands, `sort -o`
+writes its value, `tail -f` runs until stopped, `rg --pre` runs code). The utilities
+(`psh-utils`) depend on `psh-classify` for it, which costs nothing (no_std, psh-syntax
+only), and each in-process utility's tests check its option parser against its entry,
+so the classifier and the implementation cannot disagree on which flags write.
+Utilities with subcommands or nested commands (git, package managers, `find`, `xargs`,
+shells, interpreters, wrappers) have rules in code (`rules.rs`). Resolves ARCH open
+question 2. Alternative: a third crate for the tables; not worth it while psh-classify
+is this small.
+
+## D1091: Categories, priority and read-only
+date: 2026-11-06 · by: shapes · issue: 0009
+A command (and a script) has a set of categories: read, network, build, long-running,
+mutate, vcs, install, unknown. The primary one for a summary is the highest in that
+order (unknown highest): a build that writes a file is shown as mutate, anything with an
+inline interpreter as unknown. `read_only()` holds when the set is just {read}, nothing
+is written (writes to `/dev/null` and the standard streams do not count) and the script
+parsed. Unlike research/corpus/analyze.py, process inspection (`ps`, `lsof`, `sleep`)
+is read, `kill` is mutate, and inline interpreters and local scripts are unknown rather
+than categories of their own.
+
+## D1092: What makes a command unknown
+date: 2026-11-06 · by: shapes · issue: 0009
+Besides dynamic command names, `eval`/`bash -c` of non-literals, `source`, inline
+interpreters, local programs and unknown programs: calls of functions or aliases defined
+anywhere in the script; assignments (prefix, `export`, `env`, `${X:=}`) to variables that
+change what runs (`PATH`, `LD_*`, `DYLD_*`, `BASH_ENV`, `GIT_SSH_COMMAND`, `PAGER`, ...);
+a dynamic word that could be an option (it starts with an expansion) of a utility with
+an option that writes or runs code (`sed "$x"`, `rg "$x"`, `sort "$x"`, any dynamic word
+of `find`), while `grep "$x"`, `cat "$f"` and `src/$f` stay read; `git -c` and unknown git
+subcommands (aliases); shells with startup files (`-i`, `-l`); shell code that `xargs` or
+`find -exec` splices file names into; sed scripts with `e` or that do not parse; awk
+programs with `system`, pipes or print redirections; `sudo`. Reason: the classifier is
+used to auto-approve; argument injection (`rg "$(cat f)"` becoming `--pre=…`) and
+definitions it does not follow must not pass as read.
+
+## D1093: Literal shell code in strings is classified as nested scripts
+date: 2026-11-06 · by: shapes · issue: 0009
+Literal strings that a command runs as shell code are parsed with psh-syntax and walked
+like the script: `bash -c`/`sh -c`, `eval` (its arguments joined), `trap` handlers, alias
+bodies, backquote bodies, and a literal here-document or here-string fed to a shell
+(`bash <<'EOF'`). Their commands carry `source: Some(i)`, an index into
+`Classification::sources`, and spans relative to that text. Nesting deeper than 8 is
+unknown. Wrapped commands (`env`, `timeout`, `nice`, `nohup`, `command`, `exec`, `sudo`,
+`xargs`, `find -exec`, `uv run`, ...) are commands of their own with the wrapper as
+parent.

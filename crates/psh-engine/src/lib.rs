@@ -29,6 +29,7 @@ mod exec;
 mod expand;
 mod fd;
 pub mod host;
+pub mod invocation;
 mod pattern;
 mod pipe;
 mod sched;

@@ -7,8 +7,10 @@ version.workspace = true
 license.workspace = true
 publish.workspace = true
 
-# psh-syntax for L0 (the parser against bash -n) and the hit list (D1220).
+# psh-engine runs psh in-process (D1056); psh-syntax for L0 (the parser against
+# bash -n) and the hit list (D1220).
 [dependencies]
+psh-engine.workspace = true
 psh-syntax.workspace = true
 
 [lints]

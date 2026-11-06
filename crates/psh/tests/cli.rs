@@ -32,8 +32,8 @@ fn psh(args: &[&str]) -> Output {
         }
         std::thread::sleep(Duration::from_millis(10));
     };
-    // The stub writes a line at most, well below the pipe buffer, so reading after the
-    // exit cannot deadlock.
+    // The tests write a few lines at most, well below the pipe buffer, so reading after
+    // the exit cannot deadlock.
     let mut stdout = String::new();
     let mut stderr = String::new();
     child
@@ -56,23 +56,75 @@ fn psh(args: &[&str]) -> Output {
 }
 
 #[test]
-fn dash_c_is_not_implemented() {
-    let out = psh(&["-c", "echo hi"]);
+fn dash_c_runs_commands() {
+    let out = psh(&["-c", "echo hi; echo err >&2; exit 3"]);
+    assert_eq!(out.status, Some(3));
+    assert_eq!(out.stdout, "hi\n");
+    assert_eq!(out.stderr, "err\n");
+}
+
+#[test]
+fn dash_c_name_and_args() {
+    let out = psh(&["-c", "echo $0 $1 $#; nosuchcommand_psh", "name", "a"]);
+    assert_eq!(out.stdout, "name a 1\n");
+    assert_eq!(
+        out.stderr,
+        "name: line 1: nosuchcommand_psh: command not found\n"
+    );
+    assert_eq!(out.status, Some(127));
+}
+
+#[test]
+fn script_file() {
+    let dir = std::env::temp_dir().join(format!("psh-cli-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("s.sh");
+    std::fs::write(&file, "echo \"$1\"\necho )\n").unwrap();
+    let out = psh(&[file.to_str().unwrap(), "arg"]);
+    std::fs::remove_dir_all(&dir).ok();
+    assert_eq!(out.stdout, "arg\n");
     assert_eq!(out.status, Some(2));
-    assert_eq!(out.stdout, "");
-    assert_eq!(out.stderr, "psh: not implemented\n");
+    assert!(
+        out.stderr
+            .contains("line 2: syntax error near unexpected token `)'"),
+        "{}",
+        out.stderr
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn pipeline_through_externals() {
+    let out = psh(&[
+        "-c",
+        "printf 'b\\na\\n' | sort | head -n 1; x=$(echo hi | cat); echo $x",
+    ]);
+    assert_eq!(out.stdout, "a\nhi\n");
+    assert_eq!(out.status, Some(0));
 }
 
 #[test]
 fn dash_c_without_argument() {
     let out = psh(&["-c"]);
     assert_eq!(out.status, Some(2));
-    assert_eq!(out.stderr, "psh: -c: option requires an argument\n");
+    assert!(
+        out.stderr
+            .starts_with("psh: -c: option requires an argument\n"),
+        "{}",
+        out.stderr
+    );
 }
 
 #[test]
-fn no_arguments_prints_usage() {
+fn no_arguments_reads_stdin() {
     let out = psh(&[]);
+    assert_eq!(out.status, Some(0));
+    assert_eq!(out.stdout, "");
+}
+
+#[test]
+fn help_prints_usage() {
+    let out = psh(&["--help"]);
     assert_eq!(out.status, Some(2));
     assert!(out.stderr.starts_with("usage: psh"), "{}", out.stderr);
 }

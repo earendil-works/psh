@@ -247,12 +247,15 @@ fn clone_piece<'a>(p: &Piece<'a>) -> Piece<'a> {
 
 /// `{x..y[..step]}` with integers or single chars.
 fn seq(start: &str, end: &str, step: Option<&str>) -> Option<Vec<Vec<u8>>> {
-    let step_n: i64 = match step {
-        Some(s) => s.parse().ok()?,
+    // i128, so that steps and ends at the edges of i64 cannot overflow.
+    let step_n: i128 = match step {
+        // bash leaves a step of i64::MIN (which has no absolute value) unexpanded.
+        Some(s) => s.parse::<i64>().ok().filter(|&n| n != i64::MIN)?.into(),
         None => 1,
     };
-    let step_abs = step_n.unsigned_abs().max(1) as i64;
+    let step_abs = step_n.abs().max(1);
     if let (Ok(a), Ok(b)) = (start.parse::<i64>(), end.parse::<i64>()) {
+        let (a, b) = (i128::from(a), i128::from(b));
         // Zero padding when either end has a leading zero.
         let pad = |s: &str| {
             let d = s.trim_start_matches('-');
@@ -288,7 +291,7 @@ fn seq(start: &str, end: &str, step: Option<&str>) -> Option<Vec<Vec<u8>>> {
     }
     let (a, b) = (start.as_bytes(), end.as_bytes());
     if a.len() == 1 && b.len() == 1 && a[0].is_ascii_alphabetic() && b[0].is_ascii_alphabetic() {
-        let (a, b) = (i64::from(a[0]), i64::from(b[0]));
+        let (a, b) = (i128::from(a[0]), i128::from(b[0]));
         let mut out = Vec::new();
         let mut i = a;
         loop {

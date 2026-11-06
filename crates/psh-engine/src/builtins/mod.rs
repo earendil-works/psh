@@ -42,6 +42,7 @@ pub(crate) fn find(name: &[u8]) -> Option<Builtin> {
         b"exit" => (builtin!(exit), true),
         b"set" => (builtin!(set), true),
         b"shift" => (builtin!(shift), true),
+        b"return" => (builtin!(return_), true),
         b"test" => (builtin!(test::test), false),
         b"[" => (builtin!(test::bracket), false),
         _ => return None,
@@ -458,6 +459,13 @@ async fn set(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     Ok(0)
 }
 
+async fn return_(vp: &mut Vp, _args: &[Vec<u8>]) -> R {
+    // No functions or `source` yet: always outside of one.
+    vp.error("return: can only `return' from a function or sourced script")
+        .await;
+    Ok(2)
+}
+
 async fn shift(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     let n = match args.get(1) {
         None => 1,
@@ -471,7 +479,7 @@ async fn shift(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             None => {
                 vp.error(&format!("shift: {}: numeric argument required", s(a)))
                     .await;
-                return Ok(1);
+                return Ok(2);
             }
         },
     };

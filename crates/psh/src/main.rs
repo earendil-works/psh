@@ -1,4 +1,6 @@
-//! `psh -c CMD [ARGS]`: the standalone shell. A stub until the engine runs commands.
+//! `psh -c CMD [NAME [ARGS…]]`, `psh FILE [ARGS…]`, or a script on stdin: the standalone
+//! shell. It drives the engine on a thread of its own with an explicit stack (D1050),
+//! parking while the engine is blocked.
 //!
 //! `psh --parse [--compact] [-O extglob] [-c CMD | FILE]` prints the syntax tree as
 //! JSON (stdin when neither `-c` nor a file is given); status 0 if it parses, 2 if not.
@@ -12,32 +14,118 @@ mod parse_json;
 
 use std::io::{Read, Write};
 use std::process::ExitCode;
+use std::rc::Rc;
 
-fn main() -> ExitCode {
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    match args.first().map(String::as_str) {
-        Some("--parse") => parse_command(&args[1..]),
-        Some("--classify") => classify_command(&args[1..]),
-        Some("-c") if args.len() >= 2 => match psh_engine::run(&args[1]) {
-            Ok(status) => ExitCode::from(status.0 as u8),
-            Err(message) => {
-                eprintln!("psh: {message}");
-                ExitCode::from(2)
-            }
-        },
-        Some("-c") => {
-            eprintln!("psh: -c: option requires an argument");
-            ExitCode::from(2)
-        }
-        _ => usage(),
+use psh_engine::invocation::{Invocation, parse_args};
+use psh_engine::std_host::{StdFile, StdHost, drive, engine_thread};
+use psh_engine::{HostFile, Script, Shell, ShellConfig};
+
+fn os_bytes(s: std::ffi::OsString) -> Vec<u8> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::ffi::OsStringExt;
+        s.into_vec()
+    }
+    #[cfg(not(unix))]
+    {
+        s.to_string_lossy().into_owned().into_bytes()
     }
 }
 
 fn usage() -> ExitCode {
-    eprintln!("usage: psh -c COMMAND [ARGS...]");
+    eprintln!("usage: psh [-c COMMAND [NAME [ARGS...]] | FILE [ARGS...]]");
     eprintln!("       psh --parse [--compact] [-O extglob] [-c COMMAND | FILE]");
     eprintln!("       psh --classify [--compact] [-c COMMAND | FILE]");
     ExitCode::from(2)
+}
+
+fn main() -> ExitCode {
+    let args: Vec<Vec<u8>> = std::env::args_os().skip(1).map(os_bytes).collect();
+    if args.first().is_some_and(|a| a == b"--parse") {
+        let rest: Vec<String> = args[1..]
+            .iter()
+            .map(|a| String::from_utf8_lossy(a).into_owned())
+            .collect();
+        return parse_command(&rest);
+    }
+    if args.first().is_some_and(|a| a == b"--classify") {
+        let rest: Vec<String> = args[1..]
+            .iter()
+            .map(|a| String::from_utf8_lossy(a).into_owned())
+            .collect();
+        return classify_command(&rest);
+    }
+    let text = |b: &[u8]| String::from_utf8_lossy(b).into_owned();
+    let script = match parse_args(&args) {
+        Err(msg) => {
+            eprintln!("psh: {msg}");
+            return usage();
+        }
+        Ok(Invocation::Help) => return usage(),
+        Ok(Invocation::Command { source, arg0, args }) => Script {
+            source: text(&source),
+            arg0: arg0.unwrap_or_else(|| b"psh".to_vec()),
+            args,
+            dash_c: true,
+        },
+        Ok(Invocation::File { path, args }) => match std::fs::read(text(&path)) {
+            Ok(src) => Script {
+                source: text(&src),
+                arg0: path,
+                args,
+                dash_c: false,
+            },
+            Err(e) => {
+                eprintln!("psh: {}: {}", text(&path), psh_engine::host::error_text(&e));
+                return ExitCode::from(127);
+            }
+        },
+        Ok(Invocation::Stdin { args }) => {
+            // v1 reads the whole script first; bash reads it as it goes, so a command
+            // in the script could read the rest of it (a follow-up).
+            let mut src = Vec::new();
+            if std::io::stdin().read_to_end(&mut src).is_err() {
+                return ExitCode::from(2);
+            }
+            Script {
+                source: text(&src),
+                arg0: b"psh".to_vec(),
+                args,
+                dash_c: false,
+            }
+        }
+    };
+    let thread = engine_thread(move || {
+        let mut cfg = ShellConfig::new(Rc::new(StdHost::new()));
+        cfg.env = std::env::vars_os()
+            .map(|(k, v)| (os_bytes(k), os_bytes(v)))
+            .collect();
+        cfg.cwd = std::env::current_dir()
+            .map(|p| os_bytes(p.into_os_string()))
+            .unwrap_or_else(|_| b"/".to_vec());
+        if cfg!(windows) {
+            cfg.cwd = cfg
+                .cwd
+                .iter()
+                .map(|&b| if b == b'\\' { b'/' } else { b })
+                .collect();
+        }
+        let stdio = |n| {
+            StdFile::stdio(n)
+                .ok()
+                .map(|f| Rc::new(f) as Rc<dyn HostFile>)
+        };
+        cfg.stdin = stdio(0);
+        cfg.stdout = stdio(1);
+        cfg.stderr = stdio(2);
+        let mut shell = Shell::new(cfg);
+        shell.start(script);
+        drive(&mut shell)
+    });
+    match thread.map(|t| t.join()) {
+        Ok(Ok(status)) => ExitCode::from((status & 0xff) as u8),
+        _ => ExitCode::from(2),
+    }
 }
 
 fn parse_command(args: &[String]) -> ExitCode {

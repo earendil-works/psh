@@ -358,6 +358,7 @@ dependencies = [
 name = "psh-spec"
 version = "0.0.0"
 dependencies = [
+ "psh-engine",
  "psh-syntax",
 ]
 

@@ -359,13 +359,21 @@ impl Drop for StdProc {
     }
 }
 
-/// The host. `Default` is fine.
+/// The host.
 #[derive(Default)]
-pub struct StdHost;
+pub struct StdHost {
+    pid: Option<u32>,
+}
 
 impl StdHost {
     pub fn new() -> StdHost {
-        StdHost
+        StdHost::default()
+    }
+
+    /// A host whose `$$` is `pid` rather than the process's own id: for an embedder
+    /// that runs shells in-process, where `kill $$` must not reach the embedder.
+    pub fn with_pid(pid: u32) -> StdHost {
+        StdHost { pid: Some(pid) }
     }
 }
 
@@ -643,12 +651,32 @@ impl Host for StdHost {
     }
 
     fn pid(&self) -> u32 {
-        std::process::id()
+        self.pid.unwrap_or_else(std::process::id)
     }
+}
+
+/// The stack an engine thread should get: the default nesting limit at
+/// [`crate::ShellConfig::STACK_PER_LEVEL`], doubled for headroom (D1050).
+pub const ENGINE_STACK: usize =
+    2 * crate::ShellConfig::DEFAULT_MAX_DEPTH as usize * crate::ShellConfig::STACK_PER_LEVEL;
+
+/// Runs `f` on a new thread with [`ENGINE_STACK`].
+pub fn engine_thread<T: Send + 'static>(
+    f: impl FnOnce() -> T + Send + 'static,
+) -> io::Result<std::thread::JoinHandle<T>> {
+    std::thread::Builder::new()
+        .name("psh-engine".into())
+        .stack_size(ENGINE_STACK)
+        .spawn(f)
 }
 
 /// Steps a shell on the current thread until it is done, parking while it is blocked.
 pub fn drive(shell: &mut crate::Shell) -> i32 {
+    drive_until(shell, None).unwrap_or(128 + crate::host::SIGTERM)
+}
+
+/// Like [`drive`], but cancels the shell at `deadline`: `None` means it timed out.
+pub fn drive_until(shell: &mut crate::Shell, deadline: Option<std::time::Instant>) -> Option<i32> {
     struct Unpark(std::thread::Thread);
     impl std::task::Wake for Unpark {
         fn wake(self: Arc<Self>) {
@@ -659,13 +687,23 @@ pub fn drive(shell: &mut crate::Shell) -> i32 {
         }
     }
     shell.set_waker(Waker::from(Arc::new(Unpark(std::thread::current()))));
+    let mut timed_out = false;
     loop {
+        if !timed_out && deadline.is_some_and(|d| std::time::Instant::now() >= d) {
+            timed_out = true;
+            shell.control().cancel();
+        }
         match shell.step(10_000) {
-            crate::Step::Done(s) => return s,
-            crate::Step::Idle => return 0,
+            crate::Step::Done(s) => return if timed_out { None } else { Some(s) },
+            crate::Step::Idle => return Some(0),
             crate::Step::Yield => {}
             // A wake before the park makes the park return at once (the token).
-            crate::Step::Blocked => std::thread::park(),
+            crate::Step::Blocked => match deadline {
+                Some(d) => std::thread::park_timeout(
+                    d.saturating_duration_since(std::time::Instant::now()),
+                ),
+                None => std::thread::park(),
+            },
         }
     }
 }

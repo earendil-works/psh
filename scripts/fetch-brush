@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Vendor brush's YAML test cases (MIT) into tests/brush/ at the pinned commit.
+#
+#   scripts/fetch-brush          refresh tests/brush/ from upstream
+#   scripts/fetch-brush --check  verify that tests/brush/ is exactly upstream's files
+#
+# tests/brush/README.md and expected-failures.txt are ours.
+set -euo pipefail
+source "$(dirname "$0")/vendor-lib.sh"
+vendor_sync brush https://github.com/reubeno/brush.git \
+  943553433ae04f5b3bd55d2cf207e39eb9ef2af7 tests/brush \
+  "LICENSE brush-shell/tests/cases" "${1:-}"

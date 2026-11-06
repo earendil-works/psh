@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Vendor the Oils spec tests (Apache-2.0) into tests/oils/ at the pinned commit.
+#
+#   scripts/fetch-oils          refresh tests/oils/ from upstream
+#   scripts/fetch-oils --check  verify that tests/oils/ is exactly upstream's files
+#
+# The set: Oils' SUITE-compat files (the OSH spec files, minus strict-options), the
+# helpers in spec/bin and the data in spec/testdata that the cases reference, and the
+# license. tests/oils/README.md and expected-failures.txt are ours.
+set -euo pipefail
+source "$(dirname "$0")/vendor-lib.sh"
+files="LICENSE.txt spec/bin spec/testdata"
+for f in \
+  alias append arg-parse arith-context arith-dynamic arith array-assign \
+  array-assoc array-basic array-compat array-literal array-sparse array \
+  assign-deferred assign-dialects assign-extended assign background ble-features \
+  ble-idioms ble-unset blog1 blog2 bool-parse brace-expansion bugs builtin-bash \
+  builtin-bind builtin-bracket builtin-cd builtin-completion builtin-dirs \
+  builtin-echo builtin-eval-source builtin-fc builtin-getopts builtin-history \
+  builtin-kill builtin-meta-assign builtin-meta builtin-misc builtin-printf \
+  builtin-process builtin-read builtin-set builtin-special builtin-times \
+  builtin-trap-bash builtin-trap-err builtin-trap builtin-type-bash builtin-type \
+  builtin-umask builtin-vars case_ command_ command-parsing command-sub-ksh \
+  command-sub comments dbracket divergence dparen empty-bodies errexit-osh \
+  errexit exit-status explore-parsing extglob-files extglob-match fatal-errors \
+  for-expr func-parsing glob-bash glob globignore globstar here-doc \
+  history-expand if_ interactive introspect known-differences let loop nameref \
+  nix-idioms nocasematch-match nul-bytes osh-bugs paren-ambiguity parse-errors \
+  pipeline posix print-source-code process-sub prompt quote redir-order \
+  redirect-command redirect-multi redirect regex serialize sh-func \
+  sh-options-bash sh-options sh-usage smoke subshell temp-binding tilde \
+  toysh-posix toysh type-compat unicode var-num var-op-bash var-op-len \
+  var-op-patsub var-op-slice var-op-strip var-op-test var-ref var-sub-quote \
+  var-sub vars-bash vars-special whitespace word-eval word-split xtrace zsh-assoc \
+  zsh-idioms; do
+  files="$files spec/$f.test.sh"
+done
+vendor_sync oils https://github.com/oils-for-unix/oils.git \
+  d114978ca467143f171a835cbcbe8ab6ccc009a7 tests/oils "$files" "${1:-}"

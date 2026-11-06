@@ -13,6 +13,7 @@ publish = false
 [workspace.dependencies]
 psh-syntax = { path = "crates/psh-syntax" }
 psh-engine = { path = "crates/psh-engine" }
+psh-classify = { path = "crates/psh-classify" }
 
 # Every crate opts in with `[lints] workspace = true`. `unsafe` is forbidden outside the
 # OS host crates (AGENTS.md); psh-os declares its own lint table when it lands.

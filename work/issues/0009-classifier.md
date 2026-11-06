@@ -1,6 +1,6 @@
 # 0009: Classifier
 
-status: in-progress
+status: done
 agent: shapes
 branch: issue/0009-classifier
 depends-on: 0004
@@ -23,7 +23,7 @@ permission checks. Conservative: anything dynamic is `unknown`, never "read-only
 - [x] Per-utility flag tables (e.g. `sed -i` writes) in a place both the classifier and
       the utilities can use (ARCH.md open question 2; propose and record).
 - [x] `psh-classify` is `#![no_std]` + `alloc` like the parser (D023).
-- [ ] `psh --classify [-c CMD | FILE]` prints JSON via `deser-json` (D029), outside the
+- [x] `psh --classify [-c CMD | FILE]` prints JSON via `deser-json` (D029), outside the
       no_std crate.
 - [x] `tests/classify/`: at least 300 labelled cases, including adversarial ones
       (`git commit -m "$(rm -rf /)"`, `x=rm; $x -rf /`, `;` after a safe prefix,
@@ -63,6 +63,11 @@ permission checks. Conservative: anything dynamic is `unknown`, never "read-only
   `curl -o /dev/null`, sips/plutil, shells with startup files, `xargs … sh -c '{}'`.
 - psh-syntax: no API changes needed.
 - `psh --classify` waits for 0004 part 2 (the JSON plumbing in crates/psh).
+- Part 1 merged (main 08e2cf2).
+- Part 2: `psh --classify [--compact] [-c CMD | FILE]` in crates/psh
+  (`classify_json.rs`, shape documented in its header), reusing `--parse`'s `Json` and
+  input reading (`read_input`/`print_json` factored out of `parse_command`). Unit tests
+  for the shape, CLI tests for status codes and stdin.
 
 ## Follow-ups
 - Guide page `classify.md` (not written yet).
@@ -71,3 +76,17 @@ permission checks. Conservative: anything dynamic is `unknown`, never "read-only
 - `sqlite3` read-only queries (`-readonly`, `.schema`), 213 corpus commands.
 
 ## Result
+- `crates/psh-classify` (no_std + alloc, psh-syntax only, wasm32 in the gate):
+  `classify(src)` / `classify_ast(&ast)` → `Classification` with every simple command
+  (nested ones from `$(…)`, backquotes, `<(…)`, here-docs, literal `bash -c`/`eval`/
+  `trap`/alias strings, wrappers, `xargs`, `find -exec`), words and redirections with
+  spans, categories (read, network, build, long-running, mutate, vcs, install,
+  unknown), `primary()`, `read_only()`, reads, writes and truncation.
+- Per-utility tables in `psh_classify::utils` for the utilities to share (D1090);
+  rules in `rules.rs`; decisions D1090–D1093.
+- `psh --classify [--compact] [-c CMD | FILE]`: the classification as JSON.
+- `tests/classify/cases.txt`: 571 labelled cases; `tests/classify/corpus_accuracy.py`
+  and the aggregates in `tests/classify/README.md`: 51.9% read-only vs analyze.py's
+  51.7% on 295,401 commands.
+- Known gaps: see Follow-ups (no constant propagation of script-local variables,
+  `sqlite3` always unknown, no guide page yet).

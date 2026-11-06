@@ -129,3 +129,43 @@ fn parse_options_and_files() {
     assert_eq!(out.status, Some(0));
     assert!(out.stdout.contains(r#""items":[]"#), "{}", out.stdout);
 }
+
+#[test]
+fn classify_prints_json() {
+    let out = psh(&[
+        "--classify",
+        "--compact",
+        "-c",
+        "git status && rm -rf build",
+    ]);
+    assert_eq!(out.status, Some(0), "{}", out.stderr);
+    assert!(out.stdout.starts_with(r#"{"ok":true,"error":null,"primary":"mutate","categories":["read","mutate"],"read_only":false"#), "{}", out.stdout);
+    assert!(
+        out.stdout
+            .contains(r#"{"path":"build","span":[21,26],"source":null,"command":1}"#),
+        "{}",
+        out.stdout
+    );
+
+    let out = psh(&["--classify", "-c", "ls"]);
+    assert_eq!(out.status, Some(0));
+    assert!(out.stdout.contains("\"read_only\": true"), "{}", out.stdout);
+
+    let out = psh(&["--classify", "--compact", "-c", "echo a\nfi"]);
+    assert_eq!(out.status, Some(2));
+    assert!(
+        out.stdout.contains(r#""primary":"unknown""#),
+        "{}",
+        out.stdout
+    );
+
+    // No script: stdin (here empty), which does nothing.
+    let out = psh(&["--classify", "--compact"]);
+    assert_eq!(out.status, Some(0));
+    assert!(
+        out.stdout
+            .contains(r#""read_only":true,"truncated":false,"commands":[]"#),
+        "{}",
+        out.stdout
+    );
+}

@@ -2,31 +2,30 @@
 //!
 //! `no_std` + `alloc` with zero dependencies, so the parser runs anywhere the classifier
 //! does, including `wasm32-unknown-unknown`. Nothing here may touch the OS.
+//!
+//! ```
+//! let ast = psh_syntax::parse("echo hi | wc -l").unwrap();
+//! let list = ast.list(ast.root());
+//! assert_eq!(list.items.len(), 1);
+//! assert_eq!(list.items[0].first.stages.len(), 2);
+//! ```
 #![no_std]
 
 extern crate alloc;
 
-use alloc::string::String;
+mod ast;
+mod brace;
+mod dump;
+mod error;
+mod parser;
+mod printer;
+mod span;
+mod words;
 
-/// A parse error. Placeholder until the parser lands.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ParseError {
-    pub message: String,
-}
-
-/// Parses a script. The stub accepts nothing and reports that parsing is not implemented.
-pub fn parse(_source: &str) -> Result<(), ParseError> {
-    Err(ParseError {
-        message: String::from("not implemented"),
-    })
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn stub_reports_not_implemented() {
-        assert_eq!(parse("echo hi").unwrap_err().message, "not implemented");
-    }
-}
+pub use ast::*;
+pub use dump::dump;
+pub use error::ParseError;
+pub use parser::{Options, Parser, parse, parse_with};
+pub use printer::print;
+pub use span::{LineCol, LineIndex, Span};
+pub use words::{backtick_body, literal_text};

@@ -1,0 +1,63 @@
+//! Development tool: parses files and reports the verdict of each.
+//!
+//! `cargo run -p psh-syntax --example parsecheck -- [--dump|--print|--roundtrip] FILE...`
+//! prints `PATH\tok` or `PATH\terr\tMESSAGE` per file; `-c SCRIPT` parses a string.
+
+use std::io::Write;
+
+fn main() {
+    let mut mode = "";
+    let mut inputs: Vec<(String, String)> = Vec::new();
+    let mut args = std::env::args().skip(1);
+    while let Some(a) = args.next() {
+        match a.as_str() {
+            "--dump" | "--print" | "--roundtrip" => {
+                mode = if a == "--dump" {
+                    "dump"
+                } else if a == "--print" {
+                    "print"
+                } else {
+                    "roundtrip"
+                }
+            }
+            "-c" => inputs.push(("-c".into(), args.next().expect("-c SCRIPT"))),
+            _ => {
+                let bytes = std::fs::read(&a).expect("read");
+                inputs.push((a, String::from_utf8_lossy(&bytes).into_owned()));
+            }
+        }
+    }
+    let out = std::io::stdout();
+    let mut out = out.lock();
+    for (name, src) in inputs {
+        match psh_syntax::parse(&src) {
+            Ok(ast) => match mode {
+                "dump" => writeln!(out, "{}", psh_syntax::dump(&ast)).unwrap(),
+                "print" => write!(out, "{}", psh_syntax::print(&ast)).unwrap(),
+                "roundtrip" => {
+                    let printed = psh_syntax::print(&ast);
+                    match psh_syntax::parse(&printed) {
+                        Ok(again) if psh_syntax::dump(&again) == psh_syntax::dump(&ast) => {
+                            writeln!(out, "{name}\tok").unwrap()
+                        }
+                        Ok(again) => writeln!(
+                            out,
+                            "{name}\tmismatch\n  {}\n  {}\n---\n{printed}---",
+                            psh_syntax::dump(&ast),
+                            psh_syntax::dump(&again)
+                        )
+                        .unwrap(),
+                        Err(e) => writeln!(
+                            out,
+                            "{name}\treparse-error\t{}\n---\n{printed}---",
+                            e.message
+                        )
+                        .unwrap(),
+                    }
+                }
+                _ => writeln!(out, "{name}\tok").unwrap(),
+            },
+            Err(e) => writeln!(out, "{name}\terr\t{}", e.message.replace('\n', " / ")).unwrap(),
+        }
+    }
+}

@@ -5,10 +5,11 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ExitStatus(pub i32);
 
-/// Runs a command string. The stub parses it and fails with status 2 ("not implemented").
+/// Runs a command string. The stub parses it and fails with status 2 ("not implemented",
+/// or the syntax error).
 pub fn run(source: &str) -> Result<ExitStatus, String> {
     match psh_syntax::parse(source) {
-        Ok(()) => Ok(ExitStatus(0)),
+        Ok(_) => Err(String::from("not implemented")),
         Err(err) => Err(err.message),
     }
 }

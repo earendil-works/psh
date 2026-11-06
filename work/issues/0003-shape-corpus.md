@@ -1,7 +1,7 @@
 # 0003: Shape corpus
 
-status: open
-agent: -
+status: in-progress
+agent: shapes
 branch: issue/0003-shape-corpus
 depends-on: 0001 (the L0 leg needs 0002's bash -n recording and 0004's parser)
 touches: scripts/shape-corpus*, tests/shapes/

@@ -199,8 +199,10 @@ The open technical decision: brush-core is built on tokio, and pi-env is synchro
    *shape corpus* (parse-only); it is never executed.
 3. **Builtins: err on the side of too many.** The corpus is one signal; just-bash's demand
    history and the other shells' lists are others (see builtins.md). Never builtins:
-   database clients like sqlite3, interpreters, toolchains, package managers, VCS and
-   network clients.
+   database clients like sqlite3, interpreters, toolchains, package managers. VCS and
+   network clients (`git`, `curl`/`wget`, ssh/rsync-like tools) are out of scope for now
+   rather than "never": not builtins and no work on them today, but psh may later hook
+   them (host-provided commands, interception). (Revised 2026-11-06, D022.)
    Every builtin falls through to the host binary (or fails clearly) on flags it does not
    support, never silently diverges, and can be turned off.
 4. **No tokio, no async runtime.** A synchronous engine stepped by its embedder, std

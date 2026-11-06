@@ -1,3 +1,6 @@
 .venv/
 target/
 .DS_Store
+.worktrees/
+work/scratch/
+vendor/

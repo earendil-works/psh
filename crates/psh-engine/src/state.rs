@@ -24,6 +24,9 @@ pub(crate) struct Core {
     pub max_depth: u32,
     /// Ids handed out for `$!` until real jobs exist.
     pub jobs: Cell<u32>,
+    /// The script ended normally: externals of tasks dropped now are released, not
+    /// abandoned (background jobs outlive the shell, as in bash).
+    pub release_on_drop: Cell<bool>,
 }
 
 impl Core {

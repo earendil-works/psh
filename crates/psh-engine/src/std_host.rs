@@ -57,14 +57,11 @@ fn path(b: &[u8]) -> PathBuf {
 /// writes are done at once (v1, see the module docs).
 pub struct StdFile {
     file: File,
-    terminal: bool,
 }
 
 impl StdFile {
     pub fn new(file: File) -> StdFile {
-        use std::io::IsTerminal;
-        let terminal = file.is_terminal();
-        StdFile { file, terminal }
+        StdFile { file }
     }
 
     /// The process's own descriptor 0, 1 or 2 (a duplicate).
@@ -112,7 +109,8 @@ impl HostFile for StdFile {
     }
 
     fn is_terminal(&self) -> bool {
-        self.terminal
+        use std::io::IsTerminal;
+        self.file.is_terminal()
     }
 }
 
@@ -283,6 +281,7 @@ struct ProcState {
     status: Option<ExitStatus>,
     waker: Option<Waker>,
     kill: bool,
+    released: bool,
 }
 
 /// A child, waited for by its own thread.
@@ -347,13 +346,18 @@ impl ExtProc for StdProc {
     fn signal(&mut self, _sig: Signal) {
         lock(&self.state).kill = true;
     }
+
+    fn release(self: Box<Self>) {
+        // The waiter thread keeps waiting and reaps it.
+        lock(&self.state).released = true;
+    }
 }
 
 impl Drop for StdProc {
     fn drop(&mut self) {
-        // Abandon: the waiter thread kills and reaps it.
+        // Abandon, unless released: the waiter thread kills and reaps it.
         let mut s = lock(&self.state);
-        if s.status.is_none() {
+        if s.status.is_none() && !s.released {
             s.kill = true;
         }
     }
@@ -572,34 +576,69 @@ impl Host for StdHost {
                 cmd.arg0(os(a0));
             }
         }
-        let mut piped = Vec::new();
+        // The child's end of each descriptor, kept to serve `Dup`s.
+        enum End {
+            Null,
+            File(File),
+            Read(std::io::PipeReader),
+            Write(std::io::PipeWriter),
+        }
+        fn stdio(end: &End) -> io::Result<Stdio> {
+            Ok(match end {
+                End::Null => Stdio::null(),
+                End::File(f) => Stdio::from(f.try_clone()?),
+                End::Read(r) => Stdio::from(r.try_clone()?),
+                End::Write(w) => Stdio::from(w.try_clone()?),
+            })
+        }
+        let mut ends: Vec<(u32, End)> = Vec::new();
+        let mut pipes = Vec::new();
         for (n, fd) in spec.fds {
             if n > 2 {
                 // Only the standard descriptors reach children in v1.
                 continue;
             }
-            let stdio = match fd {
-                ChildFd::Null => Stdio::null(),
-                ChildFd::Pipe { input } => {
-                    piped.push((n, input));
-                    Stdio::piped()
+            let end = match fd {
+                ChildFd::Null => End::Null,
+                ChildFd::Pipe { input: true } => {
+                    let (r, w) = std::io::pipe()?;
+                    pipes.push((n, Rc::new(PumpFile::writer(w)) as Rc<dyn HostFile>));
+                    End::Read(r)
+                }
+                ChildFd::Pipe { input: false } => {
+                    let (r, w) = std::io::pipe()?;
+                    pipes.push((n, Rc::new(PumpFile::reader(r)) as Rc<dyn HostFile>));
+                    End::Write(w)
+                }
+                ChildFd::Dup(m) => {
+                    let Some((_, e)) = ends.iter().find(|(k, _)| *k == m) else {
+                        return Err(io::ErrorKind::InvalidInput.into());
+                    };
+                    match e {
+                        End::Null => End::Null,
+                        End::File(f) => End::File(f.try_clone()?),
+                        End::Read(r) => End::Read(r.try_clone()?),
+                        End::Write(w) => End::Write(w.try_clone()?),
+                    }
                 }
                 ChildFd::File(f) => {
                     let any: &dyn std::any::Any = &*f;
                     match any.downcast_ref::<StdFile>() {
-                        Some(sf) => Stdio::from(sf.file.try_clone()?),
+                        Some(sf) => End::File(sf.file.try_clone()?),
                         None => return Err(io::Error::other("not a file of this host")),
                     }
                 }
             };
+            let s = stdio(&end)?;
             match n {
-                0 => cmd.stdin(stdio),
-                1 => cmd.stdout(stdio),
-                _ => cmd.stderr(stdio),
+                0 => cmd.stdin(s),
+                1 => cmd.stdout(s),
+                _ => cmd.stderr(s),
             };
+            ends.push((n, end));
         }
         let mut tries = 0;
-        let mut child = loop {
+        let child = loop {
             match cmd.spawn() {
                 Ok(c) => break c,
                 // ETXTBSY: another thread's fork still holds a just-written script
@@ -611,15 +650,9 @@ impl Host for StdHost {
                 Err(e) => return Err(e),
             }
         };
-        let mut pipes = Vec::new();
-        for (n, input) in piped {
-            let f: Rc<dyn HostFile> = match (n, input) {
-                (0, _) => Rc::new(PumpFile::writer(child.stdin.take().expect("piped stdin"))),
-                (1, _) => Rc::new(PumpFile::reader(child.stdout.take().expect("piped stdout"))),
-                _ => Rc::new(PumpFile::reader(child.stderr.take().expect("piped stderr"))),
-            };
-            pipes.push((n, f));
-        }
+        // The child's ends must close here, or its readers never see EOF.
+        drop(cmd);
+        drop(ends);
         let state = Arc::new(Mutex::new(ProcState::default()));
         wait_thread(child, state.clone());
         Ok(Spawned {
@@ -656,9 +689,11 @@ impl Host for StdHost {
 }
 
 /// The stack an engine thread should get: the default nesting limit at
-/// [`crate::ShellConfig::STACK_PER_LEVEL`], doubled for headroom (D1050).
-pub const ENGINE_STACK: usize =
-    2 * crate::ShellConfig::DEFAULT_MAX_DEPTH as usize * crate::ShellConfig::STACK_PER_LEVEL;
+/// [`crate::ShellConfig::STACK_PER_LEVEL`], plus headroom (D1050). Only touched pages
+/// cost memory.
+pub const ENGINE_STACK: usize = crate::ShellConfig::DEFAULT_MAX_DEPTH as usize
+    * crate::ShellConfig::STACK_PER_LEVEL
+    + (4 << 20);
 
 /// Runs `f` on a new thread with [`ENGINE_STACK`].
 pub fn engine_thread<T: Send + 'static>(

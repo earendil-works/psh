@@ -359,12 +359,17 @@ async fn run_external(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec
     };
     let mut fds = Vec::new();
     let mut has = [false; 3];
+    let mut seen: Vec<(u32, &Fd)> = Vec::new();
     for (n, fd) in vp.fds.iter() {
         let child = match &**fd {
             FdObj::File(f) => ChildFd::File(f.clone()),
+            _ if let Some((m, _)) = seen.iter().find(|(_, o)| Rc::ptr_eq(o, fd)) => {
+                ChildFd::Dup(*m)
+            }
             FdObj::PipeRead(_) => ChildFd::Pipe { input: true },
             FdObj::PipeWrite(_) => ChildFd::Pipe { input: false },
         };
+        seen.push((n, fd));
         if (n as usize) < 3 {
             has[n as usize] = true;
         }
@@ -394,7 +399,10 @@ async fn run_external(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec
             return Ok(status);
         }
     };
-    let mut proc = spawned.proc;
+    let mut proc = ProcGuard {
+        proc: Some(spawned.proc),
+        core: vp.core.clone(),
+    };
     let mut inputs = Vec::new();
     let mut outputs = Vec::new();
     for (n, theirs) in spawned.pipes {
@@ -418,7 +426,7 @@ async fn run_external(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec
         }
         outputs.retain(|p| !p.is_done());
         if status.is_none()
-            && let Poll::Ready(s) = proc.poll_wait(cx)
+            && let Poll::Ready(s) = proc.get().poll_wait(cx)
         {
             status = Some(s);
             // The process is gone: its input pipes close, and a vproc writing to
@@ -433,6 +441,29 @@ async fn run_external(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec
     })
     .await;
     Ok(st.code())
+}
+
+/// Owns a running external: dropping it abandons the process (cancel), or releases it
+/// when the script ended normally and only its background jobs are being dropped.
+struct ProcGuard {
+    proc: Option<Box<dyn crate::host::ExtProc>>,
+    core: Rc<crate::state::Core>,
+}
+
+impl ProcGuard {
+    fn get(&mut self) -> &mut dyn crate::host::ExtProc {
+        self.proc.as_deref_mut().expect("process")
+    }
+}
+
+impl Drop for ProcGuard {
+    fn drop(&mut self) {
+        if let Some(p) = self.proc.take()
+            && self.core.release_on_drop.get()
+        {
+            p.release();
+        }
+    }
 }
 
 /// The default descriptor of a redirection operator.

@@ -103,56 +103,107 @@ parser crate does not depend on it; the AST's JSON form is produced outside
 A synchronous, sans-IO state machine (D005). The shape follows oh-my-pi's engine at the
 level of architecture only (clean room, D007); the code is ours or brush's.
 
-- `Shell::step(budget) -> Step` runs ready work and returns one of: `Done(status)`,
-  `Blocked` (waiting on the host; it will wake the waker), `Yield` (budget spent), or
-  `Idle`. Steps are bounded, so the embedder keeps control of its thread.
+**How it runs (D1050).** The interpreter is a tree walker over the arena AST written as
+Rust `async fn`s; recursion goes through boxed futures. The engine owns a small
+scheduler (`sched.rs`, no crate, no threads): every vproc and helper task is a boxed
+future in a slab, each with its own `std::task::Waker`. Waking a task (from the engine
+thread, or from a host thread that finished an operation) queues its id and, unless a
+step is running, wakes the embedder's waker; only woken tasks are polled. The compiler
+generates the state machines, so expansion can wait in the middle of a word
+(`"${x:=a}$(cmd)"`) and every compound command can wait anywhere. This is not an async
+runtime in D005's sense: no runtime crate, no threads, the embedder steps and parks.
+
+- **API (D1051).** `Shell::new(ShellConfig)` (host, env, cwd, stdio as `HostFile`s,
+  nesting limit), `shell.set_waker(waker)`, `shell.start(Script)`, then
+  `shell.step(budget) -> Step`: `Done(status)` (once), `Blocked` (everything waits on
+  the host or the shell is paused; the waker fires when there is work), `Yield` (budget
+  spent), `Idle` (no script). The budget counts safepoints: one before every command.
+  Shell state (variables, cwd, fds) persists across runs. `std_host::drive` is the
+  park loop the `psh` binary and psh-spec use.
+- **`!Send`.** A `Shell` holds `Rc`s (a `PhantomData<*const ()>` makes it explicit):
+  create and step it on one thread. That fits pi-env's thread per exec, psh-spec's
+  worker threads and the JS event loop. `ControlHandle` is `Send + Sync`.
+- **Stack (D1050).** Nested futures are polled recursively, so nesting within one task
+  (compound commands now, function calls and `eval`/`source` later) uses native stack:
+  measured about 5 KiB per level in release builds and 15 KiB in debug builds
+  (`examples/stackprobe.rs`). `ShellConfig::max_depth` (default 1000) bounds the
+  nesting and fails with "maximum nesting level exceeded" instead of overflowing;
+  embedders run the engine on a thread with `std_host::ENGINE_STACK` (20 MiB, only
+  touched pages cost). On wasm32 (1 MiB stack by default) use a limit around 150 or link
+  a larger stack. Subshells, pipeline stages and substitutions are tasks of their own
+  and do not deepen the stack.
 - **Virtual processes.** Subshells, pipeline stages (including compound commands and
-  functions), `$(…)`, `<(…)` and `&` jobs are vprocs inside the engine, scheduled
-  cooperatively. Nothing forks; this is also what makes Windows and WASM possible.
-  Pipeline stages run concurrently, never one after another (pipe buffers would
-  deadlock).
-- **Control.** A `ControlHandle` (an atomic control word: cancel, pause, signal) is
-  checked at every safepoint (each command and loop iteration at least). Cancel delivers
-  a virtual TERM to the vprocs (traps run), then KILL after a grace period. A late
-  cancel never leaks into the next run.
+  functions), `$(…)`, `<(…)` and `&` jobs are vprocs: a task owning a copy of the
+  parent's state (`Vp`: variables, positional parameters, cwd, fd table, `$?`).
+  Nothing forks; this is also what makes Windows and WASM possible. Pipeline stages run
+  concurrently, never one after another (pipe buffers would deadlock).
+- **Control (D1051).** A `ControlHandle` (an atomic control word: cancel, pause) is
+  checked at every safepoint and before every poll. Cancel drops every task: that is
+  the virtual TERM's default action (traps come later), the run ends with 143, and
+  dropping is what releases everything, since every host resource is released by
+  `Drop` (externals abandoned: TERM, grace, KILL, background reap; files and pipes
+  closed). `start` clears the control word, so a late cancel never leaks into the next
+  run; after a cancel the shell continues from its state before the cancelled run.
 - **Wakeups.** `std::task::Waker` only. Every pending thing the engine polls (an
-  external process, a host fs op, a pipe, a timer) is polled with a `Context` built from
-  the engine's waker. No runtime, no threads inside the engine.
-- **Pipes between vprocs** are in-memory engine objects. Pipes between two externals are
-  OS pipes handed to both, with no pumping. Only engine↔external pipes need pumps.
-- **Here-docs and here-strings** are engine fd objects fed through the same pollable
-  pipe machinery; large or seekable bodies go to a host temp file. A body is never
-  written synchronously before its consumer starts.
+  external process, a host fs op, a pipe, a timer) is polled with the task's waker.
+- **Values are bytes (D1053).** Variables, words and paths are `Vec<u8>`; char-wise
+  operations (`${#x}`, patterns) decode UTF-8 when `LC_ALL`/`LC_CTYPE`/`LANG` says
+  UTF-8, else work on bytes. Messages are `$0: line N: …` as in bash.
+- **Pipes between vprocs (D1054)** are in-memory engine objects (64 KiB, reader and
+  writer counts; writing without readers ends the vproc with status 141, its SIGPIPE).
+  Externals get host pipes, and the engine pumps between those and its objects; the
+  pumps are polled inside the wait for the external, so a cancel drops them too. Input
+  pumps stop when the external exits (so a vproc writing to it gets EPIPE); the command
+  completes when the external has exited *and* its output pumps reached EOF.
+  Descriptors that share one engine object (`|&`, `2>&1` into a pipe) share one host
+  pipe, so ordering survives. Pipes between two externals are still pumped in v1;
+  passing OS pipes directly is for 0006.
+- **Here-docs and here-strings (D1054)** are pipes preloaded with the expanded body and
+  no writer: nothing is written into a kernel pipe before its consumer runs. Large
+  seekable bodies through a host temp file are a later option.
+- **`/dev/stdin`, `/dev/stdout`, `/dev/stderr`, `/dev/fd/N`** in redirections always
+  refer to the vproc's descriptors (embedded, the process's are not the shell's; D1055).
 - **Shell builtins** (`cd`, `export`, `set`, `trap`, `read`, `printf`, `test`, `kill`,
-  `wait`, ...) are part of the engine. Job control is limited to `&`, `wait`, `kill`,
-  `$!`, `jobs` (D002).
-- **Expansion** (parameters, arithmetic as 64-bit, globbing, brace expansion, quote
-  removal, word splitting) is engine code over the AST; globbing reads directories
-  through the host.
+  `wait`, ...) are part of the engine, async functions on the calling vproc. Job control
+  is limited to `&`, `wait`, `kill`, `$!`, `jobs` (D002). When a script ends, detached
+  vprocs (`cmd &`) get one more round; their externals still running are released,
+  not killed (bash leaves background jobs running).
+- **Expansion** (brace expansion, tilde, parameters, command substitution, arithmetic
+  as 64-bit, word splitting, globbing, quote removal) is engine code over the AST;
+  globbing reads directories through the host. Features not implemented yet fail
+  loudly (`X: not supported yet`, status 2) rather than doing something else (D1057).
 
 ### The Host trait
 
-Every side effect goes through one trait, with pollable operations so that any of them
-may be `Pending`:
+Every side effect goes through one trait (`host.rs`, D1052), with pollable operations
+so that any of them may be `Pending`. File system operations return
+`HostFuture<T> = Pin<Box<dyn Future<Output = T>>>`; paths are bytes, absolute, `/`
+separated, converted at the host's boundary.
 
-- `spawn(spec) -> ExtProc` where spec carries argv, cwd, env, the fd table (engine pipe
-  ends, OS fds, files, null) and placement (own process group / job). `ExtProc` has
-  `poll_wait(cx) -> Poll<ExitStatus>`, `signal(sig)`, and drop = abandon (TERM, grace,
-  KILL, background reap).
-- File system: open, stat, read_dir, mkdir, remove, rename, symlink, ... each may return
-  `Pending`. Open files expose `poll_read` / `poll_write`.
-- Timers (`sleep`, `timeout`, `read -t`), clock, temp files, environment of the host
-  process, user and host names.
-- `resolve(name)` for command lookup (PATH, PATHEXT on Windows) and a hook where an
-  embedder can veto or rewrite a command at execution time (approval at exec time).
+- `spawn(SpawnSpec) -> Spawned`: argv (with `argv[0]` as written), the resolved
+  program, cwd, the complete env, and the child's descriptors as `ChildFd` (`File`: a
+  file of this host, passed as is; `Pipe`: a new pipe whose other end the engine pumps;
+  `Dup(n)`: the same as descriptor n; `Null`). `ExtProc` has `poll_wait(cx)`,
+  `signal(sig)`, `release()` (keep running, reap in the background), and drop =
+  abandon (TERM, grace, KILL, background reap).
+- File system: `open` (`OpenOptions`), `stat`/`lstat`, `access`, `read_dir`,
+  `canonicalize`; open files are `HostFile`s with `poll_read`/`poll_write` and
+  `is_terminal`. To come with their features: mkdir, remove, rename, symlink, temp
+  files, umask, FIFOs.
+- `resolve(name, PATH, cwd)` for command lookup (PATH, PATHEXT on Windows); a hook
+  where an embedder can veto or rewrite a command at execution time is planned
+  (approval at exec time).
+- `sleep` (timers), `pid` (`$$`). To come: clock, user and host names, signals to
+  process groups (`kill`).
 
 Hosts:
 
 | Host | Where | Notes |
 | --- | --- | --- |
-| `psh-os::unix` | macOS, Linux, Android | Below |
+| `psh-os::unix` | macOS, Linux, Android | Below (0006) |
 | `psh-os::windows` | Windows | Below |
-| test host | `psh-engine` tests | In-memory fs and fake processes; a latency mode makes every op `Pending` to prove no engine path expects synchronous answers |
+| `psh_engine::std_host` | `psh`, psh-spec until 0006 | std `Command`, a waiter thread per child polling `try_wait`, helper threads per pump, KILL only, no process groups; regular files and the shell's own stdio are read and written synchronously |
+| test host | `psh_engine::testhost` | In-memory fs, fake commands written as futures, captured stdio; a latency mode makes every op `Pending` once to prove no engine path expects synchronous answers; counts live processes, pipes and files for leak checks |
 | JS host | `psh-wasm` | Virtual fs, host-provided commands, driven from the JS event loop |
 
 ## psh-os: the OS hosts

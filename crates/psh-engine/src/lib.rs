@@ -86,10 +86,11 @@ pub struct ShellConfig {
 }
 
 impl ShellConfig {
-    /// Native stack an embedder should budget per nesting level (measured, with
-    /// headroom; D1050).
-    pub const STACK_PER_LEVEL: usize = 8 * 1024;
-    /// The default nesting limit: 1000 levels need about 8 MiB of stack.
+    /// Native stack an embedder should budget per nesting level: measured about
+    /// 5 KiB in release and 15 KiB in debug builds (`examples/stackprobe.rs`, D1050).
+    pub const STACK_PER_LEVEL: usize = 16 * 1024;
+    /// The default nesting limit: 1000 levels need up to 16 MiB of stack. On wasm32
+    /// (1 MiB stack by default) use about 150, or link with a larger stack.
     pub const DEFAULT_MAX_DEPTH: u32 = 1000;
 
     /// A config with closed stdio, an empty environment and `/` as the working
@@ -180,6 +181,7 @@ impl Shell {
             dash_c: Cell::new(false),
             max_depth: cfg.max_depth,
             jobs: Cell::new(0),
+            release_on_drop: Cell::new(false),
         });
         let mut vars = Vars::default();
         let mut foreign = Vec::new();
@@ -296,7 +298,9 @@ impl Shell {
                         .expect("main result");
                     // Give detached vprocs (`cmd &`) what is ready, then drop the rest.
                     self.core.sched.run(budget, &|| false);
+                    self.core.release_on_drop.set(true);
                     self.core.sched.drop_all();
+                    self.core.release_on_drop.set(false);
                     self.vp = Some(vp);
                     return Step::Done(status);
                 }

@@ -163,6 +163,9 @@ pub enum ChildFd {
     /// [`Spawned::pipes`]), which it pumps to or from an engine object. `input` is a
     /// pipe the child reads from.
     Pipe { input: bool },
+    /// The same as an earlier descriptor of the list (`|&`, `2>&1` into a pipe: one
+    /// pipe, so the order of the writes survives).
+    Dup(u32),
     /// The null device.
     Null,
 }
@@ -184,6 +187,9 @@ pub struct SpawnSpec {
 pub trait ExtProc {
     fn poll_wait(&mut self, cx: &mut Context<'_>) -> Poll<ExitStatus>;
     fn signal(&mut self, sig: Signal);
+    /// Lets the process run on: no signal, reaped in the background (`nohup`, and
+    /// background jobs still running when the shell exits, as bash leaves them).
+    fn release(self: Box<Self>);
 }
 
 pub struct Spawned {

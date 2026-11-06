@@ -487,6 +487,10 @@ impl ExtProc for FakeExt {
         }
     }
 
+    fn release(self: Box<Self>) {
+        // A fake cannot run without being polled: released, it simply stops.
+    }
+
     fn signal(&mut self, sig: Signal) {
         if self.status.is_none() {
             // The fake dies at once: dropping its future closes its pipes.
@@ -687,9 +691,15 @@ impl Host for TestHost {
             .ok_or(io::ErrorKind::NotFound)?;
         let mut stdio: [Option<Rc<dyn HostFile>>; 3] = [None, None, None];
         let mut pipes = Vec::new();
+        let mut given: Vec<(u32, Rc<dyn HostFile>)> = Vec::new();
         for (n, fd) in spec.fds {
             let theirs: Rc<dyn HostFile> = match fd {
                 ChildFd::File(f) => f,
+                ChildFd::Dup(m) => given
+                    .iter()
+                    .find(|(k, _)| *k == m)
+                    .map(|(_, f)| f.clone())
+                    .ok_or(io::ErrorKind::InvalidInput)?,
                 ChildFd::Null => Rc::new(NullFile),
                 ChildFd::Pipe { input } => {
                     let (r, w) = self.pipe_pair();
@@ -702,6 +712,7 @@ impl Host for TestHost {
                     }
                 }
             };
+            given.push((n, theirs.clone()));
             if (n as usize) < 3 {
                 stdio[n as usize] = Some(theirs);
             }

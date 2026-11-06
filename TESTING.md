@@ -168,8 +168,10 @@ at scale) and syntax ranking. Running anything is never involved.
 
 - Reads the Oils `.test.sh` format (following Oils' `sh_spec.py` exactly, so each case
   runs the same bytes) and the subset of brush's YAML the cases use (hand parser).
-- Runs psh **in-process** (new shell, real-fs host, temp cwd; a stub until the engine
-  runs commands) wherever possible; `--shell PATH` runs a shell binary as a subprocess
+- Runs psh **in-process** (a new shell per case on its own engine thread over the std
+  host, the case's cwd and environment, OS pipes for stdout and stderr, a fake `$$`)
+  wherever possible; cases that mention `$PPID` run in the `psh` binary, since their
+  children signal their parent (D1056); `--shell PATH` runs a shell binary as a subprocess
   in its own process group, killed with all its children on timeout and after it exits.
   The same comparison checks the runner itself: bash 5.3 must pass its own goldens
   except for documented platform differences (on macOS: BSD utilities, libc, a

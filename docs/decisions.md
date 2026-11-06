@@ -741,3 +741,93 @@ A word that starts with `$HOME`, `${HOME}`, `$PWD` or `${PWD}` (quoted or not) c
 an option for the dynamic-option rule of D1092: both are absolute paths in practice (PWD
 always, HOME by every platform's convention), so `rg x "$HOME/.config"` is read. Their
 values are still not substituted.
+## D1050: The interpreter is async fns polled by the engine's own scheduler
+date: 2026-11-07 · by: engine · issue: 0005
+The interpreter is a tree walker written as Rust `async fn`s over the arena AST; the
+engine owns a ~300-line scheduler (no crate, no threads) that polls vprocs and helper
+tasks as boxed futures, each with its own `std::task::Waker`; a wake queues only that
+task and wakes the embedder's waker. Reason: expansion must wait in the middle of a word
+(`"${x:=a}$(cmd)"`, side effects in order) and every compound command anywhere; frame
+machines written by hand would be several times the code and fragile, the compiler
+generates them. It keeps D005's substance (no runtime crate, no engine threads, Waker
+only, the embedder steps and parks); coordinator-approved. Conditions, all designed in:
+(1) nesting within a task uses native stack (measured ~5 KiB/level release, ~15 KiB
+debug, `examples/stackprobe.rs`): `ShellConfig::max_depth` (default 1000) fails with
+"maximum nesting level exceeded", embedders run the engine with
+`std_host::ENGINE_STACK` (20 MiB), wasm32 embedders use ~150 or a larger stack;
+(2) cancel = dropping tasks, so every host resource is released by `Drop` (externals
+abandoned, files and pipes closed), tested with the test host's live counters;
+(3) per-task wake queue, so unrelated vprocs are not polled; measured ~1 µs per builtin
+command in release (100k `true`s in 0.08 s with parsing); (4) `Shell` is `!Send`
+(explicit `PhantomData<*const ()>`). Alternatives: hand-written frame machines
+(oh-my-pi's IR VM), threads per vproc (ruled out by D005).
+
+## D1051: Step API and control
+date: 2026-11-07 · by: engine · issue: 0005
+`Shell::step(budget) -> Step::{Done(status), Blocked, Yield, Idle}`; the budget counts
+safepoints (one before each command; loops will add one per iteration). `Done` is
+reported once. A `ControlHandle` (`Send + Sync`) sets cancel or pause bits; safepoints
+and the scheduler check them. Cancel drops all tasks (the virtual TERM's default action
+until traps exist) and ends the run with 143; `start` clears the bits, so a late cancel
+never reaches the next run; the shell continues from its state before the cancelled run.
+Pause makes `step` return `Blocked` until `resume` wakes the waker. When the main vproc
+finishes, detached tasks get one more round, then are dropped with their externals
+released rather than killed (bash leaves background jobs running).
+
+## D1052: Host trait v1
+date: 2026-11-07 · by: engine · issue: 0005
+`psh_engine::host::Host`: `open`, `stat`, `access`, `read_dir`, `canonicalize`,
+`resolve` return `HostFuture<T>` (a boxed std `Future`; a host answers at once with
+`ready`, the test host's latency mode is `Pending` once); `spawn` is synchronous and
+returns an `ExtProc` (`poll_wait`, `signal`, `release`; drop = abandon) plus the engine's
+ends of `ChildFd::Pipe`s; `sleep`, `pid`. Files are `HostFile` (`poll_read`,
+`poll_write`, `is_terminal`, `Any` for downcasting by their own host). Paths are bytes,
+absolute and `/`-separated. Expected additions: for 0006, process groups and signals to
+groups, extra child fds (>2), umask, FIFO opens off-thread, temp files, a real `access`;
+for the utilities (0008), mkdir/remove/rename/symlink/metadata setters and a way to run
+a utility body on a worker thread polled like an `ExtProc`; for pi-env, an exec-time
+approval hook in `resolve`/`spawn`.
+
+## D1053: Shell values are bytes
+date: 2026-11-07 · by: engine · issue: 0005
+Variable values, fields, argv, env and paths are `Vec<u8>` in the engine (names of shell
+variables are `String`, always ASCII). Char-wise operations decode UTF-8 when the locale
+variables say UTF-8 (`LC_ALL`, then `LC_CTYPE`, then `LANG`), else work on bytes; bytes
+that are not valid UTF-8 count one by one. Reason: command output and `$'\xff'` are
+arbitrary bytes, and bash is byte-exact. Scripts themselves are parsed as UTF-8 (lossy).
+
+## D1054: Engine pipes, pumps and here-documents
+date: 2026-11-07 · by: engine · issue: 0005
+Pipes between vprocs are in-memory (64 KiB, as Linux); writing without readers ends the
+vproc with status 141. Externals get host pipes for descriptors that are engine
+objects; the pumps are state machines polled inside the wait for the external (not
+tasks), so dropping the wait drops them: input pumps stop when the external exits,
+output pumps run to EOF before the command completes (pitfall 7; bounded draining for
+grandchildren holding the pipe is 0006). Descriptors sharing one engine object share
+one host pipe (`ChildFd::Dup`). Here-documents and here-strings are pipes preloaded
+with the expanded body and no writer: no body is written into a kernel pipe before its
+consumer starts (pitfall 2), and an external gets it through an ordinary pump.
+
+## D1055: /dev/stdin, /dev/stdout, /dev/stderr and /dev/fd/N are emulated
+date: 2026-11-07 · by: engine · issue: 0005
+In redirections these names always duplicate the vproc's own descriptors, on every
+platform. Reason: embedded (pi-env, psh-spec in-process) the process's descriptors are
+not the shell's, and Windows has no such files. bash does the same where the OS lacks
+them.
+
+## D1056: psh-spec runs psh in-process, with two exceptions
+date: 2026-11-07 · by: engine · issue: 0005
+Each case gets a fresh shell on its own engine thread (`ENGINE_STACK`) over the std
+host, with OS pipes for stdout and stderr (externals write to them directly) and the
+case's cwd and environment. `$$` is a fake pid (99999999) so `kill … $$` cannot hit the
+runner. Cases whose arguments or stdin mention `PPID` run in the `psh` binary as a
+subprocess instead: their children signal their parent, which in-process is the runner.
+The command line (`-c`, `-s`, file, stdin) is parsed by `psh_engine::invocation`, shared
+with the `psh` binary.
+
+## D1057: Unimplemented features fail loudly
+date: 2026-11-07 · by: engine · issue: 0005
+A construct the engine does not run yet (`if`, functions, arrays, arithmetic, `set -e`,
+...) prints `NAME: line N: X: not supported yet` and fails with status 2; inside an
+expansion it ends the (sub)shell like other expansion errors. Never a silent
+different behavior; the messages double as a feature histogram for the hit list.

@@ -21,6 +21,7 @@ clippy:1800
 test:1800
 deps:300
 wasm:1800
+msrv:1800
 script-tests:300
 "
 # Later legs go here, above this line and in run_leg: the spec ratchets per layer
@@ -42,6 +43,21 @@ run_leg() {
       check_deps psh-engine "psh-syntax"
       ;;
     wasm) cargo build -p psh-syntax -p psh-engine --target wasm32-unknown-unknown --locked ;;
+    msrv)
+      # The workspace builds with the MSRV (rust-version in Cargo.toml), not only with
+      # the current stable that development uses.
+      local msrv t tc=
+      msrv=$(sed -n 's/^rust-version = "\(.*\)"/\1/p' Cargo.toml)
+      # rust-version "1.96" is satisfied by the toolchain 1.96 or 1.96.0.
+      for t in "$msrv" "$msrv.0"; do
+        if [ -z "$tc" ] && rustup run "$t" rustc --version >/dev/null 2>&1; then tc=$t; fi
+      done
+      if [ -z "$tc" ]; then
+        echo "gate: the MSRV toolchain is missing: rustup toolchain install $msrv" >&2
+        return 1
+      fi
+      cargo "+$tc" check --workspace --all-targets --locked
+      ;;
     script-tests)
       bash scripts/test-timeout.sh
       bash scripts/test-merge-to-main.sh

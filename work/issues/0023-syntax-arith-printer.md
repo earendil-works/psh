@@ -37,6 +37,47 @@ engine agent builds the interpreter (0005), so the two don't collide.
 
 ## Log
 
+### 2026-11-07: proposed API (for 0005, via the coordinator)
+Arithmetic, in `psh_syntax::arith` (re-exported at the crate root), over the *expanded*
+text as bytes; spans are byte offsets into that text:
+
+```rust
+pub fn parse_arith(text: &[u8]) -> Result<Option<ArithExpr>, ArithError>; // None: blank text (value 0)
+
+pub struct ArithExpr { pub span: Span, pub kind: ArithKind,
+                       pub last: u32 }        // start of its last token (runtime error tokens)
+pub enum ArithKind {
+    Num(i64),                                  // decoded: 10, 0x1f, 017, 64#@_, wraps like bash
+    Var(LValue),                               // x, a[i+1]
+    Unary { op: UnaryOp, expr: Box<ArithExpr> },             // + - ! ~
+    IncDec { target: LValue, inc: bool, post: bool },        // ++x x++ --x x--
+    Binary { op: BinOp, lhs: Box<ArithExpr>, rhs: Box<ArithExpr> }, // ** * / % + - << >> < <= > >= == != & ^ | && || ,
+    Cond { cond: Box<ArithExpr>, then: Box<ArithExpr>, otherwise: Box<ArithExpr> },
+    Assign { target: LValue, op: Option<BinOp>, value: Box<ArithExpr> }, // = *= /= %= += -= <<= >>= &= ^= |=
+}
+pub struct LValue { pub span: Span, pub name: Span,
+                    pub index: Option<Span> }  // raw subscript text: arithmetic for indexed
+                                               // arrays, a key for associative ones (engine decides)
+pub struct ArithError { pub kind: ArithErrorKind, pub token: u32 /* "error token is" starts here */,
+                        pub prefix: Option<Span> /* None: the whole expression */ }
+impl ArithError {
+    pub fn message(&self) -> &'static str;     // "arithmetic syntax error: operand expected", ...
+    pub fn bash_text(&self, text: &[u8]) -> String; // `1 + : arithmetic syntax error: operand expected (error token is "+ ")`
+}
+```
+
+The caller adds bash's context prefix (`bash: line N: `, `let: `, `((: `). Bash evaluates while
+it parses; with a separate parse, a syntax error after a runtime error (`1/0 +`) is reported
+as the syntax error, where bash reports division by 0 (rare; noted).
+
+Offered, if the engine agent wants it: a pure evaluator in psh-syntax,
+`pub fn eval_arith(expr: &ArithExpr, text: &[u8], env: &mut dyn ArithEnv) -> Result<i64, ArithError>`
+with `trait ArithEnv { fn get(&mut self, name: &[u8], index: Option<&[u8]>) -> Result<Option<Vec<u8>>, ArithError>; fn set(&mut self, name: &[u8], index: Option<&[u8]>, value: i64) -> Result<(), ArithError>; }`,
+handling bash's rules (values of variables evaluated recursively with the recursion limit,
+short-circuit `&&`/`||`/`?:`, wrapping 64-bit math, shifts mod 64, `division by 0`,
+`exponent less than 0`, error tokens like bash's). About 250 lines; the engine would only
+supply variables.
+
 ## Follow-ups
 
 ## Result

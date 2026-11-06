@@ -3,7 +3,7 @@
 status: open
 agent: -
 branch: issue/0014-utils-sed
-depends-on: 0008
+depends-on: 0008, 0013 (BRE/ERE translator)
 touches: crates/psh-utils/src/sed*, tests/utils/sed/
 guide: utilities.md (not written yet), utilities reference (not written yet)
 decisions: D1140–D1149
@@ -22,12 +22,17 @@ decisions: D1140–D1149
       for every branch, including `sed -i '' -e …`, `sed -i.bak`, `sed -i 's/a/b/' f`.
 - [ ] Each utility registered with its mode; unsupported flags fall through or fail
       clearly (tested per utility).
-- [ ] L4 cases in `tests/utils/<name>/` for every flag listed below, recorded against
+- [ ] L4 cases in `tests/utils/<name>/` for every flag listed above, recorded against
       GNU and BSD, with the D016 rule named where they conflict.
 - [ ] Attribution headers and `NOTICE` entries for ported code.
 - [ ] just-bash's recorded GNU fixtures (Apache) reused where they help.
 
 ## Notes
+- Regexes go through 0013's BRE/ERE translator and the regex crate. Backreferences
+  (`\1` in patterns) and leftmost-longest-sensitive `s///` fall through until psh's
+  own backtracking matcher and longest-match mode exist (ARCH.md "Search", D020).
+  Backreferences in the *replacement* (`\1`, `&`) are ordinary capture groups and must
+  work.
 - oh-my-pi has a sed port (MIT) worth comparing with. GNU sed's source is off limits.
 
 ## Log

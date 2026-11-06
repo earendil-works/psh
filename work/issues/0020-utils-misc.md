@@ -20,7 +20,8 @@ date env printenv nice nohup which`.
       -r -s`; `shasum -a ALG -c -b`.
 - [ ] `date`: GNU `-d STRING -I -R --rfc-3339 +%N`, BSD `-v±N[ymwdHMS] -j -f`, `-u`,
       `-r` per D016, real local TZ. `-d` parsing needs a decision on `parse_datetime`
-      (ARCH.md open question 6); fall through until then.
+      (ARCH.md open question 6); fall through until then. The date parser is shared:
+      `touch -d` (0015), `find -newermt` (0017) and `fd --changed-*` (0013) use it.
 - [ ] `env`/`printenv`: `-i -u -S -C`, `NAME=val cmd`, dispatch into the shell.
 - [ ] `nice -n N cmd` (setpriority; `BELOW_NORMAL_PRIORITY_CLASS` on Windows; no-op
       wrapper in WASM). `nohup`: detached from the shell's cancellation, ignores HUP, no
@@ -28,7 +29,7 @@ date env printenv nice nohup which`.
 - [ ] `which` (`-a`): reports utilities and PATH hits, exit 1 when nothing is found.
 - [ ] Each utility registered with its mode; unsupported flags fall through or fail
       clearly (tested per utility).
-- [ ] L4 cases in `tests/utils/<name>/` for every flag listed below, recorded against
+- [ ] L4 cases in `tests/utils/<name>/` for every flag listed above, recorded against
       GNU and BSD, with the D016 rule named where they conflict.
 - [ ] Attribution headers and `NOTICE` entries for ported code.
 

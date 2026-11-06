@@ -23,7 +23,7 @@ implementation. Port goawk (MIT) to Rust (D018); F mode until conformant, then S
 - [ ] Switch to S mode only when both suites pass (coordinator decision, recorded).
 - [ ] Each utility registered with its mode; unsupported flags fall through or fail
       clearly (tested per utility).
-- [ ] L4 cases in `tests/utils/<name>/` for every flag listed below, recorded against
+- [ ] L4 cases in `tests/utils/<name>/` for every flag listed above, recorded against
       GNU and BSD, with the D016 rule named where they conflict.
 - [ ] Attribution headers and `NOTICE` entries for ported code.
 

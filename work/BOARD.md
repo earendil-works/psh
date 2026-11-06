@@ -28,19 +28,19 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | 0010 | pi-env integration behind a flag | 0006, 0007, L3 high |
 | 0011 | WASM build and JS host | 0005 |
 | 0012 | Guide check tool | 0001 |
-| 0013 | Utilities B: grep, egrep, fgrep, rg (fd) | 0008; rg/fd section of builtins.md |
-| 0014 | Utilities C: sed | 0008 |
+| 0013 | Utilities B: rg, fd, grep + shared search layer | 0008; D020 confirmed |
+| 0014 | Utilities C: sed | 0008, 0013 |
 | 0015 | Utilities D: files and paths (17 names) | 0008 |
 | 0016 | Utilities E: text filters (9 names) | 0008 |
-| 0017 | Utilities F: find, xargs | 0008, 0006 |
+| 0017 | Utilities F: find, xargs | 0008, 0006, 0013 |
 | 0018 | Utilities G: jq | 0008; jaq decision |
 | 0019 | Utilities H: awk (goawk port) | 0008 |
 | 0020 | Utilities I: diff, checksums, base64, date, env, nice, nohup, which | 0008, 0006 |
 | 0021 | Utilities Tier 2 (umbrella, to be split) | Tier 1 |
 
 Language areas (expansion, execution, shell builtins) are cut from the hit list once
-0002 and 0005 have landed. 0008 + 0013–0020 are Tier 1 (61 names); 0013–0020 can run in
-parallel once 0008's registry and context exist. Tier 3 utilities are on demand.
+0002 and 0005 have landed. 0008 + 0013–0020 are Tier 1 (62 names); once 0008's registry and context exist,
+0013, 0015, 0016, 0018, 0019, 0020 run in parallel, and 0014/0017 follow 0013. Tier 3 utilities are on demand.
 
 ## Owner decisions pending
 
@@ -55,7 +55,8 @@ parallel once 0008's registry and context exist. Tier 3 utilities are on demand.
 | psh's license | README.md |
 | Utility dialect points: `ls -G`/`-T`, `xargs` on empty input, `sort` collation | 0015, 0016, 0017 |
 | Never-builtins beyond the owner rule: `git`, `curl`/`wget`, `ssh`/`rsync`, other proposals (D014) | ARCH.md "Never builtins" |
-| Utility crates: jaq, `grep -P` backend, `parse_datetime`, archives, `sysinfo`, `encoding_rs` | 0013, 0018, 0020, 0021 |
+| D020: search crate set and approach (proposed) | 0013, 0014, 0017 |
+| Utility crates: jaq, `parse_datetime`, archives, `sysinfo`, `serde_json` (`rg --json`) | 0018, 0020, 0021 |
 
 ## Done
 

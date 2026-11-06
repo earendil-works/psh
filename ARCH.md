@@ -27,9 +27,12 @@ The guide's `docs/guide/goals.md` is the human-facing statement of these. In sho
   messages. Deviations are recorded decisions.
 - **Understandable commands.** The parser is a product: hosts classify, summarize and
   approve commands with the exact parser that runs them.
-- **Controlled execution.** Cancel, timeouts and process-tree kill with no orphans; the
+
+Under all of them: permissive licensing (D007). The goals are not ranked yet (open
+question 10).
+- **Control of execution.** Cancel, timeouts and process-tree kill with no orphans; the
   embedder owns the thread.
-- **Embeddable and small.** No async runtime, near-zero dependencies, a size budget.
+- **Embeddable.** No async runtime, near-zero dependencies, a size budget.
 - **Sandboxable.** Every side effect goes through a `Host`, so the same engine runs over
   a virtual file system in WASM.
 
@@ -306,3 +309,4 @@ way for approval and another way for execution.
 7. Where the per-utility effect tables live.
 8. Whether the WASM host is needed before pi-env integration.
 9. License of psh itself (MIT, or MIT/Apache-2.0).
+10. Whether the goals are ranked, and in which order, for when they conflict.

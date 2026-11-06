@@ -1,7 +1,7 @@
 # 0002: psh-spec runner, vendored cases, recorded goldens, ratchets, status
 
-status: open
-agent: -
+status: in-progress
+agent: infra
 branch: issue/0002-spec-runner-goldens
 depends-on: 0001
 touches: crates/psh-spec/, scripts/record-goldens, scripts/status, scripts/fetch-*, docker/, tests/oils/, tests/brush/, tests/agent/, tests/goldens/, tests/spec.toml, tests/**/expected-failures.txt, tests/scores/, scripts/gate.sh (one leg), TESTING.md (the planned sections)

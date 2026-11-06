@@ -1,0 +1,139 @@
+# Goldens for tests/agent/vars-quotes.test.sh (layer agent), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: $VAR in double quotes
+status: 0
+bash-n: 0
+--- stdout
+|name: a b
+
+=== 1: unquoted variable is word-split
+status: 0
+bash-n: 0
+--- stdout
+|[1][2][3]
+
+=== 2: ${x:-default}
+status: 0
+bash-n: 0
+--- stdout
+|fallback
+|set
+
+=== 3: ${x:=default} assigns
+status: 0
+bash-n: 0
+--- stdout
+|assigned
+
+=== 4: ${x#prefix} and ${x%suffix}
+status: 0
+bash-n: 0
+--- stdout
+|main.rs src/main main.rs src
+
+=== 5: ${x/pattern/replacement}
+status: 0
+bash-n: 0
+--- stdout
+|a+b-c a+b+c
+
+=== 6: ${#x} length
+status: 0
+bash-n: 0
+--- stdout
+|5
+
+=== 7: env prefix applies to one command
+status: 0
+bash-n: 0
+--- stdout
+|FOO=bar
+|after: unset
+
+=== 8: export makes a variable visible to children
+status: 0
+bash-n: 0
+--- stdout
+|42
+
+=== 9: command substitution with $( )
+status: 0
+bash-n: 0
+--- stdout
+|[  spaced  ]
+
+=== 10: nested command substitution
+status: 0
+bash-n: 0
+--- stdout
+|nested
+
+=== 11: arithmetic expansion
+status: 0
+bash-n: 0
+--- stdout
+|11 2 2
+
+=== 12: single quotes keep everything literal
+status: 0
+bash-n: 0
+--- stdout
+|$HOME "x" \n
+
+=== 13: double quotes with escaped characters
+status: 0
+bash-n: 0
+--- stdout
+|a "quoted" $dollar \ backslash
+
+=== 14: ANSI-C quoting
+status: 0
+bash-n: 0
+--- stdout
+|tab	here
+|nl\n
+
+=== 15: printf with format and arguments
+status: 0
+bash-n: 0
+--- stdout
+|a=1
+|b=2
+
+=== 16: $? after a failing command
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 17: set -u fails on an unset variable
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 2: UNSET_VAR_XYZ: unbound variable
+
+=== 18: special parameters in -c with arguments
+status: 0
+bash-n: 0
+--- stdout
+|zero one 1
+
+=== 19: quotes inside command substitution inside quotes
+status: 0
+bash-n: 0
+--- stdout
+|result: a b
+
+=== 20: assignment of a multi-line value
+status: 0
+bash-n: 0
+--- stdout
+|2
+
+=== 21: unset variable expands to nothing
+status: 0
+bash-n: 0
+--- stdout
+|[]

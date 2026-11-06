@@ -1,6 +1,6 @@
 # 0002: psh-spec runner, vendored cases, recorded goldens, ratchets, status
 
-status: in-progress
+status: done
 agent: infra
 branch: issue/0002-spec-runner-goldens
 depends-on: 0001
@@ -40,14 +40,14 @@ list", "The runner") and `research/hillclimb.md`.
 - [x] Runner self-check: `/opt/homebrew/bin/bash` through the external engine against
       the goldens. Every mismatch is explained in the Log (platform utility
       differences, normalization gaps) and the runner fixed where it is wrong.
-- [ ] A first `tests/agent/` set (L3) of at least 100 cases written to the patterns in
+- [x] A first `tests/agent/` set (L3) of at least 100 cases written to the patterns in
       `research/corpus.md` §4 and §9, recorded like the rest.
 - [x] `expected-failures.txt` per layer with every active case (0%), and a gate leg that
       runs the ratchets.
 - [x] `scripts/status` (summary per layer and area, appended to
       `tests/scores/status.tsv`) and `--hitlist` (failures weighted by
       `research/corpus/results.json` `features`).
-- [ ] TESTING.md's *(planned)* sections updated to what was built (only those sections).
+- [x] TESTING.md's *(planned)* sections updated to what was built (only those sections).
 
 ## Notes
 - `research/spec-harness/` holds the earlier harness (Dockerfile, `SUITE-compat.txt`,
@@ -128,6 +128,14 @@ list", "The runner") and `research/hillclimb.md`.
   rarest construct (D1028), detected lexically; a minimal JSON reader in psh-spec reads
   results.json (no dependency). The top areas today: assignments, word splitting,
   printf, globbing, parse errors, quoting, redirections.
+- 2026-11-06, part 3 (L3): 144 agent cases in 7 files (`tests/agent/*.test.sh`: cd
+  chains, pipes/output limiting, redirects, here-docs, variables/quoting, globs/status,
+  control flow), recorded, deterministic over two checks, all on the ratchet (the stub
+  passes none). `sed -i ''` and other dialect questions are left to L4: the GNU golden
+  would contradict psh's deliberate dialect (D016). Homebrew self-check: 134/144; the 10
+  differences are BSD `wc`/`uniq` padding, `ls` exit status 1 vs 2, and `timeout`
+  missing on macOS (the corpus's most common "command not found").
+- Docs: TESTING.md (all formerly planned sections of 0002), `tests/agent/README.md`.
 
 ## Follow-ups
 - Platform-dependent cases: the goldens are Linux/GNU; on macOS and Windows, cases
@@ -142,3 +150,23 @@ list", "The runner") and `research/hillclimb.md`.
   lexical approximation.
 
 ## Result
+Landed in three parts (main 21dc1ab, 7d5d158, and the L3 merge):
+
+- **Cases**: L1 Oils (134 files, 2,745 cases; 2,511 active), L2 brush (133 files, 3,687
+  cases; 3,171 active, 51 later), L3 agent (7 files, 144 active). Vendored copies are
+  reproducible with `scripts/fetch-oils` / `scripts/fetch-brush [--check]`.
+- **Goldens**: `scripts/record-goldens [--check] [FILTER...]` records in the pinned
+  container (bash 5.3.9, Debian 13) into `tests/goldens/<layer>/<file>.golden`, with
+  `bash -n` per case and `tests/goldens/shapes/bash-n.txt` for the shape corpus.
+- **Runner**: `cargo run -p psh-spec -- [FILTER...] [--diff] [--layer L] [-j N]`;
+  `--shell PATH` for another shell (the bash self-check); `--update-ratchet`,
+  `--add-failures`, `--summary FILE`, `--list`, `--keep`.
+- **Groups and ratchets**: `tests/spec.toml`; `tests/<layer>/expected-failures.txt`; the
+  gate leg `spec` (seconds). Gate legs are now files in `scripts/gate.d/`.
+- **Status**: `scripts/status [--hitlist] [-n N] [--no-append]`, history in
+  `tests/scores/status.tsv`.
+
+Known gaps: the in-process engine is a stub until 0005 (the gate measures the stub);
+cases that call external programs depend on the platform's programs (see Follow-ups);
+the hit list detects constructs lexically; Windows runs psh-spec's unit tests but not
+the cases.

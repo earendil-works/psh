@@ -1,0 +1,199 @@
+# Goldens for tests/agent/cd-chains.test.sh (layer agent), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: cd into a subdirectory and list it
+status: 0
+bash-n: 0
+--- stdout
+|a.rs
+|b.rs
+--- dir proj
+--- dir proj/src
+--- file proj/src/a.rs
+--- file proj/src/b.rs
+
+=== 1: cd into the directory we are already in
+status: 0
+bash-n: 0
+--- stdout
+|work
+--- dir work
+
+=== 2: cd with a relative path, then a pipeline
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+--- dir a
+--- dir a/b
+--- file a/b/f.txt
+|one
+|two
+|three
+
+=== 3: failing cd stops the && chain
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: cd: does-not-exist: No such file or directory
+
+=== 4: failing cd does not stop a ; chain
+status: 0
+bash-n: 0
+--- stdout
+|still here
+|case
+--- stderr
+|bash: line 1: cd: does-not-exist: No such file or directory
+
+=== 5: cd in a subshell does not leak
+status: 0
+bash-n: 0
+--- stdout
+|inner
+|case
+--- dir inner
+
+=== 6: cd - returns to the previous directory
+status: 0
+bash-n: 0
+--- stdout
+|x
+--- dir x
+--- dir y
+
+=== 7: cd then a here-doc fed to a shell
+status: 0
+bash-n: 0
+--- stdout
+|in d
+--- dir d
+
+=== 8: cd then sed -n range read
+status: 0
+bash-n: 0
+--- stdout
+|10
+|11
+|12
+|13
+--- dir repo
+--- file repo/lines.txt
+|1
+|2
+|3
+|4
+|5
+|6
+|7
+|8
+|9
+|10
+|11
+|12
+|13
+|14
+|15
+|16
+|17
+|18
+|19
+|20
+|21
+|22
+|23
+|24
+|25
+|26
+|27
+|28
+|29
+|30
+|31
+|32
+|33
+|34
+|35
+|36
+|37
+|38
+|39
+|40
+|41
+|42
+|43
+|44
+|45
+|46
+|47
+|48
+|49
+|50
+
+=== 9: two cd chains with ;
+status: 0
+bash-n: 0
+--- stdout
+|P
+|Q
+--- dir p
+--- file p/f
+|P
+--- dir q
+--- file q/f
+|Q
+
+=== 10: cd to an absolute path from $PWD
+status: 0
+bash-n: 0
+--- stdout
+|dir
+--- dir abs
+--- dir abs/dir
+
+=== 11: cd into a path with spaces
+status: 0
+bash-n: 0
+--- stdout
+|sub
+--- dir with space
+--- dir with space/sub
+
+=== 12: cd with a trailing slash and ..
+status: 0
+bash-n: 0
+--- stdout
+|m
+--- dir m
+--- dir m/n
+
+=== 13: cd to HOME with no argument
+status: 0
+bash-n: 0
+--- stdout
+|home
+
+=== 14: cd X && git-like status line with ||
+status: 0
+bash-n: 0
+--- stdout
+|nothing here
+--- dir r
+
+=== 15: cd chain with output limiting and 2>&1
+status: 0
+bash-n: 0
+--- stdout
+|l3
+|l4
+|cat: missing.log: No such file or directory
+--- dir logs
+--- file logs/out.log
+|l1
+|l2
+|l3
+|l4

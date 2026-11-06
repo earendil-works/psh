@@ -1,0 +1,158 @@
+# Goldens for tests/agent/redirects.test.sh (layer agent), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: 2>&1 merges stderr into stdout
+status: 0
+bash-n: 0
+--- stdout
+|out
+|err
+
+=== 1: 2>/dev/null drops errors
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+
+=== 2: >/dev/null 2>&1 silences everything
+status: 0
+bash-n: 0
+--- stdout
+|done
+
+=== 3: order matters: 2>&1 >/dev/null
+status: 0
+bash-n: 0
+--- stdout
+|err
+
+=== 4: > writes a file
+status: 0
+bash-n: 0
+--- stdout
+|hello
+--- file out.txt
+|hello
+
+=== 5: >> appends
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+--- file log.txt
+|one
+|two
+
+=== 6: &> writes both streams to a file
+status: 0
+bash-n: 0
+--- stdout
+|err
+|out
+--- file both.txt
+|out
+|err
+
+=== 7: >&2 writes to stderr
+status: 0
+bash-n: 0
+--- stdout
+|to stdout
+--- stderr
+|to stderr
+
+=== 8: < reads a file
+status: 0
+bash-n: 0
+--- stdout
+|2
+--- file in.txt
+|x
+|y
+
+=== 9: redirect to a file in a subdirectory that does not exist
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|bash: line 1: nodir/out.txt: No such file or directory
+
+=== 10: truncate with : >
+status: 0
+bash-n: 0
+--- stdout
+|0
+--- file t.txt
+
+=== 11: exec redirection for the rest of the script
+status: 0
+bash-n: 0
+--- stdout
+|via 3
+--- file fd3.txt
+|via 3
+
+=== 12: redirect a whole group
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+--- file group.txt
+|a
+|b
+
+=== 13: redirect a for loop
+status: 0
+bash-n: 0
+--- stdout
+|n3
+--- file loop.txt
+|n1
+|n2
+|n3
+
+=== 14: noclobber refuses to overwrite
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|first
+--- stderr
+|bash: line 3: keep.txt: cannot overwrite existing file
+--- file keep.txt
+|first
+
+=== 15: >| overrides noclobber
+status: 0
+bash-n: 0
+--- stdout
+|second
+--- file f.txt
+|second
+
+=== 16: stderr of a missing command
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+--- stderr
+|bash: line 1: nonexistent-cmd-xyz: command not found
+
+=== 17: redirect stdin from /dev/null
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 18: tee to a file and stdout
+status: 0
+bash-n: 0
+--- stdout
+|teed
+|teed
+--- file copy.txt
+|teed

@@ -1,0 +1,139 @@
+# Goldens for tests/agent/globs-status.test.sh (layer agent), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: glob matches files
+status: 0
+bash-n: 0
+--- stdout
+|a.txt b.txt
+--- file a.txt
+--- file b.txt
+--- file c.log
+
+=== 1: unmatched glob stays literal
+status: 0
+bash-n: 0
+--- stdout
+|*.nomatch
+
+=== 2: unmatched glob passed to ls fails
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|ls: cannot access '*.nomatch': No such file or directory
+
+=== 3: quoted glob is not expanded
+status: 0
+bash-n: 0
+--- stdout
+|*.txt
+--- file x.txt
+
+=== 4: for loop over a glob
+status: 0
+bash-n: 0
+--- stdout
+|file: one.md
+|file: two.md
+--- file one.md
+--- file two.md
+
+=== 5: for loop over an unmatched glob runs once
+status: 0
+bash-n: 0
+--- stdout
+|got: *.zzz
+
+=== 6: nullglob drops unmatched globs
+status: 0
+bash-n: 0
+--- stdout
+|start end
+
+=== 7: glob in a subdirectory
+status: 0
+bash-n: 0
+--- stdout
+|dir/sub/k.rs dir/sub/l.rs
+--- dir dir
+--- dir dir/sub
+--- file dir/sub/k.rs
+--- file dir/sub/l.rs
+
+=== 8: rm -f with a glob
+status: 0
+bash-n: 0
+--- stdout
+|keep.c
+--- file keep.c
+
+=== 9: || true hides a failure
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 10: || echo on failure
+status: 0
+bash-n: 0
+--- stdout
+|missing
+
+=== 11: ; echo exit status idiom
+status: 0
+bash-n: 0
+--- stdout
+|exit=1
+
+=== 12: set -e stops at the first failure
+status: 1
+bash-n: 0
+--- stdout
+|before
+
+=== 13: set -e does not stop in a condition
+status: 0
+bash-n: 0
+--- stdout
+|handled
+|end
+
+=== 14: set -euo pipefail
+status: 0
+bash-n: 0
+--- stdout
+|passed
+
+=== 15: exit with a status
+status: 0
+bash-n: 0
+--- stdout
+|status=7
+
+=== 16: command not found is 127
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+
+=== 17: negation with !
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 18: timeout kills a slow command
+status: 0
+bash-n: 0
+--- stdout
+|status=124
+
+=== 19: timeout lets a fast command finish
+status: 0
+bash-n: 0
+--- stdout
+|fast
+|status=0

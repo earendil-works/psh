@@ -1,0 +1,180 @@
+# Goldens for tests/agent/control.test.sh (layer agent), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: for over words
+status: 0
+bash-n: 0
+--- stdout
+|alpha
+|beta
+
+=== 1: for over seq output
+status: 0
+bash-n: 0
+--- stdout
+|1,2,3,
+
+=== 2: if with test -f
+status: 0
+bash-n: 0
+--- stdout
+|file
+--- file exists.txt
+
+=== 3: if with test -d and else
+status: 0
+bash-n: 0
+--- stdout
+|no dir
+
+=== 4: test -z and -n
+status: 0
+bash-n: 0
+--- stdout
+|empty
+|nonempty
+
+=== 5: numeric comparison
+status: 0
+bash-n: 0
+--- stdout
+|big
+
+=== 6: [[ ]] with pattern match
+status: 0
+bash-n: 0
+--- stdout
+|json
+
+=== 7: while read over a file
+status: 0
+bash-n: 0
+--- stdout
+|v1<-k1
+|v2<-k2
+--- file kv.txt
+|k1 v1
+|k2 v2
+
+=== 8: while with a counter
+status: 0
+bash-n: 0
+--- stdout
+|i=3
+
+=== 9: case statement
+status: 0
+bash-n: 0
+--- stdout
+|rust a.rs
+|python b.py
+|other c.txt
+
+=== 10: function definition and call
+status: 0
+bash-n: 0
+--- stdout
+|hello agent
+
+=== 11: function with local and return
+status: 0
+bash-n: 0
+--- stdout
+|inner
+|status=3
+
+=== 12: subshell isolates variables
+status: 0
+bash-n: 0
+--- stdout
+|inner
+|outer
+
+=== 13: brace group shares the shell
+status: 0
+bash-n: 0
+--- stdout
+|2
+
+=== 14: background job and wait
+status: 0
+bash-n: 0
+--- stdout
+|waited status=0
+
+=== 15: two background jobs, then wait
+status: 0
+bash-n: 0
+--- stdout
+|first
+|second
+--- file bg1.txt
+|first
+--- file bg2.txt
+|second
+
+=== 16: break and continue
+status: 0
+bash-n: 0
+--- stdout
+|1
+|3
+
+=== 17: && || chain as if/else
+status: 0
+bash-n: 0
+--- stdout
+|yes
+|no
+
+=== 18: line continuation
+status: 0
+bash-n: 0
+--- stdout
+|one two three
+
+=== 19: multiple statements on one line
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+
+=== 20: comment after a command
+status: 0
+bash-n: 0
+--- stdout
+|visible
+
+=== 21: arrays are rare but used
+status: 0
+bash-n: 0
+--- stdout
+|y 3 x y z
+
+=== 22: mkdir -p then write and read
+status: 0
+bash-n: 0
+--- stdout
+|data
+--- dir out
+--- dir out/nested
+--- file out/nested/file
+|data
+
+=== 23: source a file
+status: 0
+bash-n: 0
+--- stdout
+|yes
+--- file env.sh
+|SOURCED=yes
+
+=== 24: trap on EXIT
+status: 0
+bash-n: 0
+--- stdout
+|working
+|cleanup

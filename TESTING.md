@@ -1,8 +1,7 @@
 # psh: Testing
 
 How psh is tested and how it climbs: one oracle recorded once, many fast ratchets. The
-plan behind this is `research/hillclimb.md`. Sections marked *(planned)* describe tools
-that issues 0001–0003 build; update them as they land.
+plan behind this is `research/hillclimb.md`.
 
 ## Oracle
 
@@ -45,7 +44,7 @@ that issues 0001–0003 build; update them as they land.
 | L0 parse | every script of L1–L3 plus the shape corpus | ours | `psh --parse` agrees with `bash -n` on parse/no-parse; print → re-parse round trip; spans cover the source |
 | L1 Oils spec | `oils/spec/*.test.sh` at d114978 | Apache-2.0, vendored in `tests/oils/` | the language, per area; ~2.7k cases in the compat set |
 | L2 brush cases | `brush-shell/tests/cases/**/*.yaml` | MIT, vendored in `tests/brush/` | the same, ~3.7k cases; the files hold no expectations, so the goldens come from our recording |
-| L3 agent shapes | our own cases written to the patterns in `research/corpus.md` | ours, `tests/agent/` | what agents do: `cd X && …`, `\| head`, `2>&1`, quoted here-docs, `sed -i ''`, `timeout`, globs that match nothing; starts at ~500 |
+| L3 agent shapes | our own cases written to the patterns in `research/corpus.md`, in the Oils format, run as `bash -c` | ours, `tests/agent/` | what agents do: `cd X && …`, `\| head`, `2>&1`, quoted here-docs, `timeout`, globs that match nothing; 144 cases, growing toward ~500 |
 | L4 utilities | per-utility cases, differential against GNU (container) and BSD (macOS) where flags differ | ours; uutils/GNU tests may be *run* for reference, never vendored | each in-process utility, including "unsupported flag → fall through or clear error" |
 | L5 process | Rust integration tests | ours | cancel; `timeout` kills the whole tree; no orphans; here-docs past the pipe buffer; SIGPIPE in `\| head`; background jobs; encodings; Job Objects |
 | L6 stress | L1–L3 re-run under perturbation | – | cancel at a random step (no leaked process, shell still usable); pause/resume at every k-th safepoint; a host where every op is `Pending`; tiny pipe buffers; slow consumers |

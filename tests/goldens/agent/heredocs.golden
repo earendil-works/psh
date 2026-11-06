@@ -1,0 +1,132 @@
+# Goldens for tests/agent/heredocs.test.sh (layer agent), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: cat with a quoted delimiter writes a file
+status: 0
+bash-n: 0
+--- stdout
+|name = "demo"
+|path = $HOME/not-expanded
+--- file config.txt
+|name = "demo"
+|path = $HOME/not-expanded
+
+=== 1: quoted delimiter keeps $ and backticks literal
+status: 0
+bash-n: 0
+--- stdout
+|$PATH `date` $(echo no) \n
+
+=== 2: unquoted delimiter expands
+status: 0
+bash-n: 0
+--- stdout
+|hello world sub 3
+
+=== 3: double-quoted delimiter does not expand
+status: 0
+bash-n: 0
+--- stdout
+|x is $x
+
+=== 4: <<- strips leading tabs
+status: 0
+bash-n: 0
+--- stdout
+|indented with a tab
+|two tabs
+
+=== 5: here-doc fed to sh
+status: 0
+bash-n: 0
+--- stdout
+|i=1
+|i=2
+
+=== 6: here-doc fed to bash with arguments
+status: 0
+bash-n: 0
+--- stdout
+|args: a b 2
+
+=== 7: here-doc into a pipeline
+status: 0
+bash-n: 0
+--- stdout
+|apple
+|fig
+|pear
+
+=== 8: here-doc to a while loop
+status: 0
+bash-n: 0
+--- stdout
+|a=1
+|b=2
+
+=== 9: two here-docs in one command list
+status: 0
+bash-n: 0
+--- stdout
+|first
+|second
+
+=== 10: here-doc in a command substitution
+status: 0
+bash-n: 0
+--- stdout
+|v=inside
+
+=== 11: here-doc delimiter text inside the body
+status: 0
+bash-n: 0
+--- stdout
+|not EOF yet
+| EOF with a space
+
+=== 12: here-doc with an empty body
+status: 0
+bash-n: 0
+--- stdout
+|after
+
+=== 13: here-doc appended to a file
+status: 0
+bash-n: 0
+--- stdout
+|start
+|- item
+--- file notes.md
+|start
+|- item
+
+=== 14: here-doc larger than a pipe buffer
+status: 0
+bash-n: 0
+--- stdout
+|10000
+
+=== 15: here-string
+status: 0
+bash-n: 0
+--- stdout
+|y x
+
+=== 16: here-doc then && chain
+status: 0
+bash-n: 0
+--- stdout
+|from-script
+--- file s.sh
+|echo from-script
+
+=== 17: unterminated here-doc warns
+status: 0
+bash-n: 0
+--- stdout
+|no end marker
+--- stderr
+|bash: line 2: warning: here-document at line 1 delimited by end-of-file (wanted `EOF')
+--- bash-n stderr
+|bash: line 2: warning: here-document at line 1 delimited by end-of-file (wanted `EOF')

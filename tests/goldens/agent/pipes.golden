@@ -1,0 +1,183 @@
+# Goldens for tests/agent/pipes.test.sh (layer agent), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: pipe into head
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|4
+|5
+
+=== 1: pipe into head with the old -N form
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+
+=== 2: pipe into tail
+status: 0
+bash-n: 0
+--- stdout
+|97
+|98
+|99
+|100
+
+=== 3: head of a long stream ends the producer (SIGPIPE)
+status: 0
+bash-n: 0
+--- stdout
+|y
+|y
+|status=0
+
+=== 4: seq into head, status of the pipeline
+status: 0
+bash-n: 0
+--- stdout
+|1
+|status=141 0
+
+=== 5: 2>&1 into head
+status: 0
+bash-n: 0
+--- stdout
+|out
+|err
+
+=== 6: grep -n into head
+status: 0
+bash-n: 0
+--- stdout
+|1:alpha
+|3:alphabet
+--- file words.txt
+|alpha
+|beta
+|alphabet
+|gamma
+
+=== 7: nl -ba piped to sed -n
+status: 0
+bash-n: 0
+--- stdout
+|     2	b
+|     3	c
+|     4	d
+--- file f.txt
+|a
+|b
+|c
+|d
+|e
+
+=== 8: sort | uniq -c | sort -rn
+status: 0
+bash-n: 0
+--- stdout
+|      3 b
+|      2 a
+|      1 c
+
+=== 9: wc -l of a pipeline
+status: 0
+bash-n: 0
+--- stdout
+|3
+
+=== 10: pipe status without pipefail
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 11: pipe status with pipefail
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 12: PIPESTATUS of a three-stage pipeline
+status: 0
+bash-n: 0
+--- stdout
+|0 1 0
+
+=== 13: cut -c to truncate lines
+status: 0
+bash-n: 0
+--- stdout
+|a very lon
+|short
+
+=== 14: tr and sort
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+
+=== 15: pipeline into while read
+status: 0
+bash-n: 0
+--- stdout
+|got one
+|got two
+
+=== 16: variable set in a pipeline's while loop is lost
+status: 0
+bash-n: 0
+--- stdout
+|n=0
+
+=== 17: head -c bytes
+status: 0
+bash-n: 0
+--- stdout
+|abc
+
+=== 18: tail -n +N
+status: 0
+bash-n: 0
+--- stdout
+|4
+|5
+|6
+
+=== 19: xargs with echo
+status: 0
+bash-n: 0
+--- stdout
+|a b c
+
+=== 20: pipe a here-string
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 21: command substitution of a pipeline
+status: 0
+bash-n: 0
+--- stdout
+|lines: 10
+
+=== 22: |& pipes stderr too
+status: 0
+bash-n: 0
+--- stdout
+|err
+|out
+
+=== 23: grep with no match in a pipe, then || true
+status: 0
+bash-n: 0
+--- stdout
+|status=0

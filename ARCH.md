@@ -27,23 +27,24 @@ The guide's `docs/guide/goals.md` is the human-facing statement of these. In sho
   messages. Deviations are recorded decisions.
 - **Understandable commands.** The parser is a product: hosts classify, summarize and
   approve commands with the exact parser that runs them.
-
-Under all of them: permissive licensing (D007). The goals are not ranked yet (open
-question 10).
 - **Control of execution.** Cancel, timeouts and process-tree kill with no orphans; the
   embedder owns the thread.
 - **Embeddable.** No async runtime, near-zero dependencies, a size budget.
 - **Sandboxable.** Every side effect goes through a `Host`, so the same engine runs over
   a virtual file system in WASM.
 
+Ranking when goals conflict (D033): agent-first, then portable, then bash's behavior,
+then the rest, unranked among themselves. Under all of them: permissive licensing
+(D007), MIT OR Apache-2.0 (D032).
+
 ## Crates
 
 ```
 crates/
-  psh-syntax/    lexer, parser, AST with byte spans, printer      zero deps, wasm32
-  psh-classify/  AST -> effects and summaries                     psh-syntax only, wasm32
-  psh-engine/    the stepped interpreter; Host trait; vprocs      psh-syntax only, wasm32
-  psh-os/        OS hosts: unix and windows                       platform bindings (Open)
+  psh-syntax/    lexer, parser, AST with byte spans, printer      no_std + alloc, zero deps
+  psh-classify/  AST -> effects and summaries                     no_std + alloc, psh-syntax only
+  psh-engine/    the stepped interpreter; Host trait; vprocs      std, psh-syntax only, wasm32
+  psh-os/        OS hosts: unix and windows                       libc, windows-sys
   psh-utils/     in-process utilities (grep, sed, head, jq, ...)  ripgrep crates (D020)
   psh/           the `psh` binary: -c, scripts, --parse, --classify
   psh-spec/      the conformance runner (TESTING.md)
@@ -54,11 +55,19 @@ Dependency direction: `psh-syntax` ← `psh-classify`, `psh-engine` ← `psh-os`
 `psh-utils` ← `psh`, `psh-spec`, `psh-wasm`. pi-env depends on `psh-engine`, `psh-os`
 and `psh-utils` (and `psh-classify` for a parse op); it lives in pi-mono, not here.
 
-**Open:** whether `psh-syntax` and `psh-engine` are `#![no_std]` + `alloc`. For: it
-guarantees no hidden OS access and keeps the wasm build honest. Against: `std::task`
-and `std::sync` are convenient, `wasm32-unknown-unknown` has std anyway, and the
-`Host` trait already isolates OS access. Current lean: std, with the wasm32 build in the
-gate as the guard against OS access.
+**std or not (D023).** `psh-syntax` (and `psh-classify`) are `#![no_std]` + `alloc`, so
+the parser builds small and clean for wasm. `psh-engine` uses std; its
+`wasm32-unknown-unknown` build in the gate guards against OS access. The engine must
+never force std into the parser: no std-only types in the parser's API, no parser
+feature that turns std on.
+
+**Toolchain (D025).** MSRV is 1.96, pi-env's pinned toolchain; development uses current
+stable. A gate leg checking 1.96 is a follow-up; until then, no features newer than 1.96.
+
+**JSON (D029).** All JSON in psh (`psh --parse`, `psh --classify`, `rg --json`, any
+later JSON input or output) goes through the `deser-json` crate (deser 0.10.x). The
+parser crate does not depend on it; the AST's JSON form is produced outside
+`psh-syntax` unless deser-json works under no_std.
 
 ## psh-syntax: the parser
 
@@ -182,9 +191,9 @@ From `research/execution-core.md` §5; the pitfalls listed there are requirement
   resolves X on PATH); `#!/bin/sh` and `#!/bin/bash` run in psh itself.
 - Environment names are case-insensitive for the OS environment, case-sensitive for
   shell variables.
-- Output of native programs in the ANSI/OEM code page is decoded per program. **Open:**
-  where decoding lives (engine output layer or host). `encoding_rs` is in the tree anyway
-  once `grep-searcher` is (D020), so the cost question is settled if D020 is confirmed.
+- Output of native programs in the ANSI/OEM code page is decoded per program, with
+  `encoding_rs` (in the tree anyway through `grep-searcher`, D020). **Open:** where
+  decoding lives (engine output layer or host).
 - CRLF: scripts with `\r\n` parse; `$(…)` and `read` strip a trailing `\r` from native
   output.
 - Utilities whose names collide with System32 programs (`find`, `sort`, `timeout`,
@@ -192,15 +201,17 @@ From `research/execution-core.md` §5; the pitfalls listed there are requirement
 - `ln -s`: symlink, else a junction for directories, else a clear error; never a silent
   copy.
 
-**Open:** which platform binding crates `psh-os` may use (`libc`, `windows-sys`, as
-pi-env does), or whether it declares its own FFI. Needs a decision before 0006/0007.
+Platform bindings: `psh-os` uses `libc` and `windows-sys`, as pi-env does (D024).
+
+**Windows CI (D027).** The gate's Windows leg runs on the owner's Parallels VM via
+`prlctl exec` until the repository has a remote, then on GitHub Actions.
 
 ## psh-utils: in-process utilities
 
 "Builtin utilities" (or just utilities) are in-process implementations of external
 programs (`grep`, `sed`, `head`, `jq`, `timeout`, ...), distinct from the shell builtins
 in the engine. The list, its tiers and the policies below come from
-`research/builtins.md` §4 (D010, D014–D018).
+`research/builtins.md` §4 (D010, D014–D022, D028, D034).
 
 Why have them at all, in order of weight: **portability** (Windows has none of these
 tools and WASM has no processes, so the utility set *is* the toolset there),
@@ -264,9 +275,10 @@ Around the modes:
 | `head -n -N`, `tail -r` | Single-dialect forms, both accepted |
 | `md5`/`shasum` vs `md5sum`/`sha256sum` | Output format keyed on the name; never unified |
 
-  **Open:** `ls -G`/`-T` (BSD color / full time vs GNU no-group / tab size; research
-  suggests the macOS meaning), `xargs` on empty input (research recommends BSD: don't
-  run, `-r` accepted as a no-op), and `sort`'s default collation (byte order vs locale).
+  Decided in their utility issues (D034), falling through until then: `ls -G`/`-T`
+  (BSD color / full time vs GNU no-group / tab size; research suggests the macOS
+  meaning), `xargs` on empty input (research recommends BSD: don't run, `-r` accepted as
+  a no-op), and `sort`'s default collation (byte order vs locale).
 - `uname`, `hostname`, `id` and friends report the real host. psh never pretends to be
   Linux.
 
@@ -308,19 +320,20 @@ Port mature permissive code rather than write new, above all for the four big on
 - GPL implementations (GNU coreutils, sed, grep, gawk, tree, patch, busybox, moreutils)
   are never read (D007); BSD implementations are fine as references.
 
-**Open:** which of the crates these need are allowed (D006): jaq (and whether it is a
-dependency or copied), `parse_datetime` for `date -d` (also `touch -d`, `find -newermt`,
-`fd --changed-*`), `tar`/`flate2`/`zip` for Tier 2 archives, `sysinfo` for `ps`. The
-search crates, including `encoding_rs`, are D020 (proposed); under it there is no PCRE
-backend, so `grep -P` accepts what the regex crate parses and falls through otherwise.
+**Crates (D028).** `jq` depends on jaq (copied instead only if its issue shows size
+demands it). Crates for the date parser (`date -d`, `touch -d`, `find -newermt`,
+`fd --changed-*`), tar/zip and process listing (`sysinfo`) are decided, and recorded, in
+the utility issue that needs them. The search crates, including `encoding_rs`, are
+D020/D021; there is no PCRE backend, so `grep -P` accepts what the regex crate parses
+and falls through otherwise.
 
-### Search: rg, fd, grep and find on the ripgrep crates (D020, proposed)
+### Search: rg, fd, grep and find on the ripgrep crates (D020, D021)
 
 `rg` and `fd` are embedded by owner requirement, on the upstream crates, the one
 standing dependency exception (D006). Neither ripgrep nor fd has a library entry point,
 and fd's `main` is unusable in-process (it changes the process cwd, installs a Ctrl-C
 handler, needs threads, pulls clap and jiff). Source: `research/builtins.md` §5. All of
-this is D020, proposed and pending owner confirmation.
+this is D020, confirmed by the owner (D021).
 
 **Crates.** Exactly: `grep-matcher`, `grep-regex`, `grep-searcher`, `grep-printer`
 (`default-features = false`, so no serde), `ignore`, `globset`, `regex` (plus
@@ -338,8 +351,8 @@ mechanical diff from upstream. The seams are patched: per-invocation message/err
 instead of statics, cwd/env/stdio/TTY from `UtilCtx` (also for `RIPGREP_CONFIG_PATH`),
 `--pre` and `-z` through psh's command runner, no `process::exit`, no global logger.
 `lexopt` is copied (about 1k lines, no dependencies). Search and printing use
-`grep-searcher` and `grep-printer`. `rg --json` falls through until JSON output is
-decided (`serde_json` or a hand-written printer). Broken pipe ends the search with
+`grep-searcher` and `grep-printer`; `rg --json` writes its JSON through `deser-json`
+(D029), since `grep-printer`'s JSON printer needs serde. Broken pipe ends the search with
 status 0, so `rg … | head` stops early.
 
 **fd: rewrite the CLI, copy the logic.** fd's command line is re-implemented on psh's
@@ -404,30 +417,32 @@ via `globset` with `literal_separator(false)`).
 **Windows.** Default `/` path separators for rg and fd (as `--path-separator /`; an
 explicit flag overrides). `psh.exe` carries a `longPathAware` manifest like ripgrep's.
 Color is ANSI or none, from the `UtilCtx` TTY state, never the console API. Gitignore
-matching stays case-sensitive (ripgrep's default). **Open:** CRLF-aware line ends
-(`--crlf`) by default for `grep`/`rg` on Windows, to be tested against Git for Windows'
-grep.
+matching stays case-sensitive (ripgrep's default). `grep` and `rg` treat CRLF as a line
+end by default on Windows (ripgrep's `--crlf` behavior; D030); explicit flags override.
 
 **WASM.** The `grep-*` crates, `globset`, `regex` and the `ignore` matchers build for
 `wasm32-unknown-unknown` and work over `UtilCtx` readers; only the `ignore` walker does
 not (every fs call is `Unsupported`), which is what the virtual-fs walker replaces.
 
-**Size option.** If pi-env must stay small, the utilities (and with them the regex stack)
-can be a cargo feature of the daemon build.
+**In pi-env** the utilities (and with them the regex stack) are a cargo feature of the
+daemon build, on by default (D031).
 
-### Never builtins (D014)
+### Never builtins and out of scope (D014, D022)
 
-- **Owner rule:** database clients and stateful engines (`sqlite3`, `psql`, `mysql`,
+- **Never builtins:** database clients and stateful engines (`sqlite3`, `psql`, `mysql`,
   `redis-cli`, `postgres`), interpreters and language runtimes, toolchains and build
   systems, package and environment managers.
-- **Proposed, pending owner confirmation:** `git`; `curl` and `wget`; `ssh`, `scp`,
-  `sftp`, `rsync` and other network clients (`nc ping dig openssl gh aws gcloud kubectl
-  docker podman`); interactive/TTY programs (`less vim top watch tmux fzf`); privileged
-  and OS-specific system tools (`sudo launchctl lsof pbcopy`); heavy domain tools
-  (`ffmpeg pandoc 7z`); compressors in compress mode when a real one exists, and
-  benchmarking tools; `shred`, `mkfs`.
-- An embedder may still supply such commands through the host (in WASM, like a
-  fetch-backed `curl`); they are host commands, not psh utilities.
+- **Out of scope for now:** `git`, `curl`/`wget`, and ssh/rsync-like network and VCS
+  clients (`ssh scp sftp rsync nc gh aws gcloud kubectl docker podman` and the like).
+  They are not utilities and nobody works on them, but they are not "never": psh may
+  later hook them, as host-provided commands or by interception.
+- **Not utilities, no work planned** (proposals from `research/builtins.md` §4.5, not
+  owner rules): interactive/TTY programs (`less vim top watch tmux fzf`), privileged and
+  OS-specific system tools (`sudo launchctl lsof pbcopy`), heavy domain tools (`ffmpeg
+  pandoc 7z`), compressors in compress mode when a real one exists, benchmarking tools,
+  `shred`, `mkfs`.
+- An embedder may supply any such command through the host (in WASM, like a
+  fetch-backed `curl`); those are host commands, not psh utilities.
 
 ## The `psh` binary
 
@@ -455,11 +470,11 @@ runs every `exec` as `bash -c` today (`research/pi-current.md`). psh plugs in at
 - A `parse` op returns the AST summary and classification for UI and permissions, even
   where execution still uses real bash.
 
-**Open:** how pi-env drives sessions. Each `exec` is a fresh shell today, and Durable's
-replay assumes stateless commands. Options: keep it stateless; or a persistent session
-(cwd, env, functions carried across calls) that would have to be journaled. Also open:
-whether the Node-side `NodeExecutionEnv` gets psh as a sidecar binary or always goes
-through the daemon (`research/pi-current.md` §6).
+**Sessions (D026).** Each `exec` gets a fresh psh shell; nothing (cwd, variables,
+functions) persists across calls for now, which keeps Durable's replay model intact.
+Node-side execution (`NodeExecutionEnv` and friends) uses psh through the daemon, not a
+separate binary or addon, so local p2 execution moves from Node spawning to the daemon.
+The utilities are a daemon cargo feature, on by default (D031).
 
 ## WASM and the browser
 
@@ -498,21 +513,13 @@ way for approval and another way for execution.
 
 ## Open questions
 
-1. `no_std` or std for `psh-syntax` and `psh-engine`.
-2. Platform bindings for `psh-os` (`libc`, `windows-sys`, or our own FFI).
-3. How pi-env drives sessions (stateless vs persistent), and how Node-side execution gets
-   psh.
-4. Minimum supported Rust version: pi-env pins 1.96.0, so psh must build with it if it
-   is linked in.
-5. Windows output decoding: where it lives (`encoding_rs` comes with D020).
-6. Dependencies beyond the search crates: jaq for `jq`, `parse_datetime`, archive
-   crates, `sysinfo`, `serde_json` for `rg --json`.
-7. Where the per-utility effect tables live.
-8. Whether the WASM host is needed before pi-env integration.
-9. License of psh itself (MIT, or MIT/Apache-2.0).
-10. Whether the goals are ranked, and in which order, for when they conflict.
-11. Never-builtins beyond the owner rule: `git`, `curl`/`wget`, `ssh`/`rsync` and the
-    other proposed exclusions (D014).
-12. Dialect points: `ls -G`/`-T`, `xargs` on empty input, `sort` collation.
-13. D020 (search crates and approach), proposed: needs owner confirmation.
-14. CRLF-aware `grep`/`rg` by default on Windows.
+1. Where Windows output decoding lives (engine output layer or host).
+2. Where the per-utility effect tables live, so the classifier and the utilities share
+   them.
+3. Whether the WASM host is needed before pi-env integration, and whether a WASI build
+   is wanted at all.
+
+Decided and recorded: std vs no_std (D023), platform bindings (D024), MSRV (D025),
+pi-env sessions (D026), Windows CI (D027), utility crates (D021, D028), JSON (D029),
+CRLF on Windows (D030), pi-env feature (D031), license (D032), goal ranking (D033),
+never-builtins and out-of-scope clients (D022), dialect points (D034).

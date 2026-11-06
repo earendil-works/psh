@@ -6,28 +6,28 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
-| 0001 | Workspace skeleton and the empty gate | infra | .worktrees/infra |
+| 0002 | psh-spec runner, vendored cases, recorded goldens, ratchets, status | infra | .worktrees/infra |
 | 0003 | Shape corpus (L0 leg after 0002, 0004) | shapes | .worktrees/shapes |
+| 0004 | Parser: psh-syntax from brush-parser, hand-written | parser | .worktrees/parser |
+| 0007A | Windows gate on the Parallels VM (part A of 0007) | windows | .worktrees/windows |
 
 ## Open (ready)
 
 | issue | title | depends-on | touches |
 | --- | --- | --- | --- |
+| 0012 | Guide check tool | 0001 ✓ | crates/psh-docs/ or scripts/, scripts/gate.sh (one leg) |
 
 ## Open (blocked on dependencies)
 
 | issue | title | depends-on |
 | --- | --- | --- |
-| 0002 | psh-spec runner, vendored cases, recorded goldens, ratchets, status | 0001 |
-| 0004 | Parser: psh-syntax from brush-parser, hand-written | 0001 |
 | 0005 | Minimal interpreter | 0002, 0004 |
 | 0006 | Unix process layer | 0005 |
-| 0007 | Windows CI (part A) and process layer (part B) | A: 0001; B: 0006 |
+| 0007B | Windows process layer (part B of 0007) | 0006 |
 | 0008 | Utility framework and first batch | 0005, 0006 |
 | 0009 | Classifier | 0004 |
 | 0010 | pi-env integration behind a flag | 0006, 0007, L3 high |
 | 0011 | WASM build and JS host | 0005 |
-| 0012 | Guide check tool | 0001 |
 | 0013 | Utilities B: rg, fd, grep + shared search layer | 0008 |
 | 0014 | Utilities C: sed | 0008, 0013 |
 | 0015 | Utilities D: files and paths (17 names) | 0008 |
@@ -46,7 +46,6 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 
 | question | where |
 | --- | --- |
-| Gate leg building with Rust 1.96, the MSRV (D025) | follow-up issue, after 0001 |
 | Where Windows output decoding lives | ARCH.md "Open questions" 1; 0007 |
 | Where the per-utility effect tables live | ARCH.md "Open questions" 2; 0009 |
 | Whether the WASM host is needed before pi-env integration | ARCH.md "Open questions" 3; 0011 |
@@ -55,3 +54,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 
 | issue | title | merged |
 | --- | --- | --- |
+| 0001 | Workspace skeleton and the empty gate | 6ad6973 (infra) |

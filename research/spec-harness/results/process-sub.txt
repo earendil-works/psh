@@ -1,0 +1,20 @@
+process-sub: FATAL: Got 58 total failures, but 0 are allowed
+process-sub.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  5	pass	FAIL	FAIL	pass	pass	pass	pass	FAIL	FAIL	FAIL	Process sub input
+  1	 16	pass	FAIL	FAIL	pass	pass	pass	pass	FAIL	FAIL	FAIL	Process sub from external process to stdin
+  2	 24	pass	FAIL	FAIL	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	Process sub from shell to stdin
+  3	 32	pass	FAIL	FAIL	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	Non-linear pipeline with >()
+  4	 58	FAIL	FAIL	FAIL	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	$(<file) idiom with process sub
+  5	 80	N-I	FAIL	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	status code is available
+  6	108	N-I	FAIL	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	shopt -s process_sub_fail
+  7	145	N-I	FAIL	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	process subs and pipelines together
+  8	187	pass	FAIL	FAIL	pass	pass	pass	pass	FAIL	FAIL	FAIL	process sub in background &
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	5	0	0	5	5	6	4	0	0	0
+	ok	0	0	0	1	0	0	0	0	0	0
+	N-I	3	0	0	3	0	0	0	0	0	0
+	FAIL	1	9	9	0	4	3	5	9	9	9
+	total	9	9	9	9	9	9	9	9	9	9
+

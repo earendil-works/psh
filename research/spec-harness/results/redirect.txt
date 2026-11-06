@@ -1,0 +1,53 @@
+redirect.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	>& and <& are the same
+  1	 16	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	<&
+  2	 26	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	2>&1 with no command
+  3	 38	pass	ok	ok	FAIL	FAIL	pass	pass	FAIL	FAIL	pass	2&>1 (is it a redirect or is it like a&>1)
+  4	 49	pass	ok	pass	pass	pass	pass	pass	FAIL	FAIL	pass	Nonexistent file
+  5	 55	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Descriptor redirect with spaces
+  6	 69	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Filename redirect with spaces
+  7	 76	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	Quoted filename redirect with spaces
+  8	 82	BUG	ok	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	Descriptor redirect with filename
+  9	 92	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Redirect echo to stderr, and then redirect all of stdout somewhere.
+ 10	 98	pass	N-I	N-I	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Named file descriptor
+ 11	107	pass	BUG	FAIL	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	Double digit fd (20> file)
+ 12	115	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	pass	: 9> fdleak (OSH regression)
+ 13	121	pass	pass	BUG	pass	pass	pass	pass	FAIL	FAIL	FAIL	: 3>&3 (OSH regression)
+ 14	133	pass	N-I	N-I	pass	FAIL	pass	pass	FAIL	FAIL	pass	: 3>&3-
+ 15	141	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	3>&- << EOF (OSH regression: fail to restore fds)
+ 16	153	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	Open file on descriptor 3 and write to it many times
+ 17	167	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	Open file on descriptor 4 and write to it many times
+ 18	181	pass	ok	pass	pass	pass	pass	pass	FAIL	FAIL	pass	Redirect to empty string
+ 19	193	pass	ok	pass	pass	pass	FAIL	FAIL	FAIL	pass	FAIL	Redirect to file descriptor that's not open
+ 20	220	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	Open descriptor with exec
+ 21	227	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	Open multiple descriptors with exec
+ 22	239	pass	ok	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	>| to clobber
+ 23	262	pass	N-I	pass	pass	pass	pass	pass	FAIL	pass	FAIL	&> redirects stdout and stderr
+ 24	280	pass	N-I	N-I	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	>&word redirects stdout and stderr when word is not a number or -
+ 25	300	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	1>&- to close file descriptor
+ 26	310	pass	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	1>&2- to move file descriptor
+ 27	327	BUG	ok	pass	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	1>&2- (Bash bug: fail to restore closed fd)
+ 28	362	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	<> for read/write
+ 29	377	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	<> for read/write named pipes
+ 30	389	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	&>> appends stdout and stderr
+ 31	412	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	exec redirect then various builtins
+ 32	421	BUG	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	can't mention big file descriptor
+ 33	443	pass	ok	ok	pass	FAIL	pass	pass	FAIL	FAIL	redirect: FATAL: Got 141 total failures, but 0 are allowed
+FAIL	: >/dev/null 2> / (OSH regression: fail to pop fd frame)
+ 34	457	pass	ok	pass	pass	pass	pass	pass	FAIL	pass	FAIL	echo foo >&100 (OSH regression: does not fail with invalid fd 100)
+ 35	465	pass	ok	pass	pass	pass	pass	pass	FAIL	pass	FAIL	echo foo >&N where N is first unused fd
+ 36	491	pass	N-I	N-I	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	exec {fd}>&- (OSH regression: fails to close fd)
+ 37	504	pass	ok	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	pass	noclobber can still write to non-regular files like /dev/null
+ 38	521	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Parsing of x=1> and related cases
+ 39	543	pass	N-I	BUG	pass	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	Parsing of x={myvar} and related cases
+ 40	597	pass	pass	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	xtrace not affected by redirects
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	38	21	30	34	29	32	18	18	7	8
+	ok	0	11	3	0	0	0	0	0	0	0
+	N-I	0	8	5	0	0	0	0	0	0	0
+	BUG	3	1	2	0	1	0	0	0	0	0
+	FAIL	0	0	1	7	11	9	23	23	34	33
+	total	41	41	41	41	41	41	41	41	41	41
+

@@ -1,0 +1,76 @@
+builtin-printf.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 18	pass	pass	ok	ok	pass	pass	pass	FAIL	FAIL	FAIL	printf with no args
+  1	 24	pass	N-I	N-I	FAIL	N-I	pass	FAIL	FAIL	FAIL	FAIL	printf -v %s
+  2	 38	pass	N-I	N-I	FAIL	N-I	pass	FAIL	FAIL	FAIL	FAIL	printf -v %q
+  3	 60	pass	N-I	N-I	FAIL	N-I	pass	FAIL	FAIL	FAIL	FAIL	printf -v a[1]
+  4	 76	pass	pass	N-I	FAIL	N-I	pass	FAIL	FAIL	FAIL	FAIL	printf -v syntax error
+  5	 84	pass	N-I	N-I	pass	N-I	FAIL	pass	FAIL	FAIL	FAIL	dynamic declare instead of %s
+  6	 95	pass	N-I	N-I	N-I	N-I	FAIL	pass	FAIL	FAIL	FAIL	dynamic declare instead of %q
+  7	115	pass	N-I	N-I	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	printf -v dynamic scope
+  8	156	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	pass	printf with too few arguments
+  9	162	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	pass	printf with too many arguments
+ 10	170	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	printf width strings
+ 11	178	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	printf integer
+ 12	198	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	pass	printf %6.4d -- "precision" does padding for integers
+ 13	216	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	pass	printf %6.4x X o
+ 14	242	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	pass	%06d zero padding vs. %6.6d
+ 15	256	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	pass	%06x %06X %06o
+ 16	266	pass	pass	ok	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	%06s is no-op
+ 17	286	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	pass	printf %6.4s does both truncation and padding
+ 18	302	pass	pass	N-I	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	printf %6.0s and %0.0s
+ 19	312	pass	pass	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	printf %6.s and %0.s
+ 20	326	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	pass	printf %*.*s (width/precision from args)
+ 21	340	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	unsigned / octal / hex
+ 22	360	pass	pass	BUG	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	unsigned / octal / hex big
+ 23	396	pass	pass	pass	pass	ok	pass	pass	pass	pass	pass	empty string (osh is more strict)
+ 24	405	pass	pass	ok	pass	pass	pass	pass	FAIL	FAIL	FAIL	No char after ' => zero code point
+ 25	417	pass	BUG	BUG	pass	BUG	pass	FAIL	pass	FAIL	FAIL	Unicode char with '
+ 26	500	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Invalid UTF-8
+ 27	557	FAIL	FAIL	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Too large
+ 28	598	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	pass	negative numbers with unsigned / octal / hex
+ 29	630	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	pass	printf floating point (not required, but they all implement it)
+ 30	648	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	pass	printf floating point with - and 0
+ 31	676	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	pass	printf eE fF gG
+ 32	694	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	printf backslash escapes
+ 33	712	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	printf octal backslash escapes
+ 34	720	FAIL	N-I	FAIL	FAIL	N-I	FAIL	FAIL	builtin-printf: FATAL: Got 203 total failures, but 0 are allowed
+FAIL	FAIL	FAIL	printf unicode backslash escapes
+ 35	732	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	printf invalid backslash escape (is ignored)
+ 36	738	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	printf % escapes
+ 37	744	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	printf %c ASCII
+ 38	756	pass	N-I	pass	pass	FAIL	pass	pass	pass	FAIL	FAIL	printf %c unicode - prints the first BYTE of a string - it does not respect UTF-8
+ 39	777	pass	ok	pass	pass	pass	pass	pass	pass	FAIL	pass	printf invalid format
+ 40	792	ok	N-I	pass	ok	N-I	FAIL	FAIL	pass	pass	pass	printf %q
+ 41	805	ok	N-I	N-I	ok	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	printf %6q (width)
+ 42	822	pass	pass	pass	ok	ok	FAIL	FAIL	pass	FAIL	pass	printf negative numbers
+ 43	895	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	printf + and space flags
+ 44	910	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	pass	printf # flag
+ 45	934	pass	pass	pass	BUG	BUG	FAIL	FAIL	pass	FAIL	pass	Runtime error for invalid integer
+ 46	966	pass	N-I	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	%(strftime format)T
+ 47	985	pass	N-I	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	%(strftime format)T doesn't respect TZ if not exported
+ 48	1007	pass	N-I	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	%(strftime format)T TZ in environ but not in shell's memory
+ 49	1028	pass	N-I	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	%10.5(strftime format)T
+ 50	1047	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Regression for 'printf x y'
+ 51	1054	pass	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	bash truncates long strftime string at 128
+ 52	1111	ok	ok	ok	FAIL	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	printf positive integer overflow
+ 53	1192	ok	ok	ok	BUG	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	printf negative integer overflow
+ 54	1270	pass	N-I	pass	pass	pass	pass	pass	pass	FAIL	pass	printf %b does backslash escaping
+ 55	1306	pass	N-I	pass	pass	N-I	pass	pass	pass	FAIL	pass	printf %b unicode escapes
+ 56	1321	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	pass	printf %b respects \c early return
+ 57	1330	pass	pass	pass	N-I	pass	pass	FAIL	pass	FAIL	pass	printf %b supports octal escapes, both \141 and \0141
+ 58	1371	pass	pass	pass	N-I	pass	pass	FAIL	pass	FAIL	FAIL	printf %b with truncated octal escapes
+ 59	1407	pass	pass	pass	BUG	pass	pass	FAIL	pass	pass	pass	printf %d %X support hex 0x5 and octal 055
+ 60	1465	pass	pass	pass	BUG	pass	pass	pass	pass	pass	pass	printf %d with + prefix (positive sign)
+ 61	1501	pass	pass	pass	BUG-2	BUG	FAIL	FAIL	pass	FAIL	FAIL	leading spaces are accepted in value given to %d %X, but not trailing spaces
+ 62	1576	ok	ok	ok	ok	ok	FAIL	FAIL	FAIL	FAIL	FAIL	Arbitrary base 64#a is rejected (unlike in shell arithmetic)
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	53	37	35	33	34	40	16	36	20	30
+	ok	5	4	6	5	3	0	0	0	0	0
+	N-I	0	18	15	9	14	0	0	0	0	0
+	BUG-2	0	0	0	1	0	0	0	0	0	0
+	BUG	0	1	3	4	5	0	0	0	0	0
+	FAIL	5	3	4	11	7	23	47	27	43	33
+	total	63	63	63	63	63	63	63	63	63	63
+

@@ -1,0 +1,12 @@
+known-differences: FATAL: Got 7 total failures, but 0 are allowed
+known-differences.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 11	pass	ok	pass	FAIL	ok	pass	FAIL	pass	FAIL	FAIL	`set` output format - ifupdown-ng
+  1	 23	pass	ok	ok	ok	ok	pass	FAIL	pass	FAIL	FAIL	nested function declaration - xcb-util-renderutil
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	2	0	1	0	0	2	0	2	0	0
+	ok	0	2	1	1	2	0	0	0	0	0
+	FAIL	0	0	0	1	0	0	2	0	2	2
+	total	2	2	2	2	2	2	2	2	2	2
+

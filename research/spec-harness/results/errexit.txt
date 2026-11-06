@@ -1,0 +1,48 @@
+errexit.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  6	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	errexit aborts early
+  1	 13	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	errexit for nonexistent command
+  2	 20	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	errexit aborts early on pipeline
+  3	 27	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	errexit with { }
+  4	 34	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	errexit with if and { }
+  5	 48	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	errexit with ||
+  6	 54	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	errexit with &&
+  7	 60	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	errexit test && -- from gen-module-init
+  8	 66	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	errexit test && and fail
+  9	 73	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	More && ||
+ 10	 97	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	errexit and loop
+ 11	105	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	errexit and brace group { }
+ 12	111	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	errexit and time { }
+ 13	117	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	errexit with !
+ 14	130	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	errexit with ! and ;
+ 15	139	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	errexit with while/until
+ 16	151	pass	N-I	pass	pass	N-I	pass	pass	FAIL	FAIL	FAIL	errexit with (( ))
+ 17	164	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	errexit with subshell
+ 18	173	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	set -o errexit while it's being ignored (moot with strict_errexit)
+ 19	192	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	set +o errexit while it's being ignored (moot with strict_errexit)
+ 20	210	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	set +o errexit with 2 levels of ignored
+ 21	227	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	setting errexit in a subshell works but doesn't affect parent shell
+ 22	240	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	set errexit while it's ignored in a subshell (moot with strict_errexit)
+ 23	258	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	shopt -s strict:all || true while errexit is on
+ 24	269	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	errexit double guard
+ 25	282	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	background processes respect errexit
+ 26	291	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	pipeline process respects errexit
+ 27	308	pass	ok	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	simple command / assign - redir failure DOES respect errexit
+ 28	342	pass	FAIL	pass	pass	BUG	pass	pass	FAIL	FAIL	FAIL	simple command that's an alias - redir failure checked
+ 29	370	pass	N-I	pass	pass	ok	FAIL	pass	FAIL	FAIL	FAIL	bash atoms [[ (( - redir failure checked
+ 30	404	pass	FAIL	pass	pass	BUG	FAIL	pass	FAIL	FAIL	FAIL	brace group - redir failure checked
+ 31	435	pass	FAIL	pass	pass	BUG	FAIL	pass	FAIL	FAIL	FAIL	while loop - redirect failure checked
+ 32	468	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	errexit and compound command with redirect, ending with && (regression)
+ 33	512	pass	pass	pass	errexit: FATAL: Got 80 total failures, but 0 are allowed
+pass	pass	pass	pass	pass	FAIL	FAIL	set -e enabled in function (regression)
+ 34	531	BUG	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	set -e in function #2
+ 35	548	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	Command sub exit code is lost
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	35	29	36	35	30	30	32	29	5	10
+	ok	0	1	0	0	1	0	0	0	0	0
+	N-I	0	2	0	0	1	0	0	0	0	0
+	BUG	1	0	0	0	3	0	0	0	0	0
+	FAIL	0	4	0	1	1	6	4	7	31	26
+	total	36	36	36	36	36	36	36	36	36	36
+

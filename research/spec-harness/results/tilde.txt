@@ -1,0 +1,26 @@
+tilde: FATAL: Got 41 total failures, but 0 are allowed
+tilde.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	~ expansion in assignment
+  1	  9	pass	FAIL	pass	pass	pass	pass	pass	pass	FAIL	FAIL	~ expansion in readonly assignment
+  2	 18	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	No ~ expansion in dynamic assignment
+  3	 25	BUG	pass	BUG	pass	pass	pass	pass	pass	pass	pass	No tilde expansion in word that looks like assignment but isn't
+  4	 34	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	tilde expansion of word after redirect
+  5	 41	pass	pass	pass	ok	pass	pass	pass	pass	pass	FAIL	other user
+  6	 48	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	${undef:-~}
+  7	 61	pass	N-I	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	${x//~/~root}
+  8	 80	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	x=foo:~ has tilde expansion
+  9	105	pass	N-I	pass	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	a[x]=foo:~ has tilde expansion
+ 10	123	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	tilde expansion an assignment keyword
+ 11	137	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	x=${undef-~:~}
+ 12	153	N-I	N-I	N-I	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	strict tilde
+ 13	172	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	temp assignment x=~ env
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	12	9	12	11	12	12	8	9	3	1
+	ok	0	0	0	2	0	0	0	0	0	0
+	N-I	1	3	1	1	0	0	0	0	0	0
+	BUG	1	0	1	0	0	0	0	0	0	0
+	FAIL	0	2	0	0	2	2	6	5	11	13
+	total	14	14	14	14	14	14	14	14	14	14
+

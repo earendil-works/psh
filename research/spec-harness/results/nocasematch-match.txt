@@ -1,0 +1,15 @@
+nocasematch-match: FATAL: Got 29 total failures, but 0 are allowed
+nocasematch-match.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  6	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	[[ equality matching
+  1	 19	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	[[ regex matching
+  2	 32	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	[ matching
+  3	 41	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	case matching
+  4	 54	pass	pass	pass	FAIL	pass	pass	pass	pass	pass	FAIL	file matching
+  5	 62	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	parameter expansion matching
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	6	3	3	2	3	6	3	3	1	1
+	FAIL	0	3	3	4	3	0	3	3	5	5
+	total	6	6	6	6	6	6	6	6	6	6
+

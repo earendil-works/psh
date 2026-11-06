@@ -1,0 +1,36 @@
+builtin-set: FATAL: Got 67 total failures, but 0 are allowed
+builtin-set.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	BUG	BUG	BUG	pass	pass	pass	FAIL	FAIL	pass	can continue after unknown option
+  1	 18	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	set with both options and argv
+  2	 26	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	nounset with "$@"
+  3	 32	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	set -u -- clears argv
+  4	 38	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	set -u -- x y z
+  5	 44	pass	pass	pass	pass	FAIL	pass	FAIL	pass	FAIL	FAIL	set -u with undefined variable exits the interpreter
+  6	 65	pass	BUG	BUG	BUG	FAIL	pass	FAIL	pass	FAIL	FAIL	set -u with undefined var in interactive shell does NOT exit the interpreter
+  7	 99	pass	pass	BUG	BUG	pass	pass	pass	pass	FAIL	FAIL	set -u error can break out of nested evals
+  8	127	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	reset option with long flag
+  9	134	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	reset option with short flag
+ 10	141	pass	ok	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	set -eu (flag parsing)
+ 11	149	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	set -o lists options
+ 12	156	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	'set' and 'eval' round trip
+ 13	199	pass	pass	pass	BUG	pass	pass	pass	pass	FAIL	FAIL	set - - and so forth
+ 14	238	pass	pass	pass	BUG	pass	pass	FAIL	FAIL	FAIL	FAIL	set - leading single dash is ignored, turns off xtrace verbose (#2364)
+ 15	282	pass	pass	pass	N-I	pass	pass	pass	FAIL	FAIL	FAIL	set - stops option processing like set --
+ 16	306	pass	pass	BUG	N-I	pass	FAIL	FAIL	FAIL	FAIL	FAIL	A single + is an ignored flag; not an argument
+ 17	341	pass	pass	BUG	ok	pass	FAIL	FAIL	FAIL	FAIL	FAIL	set - + and + -
+ 18	363	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	set -a exports variables
+ 19	373	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	set +a stops exporting
+ 20	384	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	set -o allexport (long form)
+ 21	395	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	variables set before set -a are not exported
+ 22	405	pass	pass	BUG	pass	pass	pass	pass	FAIL	FAIL	FAIL	set -a exports local variables
+ 23	417	pass	N-I	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	set -a exports declare variables
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	24	20	17	15	19	22	18	14	2	3
+	ok	0	1	0	1	0	0	0	0	0	0
+	N-I	0	1	1	2	0	0	0	0	0	0
+	BUG	0	2	6	5	0	0	0	0	0	0
+	FAIL	0	0	0	1	5	2	6	10	22	21
+	total	24	24	24	24	24	24	24	24	24	24
+

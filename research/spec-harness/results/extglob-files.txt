@@ -1,0 +1,35 @@
+extglob-files: FATAL: Got 155 total failures, but 0 are allowed
+extglob-files.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 37	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	@() matches exactly one of the patterns
+  1	 45	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	?() matches 0 or 1
+  2	 54	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	*() matches 0 or more
+  3	 61	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	+() matches 1 or more
+  4	 68	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	!(*.h|*.cc) to match everything except C++
+  5	 76	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Two adjacent alternations
+  6	 89	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Nested extended glob pattern
+  7	100	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Extended glob patterns with spaces
+  8	109	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Filenames with spaces
+  9	118	pass	FAIL	BUG	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	nullglob with extended glob
+ 10	133	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Glob other punctuation chars (lexer mode)
+ 11	145	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	More glob escaping
+ 12	159	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Escaping of pipe (glibc bug, see demo/glibc_fnmatch.c)
+ 13	174	pass	FAIL	ok	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Extended glob as argument to ${undef:-} (dynamic globbing)
+ 14	204	pass	FAIL	ok	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Extended glob in assignment builtin
+ 15	224	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Extended glob in same word as array
+ 16	255	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Extended glob with word splitting
+ 17	273	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	In Array Literal and for loop
+ 18	293	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	No extended glob with simple_word_eval (YSH evaluation)
+ 19	305	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	no match
+ 20	324	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	no_dash_glob
+ 21	345	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	noglob
+ 22	359	pass	FAIL	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	failglob
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	22	0	18	2	0	18	8	0	1	0
+	ok	0	0	2	0	0	0	0	0	0	0
+	N-I	1	0	2	0	0	0	0	0	0	0
+	BUG	0	0	1	0	0	0	0	0	0	0
+	FAIL	0	23	0	21	23	5	15	23	22	23
+	total	23	23	23	23	23	23	23	23	23	23
+

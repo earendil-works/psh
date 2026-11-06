@@ -1,0 +1,42 @@
+var-op-strip: FATAL: Got 79 total failures, but 0 are allowed
+var-op-strip.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Remove const suffix
+  1	  8	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Remove const prefix
+  2	 13	pass	N-I	N-I	pass	N-I	pass	pass	FAIL	FAIL	FAIL	Remove const suffix is vectorized on user array
+  3	 22	pass	N-I	N-I	pass	N-I	pass	pass	pass	FAIL	FAIL	Remove const suffix is vectorized on $@ array
+  4	 32	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Remove const suffix from undefined
+  5	 36	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Remove shortest glob suffix
+  6	 41	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Remove longest glob suffix
+  7	 46	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Remove shortest glob prefix
+  8	 51	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Remove longest glob prefix
+  9	 56	pass	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	Strip char class
+ 10	 62	pass	BUG	FAIL	BUG-2	BUG	pass	pass	pass	FAIL	FAIL	Strip unicode prefix
+ 11	118	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Bug fix: Test that you can remove everything with glob
+ 12	125	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Test that you can remove everything with const
+ 13	135	pass	N-I	N-I	pass	N-I	pass	pass	FAIL	FAIL	FAIL	Prepend using replacement of #
+ 14	147	pass	N-I	N-I	pass	N-I	pass	pass	FAIL	FAIL	FAIL	Append using replacement of %
+ 15	158	pass	pass	FAIL	BUG	pass	pass	pass	pass	FAIL	FAIL	strip unquoted and quoted [
+ 16	180	pass	pass	FAIL	ok	pass	pass	pass	pass	FAIL	FAIL	strip unquoted and quoted []
+ 17	201	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	strip unquoted and quoted ?
+ 18	214	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	strip unquoted and quoted [a]
+ 19	227	pass	N-I	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Nested % and # operators (bug reported by Crestwave)
+ 20	253	pass	pass	pass	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	strip * (bug regression)
+ 21	272	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	strip ?
+ 22	285	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	strip all
+ 23	298	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	strip none
+ 24	311	pass	BUG	FAIL	pass	BUG	pass	pass	pass	FAIL	FAIL	strip all unicode
+ 25	329	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	strip none unicode
+ 26	342	pass	pass	pass	BUG	pass	pass	pass	pass	FAIL	FAIL	Strip Right Brace (#702)
+ 27	369	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	\(\) in pattern (regression)
+ 28	382	pass	N-I	pass	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	extglob in pattern
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	28	20	19	22	21	27	27	24	0	0
+	ok	0	0	0	1	0	0	0	0	0	0
+	N-I	0	6	4	1	4	0	0	0	0	0
+	BUG-2	0	0	0	1	0	0	0	0	0	0
+	BUG	0	2	0	2	2	0	0	0	0	0
+	FAIL	1	1	6	2	2	2	2	5	29	29
+	total	29	29	29	29	29	29	29	29	29	29
+

@@ -1,0 +1,40 @@
+var-op-patsub: FATAL: Got 134 total failures, but 0 are allowed
+var-op-patsub.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  7	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Pattern replacement
+  1	 12	pass	FAIL	BUG	pass	ok	pass	pass	FAIL	FAIL	FAIL	Pattern replacement on unset variable
+  2	 29	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Global Pattern replacement with /
+  3	 34	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Left Anchored Pattern replacement with #
+  4	 39	pass	FAIL	pass	pass	BUG	pass	pass	FAIL	FAIL	FAIL	Right Anchored Pattern replacement with %
+  5	 49	pass	FAIL	pass	pass	BUG	pass	pass	FAIL	FAIL	FAIL	Replace fixed strings
+  6	 59	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Replace is longest match
+  7	 65	pass	FAIL	FAIL	pass	pass	pass	pass	FAIL	FAIL	FAIL	Replace char class
+  8	 71	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Replace hard glob
+  9	 76	pass	FAIL	pass	pass	BUG	pass	pass	FAIL	FAIL	FAIL	${v/} is empty search and replacement
+ 10	 90	pass	FAIL	pass	pass	BUG	pass	pass	FAIL	FAIL	FAIL	${v//} is empty search and replacement
+ 11	104	pass	FAIL	BUG	BUG	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	Confusing unquoted slash matches bash (and ash)
+ 12	127	pass	FAIL	BUG	BUG	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	Synthesized ${x///} bug (similar to above)
+ 13	156	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	${v/a} is the same as ${v/a/}  -- no replacement string
+ 14	165	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Replacement with special chars (bug fix)
+ 15	170	pass	FAIL	BUG	BUG	pass	pass	pass	FAIL	FAIL	FAIL	Replace backslash
+ 16	195	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Replace right ]
+ 17	205	pass	FAIL	pass	BUG	TIME	pass	pass	FAIL	FAIL	FAIL	Substitute glob characters in pattern, quoted and unquoted
+ 18	223	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Substitute one unicode character (UTF-8)
+ 19	245	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	When LC_ALL=C, pattern ? doesn't match multibyte character
+ 20	273	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	${x/^} regression
+ 21	301	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	\(\) in pattern (regression)
+ 22	317	pass	FAIL	BUG	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	patsub with single quotes and hyphen in character class (regression)
+ 23	331	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	patsub with [^]]
+ 24	343	ok	FAIL	ok	ok	ok	FAIL	FAIL	FAIL	FAIL	FAIL	[a-z] Invalid range end is syntax error
+ 25	358	pass	FAIL	pass	BUG	FAIL	FAIL	pass	FAIL	FAIL	FAIL	Pattern is empty $foo$bar -- regression for infinite loop
+ 26	373	pass	FAIL	BUG	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Chromium from http://www.oilshell.org/blog/2016/11/07.html
+ 27	397	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	${x//~homedir/}
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	27	0	19	21	14	21	20	0	0	0
+	ok	1	0	1	1	2	0	0	0	0	0
+	BUG	0	0	6	6	6	0	0	0	0	0
+	FAIL	0	28	2	0	5	7	8	28	28	28
+	TIME	0	0	0	0	1	0	0	0	0	0
+	total	28	28	28	28	28	28	28	28	28	28
+

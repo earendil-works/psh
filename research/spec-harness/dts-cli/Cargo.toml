@@ -1,0 +1,7 @@
+[package]
+name = "dts-cli"
+version = "0.1.0"
+edition = "2024"
+[dependencies]
+deno_task_shell = { path = "../deno_task_shell" }
+tokio = { version = "1", features = ["full"] }

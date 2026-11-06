@@ -1,0 +1,13 @@
+assign-dialects: FATAL: Got 30 total failures, but 0 are allowed
+assign-dialects.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  6	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	K and V are variables in (( array[K] = V ))
+  1	 21	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	test -v with strings
+  2	 39	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	test -v with arrays
+  3	 89	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	test -v with assoc arrays
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	4	0	1	1	0	2	2	0	0	0
+	FAIL	0	4	3	3	4	2	2	4	4	4
+	total	4	4	4	4	4	4	4	4	4	4
+

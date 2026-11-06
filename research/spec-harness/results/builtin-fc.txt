@@ -1,0 +1,24 @@
+builtin-fc: FATAL: Got 108 total failures, but 0 are allowed
+builtin-fc.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  5	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	fc -l lists history commands
+  1	 27	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	fc -ln lists history commands without numbers
+  2	 49	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	fc -lr lists history commands in reverse order
+  3	 71	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	fc -lnr lists history commands without numbers in reverse order
+  4	 93	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	fc -l lists history commands with default page size
+  5	127	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	fc -l [first] where first is an index
+  6	148	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	fc -l [first] where first is an offset from current command
+  7	169	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	fc -l [first] [last] where first and last are indexes
+  8	189	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	fc -l [first] [last] where first and last are offsets from current command
+  9	209	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	fc -l [first] [last] where first and last are reversed indexes
+ 10	229	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	fc -lr [first] [last] where first and last are reversed indexes does not undo reverse
+ 11	249	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	fc ignores too many args
+ 12	253	N-I	pass	pass	pass	pass	pass	pass	pass	pass	pass	fc errors out on too many args with strict_arg_parse
+ 13	262	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	fc -l when no history is present
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	13	2	2	2	2	2	2	2	2	2
+	N-I	1	0	0	0	0	0	0	0	0	0
+	FAIL	0	12	12	12	12	12	12	12	12	12
+	total	14	14	14	14	14	14	14	14	14	14
+

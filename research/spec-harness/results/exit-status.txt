@@ -1,0 +1,21 @@
+exit-status: FATAL: Got 34 total failures, but 0 are allowed
+exit-status.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 10	pass	ok	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Truncating 'exit' status
+  1	 46	pass	ok	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Truncating 'return' status
+  2	 83	ok	ok	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	subshell OverflowError https://github.com/oilshell/oil/issues/996
+  3	189	ok	ok	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	func subshell OverflowError https://github.com/oilshell/oil/issues/996
+  4	257	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	If empty command
+  5	262	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	If subshell true
+  6	267	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	If subshell true WITH OUTPUT is different
+  7	272	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	If subshell true WITH ARGUMENT
+  8	277	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	If subshell false -- exit code is propagated in a weird way (strict_argv prevents)
+  9	282	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Exit code when command sub evaluates to empty str, e.g. `false` (#2416)
+ 10	308	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	More test cases with empty argv
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	9	7	9	7	7	9	9	7	4	0
+	ok	2	4	2	0	0	0	0	0	0	0
+	FAIL	0	0	0	4	4	2	2	4	7	11
+	total	11	11	11	11	11	11	11	11	11	11
+

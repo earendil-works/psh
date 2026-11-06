@@ -1,0 +1,39 @@
+pipeline: FATAL: Got 67 total failures, but 0 are allowed
+pipeline.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 11	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Brace group in pipeline
+  1	 18	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	For loop starts pipeline
+  2	 27	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	While Loop ends pipeline
+  3	 38	pass	pass	pass	BUG	pass	pass	pass	pass	pass	pass	Redirect in Pipeline
+  4	 43	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Pipeline comments
+  5	 49	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Exit code is last status
+  6	 53	pass	N-I	BUG	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	Initial value of PIPESTATUS is empty string
+  7	 66	pass	N-I	pass	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	PIPESTATUS
+  8	 80	pass	N-I	pass	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	PIPESTATUS is set on simple commands
+  9	100	pass	N-I	pass	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	PIPESTATUS with shopt -s lastpipe
+ 10	115	pass	N-I	N-I	pass	FAIL	pass	pass	FAIL	FAIL	TIME	|&
+ 11	127	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	! turns non-zero into zero
+ 12	132	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	! turns zero into 1
+ 13	137	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	! in if
+ 14	149	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	! with ||
+ 15	157	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	! with { }
+ 16	166	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	! with ( )
+ 17	175	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	! is not a command
+ 18	180	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Evaluation of argv[0] in pipeline occurs in child
+ 19	192	ok	ok	ok	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	bash/dash/mksh run the last command is run in its own process
+ 20	198	pass	N-I	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	shopt -s lastpipe (always on in OSH)
+ 21	205	pass	N-I	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	shopt -s lastpipe (always on in OSH)
+ 22	216	pass	N-I	pass	N-I	FAIL	pass	FAIL	FAIL	FAIL	TIME	SIGPIPE causes pipeline to die (regression for issue #295)
+ 23	229	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Nested pipelines
+ 24	239	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Pipeline in eval
+ 25	246	pass	N-I	pass	pass	pass	pass	pass	pass	FAIL	FAIL	shopt -s lastpipe and shopt -s no_last_fork interaction
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	25	16	21	19	17	24	21	17	3	6
+	ok	1	1	1	0	0	0	0	0	0	0
+	N-I	0	9	3	5	0	0	0	0	0	0
+	BUG	0	0	1	1	0	0	0	0	0	0
+	FAIL	0	0	0	1	9	2	5	9	23	18
+	TIME	0	0	0	0	0	0	0	0	0	2
+	total	26	26	26	26	26	26	26	26	26	26
+

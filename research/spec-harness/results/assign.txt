@@ -1,0 +1,60 @@
+assign.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Env value doesn't persist
+  1	 12	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Env value with equals
+  2	 16	pass	pass	BUG	pass	pass	pass	pass	pass	FAIL	pass	Env binding can use preceding bindings, but not subsequent ones
+  3	 30	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Env value with two quotes
+  4	 34	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Env value with escaped <
+  5	 38	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	FOO=foo echo [foo]
+  6	 42	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FOO=foo fun
+  7	 49	pass	FAIL	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	Multiple temporary envs on the stack
+  8	113	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Escaped = in command name
+  9	118	pass	pass	ok	ok	pass	pass	FAIL	pass	FAIL	pass	Env binding not allowed before compound command
+ 10	126	pass	pass	pass	ok	pass	FAIL	pass	pass	FAIL	FAIL	Trying to run keyword 'for'
+ 11	131	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Empty env binding
+ 12	135	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Assignment doesn't do word splitting
+ 13	141	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Assignment doesn't do glob expansion
+ 14	147	BUG	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	Env binding in readonly/declare is NOT exported!  (pitfall)
+ 15	166	pass	pass	pass	ok	pass	pass	pass	pass	pass	pass	assignments / array assignments not interpreted after 'echo'
+ 16	173	ok	ok	ok	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	dynamic local variables (and splitting)
+ 17	198	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	readonly x= gives empty string (regression)
+ 18	205	pass	ok	pass	BUG	FAIL	pass	pass	FAIL	pass	FAIL	'local x' does not set variable
+ 19	216	pass	ok	pass	BUG	FAIL	pass	pass	FAIL	pass	FAIL	'local -a x' does not set variable
+ 20	227	pass	N-I	pass	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	'local x' and then array assignment
+ 21	240	pass	N-I	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	'declare -A' and then dict assignment
+ 22	252	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	declare in an if statement
+ 23	268	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Modify a temporary binding
+ 24	281	FAIL	ok	FAIL	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Reveal existence of "temp frame" (All shells disagree here!!!)
+ 25	338	pass	ok	FAIL	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	Test above without 'local' (which is not POSIX)
+ 26	373	ok	ok	pass	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Using ${x-default} after unsetting local shadowing a global
+ 27	397	FAIL	ok	FAIL	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Using ${x-default} after unsetting a temp binding shadowing a global
+ 28	427	pass	FAIL	pass	pass	pass	pass	pass	pass	FAIL	FAIL	static assignment doesn't split
+ 29	442	pass	FAIL	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	aliased assignment doesn't split
+ 30	458	ok	FAIL	ok	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	assignment using dynamic keyword (splits in most shells, not in zsh/osh)
+ 31	476	ok	ok	ok	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	assignment using dynamic var names doesn't split
+ 32	505	pass	FAIL	pass	pass	pass	pass	pass	pass	FAIL	FAIL	assign and glob
+ 33	525	assign: FATAL: Got 148 total failures, but 0 are allowed
+pass	N-I	pass	pass	FAIL	pass	pass	pass	FAIL	FAIL	declare and glob
+ 34	538	ok	ok	ok	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	readonly $x where x='b c'
+ 35	563	pass	ok	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	readonly a=(1 2) no_value c=(3 4) makes 'no_value' readonly
+ 36	570	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	export a=1 no_value c=2
+ 37	578	pass	BUG	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	local a=loc $var c=loc
+ 38	596	pass	pass	pass	BUG	pass	pass	FAIL	pass	FAIL	FAIL	redirect after assignment builtin (eval redirects after evaluating arguments)
+ 39	611	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	redirect after command sub (like case above but without assignment builtin)
+ 40	620	BUG	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	redirect after bare assignment
+ 41	631	ok	N-I	pass	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	redirect after declare -p
+ 42	651	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	declare -a arr does not remove existing arrays (OSH regression)
+ 43	664	pass	N-I	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	declare -A dict does not remove existing arrays (OSH regression)
+ 44	679	pass	N-I	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	"readonly -a arr" and "readonly -A dict" should not not remove existing arrays
+ 45	702	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	"declare -a arr" and "readonly -a a" creates an empty array (OSH)
+ 46	738	FAIL	N-I	N-I	N-I	FAIL	pass	pass	FAIL	pass	FAIL	"var d = {}; declare -p d" does not print anything (OSH)
+ 47	751	pass	N-I	ok	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	readonly array should not be modified by a+=(1)
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	36	22	32	35	28	38	34	27	14	12
+	ok	6	10	6	7	0	0	0	0	0	0
+	N-I	1	10	5	1	0	0	0	0	0	0
+	BUG	2	1	1	4	0	0	0	0	0	0
+	FAIL	3	5	4	1	20	10	14	21	34	36
+	total	48	48	48	48	48	48	48	48	48	48
+

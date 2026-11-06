@@ -1,0 +1,15 @@
+redir-order: FATAL: Got 11 total failures, but 0 are allowed
+redir-order.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	echo `cat OSCFLAGS` "world" > OSCFLAGS (from Alpine imap)
+  1	 14	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	subshell + redirect order
+  2	 24	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	for word + redirect order
+  3	 36	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	case word + redirect order
+  4	 53	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	[[ + redirect order
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	5	4	5	5	4	5	4	4	1	1
+	N-I	0	1	0	0	0	0	0	0	0	0
+	FAIL	0	0	0	0	1	0	1	1	4	4
+	total	5	5	5	5	5	5	5	5	5	5
+

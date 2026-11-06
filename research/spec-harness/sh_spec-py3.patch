@@ -1,0 +1,72 @@
+--- test/sh_spec.py	2026-11-06 09:28:26
++++ test/sh_spec3.py	2026-11-06 09:31:37
+@@ -49,8 +49,8 @@
+ """
+ 
+ import collections
+-import cgi
+-import cStringIO
++import html as cgi
++import io as cStringIO
+ import errno
+ import json
+ import optparse
+@@ -400,7 +400,7 @@
+ 
+     exp_json = d.get(key + '-json')
+     if exp_json is not None:
+-        exp = json.loads(exp_json, encoding='utf-8')
++        exp = json.loads(exp_json)
+         a = EqualAssertion(key, exp, qualifier=qualifier)
+         assertions.append(a)
+         found = True
+@@ -718,7 +718,7 @@
+             self._Write('NUM UNIQUE %d' % len(unique))
+             self._Write('')
+             i = 0
+-            for stdout, shells in unique.iteritems():
++            for stdout, shells in unique.items():
+                 self._Write('UNIQUE STDOUT %d', (i + 1))
+                 self._Write('SHELLS: %s', ' '.join(shells))
+                 shells = unique[stdout]
+@@ -887,10 +887,11 @@
+                 print('Error running %r: %s' % (sh_path, e), file=sys.stderr)
+                 sys.exit(1)
+ 
+-            p.stdin.write(code)
++            p.stdin.write(code.encode('utf-8', 'surrogateescape'))
+ 
+             actual = {'sh_label': sh_label}
+-            actual['stdout'], actual['stderr'] = p.communicate()
++            _o, _e = p.communicate()
++            actual['stdout'] = _o.decode('utf-8','surrogateescape'); actual['stderr'] = _e.decode('utf-8','surrogateescape')
+             actual['status'] = p.wait()
+ 
+             case_actual['actual'].append(actual)
+@@ -984,7 +985,7 @@
+ 
+ def _AnsiCells():
+     lookup = {}
+-    for i in xrange(Result.length):
++    for i in range(Result.length):
+         lookup[i] = ''.join([ANSI_COLORS[i], _BOLD, TEXT_CELLS[i], _RESET])
+     return lookup
+ 
+@@ -1013,7 +1014,7 @@
+     repr().
+     """
+     try:
+-        s.decode('utf-8')
++        s.encode('utf-8')
+         return s  # it decoded OK
+     except UnicodeDecodeError:
+         return repr(s)  # ASCII representation
+@@ -1243,7 +1244,7 @@
+ 
+         # Blank row for space.
+         self.f.write('<tr>')
+-        for i in xrange(len(sh_labels) + 2):
++        for i in range(len(sh_labels) + 2):
+             self.f.write('<td style="height: 2em"></td>')
+         self.f.write('</tr>\n')
+ 

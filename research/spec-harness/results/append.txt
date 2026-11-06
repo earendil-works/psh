@@ -1,0 +1,32 @@
+append: FATAL: Got 108 total failures, but 0 are allowed
+append.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  5	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Append string to string
+  1	 11	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Append array to array
+  2	 17	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Append string to undefined variable
+  3	 37	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Append to array to undefined variable
+  4	 45	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	error: s+=(my array)
+  5	 54	ok	FAIL	ok	ok	FAIL	FAIL	FAIL	FAIL	pass	FAIL	error: myarray+=s
+  6	 68	pass	FAIL	FAIL	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	typeset s+=(my array)
+  7	 87	BUG	FAIL	N-I	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	error: typeset myarray+=s
+  8	105	BUG	FAIL	BUG	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	error: append used like env prefix
+  9	115	pass	FAIL	pass	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	myarray[1]+=s - Append to element
+ 10	125	pass	FAIL	BUG	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	myarray[-1]+=s - Append to last element
+ 11	134	ok	pass	N-I	ok	pass	FAIL	FAIL	pass	FAIL	FAIL	Try to append list to element
+ 12	157	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Strings have value semantics, not reference semantics
+ 13	164	pass	FAIL	pass	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	typeset s+=
+ 14	186	pass	FAIL	pass	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	typeset s${dyn}+=
+ 15	210	pass	FAIL	pass	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	export readonly +=
+ 16	234	pass	FAIL	pass	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	local +=
+ 17	253	pass	FAIL	N-I	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	assign builtin appending array: declare d+=(d e)
+ 18	286	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	export+=array disallowed (strict_array)
+ 19	301	pass	FAIL	N-I	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	Type mismatching of lhs+=rhs should not cause a crash
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	15	1	12	9	1	14	14	1	2	0
+	ok	2	0	1	2	0	0	0	0	0	0
+	N-I	1	0	4	7	0	0	0	0	0	0
+	BUG	2	0	2	2	0	0	0	0	0	0
+	FAIL	0	19	1	0	19	6	6	19	18	20
+	total	20	20	20	20	20	20	20	20	20	20
+

@@ -1,0 +1,11 @@
+vars-bash: FATAL: Got 5 total failures, but 0 are allowed
+vars-bash.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	N-I	N-I	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	$SHELL is set to what is in /etc/passwd
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	1	0	0	0	0	1	0	0	0	0
+	N-I	0	1	1	1	0	0	0	0	0	0
+	FAIL	0	0	0	0	1	0	1	1	1	1
+	total	1	1	1	1	1	1	1	1	1	1
+

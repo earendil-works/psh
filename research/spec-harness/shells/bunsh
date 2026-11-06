@@ -1,0 +1,7 @@
+#!/bin/sh
+f=$(mktemp /tmp/bunsh.XXXXXX).sh
+cat > "$f"
+bun "$f" "$@"
+rc=$?
+rm -f "$f"
+exit $rc

@@ -1,0 +1,43 @@
+var-ref: FATAL: Got 225 total failures, but 0 are allowed
+var-ref.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 11	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	var ref ${!a}
+  1	 17	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${!ref-default}
+  2	 33	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${!undef:-}
+  3	 57	BUG	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	comparison to ${!array[@]} keys (similar SYNTAX)
+  4	 98	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	${!a[@]-'default'} is legal but fails with more than one element
+  5	129	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	var ref to $@ with @
+  6	137	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	var ref to $1 and $2 with 1 and 2
+  7	149	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	var ref: 1, @, *
+  8	161	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	var ref to special var BASH_SOURCE
+  9	168	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	var ref to $? with '?'
+ 10	181	pass	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	Var ref, then assignment with ${ := }
+ 11	191	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Var ref, then error with ${ ? }
+ 12	200	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Indirect expansion, THEN suffix operators
+ 13	262	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	var ref OF array var -- silent a[0] decay
+ 14	275	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	array ref
+ 15	285	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	array ref with strict_array
+ 16	298	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	var ref TO array var
+ 17	314	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	var ref TO array var, with subscripts
+ 18	333	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	var ref TO assoc array a[key]
+ 19	361	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	var ref TO array with arbitrary subscripts
+ 20	409	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	pass	FAIL	Bizarre tilde expansion in array index
+ 21	423	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	pass	Indirect expansion TO fancy expansion features bash disallows
+ 22	458	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Bad var ref
+ 23	467	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Bad var ref 2
+ 24	475	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${!OPTIND} (used by bash completion
+ 25	491	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	var ref doesn't need cycle detection
+ 26	509	BUG	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	Var Ref Code Injection $(tee PWNED)
+ 27	536	pass	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	${!array_ref:-set} and ${!array_ref:=assign}
+ 28	566	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Array indirect expansion with suffix operators
+ 29	637	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Array indirect expansion with replacements
+ 30	692	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Array indirect expansion with @? conversion
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	25	0	3	5	0	22	21	0	3	1
+	ok	2	0	0	0	0	0	0	0	0	0
+	N-I	1	0	0	0	0	0	0	0	0	0
+	BUG	2	0	0	0	0	0	0	0	0	0
+	FAIL	1	31	28	26	31	9	10	31	28	30
+	total	31	31	31	31	31	31	31	31	31	31
+

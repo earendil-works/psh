@@ -1,0 +1,31 @@
+xtrace: FATAL: Got 89 total failures, but 0 are allowed
+xtrace.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  6	pass	BUG	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	unset PS4
+  1	 28	ok	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	set -o verbose prints unevaluated code
+  2	 49	ok	N-I	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	xtrace with unprintable chars
+  3	 97	pass	N-I	pass	FAIL	FAIL	pass	pass	pass	FAIL	FAIL	xtrace with unicode chars
+  4	115	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	xtrace with paths
+  5	125	BUG	N-I	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	xtrace with tabs
+  6	139	ok	BUG	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	xtrace with whitespace, quotes, and backslash
+  7	159	ok	N-I	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	xtrace with newlines
+  8	183	pass	pass	ok	FAIL	pass	pass	pass	FAIL	FAIL	FAIL	xtrace written before command executes
+  9	203	ok	ok	ok	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Assignments and assign builtins
+ 10	233	ok	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	[[ ]]
+ 11	255	pass	ok	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	PS4 is scoped
+ 12	296	pass	ok	ok	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	xtrace with variables in PS4
+ 13	331	pass	FAIL	ok	pass	pass	pass	pass	pass	FAIL	pass	PS4 with unterminated ${
+ 14	348	pass	FAIL	ok	pass	pass	pass	pass	pass	FAIL	pass	PS4 with unterminated $(
+ 15	365	pass	FAIL	ok	pass	pass	pass	pass	pass	FAIL	pass	PS4 with runtime error
+ 16	383	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	Reading $? in PS4
+ 17	401	ok	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Regression: xtrace for "declare -a a+=(v)"
+ 18	418	pass	N-I	N-I	FAIL	FAIL	pass	pass	pass	FAIL	FAIL	Regression: xtrace for "a+=(v)"
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	11	4	7	4	9	13	9	9	0	3
+	ok	7	3	8	0	0	0	0	0	0	0
+	N-I	0	7	3	0	0	0	0	0	0	0
+	BUG	1	2	1	0	0	0	0	0	0	0
+	FAIL	0	3	0	15	10	6	10	10	19	16
+	total	19	19	19	19	19	19	19	19	19	19
+

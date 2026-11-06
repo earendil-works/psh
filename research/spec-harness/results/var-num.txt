@@ -1,0 +1,16 @@
+var-num: FATAL: Got 18 total failures, but 0 are allowed
+var-num.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  8	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	Normal and braced
+  1	 12	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	In function
+  2	 19	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	$0 with -c
+  3	 23	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	$0 with stdin
+  4	 27	pass	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	$0 with -i
+  5	 31	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	$0 with filename
+  6	 38	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	$@ with filename
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	7	7	7	7	7	7	4	4	2	0
+	FAIL	0	0	0	0	0	0	3	3	5	7
+	total	7	7	7	7	7	7	7	7	7	7
+

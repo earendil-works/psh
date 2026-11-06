@@ -1,0 +1,16 @@
+ble-unset: FATAL: Got 27 total failures, but 0 are allowed
+ble-unset.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  7	ok	pass	pass	ok	pass	FAIL	FAIL	FAIL	FAIL	FAIL	[bash_unset] nested context by tempenv-eval
+  1	 37	ok	ok-2	FAIL	ok-2	ok-2	FAIL	FAIL	FAIL	FAIL	FAIL	[bash_unset] local-unset / dynamic-unset for localvar on nested-context
+  2	 73	ok	ok-2	FAIL	ok-2	ok-2	FAIL	FAIL	FAIL	FAIL	FAIL	[bash_unset] dynamic-unset for nested localvars
+  3	134	ok	pass	FAIL	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	[bash_unset] dynamic-unset for nested tempenvs
+  4	190	ok	pass	FAIL	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	[bash_unset] local-unset for nested tempenvs
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	0	3	1	2	3	0	0	2	0	0
+	ok-2	0	2	0	2	2	0	0	0	0	0
+	ok	5	0	0	1	0	0	0	0	0	0
+	FAIL	0	0	4	0	0	5	5	3	5	5
+	total	5	5	5	5	5	5	5	5	5	5
+

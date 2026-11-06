@@ -1,0 +1,41 @@
+bugs: FATAL: Got 82 total failures, but 0 are allowed
+bugs.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	echo keyword
+  1	  8	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	if/else
+  2	 16	pass	N-I	pass	pass	N-I	pass	pass	FAIL	FAIL	FAIL	Turn an array into an integer.
+  3	 25	pass	ok	ok	pass	ok	pass	pass	FAIL	FAIL	FAIL	assign readonly -- one line
+  4	 32	BUG	ok	ok	pass	ok	FAIL	FAIL	FAIL	FAIL	FAIL	assign readonly -- multiple lines
+  5	 45	pass	ok	ok	pass	ok	FAIL	FAIL	FAIL	FAIL	FAIL	assign readonly -- multiple lines -- set -o posix
+  6	 55	pass	ok	pass	ok	ok	pass	pass	FAIL	pass	pass	unset readonly -- one line
+  7	 65	pass	ok	pass	ok	ok	pass	pass	FAIL	pass	pass	unset readonly -- multiple lines
+  8	 74	pass	pass	ok	ok	pass	pass	FAIL	pass	FAIL	FAIL	First word like foo$x() and foo$[1+2] (regression)
+  9	 88	pass	pass	ok	BUG	pass	pass	FAIL	pass	FAIL	FAIL	Function names
+ 10	105	ok	N-I	pass	ok	pass	FAIL	pass	pass	FAIL	FAIL	file with NUL byte
+ 11	120	BUG	N-I	FAIL	N-I	N-I	pass	pass	FAIL	FAIL	FAIL	fastlex: PS1 format string that's incomplete / with NUL byte
+ 12	142	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	'echo' and printf fail on writing to full disk
+ 13	157	pass	pass	FAIL	BUG	pass	pass	FAIL	pass	FAIL	FAIL	other builtins fail on writing to full disk
+ 14	176	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	subshell while running a script (regression)
+ 15	190	pass	N-I	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	for loop (issue #1446)
+ 16	204	pass	N-I	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	for loop 2 (issue #1446)
+ 17	217	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	autoconf word split (#1449)
+ 18	263	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	autoconf arithmetic - relaxed eval_unsafe_arith (#1450)
+ 19	276	BUG	ok	BUG	BUG	ok	FAIL	FAIL	FAIL	pass	FAIL	command execution $(echo 42 | tee PWNED) not allowed
+ 20	298	BUG	ok	pass	pass	ok	FAIL	FAIL	FAIL	pass	FAIL	process sub <(echo 42 | tee PWNED) not allowed
+ 21	323	BUG	N-I	BUG	BUG	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	unset doesn't allow command execution
+ 22	363	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	printf integer size bug
+ 23	374	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	(( status bug
+ 24	392	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	autotools as_fn_arith bug in configure
+ 25	407	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	OSH can use ARGV name
+ 26	430	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	Crash in {1..10} - issue #2296
+ 27	438	pass	N-I	N-I	pass	N-I	pass	pass	FAIL	FAIL	FAIL	Crash after changing $[] to be alias of $(( ))
+ 28	452	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	#2640 Hanging when reading from character devices
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	23	13	17	20	14	23	20	14	7	5
+	ok	1	7	5	4	7	0	0	0	0	0
+	N-I	0	9	3	1	4	0	0	0	0	0
+	BUG	5	0	2	4	0	0	0	0	0	0
+	FAIL	0	0	2	0	4	6	9	15	22	24
+	total	29	29	29	29	29	29	29	29	29	29
+

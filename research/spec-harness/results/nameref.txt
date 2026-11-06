@@ -1,0 +1,44 @@
+nameref: FATAL: Got 234 total failures, but 0 are allowed
+nameref.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	FAIL	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	pass array by reference
+  1	 14	pass	FAIL	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	mutate array by reference
+  2	 27	pass	FAIL	BUG	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	pass assoc array by reference
+  3	 39	pass	FAIL	BUG	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	pass local array by reference, relying on DYNAMIC SCOPING
+  4	 56	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	flag -n and +n
+  5	 80	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	mutating through nameref: ref=
+  6	107	pass	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	flag -n combined ${!ref} -- bash INVERTS
+  7	137	pass	pass	ok	pass	pass	pass	FAIL	pass	pass	pass	named ref with $# doesn't work
+  8	157	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	named ref with $# and shopt -s strict_nameref
+  9	179	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	named ref with 1 $1 etc.
+ 10	218	pass	pass	ok	pass	pass	pass	FAIL	pass	pass	pass	assign to invalid ref
+ 11	238	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	assign to invalid ref with strict_nameref
+ 12	258	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	name ref on Undef cell
+ 13	275	pass	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	assign to empty nameref and invalid nameref
+ 14	299	pass	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	-n attribute before it has a value
+ 15	316	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	-n attribute on array is hard error, not a warning
+ 16	337	pass	FAIL	ok	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	exported nameref
+ 17	362	pass	FAIL	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	readonly nameref doesn't prevent assigning through it
+ 18	384	ok	FAIL	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	readonly var can't be assigned through nameref
+ 19	417	pass	FAIL	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	unset nameref
+ 20	433	pass	FAIL	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	Chain of namerefs
+ 21	444	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Mutually recursive namerefs detected on READ
+ 22	462	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Mutually recursive namerefs detected on WRITE
+ 23	479	pass	FAIL	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	Dynamic scope with namerefs
+ 24	504	pass	FAIL	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	change reference itself
+ 25	537	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	a[2] in nameref
+ 26	546	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	a[expr] in nameref
+ 27	556	pass	FAIL	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	a[@] in nameref
+ 28	577	pass	FAIL	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	mutate through nameref: ref[0]=
+ 29	589	pass	FAIL	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	bad mutation through nameref: ref[0]= where ref is array[0]
+ 30	604	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	@ in nameref isn't supported, unlike in ${!ref}
+ 31	621	pass	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Unquoted assoc reference on RHS
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	25	2	12	3	2	4	13	2	2	2
+	ok	2	0	5	0	0	0	0	0	0	0
+	N-I	2	0	4	0	0	0	0	0	0	0
+	BUG	3	0	3	0	0	0	0	0	0	0
+	FAIL	0	30	8	29	30	28	19	30	30	30
+	total	32	32	32	32	32	32	32	32	32	32
+

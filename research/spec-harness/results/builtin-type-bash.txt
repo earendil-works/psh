@@ -1,0 +1,42 @@
+builtin-type-bash: FATAL: Got 216 total failures, but 0 are allowed
+builtin-type-bash.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  5	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	type -t -> function
+  1	 10	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	type -t -> alias
+  2	 16	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	type -t -> builtin
+  3	 27	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	type -t -> keyword
+  4	 38	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	type -t control flow
+  5	 60	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	type -t -> file
+  6	 67	BUG	FAIL	pass	pass	FAIL	FAIL	pass	FAIL	pass	FAIL	type -t doesn't find non-executable (like command -v)
+  7	 79	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	type -t -> not found
+  8	 90	pass	FAIL	FAIL	FAIL	pass	pass	pass	FAIL	FAIL	FAIL	type -p and -P builtin -> file
+  9	108	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	type -a -P gives multiple files
+ 10	121	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	pass	FAIL	type -p builtin -> not found
+ 11	127	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	type -p builtin -> not a file
+ 12	132	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	type -P builtin -> not found
+ 13	138	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	type -P builtin -> not a file
+ 14	144	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	type -P builtin -> not a file but file found
+ 15	160	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	type -f builtin -> not found
+ 16	164	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	type -f builtin -> function and file exists
+ 17	179	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	type prints function source code
+ 18	207	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	type -ap -> function
+ 19	213	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	type -a -> alias; prints alias definition
+ 20	220	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	type -ap -> alias
+ 21	227	pass	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	type -a -> builtin
+ 22	231	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	type -ap -> builtin
+ 23	236	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	type -a -> keyword
+ 24	240	pass	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	type -a -> file
+ 25	252	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	type -ap -> file; abbreviated
+ 26	263	pass	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	type -a -> builtin and file
+ 27	275	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	type -a -> builtin and file and shell function
+ 28	316	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	type -ap -> builtin and file; doesn't print builtin or function
+ 29	335	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	type -a -> executable not in PATH
+ 30	341	pass	FAIL	FAIL	FAIL	BUG	pass	pass	FAIL	FAIL	FAIL	type -P does not find directories (regression)
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	29	0	5	8	1	29	13	0	6	0
+	ok	1	0	0	0	0	0	0	0	0	0
+	BUG	1	0	0	0	1	0	0	0	0	0
+	FAIL	0	31	26	23	29	2	18	31	25	31
+	total	31	31	31	31	31	31	31	31	31	31
+

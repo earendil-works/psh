@@ -1,0 +1,16 @@
+zsh-assoc: FATAL: Got 52 total failures, but 0 are allowed
+zsh-assoc.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 11	pass	FAIL	pass	pass	FAIL	pass	pass	pass	FAIL	FAIL	TODO: SETUP should be shared
+  1	 15	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	retrieve key
+  2	 21	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	set key
+  3	 29	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	iterate over keys
+  4	 41	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	iterate over both keys and values
+  5	 53	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	get length
+  6	 59	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	index by integer does not work
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	3	0	1	7	0	3	3	1	0	0
+	FAIL	4	7	6	0	7	4	4	6	7	7
+	total	7	7	7	7	7	7	7	7	7	7
+

@@ -1,0 +1,49 @@
+regex.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 39	pass	FAIL	FAIL	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	BASH_REMATCH
+  1	 61	pass	FAIL	FAIL	pass	pass	pass	pass	FAIL	FAIL	FAIL	Match is unanchored at both ends
+  2	 65	pass	FAIL	pass	pass	pass	pass	pass	FAIL	pass	FAIL	Failed match
+  3	 70	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Regex quoted with \ -- preferred in bash
+  4	 74	pass	FAIL	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	Regex quoted with single quotes
+  5	 82	pass	FAIL	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	Regex quoted with double quotes
+  6	 90	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Fix single quotes by storing in variable
+  7	 95	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Fix single quotes by storing in variable
+  8	100	pass	FAIL	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	Double quoting pat variable -- again bash doesn't like it.
+  9	108	pass	FAIL	FAIL	pass	pass	pass	pass	FAIL	FAIL	FAIL	Mixing quoted and unquoted parts
+ 10	116	FAIL	pass	FAIL	ok	pass	pass	FAIL	pass	FAIL	FAIL	Regex with == and not =~ is parse error, different lexer mode required
+ 11	122	pass	FAIL	pass	pass	pass	pass	pass	FAIL	pass	FAIL	Omitting ( )
+ 12	126	FAIL	pass	FAIL	ok	pass	pass	FAIL	pass	FAIL	pass	Malformed regex
+ 13	134	pass	FAIL	FAIL	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	Regex with |
+ 14	140	pass	FAIL	FAIL	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	Regex to match literal brackets []
+ 15	157	pass	FAIL	FAIL	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	Regex to match literals . ^ $ etc.
+ 16	187	BUG	FAIL	FAIL	BUG	FAIL	FAIL	FAIL	pass	FAIL	FAIL	Unquoted { is a regex parse error
+ 17	201	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	Fatal error inside [[ =~ ]]
+ 18	212	pass	FAIL	FAIL	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	Quoted { and +
+ 19	273	pass	FAIL	FAIL	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	Escaped {
+ 20	282	pass	FAIL	FAIL	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	Escaped { stored in variable first
+ 21	293	pass	FAIL	FAIL	pass	pass	pass	pass	FAIL	FAIL	FAIL	regex with ?
+ 22	301	pass	FAIL	FAIL	pass	pass	pass	pass	FAIL	FAIL	FAIL	regex with unprintable characters
+ 23	318	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	pattern $f(x)  -- regression
+ 24	329	pass	FAIL	FAIL	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	pattern a=(1)
+ 25	343	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	pattern @f(x)
+ 26	355	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Bug: Nix idiom with closing ) next to pattern
+ 27	371	pass	FAIL	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	unquoted (a  b) as pattern, (a  b|c)
+ 28	397	pass	FAIL	FAIL	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	Multiple adjacent () groups
+ 29	433	FAIL	FAIL	FAIL	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	unquoted [a  b] as pattern, [a  b|c]
+ 30	466	pass	FAIL	FAIL	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	c|a unquoted
+ 31	477	FAIL	FAIL	FAIL	BUG	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Operator chars ; & but not |
+ 32	550	pass	FAIL	FAIL	pass	pass	pass	pass	FAIL	FAIL	FAIL	Quotes '' "" $'' $"" in pattern
+ 33	584	pass	FAIL	FAIL	pass	pass	pass	pass	FAIL	FAIL	FAIL	Unicode in pattern
+ 34	596	FAIL	FAIL	FAIL	regex: FATAL: Got 210 total failures, but 0 are allowed
+BUG	FAIL	FAIL	FAIL	pass	FAIL	pass	Parse error with 2 words
+ 35	611	pass	FAIL	FAIL	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	make a lisp example
+ 36	630	pass	FAIL	FAIL	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	Operators and space lose meaning inside ()
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	30	2	6	16	10	32	29	4	6	2
+	ok	0	0	0	7	0	0	0	0	0	0
+	N-I	0	0	0	5	0	0	0	0	0	0
+	BUG	2	0	0	9	0	0	0	0	0	0
+	FAIL	5	35	31	0	27	5	8	33	31	35
+	total	37	37	37	37	37	37	37	37	37	37
+

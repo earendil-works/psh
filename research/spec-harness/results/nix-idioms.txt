@@ -1,0 +1,15 @@
+nix-idioms: FATAL: Got 46 total failures, but 0 are allowed
+nix-idioms.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	var ref to array 'preHooks[@]'
+  1	 56	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Similar to above with set -u
+  2	 85	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	${!ref} to undefined array
+  3	103	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${!ref} to undefined string var is fatal, INCONSISTENT with array
+  4	119	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	export with dynamic var name +=
+  5	156	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	let idiom can be written in POSIX shell - eval ": \$(( ))"
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	6	0	0	0	0	6	2	0	0	0
+	FAIL	0	6	6	6	6	0	4	6	6	6
+	total	6	6	6	6	6	6	6	6	6	6
+

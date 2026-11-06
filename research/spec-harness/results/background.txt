@@ -1,0 +1,39 @@
+background: FATAL: Got 107 total failures, but 0 are allowed
+background.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 15	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	wait with nothing to wait for
+  1	 19	pass	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	wait -n with arguments - arguments are respected
+  2	 48	pass	N-I	N-I	pass	pass	FAIL	FAIL	FAIL	FAIL	pass	wait -n with nothing to wait for
+  3	 55	pass	ok	pass	pass	FAIL	FAIL	pass	pass	FAIL	pass	wait with jobspec syntax %nonexistent
+  4	 60	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	pass	wait with invalid PID
+  5	 64	ok	pass	BUG	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	wait with invalid arg
+  6	 71	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	wait for N parallel jobs
+  7	 85	pass	pass	pass	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	wait for N parallel jobs and check failure
+  8	113	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Builtin in background
+  9	118	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	External command in background
+ 10	123	pass	pass	pass	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	Start background pipeline, wait $pid
+ 11	157	pass	pass	BUG	FAIL	pass	pass	pass	pass	FAIL	FAIL	Start background pipeline, wait %job_spec
+ 12	171	pass	N-I	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Wait for job and PIPESTATUS
+ 13	196	pass	N-I	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Wait for job and PIPESTATUS - cat
+ 14	229	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Brace group in background, wait all
+ 15	236	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	Wait on background process PID
+ 16	250	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	Wait on multiple specific IDs returns last status
+ 17	261	pass	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	wait -n
+ 18	276	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Async for loop
+ 19	289	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Background process doesn't affect parent
+ 20	302	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	Background process and then a singleton pipeline
+ 21	319	pass	BUG	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	jobs prints one line per job
+ 22	333	pass	pass	pass	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	jobs -p prints one line per job
+ 23	348	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	No stderr spew when shell is not interactive
+ 24	361	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	YSH wait --all
+ 25	384	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	YSH wait --verbose
+ 26	405	pass	N-I	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	Signal message for killed background job
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	24	17	19	14	20	10	16	19	0	3
+	ok	1	1	0	0	0	0	0	0	0	0
+	N-I	2	8	6	0	0	0	0	0	0	0
+	BUG	0	1	2	0	0	0	0	0	0	0
+	FAIL	0	0	0	13	7	17	11	8	27	24
+	total	27	27	27	27	27	27	27	27	27	27
+

@@ -1,0 +1,35 @@
+toysh-posix: FATAL: Got 67 total failures, but 0 are allowed
+toysh-posix.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	ok	pass	pass	ok	pass	pass	FAIL	FAIL	FAIL	Fatal error
+  1	 12	BUG	pass	pass	ok	pass	FAIL	FAIL	pass	FAIL	FAIL	setting readonly var (bash is only one where it's non-fatal)
+  2	 26	ok	pass	pass	ok	pass	FAIL	FAIL	pass	FAIL	FAIL	readonly with temp binding
+  3	 46	BUG	ok	ok	pass	ok	pass	pass	FAIL	FAIL	FAIL	Failed redirect in assignment, vs. export
+  4	 69	ok	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	Evaluation order of redirect and ${undef?error}
+  5	 85	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	pass	Function def in pipeline
+  6	 94	pass	pass	pass	BUG	pass	pass	pass	pass	FAIL	FAIL	dynamic glob - http://landley.net/notes.html#08-05-2020
+  7	107	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	no shebang
+  8	123	pass	N-I	pass	BUG	pass	pass	pass	FAIL	FAIL	FAIL	IFS
+  9	140	pass	ok	ok	pass	pass	pass	pass	FAIL	FAIL	FAIL	shift is fatal at top level?
+ 10	154	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	var and func - http://landley.net/notes.html#19-03-2020
+ 11	167	pass	BUG	pass	N-I	BUG	pass	FAIL	FAIL	FAIL	FAIL	IFS - http://landley.net/notes.html#05-03-2020
+ 12	202	pass	BUG	pass	FAIL	BUG	pass	FAIL	FAIL	FAIL	FAIL	IFS=x and '' and unquoted $@ - reduction of case above - copied into spec/word-split
+ 13	231	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	for loop parsing - http://landley.net/notes.html#04-03-2020
+ 14	252	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Parsing $(( ))
+ 15	258	pass	pass	pass	BUG	pass	pass	FAIL	pass	FAIL	FAIL	IFS - http://landley.net/notes.html#15-02-2020 (TODO: osh)
+ 16	282	pass	pass	pass	BUG	pass	pass	FAIL	pass	FAIL	FAIL	IFS 2 - copied into spec/word-split
+ 17	295	pass	pass	pass	BUG	pass	pass	FAIL	pass	FAIL	FAIL	IFS 3
+ 18	304	BUG	pass	pass	BUG	pass	FAIL	pass	pass	FAIL	FAIL	IFS 4
+ 19	349	pass	pass	pass	BUG	pass	pass	pass	pass	FAIL	FAIL	IFS 5
+ 20	366	pass	pass	ok	ok	pass	pass	FAIL	pass	FAIL	pass	Can't parse extra }
+ 21	374	pass	pass	ok	ok	pass	FAIL	FAIL	pass	FAIL	pass	Command Sub Syntax Error
+ 22	388	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Pipeline - http://landley.net/notes-2019.html#16-12-2019
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	18	17	19	10	19	18	12	16	0	3
+	ok	2	3	4	4	2	0	0	0	0	0
+	N-I	0	1	0	1	0	0	0	0	0	0
+	BUG	3	2	0	7	2	0	0	0	0	0
+	FAIL	0	0	0	1	0	5	11	7	23	20
+	total	23	23	23	23	23	23	23	23	23	23
+

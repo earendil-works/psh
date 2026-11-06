@@ -1,0 +1,27 @@
+dparen: FATAL: Got 84 total failures, but 0 are allowed
+dparen.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	(( )) result
+  1	 11	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	negative number is true
+  2	 15	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	(( )) in if statement
+  3	 21	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	(( ))
+  4	 28	pass	FAIL	pass	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	(( )) with arrays
+  5	 35	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	(( )) with error
+  6	 48	pass	FAIL	pass	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	bash and mksh: V in (( a[K] = V )) gets coerced to integer
+  7	 68	pass	FAIL	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	bash: K in (( A[K] = V )) is a constant string
+  8	 89	BUG	FAIL	pass	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	BUG: (( V = A[K] )) doesn't retrieve the right value
+  9	108	pass	FAIL	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	bash: V in (( A["K"] = V )) gets coerced to integer
+ 10	130	FAIL	FAIL	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	literal strings inside (( ))
+ 11	148	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	(( )) with redirect
+ 12	159	pass	FAIL	pass	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	Assigning whole raray (( b = a ))
+ 13	179	pass	FAIL	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	set associative array
+ 14	192	pass	FAIL	N-I	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	Example of incrementing associative array entry with var key (ble.sh)
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	13	0	10	6	0	9	14	0	0	0
+	ok	0	0	0	1	0	0	0	0	0	0
+	N-I	0	0	5	5	0	0	0	0	0	0
+	BUG	1	0	0	2	0	0	0	0	0	0
+	FAIL	1	15	0	1	15	6	1	15	15	15
+	total	15	15	15	15	15	15	15	15	15	15
+

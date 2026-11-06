@@ -1,0 +1,17 @@
+type-compat: FATAL: Got 60 total failures, but 0 are allowed
+type-compat.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 12	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	declare -i -l -u errors can be silenced - ignore_flags_not_impl
+  1	 42	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	declare -i with +=
+  2	 69	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	declare -i with arithmetic inside strings (Nix, issue 864)
+  3	 92	FAIL	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	append in arith context
+  4	107	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	declare array vs. string: mixing -a +a and () ''
+  5	122	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	declare array vs. associative array
+  6	139	pass	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	declare -l -u
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	4	0	1	1	0	2	1	0	0	0
+	ok	1	0	0	0	0	0	0	0	0	0
+	FAIL	2	7	6	6	7	5	6	7	7	7
+	total	7	7	7	7	7	7	7	7	7	7
+

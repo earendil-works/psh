@@ -1,0 +1,25 @@
+case_: FATAL: Got 36 total failures, but 0 are allowed
+case_.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  6	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Case statement
+  1	 25	pass	N-I	pass	N-I	FAIL	pass	pass	pass	FAIL	FAIL	Case statement with ;;&
+  2	 44	pass	N-I	pass	pass	FAIL	pass	pass	pass	FAIL	FAIL	Case statement with ;&
+  3	 75	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Case with empty condition
+  4	 82	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Match a literal with a glob character
+  5	 89	pass	pass	pass	BUG	pass	pass	pass	pass	FAIL	FAIL	Match a literal with a glob character with a dynamic pattern
+  6	 98	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Quoted literal in glob pattern
+  7	106	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Multiple Patterns Match
+  8	115	pass	BUG	FAIL	pass	FAIL	pass	pass	pass	FAIL	FAIL	Pattern ? matches 1 code point (many bytes), but not multiple code points
+  9	147	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	matching the byte 0xff against empty string - DISABLED - CI only bug?
+ 10	181	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	matching every byte against itself
+ 11	211	pass	N-I	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	\(\) in pattern (regression)
+ 12	234	pass	pass	ok	ok	pass	pass	FAIL	pass	FAIL	pass	case \n bug regression
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	13	9	11	10	9	11	10	12	0	1
+	ok	0	0	1	1	0	0	0	0	0	0
+	N-I	0	3	0	1	0	0	0	0	0	0
+	BUG	0	1	0	1	0	0	0	0	0	0
+	FAIL	0	0	1	0	4	2	3	1	13	12
+	total	13	13	13	13	13	13	13	13	13	13
+

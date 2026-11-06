@@ -1,0 +1,30 @@
+builtin-dirs: FATAL: Got 110 total failures, but 0 are allowed
+builtin-dirs.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  5	pass	N-I	N-I	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	pushd/popd
+  1	 26	pass	FAIL	FAIL	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	pushd usage
+  2	 44	pass	FAIL	FAIL	BUG	FAIL	pass	FAIL	FAIL	FAIL	FAIL	popd usage error
+  3	 65	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	popd returns error on empty directory stack
+  4	 74	pass	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	cd replaces the lowest entry on the directory stack!
+  5	107	pass	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	dirs builtin
+  6	115	pass	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	dirs -c to clear the stack
+  7	132	pass	FAIL	FAIL	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	dirs -v to print numbered stack, one entry per line
+  8	155	pass	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	dirs -p to print one entry per line
+  9	174	pass	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	dirs -l to print in long format, no tilde prefix
+ 10	189	pass	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	dirs to print using tilde-prefix format
+ 11	198	pass	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	dirs test converting true home directory to tilde
+ 12	207	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	dirs don't convert to tilde when $HOME is substring
+ 13	215	pass	FAIL	FAIL	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	dirs tilde test when $HOME is exactly $PWD
+ 14	231	pass	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	dirs test of path alias `..`
+ 15	238	pass	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	dirs test of path alias `.`
+ 16	245	pass	pass	pass	FAIL	pass	pass	pass	pass	pass	pass	pushd does not take more than one argument
+ 17	253	pass	pass	pass	BUG	pass	pass	FAIL	pass	pass	pass	dirs does not take arguments
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	18	2	2	11	2	18	3	2	2	2
+	ok	0	0	0	4	0	0	0	0	0	0
+	N-I	0	1	1	0	0	0	0	0	0	0
+	BUG	0	0	0	2	0	0	0	0	0	0
+	FAIL	0	15	15	1	16	0	15	16	16	16
+	total	18	18	18	18	18	18	18	18	18	18
+

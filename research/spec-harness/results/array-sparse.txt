@@ -1,0 +1,52 @@
+array-sparse.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Performance demo
+  1	 67	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	test length
+  2	 84	ok	FAIL	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	test "declare -p sp"
+  3	129	pass	FAIL	ok	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	+=
+  4	158	pass	FAIL	ok	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	a[i]=v
+  5	187	pass	FAIL	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Negative index with a[i]=v
+  6	208	pass	FAIL	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	a[i]=v with BigInt
+  7	234	ok	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Negative out-of-bound index with a[i]=v (1/2)
+  8	263	ok	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Negative out-of-bound index with a[i]=v (2/2)
+  9	293	pass	FAIL	ok	FAIL	FAIL	pass	pass	pass	FAIL	FAIL	xtrace a+=()
+ 10	309	ok	FAIL	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	unset -v a[i]
+ 11	373	ok	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	unset -v a[i] with out-of-bound negative index
+ 12	403	ok	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	unset -v a[i] for max index
+ 13	428	pass	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	[[ -v a[i] ]]
+ 14	477	ok	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	[[ -v a[i] ]] with invalid negative index
+ 15	520	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	((sp[i])) and ((sp[i]++))
+ 16	566	ok	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	((sp[i])) and ((sp[i]++)) with invalid negative index
+ 17	593	pass	FAIL	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${sp[i]}
+ 18	632	ok	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	${sp[i]} with negative invalid index
+ 19	673	pass	FAIL	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${a[@]:offset:length}
+ 20	745	pass	FAIL	N-I	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	${@:offset:length}
+ 21	791	BUG	FAIL	N-I	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	${a[@]:BigInt}
+ 22	846	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${a[@]}
+ 23	859	pass	FAIL	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${a[@]#...}
+ 24	883	pass	FAIL	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${a[@]/pat/rep}
+ 25	915	ok	FAIL	N-I	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	${a[@]@P}, ${a[@]@Q}, and ${a[@]@a}
+ 26	950	pass	FAIL	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	${a[@]-unset}, ${a[@]:-empty}, etc.
+ 27	972	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${a-}
+ 28	988	pass	FAIL	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${!a[0]}
+ 29	1004	pass	FAIL	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${!a[@]}
+ 30	1020	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	"${a[*]}"
+ 31	1037	pass	FAIL	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -F _set_COMPREPLY
+ 32	1061	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	compadjust
+ 33	1078	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	(YSH) @[sp] and @sp
+ 34	1096	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	(YSH) $[a1 === a2]
+ 35	1131	N-I	FAIL	N-I	FAIL	FAIL	array-sparse: FATAL: Got 279 total failures, but 0 are allowed
+FAIL	FAIL	FAIL	FAIL	FAIL	(YSH) append v1 v2... (a)
+ 36	1147	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	(YSH) $[bool(a)]
+ 37	1174	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	crash dump
+ 38	1198	ok	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Regression: a[-1]=1
+ 39	1218	pass	FAIL	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Initializing indexed array with ([index]=value)
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	21	0	6	1	0	18	21	1	0	0
+	ok	11	0	5	0	0	0	0	0	0	0
+	N-I	7	0	29	0	0	0	0	0	0	0
+	BUG	1	0	0	0	0	0	0	0	0	0
+	FAIL	0	40	0	39	40	22	19	39	40	40
+	total	40	40	40	40	40	40	40	40	40	40
+

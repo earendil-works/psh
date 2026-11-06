@@ -1,0 +1,22 @@
+array-compat: FATAL: Got 71 total failures, but 0 are allowed
+array-compat.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  6	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Assignment Causes Array Decay
+  1	 16	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Array Decay with IFS
+  2	 23	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	User arrays decay
+  3	 38	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	strict_array: $array is not valid in OSH, is ${array[0]} in ksh/bash
+  4	 49	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	strict_array: ${array} is not valid in OSH, is ${array[0]} in ksh/bash
+  5	 60	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Assign to array index without initialization
+  6	 66	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	a[40] grows array
+  7	 74	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	array decays to string when comparing with [[ a = b ]]
+  8	 84	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	++ on a whole array increments the first element (disallowed with strict_array)
+  9	 94	pass	FAIL	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Apply vectorized operations on ${a[*]}
+ 10	105	pass	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	value.BashArray internal representation - Indexed
+ 11	158	pass	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	value.BashArray internal representation - Assoc (ordering is a problem)
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	12	1	9	2	1	10	10	1	0	0
+	N-I	0	0	3	0	0	0	0	0	0	0
+	FAIL	0	11	0	10	11	2	2	11	12	12
+	total	12	12	12	12	12	12	12	12	12	12
+

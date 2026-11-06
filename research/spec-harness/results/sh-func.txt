@@ -1,0 +1,23 @@
+sh-func: FATAL: Got 32 total failures, but 0 are allowed
+sh-func.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	Locals don't leak
+  1	 12	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	Globals leak
+  2	 20	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Return statement
+  3	 30	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Dynamic Scope
+  4	 41	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Dynamic Scope Mutation (wow this is bad)
+  5	 59	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Assign local separately
+  6	 69	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Assign a local and global on same line
+  7	 84	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	Return without args gives previous
+  8	 95	BUG	ok	BUG	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	return "" (a lot of disagreement)
+  9	124	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	return $empty
+ 10	138	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Subshell function
+ 11	158	pass	ok	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Scope of global variable when sourced in function (Shell Functions aren't Closures)
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	11	10	11	12	10	11	10	7	0	2
+	ok	0	2	0	0	0	0	0	0	0	0
+	BUG	1	0	1	0	0	0	0	0	0	0
+	FAIL	0	0	0	0	2	1	2	5	12	10
+	total	12	12	12	12	12	12	12	12	12	12
+

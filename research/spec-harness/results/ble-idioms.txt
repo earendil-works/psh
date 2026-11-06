@@ -1,0 +1,38 @@
+ble-idioms: FATAL: Got 104 total failures, but 0 are allowed
+ble-idioms.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	N-I	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	recursive arith: one level
+  1	 12	pass	N-I	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	recursive arith: two levels
+  2	 20	pass	N-I	FAIL	pass	BUG	pass	pass	FAIL	FAIL	FAIL	recursive arith: short circuit &&, ||
+  3	 50	pass	N-I	pass	pass	BUG	pass	pass	FAIL	FAIL	FAIL	recursive arith: short circuit ?:
+  4	 70	pass	N-I	pass	BUG	BUG	pass	pass	FAIL	FAIL	FAIL	recursive arith: side effects
+  5	 80	pass	N-I	N-I	pass	N-I	pass	pass	FAIL	FAIL	FAIL	recursive arith: recursion
+  6	 89	pass	N-I	pass	pass	N-I	pass	pass	FAIL	FAIL	FAIL	recursive arith: array elements
+  7	 98	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	dynamic arith varname: assign
+  8	113	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	dynamic arith varname: read
+  9	127	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	dynamic arith varname: copy/add
+ 10	151	pass	N-I	N-I	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	is-array with ${var@a}
+ 11	175	pass	N-I	pass	BUG	N-I	pass	pass	FAIL	FAIL	FAIL	Sparse array with big index
+ 12	209	pass	N-I	N-I	BUG	FAIL	pass	FAIL	FAIL	FAIL	FAIL	shift unshift reverse
+ 13	289	pass	N-I	N-I	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	shopt -u expand_aliases and eval
+ 14	309	pass	N-I	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Issue #1069 [40] BUG: a=(declare v); "${a[@]}" fails
+ 15	323	pass	N-I	pass	pass	FAIL	pass	FAIL	pass	FAIL	FAIL	Issue #1069 [40] BUG: a=declare; "$a" v=1 fails
+ 16	336	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Issue #1069 [49] BUG: \return 0 does not work
+ 17	347	pass	N-I	pass	ok	N-I	pass	pass	FAIL	FAIL	FAIL	Issue #1069 [49] BUG: \return 0 does not work (other variations)
+ 18	376	pass	N-I	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Issue #1069 [52] BUG: \builtin local v=1 fails
+ 19	394	pass	N-I	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	Issue #1069 [53] BUG: a[1 + 1]=2, etc. fails
+ 20	425	pass	FAIL	ok	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Issue #1069 [53] - LHS array parsing a[1 + 2]=3 (see spec/array-assign for more)
+ 21	465	ok	ok	ok	ok	ok	FAIL	FAIL	FAIL	FAIL	FAIL	Issue #1069 [56] BUG: declare -p unset does not print any error message
+ 22	495	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Issue #1069 [57] BUG: variable v is invisible after IFS= eval 'local v=...'
+ 23	509	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Issue #1069 [57] - Variable v should be visible after IFS= eval 'local v=...'
+ 24	533	pass	N-I	pass	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	Issue #1069 [59] N-I: arr=s should set RHS to arr[0]
+ 25	549	pass	FAIL	ok	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Issue #1069 [59] - Assigning Str to BashArray/BashAssoc should not remove BashArray/BashAssoc
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	25	6	18	15	8	22	16	2	0	0
+	ok	1	1	3	2	1	0	0	0	0	0
+	N-I	0	17	4	5	4	0	0	0	0	0
+	BUG	0	0	0	3	3	0	0	0	0	0
+	FAIL	0	2	1	1	10	4	10	24	26	26
+	total	26	26	26	26	26	26	26	26	26	26
+

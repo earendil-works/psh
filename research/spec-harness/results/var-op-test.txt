@@ -1,0 +1,49 @@
+var-op-test.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	N-I	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	Lazy Evaluation of Alternative
+  1	 24	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Default value when empty
+  2	 29	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Default value when unset
+  3	 33	pass	pass	pass	ok	pass	pass	pass	pass	FAIL	FAIL	Unquoted with array as default value
+  4	 51	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Quoted with array as default value
+  5	 72	pass	pass	pass	ok	pass	pass	pass	pass	FAIL	FAIL	Assign default with array
+  6	 89	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Assign default value when empty
+  7	 95	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Assign default value when unset
+  8	100	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	${v:+foo} Alternative value when empty
+  9	106	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	${v+foo} Alternative value when unset
+ 10	111	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	"${x+foo}" quoted (regression)
+ 11	118	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	${s+foo} and ${s:+foo} when set -u
+ 12	133	BUG	N-I	BUG	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	"${array[@]} with set -u (bash is outlier)
+ 13	165	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	"${undefined[@]+foo}" and "${undefined[@]:+foo}", with set -u
+ 14	181	pass	N-I	BUG	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	"${a[@]+foo}" and "${a[@]:+foo}" - operators are equivalent on arrays?
+ 15	263	pass	ok	ok	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	Nix idiom ${!hooksSlice+"${!hooksSlice}"} - was workaround for obsolete bash 4.3 bug
+ 16	304	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	${v-foo} and ${v:-foo} when set -u
+ 17	319	pass	N-I	pass	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	array and - and +
+ 18	396	pass	BUG	pass	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	$@ (empty) and - and +
+ 19	414	pass	pass	pass	ok	pass	pass	pass	pass	FAIL	FAIL	$@ ("") and - and +
+ 20	437	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	$@ ("" "") and - and +
+ 21	450	pass	FAIL	BUG	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	$* ("" "") and - and + (IFS=)
+ 22	470	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	"$*" ("" "") and - and + (IFS=)
+ 23	484	pass	N-I	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	assoc array and - and +
+ 24	528	pass	ok	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Error when empty
+ 25	536	pass	ok	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Error when unset
+ 26	543	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Error when unset
+ 27	548	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	${var=x} dynamic scope
+ 28	562	pass	N-I	pass	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	array ${arr[0]=x}
+ 29	578	pass	N-I	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	assoc array ${arr["k"]=x}
+ 30	594	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	"\z" as arg
+ 31	620	pass	FAIL	BUG	BUG	pass	pass	pass	pass	FAIL	FAIL	"\e" as arg
+ 32	629	pass	N-I	pass	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	op-test for ${a} and ${a[0]}
+ 33	674	pass	N-I	pass	ok	FAIL	FAIL	pass	FAIL	FAIL	FAIL	op-test for ${a[@]} and ${a[*]}
+ 34	734	var-op-test: FATAL: Got 121 total failures, but 0 are allowed
+pass	N-I	N-I	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	op-test for ${!array} with array="a" and array="a[0]"
+ 35	768	BUG	N-I	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	op-test for ${!array} with array="a[@]" or array="a[*]"
+ 36	813	pass	N-I	BUG	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	op-test for unquoted ${a[*]:-empty} with IFS=
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	35	18	27	23	20	31	33	20	0	0
+	ok	0	3	1	6	0	0	0	0	0	0
+	N-I	0	13	4	4	0	0	0	0	0	0
+	BUG	2	1	5	3	0	0	0	0	0	0
+	FAIL	0	2	0	1	17	6	4	17	37	37
+	total	37	37	37	37	37	37	37	37	37	37
+

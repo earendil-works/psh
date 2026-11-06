@@ -1,0 +1,28 @@
+globignore: FATAL: Got 153 total failures, but 0 are allowed
+globignore.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  5	pass	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	Don't glob flags on file system with GLOBIGNORE
+  1	 16	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Ignore *.txt
+  2	 26	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Ignore ?.txt
+  3	 36	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Ignore *.o:*.h
+  4	 44	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Ignore single file src/__main__.py
+  5	 53	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Ignore dirs dist/*:node_modules/*
+  6	 65	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	find files in subdirectory but not the ignored pattern
+  7	 75	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Ignore globs with char patterns like [!ab]
+  8	 90	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Ignore globs with char classes like [[:alnum:]]
+  9	108	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Ignore *
+ 10	117	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	treat escaped patterns literally
+ 11	125	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	resetting globignore reverts to default behaviour
+ 12	136	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Ignore .:..
+ 13	150	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Quoting GLOBIGNORE
+ 14	168	pass	FAIL	pass	pass	FAIL	pass	pass	pass	pass	FAIL	. and .. always filtered when GLOBIGNORE is set
+ 15	182	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	When GLOBIGNORE is set, glob may become empty (nullglob too)
+ 16	199	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	When GLOBIGNORE is set, no_dash_glob isn't respected
+ 17	218	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Extended glob expansion combined with GLOBIGNORE
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	17	0	1	1	0	1	1	1	1	0
+	N-I	1	1	1	0	1	0	0	0	0	0
+	FAIL	0	17	16	17	17	17	17	17	17	18
+	total	18	18	18	18	18	18	18	18	18	18
+

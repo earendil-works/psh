@@ -1,0 +1,37 @@
+sh-usage: FATAL: Got 80 total failures, but 0 are allowed
+sh-usage.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  5	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	sh -c
+  1	 10	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	empty -c input
+  2	 16	pass	pass	N-I	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	sh +c is accepted
+  3	 23	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	empty stdin
+  4	 29	pass	pass	FAIL	BUG	pass	FAIL	FAIL	pass	FAIL	FAIL	sh - and sh -- stop flag processing
+  5	 73	pass	N-I	N-I	pass	FAIL	pass	FAIL	pass	FAIL	FAIL	shell obeys --help (regression for OSH)
+  6	 83	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	args are passed
+  7	 87	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	args that look like flags are passed after script
+  8	 94	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	args that look like flags are passed after -c
+  9	 98	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	exit with explicit arg
+ 10	102	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	exit with no args
+ 11	107	N-I	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	--rcfile in non-interactive shell prints warnings
+ 12	129	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	accepts -l flag
+ 13	134	pass	ok	ok	pass	pass	pass	FAIL	pass	pass	FAIL	accepts --login flag (dash and mksh don't accept long flags)
+ 14	141	N-I	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	osh --eval
+ 15	171	pass	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Set LC_ALL LC_CTYPE LC_COLLATE LANG - affects glob ?
+ 16	222	pass	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	LC_CTYPE=invalid
+ 17	245	pass	pass	pass	pass	BUG	FAIL	FAIL	pass	FAIL	FAIL	sh -c -- 'echo hi' does not run anything (#2637)
+ 18	309	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	sh -c with multiple -- args
+ 19	330	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	sh -c with no arg after --
+ 20	349	pass	N-I	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Other flag parsers are not affected by - rule
+ 21	362	pass	pass	BUG	BUG-2	pass	FAIL	FAIL	FAIL	FAIL	FAIL	weird flag parsing -oo errexit noglob
+ 22	398	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	'sh -c -z' does not try to run -z
+ 23	421	pass	pass	pass	ok	pass	pass	FAIL	pass	FAIL	FAIL	sh -c -x 'echo hi' - order is reversed
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	22	17	15	18	18	16	8	17	5	2
+	ok	0	1	1	1	0	0	0	0	0	0
+	N-I	2	6	4	3	0	0	0	0	0	0
+	BUG-2	0	0	0	1	0	0	0	0	0	0
+	BUG	0	0	1	1	1	0	0	0	0	0
+	FAIL	0	0	3	0	5	8	16	7	19	22
+	total	24	24	24	24	24	24	24	24	24	24
+

@@ -1,0 +1,53 @@
+var-sub-quote.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 17	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	"${empty:-}"
+  1	 22	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	${empty:-}
+  2	 27	pass	N-I	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	array with empty values
+  3	 36	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	substitution of IFS character, quoted and unquoted
+  4	 46	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	:-
+  5	 51	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	-
+  6	 57	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Inner single quotes
+  7	 61	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	Inner single quotes, outer double quotes
+  8	 66	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Inner double quotes
+  9	 70	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Inner double quotes, outer double quotes
+ 10	 74	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Multiple words: no quotes
+ 11	 78	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	Multiple words: no outer quotes, inner single quotes
+ 12	 82	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	Multiple words: no outer quotes, inner double quotes
+ 13	 86	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Multiple words: outer double quotes, no inner quotes
+ 14	 90	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Multiple words: outer double quotes, inner double quotes
+ 15	 94	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	Multiple words: outer double quotes, inner single quotes
+ 16	 99	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	Mixed inner quotes
+ 17	103	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Mixed inner quotes with outer quotes
+ 18	107	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	part_value tree with multiple words
+ 19	111	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	part_value tree on RHS
+ 20	116	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Var with multiple words: no quotes
+ 21	121	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Multiple words: no outer quotes, inner single quotes
+ 22	126	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	Multiple words: no outer quotes, inner double quotes
+ 23	131	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Multiple words: outer double quotes, no inner quotes
+ 24	136	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Multiple words: outer double quotes, inner double quotes
+ 25	141	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	Multiple words: outer double quotes, inner single quotes
+ 26	150	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	No outer quotes, Multiple internal quotes
+ 27	156	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Strip a string with single quotes, unquoted
+ 28	161	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Strip a string with single quotes, double quoted
+ 29	168	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	The string to strip is space sensitive
+ 30	173	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	The string to strip can be single quoted, outer is unquoted
+ 31	178	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	Syntax error for single quote in double quote
+ 32	185	pass	ok	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	var-sub-quote: FATAL: Got 117 total failures, but 0 are allowed
+"${undef-'c d'}" and "${foo%'c d'}" are parsed differently
+ 33	217	pass	N-I	pass	pass	pass	pass	pass	pass	FAIL	FAIL	$'' allowed within VarSub arguments
+ 34	231	pass	pass	pass	pass	FAIL	pass	pass	pass	FAIL	FAIL	# operator with single quoted arg (dash/ash and bash/mksh disagree, reported by Crestwave)
+ 35	251	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	/ operator with single quoted arg (causes syntax error in regex in OSH, reported by Crestwave)
+ 36	268	pass	N-I	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	single quotes work inside character classes
+ 37	280	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	comparison: :- operator with single quoted arg
+ 38	289	BUG	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	Right Brace as argument (similar to #702)
+ 39	314	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Var substitution with newlines (#2492)
+ 40	344	pass	BUG	BUG	FAIL	pass	pass	pass	pass	FAIL	FAIL	Var substitution with \n in value
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	40	35	38	30	37	40	26	37	0	0
+	ok	0	1	1	0	0	0	0	0	0	0
+	N-I	0	4	1	0	0	0	0	0	0	0
+	BUG	1	1	1	0	0	0	0	0	0	0
+	FAIL	0	0	0	11	4	1	15	4	41	41
+	total	41	41	41	41	41	41	41	41	41	41
+

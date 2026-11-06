@@ -1,0 +1,27 @@
+builtin-history: FATAL: Got 144 total failures, but 0 are allowed
+builtin-history.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  6	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	history -a
+  1	 38	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	history -w writes out the in-memory history to the history file
+  2	 57	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	history -r reads from the history file, and appends it to the current history
+  3	 75	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	history -n reads *new* commands from the history file, and appends them to the current history
+  4	 97	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	history -c clears in-memory history
+  5	114	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	history -d to delete 1 item
+  6	130	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	history -d to delete history from end
+  7	184	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	HISTFILE is defined initially
+  8	197	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	HISTFILE must point to a file
+  9	215	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	HISTFILE set to array
+ 10	237	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	HISTFILE unset
+ 11	253	ok	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	history usage
+ 12	272	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	HISTSIZE shrinks the in-memory history when changed
+ 13	289	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	HISTFILESIZE shrinks the history file when changed
+ 14	302	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	recording history can be toggled with set -o/+o history
+ 15	327	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	shopt histappend toggle check
+ 16	348	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	shopt histappend - osh ignores shopt and appends, bash sometimes overwrites
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	15	1	1	1	1	1	2	1	0	1
+	ok	2	0	0	0	0	0	0	0	0	0
+	FAIL	0	16	16	16	16	16	15	16	17	16
+	total	17	17	17	17	17	17	17	17	17	17
+

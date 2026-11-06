@@ -1,0 +1,16 @@
+fatal-errors: FATAL: Got 24 total failures, but 0 are allowed
+fatal-errors.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  8	ok	ok	pass	pass	ok	FAIL	FAIL	FAIL	FAIL	FAIL	Unrecoverable: divide by zero in redirect word
+  1	 31	ok	ok	pass	FAIL	ok	FAIL	FAIL	FAIL	FAIL	FAIL	Unrecoverable: divide by zero in conditional word
+  2	 83	ok	ok	pass	BUG	ok	FAIL	FAIL	FAIL	FAIL	FAIL	Unrecoverable: divide by zero in case
+  3	132	ok	ok	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Unrecoverable: ${undef?message}
+  4	161	ok	ok	pass	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	${undef} with nounset
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	0	0	5	2	0	2	2	0	0	0
+	ok	5	5	0	0	3	0	0	0	0	0
+	BUG	0	0	0	2	0	0	0	0	0	0
+	FAIL	0	0	0	1	2	3	3	5	5	5
+	total	5	5	5	5	5	5	5	5	5	5
+

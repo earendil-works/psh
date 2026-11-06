@@ -1,0 +1,32 @@
+builtin-kill: FATAL: Got 89 total failures, but 0 are allowed
+builtin-kill.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  7	pass	pass	BUG	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	kill -15 kills the process with SIGTERM
+  1	 24	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	kill -KILL kills the process with SIGKILL
+  2	 37	pass	N-I	N-I	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	kill -n 9 specifies the signal number
+  3	 60	pass	pass	BUG	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	kill -s TERM specifies the signal name
+  4	 77	pass	N-I	N-I	N-I	pass	FAIL	pass	FAIL	FAIL	FAIL	kill -terM -SigterM isn't case sensitive
+  5	102	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	kill HUP pid gives the correct error
+  6	115	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	kill -l shows signals
+  7	128	pass	N-I	N-I	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	kill -L also shows signals
+  8	138	pass	N-I	N-I	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	kill -l 10 TERM translates between names and numbers
+  9	173	pass	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	kill -L checks for invalid input
+ 10	197	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	kill -l with exit code
+ 11	203	pass	pass	N-I	FAIL	FAIL	pass	pass	pass	FAIL	FAIL	kill -l with 128 is invalid
+ 12	214	pass	N-I	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	kill -l 0 returns EXIT
+ 13	224	pass	N-I	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	kill -l 0 INT lists both signals
+ 14	236	pass	N-I	pass	pass	pass	pass	pass	pass	FAIL	FAIL	kill -9999 is an invalid signal
+ 15	251	pass	N-I	BUG	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	kill -15 %% kills current job
+ 16	287	pass	BUG	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	FAIL	kill -15 %- kills previous job
+ 17	319	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	kill multiple pids at once
+ 18	333	pass	BUG	pass	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	kill pid and job at once
+ 19	345	pass	ok	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	Numeric signal out of range - OSH may send it anyway
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	20	6	8	12	12	6	15	5	0	0
+	ok	0	1	0	0	0	0	0	0	0	0
+	N-I	0	11	8	2	0	0	0	0	0	0
+	BUG	0	2	3	0	0	0	0	0	0	0
+	FAIL	0	0	1	6	8	14	5	15	20	20
+	total	20	20	20	20	20	20	20	20	20	20
+

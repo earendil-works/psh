@@ -1,0 +1,79 @@
+builtin-read.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	read line from here doc
+  1	 15	pass	ok	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	read from empty file
+  2	 34	pass	ok	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	read /dev/null
+  3	 42	pass	BUG	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	read with zero args
+  4	 52	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	read builtin with no newline returns status 1
+  5	 65	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	read builtin splits value across multiple vars
+  6	 75	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	read builtin with too few variables
+  7	 85	pass	N-I	pass	N-I	pass	pass	pass	FAIL	FAIL	FAIL	read -n (with $REPLY)
+  8	 93	pass	N-I	pass	N-I	pass	pass	pass	FAIL	FAIL	FAIL	IFS= read -n (OSH regression: value saved in tempenv)
+  9	100	pass	N-I	BUG	N-I	pass	pass	pass	FAIL	FAIL	FAIL	read -n doesn't strip whitespace (bug fix)
+ 10	154	pass	N-I	BUG	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	read -d -n - respects delimiter and splits
+ 11	213	ok	pass	pass	N-I	pass	pass	FAIL	FAIL	FAIL	FAIL	read -n with invalid arg
+ 12	220	pass	N-I	pass	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	read -n from pipe
+ 13	231	pass	FAIL	BUG	BUG	pass	pass	pass	FAIL	FAIL	FAIL	read without args uses $REPLY, no splitting occurs (without -n)
+ 14	274	pass	N-I	BUG	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	read -n vs. -N
+ 15	311	pass	N-I	pass	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	read -N ignores delimiters
+ 16	324	pass	N-I	pass	BUG	pass	pass	pass	FAIL	FAIL	FAIL	read will unset extranous vars
+ 17	349	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	read -r ignores backslashes
+ 18	356	pass	pass	BUG	BUG	pass	pass	pass	pass	FAIL	FAIL	read -r with other backslash escapes
+ 19	365	pass	N-I	pass	pass	pass	pass	pass	pass	FAIL	FAIL	read with line continuation reads multiple physical lines
+ 20	375	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	read multiple vars spanning many lines
+ 21	385	pass	BUG	BUG	BUG	pass	pass	pass	pass	FAIL	FAIL	read -r with \n
+ 22	395	pass	N-I	pass	N-I	pass	pass	pass	FAIL	FAIL	FAIL	read -s from pipe, not a terminal
+ 23	415	pass	N-I	pass	pass	pass	pass	pass	pass	FAIL	FAIL	read with IFS=$'\n'
+ 24	426	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	read multiple lines with IFS=:
+ 25	441	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	read with IFS=''
+ 26	449	pass	BUG	BUG	BUG	BUG	pass	pass	pass	FAIL	FAIL	read does not respect C backslash escapes
+ 27	465	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	dynamic scope used to set vars
+ 28	477	pass	N-I	N-I	N-I	N-I	FAIL	pass	FAIL	FAIL	FAIL	read -a reads into array
+ 29	509	pass	N-I	pass	pass	pass	pass	pass	pass	FAIL	FAIL	read -d : (colon-separated records)
+ 30	530	pass	N-I	pass	pass	pass	pass	pass	pass	FAIL	FAIL	read -d '' (null-separated records)
+ 31	551	pass	N-I	pass	pass	pass	pass	pass	pass	FAIL	FAIL	read -rd
+ 32	565	pass	N-I	pass	pass	pass	pass	pass	pass	FAIL	FAIL	read -d when there's no delimiter
+ 33	582	pass	N-I	N-I	N-I	pass	pass	FAIL	FAIL	FAIL	FAIL	builtin-read: FATAL: Got 208 total failures, but 0 are allowed
+read -t 0 tests if input is available
+ 34	605	pass	N-I	BUG	BUG	pass	pass	FAIL	FAIL	FAIL	FAIL	read -t 0.5
+ 35	619	BUG	pass	pass	BUG	pass	FAIL	pass	FAIL	FAIL	FAIL	read -t -0.5 is invalid
+ 36	634	pass	N-I	N-I	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	read -u
+ 37	647	ok	pass	pass	ok	pass	pass	pass	FAIL	FAIL	FAIL	read -u syntax error
+ 38	657	pass	N-I	N-I	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	read -u -s
+ 39	670	pass	N-I	N-I	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	read -u 3 -d 5
+ 40	683	pass	FAIL	BUG	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	read -u 3 -d b -N 6
+ 41	705	pass	N-I	ok	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	read -N doesn't respect delimiter, while read -n does
+ 42	720	pass	N-I	N-I	N-I	pass	pass	FAIL	FAIL	FAIL	FAIL	read -p (not fully tested)
+ 43	736	ok	pass	BUG	BUG	pass	pass	FAIL	FAIL	FAIL	FAIL	read usage
+ 44	748	pass	N-I	pass	N-I	pass	pass	pass	FAIL	FAIL	FAIL	read with smooshed args
+ 45	757	pass	N-I	N-I	N-I	pass	pass	pass	FAIL	FAIL	FAIL	read -r -d '' for NUL strings, e.g. find -print0
+ 46	777	pass	pass	ok	pass	pass	pass	pass	FAIL	FAIL	FAIL	read from redirected directory is non-fatal error
+ 47	794	pass	N-I	ok	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	read -n from directory
+ 48	810	BUG	N-I	N-I	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	mapfile from directory (bash doesn't handle errors)
+ 49	825	pass	pass	pass	N-I	ok	FAIL	pass	pass	FAIL	FAIL	read -n 0
+ 50	841	pass	FAIL	ok	N-I	ok	pass	pass	FAIL	FAIL	FAIL	read -n and backslash escape
+ 51	863	pass	FAIL	ok-3	N-I	ok-2	pass	pass	FAIL	FAIL	FAIL	read -n 4 with incomplete backslash
+ 52	889	pass	FAIL	ok-2	N-I	ok-2	pass	pass	FAIL	FAIL	FAIL	read -n 4 with backslash + delim
+ 53	905	pass	FAIL	ok-2	ok-2	pass	FAIL	pass	FAIL	FAIL	FAIL	"backslash + newline" should be swallowed regardless of "-d <delim>"
+ 54	926	pass	N-I	N-I	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	empty input and splitting
+ 55	942	pass	N-I	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	IFS='x ' read -a: trailing spaces (unlimited split)
+ 56	966	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	IFS='x ' read a b: trailing spaces (with max_split)
+ 57	983	pass	N-I	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	IFS='x ' read -a: intermediate spaces (unlimited split)
+ 58	1010	pass	FAIL	pass	pass	pass	pass	pass	pass	FAIL	FAIL	IFS='x ' incomplete backslash
+ 59	1021	pass	pass	ok	ok	pass	FAIL	pass	pass	FAIL	FAIL	IFS='\ ' and backslash escaping
+ 60	1036	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	max_split and backslash escaping
+ 61	1046	pass	pass	pass	ok-2	pass	FAIL	pass	pass	FAIL	FAIL	IFS=x read a b <<< xxxxxx
+ 62	1104	pass	pass	BUG	ok-2	ok-2	FAIL	pass	pass	FAIL	FAIL	read and "\ "
+ 63	1168	BUG	FAIL	BUG-2	ok-3	ok-3	FAIL	pass	pass	FAIL	FAIL	read bash bug
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	58	21	33	26	45	52	53	26	0	0
+	ok-3	0	0	1	1	1	0	0	0	0	0
+	ok-2	0	0	2	3	3	0	0	0	0	0
+	ok	3	2	5	2	2	0	0	0	0	0
+	N-I	0	30	11	24	1	0	0	0	0	0
+	BUG-2	0	0	1	0	0	0	0	0	0	0
+	BUG	3	3	11	8	1	0	0	0	0	0
+	FAIL	0	8	0	0	11	12	11	38	64	64
+	total	64	64	64	64	64	64	64	64	64	64
+

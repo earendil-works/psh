@@ -1,0 +1,54 @@
+vars-special.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 17	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	$PWD is set
+  1	 25	pass	pass	BUG	pass	pass	pass	pass	pass	FAIL	pass	$PWD is not only set, but exported
+  2	 31	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	$PATH is set if unset at startup
+  3	 73	pass	pass	pass	BUG	pass	pass	pass	pass	FAIL	FAIL	$HOME is NOT set
+  4	 96	pass	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Vars set interactively only: $HISTFILE
+  5	110	pass	N-I	ok	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Some vars are set, even without startup file, or env: PATH, PWD
+  6	180	pass	BUG	BUG	pass	FAIL	pass	pass	FAIL	FAIL	pass	UID EUID PPID can't be changed
+  7	209	pass	pass	pass	BUG	pass	FAIL	pass	pass	FAIL	FAIL	HOSTNAME OSTYPE can be changed
+  8	234	pass	pass	pass	BUG	pass	pass	pass	FAIL	FAIL	FAIL	$1 .. $9 are scoped, while $0 is not
+  9	257	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	$?
+ 10	267	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	$#
+ 11	273	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	$$ looks like a PID
+ 12	280	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	$$ doesn't change with subshell or command sub
+ 13	305	pass	N-I	pass	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	$BASHPID DOES change with subshell and command sub
+ 14	335	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	Background PID $! looks like a PID
+ 15	343	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	$PPID
+ 16	349	pass	N-I	pass	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	$PIPESTATUS
+ 17	362	pass	N-I	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	$RANDOM
+ 18	368	pass	N-I	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	$UID and $EUID
+ 19	378	pass	N-I	N-I	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	$OSTYPE is non-empty
+ 20	388	pass	N-I	N-I	N-I	pass	pass	FAIL	FAIL	FAIL	FAIL	$HOSTNAME
+ 21	398	pass	FAIL	pass	BUG	pass	pass	pass	pass	FAIL	FAIL	$LINENO is the current line, not line of function call
+ 22	428	pass	FAIL	pass	BUG	pass	FAIL	pass	pass	FAIL	FAIL	$LINENO in "bare" redirect arg (bug regression)
+ 23	441	pass	FAIL	pass	pass	pass	pass	pass	pass	FAIL	FAIL	$LINENO in redirect arg (bug regression)
+ 24	452	pass	N-I	N-I	pass	pass	pass	pass	FAIL	FAIL	FAIL	$LINENO in [[
+ 25	464	pass	N-I	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	$LINENO in ((
+ 26	477	pass	FAIL	ok	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	$LINENO in for loop
+ 27	495	pass	FAIL	pass	pass	pass	pass	pass	pass	FAIL	FAIL	$LINENO in other for loops
+ 28	506	pass	N-I	BUG	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	$LINENO in for (( loop
+ 29	523	pass	FAIL	pass	pass	pass	pass	pass	pass	FAIL	FAIL	$LINENO for assignment
+ 30	533	pass	FAIL	BUG	pass	pass	pass	pass	pass	FAIL	FAIL	$LINENO in case
+ 31	545	pass	N-I	N-I	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	$_ with simple command and evaluation
+ 32	559	pass	N-I	N-I	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	$_ and ${_}
+ 33	576	pass	N-I	N-I	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	$_ with word splitting
+ 34	590	FAIL	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	vars-special: FATAL: Got 165 total failures, but 0 are allowed
+FAIL	FAIL	$_ with pipeline and subshell
+ 35	620	pass	N-I	N-I	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	$_ with && and ||
+ 36	639	pass	N-I	N-I	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	$_ is not reset with (( and [[
+ 37	662	pass	N-I	N-I	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	$_ with assignments, arrays, etc.
+ 38	715	pass	N-I	N-I	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	$_ with loop
+ 39	745	pass	N-I	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	pass	$_ is not undefined on first use
+ 40	761	FAIL	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	BASH_VERSION / OILS_VERSION
+ 41	787	pass	N-I	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	$SECONDS
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	40	12	22	28	22	33	22	16	0	4
+	ok	0	0	2	3	0	0	0	0	0	0
+	N-I	0	22	14	5	0	0	0	0	0	0
+	BUG	0	1	4	5	0	0	0	0	0	0
+	FAIL	2	7	0	1	20	9	20	26	42	38
+	total	42	42	42	42	42	42	42	42	42	42
+

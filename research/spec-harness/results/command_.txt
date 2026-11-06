@@ -1,0 +1,27 @@
+command_: FATAL: Got 49 total failures, but 0 are allowed
+command_.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  5	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Command block
+  1	 11	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	Permission denied
+  2	 16	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Not a dir
+  3	 20	ok	FAIL	pass	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	Name too long
+  4	 26	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	External programs don't have _OVM in environment
+  5	 32	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	File with no shebang is executed
+  6	 40	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	File with relative path and no shebang is executed
+  7	 48	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	File in relative subdirectory and no shebang is executed
+  8	 57	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	$PATH lookup
+  9	 70	pass	pass	pass	ok	pass	pass	FAIL	FAIL	FAIL	FAIL	filling $PATH cache, then insert the same command earlier in cache
+ 10	101	pass	pass	ok	ok	pass	pass	FAIL	FAIL	FAIL	FAIL	filling $PATH cache, then deleting command
+ 11	133	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Non-executable on $PATH
+ 12	154	ok	pass	ok	ok	pass	FAIL	FAIL	FAIL	FAIL	FAIL	hash without args prints the cache
+ 13	171	pass	pass	BUG	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	hash with args
+ 14	190	BUG	BUG	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	hash -r doesn't allow additional args
+ 15	197	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	Executing command with same name as directory in PATH (#2429)
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	13	14	13	13	15	12	10	9	0	2
+	ok	2	0	2	3	0	0	0	0	0	0
+	BUG	1	1	1	0	0	0	0	0	0	0
+	FAIL	0	1	0	0	1	4	6	7	16	14
+	total	16	16	16	16	16	16	16	16	16	16
+

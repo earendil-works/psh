@@ -1,0 +1,51 @@
+assign-extended.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  9	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	local -a
+  1	 20	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	declare -a
+  2	 28	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	declare -f exit code indicates function existence
+  3	 51	pass	FAIL	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	declare -F prints function names
+  4	 69	pass	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	declare -F with shopt -s extdebug prints more info
+  5	 95	pass	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	declare -F with shopt -s extdebug and main file
+  6	110	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	declare -p var (exit status)
+  7	132	FAIL	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	declare
+  8	192	FAIL	FAIL	N-I	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	declare -p
+  9	254	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	declare -p doesn't print binary data, but can be loaded into bash
+ 10	299	FAIL	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	declare -p var
+ 11	351	FAIL	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	declare -p arr
+ 12	382	pass	FAIL	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	declare -p foo=bar doesn't make sense
+ 13	399	ok	FAIL	N-I	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	declare -pnrx
+ 14	438	ok	FAIL	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	declare -paA
+ 15	465	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	declare -pnrx var
+ 16	518	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	declare -pg
+ 17	536	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	declare -pg var
+ 18	554	pass	FAIL	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	ble.sh: eval -- "$(declare -p var arr)"
+ 19	580	pass	FAIL	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	declare -p and value.Undef
+ 20	601	pass	FAIL	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	eval -- "$(declare -p arr)" (restore arrays w/ unset elements)
+ 21	617	pass	FAIL	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	declare -p UNDEF (and typeset) -- prints something to stderr
+ 22	672	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	typeset -f
+ 23	691	pass	FAIL	BUG	pass	FAIL	pass	pass	pass	FAIL	FAIL	typeset -p
+ 24	714	ok	FAIL	ok	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	typeset -r makes a string readonly
+ 25	746	ok	FAIL	N-I	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	typeset -ar makes it readonly
+ 26	779	pass	FAIL	pass	pass	FAIL	pass	pass	pass	FAIL	FAIL	typeset -x makes it exported
+ 27	786	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Multiple assignments / array assignments on a line
+ 28	791	ok	FAIL	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Env bindings shouldn't contain array assignments
+ 29	808	BUG	FAIL	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	syntax error in array assignment
+ 30	818	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	declare -g (bash-specific; bash-completion uses it)
+ 31	847	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	myvar=typeset (another form of dynamic assignment)
+ 32	859	ok	FAIL	ok	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	dynamic array parsing is not allowed
+ 33	878	pass	FAIL	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	assign-extended: FATAL: Got 258 total failures, but 0 are allowed
+dynamic flag in array in assign builtin
+ 34	902	pass	FAIL	pass	pass	FAIL	pass	FAIL	pass	FAIL	FAIL	typeset +x
+ 35	912	ok	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	typeset +r removes read-only attribute (TODO: documented in bash to do nothing)
+ 36	946	pass	FAIL	N-I	N-I	N-I	pass	FAIL	FAIL	FAIL	FAIL	function name with /
+ 37	960	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	invalid var name
+ 38	964	pass	FAIL	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	unset and shell funcs
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	23	0	7	14	0	20	16	5	2	0
+	ok	7	0	3	0	0	0	0	0	0	0
+	N-I	4	0	26	1	1	0	0	0	0	0
+	BUG	1	0	2	0	0	0	0	0	0	0
+	FAIL	4	39	1	24	38	19	23	34	37	39
+	total	39	39	39	39	39	39	39	39	39	39
+

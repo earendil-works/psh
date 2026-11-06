@@ -1,0 +1,42 @@
+builtin-cd: FATAL: Got 85 total failures, but 0 are allowed
+builtin-cd.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  5	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	cd and $PWD
+  1	 10	pass	BUG	BUG	pass	BUG	pass	FAIL	FAIL	FAIL	FAIL	cd BAD/..
+  2	 26	pass	N-I	pass	pass	N-I	pass	pass	pass	FAIL	FAIL	cd with 2 or more args - with strict_arg_parse
+  3	 54	ok	pass	ok	ok	pass	FAIL	FAIL	FAIL	FAIL	FAIL	cd with 2 or more args is allowed (strict_arg_parse disabled)
+  4	 63	pass	BUG	ok	BUG	BUG	pass	pass	FAIL	FAIL	pass	cd - without OLDPWD
+  5	 81	pass	pass	BUG	BUG	pass	pass	FAIL	pass	FAIL	FAIL	$OLDPWD
+  6	101	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	pwd
+  7	108	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	pwd after cd ..
+  8	120	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	pwd with symlink and -P
+  9	140	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	setting $PWD doesn't affect the value of 'pwd' builtin
+ 10	155	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	pass	unset PWD; then pwd
+ 11	170	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	'unset PWD; pwd' before any cd (tickles a rare corner case)
+ 12	182	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	lie about PWD; pwd before any cd
+ 13	194	pass	pass	ok	pass	pass	pass	pass	FAIL	FAIL	pass	remove pwd dir
+ 14	215	pass	pass	ok	pass	pass	FAIL	pass	pass	FAIL	FAIL	pwd in symlinked dir on shell initialization
+ 15	236	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	Test the current directory after 'cd ..' involving symlinks
+ 16	253	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	cd with no arguments
+ 17	260	pass	ok	ok	pass	ok	pass	pass	FAIL	FAIL	pass	cd to nonexistent dir
+ 18	266	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	cd away from dir that was deleted
+ 19	279	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	pass	cd permits double bare dash
+ 20	284	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	cd to symlink with -L and -P
+ 21	305	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	cd to relative path with -L and -P
+ 22	334	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	unset PWD; cd /tmp is allowed (regression)
+ 23	343	pass	pass	pass	BUG	pass	FAIL	FAIL	pass	FAIL	FAIL	CDPATH is respected
+ 24	366	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Change directory in non-shell parent process (make or Python)
+ 25	407	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	What happens when inherited $PWD and current dir disagree?
+ 26	467	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	FAIL	Survey of getcwd() syscall
+ 27	488	N-I	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	chdir is a synonym for cd - busybox ash
+ 28	511	pass	pass	ok	ok	pass	pass	FAIL	FAIL	FAIL	pass	arguments to pwd
+ 29	516	N-I	N-I	pass	pass	N-I	FAIL	pass	pass	pass	FAIL	pwd errors out on args with strict_arg_parse
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	25	23	19	23	23	23	15	20	7	11
+	ok	1	1	6	2	1	0	0	0	0	0
+	N-I	2	2	0	0	2	0	0	0	0	0
+	BUG	0	2	2	3	2	0	0	0	0	0
+	FAIL	2	2	3	2	2	7	15	10	23	19
+	total	30	30	30	30	30	30	30	30	30	30
+

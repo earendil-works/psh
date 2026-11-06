@@ -1,0 +1,36 @@
+builtin-umask: FATAL: Got 104 total failures, but 0 are allowed
+builtin-umask.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	BUG	BUG	BUG	pass	FAIL	pass	pass	pass	FAIL	FAIL	usage: too many args
+  1	 17	pass	BUG	BUG	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	usage: empty input, space input
+  2	 41	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	symbolic syntax error: b=rwx
+  3	 57	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	symbolic syntax error: start with -
+  4	 82	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	symbolic syntax error: empty clause u-r,,u-r
+  5	 99	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	usage: invalid octal digits
+  6	109	ok	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	usage: large octal number
+  7	128	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	'umask' without args prints the umask
+  8	137	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	'umask -S' prints symbolic umask
+  9	146	pass	N-I	N-I	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	'umask -p' prints a form that can be eval'd
+ 10	161	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	'umask 0002' sets the umask
+ 11	177	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	set umask with symbolic mode: g-w,o-w
+ 12	195	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	set umask with symbolic mode: u-rw  ...  u=,g+,o-  ...
+ 13	243	pass	BUG	BUG	pass	FAIL	pass	FAIL	pass	FAIL	FAIL	umask with too many arguments (i.e. extra spaces)
+ 14	261	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	umask allow overwriting and duplicates
+ 15	270	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	umask a is valid who
+ 16	289	N-I	BUG	BUG	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	umask X perm
+ 17	330	N-I	pass	pass	N-I	FAIL	FAIL	FAIL	pass	FAIL	FAIL	umask s perm
+ 18	363	N-I	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	umask t perm
+ 19	404	pass	pass	pass	BUG	FAIL	FAIL	FAIL	pass	FAIL	FAIL	umask default who
+ 20	435	N-I	pass	pass	BUG	FAIL	FAIL	FAIL	pass	FAIL	FAIL	umask bare op
+ 21	462	N-I	pass	pass	N-I	FAIL	FAIL	FAIL	pass	FAIL	FAIL	umask permcopy
+ 22	486	N-I	pass	pass	N-I	FAIL	FAIL	FAIL	pass	FAIL	FAIL	umask permcopy running value
+ 23	505	N-I	pass	pass	N-I	pass	FAIL	FAIL	pass	FAIL	FAIL	umask sequential actions
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	15	18	18	15	11	8	3	18	0	0
+	ok	1	0	0	0	0	0	0	0	0	0
+	N-I	7	2	2	7	0	0	0	0	0	0
+	BUG	1	4	4	2	0	0	0	0	0	0
+	FAIL	0	0	0	0	13	16	21	6	24	24
+	total	24	24	24	24	24	24	24	24	24	24
+

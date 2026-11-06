@@ -1,0 +1,13 @@
+osh-bugs: FATAL: Got 36 total failures, but 0 are allowed
+osh-bugs.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	pass	FAIL	var x = $(echo bad; false) in OSH
+  1	 18	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	pass	FAIL	var x = $(echo one; false; echo two) in OSH
+  2	 33	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	YSH $[expr_sub] in OSH should not do dynamic globbing
+  3	 45	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	SHELLOPTS bug with ysh:ugprade
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	0	0	0	0	0	0	2	0	2	0
+	FAIL	4	4	4	4	4	4	2	4	2	4
+	total	4	4	4	4	4	4	4	4	4	4
+

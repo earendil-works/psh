@@ -1,0 +1,6937 @@
+{
+ "total": 295401,
+ "by_src": {
+  "agent": 247561,
+  "agent-codemode": 2989,
+  "p2": 44748,
+  "p2-codemode": 103
+ },
+ "sessions": {
+  "agent": 5720,
+  "agent-codemode": 158,
+  "p2": 229,
+  "p2-codemode": 5
+ },
+ "ts_range": {
+  "agent": [
+   "2026-03-16",
+   "2026-11-06"
+  ],
+  "agent-codemode": [
+   "2026-09-25",
+   "2026-11-05"
+  ],
+  "p2": [
+   "2026-10-12",
+   "2026-11-06"
+  ],
+  "p2-codemode": [
+   "2026-10-21",
+   "2026-11-06"
+  ]
+ },
+ "month": {
+  "agent": {
+   "2026-03": 10577,
+   "2026-04": 19128,
+   "2026-05": 18144,
+   "2026-06": 17110,
+   "2026-07": 28315,
+   "2026-08": 36899,
+   "2026-09": 47780,
+   "2026-10": 66121,
+   "2026-11": 3487
+  },
+  "agent-codemode": {
+   "2026-09": 1200,
+   "2026-10": 1555,
+   "2026-11": 234
+  },
+  "p2": {
+   "2026-10": 433,
+   "2026-11": 44315
+  },
+  "p2-codemode": {
+   "2026-10": 1,
+   "2026-11": 102
+  }
+ },
+ "extract_stats": {
+  "agent_files": 10186,
+  "p2_files": 39,
+  "dupes": 1781,
+  "codemode_calls": {
+   "agent": 2956,
+   "p2": 105
+  },
+  "codemode_static_unresolved": {
+   "agent": 0,
+   "p2": 0
+  }
+ },
+ "length_bytes": {
+  "agent": {
+   "p50": 157,
+   "p90": 677,
+   "p99": 4000,
+   "max": 47254
+  },
+  "agent-codemode": {
+   "p50": 112,
+   "p90": 421,
+   "p99": 789,
+   "max": 2519
+  },
+  "p2": {
+   "p50": 243,
+   "p90": 1815,
+   "p99": 6495,
+   "max": 29973
+  },
+  "p2-codemode": {
+   "p50": 152,
+   "p90": 160,
+   "p99": 169,
+   "max": 177
+  }
+ },
+ "lines_hist": {
+  "1": 246676,
+  "2-5": 6113,
+  "6-20": 22457,
+  "21-100": 17416,
+  ">100": 2739
+ },
+ "features": {
+  "agent": {
+   "pipe": 105858,
+   "and": 128103,
+   "redir_out": 13212,
+   "redir_to_file": 13836,
+   "single_quoted": 74778,
+   "heredoc": 27772,
+   "heredoc_quoted": 27682,
+   "heredoc_to_interp": 22807,
+   "double_quoted": 106839,
+   "multi_statement": 88858,
+   "semicolon": 77960,
+   "cd_prefix": 99082,
+   "glob_word": 13384,
+   "redir_devnull": 18603,
+   "redir_stderr_devnull": 12683,
+   "subshell": 2468,
+   "redir_fd_dup": 28903,
+   "heredoc_to_cat": 5682,
+   "redir_tmp": 9820,
+   "background": 1620,
+   "redir_append": 850,
+   "assignment": 11954,
+   "cmd_subst": 13082,
+   "var_ref": 19394,
+   "set_e": 1809,
+   "for": 7867,
+   "or": 8063,
+   "param_expansion": 1659,
+   "arith_expansion": 382,
+   "comment": 364,
+   "while": 299,
+   "env_prefix": 5467,
+   "redir_in": 530,
+   "proc_subst": 206,
+   "line_continuation": 858,
+   "set_pipefail": 918,
+   "set_u": 946,
+   "if": 1701,
+   "param_expansion_op": 1213,
+   "parse_error": 283,
+   "single_bracket": 1387,
+   "backtick": 70,
+   "function": 342,
+   "brace_group": 656,
+   "server_hint": 547,
+   "herestring": 38,
+   "array_ref": 192,
+   "array": 51,
+   "heredoc_unquoted": 164,
+   "negation": 139,
+   "brace_expansion": 83,
+   "set_x": 15,
+   "ansi_c_string": 156,
+   "heredoc_to_other": 179,
+   "declaration": 1226,
+   "case": 112,
+   "dbl_bracket": 50,
+   "redir_amp_out": 3,
+   "until": 1,
+   "for_c": 3
+  },
+  "all": {
+   "pipe": 139218,
+   "and": 163914,
+   "redir_out": 18446,
+   "redir_to_file": 19831,
+   "single_quoted": 86599,
+   "heredoc": 39509,
+   "heredoc_quoted": 39405,
+   "heredoc_to_interp": 32005,
+   "double_quoted": 132794,
+   "multi_statement": 123558,
+   "semicolon": 108559,
+   "cd_prefix": 135549,
+   "glob_word": 18828,
+   "redir_devnull": 22531,
+   "redir_stderr_devnull": 15568,
+   "subshell": 3565,
+   "redir_fd_dup": 44826,
+   "heredoc_to_cat": 8834,
+   "redir_tmp": 11607,
+   "background": 2116,
+   "redir_append": 1824,
+   "assignment": 14137,
+   "cmd_subst": 14750,
+   "var_ref": 25138,
+   "set_e": 1824,
+   "for": 10366,
+   "or": 8383,
+   "param_expansion": 1866,
+   "arith_expansion": 473,
+   "comment": 370,
+   "while": 343,
+   "env_prefix": 9312,
+   "redir_in": 700,
+   "proc_subst": 317,
+   "line_continuation": 1156,
+   "set_pipefail": 918,
+   "set_u": 947,
+   "if": 1807,
+   "param_expansion_op": 1368,
+   "parse_error": 321,
+   "single_bracket": 1510,
+   "backtick": 78,
+   "function": 503,
+   "brace_group": 903,
+   "server_hint": 587,
+   "herestring": 42,
+   "array_ref": 203,
+   "array": 60,
+   "heredoc_unquoted": 186,
+   "negation": 156,
+   "brace_expansion": 83,
+   "set_x": 15,
+   "ansi_c_string": 190,
+   "heredoc_to_other": 212,
+   "declaration": 1666,
+   "case": 129,
+   "dbl_bracket": 50,
+   "redir_amp_out": 3,
+   "until": 1,
+   "for_c": 3
+  },
+  "agent-codemode": {
+   "multi_statement": 1042,
+   "semicolon": 1049,
+   "pipe": 939,
+   "redir_devnull": 89,
+   "redir_stderr_devnull": 52,
+   "single_quoted": 1649,
+   "double_quoted": 434,
+   "glob_word": 131,
+   "and": 688,
+   "env_prefix": 19,
+   "redir_fd_dup": 160,
+   "cd_prefix": 566,
+   "heredoc": 36,
+   "heredoc_quoted": 36,
+   "heredoc_to_interp": 34,
+   "var_ref": 85,
+   "assignment": 44,
+   "cmd_subst": 55,
+   "redir_out": 128,
+   "redir_to_file": 128,
+   "subshell": 4,
+   "redir_tmp": 97,
+   "param_expansion": 6,
+   "param_expansion_op": 5,
+   "redir_in": 8,
+   "for": 30,
+   "if": 6,
+   "single_bracket": 8,
+   "or": 19,
+   "arith_expansion": 1,
+   "background": 18,
+   "server_hint": 3,
+   "heredoc_to_other": 2
+  },
+  "p2": {
+   "multi_statement": 33657,
+   "and": 35122,
+   "pipe": 32325,
+   "double_quoted": 25521,
+   "single_quoted": 10075,
+   "semicolon": 29549,
+   "redir_devnull": 3789,
+   "redir_stderr_devnull": 2783,
+   "cd_prefix": 35900,
+   "glob_word": 5313,
+   "for": 2468,
+   "var_ref": 5658,
+   "or": 301,
+   "env_prefix": 3826,
+   "redir_out": 5106,
+   "redir_to_file": 5867,
+   "redir_tmp": 1690,
+   "redir_fd_dup": 15717,
+   "assignment": 2139,
+   "heredoc": 11701,
+   "heredoc_quoted": 11687,
+   "heredoc_to_interp": 9164,
+   "cmd_subst": 1613,
+   "heredoc_to_cat": 3152,
+   "redir_append": 974,
+   "subshell": 1093,
+   "background": 478,
+   "heredoc_to_other": 31,
+   "single_bracket": 115,
+   "server_hint": 37,
+   "parse_error": 38,
+   "case": 17,
+   "arith_expansion": 90,
+   "line_continuation": 298,
+   "proc_subst": 111,
+   "brace_group": 247,
+   "if": 100,
+   "param_expansion": 201,
+   "param_expansion_op": 150,
+   "heredoc_unquoted": 22,
+   "declaration": 440,
+   "function": 161,
+   "comment": 6,
+   "negation": 17,
+   "set_e": 15,
+   "herestring": 4,
+   "while": 44,
+   "array_ref": 11,
+   "backtick": 8,
+   "ansi_c_string": 34,
+   "redir_in": 162,
+   "set_u": 1,
+   "array": 9
+  },
+  "p2-codemode": {
+   "single_quoted": 97,
+   "pipe": 96,
+   "redir_fd_dup": 46,
+   "redir_devnull": 50,
+   "redir_stderr_devnull": 50,
+   "multi_statement": 1,
+   "and": 1,
+   "for": 1,
+   "semicolon": 1,
+   "var_ref": 1,
+   "cd_prefix": 1
+  }
+ },
+ "feature_labels": [
+  [
+   "pipe",
+   "pipeline `|`"
+  ],
+  [
+   "and",
+   "`&&`"
+  ],
+  [
+   "or",
+   "`||`"
+  ],
+  [
+   "semicolon",
+   "`;` separator"
+  ],
+  [
+   "multi_statement",
+   "multiple top-level statements (`;`/newline)"
+  ],
+  [
+   "cd_prefix",
+   "starts with `cd X && \u2026`/`cd X;`"
+  ],
+  [
+   "redir_fd_dup",
+   "fd dup `2>&1` / `>&2`"
+  ],
+  [
+   "redir_devnull",
+   "redirect to /dev/null"
+  ],
+  [
+   "redir_stderr_devnull",
+   "`2>/dev/null`"
+  ],
+  [
+   "redir_to_file",
+   "redirect stdout to file (`>`, `>>`, `&>`)"
+  ],
+  [
+   "redir_append",
+   "append `>>`"
+  ],
+  [
+   "redir_in",
+   "input redirect `<`"
+  ],
+  [
+   "redir_tmp",
+   "redirect into /tmp"
+  ],
+  [
+   "heredoc",
+   "here-doc `<<`"
+  ],
+  [
+   "heredoc_quoted",
+   "here-doc with quoted delimiter `<<'EOF'`"
+  ],
+  [
+   "heredoc_unquoted",
+   "here-doc unquoted (expanding)"
+  ],
+  [
+   "heredoc_dash",
+   "here-doc `<<-`"
+  ],
+  [
+   "heredoc_to_interp",
+   "here-doc fed to python/node/sh"
+  ],
+  [
+   "heredoc_to_cat",
+   "`cat <<EOF` (> file)"
+  ],
+  [
+   "heredoc_to_other",
+   "here-doc to other command (git/gh/psql/\u2026)"
+  ],
+  [
+   "herestring",
+   "here-string `<<<`"
+  ],
+  [
+   "cmd_subst",
+   "command substitution `$(\u2026)`"
+  ],
+  [
+   "backtick",
+   "backticks"
+  ],
+  [
+   "proc_subst",
+   "process substitution `<(\u2026)`"
+  ],
+  [
+   "subshell",
+   "subshell `( \u2026 )`"
+  ],
+  [
+   "brace_group",
+   "group `{ \u2026; }`"
+  ],
+  [
+   "for",
+   "`for \u2026 in`"
+  ],
+  [
+   "for_c",
+   "`for ((\u2026))`"
+  ],
+  [
+   "while",
+   "`while`/`until`"
+  ],
+  [
+   "if",
+   "`if`"
+  ],
+  [
+   "case",
+   "`case`"
+  ],
+  [
+   "function",
+   "function definition"
+  ],
+  [
+   "dbl_bracket",
+   "`[[ \u2026 ]]`"
+  ],
+  [
+   "single_bracket",
+   "`[ \u2026 ]`"
+  ],
+  [
+   "arith_cmd",
+   "`(( \u2026 ))`"
+  ],
+  [
+   "arith_expansion",
+   "`$(( \u2026 ))`"
+  ],
+  [
+   "array",
+   "array literal `=( \u2026 )`"
+  ],
+  [
+   "array_ref",
+   "array ref `${a[@]}`"
+  ],
+  [
+   "var_ref",
+   "`$VAR`"
+  ],
+  [
+   "param_expansion",
+   "`${\u2026}`"
+  ],
+  [
+   "param_expansion_op",
+   "`${x:-y}`/`${x#\u2026}`/`${x/\u2026}` ops"
+  ],
+  [
+   "env_prefix",
+   "env-assignment prefix `FOO=1 cmd`"
+  ],
+  [
+   "assignment",
+   "plain assignment `x=\u2026`"
+  ],
+  [
+   "declaration",
+   "`export`/`local`/`declare`"
+  ],
+  [
+   "glob_word",
+   "unquoted glob word (`*`, `?`, `[..]`)"
+  ],
+  [
+   "brace_expansion",
+   "brace expansion `{a,b}`/`{1..3}`"
+  ],
+  [
+   "background",
+   "background `&`"
+  ],
+  [
+   "negation",
+   "`! cmd`"
+  ],
+  [
+   "set_e",
+   "`set -e`"
+  ],
+  [
+   "set_u",
+   "`set -u`"
+  ],
+  [
+   "set_pipefail",
+   "`set -o pipefail`"
+  ],
+  [
+   "set_x",
+   "`set -x`"
+  ],
+  [
+   "ansi_c_string",
+   "`$'\u2026'` ANSI-C string"
+  ],
+  [
+   "single_quoted",
+   "single-quoted string"
+  ],
+  [
+   "double_quoted",
+   "double-quoted string"
+  ],
+  [
+   "line_continuation",
+   "backslash line continuation"
+  ],
+  [
+   "comment",
+   "comment `#`"
+  ],
+  [
+   "parse_error",
+   "tree-sitter parse error"
+  ]
+ ],
+ "top_names": [
+  [
+   "cd",
+   140082,
+   150610
+  ],
+  [
+   "head",
+   97135,
+   124153
+  ],
+  [
+   "grep",
+   71606,
+   108020
+  ],
+  [
+   "git",
+   70242,
+   128703
+  ],
+  [
+   "rg",
+   58283,
+   69504
+  ],
+  [
+   "sed",
+   47609,
+   65654
+  ],
+  [
+   "python3",
+   31961,
+   34565
+  ],
+  [
+   "node",
+   28492,
+   32808
+  ],
+  [
+   "tail",
+   26457,
+   32291
+  ],
+  [
+   "<local-script>",
+   24521,
+   38202
+  ],
+  [
+   "cat",
+   24389,
+   30982
+  ],
+  [
+   "echo",
+   18810,
+   25629
+  ],
+  [
+   "ls",
+   18197,
+   21481
+  ],
+  [
+   "npm",
+   15871,
+   19494
+  ],
+  [
+   "cargo",
+   13333,
+   18835
+  ],
+  [
+   "find",
+   9318,
+   10663
+  ],
+  [
+   "sleep",
+   9081,
+   12110
+  ],
+  [
+   "printf",
+   8531,
+   14559
+  ],
+  [
+   "gh",
+   8128,
+   10053
+  ],
+  [
+   "wc",
+   8081,
+   9142
+  ],
+  [
+   "sort",
+   7995,
+   9816
+  ],
+  [
+   "rm",
+   7393,
+   7886
+  ],
+  [
+   "true",
+   6595,
+   9046
+  ],
+  [
+   "npx",
+   5427,
+   6353
+  ],
+  [
+   "curl",
+   4060,
+   5112
+  ],
+  [
+   "cut",
+   3874,
+   4265
+  ],
+  [
+   "uv",
+   3815,
+   4246
+  ],
+  [
+   "cp",
+   3810,
+   5413
+  ],
+  [
+   "awk",
+   3503,
+   4315
+  ],
+  [
+   "mkdir",
+   3479,
+   3617
+  ],
+  [
+   "<dynamic>",
+   2957,
+   5738
+  ],
+  [
+   "make",
+   2680,
+   3330
+  ],
+  [
+   "set",
+   2170,
+   2326
+  ],
+  [
+   "mktemp",
+   2036,
+   2161
+  ],
+  [
+   "jq",
+   2026,
+   2467
+  ],
+  [
+   "exit",
+   1886,
+   2434
+  ],
+  [
+   "tmux",
+   1789,
+   5661
+  ],
+  [
+   "pnpm",
+   1701,
+   2239
+  ],
+  [
+   "uniq",
+   1609,
+   1736
+  ],
+  [
+   "nice",
+   1533,
+   2014
+  ],
+  [
+   "docker",
+   1527,
+   2015
+  ],
+  [
+   "nl",
+   1523,
+   2563
+  ],
+  [
+   "tr",
+   1432,
+   1679
+  ],
+  [
+   "time",
+   1302,
+   1498
+  ],
+  [
+   "seq",
+   1176,
+   1324
+  ],
+  [
+   "go",
+   1147,
+   1526
+  ],
+  [
+   "xargs",
+   1009,
+   1100
+  ],
+  [
+   "ps",
+   989,
+   1145
+  ],
+  [
+   "xcrun",
+   914,
+   1577
+  ],
+  [
+   "diff",
+   913,
+   1058
+  ],
+  [
+   "chmod",
+   905,
+   955
+  ],
+  [
+   "python",
+   872,
+   894
+  ],
+  [
+   "pwd",
+   829,
+   847
+  ],
+  [
+   "break",
+   808,
+   921
+  ],
+  [
+   "bash",
+   801,
+   859
+  ],
+  [
+   "pkill",
+   760,
+   903
+  ],
+  [
+   "date",
+   754,
+   918
+  ],
+  [
+   "which",
+   744,
+   936
+  ],
+  [
+   "perl",
+   698,
+   932
+  ],
+  [
+   "kill",
+   671,
+   819
+  ],
+  [
+   "test",
+   670,
+   817
+  ],
+  [
+   "command",
+   605,
+   1098
+  ],
+  [
+   "uptime",
+   597,
+   635
+  ],
+  [
+   "lsof",
+   585,
+   691
+  ],
+  [
+   "nohup",
+   580,
+   604
+  ],
+  [
+   "uvx",
+   564,
+   629
+  ],
+  [
+   "tar",
+   552,
+   610
+  ],
+  [
+   "du",
+   545,
+   598
+  ],
+  [
+   "shasum",
+   541,
+   609
+  ],
+  [
+   "env",
+   509,
+   532
+  ],
+  [
+   "pi",
+   507,
+   560
+  ],
+  [
+   "sips",
+   482,
+   612
+  ],
+  [
+   "mv",
+   475,
+   668
+  ],
+  [
+   "timeout",
+   468,
+   490
+  ],
+  [
+   "psql",
+   465,
+   536
+  ],
+  [
+   "file",
+   426,
+   432
+  ],
+  [
+   "pgrep",
+   395,
+   433
+  ],
+  [
+   "wait",
+   382,
+   413
+  ],
+  [
+   "tee",
+   357,
+   386
+  ],
+  [
+   "bun",
+   346,
+   390
+  ],
+  [
+   "id",
+   331,
+   869
+  ],
+  [
+   "read",
+   326,
+   336
+  ],
+  [
+   "trap",
+   311,
+   340
+  ],
+  [
+   "ln",
+   306,
+   430
+  ],
+  [
+   "gofmt",
+   297,
+   301
+  ],
+  [
+   "ffmpeg",
+   273,
+   383
+  ],
+  [
+   "basename",
+   270,
+   314
+  ],
+  [
+   "ioreg",
+   270,
+   292
+  ],
+  [
+   "rustc",
+   266,
+   297
+  ],
+  [
+   "strings",
+   266,
+   306
+  ],
+  [
+   "paste",
+   262,
+   281
+  ],
+  [
+   "zig",
+   250,
+   309
+  ],
+  [
+   "stat",
+   249,
+   286
+  ],
+  [
+   "cmp",
+   247,
+   314
+  ],
+  [
+   "prlctl",
+   246,
+   402
+  ],
+  [
+   "sh",
+   219,
+   249
+  ],
+  [
+   "gzip",
+   219,
+   255
+  ],
+  [
+   "rustup",
+   211,
+   233
+  ],
+  [
+   "sqlite3",
+   199,
+   307
+  ],
+  [
+   "touch",
+   175,
+   192
+  ],
+  [
+   "samply",
+   167,
+   189
+  ],
+  [
+   ":",
+   165,
+   220
+  ],
+  [
+   "networksetup",
+   153,
+   203
+  ],
+  [
+   "nm",
+   152,
+   197
+  ],
+  [
+   "wasm-objdump",
+   145,
+   201
+  ],
+  [
+   "say",
+   143,
+   148
+  ],
+  [
+   "xxd",
+   142,
+   171
+  ],
+  [
+   "osascript",
+   139,
+   165
+  ],
+  [
+   "base64",
+   138,
+   162
+  ],
+  [
+   "sample",
+   132,
+   138
+  ],
+  [
+   "xcodebuild",
+   127,
+   127
+  ],
+  [
+   "ffprobe",
+   115,
+   122
+  ],
+  [
+   "readlink",
+   113,
+   125
+  ],
+  [
+   "swift",
+   113,
+   124
+  ],
+  [
+   "otool",
+   107,
+   121
+  ],
+  [
+   "sysctl",
+   106,
+   117
+  ],
+  [
+   "dirname",
+   106,
+   127
+  ],
+  [
+   "golangci-lint",
+   105,
+   113
+  ],
+  [
+   "aws",
+   102,
+   152
+  ],
+  [
+   "continue",
+   99,
+   110
+  ],
+  [
+   "rmdir",
+   98,
+   107
+  ],
+  [
+   ".",
+   97,
+   99
+  ],
+  [
+   "source",
+   95,
+   101
+  ],
+  [
+   "brew",
+   89,
+   107
+  ],
+  [
+   "dig",
+   86,
+   209
+  ],
+  [
+   "w",
+   83,
+   344
+  ],
+  [
+   "wasmtime",
+   82,
+   92
+  ],
+  [
+   "uname",
+   78,
+   83
+  ],
+  [
+   "cc",
+   76,
+   77
+  ],
+  [
+   "column",
+   76,
+   85
+  ],
+  [
+   "run",
+   74,
+   187
+  ],
+  [
+   "md5",
+   73,
+   87
+  ],
+  [
+   "ipconfig",
+   73,
+   89
+  ],
+  [
+   "open",
+   72,
+   72
+  ],
+  [
+   "comm",
+   71,
+   114
+  ],
+  [
+   "actionlint",
+   71,
+   74
+  ],
+  [
+   "rsync",
+   71,
+   74
+  ],
+  [
+   "op",
+   71,
+   82
+  ],
+  [
+   "script",
+   68,
+   71
+  ],
+  [
+   "unzip",
+   67,
+   83
+  ],
+  [
+   "dsymutil",
+   66,
+   69
+  ],
+  [
+   "ruby",
+   63,
+   63
+  ],
+  [
+   "clang",
+   62,
+   72
+  ],
+  [
+   "plutil",
+   61,
+   93
+  ],
+  [
+   "createdb",
+   61,
+   63
+  ],
+  [
+   "rocq",
+   58,
+   59
+  ],
+  [
+   "od",
+   53,
+   60
+  ],
+  [
+   "objdump",
+   53,
+   65
+  ],
+  [
+   "codesign",
+   50,
+   84
+  ],
+  [
+   "ifconfig",
+   49,
+   54
+  ]
+ ],
+ "top_subs": [
+  [
+   "git status",
+   26015
+  ],
+  [
+   "git diff",
+   26007
+  ],
+  [
+   "git log",
+   14543
+  ],
+  [
+   "npm run",
+   10743
+  ],
+  [
+   "git show",
+   7743
+  ],
+  [
+   "git commit",
+   7481
+  ],
+  [
+   "git add",
+   7160
+  ],
+  [
+   "git rev-parse",
+   4812
+  ],
+  [
+   "cargo build",
+   4390
+  ],
+  [
+   "cargo test",
+   4170
+  ],
+  [
+   "uv run",
+   3957
+  ],
+  [
+   "cargo fmt",
+   3045
+  ],
+  [
+   "npm test",
+   3044
+  ],
+  [
+   "git branch",
+   2517
+  ],
+  [
+   "gh issue",
+   2514
+  ],
+  [
+   "gh api",
+   1834
+  ],
+  [
+   "gh run",
+   1819
+  ],
+  [
+   "cargo run",
+   1555
+  ],
+  [
+   "gh pr",
+   1530
+  ],
+  [
+   "cargo clippy",
+   1442
+  ],
+  [
+   "git checkout",
+   1290
+  ],
+  [
+   "cargo check",
+   1251
+  ],
+  [
+   "git push",
+   1249
+  ],
+  [
+   "npx oxfmt",
+   1245
+  ],
+  [
+   "tmux capture-pane",
+   1222
+  ],
+  [
+   "docker run",
+   1176
+  ],
+  [
+   "git worktree",
+   1142
+  ],
+  [
+   "npx tsc",
+   1129
+  ],
+  [
+   "git rebase",
+   1123
+  ],
+  [
+   "tmux send-keys",
+   1024
+  ],
+  [
+   "git ls-files",
+   1001
+  ],
+  [
+   "git stash",
+   949
+  ],
+  [
+   "npx wrangler",
+   900
+  ],
+  [
+   "git fetch",
+   804
+  ],
+  [
+   "tmux kill-session",
+   784
+  ],
+  [
+   "git remote",
+   770
+  ],
+  [
+   "npx vitest",
+   757
+  ],
+  [
+   "npx tsx",
+   729
+  ],
+  [
+   "npm exec",
+   716
+  ],
+  [
+   "xcrun simctl",
+   716
+  ],
+  [
+   "go test",
+   714
+  ],
+  [
+   "npm view",
+   705
+  ],
+  [
+   "npm install",
+   605
+  ],
+  [
+   "tmux new-session",
+   591
+  ],
+  [
+   "git tag",
+   584
+  ],
+  [
+   "git merge-base",
+   464
+  ],
+  [
+   "git grep",
+   453
+  ],
+  [
+   "pnpm run",
+   440
+  ],
+  [
+   "git blame",
+   417
+  ],
+  [
+   "npm pack",
+   414
+  ],
+  [
+   "cargo +nightly",
+   407
+  ],
+  [
+   "gh search",
+   406
+  ],
+  [
+   "pnpm exec",
+   381
+  ],
+  [
+   "npx tsgo",
+   372
+  ],
+  [
+   "pnpm test",
+   367
+  ],
+  [
+   "git merge",
+   346
+  ],
+  [
+   "cargo doc",
+   315
+  ],
+  [
+   "npx oxlint",
+   293
+  ],
+  [
+   "npm ls",
+   286
+  ],
+  [
+   "npx biome",
+   281
+  ],
+  [
+   "git rev-list",
+   279
+  ],
+  [
+   "git switch",
+   277
+  ],
+  [
+   "git check-ignore",
+   275
+  ],
+  [
+   "go vet",
+   271
+  ],
+  [
+   "git apply",
+   246
+  ],
+  [
+   "git pull",
+   245
+  ],
+  [
+   "go build",
+   245
+  ],
+  [
+   "git ls-tree",
+   187
+  ],
+  [
+   "git rm",
+   178
+  ],
+  [
+   "git describe",
+   162
+  ],
+  [
+   "git archive",
+   160
+  ],
+  [
+   "git restore",
+   155
+  ],
+  [
+   "git reset",
+   148
+  ],
+  [
+   "cargo bench",
+   137
+  ],
+  [
+   "gh release",
+   131
+  ],
+  [
+   "cargo +nightly-2026-07-20",
+   126
+  ],
+  [
+   "gh repo",
+   120
+  ],
+  [
+   "git ls-remote",
+   117
+  ],
+  [
+   "rustup toolchain",
+   113
+  ],
+  [
+   "pnpm typecheck",
+   112
+  ],
+  [
+   "pnpm install",
+   110
+  ],
+  [
+   "npm init",
+   109
+  ],
+  [
+   "cargo tree",
+   102
+  ],
+  [
+   "git mv",
+   97
+  ],
+  [
+   "npm ci",
+   97
+  ],
+  [
+   "bun build",
+   90
+  ],
+  [
+   "docker build",
+   86
+  ],
+  [
+   "cargo +stable",
+   84
+  ],
+  [
+   "rustup target",
+   81
+  ],
+  [
+   "gh workflow",
+   78
+  ],
+  [
+   "git config",
+   73
+  ],
+  [
+   "cargo +1.87.0",
+   72
+  ],
+  [
+   "go run",
+   70
+  ],
+  [
+   "git reflog",
+   69
+  ],
+  [
+   "git cat-file",
+   67
+  ],
+  [
+   "npx prettier",
+   64
+  ],
+  [
+   "gh auth",
+   64
+  ],
+  [
+   "docker rm",
+   63
+  ],
+  [
+   "git cherry-pick",
+   61
+  ],
+  [
+   "docker info",
+   60
+  ],
+  [
+   "docker ps",
+   60
+  ],
+  [
+   "git init",
+   59
+  ],
+  [
+   "cargo +1.70.0",
+   58
+  ],
+  [
+   "cargo llvm-lines",
+   58
+  ],
+  [
+   "pnpm build",
+   57
+  ],
+  [
+   "npm audit",
+   57
+  ],
+  [
+   "xcrun devicectl",
+   57
+  ],
+  [
+   "cargo rustc",
+   56
+  ],
+  [
+   "tmux has-session",
+   55
+  ],
+  [
+   "pnpm check",
+   54
+  ],
+  [
+   "git clone",
+   54
+  ],
+  [
+   "docker exec",
+   54
+  ],
+  [
+   "cargo metadata",
+   52
+  ],
+  [
+   "pnpm vitest",
+   52
+  ],
+  [
+   "npx vite",
+   50
+  ],
+  [
+   "tmux list-sessions",
+   49
+  ],
+  [
+   "tmux display-message",
+   48
+  ],
+  [
+   "pnpm add",
+   48
+  ],
+  [
+   "npm config",
+   46
+  ],
+  [
+   "tmux list-panes",
+   44
+  ]
+ ],
+ "eff_top": [
+  [
+   "cd",
+   140083
+  ],
+  [
+   "head",
+   97135
+  ],
+  [
+   "grep",
+   71686
+  ],
+  [
+   "git",
+   70247
+  ],
+  [
+   "rg",
+   58405
+  ],
+  [
+   "sed",
+   47622
+  ],
+  [
+   "python3",
+   32063
+  ],
+  [
+   "node",
+   28922
+  ],
+  [
+   "tail",
+   26457
+  ],
+  [
+   "<local-script>",
+   25703
+  ],
+  [
+   "cat",
+   24411
+  ],
+  [
+   "echo",
+   18814
+  ],
+  [
+   "ls",
+   18258
+  ],
+  [
+   "npm",
+   16023
+  ],
+  [
+   "cargo",
+   14153
+  ],
+  [
+   "find",
+   9320
+  ],
+  [
+   "sleep",
+   9082
+  ],
+  [
+   "printf",
+   8533
+  ],
+  [
+   "wc",
+   8266
+  ],
+  [
+   "gh",
+   8134
+  ],
+  [
+   "sort",
+   7995
+  ],
+  [
+   "rm",
+   7395
+  ],
+  [
+   "true",
+   6602
+  ],
+  [
+   "npx",
+   5486
+  ],
+  [
+   "uv",
+   4098
+  ],
+  [
+   "curl",
+   4074
+  ],
+  [
+   "cut",
+   3874
+  ],
+  [
+   "cp",
+   3815
+  ],
+  [
+   "awk",
+   3505
+  ],
+  [
+   "mkdir",
+   3480
+  ],
+  [
+   "<dynamic>",
+   3173
+  ],
+  [
+   "make",
+   2719
+  ],
+  [
+   "set",
+   2170
+  ],
+  [
+   "jq",
+   2044
+  ],
+  [
+   "mktemp",
+   2036
+  ],
+  [
+   "exit",
+   1886
+  ],
+  [
+   "tmux",
+   1796
+  ],
+  [
+   "pnpm",
+   1720
+  ],
+  [
+   "uniq",
+   1609
+  ],
+  [
+   "docker",
+   1557
+  ],
+  [
+   "nice",
+   1546
+  ],
+  [
+   "nl",
+   1523
+  ],
+  [
+   "tr",
+   1432
+  ],
+  [
+   "time",
+   1305
+  ],
+  [
+   "seq",
+   1176
+  ],
+  [
+   "go",
+   1150
+  ],
+  [
+   "xargs",
+   1010
+  ],
+  [
+   "ps",
+   995
+  ],
+  [
+   "xcrun",
+   915
+  ],
+  [
+   "diff",
+   913
+  ],
+  [
+   "chmod",
+   906
+  ],
+  [
+   "python",
+   874
+  ],
+  [
+   "pwd",
+   829
+  ],
+  [
+   "bash",
+   821
+  ],
+  [
+   "break",
+   808
+  ],
+  [
+   "pkill",
+   760
+  ],
+  [
+   "date",
+   755
+  ],
+  [
+   "which",
+   744
+  ],
+  [
+   "perl",
+   715
+  ],
+  [
+   "kill",
+   683
+  ],
+  [
+   "test",
+   670
+  ],
+  [
+   "command",
+   605
+  ],
+  [
+   "uptime",
+   597
+  ],
+  [
+   "lsof",
+   585
+  ],
+  [
+   "nohup",
+   580
+  ],
+  [
+   "env",
+   572
+  ],
+  [
+   "uvx",
+   569
+  ],
+  [
+   "du",
+   552
+  ],
+  [
+   "tar",
+   552
+  ],
+  [
+   "pi",
+   550
+  ],
+  [
+   "shasum",
+   545
+  ],
+  [
+   "sips",
+   488
+  ],
+  [
+   "psql",
+   476
+  ],
+  [
+   "mv",
+   475
+  ],
+  [
+   "timeout",
+   471
+  ],
+  [
+   "file",
+   429
+  ],
+  [
+   "pgrep",
+   395
+  ],
+  [
+   "wait",
+   382
+  ],
+  [
+   "bun",
+   379
+  ],
+  [
+   "tee",
+   357
+  ],
+  [
+   "id",
+   331
+  ],
+  [
+   "read",
+   326
+  ],
+  [
+   "sh",
+   314
+  ],
+  [
+   "trap",
+   311
+  ],
+  [
+   "basename",
+   309
+  ],
+  [
+   "ln",
+   306
+  ],
+  [
+   "gofmt",
+   297
+  ],
+  [
+   "ffmpeg",
+   285
+  ],
+  [
+   "stat",
+   279
+  ],
+  [
+   "ioreg",
+   270
+  ],
+  [
+   "rustc",
+   268
+  ],
+  [
+   "strings",
+   267
+  ],
+  [
+   "zig",
+   264
+  ],
+  [
+   "paste",
+   262
+  ],
+  [
+   "prlctl",
+   248
+  ],
+  [
+   "cmp",
+   247
+  ],
+  [
+   "gzip",
+   220
+  ],
+  [
+   "rustup",
+   212
+  ],
+  [
+   "sqlite3",
+   200
+  ],
+  [
+   "touch",
+   175
+  ],
+  [
+   "samply",
+   172
+  ],
+  [
+   ":",
+   165
+  ],
+  [
+   "networksetup",
+   153
+  ],
+  [
+   "nm",
+   152
+  ],
+  [
+   "wasm-objdump",
+   146
+  ],
+  [
+   "say",
+   143
+  ],
+  [
+   "xxd",
+   142
+  ],
+  [
+   "osascript",
+   140
+  ],
+  [
+   "base64",
+   138
+  ],
+  [
+   "sample",
+   135
+  ],
+  [
+   "xcodebuild",
+   134
+  ],
+  [
+   "dirname",
+   118
+  ],
+  [
+   "ffprobe",
+   117
+  ],
+  [
+   "swift",
+   114
+  ],
+  [
+   "readlink",
+   113
+  ],
+  [
+   "golangci-lint",
+   109
+  ],
+  [
+   "otool",
+   107
+  ],
+  [
+   "sysctl",
+   106
+  ],
+  [
+   "aws",
+   102
+  ],
+  [
+   "continue",
+   99
+  ]
+ ],
+ "coverage": {
+  "5": {
+   "agent": 31.48,
+   "all": 28.89,
+   "agent-codemode": 15.16,
+   "p2": 15.55,
+   "p2-codemode": 0.97
+  },
+  "10": {
+   "agent": 52.38,
+   "all": 51.98,
+   "agent-codemode": 40.45,
+   "p2": 50.67,
+   "p2-codemode": 1.94
+  },
+  "20": {
+   "agent": 75.27,
+   "all": 75.57,
+   "agent-codemode": 75.24,
+   "p2": 77.21,
+   "p2-codemode": 100.0
+  },
+  "30": {
+   "agent": 84.54,
+   "all": 84.55,
+   "agent-codemode": 82.3,
+   "p2": 84.73,
+   "p2-codemode": 100.0
+  },
+  "50": {
+   "agent": 91.53,
+   "all": 91.66,
+   "agent-codemode": 93.98,
+   "p2": 92.19,
+   "p2-codemode": 100.0
+  },
+  "100": {
+   "agent": 97.62,
+   "all": 97.6,
+   "agent-codemode": 99.13,
+   "p2": 97.39,
+   "p2-codemode": 100.0
+  },
+  "200": {
+   "agent": 99.34,
+   "all": 99.36,
+   "agent-codemode": 99.77,
+   "p2": 99.45,
+   "p2-codemode": 100.0
+  }
+ },
+ "builtin_set": [
+  ".",
+  ":",
+  "[",
+  "[[",
+  "alias",
+  "awk",
+  "base64",
+  "basename",
+  "bc",
+  "break",
+  "cat",
+  "cd",
+  "chmod",
+  "cksum",
+  "cmp",
+  "column",
+  "comm",
+  "command",
+  "continue",
+  "cp",
+  "cut",
+  "date",
+  "declare",
+  "df",
+  "diff",
+  "dirname",
+  "du",
+  "echo",
+  "egrep",
+  "env",
+  "eval",
+  "exit",
+  "export",
+  "expr",
+  "false",
+  "fgrep",
+  "file",
+  "find",
+  "fold",
+  "grep",
+  "gtimeout",
+  "hash",
+  "head",
+  "hexdump",
+  "hostname",
+  "id",
+  "join",
+  "jq",
+  "kill",
+  "let",
+  "ln",
+  "local",
+  "ls",
+  "md5",
+  "md5sum",
+  "mkdir",
+  "mktemp",
+  "mv",
+  "nice",
+  "nl",
+  "nohup",
+  "nproc",
+  "od",
+  "paste",
+  "popd",
+  "printenv",
+  "printf",
+  "pushd",
+  "pwd",
+  "read",
+  "readlink",
+  "readonly",
+  "realpath",
+  "return",
+  "rev",
+  "rg",
+  "rm",
+  "rmdir",
+  "sed",
+  "seq",
+  "set",
+  "sha1sum",
+  "sha256sum",
+  "shasum",
+  "shift",
+  "shopt",
+  "sleep",
+  "sort",
+  "source",
+  "split",
+  "stat",
+  "tac",
+  "tail",
+  "tee",
+  "test",
+  "time",
+  "timeout",
+  "touch",
+  "tr",
+  "trap",
+  "tree",
+  "true",
+  "truncate",
+  "type",
+  "typeset",
+  "ulimit",
+  "umask",
+  "uname",
+  "uniq",
+  "unset",
+  "wait",
+  "wc",
+  "which",
+  "whoami",
+  "xargs",
+  "xxd",
+  "yes"
+ ],
+ "builtin_cov": {
+  "agent": 36.85,
+  "all": 37.59,
+  "agent-codemode": 31.92,
+  "p2": 42.13,
+  "p2-codemode": 4.85
+ },
+ "builtin_one_ext_cov": {
+  "agent": 87.37,
+  "all": 85.22,
+  "agent-codemode": 90.47,
+  "p2": 72.95,
+  "p2-codemode": 100.0
+ },
+ "ext_count_hist": {
+  "0": 111039,
+  "1": 140700,
+  "2": 33342,
+  "3+": 10320
+ },
+ "ext_top": [
+  [
+   "git",
+   70247
+  ],
+  [
+   "python3",
+   32063
+  ],
+  [
+   "node",
+   28922
+  ],
+  [
+   "<local-script>",
+   25703
+  ],
+  [
+   "npm",
+   16023
+  ],
+  [
+   "cargo",
+   14153
+  ],
+  [
+   "gh",
+   8134
+  ],
+  [
+   "npx",
+   5486
+  ],
+  [
+   "uv",
+   4098
+  ],
+  [
+   "curl",
+   4074
+  ],
+  [
+   "<dynamic>",
+   3173
+  ],
+  [
+   "make",
+   2719
+  ],
+  [
+   "tmux",
+   1796
+  ],
+  [
+   "pnpm",
+   1720
+  ],
+  [
+   "docker",
+   1557
+  ],
+  [
+   "go",
+   1150
+  ],
+  [
+   "ps",
+   995
+  ],
+  [
+   "xcrun",
+   915
+  ],
+  [
+   "python",
+   874
+  ],
+  [
+   "bash",
+   821
+  ],
+  [
+   "pkill",
+   760
+  ],
+  [
+   "perl",
+   715
+  ],
+  [
+   "uptime",
+   597
+  ],
+  [
+   "lsof",
+   585
+  ],
+  [
+   "uvx",
+   569
+  ],
+  [
+   "tar",
+   552
+  ],
+  [
+   "pi",
+   550
+  ],
+  [
+   "sips",
+   488
+  ],
+  [
+   "psql",
+   476
+  ],
+  [
+   "pgrep",
+   395
+  ],
+  [
+   "bun",
+   379
+  ],
+  [
+   "sh",
+   314
+  ],
+  [
+   "gofmt",
+   297
+  ],
+  [
+   "ffmpeg",
+   285
+  ],
+  [
+   "ioreg",
+   270
+  ],
+  [
+   "rustc",
+   268
+  ],
+  [
+   "strings",
+   267
+  ],
+  [
+   "zig",
+   264
+  ],
+  [
+   "prlctl",
+   248
+  ],
+  [
+   "gzip",
+   220
+  ],
+  [
+   "rustup",
+   212
+  ],
+  [
+   "sqlite3",
+   200
+  ],
+  [
+   "samply",
+   172
+  ],
+  [
+   "networksetup",
+   153
+  ],
+  [
+   "nm",
+   152
+  ],
+  [
+   "wasm-objdump",
+   146
+  ],
+  [
+   "say",
+   143
+  ],
+  [
+   "osascript",
+   140
+  ],
+  [
+   "sample",
+   135
+  ],
+  [
+   "xcodebuild",
+   134
+  ],
+  [
+   "ffprobe",
+   117
+  ],
+  [
+   "swift",
+   114
+  ],
+  [
+   "golangci-lint",
+   109
+  ],
+  [
+   "otool",
+   107
+  ],
+  [
+   "sysctl",
+   106
+  ],
+  [
+   "aws",
+   102
+  ],
+  [
+   "brew",
+   92
+  ],
+  [
+   "dig",
+   86
+  ],
+  [
+   "wasmtime",
+   84
+  ],
+  [
+   "actionlint",
+   83
+  ]
+ ],
+ "cat_multi": {
+  "agent": {
+   "read-only": 194203,
+   "other": 2313,
+   "file-mutate": 23748,
+   "interp-inline": 28727,
+   "script-run": 34738,
+   "echo": 26040,
+   "cd": 102860,
+   "build-test": 39281,
+   "pkg-install": 1253,
+   "network": 14633,
+   "process": 10638,
+   "vcs-mutate": 10006,
+   "shell-builtin": 4222,
+   "interactive-or-gui": 9,
+   "dynamic": 2763,
+   "shell-c": 170,
+   "long-running": 134,
+   "remote-vm": 258,
+   "windows": 11,
+   "empty-or-assign": 4
+  },
+  "all": {
+   "read-only": 239459,
+   "other": 2817,
+   "file-mutate": 33322,
+   "interp-inline": 38651,
+   "script-run": 49735,
+   "echo": 31176,
+   "cd": 140083,
+   "build-test": 45787,
+   "pkg-install": 1346,
+   "network": 15606,
+   "process": 11532,
+   "vcs-mutate": 14338,
+   "shell-builtin": 4349,
+   "interactive-or-gui": 10,
+   "dynamic": 3173,
+   "shell-c": 240,
+   "long-running": 152,
+   "remote-vm": 258,
+   "windows": 11,
+   "empty-or-assign": 4
+  },
+  "agent-codemode": {
+   "read-only": 2156,
+   "network": 393,
+   "script-run": 493,
+   "build-test": 256,
+   "process": 86,
+   "echo": 370,
+   "file-mutate": 188,
+   "cd": 589,
+   "interp-inline": 167,
+   "shell-builtin": 34,
+   "vcs-mutate": 19,
+   "pkg-install": 27,
+   "other": 30
+  },
+  "p2": {
+   "read-only": 43002,
+   "echo": 4762,
+   "cd": 36633,
+   "network": 484,
+   "vcs-mutate": 4312,
+   "build-test": 6250,
+   "file-mutate": 9386,
+   "interp-inline": 9756,
+   "process": 808,
+   "script-run": 14504,
+   "dynamic": 410,
+   "pkg-install": 66,
+   "long-running": 18,
+   "other": 474,
+   "shell-builtin": 93,
+   "shell-c": 70,
+   "interactive-or-gui": 1
+  },
+  "p2-codemode": {
+   "interp-inline": 1,
+   "read-only": 98,
+   "network": 96,
+   "echo": 4,
+   "vcs-mutate": 1,
+   "cd": 1
+  }
+ },
+ "cat_primary": {
+  "agent": {
+   "read-only": 130769,
+   "other": 879,
+   "file-mutate": 21881,
+   "interp-inline": 19113,
+   "script-run": 18622,
+   "echo": 187,
+   "build-test": 30971,
+   "pkg-install": 1253,
+   "vcs-mutate": 9957,
+   "network": 9623,
+   "process": 3075,
+   "shell-c": 95,
+   "dynamic": 770,
+   "remote-vm": 258,
+   "windows": 11,
+   "cd": 64,
+   "long-running": 6,
+   "shell-builtin": 17,
+   "empty-or-assign": 4,
+   "interactive-or-gui": 6
+  },
+  "all": {
+   "read-only": 152757,
+   "other": 932,
+   "file-mutate": 29708,
+   "interp-inline": 23844,
+   "script-run": 22630,
+   "echo": 194,
+   "build-test": 34705,
+   "pkg-install": 1346,
+   "vcs-mutate": 14287,
+   "network": 10264,
+   "process": 3477,
+   "shell-c": 116,
+   "dynamic": 770,
+   "remote-vm": 258,
+   "windows": 11,
+   "cd": 67,
+   "long-running": 7,
+   "shell-builtin": 17,
+   "empty-or-assign": 4,
+   "interactive-or-gui": 7
+  },
+  "agent-codemode": {
+   "read-only": 1663,
+   "network": 333,
+   "script-run": 393,
+   "build-test": 169,
+   "file-mutate": 179,
+   "interp-inline": 155,
+   "process": 50,
+   "vcs-mutate": 19,
+   "pkg-install": 27,
+   "other": 1
+  },
+  "p2": {
+   "read-only": 20324,
+   "vcs-mutate": 4310,
+   "network": 212,
+   "file-mutate": 7648,
+   "build-test": 3565,
+   "process": 352,
+   "interp-inline": 4575,
+   "pkg-install": 66,
+   "script-run": 3615,
+   "long-running": 1,
+   "other": 52,
+   "shell-c": 21,
+   "cd": 3,
+   "interactive-or-gui": 1,
+   "echo": 3
+  },
+  "p2-codemode": {
+   "interp-inline": 1,
+   "network": 96,
+   "echo": 4,
+   "read-only": 1,
+   "vcs-mutate": 1
+  }
+ },
+ "pure_read": {
+  "agent": 130640,
+  "all": 152595,
+  "agent-codemode": 1663,
+  "p2": 20287,
+  "p2-codemode": 5
+ },
+ "flags_by_util": {
+  "grep": [
+   [
+    "-n",
+    44964
+   ],
+   [
+    "-E",
+    20362
+   ],
+   [
+    "-v",
+    13800
+   ],
+   [
+    "-rn",
+    9752
+   ],
+   [
+    "-i",
+    4840
+   ],
+   [
+    "--include",
+    4683
+   ],
+   [
+    "-A8",
+    2591
+   ],
+   [
+    "-c",
+    2194
+   ],
+   [
+    "-A12",
+    1940
+   ],
+   [
+    "-A6",
+    1895
+   ],
+   [
+    "-A3",
+    1813
+   ],
+   [
+    "-A5",
+    1480
+   ],
+   [
+    "-A30",
+    1230
+   ],
+   [
+    "-o",
+    1191
+   ],
+   [
+    "-rln",
+    1141
+   ],
+   [
+    "-A25",
+    1133
+   ],
+   [
+    "-r",
+    1028
+   ],
+   [
+    "-A40",
+    952
+   ],
+   [
+    "-A10",
+    911
+   ],
+   [
+    "-B3",
+    847
+   ],
+   [
+    "-B2",
+    844
+   ],
+   [
+    "-A",
+    803
+   ],
+   [
+    "-iE",
+    784
+   ],
+   [
+    "-A20",
+    669
+   ],
+   [
+    "-A4",
+    653
+   ]
+  ],
+  "rg": [
+   [
+    "-n",
+    62220
+   ],
+   [
+    "--glob",
+    15942
+   ],
+   [
+    "-g",
+    6369
+   ],
+   [
+    "-i",
+    3420
+   ],
+   [
+    "-S",
+    2937
+   ],
+   [
+    "-C",
+    2234
+   ],
+   [
+    "-l",
+    1578
+   ],
+   [
+    "--type",
+    1431
+   ],
+   [
+    "-o",
+    802
+   ],
+   [
+    "-A",
+    696
+   ],
+   [
+    "-ln",
+    450
+   ],
+   [
+    "-v",
+    403
+   ],
+   [
+    "--hidden",
+    391
+   ],
+   [
+    "-il",
+    365
+   ],
+   [
+    "-A12",
+    322
+   ],
+   [
+    "-c",
+    293
+   ],
+   [
+    "-A25",
+    279
+   ],
+   [
+    "-A30",
+    248
+   ],
+   [
+    "-A8",
+    244
+   ],
+   [
+    "-rn",
+    201
+   ],
+   [
+    "-A15",
+    196
+   ],
+   [
+    "-B3",
+    187
+   ],
+   [
+    "-B2",
+    177
+   ],
+   [
+    "-A3",
+    177
+   ],
+   [
+    "-A6",
+    176
+   ]
+  ],
+  "sed": [
+   [
+    "-n",
+    56496
+   ],
+   [
+    "-i",
+    6042
+   ],
+   [
+    "-E",
+    505
+   ],
+   [
+    "-e",
+    498
+   ],
+   [
+    "-i.bak",
+    13
+   ],
+   [
+    "-nE",
+    5
+   ],
+   [
+    "-i.b2",
+    1
+   ]
+  ],
+  "head": [
+   [
+    "-20",
+    14418
+   ],
+   [
+    "-30",
+    13122
+   ],
+   [
+    "-40",
+    9180
+   ],
+   [
+    "-60",
+    5629
+   ],
+   [
+    "-80",
+    5545
+   ],
+   [
+    "-3",
+    5403
+   ],
+   [
+    "-5",
+    5175
+   ],
+   [
+    "-100",
+    4647
+   ],
+   [
+    "-50",
+    4026
+   ],
+   [
+    "-n",
+    3476
+   ],
+   [
+    "-200",
+    3199
+   ],
+   [
+    "-1",
+    2281
+   ],
+   [
+    "-120",
+    2003
+   ],
+   [
+    "-300",
+    1968
+   ],
+   [
+    "-c",
+    1511
+   ],
+   [
+    "-2",
+    1408
+   ],
+   [
+    "-10",
+    1405
+   ],
+   [
+    "-150",
+    1136
+   ],
+   [
+    "-12",
+    1040
+   ],
+   [
+    "-8",
+    876
+   ],
+   [
+    "-250",
+    669
+   ],
+   [
+    "-500",
+    624
+   ],
+   [
+    "-400",
+    560
+   ],
+   [
+    "-15",
+    509
+   ],
+   [
+    "-4",
+    410
+   ]
+  ],
+  "tail": [
+   [
+    "-1",
+    5924
+   ],
+   [
+    "-3",
+    5202
+   ],
+   [
+    "-2",
+    3666
+   ],
+   [
+    "-5",
+    3423
+   ],
+   [
+    "-30",
+    1954
+   ],
+   [
+    "-20",
+    1679
+   ],
+   [
+    "-15",
+    1484
+   ],
+   [
+    "-8",
+    1231
+   ],
+   [
+    "-40",
+    1045
+   ],
+   [
+    "-4",
+    820
+   ],
+   [
+    "-n",
+    757
+   ],
+   [
+    "-12",
+    685
+   ],
+   [
+    "-6",
+    579
+   ],
+   [
+    "-25",
+    536
+   ],
+   [
+    "-10",
+    467
+   ],
+   [
+    "-80",
+    400
+   ],
+   [
+    "-60",
+    373
+   ],
+   [
+    "-100",
+    280
+   ],
+   [
+    "-50",
+    224
+   ],
+   [
+    "-c",
+    126
+   ],
+   [
+    "-14",
+    108
+   ],
+   [
+    "-120",
+    96
+   ],
+   [
+    "-45",
+    88
+   ],
+   [
+    "-35",
+    82
+   ],
+   [
+    "-16",
+    73
+   ]
+  ],
+  "find": [
+   [
+    "-type",
+    7794
+   ],
+   [
+    "-maxdepth",
+    6895
+   ],
+   [
+    "-name",
+    6517
+   ],
+   [
+    "-o",
+    3936
+   ],
+   [
+    "-print",
+    3443
+   ],
+   [
+    "-path",
+    2276
+   ],
+   [
+    "-iname",
+    1465
+   ],
+   [
+    "-not",
+    748
+   ],
+   [
+    "-exec",
+    418
+   ],
+   [
+    "-prune",
+    344
+   ],
+   [
+    "-print0",
+    241
+   ],
+   [
+    "-c",
+    120
+   ],
+   [
+    "-mindepth",
+    115
+   ],
+   [
+    "-l",
+    65
+   ],
+   [
+    "-mmin",
+    65
+   ],
+   [
+    "-ls",
+    60
+   ],
+   [
+    "-mtime",
+    60
+   ],
+   [
+    "-f",
+    56
+   ],
+   [
+    "-size",
+    50
+   ],
+   [
+    "-quit",
+    41
+   ],
+   [
+    "-perm",
+    38
+   ],
+   [
+    "-printf",
+    28
+   ],
+   [
+    "-newer",
+    26
+   ],
+   [
+    "-n",
+    24
+   ],
+   [
+    "-111",
+    18
+   ]
+  ],
+  "ls": [
+   [
+    "-la",
+    3815
+   ],
+   [
+    "-l",
+    739
+   ],
+   [
+    "-lh",
+    495
+   ],
+   [
+    "-t",
+    393
+   ],
+   [
+    "-d",
+    379
+   ],
+   [
+    "-ld",
+    166
+   ],
+   [
+    "-R",
+    144
+   ],
+   [
+    "-1",
+    139
+   ],
+   [
+    "-a",
+    99
+   ],
+   [
+    "-lt",
+    67
+   ],
+   [
+    "-td",
+    59
+   ],
+   [
+    "-S",
+    27
+   ],
+   [
+    "-lah",
+    19
+   ],
+   [
+    "--time-style",
+    17
+   ],
+   [
+    "-lT",
+    11
+   ],
+   [
+    "-laS",
+    10
+   ],
+   [
+    "-dt",
+    9
+   ],
+   [
+    "-T",
+    9
+   ],
+   [
+    "-lS",
+    6
+   ],
+   [
+    "-al",
+    6
+   ],
+   [
+    "-lhS",
+    5
+   ],
+   [
+    "-A",
+    4
+   ],
+   [
+    "-laL",
+    3
+   ],
+   [
+    "-1t",
+    3
+   ],
+   [
+    "-alh",
+    3
+   ]
+  ],
+  "cat": [
+   [
+    "-n",
+    96
+   ],
+   [
+    "-v",
+    75
+   ],
+   [
+    "-A",
+    60
+   ],
+   [
+    "-vet",
+    18
+   ],
+   [
+    "-et",
+    4
+   ],
+   [
+    "-e",
+    4
+   ],
+   [
+    "-",
+    3
+   ],
+   [
+    "-t",
+    1
+   ]
+  ],
+  "sort": [
+   [
+    "-u",
+    986
+   ],
+   [
+    "-rn",
+    771
+   ],
+   [
+    "-n",
+    481
+   ],
+   [
+    "-nr",
+    238
+   ],
+   [
+    "-k2",
+    213
+   ],
+   [
+    "-V",
+    67
+   ],
+   [
+    "-r",
+    61
+   ],
+   [
+    "-h",
+    44
+   ],
+   [
+    "-k3",
+    38
+   ],
+   [
+    "-t",
+    16
+   ],
+   [
+    "-k4",
+    10
+   ],
+   [
+    "-o",
+    6
+   ],
+   [
+    "-k1",
+    6
+   ],
+   [
+    "-R",
+    6
+   ],
+   [
+    "-k3n",
+    6
+   ],
+   [
+    "-s",
+    5
+   ],
+   [
+    "-z",
+    4
+   ],
+   [
+    "-k5",
+    3
+   ],
+   [
+    "-k2n",
+    3
+   ],
+   [
+    "-uV",
+    2
+   ],
+   [
+    "-k3nr",
+    1
+   ],
+   [
+    "-hr",
+    1
+   ],
+   [
+    "-F",
+    1
+   ],
+   [
+    "-tx",
+    1
+   ],
+   [
+    "-a",
+    1
+   ]
+  ],
+  "wc": [
+   [
+    "-l",
+    8100
+   ],
+   [
+    "-c",
+    1391
+   ],
+   [
+    "-w",
+    87
+   ],
+   [
+    "-lc",
+    33
+   ],
+   [
+    "-rf",
+    1
+   ],
+   [
+    "-L",
+    1
+   ],
+   [
+    "-H",
+    1
+   ]
+  ],
+  "cut": [
+   [
+    "-c1-200",
+    742
+   ],
+   [
+    "-f1",
+    562
+   ],
+   [
+    "-c1-300",
+    425
+   ],
+   [
+    "-c1-250",
+    270
+   ],
+   [
+    "-c1-400",
+    210
+   ],
+   [
+    "-c1-160",
+    185
+   ],
+   [
+    "-c1-120",
+    182
+   ],
+   [
+    "-c1-150",
+    180
+   ],
+   [
+    "-c1-220",
+    166
+   ],
+   [
+    "-c1-600",
+    127
+   ],
+   [
+    "-d",
+    107
+   ],
+   [
+    "-f2",
+    92
+   ],
+   [
+    "-c1-80",
+    82
+   ],
+   [
+    "-c1-140",
+    70
+   ],
+   [
+    "-c1-170",
+    63
+   ],
+   [
+    "-c1-60",
+    61
+   ],
+   [
+    "-c1-260",
+    58
+   ],
+   [
+    "-c1-110",
+    53
+   ],
+   [
+    "-c1-100",
+    53
+   ],
+   [
+    "-c1-500",
+    48
+   ],
+   [
+    "-f3",
+    47
+   ],
+   [
+    "-c1-180",
+    43
+   ],
+   [
+    "-f2-",
+    43
+   ],
+   [
+    "-c1-1500",
+    40
+   ],
+   [
+    "-c1-90",
+    31
+   ]
+  ],
+  "awk": [
+   [
+    "-v",
+    208
+   ],
+   [
+    "-F",
+    143
+   ],
+   [
+    "-F.",
+    5
+   ],
+   [
+    "-F-",
+    2
+   ],
+   [
+    "-Fsize",
+    2
+   ],
+   [
+    "-Fjid",
+    1
+   ],
+   [
+    "-Fland.",
+    1
+   ],
+   [
+    "-Fc.get",
+    1
+   ],
+   [
+    "-F_",
+    1
+   ],
+   [
+    "-F__private_",
+    1
+   ]
+  ],
+  "xargs": [
+   [
+    "-0",
+    262
+   ],
+   [
+    "-n1",
+    77
+   ],
+   [
+    "-r",
+    30
+   ],
+   [
+    "-P",
+    29
+   ],
+   [
+    "-n",
+    8
+   ],
+   [
+    "-L",
+    6
+   ],
+   [
+    "-n2",
+    3
+   ],
+   [
+    "-P8",
+    3
+   ],
+   [
+    "-P20",
+    2
+   ],
+   [
+    "-P4",
+    1
+   ],
+   [
+    "-P6",
+    1
+   ],
+   [
+    "-n3",
+    1
+   ],
+   [
+    "-L1",
+    1
+   ],
+   [
+    "-P10",
+    1
+   ],
+   [
+    "-I",
+    1
+   ],
+   [
+    "-P40",
+    1
+   ]
+  ],
+  "git": [
+   [
+    "--short",
+    25888
+   ],
+   [
+    "--stat",
+    14904
+   ],
+   [
+    "--oneline",
+    14316
+   ],
+   [
+    "-m",
+    7041
+   ],
+   [
+    "--check",
+    6826
+   ],
+   [
+    "-q",
+    5879
+   ],
+   [
+    "--format",
+    4889
+   ],
+   [
+    "--show-toplevel",
+    4351
+   ],
+   [
+    "-C",
+    4129
+   ],
+   [
+    "-1",
+    3821
+   ],
+   [
+    "--cached",
+    2916
+   ],
+   [
+    "-A",
+    2606
+   ],
+   [
+    "--branch",
+    2423
+   ],
+   [
+    "--name-only",
+    1982
+   ],
+   [
+    "--decorate",
+    1948
+   ],
+   [
+    "-n",
+    1923
+   ],
+   [
+    "-qm",
+    1867
+   ],
+   [
+    "-3",
+    1865
+   ],
+   [
+    "--all",
+    1855
+   ],
+   [
+    "--show-current",
+    1798
+   ],
+   [
+    "--pretty",
+    1656
+   ],
+   [
+    "-5",
+    1252
+   ],
+   [
+    "-v",
+    1040
+   ],
+   [
+    "--date",
+    1028
+   ],
+   [
+    "--no-ext-diff",
+    1000
+   ]
+  ],
+  "cargo": [
+   [
+    "-p",
+    10197
+   ],
+   [
+    "-q",
+    7385
+   ],
+   [
+    "--all-features",
+    4310
+   ],
+   [
+    "--release",
+    2733
+   ],
+   [
+    "--workspace",
+    1924
+   ],
+   [
+    "--all",
+    1772
+   ],
+   [
+    "--all-targets",
+    1743
+   ],
+   [
+    "--test",
+    1572
+   ],
+   [
+    "-D",
+    1196
+   ],
+   [
+    "--features",
+    981
+   ],
+   [
+    "--no-default-features",
+    929
+   ],
+   [
+    "--lib",
+    783
+   ],
+   [
+    "--check",
+    625
+   ],
+   [
+    "--target",
+    603
+   ],
+   [
+    "--quiet",
+    460
+   ],
+   [
+    "--manifest-path",
+    427
+   ],
+   [
+    "--example",
+    381
+   ],
+   [
+    "--no-deps",
+    367
+   ],
+   [
+    "--nocapture",
+    326
+   ],
+   [
+    "--doc",
+    266
+   ],
+   [
+    "--tests",
+    251
+   ],
+   [
+    "--bin",
+    215
+   ],
+   [
+    "--config",
+    193
+   ],
+   [
+    "--offline",
+    175
+   ],
+   [
+    "--no-fail-fast",
+    149
+   ]
+  ],
+  "npm": [
+   [
+    "--json",
+    929
+   ],
+   [
+    "--ignore-scripts",
+    627
+   ],
+   [
+    "--silent",
+    347
+   ],
+   [
+    "-w",
+    304
+   ],
+   [
+    "--run",
+    297
+   ],
+   [
+    "--prefix",
+    246
+   ],
+   [
+    "--stamp",
+    243
+   ],
+   [
+    "--write",
+    199
+   ],
+   [
+    "--dry-run",
+    196
+   ],
+   [
+    "--workspace",
+    182
+   ],
+   [
+    "--package-lock-only",
+    166
+   ],
+   [
+    "--depth",
+    161
+   ],
+   [
+    "--config",
+    155
+   ],
+   [
+    "--no-audit",
+    142
+   ],
+   [
+    "--no-fund",
+    141
+   ],
+   [
+    "--pool",
+    134
+   ],
+   [
+    "--minWorkers",
+    134
+   ],
+   [
+    "--maxWorkers",
+    134
+   ],
+   [
+    "--check",
+    116
+   ],
+   [
+    "--pack-destination",
+    114
+   ],
+   [
+    "-y",
+    112
+   ],
+   [
+    "--all",
+    111
+   ],
+   [
+    "--version",
+    97
+   ],
+   [
+    "--runInBand",
+    97
+   ],
+   [
+    "--omit",
+    94
+   ]
+  ],
+  "curl": [
+   [
+    "-o",
+    1928
+   ],
+   [
+    "-s",
+    1808
+   ],
+   [
+    "-H",
+    1512
+   ],
+   [
+    "-sS",
+    1214
+   ],
+   [
+    "-w",
+    935
+   ],
+   [
+    "--max-time",
+    664
+   ],
+   [
+    "--data-urlencode",
+    570
+   ],
+   [
+    "-L",
+    476
+   ],
+   [
+    "-fsSL",
+    439
+   ],
+   [
+    "-fsS",
+    424
+   ],
+   [
+    "-X",
+    402
+   ],
+   [
+    "-sL",
+    339
+   ],
+   [
+    "-D",
+    283
+   ],
+   [
+    "-A",
+    216
+   ],
+   [
+    "--silent",
+    193
+   ],
+   [
+    "-d",
+    186
+   ],
+   [
+    "-",
+    180
+   ],
+   [
+    "--data-binary",
+    177
+   ],
+   [
+    "--connect-timeout",
+    164
+   ],
+   [
+    "--show-error",
+    153
+   ],
+   [
+    "--fail",
+    142
+   ],
+   [
+    "-m",
+    137
+   ],
+   [
+    "-sI",
+    132
+   ],
+   [
+    "--data",
+    113
+   ],
+   [
+    "-I",
+    103
+   ]
+  ],
+  "python3": [
+   [
+    "-c",
+    2256
+   ],
+   [
+    "-m",
+    357
+   ],
+   [
+    "--wasm",
+    340
+   ],
+   [
+    "-",
+    233
+   ],
+   [
+    "-n",
+    124
+   ],
+   [
+    "--top",
+    117
+   ],
+   [
+    "--check",
+    115
+   ],
+   [
+    "--slim",
+    88
+   ],
+   [
+    "--rfel",
+    74
+   ],
+   [
+    "--boot",
+    58
+   ],
+   [
+    "-a",
+    58
+   ],
+   [
+    "--noqjs",
+    53
+   ],
+   [
+    "--update",
+    39
+   ],
+   [
+    "-v",
+    35
+   ],
+   [
+    "--kernel",
+    33
+   ],
+   [
+    "--eng",
+    32
+   ],
+   [
+    "--version",
+    27
+   ],
+   [
+    "-k",
+    27
+   ],
+   [
+    "--all-features",
+    26
+   ],
+   [
+    "-q",
+    25
+   ],
+   [
+    "--func",
+    25
+   ],
+   [
+    "-p",
+    23
+   ],
+   [
+    "-r",
+    23
+   ],
+   [
+    "--reps",
+    21
+   ],
+   [
+    "--directory",
+    19
+   ]
+  ],
+  "node": [
+   [
+    "--run",
+    6957
+   ],
+   [
+    "-e",
+    3914
+   ],
+   [
+    "--test",
+    3650
+   ],
+   [
+    "--check",
+    1793
+   ],
+   [
+    "--input-type",
+    1659
+   ],
+   [
+    "--import",
+    820
+   ],
+   [
+    "-p",
+    520
+   ],
+   [
+    "--purpose",
+    445
+   ],
+   [
+    "--version",
+    378
+   ],
+   [
+    "--timeout",
+    356
+   ],
+   [
+    "--experimental-strip-types",
+    327
+   ],
+   [
+    "--vmm",
+    263
+   ],
+   [
+    "-t",
+    251
+   ],
+   [
+    "--score",
+    245
+   ],
+   [
+    "--image",
+    243
+   ],
+   [
+    "-",
+    201
+   ],
+   [
+    "--dir",
+    187
+   ],
+   [
+    "--test-name-pattern",
+    185
+   ],
+   [
+    "-lc",
+    182
+   ],
+   [
+    "--help",
+    179
+   ],
+   [
+    "--tmp",
+    174
+   ],
+   [
+    "--no-warnings",
+    171
+   ],
+   [
+    "--json",
+    160
+   ],
+   [
+    "--test-reporter",
+    153
+   ],
+   [
+    "--test-concurrency",
+    151
+   ]
+  ],
+  "rm": [
+   [
+    "-rf",
+    3598
+   ],
+   [
+    "-f",
+    2087
+   ],
+   [
+    "-r",
+    10
+   ]
+  ],
+  "cp": [
+   [
+    "-R",
+    192
+   ],
+   [
+    "-r",
+    135
+   ],
+   [
+    "-n",
+    13
+   ],
+   [
+    "-a",
+    8
+   ],
+   [
+    "-p",
+    6
+   ],
+   [
+    "-c",
+    3
+   ],
+   [
+    "-Rp",
+    1
+   ],
+   [
+    "-RL",
+    1
+   ],
+   [
+    "-Rn",
+    1
+   ],
+   [
+    "-v",
+    1
+   ],
+   [
+    "-cR",
+    1
+   ]
+  ],
+  "mkdir": [
+   [
+    "-p",
+    3257
+   ],
+   [
+    "-m",
+    1
+   ]
+  ],
+  "date": [
+   [
+    "-u",
+    123
+   ],
+   [
+    "-r",
+    17
+   ],
+   [
+    "-j",
+    5
+   ],
+   [
+    "-f",
+    5
+   ],
+   [
+    "-v-60M",
+    3
+   ],
+   [
+    "-d",
+    2
+   ],
+   [
+    "-Iseconds",
+    1
+   ],
+   [
+    "-v-35S",
+    1
+   ],
+   [
+    "-v-30M",
+    1
+   ],
+   [
+    "-Is",
+    1
+   ],
+   [
+    "-v-3H",
+    1
+   ],
+   [
+    "-v-90d",
+    1
+   ],
+   [
+    "-v-3d",
+    1
+   ],
+   [
+    "-s",
+    1
+   ]
+  ],
+  "tr": [
+   [
+    "-d",
+    377
+   ],
+   [
+    "-s",
+    36
+   ],
+   [
+    "-",
+    9
+   ],
+   [
+    "-c",
+    4
+   ],
+   [
+    "-dc",
+    3
+   ],
+   [
+    "-cd",
+    3
+   ]
+  ],
+  "uniq": [
+   [
+    "-c",
+    1609
+   ],
+   [
+    "-d",
+    22
+   ],
+   [
+    "-u",
+    5
+   ],
+   [
+    "-f1",
+    1
+   ],
+   [
+    "-name",
+    1
+   ],
+   [
+    "-not",
+    1
+   ],
+   [
+    "-path",
+    1
+   ],
+   [
+    "-f2",
+    1
+   ]
+  ],
+  "jq": [
+   [
+    "-r",
+    990
+   ],
+   [
+    "-c",
+    453
+   ],
+   [
+    "-s",
+    46
+   ],
+   [
+    "--arg",
+    39
+   ],
+   [
+    "-e",
+    18
+   ],
+   [
+    "-rc",
+    13
+   ],
+   [
+    "-rs",
+    13
+   ],
+   [
+    "--argjson",
+    6
+   ],
+   [
+    "-n",
+    6
+   ],
+   [
+    "-S",
+    4
+   ],
+   [
+    "-sr",
+    3
+   ],
+   [
+    "-cj",
+    3
+   ],
+   [
+    "-er",
+    2
+   ],
+   [
+    "--sort-keys",
+    2
+   ],
+   [
+    "--slurpfile",
+    2
+   ],
+   [
+    "--argfile",
+    1
+   ],
+   [
+    "-sc",
+    1
+   ],
+   [
+    "-rn",
+    1
+   ],
+   [
+    "-R",
+    1
+   ]
+  ],
+  "echo": [
+   [
+    "-n",
+    143
+   ],
+   [
+    "-e",
+    5
+   ],
+   [
+    "--stderr--",
+    2
+   ],
+   [
+    "--pi.dev--",
+    2
+   ],
+   [
+    "-i",
+    2
+   ],
+   [
+    "-",
+    2
+   ],
+   [
+    "--all",
+    1
+   ],
+   [
+    "--all-targets",
+    1
+   ],
+   [
+    "--target",
+    1
+   ],
+   [
+    "-D",
+    1
+   ],
+   [
+    "--side",
+    1
+   ],
+   [
+    "-R",
+    1
+   ],
+   [
+    "--json",
+    1
+   ],
+   [
+    "--server",
+    1
+   ],
+   [
+    "--tui",
+    1
+   ],
+   [
+    "--slim",
+    1
+   ]
+  ],
+  "printf": [
+   [
+    "-1",
+    1
+   ]
+  ],
+  "sleep": [],
+  "tee": [
+   [
+    "-a",
+    34
+   ],
+   [
+    "-c",
+    1
+   ]
+  ],
+  "nl": [
+   [
+    "-ba",
+    2559
+   ],
+   [
+    "-v0",
+    1
+   ]
+  ],
+  "diff": [
+   [
+    "-u",
+    215
+   ],
+   [
+    "-",
+    68
+   ],
+   [
+    "-rq",
+    61
+   ],
+   [
+    "--label",
+    52
+   ],
+   [
+    "-q",
+    37
+   ],
+   [
+    "-r",
+    30
+   ],
+   [
+    "-x",
+    29
+   ],
+   [
+    "--exclude",
+    17
+   ],
+   [
+    "-ru",
+    9
+   ],
+   [
+    "-qr",
+    7
+   ],
+   [
+    "-I",
+    6
+   ],
+   [
+    "-w",
+    3
+   ],
+   [
+    "-U0",
+    3
+   ],
+   [
+    "-y",
+    2
+   ],
+   [
+    "-W",
+    2
+   ],
+   [
+    "--ignore-all-space",
+    1
+   ],
+   [
+    "--suppress-common-lines",
+    1
+   ],
+   [
+    "--word-diff",
+    1
+   ],
+   [
+    "-ruN",
+    1
+   ]
+  ],
+  "stat": [
+   [
+    "-f",
+    298
+   ],
+   [
+    "-t",
+    48
+   ],
+   [
+    "-c",
+    3
+   ]
+  ],
+  "du": [
+   [
+    "-sh",
+    469
+   ],
+   [
+    "-h",
+    43
+   ],
+   [
+    "-sk",
+    41
+   ],
+   [
+    "-ch",
+    30
+   ],
+   [
+    "-shL",
+    9
+   ],
+   [
+    "-ah",
+    6
+   ],
+   [
+    "-k",
+    6
+   ],
+   [
+    "--exclude",
+    6
+   ],
+   [
+    "-shA",
+    6
+   ],
+   [
+    "-ck",
+    1
+   ],
+   [
+    "--apparent-size",
+    1
+   ]
+  ],
+  "ps": [
+   [
+    "-o",
+    561
+   ],
+   [
+    "-p",
+    504
+   ],
+   [
+    "-axo",
+    160
+   ],
+   [
+    "-Ao",
+    106
+   ],
+   [
+    "-r",
+    59
+   ],
+   [
+    "-ax",
+    38
+   ],
+   [
+    "-eo",
+    31
+   ],
+   [
+    "-ef",
+    17
+   ],
+   [
+    "-ww",
+    13
+   ],
+   [
+    "-t",
+    11
+   ],
+   [
+    "-A",
+    8
+   ],
+   [
+    "-g",
+    7
+   ],
+   [
+    "--sort",
+    5
+   ],
+   [
+    "-M",
+    2
+   ],
+   [
+    "-m",
+    1
+   ],
+   [
+    "-fp",
+    1
+   ],
+   [
+    "-",
+    1
+   ]
+  ],
+  "kill": [
+   [
+    "-0",
+    92
+   ],
+   [
+    "-TERM",
+    56
+   ],
+   [
+    "-KILL",
+    21
+   ],
+   [
+    "-9",
+    19
+   ],
+   [
+    "-USR1",
+    8
+   ],
+   [
+    "-USR2",
+    6
+   ],
+   [
+    "-INT",
+    3
+   ],
+   [
+    "-35454",
+    2
+   ],
+   [
+    "-79765",
+    1
+   ],
+   [
+    "-26135",
+    1
+   ],
+   [
+    "-42211",
+    1
+   ],
+   [
+    "-3091",
+    1
+   ]
+  ],
+  "pkill": [
+   [
+    "-f",
+    859
+   ],
+   [
+    "-P",
+    14
+   ],
+   [
+    "-x",
+    4
+   ],
+   [
+    "-9",
+    4
+   ],
+   [
+    "-INT",
+    3
+   ],
+   [
+    "--no-session",
+    2
+   ]
+  ],
+  "lsof": [
+   [
+    "-nP",
+    254
+   ],
+   [
+    "-i",
+    144
+   ],
+   [
+    "-p",
+    136
+   ],
+   [
+    "-iTCP",
+    111
+   ],
+   [
+    "-P",
+    72
+   ],
+   [
+    "-a",
+    61
+   ],
+   [
+    "-d",
+    47
+   ],
+   [
+    "-ti",
+    36
+   ],
+   [
+    "-n",
+    33
+   ],
+   [
+    "-Fn",
+    30
+   ],
+   [
+    "-t",
+    22
+   ],
+   [
+    "-U",
+    12
+   ],
+   [
+    "-c",
+    2
+   ]
+  ],
+  "tar": [
+   [
+    "-C",
+    284
+   ],
+   [
+    "-xzf",
+    177
+   ],
+   [
+    "-x",
+    137
+   ],
+   [
+    "-tzf",
+    70
+   ],
+   [
+    "-xf",
+    36
+   ],
+   [
+    "--strip-components",
+    31
+   ],
+   [
+    "-",
+    30
+   ],
+   [
+    "-xOf",
+    22
+   ],
+   [
+    "-tf",
+    16
+   ],
+   [
+    "-xOzf",
+    15
+   ],
+   [
+    "-xz",
+    11
+   ],
+   [
+    "-czf",
+    6
+   ],
+   [
+    "-tvf",
+    6
+   ],
+   [
+    "-xzOf",
+    5
+   ],
+   [
+    "-xzO",
+    5
+   ],
+   [
+    "-cf",
+    5
+   ],
+   [
+    "-tvzf",
+    4
+   ],
+   [
+    "-tzvf",
+    4
+   ],
+   [
+    "-m",
+    4
+   ],
+   [
+    "-O",
+    3
+   ],
+   [
+    "--wildcards",
+    2
+   ],
+   [
+    "--version",
+    2
+   ],
+   [
+    "-T",
+    2
+   ],
+   [
+    "--same-owner",
+    1
+   ],
+   [
+    "-xJf",
+    1
+   ]
+  ]
+ },
+ "compat": {
+  "find -maxdepth/-mindepth": [
+   6277,
+   6238,
+   222
+  ],
+  "wc -l": [
+   7380,
+   7287,
+   223
+  ],
+  "grep -r/-R": [
+   9757,
+   9729,
+   242
+  ],
+  "sed -n 'X,Yp' (range print)": [
+   38664,
+   38173,
+   458
+  ],
+  "rm -rf": [
+   3664,
+   3659,
+   280
+  ],
+  "cp -a / -r / -R": [
+   360,
+   359,
+   26
+  ],
+  "sed -i (any)": [
+   5472,
+   5466,
+   206
+  ],
+  "sed -i '' (BSD form)": [
+   5307,
+   5301,
+   171
+  ],
+  "timeout (GNU coreutils; not on stock macOS)": [
+   496,
+   496,
+   55
+  ],
+  "mktemp -d": [
+   1741,
+   1741,
+   225
+  ],
+  "tar --exclude / GNU long opts": [
+   122,
+   122,
+   9
+  ],
+  "grep -E": [
+   19457,
+   19393,
+   602
+  ],
+  "find -print0": [
+   226,
+   225,
+   10
+  ],
+  "xargs -0": [
+   243,
+   242,
+   15
+  ],
+  "find -exec \u2026 \\;": [
+   319,
+   318,
+   13
+  ],
+  "stat -f (BSD)": [
+   327,
+   325,
+   11
+  ],
+  "date +%s": [
+   200,
+   200,
+   31
+  ],
+  "stat -c / --format (GNU)": [
+   398,
+   197,
+   5
+  ],
+  "xargs -I": [
+   86,
+   85,
+   3
+  ],
+  "find without path (GNU default .)": [
+   9,
+   9,
+   0
+  ],
+  "ln -sf / -sfn": [
+   353,
+   352,
+   52
+  ],
+  "lsof -i / -ti": [
+   449,
+   435,
+   7
+  ],
+  "date -u / -Iseconds / --iso": [
+   167,
+   165,
+   12
+  ],
+  "grep --include/--exclude": [
+   1405,
+   1398,
+   58
+  ],
+  "head -c": [
+   1265,
+   1040,
+   42
+  ],
+  "grep -o": [
+   1418,
+   1412,
+   50
+  ],
+  "ps aux / ps -ef": [
+   530,
+   527,
+   27
+  ],
+  "sort -h": [
+   42,
+   42,
+   3
+  ],
+  "sed -E / -r": [
+   443,
+   442,
+   14
+  ],
+  "nproc (GNU)": [
+   26,
+   26,
+   4
+  ],
+  "sysctl -n hw.ncpu (macOS)": [
+   63,
+   63,
+   4
+  ],
+  "seq": [
+   1357,
+   1347,
+   218
+  ],
+  "echo -e / -n": [
+   141,
+   141,
+   5
+  ],
+  "tail -n +N": [
+   113,
+   112,
+   6
+  ],
+  "find -printf (GNU)": [
+   48,
+   48,
+   5
+  ],
+  "xargs -P": [
+   35,
+   35,
+   0
+  ],
+  "realpath": [
+   72,
+   71,
+   5
+  ],
+  "find -newer/-mtime/-mmin": [
+   148,
+   146,
+   1
+  ],
+  "sort -V (version)": [
+   58,
+   58,
+   2
+  ],
+  "base64 -d/--decode": [
+   142,
+   136,
+   9
+  ],
+  "xargs -r / --no-run-if-empty (GNU)": [
+   32,
+   31,
+   0
+  ],
+  "date -v / -j -f (BSD)": [
+   14,
+   14,
+   3
+  ],
+  "sed GNU-only escapes (\\+ \\? \\| in BRE, \\s)": [
+   124,
+   124,
+   8
+  ],
+  "find -exec \u2026 {} +": [
+   81,
+   81,
+   2
+  ],
+  "readlink -f": [
+   36,
+   36,
+   6
+  ],
+  "ls --color/--sort/--time-style (GNU)": [
+   18,
+   17,
+   1
+  ],
+  "date +%N (GNU nanoseconds)": [
+   24,
+   24,
+   0
+  ],
+  "grep -P (PCRE; not in BSD grep)": [
+   21,
+   21,
+   4
+  ],
+  "find -regex / -regextype": [
+   3,
+   3,
+   0
+  ],
+  "install -D (GNU)": [
+   5,
+   5,
+   0
+  ],
+  "date -d / --date (GNU)": [
+   2,
+   2,
+   0
+  ],
+  "awk gawk-only (gensub/strftime/asort/-i inplace)": [
+   3,
+   3,
+   2
+  ],
+  "sed -i <script> (GNU form; breaks on BSD)": [
+   144,
+   144,
+   35
+  ],
+  "sed -i.ext (suffix attached, portable)": [
+   21,
+   21,
+   1
+  ],
+  "gtimeout": [
+   19,
+   19,
+   10
+  ],
+  "cp --parents / -t (GNU)": [
+   10,
+   10,
+   0
+  ],
+  "pbcopy/pbpaste/open/osascript (macOS-only)": [
+   7,
+   7,
+   0
+  ],
+  "find -delete": [
+   20,
+   20,
+   1
+  ],
+  "md5 / shasum (BSD/perl)": [
+   88,
+   88,
+   5
+  ],
+  "tac (GNU)": [
+   1,
+   1,
+   0
+  ],
+  "head -n -N (GNU negative)": [
+   1,
+   1,
+   1
+  ],
+  "base64 -D (BSD) / -w (GNU)": [
+   1,
+   1,
+   0
+  ],
+  "md5sum/sha256sum (GNU)": [
+   2,
+   2,
+   0
+  ]
+ },
+ "compat_fail_kind": {
+  "timeout (GNU coreutils; not on stock macOS)": {
+   "flag/usage/not-found error": 44
+  },
+  "find -maxdepth/-mindepth": {
+   "flag/usage/not-found error": 7
+  },
+  "grep -E": {
+   "flag/usage/not-found error": 7
+  },
+  "ls --color/--sort/--time-style (GNU)": {
+   "flag/usage/not-found error": 1
+  },
+  "sed -i (any)": {
+   "flag/usage/not-found error": 3
+  },
+  "sed -i '' (BSD form)": {
+   "flag/usage/not-found error": 3
+  },
+  "sed -i <script> (GNU form; breaks on BSD)": {
+   "flag/usage/not-found error": 1
+  },
+  "gtimeout": {
+   "flag/usage/not-found error": 10
+  },
+  "grep -r/-R": {
+   "flag/usage/not-found error": 3
+  },
+  "sed -n 'X,Yp' (range print)": {
+   "flag/usage/not-found error": 6
+  },
+  "wc -l": {
+   "flag/usage/not-found error": 7
+  },
+  "rm -rf": {
+   "flag/usage/not-found error": 7
+  },
+  "mktemp -d": {
+   "flag/usage/not-found error": 10
+  },
+  "find -printf (GNU)": {
+   "flag/usage/not-found error": 4
+  },
+  "grep -P (PCRE; not in BSD grep)": {
+   "flag/usage/not-found error": 4
+  },
+  "grep --include/--exclude": {
+   "flag/usage/not-found error": 1
+  },
+  "cp -a / -r / -R": {
+   "flag/usage/not-found error": 1
+  },
+  "ln -sf / -sfn": {
+   "flag/usage/not-found error": 1
+  },
+  "ps aux / ps -ef": {
+   "flag/usage/not-found error": 2
+  },
+  "sort -V (version)": {
+   "flag/usage/not-found error": 1
+  },
+  "seq": {
+   "flag/usage/not-found error": 1
+  },
+  "sed GNU-only escapes (\\+ \\? \\| in BRE, \\s)": {
+   "flag/usage/not-found error": 1
+  }
+ },
+ "fails": {
+  "with_result": 292155,
+  "failed": 14965
+ },
+ "fail_src": {
+  "agent": {
+   "with_result": 247414,
+   "failed": 13867
+  },
+  "p2": {
+   "with_result": 44741,
+   "failed": 1098
+  }
+ },
+ "exit_codes": [
+  [
+   "1",
+   10818
+  ],
+  [
+   "2",
+   2163
+  ],
+  [
+   "timeout",
+   519
+  ],
+  [
+   "101",
+   487
+  ],
+  [
+   "aborted",
+   218
+  ],
+  [
+   "128",
+   172
+  ],
+  [
+   "127",
+   160
+  ],
+  [
+   "None",
+   124
+  ],
+  [
+   "125",
+   60
+  ],
+  [
+   "254",
+   38
+  ],
+  [
+   "5",
+   36
+  ],
+  [
+   "3",
+   21
+  ],
+  [
+   "255",
+   16
+  ],
+  [
+   "8",
+   13
+  ],
+  [
+   "126",
+   13
+  ],
+  [
+   "56",
+   12
+  ],
+  [
+   "7",
+   10
+  ],
+  [
+   "134",
+   9
+  ],
+  [
+   "4",
+   9
+  ],
+  [
+   "65",
+   9
+  ],
+  [
+   "129",
+   8
+  ],
+  [
+   "28",
+   8
+  ],
+  [
+   "69",
+   4
+  ],
+  [
+   "14",
+   3
+  ],
+  [
+   "253",
+   3
+  ]
+ ],
+ "fail_kinds": [
+  [
+   "other non-zero (tool-specific)",
+   5311
+  ],
+  [
+   "js/ts build/test failure",
+   3397
+  ],
+  [
+   "benign: no-match/false (exit 1, no output)",
+   1783
+  ],
+  [
+   "node runtime error",
+   837
+  ],
+  [
+   "python error",
+   592
+  ],
+  [
+   "command not found",
+   573
+  ],
+  [
+   "timeout",
+   519
+  ],
+  [
+   "rust build/test failure",
+   486
+  ],
+  [
+   "missing file",
+   451
+  ],
+  [
+   "git error",
+   259
+  ],
+  [
+   "aborted",
+   218
+  ],
+  [
+   "shell syntax/quoting error",
+   210
+  ],
+  [
+   "usage message",
+   90
+  ],
+  [
+   "network error",
+   77
+  ],
+  [
+   "zsh: no matches found (glob)",
+   65
+  ],
+  [
+   "BSD/GNU option mismatch",
+   52
+  ],
+  [
+   "permission denied",
+   42
+  ],
+  [
+   "arg list too long",
+   2
+  ],
+  [
+   "SIGPIPE (141)",
+   1
+  ]
+ ],
+ "fail_kinds_src": {
+  "agent": {
+   "other non-zero (tool-specific)": 4638,
+   "python error": 525,
+   "git error": 237,
+   "missing file": 358,
+   "benign: no-match/false (exit 1, no output)": 1783,
+   "shell syntax/quoting error": 185,
+   "timeout": 502,
+   "node runtime error": 759,
+   "js/ts build/test failure": 3382,
+   "rust build/test failure": 471,
+   "aborted": 218,
+   "command not found": 562,
+   "network error": 76,
+   "usage message": 80,
+   "permission denied": 42,
+   "BSD/GNU option mismatch": 46,
+   "SIGPIPE (141)": 1,
+   "arg list too long": 2
+  },
+  "p2": {
+   "other non-zero (tool-specific)": 673,
+   "command not found": 11,
+   "git error": 22,
+   "timeout": 17,
+   "zsh: no matches found (glob)": 65,
+   "missing file": 93,
+   "python error": 67,
+   "node runtime error": 78,
+   "js/ts build/test failure": 15,
+   "shell syntax/quoting error": 25,
+   "usage message": 10,
+   "BSD/GNU option mismatch": 6,
+   "network error": 1,
+   "rust build/test failure": 15
+  }
+ },
+ "not_found": [
+  [
+   "timeout",
+   389,
+   51
+  ],
+  [
+   "pdftotext",
+   13,
+   6
+  ],
+  [
+   "magick",
+   12,
+   12
+  ],
+  [
+   "tsc",
+   9,
+   6
+  ],
+  [
+   "pdfinfo",
+   6,
+   1
+  ],
+  [
+   "vitest",
+   6,
+   3
+  ],
+  [
+   "tmux",
+   5,
+   4
+  ],
+  [
+   "python",
+   5,
+   5
+  ],
+  [
+   "yt-dlp",
+   4,
+   1
+  ],
+  [
+   "email",
+   4,
+   1
+  ],
+  [
+   "pi",
+   4,
+   1
+  ],
+  [
+   "c",
+   4,
+   1
+  ],
+  [
+   "llvm-objdump",
+   4,
+   3
+  ],
+  [
+   "mapfile",
+   3,
+   2
+  ],
+  [
+   "shuf",
+   3,
+   3
+  ],
+  [
+   "biome",
+   3,
+   2
+  ],
+  [
+   "shellcheck",
+   3,
+   1
+  ],
+  [
+   "crucible",
+   3,
+   2
+  ],
+  [
+   "readelf",
+   3,
+   2
+  ],
+  [
+   "pandoc",
+   2,
+   1
+  ],
+  [
+   "bun",
+   2,
+   1
+  ],
+  [
+   "run",
+   2,
+   1
+  ],
+  [
+   "omp",
+   2,
+   1
+  ],
+  [
+   "emcmake",
+   2,
+   2
+  ],
+  [
+   "inkling",
+   2,
+   2
+  ],
+  [
+   "gtimeout",
+   2,
+   2
+  ],
+  [
+   "tsx",
+   2,
+   2
+  ],
+  [
+   "user_id",
+   2,
+   1
+  ],
+  [
+   "tsgo",
+   2,
+   2
+  ],
+  [
+   "ldd",
+   2,
+   1
+  ],
+  [
+   "pkg-config",
+   2,
+   1
+  ],
+  [
+   "debugfs",
+   2,
+   0
+  ],
+  [
+   "node",
+   2,
+   0
+  ],
+  [
+   "a",
+   2,
+   0
+  ],
+  [
+   "get_installed_pi_version",
+   2,
+   2
+  ],
+  [
+   "draw_logo_frame",
+   2,
+   0
+  ],
+  [
+   "unsquashfs",
+   2,
+   0
+  ],
+  [
+   "git",
+   2,
+   1
+  ],
+  [
+   "rg",
+   2,
+   1
+  ],
+  [
+   "Complete",
+   2,
+   0
+  ],
+  [
+   "factor",
+   2,
+   2
+  ],
+  [
+   "deno",
+   2,
+   0
+  ],
+  [
+   "None",
+   1,
+   0
+  ],
+  [
+   "cloudflared",
+   1,
+   0
+  ],
+  [
+   "constructor",
+   1,
+   0
+  ],
+  [
+   "rustfilt",
+   1,
+   0
+  ],
+  [
+   "low",
+   1,
+   0
+  ],
+  [
+   "setsid",
+   1,
+   0
+  ],
+  [
+   "settings-shake",
+   1,
+   1
+  ],
+  [
+   "settings-tutorial",
+   1,
+   1
+  ],
+  [
+   "-reset-page",
+   1,
+   1
+  ],
+  [
+   "settings-reset-page",
+   1,
+   1
+  ],
+  [
+   "sox",
+   1,
+   0
+  ],
+  [
+   "E",
+   1,
+   1
+  ],
+  [
+   "pulumi",
+   1,
+   0
+  ],
+  [
+   "ConversationRecordRow",
+   1,
+   1
+  ],
+  [
+   "appToLlmMessages",
+   1,
+   1
+  ],
+  [
+   "conversation_records",
+   1,
+   1
+  ],
+  [
+   "-",
+   1,
+   1
+  ],
+  [
+   "jj",
+   1,
+   1
+  ]
+ ],
+ "silent": {
+  "command not found": [
+   606,
+   452
+  ],
+  "No such file or directory": [
+   2291,
+   1368
+  ],
+  "illegal/invalid/unrecognized option": [
+   152,
+   123
+  ],
+  "shell syntax error": [
+   184,
+   11
+  ],
+  "zsh: no matches found": [
+   815,
+   750
+  ]
+ },
+ "opt_err": [
+  [
+   "cat",
+   65
+  ],
+  [
+   "grep",
+   28
+  ],
+  [
+   "ls",
+   10
+  ],
+  [
+   "script",
+   7
+  ],
+  [
+   "sandbox.wasm",
+   6
+  ],
+  [
+   "head",
+   5
+  ],
+  [
+   "error",
+   3
+  ],
+  [
+   "du",
+   3
+  ],
+  [
+   "screencapture",
+   2
+  ],
+  [
+   "jot",
+   2
+  ],
+  [
+   "wc",
+   2
+  ],
+  [
+   "diff",
+   2
+  ],
+  [
+   "sort",
+   2
+  ],
+  [
+   "ld",
+   2
+  ],
+  [
+   "date",
+   2
+  ],
+  [
+   "time",
+   1
+  ],
+  [
+   "dyld_info",
+   1
+  ],
+  [
+   "mktemp",
+   1
+  ],
+  [
+   "sed",
+   1
+  ],
+  [
+   "chmod",
+   1
+  ],
+  [
+   "sandbox-amd64.wasm",
+   1
+  ],
+  [
+   "x.wasm",
+   1
+  ],
+  [
+   "readlink",
+   1
+  ],
+  [
+   "od",
+   1
+  ],
+  [
+   "egen.sh",
+   1
+  ]
+ ],
+ "bash4": [
+  [
+   "|& (pipe stderr)",
+   582
+  ],
+  [
+   "zsh-only syntax (=(..), ${(f)..}, setopt)",
+   90
+  ],
+  [
+   "read -d '' / -a",
+   14
+  ],
+  [
+   "&> (redirect both)",
+   11
+  ],
+  [
+   "coproc",
+   7
+  ],
+  [
+   "[[ =~ ]] regex",
+   5
+  ],
+  [
+   "$EPOCHSECONDS/$SRANDOM/BASH_REMATCH",
+   5
+  ],
+  [
+   "declare/local -A (assoc array)",
+   4
+  ],
+  [
+   "mapfile/readarray",
+   2
+  ]
+ ],
+ "outlim": {
+  "pipes into head": 95402,
+  "any output limiter (head/tail/sed -n N,Mp)": 138312,
+  "sed -n 'N,Mp' file (paged read)": 38318,
+  "2>/dev/null": 15877,
+  "2>&1 | head/tail": 19871,
+  "pipes into tail": 23384,
+  "|| true / || : (ignore failure)": 6785,
+  "; echo \"exit=$?\" style status echo": 2175
+ },
+ "fail_by_cat": {
+  "read-only": [
+   237101,
+   8054
+  ],
+  "other": [
+   2781,
+   327
+  ],
+  "file-mutate": [
+   33110,
+   2026
+  ],
+  "interp-inline": [
+   38454,
+   1840
+  ],
+  "script-run": [
+   49222,
+   3722
+  ],
+  "echo": [
+   30784,
+   1368
+  ],
+  "cd": [
+   139437,
+   5194
+  ],
+  "build-test": [
+   45519,
+   4668
+  ],
+  "pkg-install": [
+   1318,
+   97
+  ],
+  "network": [
+   15109,
+   883
+  ],
+  "process": [
+   11432,
+   689
+  ],
+  "vcs-mutate": [
+   14310,
+   563
+  ],
+  "shell-builtin": [
+   4309,
+   780
+  ],
+  "interactive-or-gui": [
+   10,
+   1
+  ],
+  "dynamic": [
+   3172,
+   462
+  ],
+  "shell-c": [
+   239,
+   12
+  ],
+  "long-running": [
+   152,
+   21
+  ],
+  "remote-vm": [
+   258,
+   38
+  ],
+  "windows": [
+   11,
+   0
+  ],
+  "empty-or-assign": [
+   2,
+   2
+  ]
+ },
+ "fail_by_first": [
+  [
+   "cd",
+   134931,
+   4790
+  ],
+  [
+   "git",
+   37517,
+   654
+  ],
+  [
+   "rg",
+   33217,
+   1844
+  ],
+  [
+   "npm",
+   9202,
+   1281
+  ],
+  [
+   "node",
+   8085,
+   1163
+  ],
+  [
+   "gh",
+   5707,
+   296
+  ],
+  [
+   "find",
+   5448,
+   219
+  ],
+  [
+   "ls",
+   4425,
+   213
+  ],
+  [
+   "sed",
+   4341,
+   80
+  ],
+  [
+   "python3",
+   4257,
+   236
+  ],
+  [
+   "cat",
+   4029,
+   181
+  ],
+  [
+   "grep",
+   3109,
+   100
+  ],
+  [
+   "cargo",
+   2490,
+   426
+  ],
+  [
+   "npx",
+   2392,
+   395
+  ],
+  [
+   "set",
+   1985,
+   317
+  ],
+  [
+   "printf",
+   1755,
+   87
+  ],
+  [
+   "curl",
+   1634,
+   70
+  ],
+  [
+   "rm",
+   1513,
+   100
+  ],
+  [
+   "make",
+   1422,
+   308
+  ],
+  [
+   "mktemp",
+   1327,
+   164
+  ],
+  [
+   "uv",
+   1245,
+   135
+  ],
+  [
+   "sleep",
+   1186,
+   83
+  ],
+  [
+   "<dynamic>",
+   1158,
+   230
+  ],
+  [
+   "nl",
+   1148,
+   2
+  ],
+  [
+   "echo",
+   1120,
+   47
+  ],
+  [
+   "wc",
+   1114,
+   39
+  ],
+  [
+   "mkdir",
+   1112,
+   71
+  ],
+  [
+   "tmux",
+   897,
+   14
+  ],
+  [
+   "docker",
+   865,
+   164
+  ],
+  [
+   "python",
+   689,
+   65
+  ],
+  [
+   "pnpm",
+   656,
+   150
+  ],
+  [
+   "pwd",
+   547,
+   35
+  ],
+  [
+   "jq",
+   545,
+   14
+  ],
+  [
+   "bash",
+   406,
+   38
+  ],
+  [
+   "cp",
+   405,
+   25
+  ],
+  [
+   "date",
+   370,
+   25
+  ],
+  [
+   "command",
+   366,
+   13
+  ],
+  [
+   "ps",
+   364,
+   8
+  ],
+  [
+   "<path>/timeout.sh",
+   340,
+   5
+  ],
+  [
+   "seq",
+   325,
+   101
+  ]
+ ],
+ "timeouts_first": [
+  [
+   "cd",
+   157
+  ],
+  [
+   "node",
+   63
+  ],
+  [
+   "find",
+   31
+  ],
+  [
+   "set",
+   26
+  ],
+  [
+   "sleep",
+   23
+  ],
+  [
+   "git",
+   16
+  ],
+  [
+   "seq",
+   15
+  ],
+  [
+   "docker",
+   14
+  ],
+  [
+   "python3",
+   12
+  ],
+  [
+   "gh",
+   11
+  ],
+  [
+   "cargo",
+   9
+  ],
+  [
+   "npm",
+   8
+  ],
+  [
+   "rg",
+   8
+  ],
+  [
+   "printf",
+   8
+  ],
+  [
+   "uv",
+   7
+  ],
+  [
+   "cat",
+   7
+  ],
+  [
+   "rm",
+   7
+  ],
+  [
+   "mktemp",
+   6
+  ],
+  [
+   "npx",
+   6
+  ],
+  [
+   "date",
+   6
+  ],
+  [
+   "curl",
+   6
+  ],
+  [
+   "make",
+   5
+  ],
+  [
+   "ls",
+   5
+  ],
+  [
+   "echo",
+   4
+  ],
+  [
+   "osascript",
+   4
+  ]
+ ],
+ "sleeps": {
+  "<=5s": 3559,
+  "<=30s": 3367,
+  "<=120s": 455,
+  "<=1s": 1746,
+  ">120s": 340
+ },
+ "long_running": {
+  "background &": 2116,
+  "sleep": 9467,
+  "timeout wrapper (timeout/gtimeout/timeout.sh)": 8954,
+  "kill/pkill/lsof (process cleanup)": 1696,
+  "nohup": 585,
+  "polling loop (loop containing sleep)": 3048,
+  "server/dev-server/watch-mode hint": 587,
+  "tmux (send-keys/capture-pane, etc.)": 1941,
+  "watch": 4,
+  "disown/setsid": 19,
+  "interactive-risk (vim/less/top/git rebase -i/python REPL)": 105,
+  "tail -f/-F": 2
+ },
+ "long_running_src": {
+  "agent": {
+   "background &": 1620,
+   "sleep": 8678,
+   "timeout wrapper (timeout/gtimeout/timeout.sh)": 939,
+   "kill/pkill/lsof (process cleanup)": 1479,
+   "nohup": 449,
+   "polling loop (loop containing sleep)": 2688,
+   "server/dev-server/watch-mode hint": 547,
+   "tmux (send-keys/capture-pane, etc.)": 1920,
+   "watch": 3,
+   "disown/setsid": 11,
+   "interactive-risk (vim/less/top/git rebase -i/python REPL)": 90,
+   "tail -f/-F": 2
+  },
+  "agent-codemode": {
+   "sleep": 41,
+   "tmux (send-keys/capture-pane, etc.)": 8,
+   "polling loop (loop containing sleep)": 14,
+   "kill/pkill/lsof (process cleanup)": 6,
+   "background &": 18,
+   "server/dev-server/watch-mode hint": 3
+  },
+  "p2": {
+   "timeout wrapper (timeout/gtimeout/timeout.sh)": 8015,
+   "sleep": 748,
+   "background &": 478,
+   "kill/pkill/lsof (process cleanup)": 211,
+   "server/dev-server/watch-mode hint": 37,
+   "polling loop (loop containing sleep)": 346,
+   "nohup": 136,
+   "disown/setsid": 8,
+   "interactive-risk (vim/less/top/git rebase -i/python REPL)": 15,
+   "tmux (send-keys/capture-pane, etc.)": 13,
+   "watch": 1
+  }
+ },
+ "durations": {
+  "agent": {
+   "n": 55202,
+   "p50_ms": 71,
+   "p90_ms": 15426,
+   "p99_ms": 146713,
+   "gt10s_pct": 13.43,
+   "gt60s_pct": 3.44
+  },
+  "p2": {
+   "n": 44710,
+   "p50_ms": 72,
+   "p90_ms": 22865,
+   "p99_ms": 261550,
+   "gt10s_pct": 17.04,
+   "gt60s_pct": 4.43
+  }
+ },
+ "timeout_args": {
+  "none": 127688,
+  ">600s": 18425,
+  "<=120s": 48989,
+  "<=30s": 75196,
+  "<=600s": 25100,
+  "invalid": 3
+ },
+ "syntax": {
+  "agent": {
+   "bash_ok": 247359,
+   "zsh_ok": 247115,
+   "zsh_fail": 446,
+   "bash_fail": 202
+  },
+  "agent-codemode": {
+   "bash_ok": 2989,
+   "zsh_ok": 2988,
+   "zsh_fail": 1
+  },
+  "p2": {
+   "bash_ok": 44743,
+   "zsh_ok": 44708,
+   "zsh_fail": 40,
+   "bash_fail": 5
+  },
+  "p2-codemode": {
+   "bash_ok": 103,
+   "zsh_ok": 103
+  }
+ },
+ "ts_vs_bash": {
+  "ts_err=False,bash_ok=True": 295080,
+  "ts_err=True,bash_ok=True": 114,
+  "ts_err=True,bash_ok=False": 207
+ },
+ "windows": {
+  "mentions powershell/pwsh": 161,
+  "contains drive path C:\\": 67,
+  "prlctl (Parallels VM) commands": 254,
+  "prlctl exec into Windows VM": 112,
+  "cmd /c": 33,
+  "wsl": 14,
+  "output: 'is not recognized as an internal or external command'": 3
+ },
+ "win_fail": {
+  "prlctl Windows with result": 112,
+  "prlctl Windows failed": 17
+ },
+ "remote": {
+  "scp/rsync": 47,
+  "docker exec/run": 1217,
+  "ssh": 7,
+  "ssh with result": 7,
+  "ssh failed": 3
+ },
+ "nested_status": {
+  "ok": 2956,
+  "error": 135
+ }
+}

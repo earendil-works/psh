@@ -1,0 +1,13 @@
+command-sub-ksh: FATAL: Got 36 total failures, but 0 are allowed
+command-sub-ksh.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  6	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	${ echo hi;}
+  1	 42	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	${ echo hi }  without semi-colon
+  2	 61	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	${|REPLY=hi}
+  3	 86	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	for loop / case
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	0	0	4	0	0	0	0	0	0	0
+	FAIL	4	4	0	4	4	4	4	4	4	4
+	total	4	4	4	4	4	4	4	4	4	4
+

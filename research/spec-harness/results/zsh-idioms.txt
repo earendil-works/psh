@@ -1,0 +1,14 @@
+zsh-idioms: FATAL: Got 14 total failures, but 0 are allowed
+zsh-idioms.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	git-completion snippet
+  1	 16	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	asdf snippet
+  2	 27	pass	FAIL	BUG	ok	FAIL	FAIL	pass	FAIL	FAIL	FAIL	zsh var sub is rejected at runtime
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	3	2	2	2	2	2	1	0	0	0
+	ok	0	0	0	1	0	0	0	0	0	0
+	BUG	0	0	1	0	0	0	0	0	0	0
+	FAIL	0	1	0	0	1	1	2	3	3	3
+	total	3	3	3	3	3	3	3	3	3	3
+

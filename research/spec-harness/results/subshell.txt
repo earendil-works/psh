@@ -1,0 +1,11 @@
+subshell: FATAL: Got 2 total failures, but 0 are allowed
+subshell.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	Subshell exit code
+  1	  9	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	Subshell with redirects
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	2	2	2	2	2	2	2	2	0	2
+	FAIL	0	0	0	0	0	0	0	0	2	0
+	total	2	2	2	2	2	2	2	2	2	2
+

@@ -1,0 +1,21 @@
+var-op-len: FATAL: Got 45 total failures, but 0 are allowed
+var-op-len.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  7	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	String length
+  1	 12	pass	N-I	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	Unicode string length (UTF-8)
+  2	 19	pass	N-I	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	Unicode string length (spec/testdata/utf8-chars.txt)
+  3	 26	BUG	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	String length with incomplete utf-8
+  4	 93	BUG	N-I	FAIL	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	String length with invalid utf-8 continuation bytes
+  5	188	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Length of undefined variable
+  6	192	pass	ok	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Length of undefined variable with nounset
+  7	198	ok	FAIL	ok	BUG	pass	FAIL	FAIL	pass	FAIL	FAIL	Length operator can't be followed by test operator
+  8	223	FAIL	N-I	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	${#s} respects LC_ALL - length in bytes or code points
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	5	2	3	5	4	3	5	5	0	0
+	ok	1	1	1	0	0	0	0	0	0	0
+	N-I	0	5	0	0	0	0	0	0	0	0
+	BUG	2	0	1	2	0	0	0	0	0	0
+	FAIL	1	1	4	2	5	6	4	4	9	9
+	total	9	9	9	9	9	9	9	9	9	9
+

@@ -1,0 +1,15 @@
+divergence: FATAL: Got 11 total failures, but 0 are allowed
+divergence.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 10	pass	pass	N-I	N-I	pass	pass	pass	pass	FAIL	FAIL	xz package: dirprefix="${line##*([}"
+  1	 38	pass	pass	BUG	pass	pass	FAIL	pass	pass	FAIL	FAIL	!( as negation and subshell versus extended glob - #2463
+  2	 57	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	pass	Changing PATH will invalidate PATH cache
+  3	107	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	builtin cat crashes a subshell (#2530)
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	4	4	2	3	4	2	3	3	0	1
+	N-I	0	0	1	1	0	0	0	0	0	0
+	BUG	0	0	1	0	0	0	0	0	0	0
+	FAIL	0	0	0	0	0	2	1	1	4	3
+	total	4	4	4	4	4	4	4	4	4	4
+

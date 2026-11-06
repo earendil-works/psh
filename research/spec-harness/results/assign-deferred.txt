@@ -1,0 +1,22 @@
+assign-deferred: FATAL: Got 56 total failures, but 0 are allowed
+assign-deferred.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  7	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	typeset a[3]=4
+  1	 16	pass	FAIL	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	typeset -a a[1]=a a[3]=c
+  2	 23	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	local a[3]=4
+  3	 35	N-I	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	readonly a[7]=8
+  4	 50	pass	FAIL	BUG	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	export a[7]=8
+  5	 71	pass	N-I	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	'builtin' prefix is allowed on assignments
+  6	 81	pass	pass	pass	N-I	pass	FAIL	FAIL	pass	FAIL	FAIL	'command' prefix is allowed on assignments
+  7	 95	ok	FAIL	ok-2	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	is 'builtin' prefix and array allowed?  OSH is smarter
+  8	106	ok	FAIL	ok-2	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	is 'command' prefix and array allowed?  OSH is smarter
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	6	1	6	1	1	6	4	1	0	0
+	ok-2	0	0	2	0	0	0	0	0	0	0
+	ok	2	0	0	0	0	0	0	0	0	0
+	N-I	1	1	0	1	0	0	0	0	0	0
+	BUG	0	0	1	0	0	0	0	0	0	0
+	FAIL	0	7	0	7	8	3	5	8	9	9
+	total	9	9	9	9	9	9	9	9	9	9
+

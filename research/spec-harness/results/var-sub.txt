@@ -1,0 +1,16 @@
+var-sub: FATAL: Got 18 total failures, but 0 are allowed
+var-sub.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  8	ok	pass	ok	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	Bad var sub
+  1	 14	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Braced block inside ${}
+  2	 19	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Nested ${}
+  3	 24	pass	ok	pass	pass	pass	pass	pass	FAIL	pass	FAIL	Filename redirect with "$@"
+  4	 37	pass	ok	pass	FAIL	FAIL	pass	pass	FAIL	pass	FAIL	Descriptor redirect to bad "$@"
+  5	 47	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	pass	Here doc with bad "$@" delimiter
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	5	4	4	3	5	5	4	4	2	1
+	ok	1	2	2	0	0	0	0	0	0	0
+	FAIL	0	0	0	3	1	1	2	2	4	5
+	total	6	6	6	6	6	6	6	6	6	6
+

@@ -1,0 +1,41 @@
+command-sub: FATAL: Got 77 total failures, but 0 are allowed
+command-sub.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	case
+  1	  7	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	case in subshell
+  2	 15	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Command sub word part
+  3	 20	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	Backtick
+  4	 24	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	Backtick 2
+  5	 28	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Nested backticks
+  6	 35	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Making command out of command sub should work
+  7	 40	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	pass	Making keyword out of command sub should NOT work
+  8	 47	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Command sub with here doc
+  9	 55	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here doc with pipeline
+ 10	 62	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Command Sub word split
+ 11	 66	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Command Sub trailing newline removed
+ 12	 71	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Command Sub trailing whitespace not removed
+ 13	 76	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Command Sub and exit code
+ 14	 88	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Command Sub in local sets exit code
+ 15	103	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	Double Quotes in Command Sub in Double Quotes
+ 16	123	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	Escaped quote in [[ ]]
+ 17	133	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Quoting " within ``
+ 18	143	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Quoting $ within ``
+ 19	157	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Quoting $ within `` within double quotes
+ 20	171	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Quoting \ within ``
+ 21	182	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Quoting \ within `` within double quotes
+ 22	192	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Quoting ( within ``
+ 23	202	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Quoting ( within `` within double quotes
+ 24	212	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Quoting non-special characters within ``
+ 25	224	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Quoting non-special characters within `` within double quotes
+ 26	236	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Quoting double quotes within backticks
+ 27	246	pass	BUG	BUG	FAIL	pass	pass	pass	pass	FAIL	FAIL	More levels of double quotes in backticks
+ 28	266	ok	pass	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	pass	Syntax errors with double quotes within backticks
+ 29	291	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	Empty command sub $() (command::NoOp)
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	27	27	25	23	28	25	25	25	5	8
+	ok	1	0	2	0	0	0	0	0	0	0
+	BUG	0	1	1	0	0	0	0	0	0	0
+	FAIL	2	2	2	7	2	5	5	5	25	22
+	total	30	30	30	30	30	30	30	30	30	30
+

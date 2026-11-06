@@ -1,0 +1,21 @@
+paren-ambiguity: FATAL: Got 22 total failures, but 0 are allowed
+paren-ambiguity.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	pass	(( closed with ) ) after multiple lines is command - #2337
+  1	 19	pass	BUG	pass	pass	BUG	pass	FAIL	pass	FAIL	pass	$(( closed with ) ) after multiple lines is command - #2337
+  2	 36	pass	ok	pass	pass	ok	pass	pass	FAIL	FAIL	FAIL	(( closed with )) after multiple lines is parse error - #2337
+  3	 59	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	$(( closed with )) after multiple lines is parse error - #2337
+  4	 77	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	(((grep example - 4+ instances in regtest/aports - #2337
+  5	 97	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	((gzip example - zdiff package - #2337
+  6	114	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	pass	((pkg-config example - postfix package - #2337
+  7	125	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	((test example - liblo package - #2337
+  8	136	pass	N-I	pass	pass	N-I	pass	FAIL	pass	FAIL	pass	$((which example - command sub versus arith sub - gnunet-gtk package
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	9	6	9	9	6	9	2	8	0	4
+	ok	0	1	0	0	1	0	0	0	0	0
+	N-I	0	1	0	0	1	0	0	0	0	0
+	BUG	0	1	0	0	1	0	0	0	0	0
+	FAIL	0	0	0	0	0	0	7	1	9	5
+	total	9	9	9	9	9	9	9	9	9	9
+

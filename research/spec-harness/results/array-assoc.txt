@@ -1,0 +1,52 @@
+array-assoc.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 19	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Literal syntax ([x]=y)
+  1	 31	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	set associative array to indexed array literal (very surprising bash behavior)
+  2	 50	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Can initialize assoc array with the "(key value ...)" sequence
+  3	 65	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	create empty assoc array, put, then get
+  4	 77	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Empty value (doesn't use EmptyWord?)
+  5	 84	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	retrieve keys with !
+  6	 99	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	retrieve values with ${A[@]}
+  7	114	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	coerce to string with ${A[*]}, etc.
+  8	130	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	${A[@]/b/B}
+  9	145	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	${A[@]#prefix}
+ 10	159	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${assoc} is like ${assoc[0]}
+ 11	177	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	length ${#a[@]}
+ 12	185	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	lookup with ${a[0]} -- "0" is a string
+ 13	195	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	lookup with double quoted strings "mykey"
+ 14	205	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	lookup with single quoted string
+ 15	213	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	lookup with unquoted $key and quoted "$i$i"
+ 16	227	BUG	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	lookup by unquoted string doesn't work in OSH because it's a variable
+ 17	238	BUG	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	bash bug: "i+1" and i+1 are the same key
+ 18	274	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Array stored in associative array gets converted to string (without strict_array)
+ 19	282	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Indexed array as key of associative array coerces to string (without shopt -s strict_array)
+ 20	300	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Append to associative array value A['x']+='suffix'
+ 21	310	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Slice of associative array doesn't make sense in bash
+ 22	336	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	bash variable can have an associative array part and a string part
+ 23	358	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Associative array expressions inside (( )) with keys that look like numbers
+ 24	370	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	(( A[5] += 42 ))
+ 25	379	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	(( A[5] += 42 )) with empty cell
+ 26	388	FAIL	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	setting key to itself (from bash-bug mailing list)
+ 27	403	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	readonly associative array can't be modified
+ 28	413	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	associative array and brace expansion
+ 29	422	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	declare -A A=() allowed
+ 30	444	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	unset -v and assoc array
+ 31	484	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	nameref and assoc array
+ 32	518	pass	FAIL	FAIL	FAIL	array-assoc: FATAL: Got 307 total failures, but 0 are allowed
+FAIL	pass	FAIL	FAIL	FAIL	FAIL	${!ref} and assoc array
+ 33	540	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	printf -v and assoc array
+ 34	567	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	bash bug: (( A["$key"] = 1 )) doesn't work
+ 35	592	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Implicit increment of keys
+ 36	602	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	test -v assoc[key]
+ 37	644	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	test -v with dynamic parsing
+ 38	667	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	[[ -v assoc[key] ]]
+ 39	734	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	[[ -v assoc[key] ]] syntax errors
+ 40	755	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	BashAssoc a+=()
+ 41	772	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	BashAssoc ${a[@]@Q}
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	34	0	7	14	0	29	27	0	0	0
+	BUG	2	0	0	0	0	0	0	0	0	0
+	FAIL	6	42	35	28	42	13	15	42	42	42
+	total	42	42	42	42	42	42	42	42	42	42
+

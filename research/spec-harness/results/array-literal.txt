@@ -1,0 +1,30 @@
+array-literal: FATAL: Got 152 total failures, but 0 are allowed
+array-literal.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Tilde expansions in RHS of [k]=v (BashArray)
+  1	 13	BUG	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Tilde expansions in RHS of [k]=v (BashAssoc)
+  2	 30	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	index increments without [k]= (BashArray)
+  3	 44	pass	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	[k]=$v and [k]="$@" (BashArray)
+  4	 77	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	[k]=$v and [k]="$@" (BashAssoc)
+  5	111	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	append to element (BashArray)
+  6	126	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	append to element (BashAssoc)
+  7	149	BUG	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	non-index forms of element (BashAssoc)
+  8	171	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Evaluation order (1)
+  9	183	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Evaluation order (2)
+ 10	194	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Evaluation order (3)
+ 11	213	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	[k1]=v1 (BashArray)
+ 12	226	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	[k1]=v1 (BashAssoc)
+ 13	236	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	[k1]=v1 looking like brace expansions (BashAssoc)
+ 14	244	BUG	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	[k1]=v1 looking like brace expansions (BashArray)
+ 15	254	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	BashArray cannot be changed to BashAssoc and vice versa
+ 16	271	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	(strict_array) s+=()
+ 17	298	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	(strict_array) declare -A s+=()
+ 18	325	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	(strict_array) assoc=(key value ...) is not allowed
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	12	0	0	1	0	9	8	0	1	0
+	N-I	3	0	0	0	0	0	0	0	0	0
+	BUG	4	0	0	0	0	0	0	0	0	0
+	FAIL	0	19	19	18	19	10	11	19	18	19
+	total	19	19	19	19	19	19	19	19	19	19
+

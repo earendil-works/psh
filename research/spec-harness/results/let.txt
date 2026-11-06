@@ -1,0 +1,13 @@
+let: FATAL: Got 11 total failures, but 0 are allowed
+let.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	FAIL	pass	ok	pass	pass	FAIL	FAIL	FAIL	FAIL	let
+  1	 15	pass	FAIL	N-I	N-I	FAIL	pass	FAIL	FAIL	FAIL	FAIL	let with ()
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	2	0	1	0	1	2	0	0	0	0
+	ok	0	0	0	1	0	0	0	0	0	0
+	N-I	0	0	1	1	0	0	0	0	0	0
+	FAIL	0	2	0	0	1	0	2	2	2	2
+	total	2	2	2	2	2	2	2	2	2	2
+

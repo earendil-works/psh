@@ -1,0 +1,51 @@
+builtin-trap.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	BUG	pass	pass	pass	BUG-2	FAIL	pass	FAIL	FAIL	FAIL	traps are not active inside subshells $() ()  trap | cat
+  1	 51	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	trap accepts/ignores --
+  2	 59	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Register invalid trap, remove invalid trap
+  3	 75	pass	pass	BUG	FAIL	pass	pass	pass	FAIL	FAIL	FAIL	trap foo gives non-zero error
+  4	 86	pass	N-I	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	SIGINT and INT are aliases
+  5	100	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	trap without args prints traps
+  6	114	pass	ok	ok	FAIL	ok	pass	FAIL	FAIL	FAIL	FAIL	print trap handler with multiple lines
+  7	134	pass	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	trap -p is like trap: it prints the handlers and full signal names
+  8	152	pass	ok	ok	FAIL	ok	FAIL	FAIL	FAIL	FAIL	FAIL	Register the same handler for multiple signals
+  9	168	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	Remove multiple handlers with trap -
+ 10	186	pass	ok	BUG	FAIL	ok	pass	FAIL	FAIL	FAIL	FAIL	trap EXIT clears the EXIT trap
+ 11	222	pass	ok	ok	FAIL	ok	FAIL	FAIL	FAIL	FAIL	FAIL	trap 0 is equivalent to trap EXIT
+ 12	242	pass	N-I	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	trap 1 is equivalent to SIGHUP; HUP is equivalent to SIGHUP
+ 13	265	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	trap 0 2 resets EXIT AND SIGINT
+ 14	286	pass	pass	FAIL	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	trap '' EXIT - printing state
+ 15	314	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	trap 'echo hi' KILL (regression test, caught by smoosh suite)
+ 16	340	BUG	FAIL	BUG	pass	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	exit 1 when trap code string is invalid
+ 17	364	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	trap EXIT calling exit
+ 18	373	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	trap EXIT return status ignored
+ 19	382	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	trap EXIT with PARSE error
+ 20	389	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	trap EXIT with PARSE error and explicit exit
+ 21	395	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	trap EXIT with explicit exit
+ 22	406	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	trap EXIT sees exit status in $?
+ 23	414	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	trap EXIT saves $?, clears trap, runs a command, then exits with it
+ 24	420	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	trap EXIT sees $? of the last command, with sh -c
+ 25	428	pass	pass	pass	FAIL	pass	FAIL	pass	pass	pass	pass	bare exit in trap EXIT uses the status from before the trap
+ 26	434	pass	pass	pass	FAIL	pass	FAIL	pass	pass	FAIL	pass	bare exit in a function called from trap EXIT
+ 27	447	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	trap EXIT with command sub / subshell / pipeline
+ 28	463	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	eval in the exit trap (regression for issue #293)
+ 29	470	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	exit codes for traps are isolated
+ 30	487	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	traps are cleared in subshell (started with &)
+ 31	520	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	trap USR1, sleep, SIGINT: non-interactively
+ 32	529	pass	pass	ok	FAIL	pass	pass	builtin-trap: FATAL: Got 140 total failures, but 0 are allowed
+pass	pass	FAIL	FAIL	trap INT, sleep, SIGINT: non-interactively
+ 33	553	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	trap EXIT, sleep, SIGINT: non-interactively
+ 34	562	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	Remove trap with an unsigned integer
+ 35	606	pass	ok	FAIL	FAIL	ok	pass	FAIL	FAIL	FAIL	FAIL	trap '' sets handler to empty string (SIG_IGN)
+ 36	623	pass	ok	FAIL	FAIL	ok	FAIL	FAIL	FAIL	FAIL	FAIL	trap '' with multiple signals
+ 37	641	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	trap with command.NoOp - check internal invariant
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	36	28	26	22	29	26	14	25	2	3
+	ok	0	6	5	0	6	0	0	0	0	0
+	N-I	0	3	1	0	1	0	0	0	0	0
+	BUG-2	0	0	0	0	1	0	0	0	0	0
+	BUG	2	0	3	0	1	0	0	0	0	0
+	FAIL	0	1	3	16	0	12	24	13	36	35
+	total	38	38	38	38	38	38	38	38	38	38
+

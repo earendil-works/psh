@@ -1,0 +1,26 @@
+func-parsing: FATAL: Got 56 total failures, but 0 are allowed
+func-parsing.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	pass	BUG	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	Incomplete Function
+  1	  8	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	Incomplete Function 2
+  2	 13	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	Bad function
+  3	 18	ok	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	Unbraced function body.
+  4	 27	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Function with spaces, to see if ( and ) are separate tokens.
+  5	 32	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	subshell function
+  6	 43	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Hard case, function with } token in it
+  7	 47	pass	ok	pass	FAIL	FAIL	pass	pass	pass	FAIL	FAIL	. in function name
+  8	 55	pass	ok	ok	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	= in function name
+  9	 66	ok	pass	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	Function name with $
+ 10	 71	ok	pass	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	Function name with command sub
+ 11	 76	pass	ok	pass	pass	FAIL	pass	pass	pass	FAIL	FAIL	Function name with !
+ 12	 82	pass	ok	pass	pass	FAIL	pass	pass	pass	FAIL	FAIL	Function name with -
+ 13	 88	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Break after ) is OK.
+ 14	 98	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Nested definition
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	12	11	9	5	11	12	10	11	0	0
+	ok	3	4	5	0	0	0	0	0	0	0
+	BUG	0	0	1	0	0	0	0	0	0	0
+	FAIL	0	0	0	10	4	3	5	4	15	15
+	total	15	15	15	15	15	15	15	15	15	15
+

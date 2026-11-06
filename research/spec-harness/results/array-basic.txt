@@ -1,0 +1,15 @@
+array-basic: FATAL: Got 25 total failures, but 0 are allowed
+array-basic.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  5	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	"${a[@]}" and "${a[*]}"
+  1	 10	pass	FAIL	pass	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	${a[@]} and ${a[*]}
+  2	 20	pass	FAIL	pass	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	4 ways to interpolate empty array
+  3	 30	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	empty array
+  4	 37	pass	FAIL	pass	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	Empty array with :-
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	5	0	5	2	0	5	5	0	0	0
+	BUG	0	0	0	3	0	0	0	0	0	0
+	FAIL	0	5	0	0	5	0	0	5	5	5
+	total	5	5	5	5	5	5	5	5	5	5
+

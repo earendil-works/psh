@@ -1,0 +1,25 @@
+redirect-multi: FATAL: Got 49 total failures, but 0 are allowed
+redirect-multi.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	N-I	N-I	pass	N-I	pass	FAIL	FAIL	pass	pass	File redirects with glob args (bash and zsh only)
+  1	 23	pass	pass	pass	ok	pass	pass	pass	pass	FAIL	pass	File redirect without matching any file
+  2	 39	N-I	FAIL	N-I	pass	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	ysh behavior when glob doesn't match
+  3	 58	pass	FAIL	N-I	ok	N-I	pass	FAIL	FAIL	FAIL	pass	File redirect without matching any file, with failglob
+  4	 82	pass	ok	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Redirect to $empty (in function body)
+  5	 94	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	pass	Redirect to ''
+  6	103	pass	FAIL	ok	ok	ok	pass	FAIL	FAIL	FAIL	FAIL	File redirect to $var with glob char
+  7	132	pass	N-I	N-I	BUG	N-I	pass	FAIL	FAIL	FAIL	FAIL	File redirect that globs to more than one file (bash and zsh only)
+  8	165	pass	N-I	BUG	N-I	N-I	pass	FAIL	FAIL	FAIL	FAIL	File redirect with extended glob
+  9	193	pass	FAIL	N-I	N-I	N-I	pass	FAIL	FAIL	FAIL	FAIL	Extended glob that doesn't match anything
+ 10	230	BUG	N-I	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	Non-file redirects don't respect glob args (we differe from bash)
+ 11	258	pass	FAIL	N-I	BUG	N-I	pass	FAIL	FAIL	FAIL	pass	Redirect with brace expansion isn't allowed
+ 12	289	pass	FAIL	ok	ok	ok	pass	FAIL	FAIL	FAIL	pass	File redirects have word splitting too!
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	11	1	3	4	4	11	4	2	1	6
+	ok	0	1	2	4	2	0	0	0	0	0
+	N-I	1	4	6	3	7	0	0	0	0	0
+	BUG	1	0	1	2	0	0	0	0	0	0
+	FAIL	0	7	1	0	0	2	9	11	12	7
+	total	13	13	13	13	13	13	13	13	13	13
+

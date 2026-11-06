@@ -1,0 +1,20 @@
+blog1: FATAL: Got 32 total failures, but 0 are allowed
+blog1.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  8	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	${##}
+  1	 13	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	${###}
+  2	 20	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	${####}
+  3	 27	pass	pass	pass	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	${##2}
+  4	 34	pass	pass	FAIL	pass	pass	FAIL	FAIL	pass	FAIL	FAIL	${###2}
+  5	 42	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	${1####}
+  6	 47	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	${1#'###'}
+  7	 52	N-I	FAIL	N-I	ok	pass	FAIL	FAIL	pass	FAIL	FAIL	${#1#'###'}
+  8	 63	pass	N-I	N-I	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	Julia example from spec/oil-user-feedback
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	8	7	6	7	8	4	4	8	0	0
+	ok	0	0	0	1	0	0	0	0	0	0
+	N-I	1	1	2	1	0	0	0	0	0	0
+	FAIL	0	1	1	0	1	5	5	1	9	9
+	total	9	9	9	9	9	9	9	9	9	9
+

@@ -1,0 +1,38 @@
+builtin-process: FATAL: Got 106 total failures, but 0 are allowed
+builtin-process.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  7	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	exec builtin
+  1	 11	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	exec builtin with redirects
+  2	 17	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	exec builtin with here doc
+  3	 27	pass	BUG	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	exec builtin accepts --
+  4	 35	pass	BUG	BUG	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	exec -- 2>&1
+  5	 46	pass	N-I	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	exec -a sets argv[0]
+  6	 54	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Exit out of function
+  7	 60	ok	ok	pass	BUG	FAIL	FAIL	FAIL	FAIL	pass	FAIL	Exit builtin with invalid arg
+  8	 67	BUG	BUG	ok	BUG	FAIL	FAIL	FAIL	pass	FAIL	pass	Exit builtin with too many args
+  9	 80	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	time with brace group argument
+ 10	122	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	ulimit with no flags is like -f
+ 11	143	BUG	pass	pass	BUG	pass	pass	pass	pass	FAIL	FAIL	ulimit too many args
+ 12	163	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	ulimit negative flag
+ 13	180	pass	pass	BUG	pass	FAIL	pass	FAIL	pass	FAIL	FAIL	ulimit negative arg
+ 14	203	BUG	pass	pass	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	ulimit -a doesn't take arg
+ 15	218	BUG	BUG	BUG	BUG	FAIL	FAIL	pass	pass	FAIL	FAIL	ulimit doesn't accept multiple flags - reduce confusion between shells
+ 16	261	N-I	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	YSH readability: ulimit --all the same as ulimit -a
+ 17	283	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	ulimit accepts 'unlimited'
+ 18	308	pass	pass	BUG	pass	pass	pass	FAIL	pass	FAIL	FAIL	ulimit of 2**32, 2**31 (int overflow)
+ 19	335	pass	pass	BUG	pass	pass	pass	FAIL	pass	FAIL	FAIL	ulimit that is 64 bits
+ 20	363	pass	BUG	BUG	BUG	FAIL	FAIL	FAIL	pass	FAIL	FAIL	arg that would overflow 64 bits is detected
+ 21	395	BUG	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	ulimit -f 1 prevents files larger 512 bytes
+ 22	455	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	write big file with ulimit
+ 23	480	pass	BUG	pass	BUG	pass	FAIL	FAIL	FAIL	FAIL	FAIL	ulimit -S for soft limit (default), -H for hard limit
+ 24	538	pass	BUG	BUG	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	Changing resource limit is denied
+ 25	580	pass	ok	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	ulimit -n limits file descriptors
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	17	13	15	15	16	16	7	18	1	1
+	ok	1	2	1	0	0	0	0	0	0	0
+	N-I	1	3	1	1	0	0	0	0	0	0
+	BUG	5	7	7	6	0	0	0	0	0	0
+	FAIL	2	1	2	4	10	10	19	8	25	25
+	total	26	26	26	26	26	26	26	26	26	26
+

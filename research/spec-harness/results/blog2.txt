@@ -1,0 +1,19 @@
+blog2: FATAL: Got 32 total failures, but 0 are allowed
+blog2.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  7	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	-a
+  1	 12	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	-a -a
+  2	 17	pass	pass	FAIL	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	-a -a -a
+  3	 23	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	-a -a -a -a
+  4	 30	pass	BUG	pass	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	-a -a -a -a -a
+  5	 36	ok	pass	ok	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	-a -a -a -a -a -a
+  6	 47	pass	BUG	pass	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	-a -a -a -a -a -a -a
+  7	 57	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	-a -a -a -a -a -a -a -a
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	7	6	6	6	2	7	6	1	0	1
+	ok	1	0	1	0	0	0	0	0	0	0
+	BUG	0	2	0	2	0	0	0	0	0	0
+	FAIL	0	0	1	0	6	1	2	7	8	7
+	total	8	8	8	8	8	8	8	8	8	8
+

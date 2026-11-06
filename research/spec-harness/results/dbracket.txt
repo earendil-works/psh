@@ -1,0 +1,61 @@
+dbracket.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  7	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	[[ glob matching, [[ has no glob expansion
+  1	 15	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	[[ glob matching with escapes
+  2	 20	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	equality
+  3	 28	pass	FAIL	pass	FAIL	pass	pass	pass	FAIL	FAIL	FAIL	[[ glob matching with unquoted var
+  4	 37	pass	FAIL	N-I	pass	pass	pass	pass	FAIL	FAIL	FAIL	[[ regex matching
+  5	 49	pass	FAIL	N-I	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	[[ regex syntax error
+  6	 55	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	[[ has no word splitting
+  7	 60	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	[[ has quote joining
+  8	 65	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	[[ empty string is false
+  9	 73	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	pass	&& chain
+ 10	 77	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	|| chain
+ 11	 81	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	[[ compound expressions
+ 12	 94	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	precedence of && and || inside [[
+ 13	 98	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	precedence of && and || in a command context
+ 14	108	pass	FAIL	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Octal literals with -eq
+ 15	121	pass	FAIL	N-I	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Hex literals with -eq
+ 16	138	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	> on strings
+ 17	147	pass	FAIL	pass	pass	pass	pass	pass	FAIL	pass	FAIL	!= on strings
+ 18	156	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	-eq on strings
+ 19	166	pass	FAIL	pass	pass	pass	pass	pass	FAIL	pass	FAIL	[[ compare with literal -f (compare with test-builtin.test.sh)
+ 20	175	FAIL	FAIL	ok	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	[[ with op variable (compare with test-builtin.test.sh)
+ 21	183	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	[[ with unquoted empty var (compare with test-builtin.test.sh)
+ 22	188	pass	pass	pass	FAIL	FAIL	pass	pass	pass	FAIL	pass	[[ at runtime doesn't work
+ 23	193	pass	pass	pass	FAIL	FAIL	FAIL	pass	pass	FAIL	pass	[[ with env prefix doesn't work
+ 24	197	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	[[ over multiple lines is OK
+ 25	207	FAIL	pass	ok	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	Argument that looks like a real operator
+ 26	212	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	User array compared to "$@" (broken unless shopt -s strict_array)
+ 27	225	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Array coerces to string (shopt -s strict_array to disallow)
+ 28	234	BUG	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	(( array1 == array2 )) doesn't work
+ 29	259	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Quotes don't matter in comparison
+ 30	267	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	-eq does dynamic arithmetic parsing (not supported in OSH)
+ 31	276	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	-eq coercion produces weird results
+ 32	281	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	[[ '(' ]] is treated as literal
+ 33	286	FAIL	FAIL	ok	FAIL	FAIL	pass	FAIL	pass	dbracket: FATAL: Got 232 total failures, but 0 are allowed
+FAIL	FAIL	[[ '(' foo ]] is syntax error
+ 34	292	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	empty ! is treated as literal
+ 35	297	FAIL	FAIL	ok	pass	FAIL	pass	FAIL	pass	FAIL	FAIL	[[ -z ]] is syntax error
+ 36	303	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	[[ -z '>' ]]
+ 37	307	FAIL	FAIL	ok	pass	FAIL	pass	FAIL	pass	FAIL	FAIL	[[ -z '>' a ]] is syntax error
+ 38	313	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	pass	test whether ']]' is empty
+ 39	318	FAIL	FAIL	ok	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	[[ ]] is syntax error
+ 40	325	FAIL	FAIL	ok	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	[[ && ]] is syntax error
+ 41	332	FAIL	FAIL	BUG	BUG	FAIL	pass	FAIL	pass	FAIL	FAIL	[[ a 3< b ]] doesn't work (bug regression)
+ 42	347	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	tilde expansion in [[
+ 43	364	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	more tilde expansion
+ 44	390	pass	FAIL	N-I	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	tilde expansion with =~ (confusing)
+ 45	419	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	[[ ]] with redirect
+ 46	430	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	special chars
+ 47	441	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	\(\) in pattern (regression)
+ 48	459	pass	FAIL	BUG	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	negative numbers - zero, decimal, octal, hex, base N
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	40	7	35	35	19	46	33	12	9	5
+	ok	0	0	7	1	0	0	0	0	0	0
+	N-I	0	0	5	0	0	0	0	0	0	0
+	BUG	1	0	2	1	0	0	0	0	0	0
+	FAIL	8	42	0	12	30	3	16	37	40	44
+	total	49	49	49	49	49	49	49	49	49	49
+

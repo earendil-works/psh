@@ -1,0 +1,38 @@
+var-op-bash: FATAL: Got 186 total failures, but 0 are allowed
+var-op-bash.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Lower Case with , and ,,
+  1	 17	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Upper Case with ^ and ^^
+  2	 30	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Case folding - Unicode characters
+  3	 60	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Case folding - multi code point
+  4	118	ok	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	pass	pass	Case folding that depends on locale (not enabled, requires Turkish locale)
+  5	141	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Lower Case with constant string (VERY WEIRD)
+  6	150	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Lower Case glob
+  7	163	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${x@u} U L - upper / lower case (bash 5.1 feature)
+  8	182	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${x@Q}
+  9	190	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	${array@Q} and ${array[@]@Q}
+ 10	206	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${!prefix@} ${!prefix*} yields sorted array of var names
+ 11	237	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${!prefix@} matches var name (regression)
+ 12	247	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${var@a} for attributes
+ 13	264	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${var@a} error conditions
+ 14	270	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	undef and @P @Q @a
+ 15	287	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	argv array and @P @Q @a
+ 16	303	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	assoc array and @P @Q @a
+ 17	324	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	${!var[@]@X}
+ 18	341	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	${#var@X} is a parse error
+ 19	358	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	${!A@a} and ${!A[@]@a}
+ 20	381	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	undef vs. empty string in var ops
+ 21	410	pass	FAIL	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	-o nounset with var ops
+ 22	424	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${a[0]@a} and ${a@a}
+ 23	436	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	${!r@a} with r='a[0]' (attribute for indirect expansion of an array element)
+ 24	458	ok	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	Array expansion with nullary var op @Q
+ 25	488	ok	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Array expansion with nullary var op @P
+ 26	518	pass	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	Array expansion with nullary var op @a
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	22	2	3	3	2	21	22	2	2	1
+	ok	3	0	0	0	0	0	0	0	0	0
+	BUG	1	0	0	0	0	0	0	0	0	0
+	FAIL	1	25	24	24	25	6	5	25	25	26
+	total	27	27	27	27	27	27	27	27	27	27
+

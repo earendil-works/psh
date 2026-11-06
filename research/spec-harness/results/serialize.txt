@@ -1,0 +1,22 @@
+serialize: FATAL: Got 59 total failures, but 0 are allowed
+serialize.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 12	pass	FAIL	ok	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	printf %q newline
+  1	 36	ok	FAIL	pass	ok	FAIL	FAIL	FAIL	pass	FAIL	FAIL	printf %q spaces
+  2	 52	pass	FAIL	BUG	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	printf %q quotes
+  3	 76	pass	FAIL	BUG	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	printf %q unprintable
+  4	 94	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	printf %q unicode
+  5	111	ok	FAIL	BUG	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	printf %q invalid unicode
+  6	159	pass	FAIL	pass	BUG	ok	pass	FAIL	FAIL	FAIL	FAIL	set
+  7	174	pass	FAIL	ok	BUG	FAIL	pass	FAIL	FAIL	FAIL	FAIL	declare
+  8	193	pass	FAIL	ok	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	${var@Q}
+  9	213	ok	FAIL	pass	FAIL	ok	pass	pass	FAIL	FAIL	FAIL	xtrace
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	7	0	4	3	0	7	2	1	0	0
+	ok	3	0	3	3	2	0	0	0	0	0
+	N-I	0	0	0	1	0	0	0	0	0	0
+	BUG	0	0	3	2	0	0	0	0	0	0
+	FAIL	0	10	0	1	8	3	8	9	10	10
+	total	10	10	10	10	10	10	10	10	10	10
+

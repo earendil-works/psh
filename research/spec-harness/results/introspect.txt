@@ -1,0 +1,23 @@
+introspect: FATAL: Got 104 total failures, but 0 are allowed
+introspect.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 28	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	${FUNCNAME[@]} array
+  1	 44	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FUNCNAME with source (scalar or array)
+  2	110	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	BASH_SOURCE and BASH_LINENO scalar or array (e.g. for virtualenv)
+  3	145	pass	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	${FUNCNAME} with prefix/suffix operators
+  4	159	pass	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	operators on FUNCNAME
+  5	175	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	${FUNCNAME} and "set -u" (OSH regression)
+  6	181	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	$((BASH_LINENO)) (scalar form in arith)
+  7	188	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	${BASH_SOURCE[@]} with source and function name
+  8	200	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	${BASH_SOURCE[@]} with line numbers
+  9	216	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	${BASH_LINENO[@]} is a stack of line numbers for function calls
+ 10	235	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Locations with temp frame
+ 11	249	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Locations when sourcing
+ 12	271	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Sourcing inside function grows the debug stack
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	12	0	1	1	2	8	1	0	0	0
+	BUG	1	0	0	0	0	0	0	0	0	0
+	FAIL	0	13	12	12	11	5	12	13	13	13
+	total	13	13	13	13	13	13	13	13	13	13
+

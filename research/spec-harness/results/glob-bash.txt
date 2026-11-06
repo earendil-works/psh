@@ -1,0 +1,18 @@
+glob-bash: FATAL: Got 35 total failures, but 0 are allowed
+glob-bash.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	N-I	N-I	FAIL	N-I	pass	pass	FAIL	FAIL	pass	shopt -s nullglob
+  1	 16	pass	N-I	N-I	FAIL	N-I	pass	FAIL	FAIL	FAIL	pass	shopt -s failglob in command context
+  2	 31	pass	N-I	N-I	FAIL	N-I	pass	FAIL	FAIL	FAIL	FAIL	shopt -s failglob in loop context
+  3	 49	pass	N-I	N-I	FAIL	N-I	pass	FAIL	FAIL	FAIL	FAIL	shopt -s failglob in array literal context
+  4	 66	pass	N-I	N-I	FAIL	N-I	FAIL	pass	FAIL	FAIL	pass	shopt -s failglob exits properly in command context with set -e
+  5	 81	pass	N-I	N-I	FAIL	N-I	FAIL	pass	FAIL	FAIL	FAIL	shopt -s failglob exits properly in loop context with set -e
+  6	102	pass	N-I	N-I	FAIL	N-I	pass	FAIL	FAIL	FAIL	FAIL	shopt -s failglob behavior on single line with semicolon
+  7	128	pass	N-I	N-I	FAIL	N-I	pass	pass	FAIL	FAIL	FAIL	dotglob (bash option that no_dash_glob is roughly consistent with)
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	8	0	0	0	0	6	4	0	0	3
+	N-I	0	8	8	0	8	0	0	0	0	0
+	FAIL	0	0	0	8	0	2	4	8	8	5
+	total	8	8	8	8	8	8	8	8	8	8
+

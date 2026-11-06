@@ -1,0 +1,50 @@
+glob.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  5	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	glob double quote escape
+  1	  9	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	glob single quote escape
+  2	 13	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	glob backslash escape
+  3	 17	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	1 char glob
+  4	 22	pass	pass	pass	FAIL	pass	pass	pass	pass	pass	pass	0 char glob -- does NOT work
+  5	 28	pass	pass	pass	FAIL	pass	pass	pass	pass	pass	pass	looks like glob at the start, but isn't
+  6	 32	pass	pass	pass	FAIL	pass	pass	pass	pass	pass	pass	looks like glob plus negation at the start, but isn't
+  7	 36	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	glob can expand to command and arg
+  8	 41	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	pass	glob after var expansion
+  9	 48	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	quoted var expansion with glob meta characters
+ 10	 54	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	glob after "$@" expansion
+ 11	 61	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	glob after $@ expansion
+ 12	 69	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	no glob after ~ expansion
+ 13	 74	pass	N-I	pass	FAIL	N-I	pass	pass	FAIL	FAIL	FAIL	store literal globs in array then expand
+ 14	 82	pass	N-I	pass	pass	N-I	pass	pass	FAIL	FAIL	FAIL	glob inside array
+ 15	 90	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	glob with escaped - in char class
+ 16	 96	pass	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	glob with char class expression
+ 17	103	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	glob double quotes
+ 18	109	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	glob escaped
+ 19	116	BUG	pass	FAIL	FAIL	BUG	FAIL	FAIL	pass	FAIL	FAIL	: escaped
+ 20	133	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Glob after var manipulation
+ 21	139	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Glob after part joining
+ 22	145	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Glob flags on file system
+ 23	151	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	set -o noglob
+ 24	162	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	set -o noglob (bug #698)
+ 25	170	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Splitting/Globbing doesn't happen on local assignment
+ 26	184	pass	pass	pass	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	Glob of unescaped [[] and []]
+ 27	194	pass	BUG	BUG	pass	pass	FAIL	pass	pass	FAIL	FAIL	Glob of negated unescaped [[] and []]
+ 28	209	pass	N-I	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	PatSub of unescaped [[] and []]
+ 29	224	pass	N-I	BUG	pass	pass	pass	pass	FAIL	FAIL	FAIL	PatSub of negated unescaped [[] and []]
+ 30	244	pass	BUG	FAIL	pass	BUG	pass	pass	pass	FAIL	pass	Glob unicode char
+ 31	260	FAIL	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	Glob ordering respects LC_COLLATE (zsh respects this too)
+ 32	293	pass	pass	BUG	FAIL	pass	pass	pass	FAIL	FAIL	FAIL	\ in unquoted substitutions does not match a backslash
+ 33	328	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	\ in unquoted substitutions is preserved
+glob: FATAL: Got 93 total failures, but 0 are allowed
+ 34	339	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	\ in unquoted substitutions is preserved with set -o noglob
+ 35	349	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	\ in unquoted substitutions is preserved without glob matching
+ 36	362	pass	pass	BUG	FAIL	pass	pass	pass	FAIL	FAIL	FAIL	\ in unquoted substitutions escapes globchars
+ 37	388	pass	BUG	pass	FAIL	BUG	pass	pass	pass	FAIL	FAIL	pattern starting with . does not return . and ..
+ 38	399	pass	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	shopt -u globskipdots shows . and ..
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	37	29	30	23	32	33	35	29	12	15
+	N-I	0	6	2	0	3	0	0	0	0	0
+	BUG	1	3	4	0	3	0	0	0	0	0
+	FAIL	1	1	3	16	1	6	4	10	27	24
+	total	39	39	39	39	39	39	39	39	39	39
+

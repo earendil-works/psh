@@ -1,0 +1,40 @@
+extglob-match: FATAL: Got 184 total failures, but 0 are allowed
+extglob-match.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  8	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	@ matches exactly one
+  1	 16	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	@() with variable arms
+  2	 26	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	extglob in variable
+  3	 53	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Matching literal '@(cc)'
+  4	 75	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	nested @()
+  5	 92	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	nested @() with quotes and vars
+  6	101	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	? matches 0 or 1
+  7	109	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	+ matches 1 or more
+  8	117	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	* matches 0 or more
+  9	125	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	simple repetition with *(foo) and +(Foo)
+ 10	133	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	! matches none
+ 11	141	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	match is anchored
+ 12	151	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	repeated match is anchored
+ 13	161	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	repetition with glob
+ 14	170	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	No brace expansion in ==
+ 15	178	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	adjacent extglob
+ 16	186	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	nested extglob
+ 17	198	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	extglob empty string
+ 18	207	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	extglob empty pattern
+ 19	220	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	case with extglob
+ 20	255	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	[[ $x == !($str) ]]
+ 21	266	pass	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Turning extglob on changes the meaning of [[ !(str) ]] in bash
+ 22	286	pass	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	With extglob on, !($str) on the left or right of == has different meanings
+ 23	295	pass	FAIL	BUG	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	extglob inside arg word
+ 24	310	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	pass	extglob is not detected in regex!
+ 25	319	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	regular glob of single unicode char
+ 26	334	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	extended glob of single unicode char
+ 27	349	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Extended glob in ${x//pat/replace}
+ 28	361	pass	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Extended glob in ${x%PATTERN}
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	29	0	22	2	0	28	21	0	0	1
+	N-I	0	0	2	0	0	0	0	0	0	0
+	BUG	0	0	1	0	0	0	0	0	0	0
+	FAIL	0	29	4	27	29	1	8	29	29	28
+	total	29	29	29	29	29	29	29	29	29	29
+

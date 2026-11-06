@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /work/tl/brush/release/brush "$@"

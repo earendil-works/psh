@@ -1,0 +1,23 @@
+ble-features: FATAL: Got 37 total failures, but 0 are allowed
+ble-features.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	ok-2	ok	ok-2	ok-2	pass	pass	FAIL	FAIL	FAIL	[bash_unset] local-unset / dynamic-unset for localvar
+  1	 47	pass	ok-2	FAIL	ok-2	ok-2	FAIL	FAIL	FAIL	FAIL	FAIL	[bash_unset] local-unset / dynamic-unset for localvar (mutated from tempenv)
+  2	 95	pass	ok	FAIL	ok	ok	pass	pass	FAIL	FAIL	FAIL	[bash_unset] local-unset / dynamic-unset for tempenv
+  3	128	pass	ok-4	FAIL	ok-3	ok-2	FAIL	FAIL	FAIL	FAIL	FAIL	[bash_unset] function call with tempenv vs tempenv-eval
+  4	240	pass	ok-4	FAIL	ok-3	ok-2	FAIL	FAIL	FAIL	FAIL	FAIL	[bash_unset] localvar-inherit from tempenv
+  5	322	pass	N-I	pass	pass	N-I	pass	pass	FAIL	FAIL	FAIL	[compat_array] ${arr} is ${arr[0]}
+  6	335	pass	N-I	pass	pass	N-I	pass	pass	FAIL	FAIL	FAIL	[compat_array] scalar write to arrays
+  7	356	pass	N-I	N-I	N-I	N-I	pass	pass	FAIL	FAIL	FAIL	[compat_array] scalar write to associative arrays
+  8	376	pass	N-I	N-I	N-I	N-I	pass	pass	FAIL	FAIL	FAIL	[compat_array] ${alpha@a}
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	9	0	2	2	0	6	6	0	0	0
+	ok-4	0	2	0	0	0	0	0	0	0	0
+	ok-3	0	0	0	2	0	0	0	0	0	0
+	ok-2	0	2	0	2	4	0	0	0	0	0
+	ok	0	1	1	1	1	0	0	0	0	0
+	N-I	0	4	2	2	4	0	0	0	0	0
+	FAIL	0	0	4	0	0	3	3	9	9	9
+	total	9	9	9	9	9	9	9	9	9	9
+

@@ -1,0 +1,86 @@
+arith.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 17	pass	N-I	pass	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	Side Effect in Array Indexing
+  1	 25	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Add one to var
+  2	 30	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	$ is optional
+  3	 35	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	SimpleVarSub within arith
+  4	 40	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	BracedVarSub within ArithSub
+  5	 44	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Arith word part
+  6	 48	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Arith sub with word parts
+  7	 53	N-I	N-I	pass	N-I	FAIL	pass	pass	FAIL	FAIL	pass	Constant with quotes like '1'
+  8	 61	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Arith sub within arith sub
+  9	 66	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Backticks within arith sub
+ 10	 71	ok	ok	ok	ok	pass	pass	pass	FAIL	FAIL	pass	Invalid string to int
+ 11	 81	N-I	ok	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Invalid string to int with strict_arith
+ 12	 99	pass	N-I	BUG	BUG	pass	pass	pass	FAIL	FAIL	FAIL	Integer constant parsing
+ 13	137	pass	ok	BUG	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Integer constant validation
+ 14	179	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Newline in the middle of expression
+ 15	184	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Ternary operator
+ 16	190	pass	N-I	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Preincrement
+ 17	204	pass	N-I	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Postincrement
+ 18	215	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Increment undefined variables
+ 19	223	pass	N-I	pass	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	Increment and decrement array elements
+ 20	234	pass	ok	BUG	BUG	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Increment undefined variables with nounset
+ 21	247	pass	N-I	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Comma operator (borrowed from C)
+ 22	255	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Augmented assignment
+ 23	264	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Comparison Ops
+ 24	280	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Logical Ops
+ 25	290	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Logical Ops Short Circuit
+ 26	313	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Bitwise ops
+ 27	325	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Unary minus and plus
+ 28	333	ok	pass	ok	BUG	pass	FAIL	FAIL	pass	FAIL	FAIL	No floating point
+ 29	339	pass	N-I	pass	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	Array indexing in arith
+ 30	348	pass	N-I	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Constants in base 36
+ 31	354	pass	N-I	N-I	N-I	pass	pass	pass	FAIL	FAIL	FAIL	Constants in bases 2 to 64
+ 32	363	pass	N-I	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Multiple digit constants with base N
+ 33	369	pass	N-I	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	Dynamic base constants
+ 34	376	pass	pass	N-I	N-I	pass	pass	pass	pass	FAIL	FAIL	Octal constant
+ 35	381	pass	pass	N-I	N-I	pass	pass	pass	pass	FAIL	FAIL	Dynamic octal constant
+ 36	387	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Dynamic hex constants
+ 37	392	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Hex constant with capital X
+ 38	396	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Dynamic var names - result of runtime parse/eval
+ 39	402	pass	N-I	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Recursive name evaluation is a result of runtime parse/eval
+ 40	412	pass	BUG	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	nounset with arithmetic
+ 41	421	pass	pass	BUG	pass	pass	pass	pass	pass	FAIL	FAIL	64-bit integer doesn't overflow
+ 42	453	pass	N-I	BUG	pass	pass	pass	pass	FAIL	FAIL	FAIL	More 64-bit ops
+ 43	507	ok	N-I	ok	ok	pass	FAIL	FAIL	pass	FAIL	FAIL	Invalid LValue
+ 44	519	ok	N-I	ok	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Invalid LValue that looks like array
+ 45	534	ok	N-I	ok	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Invalid LValue: two sets of brackets
+ 46	547	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Operator Precedence
+ 47	551	pass	N-I	N-I	pass	pass	pass	pass	FAIL	FAIL	FAIL	Exponentiation with **
+ 48	565	pass	N-I	N-I	pass	pass	pass	pass	FAIL	FAIL	FAIL	Exponentiation operator has buggy precedence
+ 49	575	pass	N-I	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	Negative exponent
+ 50	585	ok	ok	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Comment not allowed in the middle of multiline arithmetic
+ 51	608	pass	N-I	N-I	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	Add integer to indexed array (a[0] decay)
+ 52	620	pass	BUG	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Add integer to associative array (a[0] decay)
+ 53	629	pass	N-I	pass	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Double subscript
+ 54	644	pass	N-I	pass	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	result of ArithSub -- array[0] decay
+ 55	662	pass	N-I	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	result of ArithSub -- assoc[0] decay
+ 56	681	pass	N-I	pass	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	comma operator
+ 57	701	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	assignment with dynamic var name
+ 58	710	pass	N-I	pass	BUG	FAIL	pass	FAIL	FAIL	FAIL	FAIL	array assignment with dynamic array name
+ 59	725	pass	BUG	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	unary assignment with dynamic var name
+ 60	737	pass	N-I	pass	BUG	FAIL	pass	FAIL	FAIL	FAIL	FAIL	unary array assignment with dynamic var name
+ 61	753	pass	N-I	BUG	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Dynamic parsing of arithmetic
+ 62	772	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Dynamic parsing on empty string
+ 63	783	pass	pass	pass	pass	FAIL	pass	pass	pass	FAIL	FAIL	nested ternary (bug fix)
+ 64	789	pass	pass	pass	BUG	FAIL	pass	pass	pass	FAIL	FAIL	1 ? a=1 : b=2 ( bug fix)
+ 65	803	BUG	ok	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Invalid constant
+ 66	835	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Negative numbers with integer division /
+ 67	872	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Negative numbers with %
+ 68	886	ok	ok	BUG	ok	FAIL	FAIL	FAIL	pass	FAIL	FAIL	Negative numbers with bit shift
+ 69	932	pass	N-I	pass	pass	FAIL	arith: FATAL: Got 249 total failures, but 0 are allowed
+pass	pass	FAIL	FAIL	FAIL	undef[0]
+ 70	958	pass	N-I	BUG	FAIL	FAIL	FAIL	pass	FAIL	pass	FAIL	undef[0] with nounset
+ 71	980	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	s[0] with string abc
+ 72	1002	pass	N-I	pass	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	s[0] with string 42
+ 73	1021	BUG	ok	pass	BUG	FAIL	FAIL	FAIL	FAIL	pass	FAIL	s[0] with string '12 34'
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	63	29	52	44	42	63	55	33	4	2
+	ok	7	8	5	9	0	0	0	0	0	0
+	N-I	2	34	8	8	0	0	0	0	0	0
+	BUG	2	3	9	9	0	0	0	0	0	0
+	FAIL	0	0	0	4	32	11	19	41	70	72
+	total	74	74	74	74	74	74	74	74	74	74
+

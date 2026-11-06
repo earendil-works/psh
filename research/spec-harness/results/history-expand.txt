@@ -1,0 +1,10 @@
+history-expand: FATAL: Got 9 total failures, but 0 are allowed
+history-expand.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	!! expansion
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	1	0	0	0	0	0	0	0	0	0
+	FAIL	0	1	1	1	1	1	1	1	1	1
+	total	1	1	1	1	1	1	1	1	1	1
+

@@ -1,0 +1,62 @@
+builtin-completion.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	complete with no args and complete -p both print completion spec
+  1	 24	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	complete -F f is usage error
+  2	 41	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	complete with nonexistent function
+  3	 47	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	complete with no action
+  4	 53	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	-A function prints functions
+  5	 74	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Invalid syntax
+  6	 79	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	how compgen calls completion functions
+  7	102	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	complete -o -F (git)
+  8	108	pass	FAIL	FAIL	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	compopt with invalid syntax
+  9	113	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	pass	FAIL	compopt fails when not in completion function
+ 10	118	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	pass	FAIL	compgen -f on invalid  dir
+ 11	123	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -f
+ 12	139	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	compgen -v with local vars
+ 13	151	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	pass	FAIL	compgen -v on unknown var
+ 14	156	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -v P
+ 15	164	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -e with global/local exported vars
+ 16	177	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	pass	FAIL	compgen -e on known, but unexported, var
+ 17	183	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	pass	FAIL	compgen -e on unknown var
+ 18	188	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -e P
+ 19	196	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	compgen with actions: function / variable / file
+ 20	209	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen with actions: alias, setopt
+ 21	221	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen with actions: shopt
+ 22	227	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen with action and suffix: helptopic
+ 23	233	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -A directory
+ 24	242	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -A file
+ 25	251	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -A user
+ 26	256	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -A command completes external commands
+ 27	265	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -A command completes functions and aliases
+ 28	292	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -A command completes builtins and keywords
+ 29	304	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -k shows the same keywords as bash
+ 30	342	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	compgen -k shows Oils keywords too
+ 31	370	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -k completes reserved shell keywords
+ 32	384	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	-o filenames and -o nospace have no effect with compgen
+ 33	392	pass	FAIL	FAIL	FAIL	FAIL	pass	builtin-completion: FATAL: Got 410 total failures, but 0 are allowed
+FAIL	FAIL	FAIL	FAIL	-o plusdirs and -o dirnames with compgen
+ 34	411	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -o default completes files and dirs
+ 35	423	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	compgen doesn't respect -X for user-defined functions
+ 36	446	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	compgen -W words -X filter
+ 37	458	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	compgen -f -X filter -- $cur
+ 38	476	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	compgen doesn't need shell quoting
+ 39	488	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -W 'one two three'
+ 40	509	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -W evaluates code in $()
+ 41	518	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -W uses IFS, and delimiters are escaped with \
+ 42	527	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	Parse errors for compgen -W and complete -W
+ 43	542	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Runtime errors for compgen -W
+ 44	549	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Runtime errors for compgen -F func
+ 45	560	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -W '' cmd is not a usage error
+ 46	566	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -A builtin
+ 47	572	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	complete -C vs. compgen -C
+ 48	600	N-I	FAIL	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	compadjust with empty COMP_ARGV
+ 49	615	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	compadjust with sparse COMP_ARGV
+ 50	631	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	compgen -F with scalar COMPREPLY
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	45	0	1	0	0	37	6	0	5	0
+	N-I	3	0	0	0	0	0	0	0	0	0
+	BUG	3	0	0	0	0	0	0	0	0	0
+	FAIL	0	51	50	51	51	14	45	51	46	51
+	total	51	51	51	51	51	51	51	51	51	51
+

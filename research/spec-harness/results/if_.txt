@@ -1,0 +1,15 @@
+if_: FATAL: Got 10 total failures, but 0 are allowed
+if_.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	If
+  1	  9	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	else
+  2	 17	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	elif
+  3	 27	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Long style
+  4	 42	pass	pass	pass	BUG	pass	FAIL	pass	FAIL	FAIL	FAIL	if break corner case
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	5	5	5	4	5	4	5	3	3	0
+	BUG	0	0	0	1	0	0	0	0	0	0
+	FAIL	0	0	0	0	0	1	0	2	2	5
+	total	5	5	5	5	5	5	5	5	5	5
+

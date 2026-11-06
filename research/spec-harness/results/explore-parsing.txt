@@ -1,0 +1,15 @@
+explore-parsing: FATAL: Got 15 total failures, but 0 are allowed
+explore-parsing.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  5	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Length of length of ARGS!
+  1	 10	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Length of length of ARGS!  2 digit
+  2	 15	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	Is \r considered whitespace?
+  3	 23	ok	ok	pass	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	readonly +
+  4	 38	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	set +
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	4	4	5	5	4	4	3	4	0	0
+	ok	1	1	0	0	0	0	0	0	0	0
+	FAIL	0	0	0	0	1	1	2	1	5	5
+	total	5	5	5	5	5	5	5	5	5	5
+

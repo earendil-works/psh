@@ -1,0 +1,67 @@
+brace-expansion.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	no expansion
+  1	  8	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	pass	incomplete trailing expansion
+  2	 13	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	pass	partial leading expansion
+  3	 18	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	pass	partial leading expansion 2
+  4	 22	pass	FAIL	pass	ok	FAIL	pass	pass	FAIL	pass	pass	} in expansion
+  5	 32	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	pass	single expansion
+  6	 36	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	pass	double expansion
+  7	 40	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	pass	triple expansion
+  8	 44	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	pass	double expansion with single and double quotes
+  9	 48	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	expansion with mixed quotes
+ 10	 52	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	pass	expansion with simple var
+ 11	 57	BUG	FAIL	pass	pass	FAIL	FAIL	pass	FAIL	pass	pass	double expansion with simple var -- bash bug
+ 12	 64	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	double expansion with braced variable
+ 13	 70	BUG	FAIL	pass	pass	FAIL	FAIL	pass	FAIL	pass	pass	double expansion with literal and simple var
+ 14	 76	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	pass	expansion with command sub
+ 15	 81	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	expansion with arith sub
+ 16	 86	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	double expansion with escaped literals
+ 17	 91	BUG	pass	pass	BUG	pass	FAIL	FAIL	pass	FAIL	FAIL	{ in expansion
+ 18	 99	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	quoted { in expansion
+ 19	103	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	pass	Empty expansion
+ 20	107	pass	FAIL	ok	ok	FAIL	pass	pass	FAIL	FAIL	pass	Empty alternative
+ 21	115	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	pass	Empty alternative with empty string suffix
+ 22	122	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	pass	nested brace expansion
+ 23	126	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	pass	triple nested brace expansion
+ 24	130	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	pass	nested and double brace expansion
+ 25	134	pass	pass	BUG	pass	pass	pass	pass	pass	FAIL	FAIL	expansion on RHS of assignment
+ 26	141	pass	pass	pass	ok	pass	pass	pass	FAIL	FAIL	pass	no expansion with RHS assignment
+ 27	147	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	Tilde expansion
+ 28	157	pass	FAIL	BUG	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Tilde expansion with brace expansion
+ 29	199	pass	FAIL	BUG	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Two kinds of tilde expansion
+ 30	236	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Tilde expansion come before var expansion
+ 31	249	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	pass	Number range expansion
+ 32	260	BUG	FAIL	N-I	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Ascending number range expansion with negative step is invalid
+ 33	270	BUG	FAIL	N-I	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	regression: -1 step disallowed
+ 34	280	BUG	FAIL	brace-expansion: FATAL: Got 215 total failures, but 0 are allowed
+N-I	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	regression: 0 step disallowed
+ 35	290	BUG	FAIL	N-I	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Descending number range expansion with positive step is invalid
+ 36	299	pass	FAIL	N-I	BUG	FAIL	pass	pass	FAIL	FAIL	pass	Descending number range expansion with negative step
+ 37	306	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	pass	Singleton ranges
+ 38	327	pass	FAIL	N-I	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	Singleton char ranges with steps
+ 39	344	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	pass	Char range expansion
+ 40	349	pass	FAIL	N-I	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	Char range expansion with step
+ 41	354	BUG	FAIL	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Char ranges with steps of the wrong sign
+ 42	370	BUG	FAIL	ok	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	pass	Mixed case char expansion is invalid
+ 43	387	pass	FAIL	N-I	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	Descending char range expansion
+ 44	392	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Fixed width number range expansion
+ 45	407	pass	FAIL	N-I	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	Inconsistent fixed width number range expansion
+ 46	414	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Inconsistent fixed width number range expansion
+ 47	420	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	pass	Adjacent comma and range works
+ 48	429	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	pass	Range inside comma works
+ 49	438	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	pass	Mixed comma and range doesn't work
+ 50	444	pass	FAIL	pass	pass	FAIL	FAIL	pass	FAIL	pass	pass	comma and invalid range (adjacent and nested)
+ 51	461	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	OSH provides an alternative to invalid syntax
+ 52	471	pass	FAIL	ok	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	Side effect in expansion
+ 53	479	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Invalid brace expansions don't expand
+ 54	489	pass	pass	pass	BUG	pass	pass	pass	pass	FAIL	FAIL	Invalid brace expansions mixing characters and numbers
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	46	8	32	38	8	45	46	7	26	30
+	ok	0	0	3	5	0	0	0	0	0	0
+	N-I	0	0	17	3	0	0	0	0	0	0
+	BUG	9	0	3	9	0	0	0	0	0	0
+	FAIL	0	47	0	0	47	10	9	48	29	25
+	total	55	55	55	55	55	55	55	55	55	55
+

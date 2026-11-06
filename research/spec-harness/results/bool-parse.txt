@@ -1,0 +1,21 @@
+bool-parse: FATAL: Got 22 total failures, but 0 are allowed
+bool-parse.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 14	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	test builtin - Unexpected trailing word '--' (#2409)
+  1	 44	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	test builtin: ( = ) is confusing: equality test or non-empty string test
+  2	 64	pass	BUG	pass	BUG-2	pass	pass	FAIL	pass	FAIL	FAIL	test builtin: ( == ) is confusing: equality test or non-empty string test
+  3	 88	pass	N-I	pass	BUG	pass	pass	pass	FAIL	FAIL	FAIL	Allowed: [[ = ]] and [[ == ]]
+  4	110	FAIL	pass	ok	ok	pass	pass	FAIL	pass	FAIL	pass	Not allowed: [[ ) ]] and [[ ( ]]
+  5	126	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	test builtin: ( x ) behavior is the same in both cases
+  6	139	pass	pass	pass	BUG	pass	pass	pass	pass	FAIL	pass	[ -f = ] and [ -f == ]
+  7	156	pass	N-I	pass	BUG	pass	pass	pass	FAIL	FAIL	FAIL	[[ -f -f ]] and [[ -f == ]]
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	7	5	7	2	8	8	4	6	0	2
+	ok	0	0	1	1	0	0	0	0	0	0
+	N-I	0	2	0	0	0	0	0	0	0	0
+	BUG-2	0	0	0	1	0	0	0	0	0	0
+	BUG	0	1	0	3	0	0	0	0	0	0
+	FAIL	1	0	0	1	0	0	4	2	8	6
+	total	8	8	8	8	8	8	8	8	8	8
+

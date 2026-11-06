@@ -1,0 +1,69 @@
+word-split.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  7	pass	pass	pass	FAIL	pass	pass	pass	FAIL	FAIL	FAIL	IFS is scoped
+  1	 18	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Tilde sub is not split, but var sub is
+  2	 27	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	pass	Word splitting
+  3	 35	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	pass	Word splitting 2
+  4	 48	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	$*
+  5	 53	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	"$*"
+  6	 58	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	$@
+  7	 64	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	"$@"
+  8	 69	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	empty argv
+  9	 73	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	$* with empty IFS
+ 10	 85	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	pass	Word elision with space
+ 11	 90	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	Word elision with non-whitespace IFS
+ 12	110	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	Leading/trailing word elision with non-whitespace IFS
+ 13	117	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	Leading ' ' vs leading ' _ '
+ 14	129	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	Multiple non-whitespace IFS chars.
+ 15	135	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	IFS with whitespace and non-whitepace.
+ 16	142	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	empty $@ and $* is elided
+ 17	147	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	unquoted empty arg is elided
+ 18	152	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	pass	unquoted whitespace arg is elided
+ 19	157	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	pass	empty literals are not elided
+ 20	162	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	no splitting when IFS is empty
+ 21	168	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	default value can yield multiple words
+ 22	172	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	default value can yield multiple words with part joining
+ 23	176	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	default value with unquoted IFS char
+ 24	181	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	IFS empty doesn't do splitting
+ 25	189	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	IFS unset behaves like $' \t\n'
+ 26	197	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	IFS='\'
+ 27	206	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	IFS='\ '
+ 28	216	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	IFS characters are glob metacharacters
+ 29	234	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Trailing space
+ 30	244	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Empty IFS (regression for bug)
+ 31	254	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Unset IFS (regression for bug)
+ 32	262	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	IFS=o (regression for bug)
+ 33	269	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	IFS and joining arrays
+ 34	283	pass	BUG	pass	FAIL	BUG	pass	pass	word-split: FATAL: Got 173 total failures, but 0 are allowed
+FAIL	FAIL	FAIL	IFS and joining arrays by assignments
+ 35	329	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	TODO
+ 36	337	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	IFS='' with $@ and $* (bug #627)
+ 37	349	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	IFS='' with $@ and $* and printf (bug #627)
+ 38	361	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	IFS='' with ${a[@]} and ${a[*]} (bug #627)
+ 39	375	BUG	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	IFS='' with ${!prefix@} and ${!prefix*} (bug #627)
+ 40	394	BUG	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	IFS='' with ${!a[@]} and ${!a[*]} (bug #627)
+ 41	412	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Bug #628 split on : with : in literal word
+ 42	442	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Bug #698, similar crash
+ 43	450	pass	pass	pass	FAIL	pass	pass	pass	pass	pass	FAIL	Bug #1664, \\ with noglob
+ 44	482	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Empty IFS bug #2141 (from pnut)
+ 45	519	pass	BUG	BUG	pass	BUG	pass	FAIL	pass	FAIL	FAIL	Unicode in IFS
+ 46	540	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	4 x 3 table: (default IFS, IFS='', IFS=zx) x ( $* "$*" $@ "$@" )
+ 47	621	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	4 x 3 table - with for loop
+ 48	668	ok	pass	ok	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	IFS=x and '' and $@ - same bug as spec/toysh-posix case #12
+ 49	712	ok	pass	ok	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	IFS=x and '' and $@ (#2)
+ 50	765	ok	pass	ok-2	ok-3	pass	FAIL	pass	pass	FAIL	FAIL	IFS=x and '' and $@ (#3)
+ 51	813	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	""$A"" - empty string on both sides - derived from spec/toysh-posix #15
+ 52	866	pass	N-I	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	Regression: "${!v*}"x should not be split
+ 53	881	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Regression: ${!v} should be split
+ 54	892	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	Regression: "${v:-AxBxC}"x should not be split
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	48	47	46	17	47	50	37	47	7	10
+	ok-3	0	0	0	1	0	0	0	0	0	0
+	ok-2	0	0	1	0	0	0	0	0	0	0
+	ok	3	0	2	0	0	0	0	0	0	0
+	N-I	0	4	3	0	0	0	0	0	0	0
+	BUG	2	2	1	0	2	0	0	0	0	0
+	FAIL	2	2	2	37	6	5	18	8	48	45
+	total	55	55	55	55	55	55	55	55	55	55
+

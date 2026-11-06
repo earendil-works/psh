@@ -1,0 +1,51 @@
+sh-options.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  7	ok	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	$- with -c
+  1	 15	ok	N-I	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	$- with pipefail
+  2	 25	pass	N-I	pass	pass	pass	pass	FAIL	FAIL	pass	pass	$- and more options
+  3	 41	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	$- with interactive shell
+  4	 48	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	pass short options like sh -e
+  5	 53	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	pass long options like sh -o errexit
+  6	 58	pass	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	pass shopt options like sh -O nullglob
+  7	 69	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	set -o vi/emacs
+  8	 79	pass	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	vi and emacs are mutually exclusive
+  9	109	pass	N-I	ok	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	interactive shell starts with emacs mode on
+ 10	139	pass	ok	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	nounset
+ 11	148	pass	ok	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	-u is nounset
+ 12	157	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	-n for no execution (useful with --ast-output)
+ 13	170	pass	N-I	pass	pass	pass	pass	pass	pass	FAIL	FAIL	pipefail
+ 14	188	pass	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	shopt -p -o prints 'set' options
+ 15	210	pass	N-I	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	shopt -o prints 'set' options
+ 16	224	pass	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	shopt -p prints 'shopt' options
+ 17	235	pass	N-I	N-I	FAIL	FAIL	pass	pass	FAIL	FAIL	pass	shopt with no flags prints options
+ 18	257	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	noclobber off
+ 19	279	pass	ok	pass	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	noclobber on
+ 20	308	pass	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	noclobber on <>
+ 21	323	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	pass	noclobber on >>
+ 22	336	pass	BUG	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	noclobber on &> >
+ 23	366	pass	BUG	pass	FAIL	FAIL	pass	pass	FAIL	FAIL	FAIL	noclobber on &>> >>
+ 24	399	pass	ok	ok	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	set without args lists variables
+ 25	432	ok	N-I	ok	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	set without args and array variables
+ 26	453	pass	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	set without args and assoc array variables (not in OSH)
+ 27	468	pass	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	shopt -q
+ 28	499	ok	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	shopt -q invalid
+ 29	512	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	shopt -s strict:all
+ 30	544	pass	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	shopt allows for backward compatibility like bash
+ 31	567	ok	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	shopt -p validates option names
+ 32	592	ok	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	shopt -p -o validates option names
+ 33	608	ok	ok	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	stubbed out bash options
+ 34	633	ok	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	sh-options: FATAL: Got 198 total failures, but 0 are allowed
+FAIL	shopt -s nounset works in YSH, not in bash
+ 35	658	ok	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Unimplemented options - print, query, set, unset
+ 36	699	pass	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Unimplemented options - OSH shopt -s ignore_shopt_not_impl
+ 37	735	pass	N-I	N-I	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	shopt -p exit code (regression)
+ 38	748	ok	pass	pass	pass	pass	FAIL	pass	pass	pass	pass	no-ops not shown by shopt -p
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	28	9	16	14	12	26	10	9	2	4
+	ok	10	5	4	0	0	0	0	0	0	0
+	N-I	1	23	17	0	0	0	0	0	0	0
+	BUG	0	2	0	0	0	0	0	0	0	0
+	FAIL	0	0	2	25	27	13	29	30	37	35
+	total	39	39	39	39	39	39	39	39	39	39
+

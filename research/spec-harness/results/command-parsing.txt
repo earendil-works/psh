@@ -1,0 +1,15 @@
+command-parsing: FATAL: Got 14 total failures, but 0 are allowed
+command-parsing.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  9	ok	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	Prefix env on assignment
+  1	 20	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Redirect on assignment (enabled 7/2019)
+  2	 31	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Prefix env on control flow
+  3	 41	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Redirect on control flow (ignored in OSH)
+  4	 55	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Redirect on control flow with ysh:all (no_parse_ignored)
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	4	5	5	4	5	4	4	4	0	0
+	ok	1	0	0	0	0	0	0	0	0	0
+	FAIL	0	0	0	1	0	1	1	1	5	5
+	total	5	5	5	5	5	5	5	5	5	5
+

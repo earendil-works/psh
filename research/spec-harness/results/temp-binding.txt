@@ -1,0 +1,15 @@
+temp-binding: FATAL: Got 12 total failures, but 0 are allowed
+temp-binding.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  7	pass	pass	N-I	pass	pass	pass	pass	FAIL	FAIL	FAIL	More eval 'local v='
+  1	 40	BUG	pass	pass	BUG	pass	FAIL	FAIL	pass	FAIL	FAIL	Temp bindings with local
+  2	 84	pass	BUG	BUG	pass	BUG	pass	pass	FAIL	FAIL	FAIL	Temp bindings with unset
+  3	156	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FOO=bar $unset - temp binding, then empty argv from unquoted unset var (#2411)
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	3	3	2	3	3	3	3	2	0	0
+	N-I	0	0	1	0	0	0	0	0	0	0
+	BUG	1	1	1	1	1	0	0	0	0	0
+	FAIL	0	0	0	0	0	1	1	2	4	4
+	total	4	4	4	4	4	4	4	4	4	4
+

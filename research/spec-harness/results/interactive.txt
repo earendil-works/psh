@@ -1,0 +1,29 @@
+interactive: FATAL: Got 147 total failures, but 0 are allowed
+interactive.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	'exit' in oshrc (regression)
+  1	 16	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	fatal errors continue
+  2	 28	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	interactive shell loads rcfile (when combined with -c)
+  3	 40	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	--rcfile with parse error - shell is executed anyway
+  4	 53	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	interactive shell loads files in rcdir (when combined with -c)
+  5	 92	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	nonexistent --rcdir is ignored
+  6	105	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	shell doesn't load rcfile/rcdir if --norc is given
+  7	138	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	interactive shell runs PROMPT_COMMAND after each command
+  8	164	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	parse error in PROMPT_COMMAND
+  9	186	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	runtime error in PROMPT_COMMAND
+ 10	208	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	Error message with bad oshrc file (currently ignored)
+ 11	225	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	PROMPT_COMMAND can see $?, like bash
+ 12	254	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	PROMPT_COMMAND that writes to BASH_REMATCH
+ 13	291	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	pass	FAIL	FAIL	NO ASSERTIONS: Are startup files sourced before or after job control?
+ 14	327	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	HISTFILE is written in interactive shell
+ 15	348	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	HISTFILE default value
+ 16	358	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	HISTFILE=my-history loads history from that file, and writes back to it
+ 17	382	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	HISTFILE=my-history with history -a
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	14	0	0	0	1	9	0	5	0	0
+	ok	2	0	0	0	0	0	0	0	0	0
+	N-I	2	0	0	0	0	0	0	0	0	0
+	FAIL	0	18	18	18	17	9	18	13	18	18
+	total	18	18	18	18	18	18	18	18	18	18
+

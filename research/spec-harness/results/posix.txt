@@ -1,0 +1,25 @@
+posix: FATAL: Got 33 total failures, but 0 are allowed
+posix.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  8	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	Empty for loop is allowed
+  1	 16	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Empty for loop without in.  Do can be on the same line I guess.
+  2	 29	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Empty case statement
+  3	 34	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Last case without ;;
+  4	 42	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Only case without ;;
+  5	 49	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Case with optional (
+  6	 57	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	pass	Empty action for case is syntax error
+  7	 69	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Empty action is allowed for last case
+  8	 77	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Case with | pattern
+  9	 86	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	pass	Bare semi-colon not allowed
+ 10	100	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Command substitution in default
+ 11	105	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Arithmetic expansion
+ 12	118	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Newlines in compound lists
+ 13	140	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Multiple here docs on one line
+ 14	151	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	cat here doc; echo; cat here doc
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	15	15	13	13	15	14	13	15	0	2
+	ok	0	0	2	0	0	0	0	0	0	0
+	FAIL	0	0	0	2	0	1	2	0	15	13
+	total	15	15	15	15	15	15	15	15	15	15
+

@@ -1,0 +1,28 @@
+arith-context: FATAL: Got 83 total failures, but 0 are allowed
+arith-context.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 12	pass	FAIL	pass	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	Multiple right brackets inside expression
+  1	 26	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Slicing of string with constants
+  2	 31	pass	FAIL	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Slicing of string with variables
+  3	 38	pass	FAIL	pass	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	Array index on LHS of assignment
+  4	 46	pass	FAIL	pass	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	Array index on LHS with indices
+  5	 53	pass	FAIL	FAIL	BUG	pass	pass	pass	FAIL	FAIL	FAIL	Slicing of string with expressions
+  6	 65	pass	FAIL	BUG	BUG	FAIL	FAIL	pass	FAIL	FAIL	FAIL	Ambiguous colon in slice
+  7	 78	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Triple parens should be disambiguated
+  8	 87	pass	FAIL	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Quadruple parens should be disambiguated
+  9	 94	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	$[ is a synonym for $((
+ 10	104	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	$[$var is a synonym for $(($var (#2426)
+ 11	115	pass	FAIL	N-I	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	$[$undefined] is a synonym for $(($undefined (#2566)
+ 12	133	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Empty expression (( ))  $(( ))
+ 13	147	pass	FAIL	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Empty expression for (( ))
+ 14	162	pass	FAIL	BUG	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Empty expression in ${a[@]: : }
+ 15	205	ok	pass	FAIL	ok	pass	FAIL	FAIL	FAIL	FAIL	FAIL	Empty expression a[]
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	15	1	8	8	4	14	13	0	0	0
+	ok	1	0	0	3	0	0	0	0	0	0
+	N-I	0	0	4	1	0	0	0	0	0	0
+	BUG	0	0	2	3	0	0	0	0	0	0
+	FAIL	0	15	2	1	12	2	3	16	16	16
+	total	16	16	16	16	16	16	16	16	16	16
+

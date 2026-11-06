@@ -1,0 +1,42 @@
+builtin-getopts: FATAL: Got 98 total failures, but 0 are allowed
+builtin-getopts.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	getopts empty
+  1	 10	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	getopts sees unknown arg
+  2	 18	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	getopts three invocations
+  3	 32	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	getopts resets OPTARG
+  4	 43	BUG	pass	BUG	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	OPTARG is empty (not unset) after parsing a flag doesn't take an arg
+  5	 60	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Basic getopts invocation
+  6	 74	ok	pass	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	getopts with invalid variable name
+  7	 82	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	getopts with invalid flag
+  8	 95	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	getopts with with -
+  9	111	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	getopts missing required argument
+ 10	124	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	getopts doesn't look for flags after args
+ 11	138	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	getopts with explicit args
+ 12	155	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	OPTIND
+ 13	159	pass	pass	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	OPTIND after multiple getopts with same spec
+ 14	192	pass	BUG	BUG	FAIL	BUG	pass	FAIL	FAIL	FAIL	FAIL	OPTIND after multiple getopts with different spec
+ 15	240	BUG	pass	BUG	FAIL	pass	FAIL	FAIL	FAIL	FAIL	FAIL	OPTIND narrowed down
+ 16	276	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Getopts parses the function's arguments
+ 17	292	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Local OPTIND
+ 18	304	pass	ok	ok	FAIL	ok	pass	pass	FAIL	FAIL	FAIL	two flags: -ab
+ 19	318	pass	BUG	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	flag and arg: -c10
+ 20	332	pass	ok	ok	pass	ok	pass	pass	FAIL	FAIL	FAIL	More Smooshing 1
+ 21	350	pass	ok	ok	pass	ok	pass	pass	FAIL	FAIL	FAIL	More Smooshing 2
+ 22	368	pass	ok	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	OPTIND should be >= 1 (regression)
+ 23	384	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	getopts bug #1523
+ 24	398	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	More regression for #1523
+ 25	412	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	getopts silent error reporting - invalid option
+ 26	422	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	getopts silent error reporting - missing required argument
+ 27	432	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	getopts normal mode - invalid option (compare with silent)
+ 28	440	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	getopts normal mode - missing required argument (compare with silent)
+ 29	448	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	getopts handles '--' #2579
+ 30	468	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	getopts leaves all args after '--' as operands #2579
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	28	25	23	18	27	28	20	22	0	0
+	ok	1	4	4	0	3	0	0	0	0	0
+	BUG	2	2	4	0	1	0	0	0	0	0
+	FAIL	0	0	0	13	0	3	11	9	31	31
+	total	31	31	31	31	31	31	31	31	31	31
+

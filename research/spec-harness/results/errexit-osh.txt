@@ -1,0 +1,46 @@
+errexit-osh.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	 15	pass	ok	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	command sub: errexit is NOT inherited and outer shell keeps going
+  1	 37	pass	pass	pass	pass	N-I	pass	pass	pass	FAIL	pass	command sub with inherit_errexit only
+  2	 54	N-I	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	pass	FAIL	strict_errexit and assignment builtins (local, export, readonly ...)
+  3	 76	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	strict_errexit and command sub in export / readonly
+  4	 98	N-I	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	strict_errexit disallows pipeline
+  5	113	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	strict_errexit allows singleton pipeline
+  6	125	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	strict_errexit with && || !
+  7	147	ok	ok	ok	FAIL	ok	FAIL	FAIL	FAIL	pass	FAIL	strict_errexit detects proc in && || !
+  8	181	N-I	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	strict_errexit without errexit proc
+  9	201	N-I	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	pass	FAIL	strict_errexit without errexit proc / command sub
+ 10	231	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	strict_errexit and errexit disabled
+ 11	258	pass	N-I	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	command sub with command_sub_errexit only
+ 12	275	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	command_sub_errexit stops at first error
+ 13	296	N-I	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	command sub with inherit_errexit and command_sub_errexit
+ 14	322	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	command sub: last command fails but keeps going and exit code is 0
+ 15	331	pass	ok	ok	FAIL	pass	pass	FAIL	FAIL	pass	FAIL	global assignment with command sub: middle command fails
+ 16	344	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	global assignment with command sub: last command fails and it aborts
+ 17	351	pass	ok	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	local: middle command fails and keeps going
+ 18	372	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	local: last command fails and also keeps going
+ 19	387	N-I	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	local and inherit_errexit / command_sub_errexit
+ 20	416	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	global assignment when last status is failure
+ 21	427	N-I	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	strict_errexit prevents errexit from being disabled in function
+ 22	454	N-I	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	strict_errexit prevents errexit from being disabled in brace group
+ 23	475	N-I	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	strict_errexit prevents errexit from being disabled in subshell
+ 24	498	N-I	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	strict_errexit and ! && || if while until
+ 25	565	pass	N-I	pass	FAIL	pass	pass	pass	FAIL	FAIL	FAIL	if pipeline doesn't fail fatally
+ 26	588	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	errexit is silent (verbose_errexit for Oils)
+ 27	595	N-I	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	command sub errexit preserves exit code
+ 28	612	N-I	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	pass	FAIL	What's in strict:all?
+ 29	651	N-I	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	pass	FAIL	command_sub_errexit causes local d=$(date %x) to fail
+ 30	675	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	pass	FAIL	command_sub_errexit and command sub in array
+ 31	697	pass	N-I	N-I	pass	pass	pass	FAIL	pass	pass	FAIL	errexit-osh: FATAL: Got 159 total failures, but 0 are allowed
+OLD: command sub in conditional, with inherit_errexit
+ 32	716	pass	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	OLD: command sub in redirect in conditional
+ 33	728	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Regression
+ 34	750	N-I	N-I	N-I	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	ShAssignment used as conditional
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	15	9	10	10	14	15	10	9	9	3
+	ok	1	4	4	0	1	0	0	0	0	0
+	N-I	19	22	21	0	15	0	0	0	0	0
+	FAIL	0	0	0	25	5	20	25	26	26	32
+	total	35	35	35	35	35	35	35	35	35	35
+

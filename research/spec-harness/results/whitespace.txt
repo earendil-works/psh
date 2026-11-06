@@ -1,0 +1,9 @@
+whitespace: FATAL: Got 50 total failures, but 0 are allowed
+whitespace.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Parsing shell words \r \v
+  1	 24	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	\r in arith expression is allowed by some shells, but not most!
+  2	 49	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	whitespace in string to integer conversion
+  3	 74	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	\r at end of line is not special
+  4	 86	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Default IFS does not include \r \v \f
+

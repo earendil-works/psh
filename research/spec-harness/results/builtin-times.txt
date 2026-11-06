@@ -1,0 +1,10 @@
+builtin-times: FATAL: Got 2 total failures, but 0 are allowed
+builtin-times.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  3	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	times shows two formatted lines
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	1	1	1	1	1	1	1	1	0	0
+	FAIL	0	0	0	0	0	0	0	0	1	1
+	total	1	1	1	1	1	1	1	1	1	1
+

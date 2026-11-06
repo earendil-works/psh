@@ -1,0 +1,37 @@
+builtin-eval-source: FATAL: Got 87 total failures, but 0 are allowed
+builtin-eval-source.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Eval
+  1	  9	pass	BUG	pass	pass	FAIL	pass	FAIL	pass	FAIL	FAIL	eval accepts/ignores --
+  2	 17	pass	ok	ok-2	ok-3	FAIL	pass	FAIL	FAIL	FAIL	FAIL	eval usage
+  3	 39	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	FAIL	eval string with 'break continue return error'
+  4	 88	N-I	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	eval YSH block with 'break continue return error'
+  5	134	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	exit within eval (regression)
+  6	140	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	exit within source (regression)
+  7	148	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Source
+  8	155	pass	N-I	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	source accepts/ignores --
+  9	164	pass	ok	pass	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	Source nonexistent
+ 10	170	pass	N-I	ok	ok	pass	pass	pass	FAIL	FAIL	FAIL	Source with no arguments
+ 11	177	pass	N-I	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Source with arguments
+ 12	186	pass	N-I	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Source from a function, mutating argv and defining a local var
+ 13	210	FAIL	ok	ok	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Source with syntax error
+ 14	224	FAIL	ok	ok	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Eval with syntax error
+ 15	234	pass	BUG	BUG	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Eval in does tilde expansion
+ 16	258	pass	N-I	BUG	BUG	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Eval in bash does tilde expansion in array
+ 17	291	pass	N-I	N-I	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	source works for files in current directory (bash only)
+ 18	311	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	source looks in PATH for files
+ 19	321	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	source finds files in PATH before current dir
+ 20	334	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	source works for files in subdirectory
+ 21	343	pass	ok	ok	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	source doesn't crash when targeting a directory
+ 22	351	pass	pass	ok	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	sourcing along PATH should ignore directories
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	20	9	12	14	13	17	15	9	0	0
+	ok-3	0	0	0	1	0	0	0	0	0	0
+	ok-2	0	0	1	0	0	0	0	0	0	0
+	ok	0	5	5	5	0	0	0	0	0	0
+	N-I	1	7	2	2	0	0	0	0	0	0
+	BUG	0	2	2	1	0	0	0	0	0	0
+	FAIL	2	0	1	0	10	6	8	14	23	23
+	total	23	23	23	23	23	23	23	23	23	23
+

@@ -1,0 +1,19 @@
+builtin-misc: FATAL: Got 30 total failures, but 0 are allowed
+builtin-misc.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	ok	N-I	BUG	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	history builtin usage
+  1	 46	ok	ok	ok	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Print shell strings with weird chars: set and printf %q and ${x@Q}
+  2	 93	ok	N-I	ok	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Print shell strings with normal chars: set and printf %q and ${x@Q}
+  3	137	pass	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	time pipeline
+  4	142	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	shift
+  5	154	pass	ok	pass	pass	pass	FAIL	pass	pass	pass	FAIL	Shifting too far
+  6	160	ok	pass	BUG	BUG	pass	pass	pass	pass	FAIL	FAIL	Invalid shift argument
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	3	2	3	3	3	3	3	3	1	0
+	ok	4	2	2	1	0	0	0	0	0	0
+	N-I	0	2	0	1	0	0	0	0	0	0
+	BUG	0	0	2	2	0	0	0	0	0	0
+	FAIL	0	1	0	0	4	4	4	4	6	7
+	total	7	7	7	7	7	7	7	7	7	7
+

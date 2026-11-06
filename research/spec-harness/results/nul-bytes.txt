@@ -1,0 +1,29 @@
+nul-bytes: FATAL: Got 54 total failures, but 0 are allowed
+nul-bytes.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  5	pass	N-I	pass	BUG	pass	pass	pass	pass	FAIL	FAIL	NUL bytes with echo -e
+  1	 27	pass	N-I	pass	BUG	FAIL	pass	pass	FAIL	FAIL	FAIL	printf - literal NUL in format string
+  2	 62	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	printf - \0 escape shows NUL byte
+  3	 71	pass	N-I	pass	ok	pass	pass	pass	pass	FAIL	FAIL	printf - NUL byte in value (OSH and zsh agree)
+  4	 94	pass	N-I	pass	ok	pass	pass	pass	pass	FAIL	FAIL	NUL bytes with echo $'\0' (OSH and zsh agree)
+  5	116	pass	N-I	pass	BUG	pass	pass	pass	FAIL	FAIL	FAIL	NUL bytes and IFS splitting
+  6	140	pass	N-I	pass	FAIL	pass	pass	pass	FAIL	FAIL	FAIL	NUL bytes with test -n
+  7	169	pass	N-I	pass	pass	ok	pass	pass	FAIL	FAIL	FAIL	NUL bytes with test -f
+  8	206	pass	N-I	pass	ok	pass	pass	pass	FAIL	FAIL	FAIL	NUL bytes with ${#s} (OSH and zsh agree)
+  9	230	pass	pass	pass	BUG	pass	pass	pass	FAIL	FAIL	FAIL	Compare \x00 byte versus \x01 byte - command sub
+ 10	268	pass	pass	pass	BUG	pass	FAIL	FAIL	FAIL	FAIL	FAIL	Compare \x00 byte versus \x01 byte - read builtin
+ 11	301	pass	N-I	BUG-2	BUG	pass	FAIL	FAIL	FAIL	FAIL	FAIL	Compare \x00 byte versus \x01 byte - read -n
+ 12	344	pass	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Compare \x00 byte versus \x01 byte - mapfile builtin
+ 13	371	pass	pass	pass	BUG	pass	pass	pass	FAIL	FAIL	FAIL	Strip ops # ## % %% with NUL bytes
+ 14	423	pass	pass	pass	BUG	pass	pass	pass	FAIL	FAIL	FAIL	Issue 2269 Reduction
+ 15	472	pass	pass	pass	ok	pass	pass	FAIL	FAIL	FAIL	FAIL	Issue 2269 - Do NUL bytes match ? in ${a#?}
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	16	6	14	2	13	13	12	4	0	0
+	ok	0	0	0	4	1	0	0	0	0	0
+	N-I	0	10	1	1	0	0	0	0	0	0
+	BUG-2	0	0	1	0	0	0	0	0	0	0
+	BUG	0	0	0	8	0	0	0	0	0	0
+	FAIL	0	0	0	1	2	3	4	12	16	16
+	total	16	16	16	16	16	16	16	16	16	16
+

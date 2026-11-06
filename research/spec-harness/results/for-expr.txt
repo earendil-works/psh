@@ -1,0 +1,19 @@
+for-expr: FATAL: Got 55 total failures, but 0 are allowed
+for-expr.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  6	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	C-style for loop
+  1	 26	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	For loop with and without semicolon
+  2	 43	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Accepts { } syntax too
+  3	 53	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Empty init
+  4	 65	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Empty init and cond
+  5	 80	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Infinite loop with ((;;))
+  6	 96	FAIL	FAIL	FAIL	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	Arith lexer mode
+  7	120	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Integers near 31, 32, 62 bits
+  8	155	pass	FAIL	FAIL	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Condition that's greater than 32 bits
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	8	0	0	8	0	9	9	0	0	0
+	ok	0	0	0	1	0	0	0	0	0	0
+	FAIL	1	9	9	0	9	0	0	9	9	9
+	total	9	9	9	9	9	9	9	9	9	9
+

@@ -1,0 +1,18 @@
+builtin-bind: FATAL: Got 80 total failures, but 0 are allowed
+builtin-bind.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  8	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	bind -l should report readline functions
+  1	 23	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	bind -p -P to print function names and key bindings
+  2	 37	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	FAIL	FAIL	FAIL	bind -s -S accepted
+  3	 47	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	bind -v -V accepted
+  4	 61	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	bind -q
+  5	 83	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	bind -X
+  6	100	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	bind -m with bind -x/-X
+  7	121	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	bind -r
+  8	141	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	bind -r of bind -x commands
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	9	0	0	0	0	1	0	0	0	0
+	FAIL	0	9	9	9	9	8	9	9	9	9
+	total	9	9	9	9	9	9	9	9	9	9
+

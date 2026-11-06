@@ -1,0 +1,22 @@
+builtin-meta-assign: FATAL: Got 60 total failures, but 0 are allowed
+builtin-meta-assign.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	BUG	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	builtin declare a=(x y) is allowed
+  1	 38	pass	pass	pass	N-I	pass	FAIL	FAIL	pass	FAIL	FAIL	command export,readonly
+  2	 67	pass	BUG	N-I	N-I	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	command local
+  3	 88	BUG	FAIL	BUG	pass	N-I	pass	FAIL	FAIL	FAIL	FAIL	export, builtin export
+  4	118	BUG	N-I	N-I	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	\builtin declare - ble.sh relies on it
+  5	159	BUG	FAIL	pass	N-I	pass	FAIL	FAIL	FAIL	FAIL	FAIL	\command readonly - similar issue
+  6	207	BUG	FAIL	FAIL	N-I	pass	FAIL	FAIL	FAIL	FAIL	FAIL	Dynamic $c readonly - bash and dash change behavior, mksh bug
+  7	239	pass	N-I	pass	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	static builtin command ASSIGN, command builtin ASSIGN
+  8	268	pass	N-I	pass	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	dynamic builtin command ASSIGN, command builtin ASSIGN
+  9	322	pass	N-I	pass	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	builtin typeset, export,readonly
+ 10	357	pass	N-I	N-I	pass	FAIL	pass	FAIL	FAIL	FAIL	FAIL	builtin declare,local
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	6	1	5	4	3	4	0	1	0	0
+	N-I	0	6	4	7	1	0	0	0	0	0
+	BUG	5	1	1	0	1	0	0	0	0	0
+	FAIL	0	3	1	0	6	7	11	10	11	11
+	total	11	11	11	11	11	11	11	11	11	11
+

@@ -1,0 +1,53 @@
+builtin-vars.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  8	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Export sets a global variable
+  1	 19	pass	N-I	N-I	N-I	pass	pass	FAIL	FAIL	FAIL	FAIL	Export sets a global variable that persists after export -n
+  2	 46	pass	N-I	N-I	N-I	pass	pass	pass	FAIL	FAIL	pass	export -n undefined is ignored
+  3	 56	ok	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	export -n foo=bar not allowed
+  4	 78	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Export a global variable and unset it
+  5	 93	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Export existing global variables
+  6	103	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Export existing local variable
+  7	116	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Export a local that shadows a global
+  8	133	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	Export a variable before defining it
+  9	139	pass	pass	pass	pass	pass	FAIL	pass	pass	FAIL	FAIL	Unset exported variable, then define it again.  It's NOT still exported.
+ 10	155	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Exporting a parent func variable (dynamic scope)
+ 11	180	pass	pass	pass	pass	pass	pass	FAIL	pass	pass	pass	Dependent export setting
+ 12	186	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	Exporting a variable doesn't change it
+ 13	193	pass	N-I	BUG	pass	FAIL	FAIL	pass	FAIL	FAIL	pass	can't export array (strict_array)
+ 14	212	pass	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	pass	can't export associative array (strict_array)
+ 15	228	BUG	ok	ok	pass	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	assign to readonly variable
+ 16	238	pass	ok	ok	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Make an existing local variable readonly
+ 17	265	pass	ok	ok	pass	FAIL	FAIL	pass	FAIL	FAIL	FAIL	assign to readonly variable - errexit
+ 18	273	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	Unset a variable
+ 19	283	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	Unset exit status
+ 20	289	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	Unset nonexistent variable
+ 21	294	pass	ok	pass	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	Unset readonly variable
+ 22	306	pass	N-I	N-I	N-I	FAIL	pass	pass	FAIL	FAIL	pass	Unset a function without -f
+ 23	321	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Unset has dynamic scope
+ 24	334	pass	ok	pass	ok	ok	pass	pass	FAIL	FAIL	FAIL	Unset and scope (bug #653)
+ 25	378	ok	ok	pass	ok	ok	FAIL	FAIL	FAIL	FAIL	FAIL	unset of local reveals variable in higher scope
+ 26	400	FAIL	ok	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Unset invalid variable name
+ 27	416	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	Unset nonexistent variable
+ 28	423	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Unset -v
+ 29	436	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Unset -f
+ 30	450	pass	N-I	pass	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	Unset array member
+ 31	466	pass	N-I	pass	pass	FAIL	pass	pass	pass	FAIL	pass	Unset errors
+ 32	487	FAIL	N-I	N-I	BUG	FAIL	pass	FAIL	FAIL	FAIL	FAIL	Unset wrong type
+ 33	540	pass	N-I	N-I	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	unset -v assoc (related to issue #661)
+ 34	565	builtin-vars: FATAL: Got 134 total failures, but 0 are allowed
+pass	N-I	N-I	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	unset assoc errors
+ 35	579	pass	N-I	pass	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	Unset array member with dynamic parsing
+ 36	595	pass	pass	pass	BUG	pass	pass	pass	FAIL	FAIL	FAIL	Use local twice
+ 37	608	pass	ok	pass	BUG	FAIL	pass	pass	FAIL	pass	FAIL	Local without variable is still unset!
+ 38	622	BUG	ok	BUG	pass	FAIL	FAIL	FAIL	FAIL	pass	FAIL	local after readonly
+ 39	647	pass	N-I	BUG	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	unset a[-1] (bf.bash regression)
+ 40	676	pass	N-I	BUG	N-I	FAIL	pass	pass	FAIL	FAIL	FAIL	unset a[-1] in sparse array (bf.bash regression)
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	35	19	25	25	21	30	32	16	3	11
+	ok	2	9	4	4	2	0	0	0	0	0
+	N-I	0	13	8	8	0	0	0	0	0	0
+	BUG	2	0	4	3	0	0	0	0	0	0
+	FAIL	2	0	0	1	18	11	9	25	38	30
+	total	41	41	41	41	41	41	41	41	41	41
+

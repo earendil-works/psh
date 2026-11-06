@@ -1,0 +1,48 @@
+here-doc.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Here string
+  1	 12	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Here string with $
+  2	 22	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here redirect with explicit descriptor
+  3	 29	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Here doc from another input file descriptor
+  4	 37	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Multiple here docs with different descriptors
+  5	 48	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	Here doc with bad var delimiter
+  6	 57	BUG	pass	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	pass	Here doc with bad comsub delimiter
+  7	 68	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Here doc and < redirect -- last one wins
+  8	 77	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	< redirect and here doc -- last one wins
+  9	 86	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here doc with var sub, command sub, arith sub
+ 10	 99	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here doc in middle.  And redirects in the middle.
+ 11	113	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here doc line continuation
+ 12	123	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here doc with quote expansion in terminator
+ 13	133	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here doc with multiline double quoted string
+ 14	144	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Two here docs -- first is ignored; second ones wins!
+ 15	152	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	pass	Here doc with line continuation, then pipe.  Syntax error.
+ 16	162	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here doc with pipe on first line
+ 17	174	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here doc with pipe continued on last line
+ 18	187	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Here doc with builtin 'read'
+ 19	195	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Compound command here doc
+ 20	210	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here doc in while condition and here doc in body
+ 21	224	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here doc in while condition and here doc in body on multiple lines
+ 22	242	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here doc in while loop split up more
+ 23	263	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Mixing << and <<-
+ 24	277	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	Two compound commands with two here docs
+ 25	293	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Function def and execution with here doc
+ 26	305	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here doc as command prefix
+ 27	322	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Redirect after here doc
+ 28	328	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	here doc stripping tabs
+ 29	342	pass	N-I	pass	pass	pass	pass	pass	FAIL	FAIL	FAIL	Here doc within subshell with boolean
+ 30	350	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here Doc in if condition
+ 31	361	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Nested here docs which are indented
+ 32	374	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Multiple here docs in pipeline
+ 33	392	here-doc: FATAL: Got 119 total failures, but 0 are allowed
+FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Multiple here docs in pipeline on multiple lines
+ 34	412	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here doc and backslash double quote
+ 35	421	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here doc escapes
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	31	29	30	25	30	31	29	28	0	2
+	ok	0	0	2	0	0	0	0	0	0	0
+	N-I	0	3	0	0	0	0	0	0	0	0
+	BUG	1	0	0	0	0	0	0	0	0	0
+	FAIL	4	4	4	11	6	5	7	8	36	34
+	total	36	36	36	36	36	36	36	36	36	36
+

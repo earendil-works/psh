@@ -1,0 +1,19 @@
+unicode: FATAL: Got 56 total failures, but 0 are allowed
+unicode.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	pass	FAIL	pass	pass	pass	FAIL	FAIL	FAIL	FAIL	FAIL	OSH source code doesn't have to be valid Unicode (like other shells)
+  1	 41	pass	N-I	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	Unicode escapes \u03bc \U000003bc in $'', echo -e, printf
+  2	 60	FAIL	N-I	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Max code point U+10ffff can escaped with $''  printf  echo -e
+  3	 89	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	$'' does NOT check that 0x110000 is too big at parse time
+  4	105	FAIL	FAIL	FAIL	ok	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	$'' does not check for surrogate range at parse time
+  5	125	FAIL	FAIL	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	printf / echo -e do NOT check max code point at runtime
+  6	150	FAIL	FAIL	BUG	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	printf / echo -e do NOT check surrogates at runtime
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	2	0	2	2	1	1	1	0	0	0
+	ok	0	0	0	1	0	0	0	0	0	0
+	N-I	0	2	0	0	0	0	0	0	0	0
+	BUG	0	0	2	0	0	0	0	0	0	0
+	FAIL	5	5	3	4	6	6	6	7	7	7
+	total	7	7	7	7	7	7	7	7	7	7
+

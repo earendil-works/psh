@@ -1,0 +1,40 @@
+parse-errors: FATAL: Got 102 total failures, but 0 are allowed
+parse-errors.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  4	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Long Token - 65535 bytes
+  1	 14	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	FAIL	Token that's too long for Oils - 65536 bytes
+  2	 26	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	$% is not a parse error
+  3	 30	ok	pass	ok	FAIL	pass	FAIL	FAIL	pass	FAIL	FAIL	Bad braced var sub -- not allowed
+  4	 35	BUG	BUG	BUG	FAIL	FAIL	FAIL	FAIL	pass	FAIL	pass	Bad var sub caught at parse time
+  5	 44	pass	pass	ok	TIME	pass	pass	FAIL	pass	FAIL	pass	Incomplete while
+  6	 51	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	pass	Incomplete for
+  7	 58	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	pass	Incomplete if
+  8	 65	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	pass	do unexpected
+  9	 71	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	} is a parse error
+ 10	 78	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	{ is its own word, needs a space
+ 11	 87	pass	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	pass	} on the second line
+ 12	 93	BUG	pass	ok	FAIL	pass	FAIL	FAIL	FAIL	FAIL	pass	Invalid for loop variable name
+ 13	104	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	pass	bad var name globally isn't parsed like an assignment
+ 14	109	pass	ok	pass	pass	FAIL	pass	pass	FAIL	FAIL	FAIL	bad var name in export
+ 15	115	pass	ok	pass	pass	FAIL	pass	pass	FAIL	pass	FAIL	bad var name in local
+ 16	124	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	misplaced parentheses are not a subshell
+ 17	129	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	pass	incomplete command sub
+ 18	134	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	pass	incomplete backticks
+ 19	139	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	pass	misplaced ;;
+ 20	145	FAIL	N-I	ok	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	empty clause in [[
+ 21	154	pass	pass	ok	FAIL	pass	pass	pass	pass	FAIL	pass	interactive parse error (regression)
+ 22	166	BUG	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	FAIL	array literal inside array is a parse error
+ 23	175	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	pass	array literal inside loop is a parse error
+ 24	187	pass	pass	ok	FAIL	pass	pass	FAIL	pass	FAIL	pass	array literal in case
+ 25	200	pass	pass	ok	FAIL	pass	pass	FAIL	FAIL	FAIL	FAIL	%foo=() is parse error (regression)
+ 26	211	pass	pass	pass	FAIL	pass	pass	pass	pass	pass	pass	echo =word is allowed
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	20	21	6	4	22	22	6	20	3	16
+	ok	1	2	18	0	0	0	0	0	0	0
+	N-I	0	1	0	0	0	0	0	0	0	0
+	BUG	3	1	1	0	0	0	0	0	0	0
+	FAIL	3	2	2	22	5	5	21	7	24	11
+	TIME	0	0	0	1	0	0	0	0	0	0
+	total	27	27	27	27	27	27	27	27	27	27
+

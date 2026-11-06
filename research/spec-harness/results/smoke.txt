@@ -1,0 +1,27 @@
+smoke: FATAL: Got 18 total failures, but 0 are allowed
+smoke.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  7	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	builtin
+  1	 11	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	command sub
+  2	 15	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	command sub with builtin
+  3	 19	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	pipeline
+  4	 23	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	pipeline with builtin
+  5	 27	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	and-or chains
+  6	 44	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	here doc with var
+  7	 52	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	here doc without var
+  8	 59	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	here doc with builtin
+  9	 66	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Redirect external command
+ 10	 72	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	Redirect with builtin
+ 11	 77	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	Here doc with redirect
+ 12	 85	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	"$@" "$*"
+ 13	 92	pass	pass	pass	FAIL	pass	pass	pass	pass	FAIL	FAIL	$@ $*
+ 14	 99	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	pass	failed command
+ 15	103	pass	pass	pass	pass	pass	pass	pass	pass	pass	pass	subshell
+ 16	111	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	for loop
+ 17	123	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	vars
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	18	18	18	17	18	18	18	18	9	10
+	FAIL	0	0	0	1	0	0	0	0	9	8
+	total	18	18	18	18	18	18	18	18	18	18
+

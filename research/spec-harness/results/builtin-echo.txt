@@ -1,0 +1,39 @@
+builtin-echo: FATAL: Got 61 total failures, but 0 are allowed
+builtin-echo.test.sh
+case	line	bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+  0	  6	pass	pass	pass	BUG	pass	pass	pass	pass	pass	pass	echo dashes
+  1	 21	pass	BUG	BUG	BUG	pass	pass	pass	pass	pass	FAIL	echo backslashes
+  2	 38	pass	N-I	pass	pass	pass	pass	pass	pass	pass	FAIL	echo -e backslashes
+  3	 66	pass	pass	ok	ok	pass	pass	FAIL	pass	FAIL	FAIL	echo builtin should disallow typed args - literal
+  4	 73	pass	pass	ok	ok	pass	pass	FAIL	pass	FAIL	FAIL	echo builtin should disallow typed args - variable
+  5	 81	pass	N-I	pass	pass	pass	pass	FAIL	pass	pass	FAIL	echo -en
+  6	 93	pass	ok	ok	ok	pass	pass	pass	pass	pass	pass	echo -ez (invalid flag)
+  7	107	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	echo -e with embedded newline
+  8	118	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	echo -e line continuation
+  9	129	pass	FAIL	pass	pass	pass	pass	pass	pass	pass	FAIL	echo -e with C escapes
+ 10	137	pass	N-I	pass	pass	pass	pass	pass	pass	pass	FAIL	echo -e with whitespace C escapes
+ 11	142	pass	N-I	pass	pass	pass	pass	pass	pass	pass	FAIL	\0
+ 12	147	pass	pass	N-I	pass	pass	pass	FAIL	pass	FAIL	FAIL	\c stops processing input
+ 13	155	pass	N-I	pass	pass	pass	pass	pass	pass	pass	FAIL	echo -e with hex escape
+ 14	164	pass	pass	pass	pass	pass	pass	pass	pass	FAIL	FAIL	echo -e with octal escape
+ 15	173	pass	N-I	pass	pass	N-I	pass	pass	FAIL	FAIL	FAIL	echo -e with 4 digit unicode escape
+ 16	185	pass	N-I	pass	pass	N-I	pass	pass	FAIL	FAIL	FAIL	echo -e with 8 digit unicode escape
+ 17	197	pass	N-I	pass	pass	pass	FAIL	FAIL	pass	pass	FAIL	\0377 is the highest octal byte
+ 18	206	pass	N-I	pass	pass	BUG	FAIL	FAIL	pass	pass	FAIL	\0400 is one more than the highest octal byte
+ 19	219	pass	pass	BUG	pass	BUG	FAIL	FAIL	pass	FAIL	FAIL	\0777 is out of range
+ 20	234	pass	N-I	pass	pass	pass	pass	FAIL	pass	pass	FAIL	incomplete hex escape
+ 21	243	pass	N-I	FAIL	BUG	pass	pass	pass	pass	pass	FAIL	\x
+ 22	256	pass	pass	pass	pass	pass	pass	FAIL	pass	FAIL	FAIL	incomplete octal escape
+ 23	265	pass	N-I	pass	pass	BUG	pass	FAIL	FAIL	FAIL	FAIL	incomplete unicode escape
+ 24	277	pass	N-I	pass	pass	N-I	pass	FAIL	FAIL	FAIL	FAIL	\u6
+ 25	289	pass	BUG	pass	pass	BUG	pass	FAIL	FAIL	FAIL	FAIL	\0 \1 \8
+ 26	304	pass	ok	pass	pass	pass	pass	pass	FAIL	FAIL	pass	echo to redirected directory is an error
+
+		bash	dash	mksh	zsh	ash	brush	gosh	yash3	bunsh	deno-task	
+	pass	27	9	20	21	20	24	15	21	13	3
+	ok	0	2	3	3	0	0	0	0	0	0
+	N-I	0	13	1	0	3	0	0	0	0	0
+	BUG	0	2	2	3	4	0	0	0	0	0
+	FAIL	0	1	1	0	0	3	12	6	14	24
+	total	27	27	27	27	27	27	27	27	27	27
+

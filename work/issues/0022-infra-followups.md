@@ -1,7 +1,7 @@
 # 0022: L0 leg, gate caching, hit list on the parser
 
-status: open
-agent: -
+status: in-progress
+agent: infra
 branch: issue/0022-infra-followups
 depends-on: 0002, 0004 part 1
 touches: crates/psh-spec/, scripts/gate.d/, scripts/gate.sh, scripts/status, tests/l0/, tests/shapes/ (ratchet only), TESTING.md

@@ -11,6 +11,7 @@
 # .cargo/config.toml still apply, since several gates may run at once.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+source scripts/merge-lock.sh
 export PSH_GATE=1
 
 # name:timeout-seconds, in the order they run.
@@ -25,9 +26,11 @@ msrv:1800
 script-tests:300
 shapes:120
 guide:600
+windows:3000
 "
-# Later legs go here, above this line and in run_leg: the spec ratchets per layer
-# (0002 onward), the Windows legs (0007).
+# Later legs go here, above `windows` (it stays last: it is the slowest, and a failure on
+# macOS is cheaper to find first) and in run_leg: the spec ratchets per layer (0002
+# onward).
 
 run_leg() {
   case "$1" in
@@ -72,6 +75,19 @@ run_leg() {
     guide)
       # The guide keeps its writing rules (docs/guide/README.md).
       cargo run -q --locked -p psh-docs -- check
+      ;;
+    windows)
+      # The Rust legs on the Parallels Windows VM (D1070). PSH_GATE_WINDOWS=0 skips them
+      # when the VM is broken: for the coordinator and the owner only, never to get green.
+      if [ "${PSH_GATE_WINDOWS:-1}" = 0 ]; then
+        echo "gate: !!! WINDOWS LEG SKIPPED (PSH_GATE_WINDOWS=0): this commit is untested on Windows !!!" >&2
+        local log
+        log="$(primary_checkout)/work/scratch/windows-gate/skipped.tsv"
+        mkdir -p "$(dirname "$log")"
+        printf '%s\t%s\t%s\n' "$(date '+%F %T')" "$(basename "$(pwd -P)")" "$(git rev-parse --short HEAD)" >>"$log"
+        return 0
+      fi
+      scripts/windows-gate.sh
       ;;
     *)
       echo "gate: unknown leg '$1' (scripts/gate.sh --list)" >&2

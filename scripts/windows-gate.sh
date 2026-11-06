@@ -12,8 +12,8 @@
 # its own that keeps its target\ between runs. scripts/windows-gate.ps1 runs the legs
 # there, each under its own timeout, and the output streams back.
 #
-# The VM is resumed or started if needed and put back into the state it was in afterwards
-# (PSH_WINDOWS_KEEP_VM=1 leaves it running), unless another run still uses it.
+# The VM is resumed or started if needed. The last run out puts it back to sleep, and
+# only if a run woke it: a VM that was already running (the owner's) stays running.
 #
 #   PSH_WINDOWS_VM        the VM's name (default "Windows 11")
 #   PSH_WINDOWS_KEEP_VM   1: leave the VM running afterwards
@@ -102,14 +102,40 @@ if [ "$tree" != "$(git rev-parse 'HEAD^{tree}')" ]; then
 fi
 git update-ref "refs/windows-gate/$name" "$commit"
 
-# --- locks in the primary checkout: one per NAME (one run per checkout in the VM), and
-# a short one around starting and stopping the VM.
+# --- sharing the VM between concurrent runs (several gates run at once, D1010). In the
+# primary checkout's work/scratch/windows-gate/:
+#   run-NAME.lock  one per run (and one run per NAME: it owns C:\psh-gate\NAME); the
+#                  runs using the VM, a reference count with PIDs, so a run killed with
+#                  SIGKILL does not count forever
+#   vm.lock        held briefly while a run starts the VM or decides to put it back
+#   resumed        exists while the VM runs because a run started it; holds the state
+#                  it was in. Without it a running VM is the owner's and stays running.
+# The last run out puts the VM back, and only if a run started it.
 locks="$(primary_checkout)/work/scratch/windows-gate"
 run_lock="$locks/run-$name.lock"
 vm_lock="$locks/vm.lock"
-prior_state=
+resumed="$locks/resumed"
+
+# Whether a run other than this one still uses the VM; drops the locks of dead runs.
+other_runs() {
+  local l pid found=1
+  for l in "$locks"/run-*.lock; do
+    [ -d "$l" ] && [ "$l" != "$run_lock" ] || continue
+    pid=$(sed -n 's/.*pid=\([0-9][0-9]*\).*/\1/p' "$l/owner" 2>/dev/null || true)
+    if [ -n "$pid" ] && ! kill -0 "$pid" 2>/dev/null; then
+      rm -rf "$l"
+    else
+      found=0
+    fi
+  done
+  return $found
+}
+
+# prlctl's VM management hangs at times; every call is bounded.
+prl() { scripts/timeout.sh "$1" prlctl "${@:2}"; }
+
 cleanup() {
-  local st=$?
+  local st=$? prior
   trap - EXIT INT TERM HUP
   if [ -n "${run_pid:-}" ]; then
     kill -TERM "$run_pid" 2>/dev/null || true
@@ -118,24 +144,29 @@ cleanup() {
   if [ -n "${running:-}" ]; then
     # Killing prlctl does not stop the runner in the VM; this does, and its Job Object
     # takes the cargo and test processes along.
-    scripts/timeout.sh 120 prlctl exec "$vm" --current-user powershell -NoProfile \
-      -NonInteractive -ExecutionPolicy Bypass -File "$runner" -Name "$name" -Kill || true
+    prl 60 exec "$vm" --current-user powershell -NoProfile -NonInteractive \
+      -ExecutionPolicy Bypass -File "$runner" -Name "$name" -Kill || true
   fi
   if [ -n "${have_run_lock:-}" ]; then
-    take_merge_lock "$vm_lock" "windows-gate $name (stop)" 600 || exit "$st"
+    take_merge_lock "$vm_lock" "windows-gate $name (stop)" 300 || exit "$st"
     release_merge_lock "$run_lock"
-    if [ -n "$prior_state" ] && [ "${PSH_WINDOWS_KEEP_VM:-}" != 1 ] &&
-      ! ls -d "$locks"/run-*.lock >/dev/null 2>&1; then
-      case $prior_state in
-        suspended | paused)
-          echo "windows-gate: suspending the VM again"
-          prlctl suspend "$vm" >/dev/null || true
-          ;;
-        stopped)
-          echo "windows-gate: stopping the VM again"
-          prlctl stop "$vm" >/dev/null || true
-          ;;
-      esac
+    if [ -f "$resumed" ] && ! other_runs; then
+      prior=$(cat "$resumed")
+      rm -f "$resumed"
+      if [ "${PSH_WINDOWS_KEEP_VM:-}" = 1 ]; then
+        echo "windows-gate: leaving the VM running (PSH_WINDOWS_KEEP_VM=1)"
+      else
+        case $prior in
+          stopped)
+            echo "windows-gate: shutting the VM down again"
+            prl 300 stop "$vm" >/dev/null || true
+            ;;
+          *)
+            echo "windows-gate: suspending the VM again"
+            prl 300 suspend "$vm" >/dev/null || true
+            ;;
+        esac
+      fi
     fi
     release_merge_lock "$vm_lock"
   fi
@@ -150,40 +181,47 @@ take_merge_lock "$run_lock" "windows-gate $name" 3600 || exit 2
 have_run_lock=1
 
 vm_state() {
-  prlctl list -a -o status,name | awk -v vm="$vm" 'NR > 1 {
+  prl 60 list -a -o status,name | awk -v vm="$vm" 'NR > 1 {
     st = $1; sub(/^[^ ]+ +/, ""); if ($0 == vm) print st }'
 }
 
-take_merge_lock "$vm_lock" "windows-gate $name (start)" 600 || exit 2
-state=$(vm_state)
+take_merge_lock "$vm_lock" "windows-gate $name (start)" 300 || exit 2
+state=$(vm_state || true)
 case $state in
   running) ;;
   suspended | paused | stopped)
-    prior_state=$state
     echo "windows-gate: the VM is $state; starting it"
+    [ -f "$resumed" ] || echo "$state" >"$resumed"
     case $state in
-      suspended | paused) prlctl resume "$vm" >/dev/null ;;
-      stopped) prlctl start "$vm" >/dev/null ;;
+      suspended | paused) ok=$(prl 180 resume "$vm" >/dev/null && echo 1 || true) ;;
+      stopped) ok=$(prl 300 start "$vm" >/dev/null && echo 1 || true) ;;
     esac
+    if [ -z "$ok" ]; then
+      echo "windows-gate: could not start the VM '$vm' (prlctl $state -> running failed)" >&2
+      release_merge_lock "$vm_lock"
+      exit 3
+    fi
     ;;
   "")
-    echo "windows-gate: no VM named '$vm' (prlctl list -a; PSH_WINDOWS_VM)" >&2
+    echo "windows-gate: no VM named '$vm', or prlctl does not answer (PSH_WINDOWS_VM)" >&2
     release_merge_lock "$vm_lock"
     exit 3
     ;;
   *)
-    echo "windows-gate: the VM is $state; try again later" >&2
+    echo "windows-gate: the VM is '$state'; cannot use it now" >&2
     release_merge_lock "$vm_lock"
     exit 3
     ;;
 esac
 release_merge_lock "$vm_lock"
 
-# Wait until the guest tools answer (a fresh boot takes a while).
+# Wait until the guest tools answer for the logged-in user (a fresh boot takes a while;
+# without a logged-in user --current-user never works).
 waited=0
-until scripts/timeout.sh 30 prlctl exec "$vm" --current-user cmd /c "exit 0" >/dev/null 2>&1; do
+until prl 30 exec "$vm" --current-user cmd /c "exit 0" >/dev/null 2>&1; do
   if [ "$waited" -ge 300 ]; then
-    echo "windows-gate: the VM does not answer prlctl exec after ${waited}s" >&2
+    echo "windows-gate: the VM '$vm' does not answer prlctl exec --current-user after" \
+      "${waited}s (is a user logged in?)" >&2
     exit 3
   fi
   sleep 5

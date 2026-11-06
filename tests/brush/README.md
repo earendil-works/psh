@@ -5,8 +5,9 @@ Vendored from [brush](https://github.com/reubeno/brush) at commit
 Unmodified; `scripts/fetch-brush` reproduces the copy and `scripts/fetch-brush
 --check` verifies it.
 
-Only `brush-shell/tests/cases/**/*.yaml` (and `tests/utils/`, which cases source) is used. The expectations brush keeps in the
-files (`expected_stdout`, `known_failure`, snapshots) are not our oracle: the goldens in
-`tests/goldens/brush/`, recorded from bash 5.3, are.
+Only `brush-shell/tests/cases/**/*.yaml` is used, plus `brush-shell/tests/utils/`,
+which a case sources. The expectations brush keeps in the files (`expected_stdout`,
+`known_failure`, snapshots) are not our oracle: the goldens in `tests/goldens/brush/`,
+recorded from bash 5.3, are.
 
 `expected-failures.txt` (ours) is the ratchet for this layer.

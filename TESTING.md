@@ -94,13 +94,19 @@ Moving cases between groups is a coordinator decision.
   `research/corpus/results.json`, so a failing here-doc case outranks a failing `select`
   case by orders of magnitude. The coordinator cuts issues from the top.
 
-## The shape corpus *(planned, 0003)*
+## The shape corpus
 
 The private corpus (295k real agent commands, `~/.cache/psh-corpus/`) is never executed
-and never committed. `scripts/shape-corpus` turns each command into its syntax skeleton:
-every word becomes a placeholder (`w1`, `w2`, ...), while operators, redirections,
-quoting kinds, here-doc markers and command names from the utility list are kept. The
-output holds no private data, is committed under `tests/shapes/`, and feeds L0 (parser
+and never committed. `scripts/shape-corpus` (local Python on tree-sitter-bash, so the
+parser is not its own oracle) turns each command into its syntax skeleton: words outside
+a reviewed vocabulary (`tests/shapes/vocabulary.txt`: keywords, builtins, utility and
+tool names, subcommands, frequent options, well-known variables) become placeholders
+(`w1`, `w2`, ..., variables `v1`, ...), quoted text and here-doc bodies too, while
+operators, redirections, quoting kinds, here-doc markers and expansions are kept.
+`tests/shapes/shapes.txt` holds 26k skeletons standing for 123k commands, all those seen
+in two or more sessions plus enough single-session ones to cover every syntax 4-gram;
+`tests/shapes/README.md` has the format and the counts. The gate leg `shapes` checks
+that every token is a vocabulary word or a placeholder. The skeletons feed L0 (parser
 at scale) and syntax ranking. Running anything is never involved.
 
 ## The runner *(planned, 0002)*
@@ -125,6 +131,7 @@ reaches `main` (AGENTS.md). Legs, as they come into existence:
    sets are checked (`deps`: none, and `psh-syntax` only) (0001).
 3. `cargo check` with Rust 1.96, the MSRV (D025, 0001); the scripts parse and the
    tests of `timeout.sh` and `merge-to-main.sh` pass (0001, D1013).
+   `shapes`: the shape corpus passes its privacy check (0003, D1030).
 4. The spec ratchets for every layer that exists (0002 onward).
 5. Windows: the same legs on a Windows machine (0007; D027).
 

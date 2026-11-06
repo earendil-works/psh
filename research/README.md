@@ -187,3 +187,30 @@ The open technical decision: brush-core is built on tokio, and pi-env is synchro
 3. Should p2 keep honoring the user's `$SHELL` (zsh) anywhere, e.g. for the interactive terminal only?
 4. How much Windows do we want? A psh that is "bash on Windows without Git Bash" is the clearest product win, but it needs Windows CI, which oh-my-pi lacks and which bit them.
 5. In the browser, is a read-only exploration shell enough, or do we expect to run builds there? The answer decides whether Phase 3 matters at all.
+
+## 8. Agreed constraints (owner discussion, 2026-11-06)
+
+1. **Scope: driving an agent only.** Non-interactive bash 5.x semantics (`bash -c` style).
+   No line editing, completion, history, zsh or POSIX-sh mode. Job control only as far as
+   `&`, `wait`, `kill`, `$!`. The interface stays "command string in; stdout, stderr and
+   exit code out". Real bash stays available as an escape hatch (`shellPath`).
+2. **Tests: Oils spec + brush cases** as the backbone, with goldens recorded from bash 5.3
+   (see [hillclimb.md](hillclimb.md)). The private corpus is used only through a sanitized
+   *shape corpus* (parse-only); it is never executed.
+3. **Builtins: err on the side of too many.** The corpus is one signal; just-bash's demand
+   history and the other shells' lists are others (see builtins.md). Never builtins:
+   database clients like sqlite3, interpreters, toolchains, package managers, VCS and
+   network clients.
+   Every builtin falls through to the host binary (or fails clearly) on flags it does not
+   support, never silently diverges, and can be turned off.
+4. **No tokio, no async runtime.** A synchronous engine stepped by its embedder, std
+   `Waker`s only, OS waits behind a `Host` trait (waiter threads, pidfd/select on Unix, Job
+   Objects and overlapped pipes on Windows). See [execution-core.md](execution-core.md).
+5. **Near-zero dependencies.** We copy from brush (MIT, with attribution) rather than depend
+   on it, and replace its peg/winnow parsing with hand-written code. The deliberate exception:
+   `rg` and `fd` are built on the ripgrep/fd crates (`grep-*`, `ignore`, `globset`, `regex`).
+   Everything else needs a recorded decision.
+6. **Licensing: clean room.** MIT/Apache dependencies only. Nobody reads GNU bash's source or
+   oh-my-pi's bash-derived engine. GPL test suites may be run, never vendored.
+7. **Windows from the start:** Windows CI for every layer, no Git Bash/MSYS dependency.
+8. **Commit along the way.**

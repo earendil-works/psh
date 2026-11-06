@@ -124,14 +124,23 @@ Moving cases between groups is a coordinator decision.
 - Never add a line to hide a regression your change caused (AGENTS.md). Lines are added
   only when new cases are vendored or written, or when a case moves into `active`.
 
-## Status and the hit list *(planned, 0002)*
+## Status and the hit list
 
-- `scripts/status` prints pass counts per layer and per area (Oils file, brush file,
-  utility) and appends them to `tests/scores/status.tsv`, so progress is visible over
-  time. The score is the source of truth, not the prose.
-- `scripts/status --hitlist` joins the failing cases with the feature frequencies in
-  `research/corpus/results.json`, so a failing here-doc case outranks a failing `select`
-  case by orders of magnitude. The coordinator cuts issues from the top.
+- `scripts/status` runs psh over every non-skip case and prints pass counts per layer
+  and per area (Oils file, brush file) as Markdown, and appends one line per layer to
+  `tests/scores/status.tsv` (date, commit, active, pass, pass with stderr, later, later
+  passing, skip), so progress is visible over time; commit that line with the change that
+  moved the numbers. `--no-append` leaves the file alone. The score is the source of
+  truth, not the prose.
+- `scripts/status --hitlist [-n N]` ranks the failing active cases, and the areas by
+  the summed weight of their failures. A case's weight is the corpus frequency
+  (`research/corpus/results.json`: `features` for syntax, `top_names` for command
+  names) of the rarest construct in its script, so a failing here-doc case outranks a
+  failing `select` case by orders of magnitude (D1028). Constructs the corpus did not
+  measure (`select`, `coproc`, `${!x}`, namerefs, `=~`), bash builtins outside its top
+  names, and shell arguments other than `-c CODE` count as rare. The constructs are
+  found lexically for now; psh's parser will classify them once it exists. The
+  coordinator cuts issues from the top.
 
 ## The shape corpus
 

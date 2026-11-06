@@ -584,3 +584,14 @@ summarized only. `--add-failures` exists for newly added cases; regressions are 
 added. A case "passes" on stdout, status and files, so a few cases already pass with
 the stub engine (bash prints nothing and exits 2 on a syntax error); they stay off the
 ratchet and must keep passing.
+
+## D1028: Hit list weight: the rarest construct of a case
+date: 2026-11-06 · by: infra · issue: 0002
+`scripts/status --hitlist` weighs each failing case by the corpus frequency of the
+rarest construct in its script (corpus `features` and `top_names`); constructs the
+corpus did not measure, builtins outside its top names and shell invocation arguments
+count as rare (weight 1), a case with none of them weighs the corpus total. Areas rank by
+the summed weight of their failing cases. Reason: a spec case usually tests its most
+exotic part, so the minimum, not the sum, says how much agents depend on it. The
+constructs are detected lexically until psh-syntax can classify scripts; then the
+detector should move onto the parser (follow-up).

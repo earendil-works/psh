@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# The conformance scoreboard (TESTING.md "Status and the hit list"):
+#
+#   scripts/status                 pass counts per layer and area (Markdown); appends a
+#                                  line per layer to tests/scores/status.tsv
+#   scripts/status --hitlist [-n N]
+#                                  also the failing cases and areas ranked by how often
+#                                  agents use what they test (research/corpus)
+#   scripts/status --no-append ... do not touch tests/scores/status.tsv
+#
+# Runs psh (the in-process engine) over every non-skip case; takes seconds. Commit the
+# status.tsv line with the change that moved the numbers.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+cargo build -q -p psh -p psh-spec
+exec scripts/timeout.sh 1800 cargo run -q -p psh-spec -- --status "$@"

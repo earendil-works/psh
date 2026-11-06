@@ -10,6 +10,7 @@ mod engine;
 mod golden;
 mod groups;
 mod helpers;
+mod json;
 mod normalize;
 mod oils;
 mod ratchet;
@@ -17,6 +18,7 @@ mod report;
 mod runner;
 mod sandbox;
 mod shapes;
+mod status;
 mod yaml;
 
 use std::collections::{BTreeMap, HashMap};
@@ -46,6 +48,10 @@ Engines:
 Modes:
   --record            record goldens with --shell (scripts/record-goldens does this)
   --list              list the selected cases with their group
+  --status            the scoreboard per layer and area (scripts/status); appends a
+                      line per layer to tests/scores/status.tsv (unless --no-append,
+                      filters or another shell)
+  --hitlist           with --status: failing cases ranked by corpus weight (-n N rows)
   --diff-goldens A B  compare two golden directories per case (determinism check)
   --record-shapes     record `bash -n` verdicts for tests/shapes/shapes.txt (L0) with
                       --shell into <goldens>/shapes/bash-n.txt
@@ -83,6 +89,10 @@ struct Options {
     keep: bool,
     diff_goldens: Option<(PathBuf, PathBuf)>,
     record_shapes: bool,
+    status: bool,
+    hitlist: bool,
+    rows: usize,
+    no_append: bool,
 }
 
 fn parse_args(args: Vec<String>) -> Result<Options, String> {
@@ -104,6 +114,10 @@ fn parse_args(args: Vec<String>) -> Result<Options, String> {
         keep: false,
         diff_goldens: None,
         record_shapes: false,
+        status: false,
+        hitlist: false,
+        rows: 40,
+        no_append: false,
     };
     let mut it = args.into_iter();
     while let Some(a) = it.next() {
@@ -136,6 +150,13 @@ fn parse_args(args: Vec<String>) -> Result<Options, String> {
             "--summary" => o.summary = Some(value("--summary")?.into()),
             "--keep" => o.keep = true,
             "--record-shapes" => o.record_shapes = true,
+            "--status" => o.status = true,
+            "--hitlist" => {
+                o.status = true;
+                o.hitlist = true;
+            }
+            "--no-append" => o.no_append = true,
+            "-n" => o.rows = value("-n")?.parse().map_err(|_| "-n needs a number")?,
             "--diff-goldens" => {
                 let a = value("--diff-goldens")?;
                 let b = it.next().ok_or("--diff-goldens needs two directories")?;
@@ -318,6 +339,19 @@ fn run(opts: Options) -> Result<ExitCode, String> {
             Err(e) => Err(e.clone()),
         };
         results.push(report::compare(it, golden, obs, engine.name()));
+    }
+
+    if opts.status {
+        print!("{}", status::render_status(&results, &items, &opts.layers));
+        if !opts.no_append && opts.filters.is_empty() && engine.name() == "psh" {
+            status::append_history(&root, &results, &items, &opts.layers)?;
+            println!("\n(appended to tests/scores/status.tsv)");
+        }
+        if opts.hitlist {
+            let weights = status::Weights::load(&root)?;
+            println!("\n{}", status::hitlist(&results, &weights, opts.rows));
+        }
+        return Ok(ExitCode::SUCCESS);
     }
 
     // Ratchets: per layer, over the cases this run covered. They describe psh; another

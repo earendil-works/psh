@@ -7,7 +7,6 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
 | 0002 | psh-spec runner, vendored cases, recorded goldens, ratchets, status | infra | .worktrees/infra |
-| 0012 | Guide check tool | shapes | .worktrees/shapes |
 | 0004 | Parser: psh-syntax from brush-parser, hand-written | parser | .worktrees/parser |
 | 0007A | Windows gate on the Parallels VM (part A of 0007) | windows | .worktrees/windows |
 
@@ -56,3 +55,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | --- | --- | --- |
 | 0001 | Workspace skeleton and the empty gate | 6ad6973 (infra) |
 | 0003 | Shape corpus | e16788b (shapes) |
+| 0012 | Guide check tool | 2983147 (shapes) |

@@ -67,6 +67,17 @@ Close the process-layer follow-ups from 0006 and the coordinator's queue.
 - oils/process-sub/5 and /7 under `-j 8` load (reported by infra): not reproduced in ~90
   loaded runs; need a diff when it recurs.
 
+### 2026-11-07 part 3a: signal dispositions in tests (D1304), the Terminated report (D1303)
+- Coordinator: `ignored_signals_and_umask_take_effect` failed in text's gate (its gate ran
+  with SIGINT ignored). Sweep: every test that spawns externals or psh expected default
+  dispositions. Fix at the source instead of per test: `UnixConfig::inherit_ignored`
+  (off by default, on in the psh binary), and psh-spec plus the standalone tests reset
+  the ignored asynchronous signals before starting anything. Verified with everything
+  run under `perl -e '$SIG{...}="IGNORE"…; exec'` for INT TERM HUP QUIT USR1 USR2 ALRM,
+  from a backgrounded job and under `nohup`: all pass. No change to timeout.sh needed.
+- D1303: the "Terminated" / "line N: PID Killed" report after a foreground simple
+  command; `wait`'s report pads the pid to 5 columns. L5 test.
+
 ## Follow-ups
 
 ## Result

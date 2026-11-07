@@ -50,6 +50,12 @@ pub struct UnixConfig {
     /// What happens to the run's leftovers (released background jobs and what
     /// externals left running) when the host is dropped.
     pub leftovers: Leftovers,
+    /// Signals the process ignores when the host is made stay ignored in externals, as
+    /// bash keeps the signals ignored on its entry (D1304). On for the standalone `psh`;
+    /// off by default: an embedder's own dispositions (a daemon started under `nohup`,
+    /// a test run as a background job) are not the shell's, and every signal then
+    /// starts at its default unless the script ignores it.
+    pub inherit_ignored: bool,
 }
 
 impl UnixConfig {
@@ -63,6 +69,7 @@ impl Default for UnixConfig {
             grace: UnixConfig::DEFAULT_GRACE,
             pid: None,
             leftovers: Leftovers::Kill,
+            inherit_ignored: false,
         }
     }
 }
@@ -106,7 +113,11 @@ impl UnixHost {
                 grace: cfg.grace,
                 placement: cfg.placement,
                 scopes: Mutex::new(Vec::new()),
-                ignored_at_start: spawn::ignored_now(),
+                ignored_at_start: if cfg.inherit_ignored {
+                    spawn::ignored_now()
+                } else {
+                    Default::default()
+                },
                 fork_only: Default::default(),
             }),
             pid: cfg.pid,

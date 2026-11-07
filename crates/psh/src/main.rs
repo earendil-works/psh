@@ -33,6 +33,8 @@ fn os_host() -> (Rc<dyn Host>, Stdio) {
     let host = UnixHost::new(UnixConfig {
         placement: Placement::Inherit,
         leftovers: Leftovers::Keep,
+        // bash's rule: what was ignored when the shell started stays ignored.
+        inherit_ignored: true,
         ..UnixConfig::default()
     });
     let stdio = |n| {
@@ -51,6 +53,8 @@ fn os_host() -> (Rc<dyn Host>, Stdio) {
     let host = WindowsHost::new(WindowsConfig {
         placement: Placement::Inherit,
         leftovers: Leftovers::Keep,
+        // bash's rule: what was ignored when the shell started stays ignored.
+        inherit_ignored: true,
         ..WindowsConfig::default()
     });
     let stdio = |n| {

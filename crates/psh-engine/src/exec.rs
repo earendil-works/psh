@@ -157,6 +157,24 @@ pub(crate) async fn check_failure(vp: &mut Vp, status: i32) -> R {
     Ok(status)
 }
 
+/// bash reports a foreground program a signal ended, other than INT and PIPE (D1303):
+/// TERM as `DESCRIPTION COMMAND`, the others as `NAME: line N: PID DESCRIPTION COMMAND`.
+async fn report_signal_death(vp: &mut Vp, code: &Rc<Code>, cmd: &Command, status: i32) {
+    let Some((sig, pid)) = vp.core.fg_signal.take() else {
+        return;
+    };
+    if status != 128 + sig || sig == crate::host::SIGINT || sig == crate::host::SIGPIPE {
+        return;
+    }
+    let text = String::from_utf8_lossy(&command_text(code, cmd)).into_owned();
+    let desc = crate::signals::describe(sig);
+    if sig == crate::host::SIGTERM {
+        vp.error_raw(format!("{desc:<27}{text}\n").as_bytes()).await;
+    } else {
+        vp.error(&format!("{pid:>5} {desc:<27}{text}")).await;
+    }
+}
+
 /// The DEBUG trap before a command, with `BASH_COMMAND` set to its text (D1283).
 async fn debug_trap(vp: &mut Vp, code: &Rc<Code>, cmd: &Command) -> Result<(), Unwind> {
     if vp.in_trap.is_some() || vp.traps.action(TrapKey::Debug).is_none_or(|a| a.is_empty()) {
@@ -364,6 +382,10 @@ fn run_command_with<'a>(
         }
         let mark = vp.subst_fds.len();
         let last_args = vp.last_args.len();
+        let simple = matches!(cmd.kind, CommandKind::Simple(_));
+        if simple {
+            vp.core.fg_signal.set(None);
+        }
         let result = match &cmd.kind {
             CommandKind::Simple(s) => run_simple(vp, code, cmd, s).await,
             CommandKind::Select(_) | CommandKind::Cond(_) | CommandKind::Coproc(_) => {
@@ -385,6 +407,9 @@ fn run_command_with<'a>(
             set_underscore(vp, last);
         }
         let status = result?;
+        if simple && check && !vp.in_subst {
+            Box::pin(report_signal_death(vp, code, cmd, status)).await;
+        }
         match after_command(vp, code, cmd, status, check) {
             Some(f) => f.await,
             None => Ok(status),
@@ -1409,6 +1434,11 @@ pub(crate) async fn run_external_with(
         Ok(st) => st,
         Err(sig) => return Ok(128 + sig),
     };
+    // For the report of a signal death (D1303).
+    vp.core.fg_signal.set(match st {
+        crate::host::ExitStatus::Signaled(sig) if !vp.in_subst => Some((sig, proc.pid())),
+        _ => None,
+    });
     if let Some(job) = &vp.job {
         job.ended(match st {
             crate::host::ExitStatus::Signaled(sig) => Some(sig),
@@ -1485,6 +1515,14 @@ struct ProcGuard {
 }
 
 impl ProcGuard {
+    fn pid(&self) -> u32 {
+        self.proc
+            .borrow()
+            .as_ref()
+            .and_then(|p| p.pid())
+            .unwrap_or(0)
+    }
+
     fn poll_wait(&mut self, cx: &mut std::task::Context<'_>) -> Poll<crate::host::ExitStatus> {
         match self.proc.borrow_mut().as_mut() {
             Some(p) => p.poll_wait(cx),
@@ -1835,6 +1873,8 @@ async fn subst(vp: &mut Vp, code: Rc<Code>, list: ListId) -> Result<(Vec<u8>, i3
     }
     // `set -x` shows one more `+` inside (D1285).
     sub.xtrace_level += 1;
+    // Its programs' signal deaths are not reported (D1303).
+    sub.in_subst = true;
     let (r, w) = pipe::pipe();
     sub.fds.set(1, Rc::new(FdObj::PipeWrite(w)));
     let join = spawn_sub(sub, code, Body::List(list));

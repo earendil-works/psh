@@ -127,6 +127,27 @@ pub(crate) fn restore_mask(old: libc::sigset_t) {
     unsafe { libc::pthread_sigmask(libc::SIG_SETMASK, &raw const old, std::ptr::null_mut()) };
 }
 
+/// Resets those of `sigs` the process ignores to their default disposition (Linux
+/// numbers): for a test runner or harness whose children must not depend on how it
+/// was started (a background job starts with SIGINT ignored, `nohup` ignores SIGHUP).
+/// Never SIGPIPE in a Rust program: its writes rely on EPIPE.
+pub fn reset_ignored(sigs: &[Signal]) {
+    for &sig in sigs {
+        if !is_ignored(sig) {
+            continue;
+        }
+        let Some(os) = super::signum::to_os(sig) else {
+            continue;
+        };
+        // SAFETY: sets a default disposition; no handler code is involved.
+        unsafe { libc::signal(os, libc::SIG_DFL) };
+    }
+}
+
+/// The asynchronous signals a test harness resets with [`reset_ignored`] (Linux
+/// numbers; not PIPE, KILL, STOP or the faults).
+pub const HARNESS_RESET: [Signal; 11] = [1, 2, 3, 10, 12, 14, 15, 24, 25, 26, 27];
+
 /// Whether the process ignores `sig` now.
 pub fn is_ignored(sig: Signal) -> bool {
     let Some(sig) = super::signum::to_os(sig) else {

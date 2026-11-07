@@ -26,6 +26,9 @@ pub(crate) struct Core {
     /// The signal whose default action ended the run (D1903): a standalone shell then
     /// dies by it.
     pub died_of: Cell<Option<i32>>,
+    /// The signal and pid of the external that just ended by a signal, for the report
+    /// after its command (D1303).
+    pub fg_signal: Cell<Option<(i32, u32)>>,
     /// The in-process utilities and their off switches (D1080).
     pub utilities: crate::util::UtilPolicy,
     /// `$RANDOM`'s state (shared by subshells, which bash reseeds; close enough).
@@ -170,6 +173,8 @@ pub(crate) struct Vp {
     /// that command's external starts, `exec_now` says so.
     pub exec_tail: Option<usize>,
     pub exec_now: bool,
+    /// A command substitution's vproc: its programs' signal deaths are not reported.
+    pub in_subst: bool,
     /// Function definitions; shared with subshells until one defines or unsets.
     pub funcs: Rc<HashMap<String, Rc<Func>>>,
     /// One frame per running function call: the variables its `local`s shadow.

@@ -230,6 +230,11 @@ fn main() -> ExitCode {
     {
         return ExitCode::from(status.clamp(0, 255) as u8);
     }
+    // Cases run with default signal dispositions however the runner was started (a
+    // background job ignores SIGINT, `nohup` SIGHUP): the shells under test keep what
+    // they inherit ignored, as bash does (D1304).
+    #[cfg(unix)]
+    psh_os::unix::signals::reset_ignored(&psh_os::unix::signals::HARNESS_RESET);
     let opts = match parse_args(std::env::args().skip(1).collect()) {
         Ok(o) => o,
         Err(e) if e.is_empty() => {

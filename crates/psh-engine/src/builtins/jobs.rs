@@ -24,7 +24,7 @@ async fn report(vp: &Vp, job: &Job) {
         return;
     }
     let desc = signals::describe(sig);
-    vp.error(&format!("{} {desc:<27}{}", job.pid(), job.text))
+    vp.error(&format!("{:>5} {desc:<27}{}", job.pid(), job.text))
         .await;
 }
 

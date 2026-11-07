@@ -1724,3 +1724,26 @@ in psh-os unix, std_host and the test host (in-memory symlinks, inode numbers, l
 counts; `MemFs::set_unsupported` plays a host without them); the Windows and JS hosts
 follow in their own issues. Reason: ARCH listed these as "to come with their features";
 copy (`cp`) stays a read/write loop over `open`, so no copy primitive is added.
+
+## D1303: The report of a foreground program a signal ended
+date: 2026-11-07 · by: procs · issue: 0030
+As bash prints it non-interactively: after a simple command whose external died of a
+signal other than INT and PIPE (status 128+n), TERM as `DESCRIPTION COMMAND`
+(`Terminated                 sh -c 'kill -TERM $$'`, the description padded to 27), every
+other signal as `NAME: line N: PID DESCRIPTION COMMAND` (pid right-aligned in 5). Not
+inside `$(…)`, not for pipeline stages or a job's own command (`wait` reports those, also
+with the pid in 5 columns now). Gaps: a pipeline whose last stage died (bash reports the
+whole pipeline) and a subshell that died (bash prints `( … )`) are not reported.
+
+## D1304: Signal dispositions the tests and the runner start from
+date: 2026-11-07 · by: procs · issue: 0030
+`UnixConfig::inherit_ignored` (default off; the standalone `psh` sets it): only then do
+signals the process ignored when the host was made stay ignored in externals (bash's
+rule for its own start). Embedded, the embedder's dispositions (a daemon under `nohup`, a
+test binary started as a background job, which ignores SIGINT) are not the shell's.
+psh-spec and the standalone tests reset the asynchronous signals they ignore to their
+defaults before running anything (`signals::reset_ignored(&HARNESS_RESET)`: HUP INT QUIT
+USR1 USR2 ALRM TERM XCPU XFSZ VTALRM PROF; never PIPE), so the psh binary they start and
+the cases' goldens see default dispositions however the gate was started. Checked: all
+psh-os, L5, standalone and psh-spec runs pass under a parent ignoring INT TERM HUP QUIT
+USR1 USR2 ALRM.

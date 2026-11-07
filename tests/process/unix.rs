@@ -327,3 +327,21 @@ fn a_file_without_an_interpreter_line_runs_in_psh() {
     );
     assert_eq!(r.stdout, "./s a x=2 y=unset\nnof\nst=4\n", "{r:?}");
 }
+
+#[test]
+fn a_foreground_programs_signal_death_is_reported() {
+    // As bash prints it non-interactively (D1303): TERM bare, the others with the line
+    // and pid; INT and PIPE not at all; nothing for `$(…)`.
+    let r = run(
+        "sh -c 'kill -TERM $$'; sh -c 'kill -9 $$'; sh -c 'kill -INT $$'; x=$(sh -c 'kill -HUP $$'); echo after",
+    );
+    assert_eq!(r.stdout, "after\n", "{r:?}");
+    let lines: Vec<&str> = r.stderr.lines().collect();
+    assert_eq!(lines.len(), 2, "{r:?}");
+    assert_eq!(lines[0], "Terminated                 sh -c 'kill -TERM $$'");
+    assert!(lines[1].starts_with("psh: line 1: "), "{r:?}");
+    assert!(
+        lines[1].ends_with(" Killed                     sh -c 'kill -9 $$'"),
+        "{r:?}"
+    );
+}

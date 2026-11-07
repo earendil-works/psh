@@ -18,6 +18,13 @@ const SIGINT: i32 = 2;
 const SIGKILL: i32 = 9;
 const SIGTERM: i32 = 15;
 
+/// psh keeps the signals ignored when it starts ignored, as bash does: the tests start it
+/// with default dispositions, however the test binary was started (D1304).
+fn reset_signals() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| psh_os::unix::signals::reset_ignored(&psh_os::unix::signals::HARNESS_RESET));
+}
+
 struct Case {
     dir: PathBuf,
     child: Child,
@@ -30,6 +37,7 @@ impl Case {
     }
 
     fn start_with(cmd: &mut Command) -> Case {
+        reset_signals();
         use std::sync::atomic::{AtomicU32, Ordering};
         static N: AtomicU32 = AtomicU32::new(0);
         let dir = std::env::temp_dir().canonicalize().unwrap().join(format!(
@@ -138,13 +146,6 @@ fn term_cancels_a_pipeline_and_psh_dies_by_term() {
 #[test]
 fn int_and_hup_too() {
     for sig in [SIGINT, SIGHUP] {
-        // A signal ignored where the tests run (a background job of a shell starts with
-        // SIGINT ignored, `nohup` ignores SIGHUP) stays ignored in psh, as in bash:
-        // nothing to test for it here.
-        if psh_os::unix::signals::is_ignored(sig) {
-            eprintln!("skipping signal {sig}: ignored in the test process");
-            continue;
-        }
         let mut c = Case::start(&sleeper("a", false));
         let a = c.pid("a");
         c.signal(sig);
@@ -216,6 +217,7 @@ fn what_an_external_left_dies_with_psh_even_if_only_psh_is_signalled() {
 
 /// Runs `psh -c script` to its end with stdout captured.
 fn output(script: &str) -> (ExitStatus, String) {
+    reset_signals();
     let mut child = Command::new(env!("CARGO_BIN_EXE_psh"))
         .args(["-c", script])
         .stdin(Stdio::null())

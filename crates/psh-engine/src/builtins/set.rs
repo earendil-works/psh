@@ -493,6 +493,8 @@ mod tests {
             (127, "d\n".into())
         );
         assert_eq!(out("set -eu; echo $x"), (1, String::new()));
+        // Only the shell itself ends with 127 under -c; a subshell with 1.
+        assert_eq!(out("(set -u; echo $x); echo $?"), (0, "1\n".into()));
         assert!(out("set -a; x=1; env").1.lines().any(|l| l == "x=1"));
         assert!(!out("x=1; env").1.lines().any(|l| l == "x=1"));
     }

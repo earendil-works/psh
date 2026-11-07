@@ -137,6 +137,8 @@ and `timeout` approximate and output order racy. The porting saving (keeping uut
   - L4: `tests/utils/` with 65 cases for batch A, GNU and BSD goldens (both
     deterministic over two recordings), `## expect:` per case; psh passes all 65.
   - Docs: ARCH "Interface", TESTING (L4 row, goldens), decisions D1083–D1084.
+- 2026-11-07: `exec NAME` into a utility runs it, then ends the (sub)shell with its status
+  (coordinator's call; `exec -a`/`-c` do not apply to utilities).
 - 2026-11-07, after rebasing onto main (0026, 0028, 0029): no regression; ratchets
   updated (oils −49, brush −13, agent −17 entries). In wasm, `oils/pipeline/22` needed
   `/dev/urandom`: MemHost has `/dev/random` and `/dev/urandom` now; `brush/.../set/20`
@@ -155,7 +157,6 @@ and `timeout` approximate and output order racy. The porting saving (keeping uut
   (0013, rg) adds `SyncCtx` and the worker-thread/inline runner, with the wasm input bound.
 - Move `crates/psh/src/{json,parse_json,classify_json}.rs` into a crate shared by the psh
   binary and psh-wasm (now a `#[path]` include, 0011).
-- `exec NAME` into a utility (engine agent's call).
 - guide: utilities.md.
 
 ## Result

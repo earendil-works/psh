@@ -629,6 +629,12 @@ mod tests {
             "upper is a psh utility\nupper\nbuiltin\n"
         );
         assert_eq!(run_with("command upper", on()).1, "ABC\nDEF\n");
+        // `exec` into a utility: it runs, then the shell ends with its status.
+        assert_eq!(
+            run_with("exec upper; echo not reached", on()),
+            (0, "ABC\nDEF\n".into(), String::new())
+        );
+        assert_eq!(run_with("(exec says); echo $?", on()).1, "says 1 W=\n0\n");
         // A wrapper runs utilities, standalone builtins and programs, not functions.
         assert_eq!(run_with("wrap says", on()).1, "says 1 W=1\n");
         assert_eq!(

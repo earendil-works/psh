@@ -88,6 +88,14 @@ fn specs_match_the_classifier() {
 const OWN_PARSER: &[&str] = &["rg"];
 
 #[test]
+fn force_names_from_the_variable() {
+    let all = crate::force_names(b"all");
+    assert!(all.contains(&b"awk".to_vec()) && all.contains(&b"timeout".to_vec()));
+    assert!(!all.contains(&b"cat".to_vec()));
+    assert_eq!(crate::force_names(b"awk,,sed"), vec![b"awk".to_vec(), b"sed".to_vec()]);
+}
+
+#[test]
 fn every_entry_has_a_spec() {
     for e in crate::REGISTRY {
         assert!(

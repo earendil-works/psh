@@ -513,11 +513,17 @@ impl Engine for InProcess {
         let out_thread = std::thread::spawn(move || read_limited(out_r));
         let err_thread = std::thread::spawn(move || read_limited(err_r));
 
-        let env: Vec<(Vec<u8>, Vec<u8>)> = req
+        let mut env: Vec<(Vec<u8>, Vec<u8>)> = req
             .env
             .iter()
             .map(|(k, v)| (os_bytes(k), os_bytes(v)))
             .collect();
+        // As the psh binary does (D1192).
+        let force = env
+            .iter()
+            .position(|(k, _)| k == psh_utils::FORCE_VAR.as_bytes())
+            .map(|i| psh_utils::force_names(&env.remove(i).1))
+            .unwrap_or_default();
         let cwd = engine_cwd(req.cwd);
         let deadline = Instant::now() + req.timeout;
         let out_file = file_from_writer(out_w);
@@ -529,6 +535,7 @@ impl Engine for InProcess {
             let noting = std::rc::Rc::new(Noting::new(host));
             let mut cfg = ShellConfig::new(noting.clone());
             cfg.utilities = psh_utils::policy(false);
+            cfg.utilities.force_names = force;
             cfg.env = env;
             cfg.cwd = cwd;
             cfg.stdin = Some(file(stdin_file));

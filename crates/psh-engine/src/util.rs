@@ -69,6 +69,9 @@ pub struct UtilPolicy {
     pub off_destructive: bool,
     /// These names run the real program (or are not found).
     pub off_names: Vec<Vec<u8>>,
+    /// These names run the utility even in `PathFallback` and `WindowsShadow` mode,
+    /// when `PATH` has the program (D1192: the L4 cases test psh's utilities).
+    pub force_names: Vec<Vec<u8>>,
     /// There are no real programs (wasm, a sandbox host): `PathFallback` and
     /// `WindowsShadow` utilities always run.
     pub sandbox: bool,
@@ -98,7 +101,8 @@ pub(crate) async fn lookup(vp: &Vp, name: &[u8]) -> Option<&'static UtilEntry> {
         Mode::WindowsShadow => !cfg!(windows),
     };
     if fallback
-        && !vp.core.utilities.sandbox
+        && !policy.sandbox
+        && !policy.force_names.iter().any(|n| n == name)
         && crate::builtins::hash::search(vp, name, None)
             .await
             .is_some()
@@ -963,6 +967,12 @@ mod tests {
             run_with("says a b", on()),
             (0, "says 3 W=\n".into(), "says: to stderr\n".into())
         );
+        // A forced name runs the utility in F mode.
+        let forced = UtilPolicy {
+            force_names: vec![b"cat".to_vec()],
+            ..on()
+        };
+        assert_eq!(run_with("cat", forced).1, "cat 1 W=\n");
         // A sandbox treats F as S.
         let sandbox = UtilPolicy {
             sandbox: true,

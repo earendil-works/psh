@@ -216,8 +216,14 @@ impl Engine for WasmEngine {
         f.u32(u32::from(dash_c));
         f.u32(u32::from(stdin.is_some()));
         f.bytes(stdin.as_deref().unwrap_or_default());
-        f.u32(req.env.len() as u32);
-        for (k, v) in req.env {
+        // A sandbox runs every utility already; the variable is psh's (D1192).
+        let env: Vec<_> = req
+            .env
+            .iter()
+            .filter(|(k, _)| k != psh_utils::FORCE_VAR)
+            .collect();
+        f.u32(env.len() as u32);
+        for (k, v) in env {
             f.bytes(k.as_bytes());
             f.bytes(v.as_bytes());
         }

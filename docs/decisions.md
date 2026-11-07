@@ -2292,3 +2292,16 @@ one). `env -C DIR` checks the directory (`cannot change directory to 'DIR'`, 125
 runs the command there: `SpawnEnv::cwd`, set on the command's subshell. `env -S` splits
 by GNU's documented rules and its words may be options again. `which` uses two new
 `UtilCtx` calls: `is_utility(name)` and `search_path(name, PATH)`.
+## D1192: PSH_UTILS_FORCE: the L4 cases test psh's F/W utilities
+date: 2026-11-08 · by: text · issue: 0019 (coordinator-approved)
+`UtilPolicy::force_names` lists names whose utility runs in-process even in
+`PathFallback` and `WindowsShadow` mode when `PATH` has the program (the inverse of
+`off_names`). The psh binary and psh-spec's in-process engine set it from the
+environment variable `PSH_UTILS_FORCE` (`psh_utils::FORCE_VAR`): a comma-separated list
+of names, or `all` for every registered F/W utility (`psh_utils::force_names`); they
+take the variable out of the shell's environment, so commands never see it (the wasm
+engine drops it too: a sandbox runs every utility anyway). psh-spec sets
+`PSH_UTILS_FORCE=all` for the utils layer only, and only when the shell under test is
+psh (a recording bash would export it). So every utility's L4 cases test psh's
+implementation, not the host's program, whatever its mode. Other layers are unchanged.
+Reason: in F mode the spec runner's PATH (/usr/bin/awk) would answer the awk cases.

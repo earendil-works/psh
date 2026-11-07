@@ -172,6 +172,16 @@ fn main() -> ExitCode {
         cfg.env = std::env::vars_os()
             .map(|(k, v)| (os_bytes(k), os_bytes(v)))
             .collect();
+        // PSH_UTILS_FORCE (D1192): utilities that run in-process even in F/W mode; the
+        // variable is psh's, so it is not passed on.
+        if let Some(i) = cfg
+            .env
+            .iter()
+            .position(|(k, _)| k == psh_utils::FORCE_VAR.as_bytes())
+        {
+            let (_, v) = cfg.env.remove(i);
+            cfg.utilities.force_names = psh_utils::force_names(&v);
+        }
         cfg.cwd = std::env::current_dir()
             .map(|p| os_bytes(p.into_os_string()))
             .unwrap_or_else(|_| b"/".to_vec());

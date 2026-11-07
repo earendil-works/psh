@@ -168,8 +168,17 @@ impl Runner<'_> {
                 env.push(("LC_ALL".into(), "C".into()));
                 env.push(("PS1".into(), "test$ ".into()));
             }
-            Layer::Agent | Layer::Utils => {
+            Layer::Agent => {
                 env.push(("LC_ALL".into(), "C.UTF-8".into()));
+            }
+            Layer::Utils => {
+                env.push(("LC_ALL".into(), "C.UTF-8".into()));
+                // The cases test psh's utilities, also those that defer to a program on
+                // PATH (D1192). Only psh reads (and drops) it; a recording shell would
+                // pass it on.
+                if self.engine.name() == "psh" {
+                    env.push((psh_utils::FORCE_VAR.into(), "all".into()));
+                }
             }
         }
         for (k, v) in &case.env {

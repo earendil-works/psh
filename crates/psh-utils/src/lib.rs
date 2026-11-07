@@ -360,5 +360,26 @@ pub fn policy(sandbox: bool) -> UtilPolicy {
     }
 }
 
+/// The environment variable that forces utilities to run in-process in F and W mode
+/// (D1192): a comma-separated list of names, or `all` for every such utility. The psh
+/// binary and psh-spec read it and take it out of the environment.
+pub const FORCE_VAR: &str = "PSH_UTILS_FORCE";
+
+/// The names `PSH_UTILS_FORCE`'s value forces.
+pub fn force_names(value: &[u8]) -> Vec<Vec<u8>> {
+    if value == b"all" {
+        return REGISTRY
+            .iter()
+            .filter(|e| e.mode != Mode::Always)
+            .flat_map(|e| e.names.iter().map(|n| n.as_bytes().to_vec()))
+            .collect();
+    }
+    value
+        .split(|&b| b == b',')
+        .filter(|n| !n.is_empty())
+        .map(<[u8]>::to_vec)
+        .collect()
+}
+
 #[cfg(test)]
 mod tests;

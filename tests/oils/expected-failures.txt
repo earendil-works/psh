@@ -132,6 +132,7 @@ oils/builtin-type-bash/8: S-mode psh utility shadows the PATH file (D1083, D1151
 oils/builtin-type-bash/13
 oils/builtin-type-bash/14
 oils/builtin-type-bash/16: S-mode psh utility shadows the PATH file (D1083, D1151); type reports what runs
+oils/builtin-type-bash/24: date is an S-mode psh utility (0020); type -a reports it before the PATH files
 oils/builtin-type-bash/21
 oils/builtin-type-bash/22
 oils/builtin-type-bash/30

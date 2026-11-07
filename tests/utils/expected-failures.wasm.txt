@@ -3,3 +3,6 @@
 # that need external programs are not listed. psh-spec --update-ratchet removes
 # cases that pass; never add a regression.
 utils/rm/basic/13: the JS MemHost has no permission checks (a read-only directory's entries can be removed)
+utils/date/basic/0: wasm has no zone files: TZ=Region/City falls back to the host's offset, %Z to the number
+utils/date/basic/8: wasm has no zone files: TZ=Region/City falls back to the host's offset, %Z to the number
+utils/date/basic/10: wasm has no zone files: TZ=Region/City falls back to the host's offset, %Z to the number

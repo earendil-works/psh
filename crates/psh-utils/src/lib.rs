@@ -29,20 +29,20 @@ mod realpath;
 mod rmdir;
 mod touch;
 
+mod chmod;
 mod comm;
+mod cp;
 mod cut;
+mod ln;
+mod mv;
 mod nl;
 mod paste;
+mod rm;
 mod seq;
 mod sort;
 mod tee;
 mod tr;
 mod uniq;
-mod chmod;
-mod cp;
-mod ln;
-mod mv;
-mod rm;
 
 use psh_engine::util::{Mode, UtilEntry, UtilPolicy};
 

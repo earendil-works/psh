@@ -1,5 +1,5 @@
 //! Arithmetic over the shell's variables: psh-syntax's evaluator (`eval_arith`) with
-//! the vproc as its environment. Arrays come later; `x[0]` is the scalar `x`.
+//! the vproc as its environment, arrays included.
 
 use psh_syntax::{ArithEnv, ArithIndex, EvalError, eval_arith};
 
@@ -12,8 +12,9 @@ struct Env<'a> {
 impl ArithEnv for Env<'_> {
     type Error = String;
 
-    fn is_assoc(&mut self, _name: &[u8]) -> bool {
-        false
+    fn is_assoc(&mut self, name: &[u8]) -> bool {
+        let name = String::from_utf8_lossy(name);
+        self.vp.var_ref(&name).is_some_and(|v| v.is_assoc())
     }
 
     fn get(
@@ -21,11 +22,12 @@ impl ArithEnv for Env<'_> {
         name: &[u8],
         index: Option<ArithIndex<'_>>,
     ) -> Result<Option<Vec<u8>>, String> {
-        if !matches!(index, None | Some(ArithIndex::Num(0))) {
-            return Ok(None);
+        let name = String::from_utf8_lossy(name).into_owned();
+        match index {
+            None => Ok(self.vp.var(&name).map(<[u8]>::to_vec)),
+            Some(ArithIndex::Key(k)) => self.vp.get_elem(&name, k),
+            Some(ArithIndex::Num(i)) => self.vp.get_elem(&name, i.to_string().as_bytes()),
         }
-        let name = String::from_utf8_lossy(name);
-        Ok(self.vp.var(&name).map(<[u8]>::to_vec))
     }
 
     fn set(
@@ -35,14 +37,15 @@ impl ArithEnv for Env<'_> {
         value: i64,
     ) -> Result<(), String> {
         let name = String::from_utf8_lossy(name).into_owned();
-        if !matches!(index, None | Some(ArithIndex::Num(0))) {
-            return Err(format!("{name}: arrays are not supported yet"));
+        let v = value.to_string().into_bytes();
+        match index {
+            None => self.vp.assign(&name, v),
+            Some(ArithIndex::Key(k)) => self.vp.assign_elem(&name, k, v, false),
+            Some(ArithIndex::Num(i)) => {
+                self.vp
+                    .assign_elem(&name, i.to_string().as_bytes(), v, false)
+            }
         }
-        if self.vp.vars.get(&name).is_some_and(|v| v.readonly) {
-            return Err(format!("{name}: readonly variable"));
-        }
-        self.vp.set_var(&name, value.to_string().into_bytes());
-        Ok(())
     }
 }
 

@@ -494,7 +494,7 @@ async fn call_function(
     vp.frames.push(frame);
     for (n, v) in assigns {
         let var = vp.vars.entry(&n);
-        var.value = Some(v);
+        var.set(v);
         var.exported = true;
     }
     let r = run_command(vp, &f.code, f.body).await;
@@ -531,54 +531,64 @@ async fn prepare_simple(
         .words
         .first()
         .and_then(|w| psh_syntax::literal_text(&code.ast, w))
-        .is_some_and(|t| builtins::is_declaration(t.as_bytes()));
-    let fields = if decl {
-        Box::pin(expand::expand_decl_words(vp, code, &s.words)).await?
+        .and_then(|t| builtins::declare::Which::from_name(t.as_bytes()));
+    let mut decl_args = None;
+    let (argv, mut subst_status) = if decl.is_some() {
+        let (name, args, st) = Box::pin(expand::expand_decl_args(vp, code, &s.words)).await?;
+        decl_args = Some(args);
+        (vec![name], st)
     } else {
-        Box::pin(expand::expand_words(vp, code, &s.words)).await?
+        let fields = Box::pin(expand::expand_words(vp, code, &s.words)).await?;
+        let st = fields.subst_status;
+        (
+            fields.out.into_iter().map(|f| f.text).collect::<Vec<_>>(),
+            st,
+        )
     };
-    let mut subst_status = fields.subst_status;
-    let argv: Vec<Vec<u8>> = fields.out.into_iter().map(|f| f.text).collect();
 
     // Assignments, expanded after the words.
     let mut assigns: Vec<(String, Vec<u8>)> = Vec::with_capacity(s.assigns.len());
     for a in &s.assigns {
         let name = code.ast.text(a.name).to_string();
-        if a.index.is_some() {
-            return expand::unsupported(vp, "array assignment")
-                .await
-                .map(Prepared::Done);
-        }
-        let value = match &a.value {
-            AssignValue::Scalar(w) => {
+        let r = match (&a.index, &a.value) {
+            (None, AssignValue::Scalar(w)) => {
                 let (v, st) = Box::pin(expand::assign_value(vp, code, w)).await?;
-                if st.is_some() {
-                    subst_status = st;
+                subst_status = st.or(subst_status);
+                if argv.is_empty() {
+                    // Assigned at once: later assignments see earlier ones (`a=1 b=$a`).
+                    let target = vp.resolve(&name).into_owned();
+                    vp.prepare_value(&target, v, a.append)
+                        .map(|v| vp.vars.entry(&target).set(v))
+                } else {
+                    let v = if a.append {
+                        let mut old = vp.var(&name).map(<[u8]>::to_vec).unwrap_or_default();
+                        old.extend_from_slice(&v);
+                        old
+                    } else {
+                        v
+                    };
+                    assigns.push((name, v));
+                    Ok(())
                 }
-                v
             }
-            AssignValue::Array(_) => {
-                return expand::unsupported(vp, "array assignment")
-                    .await
-                    .map(Prepared::Done);
+            (Some(idx), AssignValue::Scalar(w)) => {
+                let (sub, st1) = Box::pin(expand::expand_single(vp, code, idx, Ctx::Word)).await?;
+                let (v, st2) = Box::pin(expand::assign_value(vp, code, w)).await?;
+                subst_status = st2.or(st1).or(subst_status);
+                vp.assign_elem(&name, &sub, v, a.append)
+            }
+            (None, AssignValue::Array(lit)) => {
+                let (items, st) = Box::pin(expand::expand_array_lit(vp, code, lit)).await?;
+                subst_status = st.or(subst_status);
+                vp.assign_array(&name, items, a.append)
+            }
+            (Some(_), AssignValue::Array(_)) => {
+                Err(format!("{name}: cannot assign list to array member"))
             }
         };
-        let value = if a.append {
-            let mut old = vp.var(&name).map(<[u8]>::to_vec).unwrap_or_default();
-            old.extend_from_slice(&value);
-            old
-        } else {
-            value
-        };
-        if argv.is_empty() {
-            // Assigned at once: later assignments see earlier ones (`a=1 b=$a`).
-            if vp.vars.get(&name).is_some_and(|v| v.readonly) {
-                vp.error(&format!("{name}: readonly variable")).await;
-                return Err(Unwind::Abort(1));
-            }
-            vp.set_var(&name, value);
-        } else {
-            assigns.push((name, value));
+        if let Err(msg) = r {
+            vp.error(&msg).await;
+            return Err(Unwind::Abort(1));
         }
     }
 
@@ -592,12 +602,23 @@ async fn prepare_simple(
         vp.fds = saved;
         return Ok(Prepared::Done(if ok? { status } else { 1 }));
     }
+    if let (Some(which), Some(args)) = (decl, decl_args)
+        && !vp.funcs.contains_key(&*String::from_utf8_lossy(&argv[0]))
+    {
+        return Ok(Prepared::Decl(which, args, assigns));
+    }
     Ok(Prepared::Run(argv, assigns))
 }
 
 enum Prepared {
     Done(i32),
     Run(Vec<Vec<u8>>, Vec<(String, Vec<u8>)>),
+    /// A declaration builtin with its arguments (D1262).
+    Decl(
+        builtins::declare::Which,
+        Vec<builtins::declare::DeclArg>,
+        Vec<(String, Vec<u8>)>,
+    ),
 }
 
 fn run_simple<'a>(
@@ -611,6 +632,21 @@ fn run_simple<'a>(
         let (argv, assigns) = match Box::pin(prepare_simple(vp, code, cmd, s)).await? {
             Prepared::Done(status) => return Ok(status),
             Prepared::Run(argv, assigns) => (argv, assigns),
+            Prepared::Decl(which, args, assigns) => {
+                for (n, v) in assigns {
+                    vp.set_var(&n, v);
+                }
+                let saved = vp.fds.clone();
+                if !cmd.redirects.is_empty()
+                    && !Box::pin(apply_redirects(vp, code, &cmd.redirects)).await?
+                {
+                    vp.fds = saved;
+                    return Ok(1);
+                }
+                let r = Box::pin(builtins::declare::run(vp, which, args)).await;
+                vp.fds = saved;
+                return r;
+            }
         };
         if cmd.redirects.is_empty() {
             return run_argv(vp, argv, assigns).await;
@@ -678,7 +714,7 @@ async fn run_builtin(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec<
             .collect();
         for (n, v) in assigns {
             let var = vp.vars.entry(&n);
-            var.value = Some(v);
+            var.set(v);
             var.exported = true;
         }
         let r = (b.run)(vp, &argv).await;

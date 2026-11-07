@@ -191,9 +191,7 @@ async fn unary(vp: &Vp, op: &[u8], arg: &[u8]) -> T {
         b'z' => return Ok(arg.is_empty()),
         b'n' => return Ok(!arg.is_empty()),
         b'v' => {
-            return Ok(std::str::from_utf8(arg)
-                .ok()
-                .is_some_and(|n| vp.var(n).is_some()));
+            return Ok(std::str::from_utf8(arg).ok().is_some_and(|n| vp.is_set(n)));
         }
         b'o' | b'R' => return Ok(false),
         b't' => {

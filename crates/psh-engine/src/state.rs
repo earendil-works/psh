@@ -90,42 +90,25 @@ impl Unwind {
 
 pub(crate) type R = Result<i32, Unwind>;
 
-#[derive(Clone, Debug, Default)]
-pub(crate) struct Var {
-    /// `None`: declared (`export x`) but without a value.
-    pub value: Option<Vec<u8>>,
-    pub exported: bool,
-    pub readonly: bool,
-}
+pub(crate) use crate::vars::{Case, Value, Var, Vars};
 
-#[derive(Clone, Default)]
-pub(crate) struct Vars {
-    map: HashMap<String, Var>,
-}
-
-impl Vars {
-    pub(crate) fn get(&self, name: &str) -> Option<&Var> {
-        self.map.get(name)
-    }
-
-    pub(crate) fn value(&self, name: &str) -> Option<&[u8]> {
-        self.map.get(name).and_then(|v| v.value.as_deref())
-    }
-
-    pub(crate) fn entry(&mut self, name: &str) -> &mut Var {
-        self.map.entry(name.to_string()).or_default()
-    }
-
-    pub(crate) fn remove(&mut self, name: &str) -> Option<Var> {
-        self.map.remove(name)
-    }
-
-    pub(crate) fn insert(&mut self, name: &str, var: Var) {
-        self.map.insert(name.to_string(), var);
-    }
-
-    pub(crate) fn iter(&self) -> impl Iterator<Item = (&String, &Var)> {
-        self.map.iter()
+/// `declare -l` / `-u` conversion.
+pub(crate) fn apply_case(case: Case, value: Vec<u8>) -> Vec<u8> {
+    match case {
+        Case::None => value,
+        Case::Lower | Case::Upper => match String::from_utf8(value) {
+            Ok(s) if case == Case::Lower => s.to_lowercase().into_bytes(),
+            Ok(s) => s.to_uppercase().into_bytes(),
+            Err(e) => {
+                let mut v = e.into_bytes();
+                if case == Case::Lower {
+                    v.make_ascii_lowercase();
+                } else {
+                    v.make_ascii_uppercase();
+                }
+                v
+            }
+        },
     }
 }
 
@@ -220,12 +203,121 @@ impl Vp {
         self.fds.get(n).cloned()
     }
 
-    pub(crate) fn var(&self, name: &str) -> Option<&[u8]> {
-        self.vars.value(name)
+    /// The variable a name refers to, following namerefs (`declare -n`); at most a few
+    /// levels, as bash (a loop resolves to the last name seen).
+    pub(crate) fn resolve<'n>(&self, name: &'n str) -> std::borrow::Cow<'n, str> {
+        let mut cur = std::borrow::Cow::Borrowed(name);
+        for _ in 0..8 {
+            match self.vars.get(&cur) {
+                Some(v) if v.nameref => match v.get() {
+                    Some(t) if !t.is_empty() => {
+                        cur = std::borrow::Cow::Owned(String::from_utf8_lossy(t).into_owned());
+                    }
+                    _ => break,
+                },
+                _ => break,
+            }
+        }
+        cur
     }
 
+    /// The scalar value of a variable (element 0 of an array), following namerefs.
+    pub(crate) fn var(&self, name: &str) -> Option<&[u8]> {
+        let name = self.resolve(name);
+        self.vars.value(&name)
+    }
+
+    /// The variable itself, following namerefs.
+    pub(crate) fn var_ref(&self, name: &str) -> Option<&Var> {
+        let name = self.resolve(name);
+        self.vars.get(&name)
+    }
+
+    /// Whether a variable has a value (`test -v`): a set scalar, or element 0 / any
+    /// element of an array (bash: `-v a` is element 0).
+    pub(crate) fn is_set(&self, name: &str) -> bool {
+        // `a[sub]`: an element; numeric subscripts only for indexed arrays.
+        if let Some(open) = name.find('[')
+            && name.ends_with(']')
+        {
+            let base = self.resolve(&name[..open]).into_owned();
+            let sub = &name[open + 1..name.len() - 1];
+            return match self.vars.get(&base).map(|v| &v.value) {
+                Some(Value::Assoc(a)) => match sub {
+                    "@" | "*" => a.len() > 0,
+                    k => a.get(k.as_bytes()).is_some(),
+                },
+                Some(Value::Indexed(m)) => match sub {
+                    "@" | "*" => !m.is_empty(),
+                    k => k.trim().parse::<i64>().ok().is_some_and(|i| {
+                        let i = if i < 0 {
+                            m.keys().next_back().map_or(-1, |mx| mx + 1 + i)
+                        } else {
+                            i
+                        };
+                        m.contains_key(&i)
+                    }),
+                },
+                Some(Value::Str(_)) => matches!(sub, "0" | "@" | "*"),
+                _ => false,
+            };
+        }
+        self.var(name).is_some()
+    }
+
+    /// Sets the scalar value (or element 0) without any checks: for the shell's own
+    /// variables (`OPTIND`, `PWD`, …). Assignments a script makes go through `assign`.
     pub(crate) fn set_var(&mut self, name: &str, value: Vec<u8>) {
-        self.vars.entry(name).value = Some(value);
+        let name = self.resolve(name).into_owned();
+        self.vars.entry(&name).set(value);
+    }
+
+    /// An assignment `name=value`: readonly check, `-i` arithmetic, `-l`/`-u` case,
+    /// namerefs. The error is bash's message without the `line N:` prefix.
+    pub(crate) fn assign(&mut self, name: &str, value: Vec<u8>) -> Result<(), String> {
+        let name = self.resolve(name).into_owned();
+        let value = self.prepare_value(&name, value, false)?;
+        self.vars.entry(&name).set(value);
+        Ok(())
+    }
+
+    /// Applies the target's attributes to a value about to be assigned (`append`:
+    /// `+=`, which for `-i` adds).
+    pub(crate) fn prepare_value(
+        &mut self,
+        name: &str,
+        value: Vec<u8>,
+        append: bool,
+    ) -> Result<Vec<u8>, String> {
+        let (readonly, integer, case) = match self.vars.get(name) {
+            Some(v) => (v.readonly, v.integer, v.case),
+            None => (false, false, Case::None),
+        };
+        if readonly {
+            return Err(format!("{name}: readonly variable"));
+        }
+        let mut value = value;
+        if integer {
+            let mut n = crate::arith::eval(self, &value)?;
+            if append {
+                let old = self
+                    .vars
+                    .value(name)
+                    .map(<[u8]>::to_vec)
+                    .unwrap_or_default();
+                n = n.wrapping_add(crate::arith::eval(self, &old)?);
+            }
+            value = n.to_string().into_bytes();
+        } else if append {
+            let mut old = self
+                .vars
+                .value(name)
+                .map(<[u8]>::to_vec)
+                .unwrap_or_default();
+            old.extend_from_slice(&value);
+            value = old;
+        }
+        Ok(apply_case(case, value))
     }
 
     /// Whether the locale is UTF-8 (`LC_ALL`, `LC_CTYPE`, `LANG`, first set wins).
@@ -247,8 +339,9 @@ impl Vp {
     pub(crate) fn env(&self, extra: &[(String, Vec<u8>)]) -> Vec<(Vec<u8>, Vec<u8>)> {
         let mut env: Vec<(Vec<u8>, Vec<u8>)> = self.foreign_env.as_ref().clone();
         for (name, var) in self.vars.iter() {
+            // Arrays are not exported (bash).
             if var.exported
-                && let Some(v) = &var.value
+                && let Value::Str(v) = &var.value
                 && !extra.iter().any(|(n, _)| n == name)
             {
                 env.push((name.as_bytes().to_vec(), v.clone()));

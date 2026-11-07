@@ -7,6 +7,7 @@ mod command;
 mod core_tests;
 mod eval;
 pub(crate) mod hash;
+pub(crate) mod declare;
 mod printf;
 mod read;
 mod test;
@@ -45,8 +46,9 @@ pub(crate) fn find(name: &[u8]) -> Option<Builtin> {
         b"printf" => (builtin!(printf::printf), false),
         b"cd" => (builtin!(cd), false),
         b"pwd" => (builtin!(pwd), false),
-        b"export" => (builtin!(export), true),
-        b"readonly" => (builtin!(readonly), true),
+        b"export" => (builtin!(declare_words), true),
+        b"readonly" => (builtin!(declare_words), true),
+        b"declare" | b"typeset" => (builtin!(declare_words), false),
         b"unset" => (builtin!(unset), true),
         b"alias" => (builtin!(alias::alias), false),
         b"unalias" => (builtin!(alias::unalias), false),
@@ -56,7 +58,7 @@ pub(crate) fn find(name: &[u8]) -> Option<Builtin> {
         b"return" => (builtin!(return_), true),
         b"break" => (builtin!(break_), true),
         b"continue" => (builtin!(continue_), true),
-        b"local" => (builtin!(local), false),
+        b"local" => (builtin!(declare_words), false),
         b"let" => (builtin!(let_), false),
         b"getopts" => (builtin!(getopts), false),
         b"test" => (builtin!(test::test), false),
@@ -227,6 +229,18 @@ fn s(b: &[u8]) -> std::borrow::Cow<'_, str> {
     String::from_utf8_lossy(b)
 }
 
+/// A declaration builtin called with plain words (the interpreter passes expanded
+/// assignments to `declare::run` directly).
+async fn declare_words(vp: &mut Vp, args: &[Vec<u8>]) -> R {
+    let which = declare::Which::from_name(&args[0]).unwrap_or(declare::Which::Declare);
+    let args = args[1..]
+        .iter()
+        .cloned()
+        .map(declare::DeclArg::from_word)
+        .collect();
+    declare::run(vp, which, args).await
+}
+
 async fn colon(_vp: &mut Vp, _args: &[Vec<u8>]) -> R {
     Ok(0)
 }
@@ -380,128 +394,9 @@ async fn pwd(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     out(vp, "pwd", &dir).await
 }
 
-/// `"value"` with `"`, `\`, `$` and `` ` `` escaped, as `declare -p` prints it.
-fn dquote(v: &[u8]) -> Vec<u8> {
-    let mut out = vec![b'"'];
-    for &b in v {
-        if matches!(b, b'"' | b'\\' | b'$' | b'`') {
-            out.push(b'\\');
-        }
-        out.push(b);
-    }
-    out.push(b'"');
-    out
-}
-
-async fn print_vars(
-    vp: &Vp,
-    name: &str,
-    flag: &str,
-    filter: impl Fn(&crate::state::Var) -> bool,
-) -> R {
-    let mut vars: Vec<_> = vp.vars.iter().filter(|(_, v)| filter(v)).collect();
-    vars.sort_by(|a, b| a.0.cmp(b.0));
-    let mut buf = Vec::new();
-    for (n, v) in vars {
-        buf.extend_from_slice(format!("declare -{flag} {n}").as_bytes());
-        if let Some(val) = &v.value {
-            buf.push(b'=');
-            buf.extend_from_slice(&dquote(val));
-        }
-        buf.push(b'\n');
-    }
-    out(vp, name, &buf).await
-}
-
-/// `export` and `readonly`: set an attribute, with optional values.
-async fn declare_attr(vp: &mut Vp, args: &[Vec<u8>], name: &str, readonly: bool) -> R {
-    let mut remove = false;
-    let mut i = 1;
-    let mut print = false;
-    while i < args.len() && args[i].first() == Some(&b'-') && args[i].len() > 1 {
-        if args[i] == b"--" {
-            i += 1;
-            break;
-        }
-        for c in &args[i][1..] {
-            match c {
-                b'n' if !readonly => remove = true,
-                b'p' => print = true,
-                b'f' | b'a' | b'A' => {}
-                _ => {
-                    vp.error(&format!("{name}: -{}: invalid option", *c as char))
-                        .await;
-                    return Ok(2);
-                }
-            }
-        }
-        i += 1;
-    }
-    if i == args.len() {
-        let _ = print;
-        let flag = if readonly { "r" } else { "x" };
-        return print_vars(vp, name, flag, |v| {
-            if readonly { v.readonly } else { v.exported }
-        })
-        .await;
-    }
-    let mut status = 0;
-    for a in &args[i..] {
-        let (n, value) = match a.iter().position(|&b| b == b'=') {
-            Some(eq) => {
-                let (n, append) = match a[..eq].strip_suffix(b"+") {
-                    Some(n) => (n, true),
-                    None => (&a[..eq], false),
-                };
-                let mut v = a[eq + 1..].to_vec();
-                if append
-                    && let Ok(nm) = std::str::from_utf8(n)
-                    && let Some(old) = vp.var(nm)
-                {
-                    let mut o = old.to_vec();
-                    o.extend_from_slice(&v);
-                    v = o;
-                }
-                (n, Some(v))
-            }
-            None => (&a[..], None),
-        };
-        if !is_name(n) {
-            vp.error(&format!("{name}: `{}': not a valid identifier", s(a)))
-                .await;
-            status = 1;
-            continue;
-        }
-        let n = std::str::from_utf8(n).unwrap_or_default();
-        let var = vp.vars.entry(n);
-        if value.is_some() && var.readonly {
-            vp.error(&format!("{n}: readonly variable")).await;
-            status = 1;
-            continue;
-        }
-        if let Some(v) = value {
-            var.value = Some(v);
-        }
-        if readonly {
-            var.readonly = true;
-        } else {
-            var.exported = !remove;
-        }
-    }
-    Ok(status)
-}
-
-async fn export(vp: &mut Vp, args: &[Vec<u8>]) -> R {
-    declare_attr(vp, args, "export", false).await
-}
-
-async fn readonly(vp: &mut Vp, args: &[Vec<u8>]) -> R {
-    declare_attr(vp, args, "readonly", true).await
-}
-
 async fn unset(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     let mut i = 1;
-    let (mut funcs, mut vars_only) = (false, false);
+    let (mut funcs, mut vars_only, mut nameref) = (false, false, false);
     while i < args.len() && args[i].first() == Some(&b'-') && args[i].len() > 1 {
         if args[i] == b"--" {
             i += 1;
@@ -514,6 +409,7 @@ async fn unset(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         }
         funcs |= args[i].contains(&b'f');
         vars_only |= args[i].contains(&b'v');
+        nameref |= args[i].contains(&b'n');
         i += 1;
     }
     let mut status = 0;
@@ -526,19 +422,38 @@ async fn unset(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             std::rc::Rc::make_mut(&mut vp.funcs).remove(n);
             continue;
         }
+        // `unset a[i]`
+        if !funcs
+            && let Some(open) = a.iter().position(|&b| b == b'[')
+            && a.ends_with(b"]")
+            && is_name(&a[..open])
+        {
+            let name = String::from_utf8_lossy(&a[..open]).into_owned();
+            if let Err(msg) = vp.unset_elem(&name, &a[open + 1..a.len() - 1]) {
+                vp.error(&format!("unset: {msg}")).await;
+                status = 1;
+            }
+            continue;
+        }
         if !is_name(a) {
             vp.error(&format!("unset: `{}': not a valid identifier", s(a)))
                 .await;
             status = 1;
             continue;
         }
-        if vp.vars.get(n).is_some_and(|v| v.readonly) {
+        // A nameref unsets its target, unless `-n`.
+        let n = if nameref {
+            n.to_string()
+        } else {
+            vp.resolve(n).into_owned()
+        };
+        if vp.vars.get(&n).is_some_and(|v| v.readonly) {
             vp.error(&format!("unset: {n}: cannot unset: readonly variable"))
                 .await;
             status = 1;
             continue;
         }
-        vp.vars.remove(n);
+        vp.vars.remove(&n);
     }
     Ok(status)
 }
@@ -590,13 +505,13 @@ async fn set(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         return Ok(0);
     }
     if args.len() == 1 {
-        let mut vars: Vec<_> = vp.vars.iter().filter(|(_, v)| v.value.is_some()).collect();
+        let mut vars: Vec<_> = vp.vars.iter().filter(|(_, v)| v.get().is_some()).collect();
         vars.sort_by(|a, b| a.0.cmp(b.0));
         let mut buf = Vec::new();
         for (n, v) in vars {
             buf.extend_from_slice(n.as_bytes());
             buf.push(b'=');
-            buf.extend_from_slice(&shell_quote(v.value.as_deref().unwrap_or_default()));
+            buf.extend_from_slice(&shell_quote(v.get().unwrap_or_default()));
             buf.push(b'\n');
         }
         return out(vp, "set", &buf).await;
@@ -666,76 +581,6 @@ async fn loop_control(vp: &mut Vp, args: &[Vec<u8>], name: &str) -> R {
     } else {
         Unwind::Continue(n)
     })
-}
-
-async fn local(vp: &mut Vp, args: &[Vec<u8>]) -> R {
-    if vp.frames.is_empty() {
-        vp.error("local: can only be used in a function").await;
-        return Ok(1);
-    }
-    let mut i = 1;
-    let (mut readonly, mut export) = (false, false);
-    while i < args.len() && args[i].len() > 1 && (args[i][0] == b'-' || args[i][0] == b'+') {
-        if args[i] == b"--" {
-            i += 1;
-            break;
-        }
-        for c in &args[i][1..] {
-            match c {
-                b'r' => readonly = args[i][0] == b'-',
-                b'x' => export = args[i][0] == b'-',
-                _ => {
-                    return crate::expand::unsupported(vp, &format!("local -{}", *c as char)).await;
-                }
-            }
-        }
-        i += 1;
-    }
-    let mut status = 0;
-    for a in &args[i..] {
-        let (n, value) = match a.iter().position(|&b| b == b'=') {
-            Some(eq) => (&a[..eq], Some(a[eq + 1..].to_vec())),
-            None => (&a[..], None),
-        };
-        let (n, append) = match n.strip_suffix(b"+") {
-            Some(n) if value.is_some() => (n, true),
-            _ => (n, false),
-        };
-        if !is_name(n) {
-            vp.error(&format!("local: `{}': not a valid identifier", s(a)))
-                .await;
-            status = 1;
-            continue;
-        }
-        let n = std::str::from_utf8(n).unwrap_or_default().to_string();
-        if vp.vars.get(&n).is_some_and(|v| v.readonly) {
-            vp.error(&format!("local: {n}: readonly variable")).await;
-            status = 1;
-            continue;
-        }
-        let fresh = vp
-            .frames
-            .last()
-            .is_some_and(|f| !f.saved.iter().any(|(s, _)| *s == n));
-        vp.make_local(&n);
-        let old = vp.var(&n).map(<[u8]>::to_vec);
-        let var = vp.vars.entry(&n);
-        if fresh {
-            *var = crate::state::Var::default();
-        }
-        match value {
-            Some(v) if append => {
-                let mut o = old.unwrap_or_default();
-                o.extend_from_slice(&v);
-                var.value = Some(o);
-            }
-            Some(v) => var.value = Some(v),
-            None => {}
-        }
-        var.readonly |= readonly;
-        var.exported |= export;
-    }
-    Ok(status)
 }
 
 async fn let_(vp: &mut Vp, args: &[Vec<u8>]) -> R {

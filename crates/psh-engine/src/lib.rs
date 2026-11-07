@@ -24,6 +24,7 @@
 //! [`Shell`] is `!Send`: create and step it on one thread.
 
 mod arith;
+mod arrays;
 mod builtins;
 mod escape;
 mod exec;
@@ -40,6 +41,7 @@ pub mod std_host;
 pub mod testhost;
 #[cfg(test)]
 mod tests;
+mod vars;
 
 use std::cell::{Cell, RefCell};
 use std::marker::PhantomData;
@@ -203,24 +205,16 @@ impl Shell {
                 Ok(name) if state::is_name(k) => vars.insert(
                     name,
                     Var {
-                        value: Some(v.clone()),
                         exported: true,
-                        readonly: false,
+                        ..Var::scalar(v.clone())
                     },
                 ),
                 _ => foreign.push((k.clone(), v.clone())),
             }
         }
-        vars.insert(
-            "IFS",
-            Var {
-                value: Some(b" \t\n".to_vec()),
-                exported: false,
-                readonly: false,
-            },
-        );
+        vars.insert("IFS", Var::scalar(b" \t\n".to_vec()));
         let pwd = vars.entry("PWD");
-        pwd.value = Some(cfg.cwd.clone());
+        pwd.value = vars::Value::Str(cfg.cwd.clone());
         pwd.exported = true;
         let shlvl = vars
             .value("SHLVL")
@@ -228,7 +222,7 @@ impl Shell {
             .and_then(|v| v.trim().parse::<i64>().ok())
             .unwrap_or(0);
         let lvl = vars.entry("SHLVL");
-        lvl.value = Some((shlvl + 1).to_string().into_bytes());
+        lvl.value = vars::Value::Str((shlvl + 1).to_string().into_bytes());
         lvl.exported = true;
         let old = vars.entry("OLDPWD");
         old.exported = true;

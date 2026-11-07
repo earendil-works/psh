@@ -672,32 +672,51 @@ async fn param(
             Err::<(), Unwind>(Unwind::Abort(1))
         }
     };
+    let is_list = matches!(p.index, Some(Subscript::At | Subscript::Star));
+    // `${!a[@]}`: the keys of an array.
+    if p.prefix == ParamPrefix::Indirect && is_list && p.name == ParamName::Var {
+        let name = vp.resolve(code.ast.text(p.name_span)).into_owned();
+        let keys = vp.vars.get(&name).map(|v| v.keys()).unwrap_or_default();
+        let star = matches!(p.index, Some(Subscript::Star));
+        return emit_val(vp, f, Val::List(keys, star), quoted);
+    }
+    // `${x:o:l}` on arrays and `$@` slices by index, so it reads the source itself.
+    if let ParamOp::Substring { offset, length } = &p.op
+        && p.prefix == ParamPrefix::None
+        && (is_list || matches!(p.name, ParamName::Special(b'@' | b'*')))
+    {
+        let off = arith_word(vp, code, offset).await?;
+        let len = match length {
+            Some(w) => Some(arith_word(vp, code, w).await?),
+            None => None,
+        };
+        let star = matches!(p.index, Some(Subscript::Star)) || p.name == ParamName::Special(b'*');
+        let items = if p.name == ParamName::Var {
+            let name = vp.resolve(code.ast.text(p.name_span)).into_owned();
+            slice_array(vp, &name, off, len)
+        } else {
+            let mut all = vec![(0, vp.arg0.clone())];
+            all.extend(
+                vp.args
+                    .iter()
+                    .enumerate()
+                    .map(|(i, a)| (i as i64 + 1, a.clone())),
+            );
+            slice_items(&all, off, len)
+        };
+        let items = match items {
+            Ok(items) => items,
+            Err(msg) => {
+                vp.error(&format!("{msg}: substring expression < 0")).await;
+                return Err(Unwind::Abort(1));
+            }
+        };
+        return emit_val(vp, f, Val::List(items, star), quoted);
+    }
     let mut val = match p.name {
         ParamName::Var => {
-            let v = match vp.var(code.ast.text(p.name_span)) {
-                Some(v) => Val::Str(v.to_vec()),
-                None => Val::Unset,
-            };
-            match &p.index {
-                None => v,
-                Some(Subscript::At) => match v {
-                    Val::Str(s) => Val::List(vec![s], false),
-                    _ => Val::List(Vec::new(), false),
-                },
-                Some(Subscript::Star) => match v {
-                    Val::Str(s) => Val::List(vec![s], true),
-                    _ => Val::List(Vec::new(), true),
-                },
-                Some(Subscript::Expr(w)) => {
-                    // Arrays are not there yet; a scalar is element 0.
-                    let (idx, _) = expand_single(vp, code, w, Ctx::Word).await?;
-                    if idx.trim_ascii() == b"0" {
-                        v
-                    } else {
-                        Val::Unset
-                    }
-                }
-            }
+            let name = vp.resolve(code.ast.text(p.name_span)).into_owned();
+            lookup_var(vp, code, &name, &p.index).await?
         }
         ParamName::Positional | ParamName::Special(_) => {
             by_name(vp, name_text).unwrap_or(Val::Unset)
@@ -722,35 +741,45 @@ async fn param(
                 let mut names: Vec<Vec<u8>> = vp
                     .vars
                     .iter()
-                    .filter(|(n, v)| n.starts_with(prefix) && v.value.is_some())
+                    .filter(|(n, v)| n.starts_with(prefix) && v.value != crate::vars::Value::Unset)
                     .map(|(n, _)| n.as_bytes().to_vec())
                     .collect();
                 names.sort();
                 return emit_val(vp, f, Val::List(names, star), quoted);
             }
-            let target = match &val {
-                Val::Str(s) => s.clone(),
-                Val::Unset => {
-                    vp.error(&format!(
-                        "{}: invalid indirect expansion",
-                        String::from_utf8_lossy(name_text)
-                    ))
-                    .await;
-                    return Err(Unwind::Abort(1));
-                }
-                Val::List(..) => return bad(vp).await,
-            };
-            val = match by_name(vp, &target) {
-                Some(v) => v,
-                None => {
-                    vp.error(&format!(
-                        "{}: invalid variable name",
-                        String::from_utf8_lossy(&target)
-                    ))
-                    .await;
-                    return Err(Unwind::Abort(1));
-                }
-            };
+            // A nameref: `${!ref}` is the name it refers to.
+            if p.name == ParamName::Var
+                && let Some(v) = vp
+                    .vars
+                    .get(code.ast.text(p.name_span))
+                    .filter(|v| v.nameref)
+            {
+                val = v.get().map_or(Val::Unset, |t| Val::Str(t.to_vec()));
+            } else {
+                let target = match &val {
+                    Val::Str(s) => s.clone(),
+                    Val::Unset => {
+                        vp.error(&format!(
+                            "{}: invalid indirect expansion",
+                            String::from_utf8_lossy(name_text)
+                        ))
+                        .await;
+                        return Err(Unwind::Abort(1));
+                    }
+                    Val::List(..) => return bad(vp).await,
+                };
+                val = match indirect(vp, code, &target).await? {
+                    Some(v) => v,
+                    None => {
+                        vp.error(&format!(
+                            "{}: invalid variable name",
+                            String::from_utf8_lossy(&target)
+                        ))
+                        .await;
+                        return Err(Unwind::Abort(1));
+                    }
+                };
+            }
         }
     }
 
@@ -867,7 +896,26 @@ async fn param(
             let val = map_val(val, |s| change_case(s, *kind, &pat, utf8));
             emit_val(vp, f, val, quoted)
         }
-        ParamOp::Substring { .. } => unsupported(vp, "substring expansion").await,
+        ParamOp::Substring { offset, length } => {
+            let off = arith_word(vp, code, offset).await?;
+            let len = match length {
+                Some(w) => Some(arith_word(vp, code, w).await?),
+                None => None,
+            };
+            let mut err = None;
+            let val = map_val(val, |s| match substring(s, off, len, utf8) {
+                Ok(v) => v,
+                Err(e) => {
+                    err = Some(e);
+                    Vec::new()
+                }
+            });
+            if let Some(e) = err {
+                vp.error(&format!("{e}: substring expression < 0")).await;
+                return Err(Unwind::Abort(1));
+            }
+            emit_val(vp, f, val, quoted)
+        }
         ParamOp::Transform(op) => {
             let op = *op;
             match op {
@@ -892,6 +940,153 @@ async fn param(
         }
         ParamOp::Names { .. } => bad(vp).await,
     }
+}
+
+/// The value of a variable for `${name}`, `${name[sub]}`, `${name[@]}`.
+async fn lookup_var(
+    vp: &mut Vp,
+    code: &Rc<Code>,
+    name: &str,
+    index: &Option<Subscript>,
+) -> Result<Val, Unwind> {
+    match index {
+        None => Ok(vp
+            .vars
+            .value(name)
+            .map_or(Val::Unset, |v| Val::Str(v.to_vec()))),
+        Some(Subscript::At) | Some(Subscript::Star) => {
+            let values = vp.vars.get(name).map(|v| v.values()).unwrap_or_default();
+            Ok(Val::List(values, matches!(index, Some(Subscript::Star))))
+        }
+        Some(Subscript::Expr(w)) => {
+            let (sub, _) = expand_single(vp, code, w, Ctx::Word).await?;
+            element(vp, name, &sub).await
+        }
+    }
+}
+
+/// `name[sub]` with `sub` expanded: an associative key or an arithmetic index.
+async fn element(vp: &mut Vp, name: &str, sub: &[u8]) -> Result<Val, Unwind> {
+    match vp.get_elem(name, sub) {
+        Ok(v) => Ok(v.map_or(Val::Unset, Val::Str)),
+        Err(msg) if msg.ends_with("bad array subscript") => {
+            // A reference before the start: an error, but the word goes on empty.
+            vp.error(&msg).await;
+            Ok(Val::Unset)
+        }
+        Err(msg) => {
+            vp.error(&msg).await;
+            Err(Unwind::Abort(1))
+        }
+    }
+}
+
+/// `${!name}`: the value of the variable (or `a[sub]`, `a[@]`, positional) named by
+/// `target`; `None` if it is not a valid name.
+async fn indirect(vp: &mut Vp, code: &Rc<Code>, target: &[u8]) -> Result<Option<Val>, Unwind> {
+    if let Some(open) = target.iter().position(|&b| b == b'[')
+        && target.ends_with(b"]")
+        && is_name(&target[..open])
+    {
+        let name = vp
+            .resolve(&String::from_utf8_lossy(&target[..open]))
+            .into_owned();
+        let sub = &target[open + 1..target.len() - 1];
+        let _ = code;
+        return Ok(Some(match sub {
+            b"@" | b"*" => {
+                let values = vp.vars.get(&name).map(|v| v.values()).unwrap_or_default();
+                Val::List(values, sub == b"*")
+            }
+            _ => element(vp, &name, sub).await?,
+        }));
+    }
+    if is_name(target) {
+        let name = String::from_utf8_lossy(target).into_owned();
+        return Ok(Some(
+            vp.var(&name).map_or(Val::Unset, |v| Val::Str(v.to_vec())),
+        ));
+    }
+    Ok(by_name(vp, target))
+}
+
+/// An arithmetic word (offsets, lengths): expanded, then evaluated.
+async fn arith_word(vp: &mut Vp, code: &Rc<Code>, w: &Word) -> Result<i64, Unwind> {
+    let (text, _) = expand_single(vp, code, w, Ctx::Word).await?;
+    match crate::arith::eval(vp, &text) {
+        Ok(v) => Ok(v),
+        Err(msg) => {
+            vp.error(&msg).await;
+            Err(Unwind::Abort(1))
+        }
+    }
+}
+
+/// `${a[@]:off:len}`: elements by index (`off` counts from after the last index when
+/// negative), at most `len` of them.
+fn slice_array(vp: &Vp, name: &str, off: i64, len: Option<i64>) -> Result<Vec<Vec<u8>>, String> {
+    let items: Vec<(i64, Vec<u8>)> = match vp.vars.get(name).map(|v| &v.value) {
+        Some(crate::vars::Value::Indexed(m)) => m.iter().map(|(k, v)| (*k, v.clone())).collect(),
+        Some(crate::vars::Value::Assoc(a)) => a
+            .iter()
+            .enumerate()
+            .map(|(i, (_, v))| (i as i64, v.to_vec()))
+            .collect(),
+        Some(crate::vars::Value::Str(s)) => vec![(0, s.clone())],
+        _ => Vec::new(),
+    };
+    slice_items(&items, off, len)
+}
+
+fn slice_items(
+    items: &[(i64, Vec<u8>)],
+    off: i64,
+    len: Option<i64>,
+) -> Result<Vec<Vec<u8>>, String> {
+    if let Some(l) = len
+        && l < 0
+    {
+        return Err(l.to_string());
+    }
+    let start = if off < 0 {
+        let end = items.last().map_or(0, |(k, _)| k + 1);
+        end + off
+    } else {
+        off
+    };
+    if off < 0 && start < 0 {
+        return Ok(Vec::new());
+    }
+    let it = items
+        .iter()
+        .filter(|(k, _)| *k >= start)
+        .map(|(_, v)| v.clone());
+    Ok(match len {
+        Some(l) => it.take(l as usize).collect(),
+        None => it.collect(),
+    })
+}
+
+/// `${x:off:len}` on a string, by chars (UTF-8 locale) or bytes.
+fn substring(s: &[u8], off: i64, len: Option<i64>, utf8: bool) -> Result<Vec<u8>, String> {
+    let (u, offs) = pattern::units(s, utf8);
+    let n = u.len() as i64;
+    let start = if off < 0 { n + off } else { off };
+    if start < 0 || start > n {
+        return Ok(Vec::new());
+    }
+    let end = match len {
+        None => n,
+        Some(l) if l < 0 => {
+            let e = n + l;
+            if e < start {
+                return Err(l.to_string());
+            }
+            e
+        }
+        Some(l) => (start + l).min(n),
+    };
+    Ok(s[offs[start as usize]..offs[end as usize]].to_vec())
 }
 
 /// `${x@Q}`: quoted for reuse as shell input.
@@ -1131,41 +1326,109 @@ pub(crate) async fn assign_value(
     expand_single(vp, code, word, Ctx::Assign).await
 }
 
-/// The words of a declaration builtin (`export a=$x`): arguments that look like
-/// assignments are expanded like assignment values, without splitting or globbing.
-pub(crate) async fn expand_decl_words(
+/// The elements of a compound assignment `(…)`: `[key]=value` elements are expanded
+/// like assignment values; plain elements like command words (split, globbed), each
+/// field an element.
+pub(crate) async fn expand_array_lit(
+    vp: &mut Vp,
+    code: &Rc<Code>,
+    lit: &psh_syntax::ArrayLit,
+) -> Result<(Vec<crate::arrays::ArrayItem>, Option<i32>), Unwind> {
+    let mut items = Vec::new();
+    let mut status = None;
+    for e in &lit.elems {
+        match &e.key {
+            Some(k) => {
+                let (key, st1) = expand_single(vp, code, k, Ctx::Word).await?;
+                let (value, st2) = expand_single(vp, code, &e.value, Ctx::Assign).await?;
+                status = st2.or(st1).or(status);
+                items.push(crate::arrays::ArrayItem {
+                    key: Some(key),
+                    value,
+                    append: e.append,
+                });
+            }
+            None => {
+                let f = expand_words(vp, code, std::slice::from_ref(&e.value)).await?;
+                status = f.subst_status.or(status);
+                for field in f.out {
+                    items.push(crate::arrays::ArrayItem {
+                        key: None,
+                        value: field.text,
+                        append: false,
+                    });
+                }
+            }
+        }
+    }
+    Ok((items, status))
+}
+
+/// Whether a word starts like an assignment: `name=`, `name+=` or `name[`.
+fn assignment_like(code: &Code, w: &Word) -> bool {
+    let Some(p) = w.parts.first() else {
+        return false;
+    };
+    if !matches!(p.kind, Part::Lit) {
+        return false;
+    }
+    let t = code.ast.bytes(p.span);
+    let end = t
+        .iter()
+        .position(|&b| b == b'=' || b == b'[' || b == b'+')
+        .unwrap_or(t.len());
+    end > 0
+        && end < t.len()
+        && is_name(&t[..end])
+        && (t[end] != b'+' || t.get(end + 1) == Some(&b'='))
+}
+
+/// The arguments of a declaration builtin (`declare a=(…) b=$x c`): assignments are
+/// expanded like assignment values (no splitting), `name=(…)` into array items, the
+/// rest like command words. Returns the builtin's name, its arguments and the status of
+/// the last command substitution.
+pub(crate) async fn expand_decl_args(
     vp: &mut Vp,
     code: &Rc<Code>,
     words: &[Word],
-) -> Result<Fields, Unwind> {
-    let mut f = Fields::new(vp, true);
-    for (i, w) in words.iter().enumerate() {
-        let assignment = i > 0
-            && matches!(w.parts.first(), Some(p) if matches!(p.kind, Part::Lit) && {
-                let t = code.ast.bytes(p.span);
-                t.iter().position(|&b| b == b'=').is_some_and(|eq| {
-                    let n = t[..eq].strip_suffix(b"+").unwrap_or(&t[..eq]);
-                    is_name(n)
-                })
+) -> Result<(Vec<u8>, Vec<crate::builtins::declare::DeclArg>, Option<i32>), Unwind> {
+    use crate::builtins::declare::DeclArg;
+    let mut args = Vec::new();
+    let mut status = None;
+    let name = expand_single(vp, code, &words[0], Ctx::Word).await?.0;
+    for w in &words[1..] {
+        if let Some((i, Part::Array(lit))) =
+            w.parts.iter().enumerate().find_map(|(i, p)| match &p.kind {
+                Part::Array(l) => Some((i, Part::Array(l.clone()))),
+                _ => None,
+            })
+        {
+            // `name=(…)` / `name+=(…)`: the text before the parentheses names it.
+            let mut lhs = Vec::new();
+            for p in &w.parts[..i] {
+                lhs.extend_from_slice(code.ast.bytes(p.span));
+            }
+            let lhs = lhs.strip_suffix(b"=").unwrap_or(&lhs).to_vec();
+            let (lhs, append) = match lhs.strip_suffix(b"+") {
+                Some(l) => (l.to_vec(), true),
+                None => (lhs, false),
+            };
+            let (items, st) = expand_array_lit(vp, code, &lit).await?;
+            status = st.or(status);
+            args.push(DeclArg::Array {
+                name: lhs,
+                append,
+                items,
             });
-        if assignment {
+        } else if assignment_like(code, w) {
             let (v, st) = expand_single(vp, code, w, Ctx::Assign).await?;
-            if st.is_some() {
-                f.subst_status = st;
-            }
-            f.out.push(Field {
-                text: v,
-                pat: Vec::new(),
-                glob: false,
-                started: true,
-            });
+            status = st.or(status);
+            args.push(DeclArg::from_word(v));
         } else {
-            let more = expand_words(vp, code, std::slice::from_ref(w)).await?;
-            if more.subst_status.is_some() {
-                f.subst_status = more.subst_status;
-            }
-            f.out.extend(more.out);
+            let f = expand_words(vp, code, std::slice::from_ref(w)).await?;
+            status = f.subst_status.or(status);
+            args.extend(f.out.into_iter().map(|f| DeclArg::from_word(f.text)));
         }
     }
-    Ok(f)
+    Ok((name, args, status))
 }

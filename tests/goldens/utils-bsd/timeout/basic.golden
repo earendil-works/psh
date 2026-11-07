@@ -1,0 +1,88 @@
+# Goldens for tests/utils/timeout/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: a command that finishes in time
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+--- stderr
+|bash: line 1: timeout: command not found
+
+=== 1: a command that times out
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+--- stderr
+|bash: line 1: timeout: command not found
+
+=== 2: the command's own status passes through
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+--- stderr
+|bash: line 1: timeout: command not found
+
+=== 3: KILL gives 137
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+--- stderr
+|bash: line 1: timeout: command not found
+
+=== 4: --preserve-status
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+--- stderr
+|bash: line 1: timeout: command not found
+
+=== 5: a suffix and -k
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+--- stderr
+|bash: line 1: timeout: command not found
+
+=== 6: the whole pipeline inside sh is stopped
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+--- stderr
+|bash: line 1: timeout: command not found
+
+=== 7: timeout runs builtins' standalone forms
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+--- stderr
+|bash: line 1: timeout: command not found
+|bash: line 2: timeout: command not found
+
+=== 8: a command that does not exist
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+
+=== 9: an invalid duration
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+--- stderr
+|bash: line 1: timeout: command not found
+
+=== 10: timeout inside a pipeline with head
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 1: timeout: command not found

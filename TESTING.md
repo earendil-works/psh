@@ -45,7 +45,7 @@ plan behind this is `research/hillclimb.md`.
 | L1 Oils spec | `oils/spec/*.test.sh` at d114978 | Apache-2.0, vendored in `tests/oils/` | the language, per area; ~2.7k cases in the compat set |
 | L2 brush cases | `brush-shell/tests/cases/**/*.yaml` | MIT, vendored in `tests/brush/` | the same, ~3.7k cases; the files hold no expectations, so the goldens come from our recording |
 | L3 agent shapes | our own cases written to the patterns in `research/corpus.md`, in the Oils format, run as `bash -c` | ours, `tests/agent/` | what agents do: `cd X && …`, `\| head`, `2>&1`, quoted here-docs, `timeout`, globs that match nothing; 144 cases, growing toward ~500 |
-| L4 utilities | per-utility cases, differential against GNU (container) and BSD (macOS) where flags differ | ours; uutils/GNU tests may be *run* for reference, never vendored | each in-process utility, including "unsupported flag → fall through or clear error" |
+| L4 utilities | per-utility cases in `tests/utils/NAME/`, recorded from GNU (container) and BSD (macOS); each case expects one or both (D1084) | ours; uutils/GNU tests may be *run* for reference, never vendored | each in-process utility, including "unsupported flag → fall through or clear error" |
 | L5 process | Rust integration tests in `tests/process/` (`cargo test -p psh-os --test process`; the standalone binary's signals: `cargo test -p psh --test standalone`), each under a deadline and with a leak check (D1064) | ours | cancel; `timeout` kills the whole tree; no orphans; here-docs past the pipe buffer; SIGPIPE in `\| head`; background jobs; encodings; Job Objects |
 | L6 stress | L1–L3 re-run under perturbation | – | cancel at a random step (no leaked process, shell still usable); pause/resume at every k-th safepoint; a host where every op is `Pending`; tiny pipe buffers; slow consumers |
 
@@ -79,6 +79,12 @@ reference only, never vendored.
   created or changed in its directory (contents up to 64 KiB, else size and hash;
   directories; symlinks) and `bash -n`'s stderr. Lines are `|text`, or `\text` with
   `\\` and `\xNN` escapes for control characters and invalid UTF-8.
+- L4 (`tests/utils/NAME/*.test.sh`, the agent cases' format, run as `bash -c`) has two
+  recordings: GNU's in `tests/goldens/utils/` (the container) and BSD's in
+  `tests/goldens/utils-bsd/` (`scripts/record-goldens --bsd`, on macOS with Homebrew's
+  bash 5.3 and only the system's directories on PATH). A case declares
+  `## expect: gnu`, `bsd` or `both` (the default), with the reason or the D016 rule;
+  `both` cases fail as "goldens disagree" until they say which (D1084).
 - `tests/goldens/shapes/bash-n.txt` and `tests/goldens/l0/bash-n.txt` hold `bash -n`'s
   verdict for each skeleton of the shape corpus (by line in `tests/shapes/shapes.txt`)
   and each snippet of the parser's `tests/l0/syntax.txt` (by name) that bash rejects;

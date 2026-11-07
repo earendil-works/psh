@@ -376,15 +376,20 @@ program, which the policies below exist to contain.
 
 ### Interface
 
-A utility is a synchronous `run(&mut UtilCtx) -> i32` over a small context:
-stdin/stdout/stderr streams, cwd, env, the host fs, a cancel flag (which also makes a
-blocked stdin read return EOF), and a command runner for the wrappers (`xargs`,
-`find -exec`, `env`, `timeout`, `nice`, `nohup`). The engine runs utilities on worker
-threads (inline in WASM) and polls them like externals; a utility never detaches a
-thread that still writes to its fds. Ported code (uutils calls `std::io::stdout()` and
-`std::fs` directly) is refactored onto this context, as oh-my-pi did; re-executing the
-psh binary per utility, as brush does, is not an option because it fails in WASM and
-breaks cancellation (D018).
+A utility is an async function `run(&mut UtilCtx, argv) -> i32` (D1080, D1081), run on
+the vproc that runs the command, where shell builtins run, natively and in WASM alike.
+`UtilCtx` (`psh_engine::util`, versioned) gives it the command's descriptors (reads
+awaited, stdout buffered and flushed before reads, before stderr writes and when full),
+cwd, environment, the Host's file operations, `sleep`, a safepoint (`check`) for long
+loops, `spawn` for the wrappers (`xargs`, `find -exec`, `env`, `timeout`, `nice`,
+`nohup`) and `run_program` for falling through to the real program. Cancel is dropping
+the future. Code built on synchronous crates (ripgrep's, jaq) is the exception: a
+blocking utility on a worker thread natively, inline with its input read first (within
+a bound) in WASM. The registry (psh-utils) is passed in `ShellConfig::utilities`; the
+engine looks a name up after functions and builtins, before PATH (D1083). Ported code
+(uutils calls `std::io::stdout()` and `std::fs` directly) is refactored onto this
+context, as oh-my-pi did; re-executing the psh binary per utility, as brush does, is not
+an option because it fails in WASM and breaks cancellation (D018).
 
 ### Shadowing modes (D015)
 

@@ -8,6 +8,7 @@
 #   scripts/record-goldens --check [FILTER...]  record into a scratch directory and
 #                                               compare with tests/goldens per case
 #   scripts/record-goldens --l0 [--check]       only the L0 verdicts below (seconds)
+#   scripts/record-goldens --bsd [FILTER...]    the BSD goldens of L4, on macOS
 #
 # --check is the determinism check: a second recording must reproduce the committed
 # goldens. Cases that differ are listed; inherently nondeterministic ones belong in a
@@ -24,6 +25,23 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 root=$(pwd)
+
+# The BSD goldens of L4 are recorded on macOS itself, with Homebrew's bash 5.3 and only
+# the system's directories on PATH (psh-spec --record --bsd).
+if [ "${1:-}" = --bsd ]; then
+  shift
+  if [ "$(uname -s)" != Darwin ]; then
+    echo "record-goldens --bsd: run this on macOS" >&2
+    exit 2
+  fi
+  bash53=${PSH_BSD_BASH:-/opt/homebrew/bin/bash}
+  case "$("$bash53" -c 'echo $BASH_VERSION' 2>/dev/null)" in
+    5.3.*) ;;
+    *) echo "record-goldens --bsd: $bash53 is not bash 5.3 (set PSH_BSD_BASH)" >&2; exit 2 ;;
+  esac
+  cargo build -q -p psh -p psh-spec
+  exec target/debug/psh-spec --record --bsd --shell "$bash53" -j 8 "$@"
+fi
 
 l0_only=0
 if [ "${1:-}" = --l0 ]; then

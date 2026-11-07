@@ -14,26 +14,26 @@ batch, led by `timeout`, the most common "command not found" in the agent corpus
 later batch (0013–0021) builds on this; it fixes the interface they all use.
 
 ## Acceptance criteria
-- [ ] `psh-utils` crate: the synchronous utility interface over a small context (stdio,
+- [x] `psh-utils` crate: the synchronous utility interface over a small context (stdio,
       cwd, env, host fs, cancel flag that unblocks stdin reads, command runner); the
       engine runs utilities on worker threads and polls them like externals; no thread
       outlives its utility while it can still write to the command's fds.
-- [ ] A registry: one entry per utility with its name(s), mode (S / F / W, D015), and
+- [x] A registry: one entry per utility with its name(s), mode (S / F / W, D015), and
       whether it is in the destructive group. Adding a utility is one entry plus a module.
-- [ ] Modes behave as specified: F checks PATH, W shadows only on Windows, explicit paths
+- [x] Modes behave as specified: F checks PATH, W shadows only on Windows, explicit paths
       always run the real program; WASM/sandbox mode treats F as S.
-- [ ] Off switches per session: all, destructive group, single names.
-- [ ] Fall-through: an unsupported flag runs the real program from PATH if present, else
+- [x] Off switches per session: all, destructive group, single names.
+- [x] Fall-through: an unsupported flag runs the real program from PATH if present, else
       fails with `NAME: unsupported option -X (psh builtin)` or similar; a shared helper
       makes this one line per utility. Tested.
-- [ ] `command -v`, `type`, `which` (the `which` utility itself is 0020) report
+- [x] `command -v`, `type`, `which` (the `which` utility itself is 0020) report
       utilities truthfully; `env`, `xargs`, `find -exec`, `timeout` dispatch back into the
       shell (tested here with `env` and `timeout`), including the standalone forms of
       `printf echo test [ true false pwd kill`.
-- [ ] L4 harness: cases in `tests/utils/<name>/`, goldens recorded from GNU (the 0002
+- [x] L4 harness: cases in `tests/utils/<name>/`, goldens recorded from GNU (the 0002
       container) and from BSD (macOS, with `/usr/bin` tools); a case declares which
       dialect(s) it expects, or the D016 rule it exercises.
-- [ ] Batch A, all S: `timeout` (W; GNU semantics: `s m h d` suffixes and fractions,
+- [x] Batch A, all S: `timeout` (W; GNU semantics: `s m h d` suffixes and fractions,
       `-k`, `-s SIG`, `--preserve-status`, `--foreground`, statuses 124/137, kills the
       whole tree; `gtimeout` alias), `head`, `tail` (`-f`/`-F` streaming and cancellable;
       BSD `-r`), `cat` (GNU `-A -v -e -E -t -T -n -b -s`), `wc` (GNU widths), `sleep`
@@ -117,6 +117,26 @@ writer is another vproc on the same thread (`yes | head`), so wasm would need ei
 second implementation or buffering every input first; and natively, threads make cancel
 and `timeout` approximate and output order racy. The porting saving (keeping uutils'
 `Read`/`Write` loops) is real but small next to that.
+- 2026-11-07, implementation (decisions D1080–D1084, approved; engine part waiting for
+  the engine agent's OK):
+  - `psh_engine::util` (UtilCtx v1): descriptors, buffered stdout (flushed before reads,
+    before stderr writes, when full, at line ends on a terminal; a failed flush makes
+    every later write fail, so `yes | cat | head` ends), Host file operations, `sleep`,
+    `check`, `spawn` (wrappers) and `run_program` (fall-through). Dispatch after
+    functions and builtins; `command`, `type`, `command -v`; hashed names and
+    `command -p` run the program (two brush cases showed why).
+  - psh-utils: the option parser (GNU conventions, `Spec` data), the classifier check
+    (`timeout` is classified in code, so it is exempt), `REGISTRY`, `policy()`, and batch
+    A: `timeout`/`gtimeout` (W), `head`, `tail` (`-f`/`-F` as a host-timer loop, BSD
+    `-r`), `cat`, `wc` (GNU widths, `--total`), `sleep`. Written for psh from GNU's and
+    BSD's documented behavior (no uutils code copied, so no attribution needed).
+    Tests on the engine's test host (virtual time: timeout cases use `hang`).
+  - Wired into the psh binary, psh-spec (in-process) and psh-wasm (sandbox policy).
+    Native spec run: oils +19, brush +13, agent +7 cases pass now, no regression.
+    In wasm the utilities are the toolset: oils 1,150 pass there now (was 867).
+  - L4: `tests/utils/` with 65 cases for batch A, GNU and BSD goldens (both
+    deterministic over two recordings), `## expect:` per case; psh passes all 65.
+  - Docs: ARCH "Interface", TESTING (L4 row, goldens), decisions D1083–D1084.
 
 ## Follow-ups
 

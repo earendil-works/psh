@@ -1,0 +1,91 @@
+# Goldens for tests/utils/wc/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: one count from stdin
+status: 0
+bash-n: 0
+--- stdout
+|2
+
+=== 1: all counts from stdin
+status: 0
+bash-n: 0
+--- stdout
+|      2       3       6
+
+=== 2: one count of a file
+status: 0
+bash-n: 0
+--- stdout
+|2 f
+--- file f
+|a b
+|c
+
+=== 3: all counts of a file
+status: 0
+bash-n: 0
+--- stdout
+|2 3 6 f
+--- file f
+|a b
+|c
+
+=== 4: several files and a total
+status: 0
+bash-n: 0
+--- stdout
+| 2  3  6 f
+| 1  3 16 g
+| 3  6 22 total
+--- file f
+|a b
+|c
+--- file g
+|hello world foo
+
+=== 5: stdin redirected from a file
+status: 0
+bash-n: 0
+--- stdout
+|2
+--- file f
+|one
+|two
+
+=== 6: words and bytes
+status: 0
+bash-n: 0
+--- stdout
+|      3      22
+
+=== 7: characters in UTF-8
+status: 0
+bash-n: 0
+--- stdout
+|6
+
+=== 8: longest line
+status: 0
+bash-n: 0
+--- stdout
+|11
+
+=== 9: a number with nothing else, as agents use it
+status: 0
+bash-n: 0
+--- stdout
+|[42]
+
+=== 10: a missing file
+status: 0
+bash-n: 0
+--- stdout
+|1 f
+|1 total
+|status=1
+--- stderr
+|wc: missing: No such file or directory
+--- file f
+|x

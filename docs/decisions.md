@@ -1501,3 +1501,28 @@ program from PATH if there is one (unless the utility is the only one, as in was
 `NAME: unsupported option 'X' (psh built-in NAME)` and status 2. A test compares every
 utility's spec with its `psh_classify::utils` entry (D1090): the same value-taking short
 and long options, and every effect option the classifier lists is accepted.
+
+## D1083: The utility registry and where it is looked up
+date: 2026-11-07 · by: infra · issue: 0008
+psh-utils' `REGISTRY` is a static table of `UtilEntry { names, mode, destructive, run }`;
+`psh_utils::policy(sandbox)` turns it into the `UtilPolicy` an embedder puts in
+`ShellConfig::utilities` (the psh binary and psh-spec natively, psh-wasm with
+`sandbox: true`; empty by default, so a bare engine has none). The engine looks a command
+name up after functions and builtins and before PATH; a name with a slash, a name bound to
+a path in the hash table (`hash -p`, or a program already run) and `command -p NAME`
+run the program. Off switches (all, the destructive group, names) are fields of the
+policy. `type` says `NAME is a psh utility`, `type -t` says `builtin`, `command -v` prints
+the name. Wrappers (`UtilCtx::spawn`) run standalone builtins (`printf echo test [ true
+false pwd kill`), utilities and programs, never functions. In wasm the utilities shadow
+JS host commands of the same name.
+
+## D1084: L4: GNU and BSD recordings, one expectation per case
+date: 2026-11-07 · by: infra · issue: 0008
+L4 cases live in `tests/utils/NAME/*.test.sh` (the Oils format, run as `bash -c`). Each
+is recorded twice: GNU in the container (`tests/goldens/utils/`) and BSD on macOS
+(`tests/goldens/utils-bsd/`, `scripts/record-goldens --bsd`: Homebrew's bash 5.3, PATH of
+the system's directories only, so no GNU tool answers). A case declares `## expect: gnu`,
+`bsd` or `both` (default); with `both` the two recordings must agree on stdout, status and
+files, else the case fails as "goldens disagree" until it is annotated with the dialect and
+the D016 rule or the flag's origin. The BSD goldens are recorded by hand on a Mac, not in
+CI; their determinism is checked by recording twice.

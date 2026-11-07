@@ -112,6 +112,7 @@ pub(crate) async fn run(
         name,
         env,
         out: Vec::new(),
+        write_error: None,
     };
     let status = (entry.run)(&mut ctx, &argv).await;
     // What is still buffered goes out now; a utility that cares about a failing final
@@ -130,6 +131,9 @@ pub struct UtilCtx<'v> {
     name: String,
     env: Vec<(Vec<u8>, Vec<u8>)>,
     out: Vec<u8>,
+    /// A failed stdout write (a flush before a read, say): every later write fails with
+    /// it, so a utility writing into a closed pipe stops (EPIPE).
+    write_error: Option<io::ErrorKind>,
 }
 
 /// How [`UtilCtx::spawn`] changes the environment of the command it runs.
@@ -280,6 +284,9 @@ impl UtilCtx<'_> {
     /// Writes to stdout through the buffer (flushed when full, and at line ends when
     /// stdout is a terminal).
     pub async fn write(&mut self, data: &[u8]) -> io::Result<()> {
+        if let Some(kind) = self.write_error {
+            return Err(kind.into());
+        }
         self.out.extend_from_slice(data);
         if self.out.len() >= BUFFER || (data.contains(&b'\n') && self.is_terminal(1)) {
             self.flush().await?;
@@ -293,10 +300,14 @@ impl UtilCtx<'_> {
             return Ok(());
         }
         let data = std::mem::take(&mut self.out);
-        match self.fd(1) {
+        let r = match self.fd(1) {
             Some(f) => f.write_all(&data).await,
             None => Err(bad_fd()),
+        };
+        if let Err(e) = &r {
+            self.write_error = Some(e.kind());
         }
+        r
     }
 
     /// Writes `NAME: msg` and a newline to stderr (stdout is flushed first).

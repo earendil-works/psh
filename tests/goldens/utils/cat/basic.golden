@@ -1,0 +1,124 @@
+# Goldens for tests/utils/cat/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: copy a file and stdin
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|mid
+|one
+|two
+--- file f
+|one
+|two
+
+=== 1: a file without a final newline
+status: 0
+bash-n: 0
+--- stdout
+|x
+|yx
+|y
+--- file f
+|x
+|y
+~ no newline at end
+
+=== 2: -n numbers lines across files
+status: 0
+bash-n: 0
+--- stdout
+|     1	a
+|     2	b
+|     3	c
+--- file f
+|a
+|b
+--- file g
+|c
+~ no newline at end
+
+=== 3: -b numbers non-blank lines
+status: 0
+bash-n: 0
+--- stdout
+|     1	a
+|
+|     2	b
+
+=== 4: -s squeezes blank lines
+status: 0
+bash-n: 0
+--- stdout
+|a
+|
+|b
+|
+
+=== 5: -e shows line ends and control characters
+status: 0
+bash-n: 0
+--- stdout
+|a	b^A^M$
+
+=== 6: -t shows tabs and control characters
+status: 0
+bash-n: 0
+--- stdout
+|a^Ib^A
+
+=== 7: -v shows control and high bytes
+status: 0
+bash-n: 0
+--- stdout
+|x^A^?M-^@M-^?
+
+=== 8: -A shows everything
+status: 0
+bash-n: 0
+--- stdout
+|a^Ib^AM-^@^M$
+
+=== 9: -E and -T
+status: 0
+bash-n: 0
+--- stdout
+|a^Ib$
+
+=== 10: --number and --squeeze-blank
+status: 0
+bash-n: 0
+--- stdout
+|     1	a
+|     2	
+|     3	b
+
+=== 11: a missing file is reported, the rest is printed
+status: 0
+bash-n: 0
+--- stdout
+|ok
+|status=1
+--- stderr
+|cat: missing: No such file or directory
+--- file f
+|ok
+
+=== 12: a directory
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|cat: d: Is a directory
+--- dir d
+
+=== 13: cat to a closed pipe
+status: 0
+bash-n: 0
+--- stdout
+|y
+|y

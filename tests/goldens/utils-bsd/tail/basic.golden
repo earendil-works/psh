@@ -1,0 +1,141 @@
+# Goldens for tests/utils/tail/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: default ten lines
+status: 0
+bash-n: 0
+--- stdout
+|11
+|12
+|13
+|14
+|15
+|16
+|17
+|18
+|19
+|20
+
+=== 1: -n and -N
+status: 0
+bash-n: 0
+--- stdout
+|18
+|19
+|20
+|19
+|20
+--- file f
+|1
+|2
+|3
+|4
+|5
+|6
+|7
+|8
+|9
+|10
+|11
+|12
+|13
+|14
+|15
+|16
+|17
+|18
+|19
+|20
+
+=== 2: +N and -n +N start at a line
+status: 0
+bash-n: 0
+--- stdout
+|4
+|5
+|4
+|5
+--- file f
+|1
+|2
+|3
+|4
+|5
+
+=== 3: -c bytes
+status: 0
+bash-n: 0
+--- stdout
+|def
+
+=== 4: -c +N
+status: 0
+bash-n: 0
+--- stdout
+|cdef
+
+=== 5: a last line without a newline
+status: 0
+bash-n: 0
+--- stdout
+|b
+
+=== 6: several files get headers
+status: 0
+bash-n: 0
+--- stdout
+|==> f <==
+|b
+|
+|==> g <==
+|c
+--- file f
+|a
+|b
+--- file g
+|c
+
+=== 7: -r reverses
+status: 0
+bash-n: 0
+--- stdout
+|c
+|b
+|a
+--- file f
+|a
+|b
+|c
+
+=== 8: -n with -r
+status: 0
+bash-n: 0
+--- stdout
+|5
+|4
+--- file f
+|1
+|2
+|3
+|4
+|5
+
+=== 9: a missing file
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|tail: missing: No such file or directory
+
+=== 10: -f on a file that does not grow, stopped by timeout
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+--- stderr
+|bash: line 2: timeout: command not found
+--- file f
+|a
+|b

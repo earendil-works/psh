@@ -1,0 +1,144 @@
+# Goldens for tests/utils/head/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: default ten lines
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|4
+|5
+|6
+|7
+|8
+|9
+|10
+
+=== 1: -n and -N
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|1
+|2
+--- file f
+|1
+|2
+|3
+|4
+|5
+|6
+|7
+|8
+|9
+|10
+|11
+|12
+|13
+|14
+|15
+|16
+|17
+|18
+|19
+|20
+
+=== 2: -c bytes
+status: 0
+bash-n: 0
+--- stdout
+|abc
+
+=== 3: several files get headers
+status: 0
+bash-n: 0
+--- stdout
+|==> f <==
+|a
+|
+|==> g <==
+|c
+--- file f
+|a
+|b
+--- file g
+|c
+
+=== 4: -q suppresses headers
+status: 1
+bash-n: 0
+--- stderr
+|head: invalid option -- q
+|usage: head [-n lines | -c bytes] [file ...]
+--- file f
+|a
+|b
+--- file g
+|c
+
+=== 5: -v prints a header for one file
+status: 1
+bash-n: 0
+--- stderr
+|head: invalid option -- v
+|usage: head [-n lines | -c bytes] [file ...]
+--- file f
+|a
+
+=== 6: all but the last lines
+status: 1
+bash-n: 0
+--- stderr
+|head: illegal line count -- -2
+
+=== 7: all but the last bytes
+status: 0
+bash-n: 0
+--- stdout
+|
+--- stderr
+|head: illegal byte count -- -2
+
+=== 8: head ends the producer
+status: 0
+bash-n: 0
+--- stdout
+|y
+|y
+|y
+
+=== 9: an endless loop into head
+status: 0
+bash-n: 0
+--- stdout
+|0
+|1
+
+=== 10: a missing file
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|head: missing: No such file or directory
+
+=== 11: counts with suffixes
+status: 0
+bash-n: 0
+--- stdout
+|       0
+--- stderr
+|head: illegal byte count -- 1K
+
+=== 12: an invalid count
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|head: illegal line count -- x

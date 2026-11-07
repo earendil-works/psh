@@ -1,0 +1,39 @@
+# Goldens for tests/utils/sleep/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: a fraction
+status: 0
+bash-n: 0
+--- stdout
+|done
+
+=== 1: several operands add up
+status: 0
+bash-n: 0
+--- stdout
+|done
+
+=== 2: a suffix
+status: 0
+bash-n: 0
+--- stdout
+|done
+
+=== 3: an invalid interval
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|sleep: invalid time interval ‘x’
+|Try 'sleep --help' for more information.
+
+=== 4: no operand
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|sleep: missing operand
+|Try 'sleep --help' for more information.

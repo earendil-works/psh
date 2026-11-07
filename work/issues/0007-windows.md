@@ -6,7 +6,7 @@ branch: issue/0007-windows
 depends-on: part A: 0001; part B: 0006 (`windows-sys` allowed, D024)
 touches: .github/ or scripts/windows-*, crates/psh-os/ (windows), crates/psh-spec/ (Windows normalization), tests/process/ (Windows cases)
 guide: windows.md
-decisions: D1070–D1079, D1910–D1919
+decisions: D1070–D1079, D1910–D1919, D1930–D1939
 
 ## Goal
 Windows as a first-class platform from the start (D011): the gate runs on Windows, and
@@ -434,7 +434,7 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
 - Now: oils 2132/2511 (84.9%), brush 2579/3171 (81.3%), agent 283/701 (40.4%), utils
   357/433 (82.4%); the rest of the failures not in the shared ratchet: 161 + 233 + 411 +
   49 need external programs (sh, grep, sed, awk, seq, ps, python2, ...), 70 are listed in
-  the new windows files by kind (D1920): file names 17, symlinks 14, x/permission bits 8,
+  the new windows files by kind (D1930): file names 17, symlinks 14, x/permission bits 8,
   Unix layout 8, psh bug mkdir -p 9, fds>2 4, setuid/sticky 3, drive-rooted HOME 2,
   python2 2, trailing dot 1, SIGUSR1 1. The files agent's 27 utils lines unchanged.
 - Gate: the `spec` leg runs every layer, 85 s with the build.

@@ -155,6 +155,8 @@ impl HostFile for WinFile {
                 _ => FileKind::CharDevice,
             },
             Kind::Shared(_) | Kind::Pump(_) => FileKind::Fifo,
+            Kind::Dev(Dev::Dir) => FileKind::Dir,
+            Kind::Dev(_) => FileKind::CharDevice,
         })
     }
 

@@ -73,7 +73,7 @@ date env printenv nice nohup which`.
   nearly every case except times in headers, `--left-column`, `--color`, quoting.
 - oils/array-assign/6 failed once in a loaded spec-linux run and passed alone; quarantine
   it if it recurs.
-- ARCH.md: the `which` line now says it reports the PATH program (coordinator's call).
+- ARCH.md: the coordinator rewrote the `which` reporting line (D1200) on main.
 
 ## Follow-ups
 - touch -d / find -newermt: call `ctx.load_zone()` so `TZ=...` applies (one line each).

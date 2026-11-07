@@ -304,7 +304,16 @@ pub(crate) fn spawn_sub(sub: Vp, code: Rc<Code>, body: Body) -> Join<i32> {
         let r = match body {
             Body::List(l) => run_list(&mut sub, &code, l).await,
             Body::Stage(c) => {
-                sub.exec_tail = matches!(code.ast.cmd(c).kind, CommandKind::Simple(_));
+                let cmd = code.ast.cmd(c);
+                // bash does not exec while a trap could still run in the subshell.
+                let traps = sub
+                    .traps
+                    .map
+                    .values()
+                    .any(|t| t.active && !t.action.is_empty());
+                if matches!(cmd.kind, CommandKind::Simple(_)) && !traps {
+                    sub.exec_tail = Some(std::ptr::from_ref(cmd) as usize);
+                }
                 run_command_unchecked(&mut sub, &code, c).await
             }
         };
@@ -968,8 +977,12 @@ fn run_simple<'a>(
     s: &'a SimpleCommand,
 ) -> LocalBoxFuture<'a, R> {
     Box::pin(async move {
-        // Only this command is the vproc's last act, not what it runs (D1902).
-        let tail = std::mem::take(&mut vp.exec_tail);
+        // Only the stage's own command is the vproc's last act, not what it runs or a
+        // trap that runs before it (D1902).
+        let tail = vp.exec_tail == Some(std::ptr::from_ref(cmd) as usize);
+        if tail {
+            vp.exec_tail = None;
+        }
         vp.line = code.line(cmd.span.start);
         let (argv, assigns) = match Box::pin(prepare_simple(vp, code, cmd, s)).await? {
             Prepared::Done(status) => return Ok(status),
@@ -1033,7 +1046,7 @@ fn run_simple<'a>(
             }
         };
         if cmd.redirects.is_empty() {
-            vp.exec_tail = tail;
+            vp.exec_now = tail;
             return run_argv(vp, argv, assigns).await;
         }
 
@@ -1065,7 +1078,7 @@ fn run_simple<'a>(
             // The vproc ends with this command: nothing to restore, and the saved
             // table must not keep the external's pipe ends open.
             drop(saved);
-            vp.exec_tail = true;
+            vp.exec_now = true;
             return run_argv(vp, argv, assigns).await;
         }
         let r = run_argv(vp, argv, assigns).await;
@@ -1087,13 +1100,13 @@ fn run_argv(
         .and_then(|n| vp.funcs.get(n))
         .cloned()
     {
-        vp.exec_tail = false;
+        vp.exec_now = false;
         return Box::pin(call_function(vp, f, argv, assigns));
     }
     if builtins::get(vp, name).is_none() {
         return Box::pin(run_external(vp, argv, assigns));
     }
-    vp.exec_tail = false;
+    vp.exec_now = false;
     Box::pin(run_builtin(vp, argv, assigns))
 }
 
@@ -1264,7 +1277,7 @@ pub(crate) async fn run_external_with(
     }
     // The vproc's last act: the external has its descriptors now (bash execs it), so
     // the vproc lets go of them; a pipe the external closes is closed (D1902).
-    if std::mem::take(&mut vp.exec_tail) {
+    if std::mem::take(&mut vp.exec_now) {
         vp.fds = Default::default();
     }
     let mut status = None;

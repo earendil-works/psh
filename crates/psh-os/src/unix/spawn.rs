@@ -864,7 +864,9 @@ fn wait_exit(pid: i32) -> ExitStatus {
             let status = unsafe { info.si_status() };
             match info.si_code {
                 libc::CLD_EXITED => return ExitStatus::Exited(status),
-                libc::CLD_KILLED | libc::CLD_DUMPED => return ExitStatus::Signaled(status),
+                libc::CLD_KILLED | libc::CLD_DUMPED => {
+                    return ExitStatus::Signaled(super::signum::from_os(status));
+                }
                 _ => {
                     // macOS reports stops and continues even for WEXITED; with WNOWAIT
                     // the report would repeat. Consume it without reaping.
@@ -922,6 +924,9 @@ impl ExtProc for UnixProc {
     }
 
     fn signal(&mut self, sig: Signal) {
+        let Some(sig) = super::signum::to_os(sig) else {
+            return;
+        };
         let mut life = self.tracker.lock();
         if life.reaped() {
             return;

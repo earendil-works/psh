@@ -224,7 +224,6 @@ brush/compat/builtins/jobs/12
 brush/compat/builtins/jobs/14
 brush/compat/builtins/jobs/15
 brush/compat/builtins/jobs/16
-brush/compat/builtins/kill/0
 brush/compat/builtins/kill/1
 brush/compat/builtins/kill/3
 brush/compat/builtins/kill/9

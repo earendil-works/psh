@@ -145,10 +145,12 @@ pub(crate) struct Vp {
     pub jobs: Rc<RefCell<crate::jobs::JobTable>>,
     /// The job this vproc runs in, if it is part of one (`cmd &`).
     pub job: Option<Rc<crate::jobs::Job>>,
-    /// The next simple command is this vproc's last act (a pipeline stage that is one
-    /// simple command): an external it runs takes over its descriptors, as bash execs
-    /// it, so the vproc holds no pipe end the external closes (D1902).
-    pub exec_tail: bool,
+    /// This vproc's last act, a pipeline stage that is one simple command (the
+    /// command's address): an external it runs takes over the vproc's descriptors, as
+    /// bash execs it, so the vproc holds no pipe end the external closes (D1902). While
+    /// that command's external starts, `exec_now` says so.
+    pub exec_tail: Option<usize>,
+    pub exec_now: bool,
     /// Function definitions; shared with subshells until one defines or unsets.
     pub funcs: Rc<HashMap<String, Rc<Func>>>,
     /// One frame per running function call: the variables its `local`s shadow.

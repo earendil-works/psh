@@ -6,6 +6,7 @@
 //! driver's callback (which cancels the run). Children never see these handlers: an
 //! exec resets caught signals, and the spawner resets every disposition anyway.
 //! A signal ignored when psh started stays ignored and gets no handler, as in bash.
+//! The API takes and gives the engine's (Linux) signal numbers (D1283).
 
 use std::io::{self, Read};
 use std::os::fd::{AsRawFd, IntoRawFd};
@@ -74,7 +75,7 @@ fn set_errno(e: i32) {
 pub fn first_caught() -> Option<Signal> {
     match FIRST.load(Ordering::SeqCst) {
         0 => None,
-        s => Some(s),
+        s => Some(super::signum::from_os(s)),
     }
 }
 
@@ -93,7 +94,7 @@ fn mask(how: libc::c_int, sigs: &[Signal]) {
     unsafe {
         let mut set: libc::sigset_t = std::mem::zeroed();
         libc::sigemptyset(&raw mut set);
-        for &s in sigs {
+        for s in sigs.iter().filter_map(|&s| super::signum::to_os(s)) {
             libc::sigaddset(&raw mut set, s);
         }
         libc::pthread_sigmask(how, &raw const set, std::ptr::null_mut());
@@ -141,6 +142,9 @@ pub(crate) fn restore_mask(old: libc::sigset_t) {
 
 /// Whether the process ignores `sig` now.
 pub fn is_ignored(sig: Signal) -> bool {
+    let Some(sig) = super::signum::to_os(sig) else {
+        return false;
+    };
     // SAFETY: sigaction is plain data, valid zeroed.
     let mut old: libc::sigaction = unsafe { std::mem::zeroed() };
     // SAFETY: a null new action only queries; `old` is writable.
@@ -183,6 +187,9 @@ pub fn catch(sigs: &[Signal], callback: impl Fn(Signal) + Send + 'static) -> io:
         if is_ignored(sig) {
             continue;
         }
+        let Some(sig) = super::signum::to_os(sig) else {
+            continue;
+        };
         // SAFETY: sigaction is plain data; the handler only does async-signal-safe
         // work (atomics, write).
         unsafe {
@@ -204,17 +211,18 @@ pub fn catch(sigs: &[Signal], callback: impl Fn(Signal) + Send + 'static) -> io:
 /// signal goes to the whole group: what the shell's externals left behind there dies
 /// with it, even when only the shell's pid was signalled (D1067).
 pub fn die_by(sig: Signal) -> ! {
+    let os = super::signum::to_os(sig).unwrap_or(libc::SIGTERM);
     // SAFETY: plain calls with valid arguments; the process ends here.
     unsafe {
-        libc::signal(sig, libc::SIG_DFL);
+        libc::signal(os, libc::SIG_DFL);
         let mut set: libc::sigset_t = std::mem::zeroed();
         libc::sigemptyset(&raw mut set);
-        libc::sigaddset(&raw mut set, sig);
+        libc::sigaddset(&raw mut set, os);
         libc::pthread_sigmask(libc::SIG_UNBLOCK, &raw const set, std::ptr::null_mut());
         if libc::getpgrp() == libc::getpid() {
-            libc::kill(0, sig);
+            libc::kill(0, os);
         }
-        libc::raise(sig);
+        libc::raise(os);
     }
     std::process::exit(128 + sig)
 }

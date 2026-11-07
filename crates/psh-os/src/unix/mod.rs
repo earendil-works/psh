@@ -13,6 +13,7 @@
 mod file;
 pub mod ready;
 pub mod signals;
+pub mod signum;
 mod spawn;
 
 use std::ffi::{CString, OsStr, OsString};
@@ -400,6 +401,9 @@ impl Host for UnixHost {
     }
 
     fn kill(&self, pid: i32, sig: Signal) -> io::Result<()> {
+        let Some(sig) = signum::to_os(sig) else {
+            return Err(io::ErrorKind::InvalidInput.into());
+        };
         // Embedded (a fake `$$`), the process and its group are the embedder's: a
         // script must not reach them (`kill 0`, `kill -1` and the real pid included).
         if self.pid.is_some() {
@@ -432,8 +436,9 @@ impl Host for UnixHost {
     }
 }
 
-/// Sends `sig` to process `pid` (negative: a process group), as `kill(2)`.
-pub fn kill(pid: i32, sig: Signal) -> io::Result<()> {
+/// Sends the OS's signal `sig` to process `pid` (negative: a process group), as
+/// `kill(2)`.
+pub fn kill(pid: i32, sig: libc::c_int) -> io::Result<()> {
     // SAFETY: plain syscall without pointers.
     if unsafe { libc::kill(pid, sig) } == 0 {
         Ok(())

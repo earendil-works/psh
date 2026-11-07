@@ -144,8 +144,6 @@ oils/builtin-getopts/6
 oils/builtin-getopts/12
 oils/builtin-getopts/13
 oils/builtin-getopts/14
-oils/builtin-kill/8
-oils/builtin-kill/9
 oils/builtin-meta/4
 oils/builtin-meta/6
 oils/builtin-misc/0
@@ -287,8 +285,6 @@ oils/divergence/2
 oils/divergence/3
 oils/dparen/10
 oils/errexit/9
-oils/errexit/25
-oils/errexit/28
 oils/errexit/29
 oils/exit-status/2
 oils/extglob-files/0

@@ -250,6 +250,18 @@ can express neither); `pid()`; `kill()`.
   `scripts/timeout.sh` because it runs commands with `nice -n 10`: on a loaded machine
   10–60 ms sleeps race. Un-niced (as the gate runs) they pass; background/7 stays in the
   ratchet as a race.
+- Rebased onto 0028 part 2 (traps, D1283/D1284): conflicts in state.rs (subshell),
+  exec.rs (run_background now runs the EXIT trap; finish after it), lib.rs
+  (`ControlHandle::signal` next to `cancel_word`). Signal numbers are Linux's in the
+  engine everywhere (D1283): engine `signals.rs` now uses `builtins::trap`'s table, and
+  psh-os maps at its boundary (`unix::signum`: `ExtProc::signal`, `Host::kill`,
+  `sig_ignore`, `ExitStatus::Signaled`, the standalone signal API). macOS now passes
+  `kill -l` cases recorded on Linux.
+- D1902 refined: the tail mark is the stage command's address (a DEBUG trap's own
+  command before it must not take it), and no exec while a trap could run.
+- Open, D1284's procs half: `kill` on the shell itself sets the engine's signal mask;
+  the standalone psh forwards its OS signals to `ControlHandle::signal`; `wait` and
+  foreground waits wake on pending signals. Next part.
 
 ## Follow-ups
 - guide: `processes.md` (placement, cancel and abandonment, leak checks).

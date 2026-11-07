@@ -1,128 +1,36 @@
-//! Signal names, numbers and descriptions (`kill -l`, `kill -SIG`, job states).
-//!
-//! Numbers are the OS's own: the engine sends and reports real signals (BSD numbering on
-//! macOS and the BSDs, Linux numbering elsewhere, wasm included). Descriptions are
-//! glibc's `strsignal` texts on every platform, as bash prints them on Linux (the
-//! recorded goldens).
+//! Signal helpers for `kill`, `jobs` and `wait` (D1900), over the engine's one signal
+//! table in `builtins::trap` (D1283): Linux numbering on every platform, as the goldens
+//! and `kill -l` show it; hosts map the numbers to the platform's own. Descriptions are
+//! glibc's `strsignal` texts, as bash prints them on Linux.
 
+use crate::builtins::trap::{signal_name, signal_number};
 use crate::host::Signal;
 
-/// Signals by number, without the `SIG` prefix; index = number.
-#[cfg(any(
-    target_os = "macos",
-    target_os = "ios",
-    target_os = "freebsd",
-    target_os = "netbsd",
-    target_os = "openbsd"
-))]
-const NAMES: &[&str] = &[
-    "", "HUP", "INT", "QUIT", "ILL", "TRAP", "ABRT", "EMT", "FPE", "KILL", "BUS", "SEGV", "SYS",
-    "PIPE", "ALRM", "TERM", "URG", "STOP", "TSTP", "CONT", "CHLD", "TTIN", "TTOU", "IO", "XCPU",
-    "XFSZ", "VTALRM", "PROF", "WINCH", "INFO", "USR1", "USR2",
-];
-
-#[cfg(not(any(
-    target_os = "macos",
-    target_os = "ios",
-    target_os = "freebsd",
-    target_os = "netbsd",
-    target_os = "openbsd"
-)))]
-const NAMES: &[&str] = &[
-    "", "HUP", "INT", "QUIT", "ILL", "TRAP", "ABRT", "BUS", "FPE", "KILL", "USR1", "SEGV", "USR2",
-    "PIPE", "ALRM", "TERM", "STKFLT", "CHLD", "CONT", "STOP", "TSTP", "TTIN", "TTOU", "URG",
-    "XCPU", "XFSZ", "VTALRM", "PROF", "WINCH", "IO", "PWR", "SYS",
-];
-
-/// Linux's real-time signals (`RTMIN` 34 … `RTMAX` 64), as bash names them.
-#[cfg(not(any(
-    target_os = "macos",
-    target_os = "ios",
-    target_os = "freebsd",
-    target_os = "netbsd",
-    target_os = "openbsd"
-)))]
-const RT: Option<(Signal, Signal)> = Some((34, 64));
-#[cfg(any(
-    target_os = "macos",
-    target_os = "ios",
-    target_os = "freebsd",
-    target_os = "netbsd",
-    target_os = "openbsd"
-))]
-const RT: Option<(Signal, Signal)> = None;
-
-/// The highest signal number.
+/// The highest signal number (`SIGRTMAX`).
 pub(crate) fn max() -> Signal {
-    match RT {
-        Some((_, hi)) => hi,
-        None => NAMES.len() as Signal - 1,
-    }
+    64
 }
 
-/// `SIGTERM` for 15 (Linux), `SIGRTMIN+2` for 36; `None` when there is no such signal.
+/// `SIGTERM` for 15, `SIGRTMIN+2` for 36; `None` when there is no such signal.
 pub(crate) fn name(n: Signal) -> Option<String> {
-    if n > 0 && (n as usize) < NAMES.len() {
-        return Some(format!("SIG{}", NAMES[n as usize]));
-    }
-    let (lo, hi) = RT?;
-    if n < lo || n > hi {
-        return None;
-    }
-    let mid = lo + (hi - lo) / 2;
-    Some(if n == lo {
-        "SIGRTMIN".to_string()
-    } else if n == hi {
-        "SIGRTMAX".to_string()
-    } else if n <= mid {
-        format!("SIGRTMIN+{}", n - lo)
-    } else {
-        format!("SIGRTMAX-{}", hi - n)
-    })
+    signal_name(n)
 }
 
 /// The number of a signal name: `TERM`, `SIGTERM`, `term` (any case), `RTMIN+2`.
-/// `EXIT` and `0` are 0.
+/// `EXIT` is 0.
 pub(crate) fn number(s: &str) -> Option<Signal> {
-    let up = s.to_ascii_uppercase();
-    let bare = up.strip_prefix("SIG").unwrap_or(&up);
-    if bare == "EXIT" {
+    if s.eq_ignore_ascii_case("EXIT") || s.eq_ignore_ascii_case("SIGEXIT") {
         return Some(0);
     }
-    if let Some(i) = NAMES.iter().position(|n| !n.is_empty() && *n == bare) {
-        return Some(i as Signal);
+    if s.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
     }
-    if bare == "IOT" {
-        return number("ABRT");
+    let up = s.to_ascii_uppercase();
+    match up.strip_prefix("SIG").unwrap_or(&up) {
+        "IOT" => Some(6),
+        "POLL" => Some(29),
+        _ => signal_number(s),
     }
-    if bare == "POLL" {
-        return number("IO");
-    }
-    let (lo, hi) = RT?;
-    let rel = |rest: &str| -> Option<Signal> {
-        if rest.is_empty() {
-            Some(0)
-        } else {
-            rest.parse().ok()
-        }
-    };
-    if let Some(rest) = bare.strip_prefix("RTMIN") {
-        let off = match rest.strip_prefix('+') {
-            Some(r) => rel(r)?,
-            None if rest.is_empty() => 0,
-            None => return None,
-        };
-        return (lo + off <= hi).then_some(lo + off);
-    }
-    if let Some(rest) = bare.strip_prefix("RTMAX") {
-        let off = match rest.strip_prefix('-') {
-            Some(r) => rel(r)?,
-            None if rest.is_empty() => 0,
-            None => return None,
-        };
-        return (hi - off >= lo).then_some(hi - off);
-    }
-    None
 }
 
 /// A signal given by name or number (`kill -s`, `kill -SIG`): `None` when invalid.
@@ -169,8 +77,6 @@ pub(crate) fn describe(n: Signal) -> String {
         Some("IO") => "I/O possible",
         Some("PWR") => "Power failure",
         Some("SYS") => "Bad system call",
-        Some("EMT") => "EMT trap",
-        Some("INFO") => "Information request",
         _ => return format!("Signal {n}"),
     };
     text.to_string()
@@ -181,7 +87,7 @@ pub(crate) fn harmless(n: Signal) -> bool {
     n == 0
         || matches!(
             name(n).as_deref(),
-            Some("SIGCHLD" | "SIGCONT" | "SIGURG" | "SIGWINCH" | "SIGINFO")
+            Some("SIGCHLD" | "SIGCONT" | "SIGURG" | "SIGWINCH")
         )
 }
 
@@ -205,6 +111,7 @@ mod tests {
                 assert_eq!(number(&s), Some(n), "{s}");
             }
         }
+        assert_eq!(number("USR1"), Some(10));
         assert!(name(15).is_some() && name(max() + 1).is_none());
         assert_eq!(number("term"), Some(15));
         assert_eq!(number("SigTerm"), Some(15));

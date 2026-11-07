@@ -6,10 +6,10 @@ use std::rc::Rc;
 use crate::testhost::TestHost;
 use crate::{Script, Shell, Step};
 
-struct Out {
-    status: i32,
-    stdout: String,
-    stderr: String,
+pub(crate) struct Out {
+    pub status: i32,
+    pub stdout: String,
+    pub stderr: String,
 }
 
 fn run_on(host: Rc<TestHost>, src: &str) -> Out {
@@ -58,18 +58,18 @@ fn run_setup(src: &str, setup: impl Fn(&TestHost)) -> Out {
     a
 }
 
-fn run(src: &str) -> Out {
+pub(crate) fn run(src: &str) -> Out {
     run_setup(src, |_| {})
 }
 
 #[track_caller]
-fn check(src: &str, stdout: &str) {
+pub(crate) fn check(src: &str, stdout: &str) {
     let o = run(src);
     assert_eq!(o.stdout, stdout, "stdout of {src:?} (stderr: {})", o.stderr);
 }
 
 #[track_caller]
-fn check_status(src: &str, status: i32) {
+pub(crate) fn check_status(src: &str, status: i32) {
     let o = run(src);
     assert_eq!(o.status, status, "status of {src:?} (stderr: {})", o.stderr);
 }
@@ -635,5 +635,10 @@ fn aliases() {
         o.stderr.contains("line 3: nosuchcmd_x: command not found"),
         "{}",
         o.stderr
+#[test]
+fn empty_quoted_word_is_a_field() {
+    check(
+        r#"f() { echo $#; }; f a ""; f ''; f "$@"; f "" "$@""#,
+        "2\n1\n0\n1\n",
     );
 }

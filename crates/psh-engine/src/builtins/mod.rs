@@ -2,7 +2,10 @@
 //! them.
 
 mod alias;
+#[cfg(test)]
+mod core_tests;
 mod printf;
+mod read;
 mod test;
 
 use crate::escape::{Dialect, decode};
@@ -53,6 +56,7 @@ pub(crate) fn find(name: &[u8]) -> Option<Builtin> {
         b"getopts" => (builtin!(getopts), false),
         b"test" => (builtin!(test::test), false),
         b"[" => (builtin!(test::bracket), false),
+        b"read" => (builtin!(read::read), false),
         _ => return None,
     };
     Some(Builtin { run, special })

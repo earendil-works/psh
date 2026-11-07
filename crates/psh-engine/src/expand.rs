@@ -515,7 +515,7 @@ async fn expand_part(
         Part::Double(inner) | Part::Locale(inner) => {
             // `"…"` makes a field even when everything inside is empty, except that
             // `"$@"` with no parameters makes none.
-            if !inner.iter().all(is_at) {
+            if inner.is_empty() || !inner.iter().all(is_at) {
                 f.quoted(b"");
             }
             expand_parts(vp, code, inner, true, f).await?;

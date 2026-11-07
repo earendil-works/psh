@@ -99,6 +99,32 @@ use Operands::{
     AllWrite, LastWrite, None as NoOps, Read as Reads, ReadThenWrite, Script, Write as Writes,
 };
 
+/// GNU grep's long options with a value (also `egrep`, `fgrep`).
+const GREP_LONG_VALUES: &[&str] = &[
+    "--regexp",
+    "--file",
+    "--max-count",
+    "--after-context",
+    "--before-context",
+    "--context",
+    "--label",
+    "--devices",
+    "--directories",
+    "--binary-files",
+    "--include",
+    "--exclude",
+    "--exclude-from",
+    "--exclude-dir",
+    "--group-separator",
+];
+
+/// grep reads its `-f`/`--file` and `--exclude-from` files.
+const GREP_EFFECTS: &[(&str, Effect)] = &[
+    ("-f", ReadsValue),
+    ("--file", ReadsValue),
+    ("--exclude-from", ReadsValue),
+];
+
 /// The table. Names are unique; [`utility`] looks them up.
 pub static UTILITIES: &[Utility] = &[
     // Reading files and text.
@@ -143,36 +169,25 @@ pub static UTILITIES: &[Utility] = &[
         "grep",
         Read,
         "efmABCdD",
-        &[
-            "--regexp",
-            "--file",
-            "--max-count",
-            "--after-context",
-            "--before-context",
-            "--context",
-            "--label",
-            "--devices",
-            "--directories",
-            "--binary-files",
-        ],
+        GREP_LONG_VALUES,
         Script("ef"),
-        &[("-f", ReadsValue), ("--file", ReadsValue)],
+        GREP_EFFECTS,
     ),
     v(
         "egrep",
         Read,
         "efmABCdD",
-        &["--regexp", "--file"],
+        GREP_LONG_VALUES,
         Script("ef"),
-        &[("-f", ReadsValue)],
+        GREP_EFFECTS,
     ),
     v(
         "fgrep",
         Read,
         "efmABCdD",
-        &["--regexp", "--file"],
+        GREP_LONG_VALUES,
         Script("ef"),
-        &[("-f", ReadsValue)],
+        GREP_EFFECTS,
     ),
     v(
         "rg",

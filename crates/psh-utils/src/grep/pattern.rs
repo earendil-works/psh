@@ -63,7 +63,9 @@ pub(crate) enum PatternError {
 /// GNU's warnings and errors for patterns that parse but are likely mistakes, checked
 /// before translating: a POSIX class outside brackets (`[:space:]`, an error), and in
 /// ERE a repetition operator at the start of an expression (a warning; GNU then
-/// ignores a `*`, `+` or `?` there, so the pattern returned leaves it out).
+/// ignores a `*`, `+` or `?` there, so the pattern returned leaves it out). Also GNU's
+/// ERE extensions over POSIX: a `{` that starts no interval is literal, `^*` is no
+/// anchor.
 pub(crate) fn diagnose(p: &[u8], extended: bool, warnings: &mut Vec<String>) -> Result<Vec<u8>, String> {
     let mut out = Vec::with_capacity(p.len());
     let mut i = 0;
@@ -97,13 +99,25 @@ pub(crate) fn diagnose(p: &[u8], extended: bool, warnings: &mut Vec<String>) -> 
         if extended {
             match c {
                 b'(' | b'|' => at_start = true,
+                // `^*`: any number of anchors, so none is needed.
+                b'^' if p.get(i + 1) == Some(&b'*') => {
+                    i += 2;
+                    continue;
+                }
                 b'^' => {}
                 b'*' | b'+' | b'?' if at_start => {
                     warnings.push(format!("{} at start of expression", c as char));
                     i += 1;
                     continue;
                 }
-                b'{' if at_start && is_interval(&p[i + 1..]) => {
+                // A `{` that does not start an interval is an ordinary character.
+                b'{' if !is_interval(&p[i + 1..]) => {
+                    out.extend_from_slice(b"\\{");
+                    i += 1;
+                    at_start = false;
+                    continue;
+                }
+                b'{' if at_start => {
                     warnings.push("{...} at start of expression".into());
                 }
                 _ => at_start = false,
@@ -561,7 +575,8 @@ mod tests {
         let mut w = Vec::new();
         assert!(diagnose(b"[:space:]", false, &mut w).is_err());
         assert_eq!(diagnose(b"a|*b(+c)", true, &mut w).unwrap(), b"a|b(c)");
-        assert_eq!(diagnose(br"^*a[*]\*", true, &mut w).unwrap(), br"^a[*]\*");
+        assert_eq!(diagnose(br"^*a[*]\*", true, &mut w).unwrap(), br"a[*]\*");
+        assert_eq!(diagnose(b"x{1|{,2}", true, &mut w).unwrap(), br"x\{1|{,2}");
         w.clear();
         assert!(diagnose(b"x[:a]", false, &mut w).is_ok());
         assert!(diagnose(b"[[:alpha:]:]", false, &mut w).is_ok());

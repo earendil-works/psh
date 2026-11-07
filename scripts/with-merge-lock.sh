@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Run a command while holding the merge lock (the lock merge-to-main.sh takes before it
-# fast-forwards main). The coordinator commits on main through this, so main never moves
-# between an agent's "is main still where I gated?" check and its fast-forward:
+# Run a command while holding the merge lock (the lock merge-to-main.sh holds from its
+# rebase through its gate to the fast-forward). The coordinator commits on main through
+# this, so main never moves under a merge's gate; a commit waits for a running merge to
+# land (or to release the lock while it waits for a dirty primary checkout):
 #
 #   scripts/with-merge-lock.sh git commit -qm "board: ..."
 #   scripts/with-merge-lock.sh sh -c 'edit files && git commit -qam "docs: ..."'

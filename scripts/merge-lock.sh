@@ -17,7 +17,7 @@ primary_checkout() {
 }
 
 take_merge_lock() {
-  local lock=$1 who=$2 max=$3 waited=0 next_note=0 pid owner
+  local lock=$1 who=$2 max=$3 waited=0 next_note=0 pid owner held
   local poll=${PSH_MERGE_POLL:-2}
   mkdir -p "$(dirname "$lock")"
   until mkdir "$lock" 2>/dev/null; do
@@ -28,8 +28,11 @@ take_merge_lock() {
       rm -rf "$lock"
       continue
     fi
-    if [ "$waited" -ge "$next_note" ]; then
-      echo "merge lock: waiting for $lock, held by: ${owner:-unknown (no owner file yet)}" >&2
+    # The holder writes its owner file just after mkdir: give it one poll.
+    if [ "$waited" -ge "$next_note" ] && { [ -n "$owner" ] || [ "$waited" -gt 0 ]; }; then
+      # The owner line is "WHO since TIME host=... pid=...".
+      held=${owner%% host=*}
+      echo "merge lock: waiting for the merge lock (held by ${held:-someone, no owner file yet})" >&2
       next_note=$((next_note + 300))
     fi
     if [ "$waited" -ge "$max" ]; then

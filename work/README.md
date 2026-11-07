@@ -62,17 +62,23 @@ utilities (one agent per batch), Windows.
 
 ## Merging
 
-`scripts/merge-to-main.sh` rebases the branch onto `main` and runs `scripts/gate.sh` in
-the issue worktree, then takes `work/scratch/merge.lock` in the primary checkout just to
-fast-forward `main`. If `main` moved while it gated, it rebases and gates again (D1010).
-If the rebase conflicts, it stops: resolve, `git rebase --continue`, run it again.
+`scripts/merge-to-main.sh` takes `work/scratch/merge.lock` in the primary checkout
+first, then rebases the branch onto `main`, runs `scripts/gate.sh` in the issue worktree
+and fast-forwards `main`, holding the lock throughout (D1342). Merges are serialized: a
+second agent sees `waiting for the merge lock (held by merge-to-main issue/… since …)`
+and starts its rebase and gate once the first has landed, so no gate is wasted on a
+`main` that moved. If `main` moves anyway (a commit made without the lock), it rebases and
+gates again, still holding the lock. If the rebase conflicts, it stops and releases the
+lock: resolve, `git rebase --continue`, run it again.
 `scripts/with-merge-lock.sh CMD...` runs a command under the same lock; the coordinator
-commits on `main` through it. Each run appends a line to `work/scratch/merge-log.tsv`.
+commits on `main` through it, which waits while a merge's gate runs. Each run appends a
+line to `work/scratch/merge-log.tsv`.
 
 - `docs/decisions.md` and the ratchet files (`tests/**/expected-failures.txt`) are
   append-mostly; give them git's `union` merge driver in `.gitattributes` so appends from
   different branches never conflict. A stale ratchet line is harmless: the gate reports
   it and the next `--update-ratchet` rewrites the file.
 - merge-to-main refuses an issue worktree with uncommitted or untracked files. If the
-  primary checkout has uncommitted changes when it is about to fast-forward, it waits
-  for them to be committed (up to 30 minutes), then lands on top (D1011).
+  primary checkout has uncommitted changes when it is about to fast-forward, it releases
+  the lock, waits for them to be committed (up to 30 minutes), takes the lock again and
+  lands on top, gating again if that moved `main` (D1011).

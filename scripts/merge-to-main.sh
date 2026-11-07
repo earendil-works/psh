@@ -3,25 +3,28 @@
 #
 #   scripts/merge-to-main.sh
 #
-# 1. Rebase the branch onto main (no lock).
-# 2. Run scripts/gate.sh on the result, here in the issue worktree (no lock), under
+# 1. Take the merge lock (work/scratch/merge.lock in the primary checkout), waiting
+#    for whoever holds it ("waiting for the merge lock (held by X since T)"). It is held
+#    from here to the fast-forward, so merges are serialized and a gate is never wasted
+#    because main moved under it (D1342).
+# 2. Rebase the branch onto main.
+# 3. Run scripts/gate.sh on the result, here in the issue worktree, under
 #    scripts/timeout.sh (PSH_GATE_TIMEOUT seconds, default 10800: the windows leg may
 #    wait an hour for the VM's turn, D1072).
-# 3. Take the merge lock (work/scratch/merge.lock in the primary checkout). If main is
-#    still where step 1 put the branch, fast-forward main in the primary checkout and
-#    release: the lock is held for seconds. If main moved meanwhile (another merge, the
-#    coordinator's commits), release it and go back to 1. After two such lost races the
-#    next attempt holds the lock from 1 to 3, so no branch starves.
+# 4. Fast-forward main in the primary checkout and release the lock. If main moved
+#    anyway (a commit made without the lock), rebase and gate again, still holding it.
 #
 # main only ever fast-forwards to a commit that passed the gate.
 #
 # Refuses to start when this worktree has uncommitted or untracked files (the gate would
 # test something other than the commit). When the primary checkout has uncommitted
-# changes at fast-forward time, it releases the lock and waits for them to be committed
-# (polling, up to PSH_MERGE_DIRTY_WAIT seconds, default 1800), then rebases and gates
-# again if that moved main; it never touches the primary checkout's changes. The lock
-# wait is capped by PSH_MERGE_LOCK_WAIT (default 3600). A rebase conflict stops the
-# script with the rebase in progress: resolve it, `git rebase --continue`, run it again.
+# changes at fast-forward time, it releases the lock (the coordinator commits them with
+# scripts/with-merge-lock.sh) and waits for them to be committed (polling, up to
+# PSH_MERGE_DIRTY_WAIT seconds, default 1800), then takes the lock again and rebases
+# and gates again if that moved main; it never touches the primary checkout's changes.
+# The lock wait is capped by PSH_MERGE_LOCK_WAIT (default 14400: other merges' gates
+# run in front of this one). A rebase conflict stops the script with the rebase in
+# progress: resolve it, `git rebase --continue`, run it again.
 #
 # One line per run goes to work/scratch/merge-log.tsv in the primary checkout: start,
 # branch, outcome, seconds, attempts.
@@ -69,7 +72,7 @@ primary_branch=$(git -C "$main_root" symbolic-ref -q --short HEAD || true)
 scratch="$main_root/work/scratch"
 lock="$scratch/merge.lock"
 mkdir -p "$scratch"
-lock_wait=${PSH_MERGE_LOCK_WAIT:-3600}
+lock_wait=${PSH_MERGE_LOCK_WAIT:-14400}
 dirty_wait=${PSH_MERGE_DIRTY_WAIT:-1800}
 poll=${PSH_MERGE_POLL:-2}
 
@@ -140,31 +143,23 @@ run_gate() {
 }
 
 gated=
-lost=0
+take
 while :; do
   attempts=$((attempts + 1))
-  hold=0
-  if [ "$lost" -ge 2 ]; then
-    echo "== main moved twice while gating; this attempt holds the merge lock throughout"
-    hold=1
-    take
-  fi
   rebase_onto_main
   # Nothing to gate again when the rebase was a no-op (we only waited for the primary).
   if [ "$sha" != "$gated" ]; then
     run_gate
     gated=$sha
   fi
-  [ "$hold" = 1 ] || take
   if [ "$(git rev-parse main)" != "$base" ]; then
-    echo "== main moved while gating ($(git rev-parse --short "$base") -> $(git rev-parse --short main)); rebasing and gating again"
-    release
-    lost=$((lost + 1))
+    echo "== main moved while gating, without the merge lock ($(git rev-parse --short "$base") -> $(git rev-parse --short main)); rebasing and gating again"
     continue
   fi
   if primary_dirty; then
     release
     wait_primary_clean
+    take
     continue
   fi
   echo "== fast-forward main to $(git rev-parse --short "$sha")"

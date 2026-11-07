@@ -6,7 +6,8 @@ set -uo pipefail
 src=$(cd "$(dirname "$0")" && pwd)
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/psh-merge-test.XXXXXX")
 tmp=$(cd "$tmp" && pwd -P)
-trap 'rm -rf "$tmp"' EXIT
+# KEEP=1 keeps the throwaway repository and outputs for a look after a failure.
+trap '[ -n "${KEEP:-}" ] || rm -rf "$tmp"' EXIT
 
 # Isolate git from the caller: no user config (signing, hooks), no repository env (the
 # outer merge's gate runs this).
@@ -100,28 +101,56 @@ lock_free || fail "failing gate: lock left behind"
 git -C "$main/.worktrees/0002-b" rm -q FAIL
 git -C "$main/.worktrees/0002-b" commit -qm "pass the gate"
 
-# 4. main moves while the gate runs: rebase and gate again, then land both.
-# The coordinator commits on main through with-merge-lock while the gate runs.
-echo "cd '$main' && echo c >c.txt && git add c.txt && scripts/with-merge-lock.sh git commit -qm c" \
+# 4. The lock is held from the start of the gate: a coordinator commit through
+# with-merge-lock while the gate runs waits until main has fast-forwarded and lands on
+# top; the gate runs once.
+# (The edit is made under the lock too: an edit before it makes the primary dirty, the
+# case of section 5.)
+echo "cd '$main' && scripts/with-merge-lock.sh sh -c 'echo c >c.txt && git add c.txt && git commit -qm c'" \
   >"$tmp/move-main.sh"
-GATE_HOOK="bash $tmp/move-main.sh" merge 0002-b || fail "merge after main moved failed: $(cat "$tmp/out")"
-on_main 0002-b.txt && on_main c.txt || fail "main moved: main lacks a commit"
-[ "$(gate_runs)" = 2 ] || fail "main moved: gate ran $(gate_runs) times, want 2"
-grep -q "main moved while gating" "$tmp/out" || fail "main moved: no message"
-check_linear "main moved"
-lock_free || fail "main moved: lock left behind"
+GATE_HOOK="test -d '$main/work/scratch/merge.lock' || echo unlocked >>'$tmp/unlocked'; \
+  (bash $tmp/move-main.sh >'$tmp/coord.out' 2>&1 &)" merge 0002-b ||
+  fail "merge with a waiting commit failed: $(cat "$tmp/out")"
+[ -e "$tmp/unlocked" ] && fail "lock held: the gate ran without the merge lock"
+[ "$(gate_runs)" = 1 ] || fail "lock held: gate ran $(gate_runs) times, want 1"
+for _ in $(seq 1 20); do on_main c.txt && break; sleep 1; done
+on_main 0002-b.txt && on_main c.txt || fail "lock held: main lacks a commit"
+[ "$(git -C "$main" log -1 --format=%s main)" = c ] || fail "lock held: the waiting commit did not land on top"
+grep -q "waiting for the merge lock (held by merge-to-main issue/0002-b since " "$tmp/coord.out" ||
+  fail "lock held: no waiting message: $(cat "$tmp/coord.out")"
+check_linear "lock held"
+lock_free || fail "lock held: lock left behind"
 
-# ... and after losing that race twice, the next attempt holds the lock throughout.
+# ... two merges at once are serialized: the second waits for the first's lock, then
+# rebases onto it and gates once; no gate is wasted.
 new_issue 0006-f
-echo "cd '$main' && date >>moves.txt && git add moves.txt && scripts/with-merge-lock.sh git commit -qm move" \
-  >"$tmp/move-main.sh"
-GATE_HOOK="bash $tmp/move-main.sh" GATE_HOOK_TIMES=2 merge 0006-f ||
-  fail "merge after two lost races failed: $(cat "$tmp/out")"
-on_main 0006-f.txt || fail "two lost races: main lacks the branch's commit"
-[ "$(gate_runs)" = 3 ] || fail "two lost races: gate ran $(gate_runs) times, want 3"
-grep -q "holds the merge lock throughout" "$tmp/out" || fail "two lost races: no message"
-check_linear "two lost races"
-lock_free || fail "two lost races: lock left behind"
+new_issue 0007-g
+rm -f "$GATE_LOG"
+(cd "$main/.worktrees/0006-f" && GATE_HOOK="sleep 3" "$main/scripts/timeout.sh" 60 scripts/merge-to-main.sh) \
+  >"$tmp/out-f" 2>&1 &
+first=$!
+for _ in $(seq 1 20); do [ -e "$GATE_LOG" ] && break; sleep 0.2; done
+(cd "$main/.worktrees/0007-g" && "$main/scripts/timeout.sh" 60 scripts/merge-to-main.sh) >"$tmp/out-g" 2>&1 ||
+  fail "serialized: the second merge failed: $(cat "$tmp/out-g")"
+wait "$first" || fail "serialized: the first merge failed: $(cat "$tmp/out-f")"
+on_main 0006-f.txt && on_main 0007-g.txt || fail "serialized: main lacks a commit"
+[ "$(gate_runs)" = 2 ] || fail "serialized: gate ran $(gate_runs) times, want 2"
+grep -q "waiting for the merge lock (held by merge-to-main issue/0006-f since " "$tmp/out-g" ||
+  fail "serialized: no waiting message: $(cat "$tmp/out-g")"
+grep -q "main moved" "$tmp/out-g" && fail "serialized: the second merge gated twice"
+[ "$(git -C "$main" log -1 --format=%s main)" = 0007-g ] || fail "serialized: wrong order"
+check_linear "serialized"
+lock_free || fail "serialized: lock left behind"
+
+# ... and a commit made without the lock while the gate runs: rebase and gate again.
+new_issue 0008-h
+echo "cd '$main' && date >>moves.txt && git add moves.txt && git commit -qm move" >"$tmp/move-main.sh"
+GATE_HOOK="bash $tmp/move-main.sh" merge 0008-h || fail "merge after an unlocked move failed: $(cat "$tmp/out")"
+on_main 0008-h.txt && on_main moves.txt || fail "unlocked move: main lacks a commit"
+[ "$(gate_runs)" = 2 ] || fail "unlocked move: gate ran $(gate_runs) times, want 2"
+grep -q "main moved while gating, without the merge lock" "$tmp/out" || fail "unlocked move: no message"
+check_linear "unlocked move"
+lock_free || fail "unlocked move: lock left behind"
 
 # 5. A dirty primary checkout: wait until it is committed, then land on top of it.
 new_issue 0003-c

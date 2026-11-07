@@ -2398,3 +2398,18 @@ answer is the engine's own lookup and cannot drift from it. The JSON is
 `{"utilities": [{name, utility, mode, destructive, runs, path|null}]}`.
 A script operand that cannot be read is 126 unless it does not exist (127), as bash
 (`psh /tmp` was 127).
+
+## D1342: merge-to-main holds the merge lock from the start, on every attempt
+date: 2026-11-07 · by: cli (coordinator request) · issue: 0034
+`scripts/merge-to-main.sh` takes the merge lock before its rebase and holds it through
+the gate to the fast-forward, on the first attempt (it used to hold it only for the
+fast-forward, and throughout only after losing two races, D1010). Merges are serialized:
+a waiting merge prints `merge lock: waiting for the merge lock (held by WHO since TIME)`
+(from the lock's owner file; again every 5 minutes) and rebases only once the holder has
+landed, so a gate is never wasted on a `main` that moved meanwhile. A commit on `main`
+made without the lock still makes it rebase and gate again, keeping the lock. The
+dirty-primary wait (D1011) stays: the merge releases the lock so the coordinator can
+commit through `scripts/with-merge-lock.sh`, then takes it again. The cost: a
+coordinator commit waits for a running gate, and merges queue; merge-to-main's lock wait
+(`PSH_MERGE_LOCK_WAIT`) defaults to 4 hours, with-merge-lock's stays 1 hour. The
+lost-race counter is gone. (D1341 is `psh --utils`, so this is D1342.)

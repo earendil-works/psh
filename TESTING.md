@@ -85,6 +85,8 @@ reference only, never vendored.
   bash 5.3 and only the system's directories on PATH). A case declares
   `## expect: gnu`, `bsd` or `both` (the default), with the reason or the D016 rule;
   `both` cases fail as "goldens disagree" until they say which (D1084).
+  psh runs them with `PSH_UTILS_FORCE=all` (D1192), so a utility in F or W mode runs
+  psh's implementation even though the system's program is on PATH.
 - `tests/goldens/shapes/bash-n.txt` and `tests/goldens/l0/bash-n.txt` hold `bash -n`'s
   verdict for each skeleton of the shape corpus (by line in `tests/shapes/shapes.txt`)
   and each snippet of the parser's `tests/l0/syntax.txt` (by name) that bash rejects;

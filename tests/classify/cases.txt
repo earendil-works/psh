@@ -676,3 +676,7 @@ unknown	sqlite3 app.db "vacuum into 'copy.db'"
 unknown	sqlite3 app.db "$query"
 unknown	sqlite3 -init setup.sql app.db 'select 1'
 unknown	sqlite3 app.db <<'EOF'␤select 1;␤EOF
+read	rg -n foo "$HOME/.config" --glob '*.toml'
+read	sed -n 1,5p "${PWD}/file"
+unknown	sed -n 1p "$HOMEDIR/x"
+unknown	sed -n 1p "${HOME:--i}"

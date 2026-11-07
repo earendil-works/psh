@@ -126,6 +126,18 @@ impl Arg {
         if let Some(v) = &self.value {
             return v.starts_with('-');
         }
+        // `$HOME` and `$PWD` are absolute paths: `"$HOME/x"` cannot be an option.
+        let unquoted = self.text.trim_start_matches('"');
+        for var in ["HOME", "PWD"] {
+            for form in [alloc::format!("${var}"), alloc::format!("${{{var}}}")] {
+                if let Some(rest) = unquoted.strip_prefix(form.as_str())
+                    && !rest.starts_with(|c: char| c.is_ascii_alphanumeric() || c == '_')
+                    && !(form.len() == var.len() + 1 && rest.starts_with(['[', ':']))
+                {
+                    return false;
+                }
+            }
+        }
         // Skip opening quotes and backslashes; a `$` among them starts an expansion.
         let t = self.text.trim_start_matches(['"', '\'', '\\', '$']);
         let lead = &self.text[..self.text.len() - t.len()];

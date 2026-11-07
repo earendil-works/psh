@@ -368,6 +368,13 @@ async fn fail(ctx: &mut UtilCtx<'_>, what: &str, f: &[u8], e: &io::Error) {
     ctx.error(&msg).await;
 }
 
+/// `/dev/fd/N`, `/dev/stdin` and friends: the shell's own descriptors.
+fn is_dev_fd(p: &[u8]) -> bool {
+    matches!(p, b"/dev/stdin" | b"/dev/stdout" | b"/dev/stderr")
+        || p.strip_prefix(b"/dev/fd/")
+            .is_some_and(|n| !n.is_empty() && n.iter().all(u8::is_ascii_digit))
+}
+
 fn same(a: &Metadata, b: &Metadata) -> bool {
     a.dev == b.dev && a.ino == b.ino && a.ino != 0
 }
@@ -382,6 +389,24 @@ pub fn copy<'a, 'v>(
 ) -> LocalBoxFuture<'a, bool> {
     Box::pin(async move {
         ctx.check().await;
+        // The shell's descriptors (`cp <(cmd) >(cmd)`): streams, not files.
+        if is_dev_fd(&src) || is_dev_fd(&dst) {
+            let m = Metadata {
+                kind: FileKind::File,
+                size: 0,
+                mode: 0o666,
+                mtime_ns: 0,
+                dev: 0,
+                ino: 0,
+                uid: 0,
+                gid: 0,
+            };
+            if let Err((what, e)) = copy_file(ctx, &src, &dst, &m, o).await {
+                fail(ctx, what, &src, &e).await;
+                return false;
+            }
+            return verbose(ctx, o, &src, &dst).await;
+        }
         let follow = match o.deref {
             Deref::Always => true,
             Deref::Never => false,

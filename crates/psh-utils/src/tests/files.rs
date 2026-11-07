@@ -342,7 +342,12 @@ fn mv() {
         "",
         "mv: cannot move 'f' to 'dir/sub/x/y': Not a directory\n",
     );
-    check_all("mv a b c", 1, "", "mv: target 'c': No such file or directory\n");
+    check_all(
+        "mv a b c",
+        1,
+        "",
+        "mv: target 'c': No such file or directory\n",
+    );
     let r = run("echo new > n; mv -n n f; cat f; mv -b n f; cat f f~");
     assert_eq!(r.stdout, "one\ntwo\nnew\none\ntwo\n");
     // A symlink moves as itself.

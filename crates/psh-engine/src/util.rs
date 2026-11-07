@@ -412,11 +412,17 @@ impl UtilCtx<'_> {
         for name in &env.unset {
             sub.vars.remove(name);
         }
-        let set = env.set;
+        // Set as variables of the child, not as prefix assignments: the command is
+        // looked up with them (`env PATH=/x cmd` searches /x).
+        for (name, value) in env.set {
+            let var = sub.vars.entry(&name);
+            var.set(value);
+            var.exported = true;
+        }
         UtilChild {
             fut: Box::pin(async move {
                 let mut sub = sub;
-                let r = run_wrapped(&mut sub, argv, set).await;
+                let r = run_wrapped(&mut sub, argv, Vec::new()).await;
                 let last = sub.status;
                 r.unwrap_or_else(|u| u.status(last))
             }),

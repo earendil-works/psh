@@ -1,0 +1,56 @@
+# Goldens for tests/utils/env/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: a variable for one command
+status: 0
+bash-n: 0
+--- stdout
+|A=1
+|2
+|after: unset
+
+=== 1: -i starts empty
+status: 0
+bash-n: 0
+--- stdout
+|B=2
+
+=== 2: -u removes a variable
+status: 0
+bash-n: 0
+--- stdout
+|gone
+
+=== 3: a lone - is -i
+status: 0
+bash-n: 0
+--- stdout
+|C=3
+
+=== 4: env runs standalone builtins
+status: 0
+bash-n: 0
+--- stdout
+|via-printf
+|status=0
+
+=== 5: env does not run functions
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+--- stderr
+|env: ‘f’: No such file or directory
+
+=== 6: env runs utilities
+status: 0
+bash-n: 0
+--- stdout
+|a
+
+=== 7: PATH changes the lookup of the command
+status: 0
+bash-n: 0
+--- stdout
+|status=127

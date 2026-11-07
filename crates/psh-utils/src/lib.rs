@@ -9,6 +9,7 @@ mod common;
 pub mod opts;
 
 mod cat;
+mod env;
 mod head;
 mod sleep;
 mod tail;
@@ -52,6 +53,12 @@ pub static REGISTRY: &[UtilEntry] = &[
         run: util_fn!(wc::run),
     },
     UtilEntry {
+        names: &["env"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(env::run),
+    },
+    UtilEntry {
         names: &["sleep"],
         mode: Mode::Always,
         destructive: false,
@@ -67,6 +74,7 @@ pub static SPECS: &[opts::Spec] = &[
     cat::SPEC,
     wc::SPEC,
     sleep::SPEC,
+    env::SPEC,
 ];
 
 /// The policy for a shell: every utility on. `sandbox`: no real programs exist (wasm),

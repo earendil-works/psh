@@ -190,6 +190,22 @@ fn wc() {
 }
 
 #[test]
+fn env() {
+    check("env -i B=2 env", "B=2\n");
+    check("env -i", "");
+    check("X=1 env -u X sh_not_there=1 printf '%s\n' ok", "ok\n");
+    check("env -i A=1 B=2 printf '%s\n' x", "x\n");
+    check_all(
+        "f() { echo fn; }; env f",
+        "",
+        127,
+        "",
+        "psh: line 1: f: command not found\n",
+    );
+    check("env - C=3 env", "C=3\n");
+}
+
+#[test]
 fn sleep_and_timeout() {
     check_all("sleep 0.01; echo done", "", 0, "done\n", "");
     check_all(

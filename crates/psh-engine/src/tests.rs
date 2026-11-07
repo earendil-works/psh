@@ -635,6 +635,9 @@ fn aliases() {
         o.stderr.contains("line 3: nosuchcmd_x: command not found"),
         "{}",
         o.stderr
+    );
+}
+
 #[test]
 fn empty_quoted_word_is_a_field() {
     check(

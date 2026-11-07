@@ -37,6 +37,8 @@ const KEYWORDS: &[&[u8]] = &[
 
 /// What a command name is, in the order the shell looks.
 enum Kind {
+    /// An alias (only while aliases expand), with its text.
+    Alias(Vec<u8>),
     Keyword,
     Function(Rc<Func>),
     Builtin,
@@ -57,6 +59,11 @@ struct Lookup {
 async fn lookup(vp: &Vp, name: &[u8], o: Lookup) -> Vec<Kind> {
     let mut found = Vec::new();
     if !o.path_only {
+        if vp.expand_aliases
+            && let Some(a) = vp.aliases.get(name)
+        {
+            found.push(Kind::Alias(a.to_vec()));
+        }
         if KEYWORDS.contains(&name) {
             found.push(Kind::Keyword);
         }
@@ -169,6 +176,10 @@ pub(super) async fn command(vp: &mut Vp, args: &[Vec<u8>]) -> R {
                 describe(&mut buf, name, &k);
             } else {
                 match k {
+                    Kind::Alias(a) => {
+                        buf.extend_from_slice(&super::alias::definition(name, &a));
+                        continue;
+                    }
                     Kind::File(p, _) => buf.extend_from_slice(&p),
                     _ => buf.extend_from_slice(name),
                 }
@@ -200,6 +211,11 @@ async fn flush(vp: &Vp, name: &str, buf: &mut Vec<u8>) -> Result<(), Unwind> {
 fn describe(buf: &mut Vec<u8>, name: &[u8], k: &Kind) {
     buf.extend_from_slice(name);
     match k {
+        Kind::Alias(a) => {
+            buf.extend_from_slice(b" is aliased to `");
+            buf.extend_from_slice(a);
+            buf.extend_from_slice(b"'\n");
+        }
         Kind::Keyword => buf.extend_from_slice(b" is a shell keyword\n"),
         Kind::Builtin => buf.extend_from_slice(b" is a shell builtin\n"),
         Kind::Function(f) => {
@@ -267,7 +283,8 @@ pub(super) async fn type_(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         for k in &kinds {
             if kind_only {
                 buf.extend_from_slice(match k {
-                    Kind::Keyword => b"keyword\n".as_slice(),
+                    Kind::Alias(_) => b"alias\n".as_slice(),
+                    Kind::Keyword => b"keyword\n",
                     Kind::Function(_) => b"function\n",
                     Kind::Builtin => b"builtin\n",
                     Kind::File(..) => b"file\n",

@@ -196,7 +196,7 @@ fn valid_name(name: &[u8]) -> bool {
 
 /// `alias name='value'` (with `--` before names that start with `-`), as `alias` prints
 /// a definition: the value single-quoted, each `'` as `'\''`.
-fn definition(name: &[u8], value: &[u8]) -> Vec<u8> {
+pub(crate) fn definition(name: &[u8], value: &[u8]) -> Vec<u8> {
     let mut out = b"alias ".to_vec();
     if name.first() == Some(&b'-') {
         out.extend_from_slice(b"-- ");

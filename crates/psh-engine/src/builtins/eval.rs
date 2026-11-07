@@ -27,7 +27,12 @@ pub(crate) async fn run_text(vp: &mut Vp, text: &[u8], line_base: u32, origin: O
     let lines = Rc::new(LineIndex::from_bytes(text));
     let mut parser = Parser::from_bytes(text, Options::default());
     let mut status = 0;
-    while let Some(chunk) = parser.next_chunk() {
+    loop {
+        // Aliases expand with the table as it is when each line is read.
+        parser.set_aliases(vp.expand_aliases.then_some(&vp.aliases));
+        let Some(chunk) = parser.next_chunk() else {
+            break;
+        };
         match chunk {
             Ok(ast) => {
                 let root = ast.root();

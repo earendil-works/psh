@@ -1,7 +1,7 @@
 //! Shell builtins (Tier 0, ARCH.md): part of the engine, run on the vproc that calls
 //! them.
 
-mod alias;
+pub(crate) mod alias;
 mod command;
 #[cfg(test)]
 mod core_tests;

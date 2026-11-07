@@ -1084,3 +1084,21 @@ run (impossible without a helper process: nothing can join another session); a r
 the harness side only (leaves the embedded case open). Residual risk: a session whose
 leader was reaped is signalled at the end only while it still has members, so its id
 cannot have been reused, but the check and the signal are not atomic.
+
+## D1290: Assignments in front of any builtin are temporary and exported
+date: 2026-11-07 · by: builtins · issue: 0029
+Bash 5.3 outside POSIX mode treats `x=1 cmd` the same for every builtin, special or not
+(probed: `x=1 :; echo $x` prints nothing, `x=1 eval 'sh -c "echo \$x"'` prints 1,
+`y=0; y=1 eval y=2; echo $y` prints 0). `run_builtin` sets them exported for the
+builtin's run and restores the previous variables afterwards. `Builtin::special` stays
+for POSIX mode (`set -o posix`, where the assignments persist).
+
+## D1291: The command hash table belongs to a PATH value
+date: 2026-11-07 · by: builtins · issue: 0029
+`Vp::hash` (shared with subshells until one changes it) remembers what `PATH` lookups
+found, with hit counts; running a remembered name uses its path as is (bash: a stale
+path fails with "No such file or directory"). Instead of hooking every assignment to
+`PATH`, the table records the `PATH` value it was filled under and starts empty when the
+value differs. Lookups go one `PATH` entry at a time through `Host::resolve`, so a
+relative entry yields a relative path (`dir/name`, as bash prints it) and, when no
+entry has an executable, the first plain file is used (it then fails with 126).

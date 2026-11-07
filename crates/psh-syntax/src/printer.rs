@@ -53,12 +53,15 @@ impl Printer<'_> {
             let h = ast.heredoc(id);
             let body = ast.text(h.body.span);
             self.out.push_str(body);
-            if !body.is_empty() && !body.ends_with('\n') {
+            if h.terminated && !body.is_empty() && !body.ends_with('\n') {
                 self.out.push('\n');
             }
-            let delim = heredoc_delim_text(ast, &h.delimiter);
-            self.out.push_str(&delim);
-            self.out.push('\n');
+            // A body that ran to the end of the input had no delimiter line.
+            if h.terminated {
+                let delim = heredoc_delim_text(ast, &h.delimiter);
+                self.out.push_str(&delim);
+                self.out.push('\n');
+            }
         }
     }
 
@@ -71,9 +74,20 @@ impl Printer<'_> {
     /// Each item of the list on its own line.
     fn list_lines(&mut self, id: ListId) {
         let ast = self.ast;
-        for item in &ast.list(id).items {
+        let items = &ast.list(id).items;
+        for (i, item) in items.iter().enumerate() {
             self.pad();
             self.and_or(item);
+            // A here-doc body that runs to the end of the input swallows every line
+            // after its operator, so what followed on that line stays on it.
+            let open = self.heredocs.iter().any(|&h| !ast.heredoc(h).terminated);
+            if open && i + 1 < items.len() {
+                if !item.background {
+                    self.s(";");
+                }
+                self.s(" ");
+                continue;
+            }
             self.newline();
         }
     }
@@ -134,6 +148,22 @@ impl Printer<'_> {
         match &c.kind {
             CommandKind::Simple(s) => {
                 let mut first = true;
+                // `<<x case` must not become `case <<x`: a reserved word only stays a
+                // plain word behind something else.
+                let reserved = s.assigns.is_empty()
+                    && s.words.first().is_some_and(|w| {
+                        crate::parser::RESERVED.contains(&ast.text(w.span))
+                            || ast.text(w.span) == "(("
+                    });
+                if reserved {
+                    for r in &c.redirects {
+                        if !first {
+                            self.s(" ");
+                        }
+                        first = false;
+                        self.redirect(r);
+                    }
+                }
                 for a in &s.assigns {
                     if !first {
                         self.s(" ");
@@ -148,12 +178,14 @@ impl Printer<'_> {
                     first = false;
                     self.src(w.span);
                 }
-                for r in &c.redirects {
-                    if !first {
-                        self.s(" ");
+                if !reserved {
+                    for r in &c.redirects {
+                        if !first {
+                            self.s(" ");
+                        }
+                        first = false;
+                        self.redirect(r);
                     }
-                    first = false;
-                    self.redirect(r);
                 }
                 return;
             }

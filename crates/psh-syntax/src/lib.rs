@@ -22,6 +22,7 @@ mod dump;
 mod error;
 mod parser;
 mod printer;
+mod source;
 mod span;
 mod words;
 
@@ -39,7 +40,8 @@ pub use ast::*;
 pub use bash_print::print_function_bash;
 pub use dump::dump;
 pub use error::ParseError;
-pub use parser::{Options, Parser, parse, parse_with};
+pub use parser::{Options, Parser, parse, parse_bytes, parse_with};
 pub use printer::print;
+pub use source::Source;
 pub use span::{LineCol, LineIndex, Span};
 pub use words::{backtick_body, decode_ansi_c, literal_text};

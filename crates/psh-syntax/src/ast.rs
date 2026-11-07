@@ -14,10 +14,10 @@
 //! [`Part`]).
 
 use alloc::boxed::Box;
-use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::ops::Index;
 
+use crate::source::Source;
 use crate::span::Span;
 
 /// Index of a [`List`] in its [`Ast`].
@@ -53,7 +53,7 @@ impl HereDocId {
 /// A parsed script (or one chunk of it, see [`crate::Parser`]).
 #[derive(Clone, Debug)]
 pub struct Ast {
-    pub(crate) source: Arc<str>,
+    pub(crate) source: Source,
     pub(crate) lists: Vec<List>,
     pub(crate) cmds: Vec<Command>,
     pub(crate) heredocs: Vec<HereDoc>,
@@ -61,14 +61,37 @@ pub struct Ast {
 }
 
 impl Ast {
-    /// The whole source text all spans point into.
+    /// The whole source as text: its UTF-8 view (see [`Source`]), which is the source
+    /// itself unless it is not valid UTF-8. Spans are offsets into
+    /// [`Ast::source_bytes`]; slice with [`Ast::text`], not with this.
     pub fn source(&self) -> &str {
+        self.source.view()
+    }
+
+    /// The original bytes all spans point into.
+    pub fn source_bytes(&self) -> &[u8] {
+        self.source.bytes()
+    }
+
+    /// The source with its UTF-8 view, shared by all chunks of one script.
+    pub fn source_info(&self) -> &Source {
         &self.source
     }
 
-    /// The shared source, for embedders that keep several chunks of one script.
-    pub fn source_arc(&self) -> &Arc<str> {
-        &self.source
+    /// Whether the source is valid UTF-8 (then text and bytes agree everywhere).
+    pub fn is_utf8(&self) -> bool {
+        self.source.is_utf8()
+    }
+
+    /// The original bytes of a span.
+    pub fn bytes(&self, span: Span) -> &[u8] {
+        self.source.slice(span)
+    }
+
+    /// Turns text from [`Ast::text`], `print` or `dump` back into the source's bytes
+    /// (see [`Source::restore`]).
+    pub fn restore_bytes<'t>(&self, text: &'t str) -> alloc::borrow::Cow<'t, [u8]> {
+        self.source.restore(text)
     }
 
     /// The top-level list: the script's commands in order.
@@ -88,9 +111,9 @@ impl Ast {
         &self.heredocs[id.index()]
     }
 
-    /// The source text of a span.
+    /// The text of a span (its UTF-8 view; see [`Source`]).
     pub fn text(&self, span: Span) -> &str {
-        &self.source[span.range()]
+        self.source.text(span)
     }
 
     /// Number of commands in the arena (all of them, including nested ones).

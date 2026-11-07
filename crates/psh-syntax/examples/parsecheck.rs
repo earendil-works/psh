@@ -7,7 +7,7 @@ use std::io::Write;
 
 fn main() {
     let mut mode = "";
-    let mut inputs: Vec<(String, String)> = Vec::new();
+    let mut inputs: Vec<(String, Vec<u8>)> = Vec::new();
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         match a.as_str() {
@@ -20,11 +20,11 @@ fn main() {
                     "roundtrip"
                 }
             }
-            "-c" => inputs.push(("-c".into(), args.next().expect("-c SCRIPT"))),
+            "-c" => inputs.push(("-c".into(), args.next().expect("-c SCRIPT").into_bytes())),
             "--bench" => mode = "bench",
             _ => {
                 let bytes = std::fs::read(&a).expect("read");
-                inputs.push((a, String::from_utf8_lossy(&bytes).into_owned()));
+                inputs.push((a, bytes));
             }
         }
     }
@@ -35,7 +35,7 @@ fn main() {
         let mut n = 0usize;
         for _ in 0..20 {
             for (_, src) in &inputs {
-                n += psh_syntax::parse(src).map_or(0, |a| a.cmd_count());
+                n += psh_syntax::parse_bytes(src, Default::default()).map_or(0, |a| a.cmd_count());
             }
         }
         let per_pass = start.elapsed() / 20;
@@ -48,13 +48,14 @@ fn main() {
     let out = std::io::stdout();
     let mut out = out.lock();
     for (name, src) in inputs {
-        match psh_syntax::parse(&src) {
+        match psh_syntax::parse_bytes(&src, Default::default()) {
             Ok(ast) => match mode {
                 "dump" => writeln!(out, "{}", psh_syntax::dump(&ast)).unwrap(),
                 "print" => write!(out, "{}", psh_syntax::print(&ast)).unwrap(),
                 "roundtrip" => {
                     let printed = psh_syntax::print(&ast);
-                    match psh_syntax::parse(&printed) {
+                    match psh_syntax::parse_bytes(&ast.restore_bytes(&printed), Default::default())
+                    {
                         Ok(again) if psh_syntax::dump(&again) == psh_syntax::dump(&ast) => {
                             writeln!(out, "{name}\tok").unwrap()
                         }

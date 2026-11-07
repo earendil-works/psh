@@ -141,6 +141,35 @@ value, side effects and runtime error text.
   checked by `crates/psh-syntax/tests/declare_f.rs`. Format: `#### N`, source,
   `## declare -f:`, bash's output, `## end`.
 
+### 2026-11-07: part 3, byte-exact sources
+- `Source` (`src/source.rs`, D1233): the original bytes plus a UTF-8 view; undecodable
+  bytes are U+F700+byte in the view. New API: `parse_bytes(&[u8], Options)`,
+  `Parser::from_bytes(&[u8], Options)`, `Ast::{source_bytes, bytes(span), is_utf8,
+  restore_bytes(&str), source_info}`, `LineIndex::{from_bytes, line_col_bytes}`.
+  Unchanged: `parse(&str)`, `Parser::new`, `Ast::source() -> &str` (now the view),
+  `Ast::text(span) -> &str` (the view of the span). For the engine: build line tables
+  with `LineIndex::from_bytes(ast.source_bytes())` (offsets of the view differ after an
+  undecodable byte), and turn printed text back into bytes with `restore_bytes`.
+- Parser: no `&str` inside any more; char lengths only count valid UTF-8 sequences (an
+  incomplete `\xe2\x82` no longer swallows the following `;`); messages are lossy.
+  `psh --parse` reads files and stdin as bytes and adds `"utf8": false` for such input.
+- Fuzzing against bash 5.3 in the recording container (Linux, C.UTF-8): 20k random scripts
+  mixing shell tokens and invalid/valid multibyte sequences agree on every verdict and
+  all round-trip (`work/scratch/0023/genbytes.py`). macOS bash disagrees on 8 of them
+  (`isalpha` of bytes ≥ 0x80 in its UTF-8 locale makes `\xc3[` an assignment start);
+  the container is the oracle.
+- The same fuzzing found parser bugs unrelated to bytes, fixed and added to
+  `tests/l0/syntax.txt` (32 new snippets, verdicts re-recorded with
+  `scripts/record-goldens --l0`): `in` and `]]` are errors in command position; an
+  unclosed `[` after a name where an assignment may start is an error (`a[b`); `${…}`
+  does not pair braces (`${x:-{a}b}` is `${x:-{a}` + `b}`); `${ …; }` may be empty and
+  its `}` closes even with word chars after it (`${ :; }x`); `${${x}}` and `${$(…)}` are
+  bad substitutions scanned as nests; a reserved word followed by a line continuation
+  is still reserved (`if\⏎`). Printer: `<<x case` keeps the redirection first; a
+  here-doc body that runs to the end of the input gets no delimiter line or newline and
+  keeps the rest of its line on that line. This also fixed the 23 shape skeletons in the
+  L0 ratchet (round trip), which is empty now.
+
 ## Follow-ups
 
 ## Result

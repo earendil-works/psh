@@ -221,3 +221,22 @@ fn classify_prints_json() {
         out.stdout
     );
 }
+
+#[test]
+fn parse_keeps_bytes_that_are_not_utf8() {
+    let dir = std::env::temp_dir().join(format!("psh-cli-bytes-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("latin1.sh");
+    std::fs::write(&file, b"echo caf\xe9 ok\n").unwrap();
+    let out = psh(&["--parse", "--compact", file.to_str().unwrap()]);
+    std::fs::remove_dir_all(&dir).ok();
+    assert_eq!(out.status, Some(0));
+    assert!(out.stdout.contains(r#""utf8":false"#), "{}", out.stdout);
+    // `ok` starts at byte 10: the byte offsets are those of the file.
+    assert!(
+        out.stdout.contains(r#""span":[10,12],"text":"ok""#),
+        "{}",
+        out.stdout
+    );
+    assert!(out.stdout.contains("caf\u{f7e9}"), "{}", out.stdout);
+}

@@ -42,10 +42,12 @@ struct Walk<'a> {
 
 impl Walk<'_> {
     fn node(&mut self, kind: &str, span: Span, parent: Span) {
-        let src = self.ast.source();
+        let src = self.ast.source_bytes();
         assert!(span.start <= span.end && span.end as usize <= src.len());
-        assert!(src.is_char_boundary(span.start as usize));
-        assert!(src.is_char_boundary(span.end as usize));
+        // Spans never split a char of the text view.
+        let info = self.ast.source_info();
+        assert!(info.view().is_char_boundary(info.view_offset(span.start)));
+        assert!(info.view().is_char_boundary(info.view_offset(span.end)));
         assert!(
             parent.contains(span),
             "{kind} {span:?} {:?} outside {parent:?} {:?}",
@@ -173,7 +175,7 @@ impl Walk<'_> {
                 RedirTarget::HereDoc(id) => {
                     let h = ast.heredoc(*id);
                     self.word("delimiter", &h.delimiter, r.span);
-                    let all = Span::new(0, ast.source().len() as u32);
+                    let all = Span::new(0, ast.source_bytes().len() as u32);
                     self.word("heredoc-body", &h.body, all);
                 }
             }
@@ -324,7 +326,7 @@ fn walk(ast: &Ast) -> Vec<String> {
         ast,
         lines: Vec::new(),
     };
-    let all = Span::new(0, ast.source().len() as u32);
+    let all = Span::new(0, ast.source_bytes().len() as u32);
     w.list(ast.root(), all);
     w.lines
 }
@@ -531,7 +533,7 @@ fn parameters() {
     );
     assert_eq!(
         d("echo ${x:-{a}} ${x:-a}b}"),
-        "(list (cmd <\"echo\"> <${x :-<\"{a}\">}> <${x :-<\"a\">} \"b}\">))"
+        "(list (cmd <\"echo\"> <${x :-<\"{a\">} \"}\"> <${x :-<\"a\">} \"b}\">))"
     );
     assert_eq!(
         d(r#"echo "${x:-'a'}" "${x%d\'}" ${x:-"$y"}"#),
@@ -945,4 +947,66 @@ fn deep_nesting_fits_a_small_stack() {
         })
         .unwrap();
     handle.join().unwrap();
+}
+
+#[test]
+fn bytes_that_are_not_utf8() {
+    let src: &[u8] = b"echo a\xffb \"\xfe$x\" '\xc3' \\\xff; cat <<E\xff\nbody \xfe $y\nE\xff\n# \xff comment\nf\xff() { :; }\n";
+    let ast = parse_bytes(src, Options::default()).unwrap();
+    assert!(!ast.is_utf8());
+    assert_eq!(ast.source_bytes(), src);
+    check_spans(&ast);
+    let items = &ast.list(ast.root()).items;
+    assert_eq!(items.len(), 3);
+    let CommandKind::Simple(s) = &ast.cmd(items[0].first.stages[0].cmd).kind else {
+        panic!()
+    };
+    // Spans are offsets into the original bytes; the text view shows U+F7xx.
+    assert_eq!(s.words[1].span, Span::new(5, 8));
+    assert_eq!(ast.bytes(s.words[1].span), b"a\xffb");
+    assert_eq!(ast.text(s.words[1].span), "a\u{f7ff}b");
+    assert_eq!(ast.bytes(s.words[4].span), b"\\\xff");
+    assert!(matches!(s.words[4].parts[0].kind, Part::Escaped));
+    // The here-doc delimiter matches byte for byte.
+    let h = ast.heredoc(HereDocId(0));
+    assert!(h.terminated);
+    assert_eq!(ast.bytes(h.body.span), b"body \xfe $y\n");
+    // Printing goes through the view; restoring gives the bytes back.
+    let printed = print(&ast);
+    let again = parse_bytes(&ast.restore_bytes(&printed), Options::default()).unwrap();
+    assert_eq!(dump(&again), dump(&ast));
+    assert_eq!(&*ast.restore_bytes(ast.text(s.words[1].span)), b"a\xffb");
+    // Columns count an undecodable byte as one.
+    let idx = LineIndex::from_bytes(src);
+    let lc = idx.line_col_bytes(src, 8);
+    assert_eq!((lc.line, lc.column), (1, 9));
+    // Incomplete sequences stand alone and never swallow the next char.
+    let ast = parse_bytes(b"echo \xe2\x82; echo \xc3", Options::default()).unwrap();
+    assert_eq!(ast.list(ast.root()).items.len(), 2);
+    assert_eq!(
+        parse_bytes(b"echo \xc3\"", Options::default())
+            .unwrap_err()
+            .message,
+        "unexpected EOF while looking for matching `\"'"
+    );
+}
+
+#[test]
+fn reserved_words_and_subscripts_found_by_fuzzing() {
+    // Checked against bash 5.3 (Linux, C.UTF-8).
+    assert_eq!(err("in"), "syntax error near unexpected token `in'");
+    assert_eq!(err("]]"), "syntax error near unexpected token `]]'");
+    assert_eq!(err("a[b"), "unexpected EOF while looking for matching `]'");
+    assert_eq!(
+        err("x=1 a["),
+        "unexpected EOF while looking for matching `]'"
+    );
+    d("echo a[");
+    d("a[]");
+    d("echo ${ :; }x ${ } ${${x}} ${$(echo)} ${$}");
+    assert_eq!(
+        err("{\\\n"),
+        "syntax error: unexpected end of file from `{' command on line 1"
+    );
+    d("<<then case\nthen");
 }

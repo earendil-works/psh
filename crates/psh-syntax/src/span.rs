@@ -66,9 +66,14 @@ pub struct LineIndex {
 
 impl LineIndex {
     pub fn new(source: &str) -> LineIndex {
+        LineIndex::from_bytes(source.as_bytes())
+    }
+
+    /// For sources that may not be UTF-8 (spans are offsets into these bytes).
+    pub fn from_bytes(source: &[u8]) -> LineIndex {
         let mut starts = Vec::with_capacity(source.len() / 32 + 1);
         starts.push(0);
-        for (i, b) in source.bytes().enumerate() {
+        for (i, &b) in source.iter().enumerate() {
             if b == b'\n' {
                 starts.push(i as u32 + 1);
             }
@@ -87,13 +92,21 @@ impl LineIndex {
     /// The 1-based line and char column of `offset` in `source`, which must be the source
     /// this index was built from.
     pub fn line_col(&self, source: &str, offset: u32) -> LineCol {
+        self.line_col_bytes(source.as_bytes(), offset)
+    }
+
+    /// Like [`LineIndex::line_col`] for a source given as bytes; a byte that is not
+    /// part of valid UTF-8 counts as one column.
+    pub fn line_col_bytes(&self, source: &[u8], offset: u32) -> LineCol {
         let line = self.line(offset);
         let start = self.starts[line as usize - 1] as usize;
         let end = (offset as usize).min(source.len());
-        let column = source
-            .get(start..end)
-            .map_or(end - start, |s| s.chars().count()) as u32
-            + 1;
+        let mut column = 1;
+        let mut i = start;
+        while i < end {
+            i += crate::parser::char_len(source, i, end);
+            column += 1;
+        }
         LineCol { line, column }
     }
 }

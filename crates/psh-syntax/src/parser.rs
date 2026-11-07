@@ -14,6 +14,7 @@ use alloc::vec::Vec;
 use crate::ast::*;
 use crate::brace::brace_pass;
 use crate::error::ParseError;
+use crate::source::Source;
 use crate::span::Span;
 
 /// Parser settings that change what is valid syntax.
@@ -32,8 +33,17 @@ pub fn parse(source: &str) -> Result<Ast, ParseError> {
 
 /// Parses a whole script.
 pub fn parse_with(source: &str, opts: Options) -> Result<Ast, ParseError> {
-    let source: Arc<str> = Arc::from(source);
-    let mut p = P::new(&source, 0, opts)?;
+    parse_source(Source::from_text(source), opts)
+}
+
+/// Parses a script given as bytes, which need not be UTF-8; spans are offsets into
+/// `source` (see [`Source`]).
+pub fn parse_bytes(source: &[u8], opts: Options) -> Result<Ast, ParseError> {
+    parse_source(Source::from_bytes(source), opts)
+}
+
+fn parse_source(source: Source, opts: Options) -> Result<Ast, ParseError> {
+    let mut p = P::new(source.bytes(), 0, opts)?;
     let mut items = Vec::new();
     while p.parse_line(&mut items)? {}
     p.finish_pending();
@@ -46,7 +56,7 @@ pub fn parse_with(source: &str, opts: Options) -> Result<Ast, ParseError> {
 /// can change between chunks (`shopt -s extglob`).
 #[derive(Clone, Debug)]
 pub struct Parser {
-    source: Arc<str>,
+    source: Source,
     pos: usize,
     opts: Options,
     done: bool,
@@ -54,8 +64,17 @@ pub struct Parser {
 
 impl Parser {
     pub fn new(source: impl Into<Arc<str>>, opts: Options) -> Parser {
+        Parser::with_source(Source::from_text(source), opts)
+    }
+
+    /// A parser over bytes that need not be UTF-8 (see [`Source`]).
+    pub fn from_bytes(source: &[u8], opts: Options) -> Parser {
+        Parser::with_source(Source::from_bytes(source), opts)
+    }
+
+    fn with_source(source: Source, opts: Options) -> Parser {
         Parser {
-            source: source.into(),
+            source,
             pos: 0,
             opts,
             done: false,
@@ -79,7 +98,7 @@ impl Parser {
         }
         let source = self.source.clone();
         let result = (|| {
-            let mut p = P::new(&source, self.pos, self.opts)?;
+            let mut p = P::new(source.bytes(), self.pos, self.opts)?;
             let mut items = Vec::new();
             let more = p.parse_line(&mut items)?;
             if !more {
@@ -115,7 +134,7 @@ impl Parser {
 /// scripts stay far below it.
 const MAX_DEPTH: u32 = 100;
 
-const RESERVED: &[&str] = &[
+pub(crate) const RESERVED: &[&str] = &[
     "if", "then", "else", "elif", "fi", "do", "done", "case", "esac", "while", "until", "for",
     "select", "function", "in", "time", "{", "}", "!", "[[", "]]", "coproc",
 ];
@@ -182,6 +201,9 @@ impl Ctx {
 
 #[derive(Clone, Copy)]
 enum Term {
+    /// The `}` of `${ …; }`, even with more word chars right after it (`${ :; }x`),
+    /// unlike the reserved word `}` of a brace group.
+    FunSubClose,
     /// `)`
     Paren,
     /// One of these reserved words.
@@ -202,7 +224,7 @@ struct Opener {
 
 struct Pending {
     id: HereDocId,
-    delim: String,
+    delim: Vec<u8>,
     strip: bool,
     quoted: bool,
 }
@@ -218,7 +240,6 @@ struct Checkpoint {
 type R<T> = Result<T, ParseError>;
 
 struct P<'a> {
-    src: &'a str,
     b: &'a [u8],
     pos: usize,
     end: usize,
@@ -258,12 +279,19 @@ fn is_special_param(c: u8) -> bool {
     matches!(c, b'@' | b'*' | b'#' | b'?' | b'-' | b'$' | b'!')
 }
 
-fn utf8_len(b: u8) -> usize {
-    match b {
-        0xF0..=0xFF => 4,
+/// The length of the char at `b[i..end]`: the length of a valid UTF-8 sequence there,
+/// else 1 (an undecodable byte stands alone, so spans never split a char of the view).
+pub(crate) fn char_len(b: &[u8], i: usize, end: usize) -> usize {
+    let n = match b[i] {
+        0xF0..=0xF7 => 4,
         0xE0..=0xEF => 3,
-        0xC0..=0xDF => 2,
-        _ => 1,
+        0xC2..=0xDF => 2,
+        _ => return 1,
+    };
+    if i + n <= end && core::str::from_utf8(&b[i..i + n]).is_ok() {
+        n
+    } else {
+        1
     }
 }
 
@@ -289,7 +317,7 @@ fn push_lit(out: &mut Vec<WordPart>, start: usize, end: usize) {
 }
 
 impl<'a> P<'a> {
-    fn new(src: &'a str, pos: usize, opts: Options) -> R<P<'a>> {
+    fn new(src: &'a [u8], pos: usize, opts: Options) -> R<P<'a>> {
         if src.len() >= u32::MAX as usize {
             return Err(ParseError {
                 span: Span::default(),
@@ -298,8 +326,7 @@ impl<'a> P<'a> {
             });
         }
         Ok(P {
-            src,
-            b: src.as_bytes(),
+            b: src,
             pos,
             end: src.len(),
             opts,
@@ -313,7 +340,7 @@ impl<'a> P<'a> {
         })
     }
 
-    fn into_ast(mut self, items: Vec<AndOr>, source: Arc<str>) -> Ast {
+    fn into_ast(mut self, items: Vec<AndOr>, source: Source) -> Ast {
         let span = match (items.first(), items.last()) {
             (Some(f), Some(l)) => f.span.to(l.span),
             _ => sp(self.pos, self.pos),
@@ -410,6 +437,11 @@ impl<'a> P<'a> {
         ))
     }
 
+    /// Source bytes as text for messages (invalid UTF-8 replaced).
+    fn lossy(&self, start: usize, end: usize) -> String {
+        String::from_utf8_lossy(&self.b[start..end]).into_owned()
+    }
+
     fn line_of(&self, pos: usize) -> usize {
         self.b[..pos].iter().filter(|&&c| c == b'\n').count() + 1
     }
@@ -442,10 +474,7 @@ impl<'a> P<'a> {
         if let Some((_, _, _, len)) = self.peek_redirect() {
             return (start, start + len);
         }
-        let mut i = start;
-        while i < self.end && !is_meta(self.b[i]) {
-            i += 1;
-        }
+        let mut i = start + self.run().len();
         if i == start {
             i = start + 1;
         }
@@ -457,10 +486,11 @@ impl<'a> P<'a> {
             return self.eof_error(String::from("syntax error: unexpected end of file"));
         }
         let (s, e) = self.token_text();
-        let text = if self.b[s] == b'\n' {
+        let lossy = self.lossy(s, e);
+        let text: &str = if self.b[s] == b'\n' {
             "newline"
         } else {
-            &self.src[s..e]
+            &lossy
         };
         // Inside a substitution bash names what it was looking for, unless the
         // unexpected token is that closer itself.
@@ -550,7 +580,7 @@ impl<'a> P<'a> {
                     }
                 }
                 let line = &self.b[content..line_end];
-                if line == p.delim.as_bytes() {
+                if line == &p.delim[..] {
                     body_end = line_start;
                     self.pos = (line_end + 1).min(self.end);
                     terminated = true;
@@ -559,7 +589,7 @@ impl<'a> P<'a> {
                 // Inside `$(…)`, bash ends the body at a delimiter directly followed by
                 // the closing parenthesis (and warns as at end of file).
                 if self.comsub > 0
-                    && line.starts_with(p.delim.as_bytes())
+                    && line.starts_with(&p.delim)
                     && line.get(p.delim.len()) == Some(&b')')
                 {
                     body_end = line_start;
@@ -706,6 +736,14 @@ impl<'a> P<'a> {
     fn run(&self) -> &'a [u8] {
         let mut i = self.pos;
         while i < self.end && !is_meta(self.b[i]) {
+            // A line continuation followed by a token boundary ends the run too
+            // (`if\⏎`), so a reserved word before it is still recognized.
+            if self.b[i] == b'\\' && self.b.get(i + 1) == Some(&b'\n') {
+                let j = self.cont(i);
+                if j >= self.end || is_meta(self.b[j]) {
+                    break;
+                }
+            }
             i += 1;
         }
         &self.b[self.pos..i]
@@ -853,6 +891,7 @@ impl<'a> P<'a> {
     fn at_term(&self, term: Term) -> bool {
         match term {
             Term::Paren => self.peek() == Some(b')'),
+            Term::FunSubClose => self.peek() == Some(b'}'),
             Term::Words(words) => self.peek_reserved().is_some_and(|w| words.contains(&w)),
             Term::Case => {
                 matches!(
@@ -1071,7 +1110,10 @@ impl<'a> P<'a> {
                 Some("[[") => self.parse_cond_command()?,
                 Some("function") => return self.parse_function_keyword(start),
                 Some("coproc") => return self.parse_coproc(start),
-                Some("then" | "else" | "elif" | "fi" | "do" | "done" | "esac" | "}" | "!") => {
+                Some(
+                    "then" | "else" | "elif" | "fi" | "do" | "done" | "esac" | "}" | "!" | "in"
+                    | "]]",
+                ) => {
                     return Err(self.unexpected());
                 }
                 _ => return self.parse_simple(start),
@@ -1580,7 +1622,9 @@ impl<'a> P<'a> {
             };
             if words.is_empty() && word.parts.len() == 1 && matches!(word.parts[0].kind, Part::Lit)
             {
-                decl = DECL_BUILTINS.contains(&&self.src[word.span.range()]);
+                decl = DECL_BUILTINS
+                    .iter()
+                    .any(|d| d.as_bytes() == &self.b[word.span.range()]);
             }
             end = word.span.end as usize;
             words.push(word);
@@ -1650,25 +1694,25 @@ impl<'a> P<'a> {
     }
 
     /// The delimiter text after quote removal, and whether any of it was quoted.
-    fn heredoc_delimiter(&self, w: &Word) -> (String, bool) {
-        let mut out = String::new();
+    fn heredoc_delimiter(&self, w: &Word) -> (Vec<u8>, bool) {
+        let mut out = Vec::new();
         let mut quoted = false;
-        fn walk(src: &str, parts: &[WordPart], out: &mut String, quoted: &mut bool) {
+        fn walk(src: &[u8], parts: &[WordPart], out: &mut Vec<u8>, quoted: &mut bool) {
             for p in parts {
                 let text = &src[p.span.range()];
                 match &p.kind {
-                    Part::Lit => out.push_str(text),
+                    Part::Lit => out.extend_from_slice(text),
                     Part::Escaped => {
                         *quoted = true;
-                        out.push_str(&text[1..]);
+                        out.extend_from_slice(&text[1..]);
                     }
                     Part::Single => {
                         *quoted = true;
-                        out.push_str(&text[1..text.len() - 1]);
+                        out.extend_from_slice(&text[1..text.len() - 1]);
                     }
                     Part::AnsiC => {
                         *quoted = true;
-                        out.push_str(&text[2..text.len() - 1]);
+                        out.extend_from_slice(&text[2..text.len() - 1]);
                     }
                     Part::Double(inner) => {
                         *quoted = true;
@@ -1678,11 +1722,11 @@ impl<'a> P<'a> {
                         *quoted = true;
                         walk(src, inner, out, quoted);
                     }
-                    _ => out.push_str(text),
+                    _ => out.extend_from_slice(text),
                 }
             }
         }
-        walk(self.src, &w.parts, &mut out, &mut quoted);
+        walk(self.b, &w.parts, &mut out, &mut quoted);
         (out, quoted)
     }
 
@@ -1715,6 +1759,10 @@ impl<'a> P<'a> {
             let s = self.pos;
             let mut parts = Vec::new();
             self.parse_parts(Ctx::Subscript, &mut parts)?;
+            if self.at_eof() {
+                // Bash insists on the `]` of a subscript where an assignment may start.
+                return Err(self.unterminated("]"));
+            }
             if self.peek() != Some(b']') {
                 self.rewind(cp);
                 return Ok(None);
@@ -1890,7 +1938,7 @@ impl<'a> P<'a> {
                     let run = self.run().len();
                     s + run.max(1)
                 };
-                (s, e, String::from(&self.src[s..e]))
+                (s, e, self.lossy(s, e))
             }
         }
     }
@@ -2016,7 +2064,7 @@ impl<'a> P<'a> {
         let Some(first) = self.read_word(plain, false)? else {
             return Err(self.cond_primary_error(open));
         };
-        let first_text = &self.src[first.span.range()];
+        let first_text = &*self.lossy(first.span.start as usize, first.span.end as usize);
         let first_plain = first.parts.len() == 1 && matches!(first.parts[0].kind, Part::Lit);
         if first_plain && let Some(op) = UnaryTest::from_op(first_text) {
             self.skip_blanks();
@@ -2082,7 +2130,7 @@ impl<'a> P<'a> {
             ));
         };
         let op_span = sp(op_start, self.pos);
-        let op_text = &self.src[op_span.range()];
+        let op_text = &*self.lossy(op_span.start as usize, op_span.end as usize);
         self.skip_blanks();
         let rhs_ctx = match op {
             BinaryTest::StringMatchesRegex => Ctx::Regex,
@@ -2160,7 +2208,7 @@ impl<'a> P<'a> {
                             || (n == b'"' && !matches!(ctx, Ctx::HereDoc { .. }))
                             || matches!(ctx, Ctx::Operand { .. });
                         if escapable {
-                            self.pos += 1 + utf8_len(n);
+                            self.pos += 1 + char_len(self.b, self.pos + 1, self.end);
                             out.push(WordPart {
                                 span: sp(start, self.pos),
                                 kind: Part::Escaped,
@@ -2275,18 +2323,9 @@ impl<'a> P<'a> {
                             }
                             _ => false,
                         },
-                        Ctx::Operand { stop, .. } => match c {
-                            b'{' => {
-                                depth += 1;
-                                false
-                            }
-                            b'}' if depth == 0 => true,
-                            b'}' => {
-                                depth -= 1;
-                                false
-                            }
-                            _ => depth == 0 && stop != 0 && c == stop,
-                        },
+                        // Bash does not pair braces in `${…}`: the first unquoted
+                        // `}` ends it (`${x:-{a}b}` is `${x:-{a}` and `b}`).
+                        Ctx::Operand { stop, .. } => c == b'}' || (stop != 0 && c == stop),
                         Ctx::Subscript | Ctx::ArithBracket => match c {
                             b'[' => {
                                 depth += 1;
@@ -2328,7 +2367,7 @@ impl<'a> P<'a> {
                     if stop {
                         return Ok(());
                     }
-                    self.pos += utf8_len(c).min(self.end - self.pos);
+                    self.pos += char_len(self.b, self.pos, self.end);
                     push_lit(out, start, self.pos);
                 }
             }
@@ -2561,18 +2600,22 @@ impl<'a> P<'a> {
             let outer = self.stash_pending();
             let closer = self.closer.replace("}");
             let r = self.parse_compound_list(
-                Term::Words(&["}"]),
+                Term::FunSubClose,
                 Opener {
                     what: "}",
                     pos: start,
                     matching: true,
                 },
-                false,
+                true,
             );
             self.unstash_pending(outer);
             self.closer = closer;
             let list = r?;
-            self.expect_reserved("}")?;
+            self.skip_blanks();
+            if self.peek() != Some(b'}') {
+                return Err(self.unexpected());
+            }
+            self.pos += 1;
             return Ok(WordPart {
                 span: sp(start, self.pos),
                 kind: Part::FunSub {
@@ -2603,6 +2646,9 @@ impl<'a> P<'a> {
                     None => Some((ParamName::Special(b'!'), p, p + 1)),
                 },
             },
+            // `${$` followed by `{` or `(` nests an expansion (`${${x}}`): not the
+            // pid, and not valid; scanned like any bad substitution.
+            Some(b'$') if matches!(self.byte(p + 1), Some(b'{' | b'(')) => None,
             _ => self.param_name_at(p).map(|(n, e)| (n, p, e)),
         };
         let Some((name, ns, ne)) = head else {

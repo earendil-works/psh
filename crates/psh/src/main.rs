@@ -164,10 +164,10 @@ fn parse_command(args: &[String]) -> ExitCode {
             _ => return usage(),
         }
     }
-    let Some(text) = read_input(source) else {
+    let Some(bytes) = read_bytes(source) else {
         return ExitCode::from(2);
     };
-    let (json, ok) = parse_json::parse_to_json(&text, opts);
+    let (json, ok) = parse_json::parse_to_json(&bytes, opts);
     print_json(&json, compact, ok)
 }
 
@@ -203,9 +203,14 @@ fn classify_command(args: &[String]) -> ExitCode {
     print_json(&classify_json::to_json(&c, &text), compact, ok)
 }
 
-/// The script from `-c` or a file, else stdin. The parser works on UTF-8; invalid bytes
-/// become U+FFFD, which moves the byte offsets after them.
+/// The script from `-c` or a file, else stdin, as text: invalid UTF-8 becomes U+FFFD,
+/// which moves the byte offsets after it.
 fn read_input(source: Option<Vec<u8>>) -> Option<String> {
+    read_bytes(source).map(|b| String::from_utf8_lossy(&b).into_owned())
+}
+
+/// The script from `-c` or a file, else stdin, byte for byte.
+fn read_bytes(source: Option<Vec<u8>>) -> Option<Vec<u8>> {
     let bytes = match source {
         Some(b) => b,
         None => {
@@ -217,7 +222,7 @@ fn read_input(source: Option<Vec<u8>>) -> Option<String> {
             b
         }
     };
-    Some(String::from_utf8_lossy(&bytes).into_owned())
+    Some(bytes)
 }
 
 /// Prints the JSON; status 0 if the input parsed, 2 if not or if stdout fails.

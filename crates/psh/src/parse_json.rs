@@ -3,7 +3,8 @@
 //! The shape, for the classifier, UIs and tests (every node is an object with `type` and
 //! `span`; spans are `[start, end]` byte offsets into the UTF-8 source):
 //!
-//! - Result: `{"ok": true, "script": LIST}` or `{"ok": false, "error": {"message",
+//! - Result: `{"ok": true, "script": LIST}` (with `"utf8": false` when the input is not
+//!   UTF-8: texts then show each undecodable byte as U+F780..U+F7FF) or `{"ok": false, "error": {"message",
 //!   "span", "line", "column", "incomplete"}}` (`line`/`column` 1-based, column in chars;
 //!   `message` may have several lines, as bash prints them).
 //! - `list`: `items` (and-or lists). `and_or`: `pipelines`, `operators` (`&&`/`||`
@@ -42,14 +43,19 @@ use psh_syntax::*;
 use crate::json::Json;
 
 /// Parses `source` and returns the JSON result and whether it parsed.
-pub fn parse_to_json(source: &str, opts: Options) -> (Json, bool) {
-    match parse_with(source, opts) {
+pub fn parse_to_json(source: &[u8], opts: Options) -> (Json, bool) {
+    match parse_bytes(source, opts) {
         Ok(ast) => {
             let script = Conv::new(&ast).list(ast.root());
-            (Json::obj().set("ok", true).set("script", script), true)
+            let mut j = Json::obj().set("ok", true);
+            if !ast.is_utf8() {
+                // Texts show undecodable bytes as U+F780..U+F7FF; spans stay exact.
+                j = j.set("utf8", false);
+            }
+            (j.set("script", script), true)
         }
         Err(e) => {
-            let lc = LineIndex::new(source).line_col(source, e.span.start);
+            let lc = LineIndex::from_bytes(source).line_col_bytes(source, e.span.start);
             let error = Json::obj()
                 .set("message", e.message.as_str())
                 .set("span", span(e.span))
@@ -483,7 +489,7 @@ mod tests {
     use super::*;
 
     fn json(src: &str) -> Json {
-        let (j, ok) = parse_to_json(src, Options::default());
+        let (j, ok) = parse_to_json(src.as_bytes(), Options::default());
         assert!(ok, "{}", j.to_pretty());
         j
     }
@@ -505,7 +511,7 @@ mod tests {
 
     #[test]
     fn error() {
-        let (j, ok) = parse_to_json("echo a\nfi", Options::default());
+        let (j, ok) = parse_to_json(b"echo a\nfi", Options::default());
         assert!(!ok);
         assert_eq!(
             j.to_compact(),

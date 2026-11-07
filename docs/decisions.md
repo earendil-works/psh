@@ -843,3 +843,21 @@ inside `$((…) )` text that is not arithmetic. To reproduce bash, the AST recor
 a list item ended at a newline (`AndOr::newline`), which bash keeps inside substitutions,
 and `decode_ansi_c` decodes `$'…'` (bash prints it single-quoted). `tests/l0/declare-f.txt`
 holds 206 cases with bash's output.
+
+## D1233: Sources are bytes; the AST has a UTF-8 view of them
+date: 2026-11-07 · by: parser · issue: 0023
+The parser works on bytes (`parse_bytes`, `Parser::from_bytes`), so scripts that are not
+UTF-8 parse byte-exactly and spans are offsets into the input as given. Words keep no
+text of their own (D1040), so nothing in the AST needs to change for bytes:
+`Ast::bytes(span)` gives the exact bytes. For the `&str` APIs (`Ast::text`, `print`,
+`print_function_bash`, `dump`, `literal_text`) the source has a UTF-8 view (`Source`):
+the input itself when it is UTF-8 (no copy, no cost); otherwise each byte that is not part
+of a valid UTF-8 sequence appears as the private-use char U+F700 + byte, and
+`Ast::restore_bytes` maps view text back to bytes. An undecodable byte is a char of its
+own, so spans never split a char of the view and no valid char is swallowed. Rejected:
+lossy U+FFFD (not reversible, shifts offsets), bytes in every API (churn for the engine
+and classifier, whose words are text for UTF-8 scripts anyway). `parse(&str)`,
+`Parser::new`, `Ast::source() -> &str` and `LineIndex::new(&str)` keep working;
+`Ast::source_bytes`, `LineIndex::from_bytes` and `line_col_bytes` are the byte forms.
+Collision: a script that is not UTF-8 and also contains real U+F780..U+F7FF chars would
+restore those chars as bytes; such scripts are not expected.

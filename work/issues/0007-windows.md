@@ -402,6 +402,12 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
   in psh's PATH form. Host test; Windows L5 `command -p cmd /d /c echo hi` with an
   empty PATH and `command -pv cmd`.
 
+### 2026-11-07 Leak check on Windows
+- RunInShell was done already (d27196a). psh-spec's per-case leak check on Windows
+  (D1918): `WindowsConfig::detached_survive` (false in psh-spec), the case's jobs
+  through `RunKiller::leftovers` after the grace period. Host test; L4 on Windows runs
+  with it (433 cases; the windows ratchet the files agent keeps covers the others).
+
 ## Follow-ups
 - psh-spec on Windows for the oils, brush and agent layers: triage the differences into
   `expected-failures.windows.txt` (and normalization rules where a difference is not

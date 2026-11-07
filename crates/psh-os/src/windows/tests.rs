@@ -523,3 +523,19 @@ fn standard_path_is_windows_own() {
     assert!(resolve_in(b"cmd", &p, b"C:/").is_some());
     assert!(resolve_in(b"powershell", &p, b"C:/").is_some());
 }
+
+#[test]
+fn detached_externals_stay_in_a_test_runner_s_run() {
+    let h = WindowsHost::new(WindowsConfig {
+        grace: Duration::from_millis(300),
+        detached_survive: false,
+        ..WindowsConfig::default()
+    });
+    let mut spec = cmd("ping -n 60 127.0.0.1 >NUL", nulls());
+    spec.detach = true;
+    drop(h.spawn(spec).unwrap().proc);
+    std::thread::sleep(Duration::from_millis(200));
+    assert_eq!(h.leftovers().len(), 1);
+    h.kill_all();
+    no_leftovers(&h);
+}

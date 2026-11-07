@@ -325,13 +325,33 @@ fn os_host(pid: u32) -> (std::rc::Rc<dyn psh_engine::Host>, WrapFile, LeakCheck)
     use psh_os::windows::{WinFile, WindowsConfig, WindowsHost};
     let host = WindowsHost::new(WindowsConfig {
         pid: Some(pid),
+        // Nothing a case starts may outlive it, `nohup` jobs included.
+        detached_survive: false,
         ..WindowsConfig::default()
+    });
+    let killer = host.killer();
+    // Dropping the host killed what the run left (a ctrl-break, then the job after the
+    // grace period): a job that still has a process a little after that is a leak.
+    let check: LeakCheck = Box::new(move || {
+        let deadline =
+            Instant::now() + psh_os::windows::WindowsConfig::DEFAULT_GRACE + Duration::from_secs(1);
+        loop {
+            let left = killer.leftovers();
+            if left.is_empty() {
+                return Vec::new();
+            }
+            if Instant::now() >= deadline {
+                killer.kill_all();
+                psh_os::windows::settle(Duration::from_secs(5));
+                return left.iter().map(|p| format!("the job of pid {p}")).collect();
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
     });
     (
         std::rc::Rc::new(host),
         |f| std::rc::Rc::new(WinFile::new(std::os::windows::io::OwnedHandle::from(f))),
-        // Windows: the job objects of the host kill what is left; no check yet.
-        Box::new(Vec::new),
+        check,
     )
 }
 

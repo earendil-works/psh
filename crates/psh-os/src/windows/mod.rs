@@ -67,6 +67,9 @@ pub struct WindowsConfig {
     pub leftovers: Leftovers,
     /// How output of native programs read by the engine is decoded.
     pub decode: Decode,
+    /// Detached externals (`nohup`, `setsid`) outlive the run. Off for a test runner,
+    /// where nothing a case started may survive it: their jobs then belong to the run.
+    pub detached_survive: bool,
 }
 
 impl WindowsConfig {
@@ -81,6 +84,7 @@ impl Default for WindowsConfig {
             pid: None,
             leftovers: Leftovers::Kill,
             decode: Decode::Off,
+            detached_survive: true,
         }
     }
 }
@@ -135,6 +139,7 @@ impl WindowsHost {
                 placement: cfg.placement,
                 console: spawn::has_console(),
                 decode: cfg.decode,
+                detached_survive: cfg.detached_survive,
                 jobs: Mutex::new(Vec::new()),
             }),
             pid: cfg.pid,

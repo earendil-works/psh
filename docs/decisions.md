@@ -2124,3 +2124,13 @@ of a fresh account: `%SystemRoot%\system32`, `%SystemRoot%`, `System32\Wbem` and
 `System32\WindowsPowerShell\v1.0`, `/`-separated and joined with `;` (which
 `path_entries` splits). The user's directories (npm, cargo, ...) stay out on purpose:
 `command -p` means the system's programs whatever `PATH` says.
+
+## D1918: psh-spec's leak check on Windows
+date: 2026-11-07 · by: windows · issue: 0007
+As on Unix (D1305): psh-spec's in-process Windows host has `detached_survive: false` (a
+new `WindowsConfig` field, true by default, as `UnixConfig`'s), so `nohup`/`setsid`
+externals' jobs belong to the case's run too, and after the host is dropped (a
+ctrl-break to the run's jobs, termination after the grace period) any job with a live
+process left after the grace period plus a second is the case's leak: it is killed and
+reported, and the case fails. The jobs see grandchildren that left their parent, which
+the Unix group check sees only while they stay in the group.

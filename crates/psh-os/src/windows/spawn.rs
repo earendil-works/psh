@@ -242,6 +242,8 @@ pub(crate) struct Shared {
     /// psh has a console its children can share (else they get a hidden one each).
     pub(crate) console: bool,
     pub(crate) decode: Decode,
+    /// `WindowsConfig::detached_survive`.
+    pub(crate) detached_survive: bool,
     /// The run's jobs (all but detached and disowned externals): leak checks and the
     /// leftovers killed at the end.
     pub(crate) jobs: Mutex<Vec<Arc<Job>>>,
@@ -669,7 +671,9 @@ pub(crate) fn spawn(shared: &Arc<Shared>, mut spec: SpawnSpec) -> io::Result<Spa
     let mut job = Job::new()?;
     let group = spec.detach || shared.placement == Placement::Group;
     job.breakable = group && shared.console;
-    if !spec.detach {
+    // Part of the run: killed with its leftovers, and when psh dies.
+    let in_run = !spec.detach || !shared.detached_survive;
+    if in_run {
         job.kill_on_close(true)?;
     }
     let (process, pid) = create(&mut cmd, &env, &cwd, &stdio, &job, group, shared.console)?;
@@ -678,7 +682,7 @@ pub(crate) fn spawn(shared: &Arc<Shared>, mut spec: SpawnSpec) -> io::Result<Spa
     drop(held);
     job.pid = pid;
     let job = Arc::new(job);
-    if !spec.detach {
+    if in_run {
         shared.record(&job);
     }
     let tracker = Arc::new(Tracker::new());

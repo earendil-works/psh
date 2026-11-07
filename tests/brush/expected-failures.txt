@@ -171,7 +171,6 @@ brush/compat/builtins/jobs/11
 brush/compat/builtins/jobs/12
 brush/compat/builtins/jobs/14
 brush/compat/builtins/jobs/15
-brush/compat/builtins/jobs/16
 brush/compat/builtins/kill/1
 brush/compat/builtins/kill/3
 brush/compat/builtins/kill/9
@@ -770,3 +769,4 @@ brush/compat/word_expansion/tilde/3
 brush/compat/word_expansion/tilde/6
 brush/compat/word_expansion/tilde/7
 brush/compat/word_expansion/tilde/11
+brush/compat/background_jobs/19: an in-process utility (sleep) has no OS pid, so another program cannot signal its $! (D1085)

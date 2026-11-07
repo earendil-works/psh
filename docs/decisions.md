@@ -1526,3 +1526,10 @@ the system's directories only, so no GNU tool answers). A case declares `## expe
 files, else the case fails as "goldens disagree" until it is annotated with the dialect and
 the D016 rule or the flag's origin. The BSD goldens are recorded by hand on a Mac, not in
 CI; their determinism is checked by recording twice.
+
+## D1085: A utility job has no OS process id
+date: 2026-11-07 · by: infra · issue: 0008
+A background job that is an in-process utility (`sleep 5 &`) has no OS process: its `$!`
+is the shell's own job id. `kill`, `wait` and
+`jobs` in the shell handle it; another program cannot signal it (`sh -c "kill $!"`). One
+brush case does exactly that and fails for this reason (its ratchet line says so).

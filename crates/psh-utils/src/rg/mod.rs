@@ -75,6 +75,16 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         }
         ParseResult::Ok(low) => low,
     };
+    // grep-printer's sinks read `std::time::Instant`, which panics on
+    // wasm32-unknown-unknown (D1133).
+    if cfg!(all(target_arch = "wasm32", target_os = "unknown")) {
+        return crate::textio::fall_through(
+            ctx,
+            argv,
+            "search here: grep-printer needs a clock wasm32 lacks",
+        )
+        .await;
+    }
     if let Some(what) = left_to_rg(&low) {
         return crate::textio::fall_through(ctx, argv, what).await;
     }

@@ -699,11 +699,16 @@ impl Walk<'_, '_> {
     }
 
     /// A walkdir error: the path, also in the message, as walkdir words it.
+    /// (`parallel_errors`: as `ignore`'s parallel walker words it, without the prefix.)
     fn io_err(&mut self, path: &[u8], depth: usize, e: io::Error) -> WalkState {
-        let e = io::Error::new(
-            e.kind(),
-            format!("IO error for operation on {}: {e}", to_path(path).display()),
-        );
+        let e = if self.o.parallel_errors {
+            e
+        } else {
+            io::Error::new(
+                e.kind(),
+                format!("IO error for operation on {}: {e}", to_path(path).display()),
+            )
+        };
         self.emit(Err(with_path(with_depth(Error::Io(e), depth), path)))
     }
 

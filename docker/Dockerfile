@@ -36,20 +36,44 @@ RUN set -eu; \
     ./configure --prefix=/usr/local --quiet; \
     make -s -j"$(nproc)"; \
     make -s install
+# ripgrep and fd as psh implements them (0013, D1134): the upstream release binaries
+# (static musl builds), pinned by sha256, for the image's architecture.
+ARG TARGETARCH
+RUN set -eu; \
+    case "$TARGETARCH" in \
+      arm64) arch=aarch64; \
+        rg_sum=800b1e7206afe799dfb5a6901f23147cfaabe0e52210538100f61e86e1740915; \
+        fd_sum=64c20b9b154c9d4b36d4b7df3521de771c499c4768b4b5b045ef6b01532117be ;; \
+      amd64) arch=x86_64; \
+        rg_sum=33e15bcf1624b25cdd2a55813a47a2f95dbe126268203e76aa6a585d1e7b149c; \
+        fd_sum=f6c95edb190c241df6fddc815a5bab4051444993ac5d92ddc6eec0e0dc2342c7 ;; \
+      *) echo "no ripgrep/fd pin for $TARGETARCH" >&2; exit 1 ;; \
+    esac; \
+    rg=ripgrep-15.2.0-$arch-unknown-linux-musl; \
+    fd=fd-v10.5.1-$arch-unknown-linux-musl; \
+    curl -fsSLO "https://github.com/BurntSushi/ripgrep/releases/download/15.2.0/$rg.tar.gz"; \
+    curl -fsSLO "https://github.com/sharkdp/fd/releases/download/v10.5.1/$fd.tar.gz"; \
+    printf '%s\n' "$rg_sum  $rg.tar.gz" "$fd_sum  $fd.tar.gz" | sha256sum -c -; \
+    tar xzf "$rg.tar.gz"; \
+    tar xzf "$fd.tar.gz"; \
+    mkdir -p /build/tools; \
+    cp "$rg/rg" "$fd/fd" /build/tools/
 
 FROM debian:stable@sha256:3f0347f4b50e7a54a91d1beaf6ce6fa5aec392347da6a9184b5bfe4e1b814538
 # The GNU userland the cases may call: coreutils, grep, sed, findutils, diffutils are in
 # the base image; gawk replaces mawk as awk; procps provides ps; locales provides
-# en_US.UTF-8, which a few cases switch to and typical agent machines have. git, ripgrep
-# and jq for the agent layer (0031, D1310): agents run them in a quarter of their
-# commands. Pinned to the versions of this Debian image; a rebuild after Debian drops one
-# of them needs snapshot.debian.org or a new pin and a re-recording.
+# en_US.UTF-8, which a few cases switch to and typical agent machines have. git and jq
+# for the agent layer (0031, D1310): agents run them in a quarter of their commands.
+# Pinned to the versions of this Debian image; a rebuild after Debian drops one of them
+# needs snapshot.debian.org or a new pin and a re-recording. ripgrep 15.2.0 and fd 10.5.1
+# come from the build stage (D1134).
 RUN apt-get update \
  && apt-get install -y --no-install-recommends gawk procps locales \
-      git=1:2.47.3-0+deb13u1 ripgrep=14.1.1-1+b4 jq=1.7.1-6+deb13u4 \
+      git=1:2.47.3-0+deb13u1 jq=1.7.1-6+deb13u4 \
  && rm -rf /var/lib/apt/lists/* \
  && sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen && locale-gen
 COPY --from=build /usr/local/bin/bash /usr/local/bin/bash
+COPY --from=build /build/tools/rg /build/tools/fd /usr/local/bin/
 # Cases run as an ordinary user (root passes every permission test), with a fixed
 # name, home, hostname (set by `docker run --hostname`) and umask.
 RUN useradd --create-home --uid 1000 spec

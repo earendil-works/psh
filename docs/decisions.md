@@ -2202,3 +2202,39 @@ executable path or login shell), `HISTCMD`, `DIRSTACK`, `BASH_CMDS`, `BASH_COMMA
 The CRLF rule of command substitution moves from `cfg!(windows)` to
 `Host::strips_crlf()` (D1292) when that method lands, superseding D1324's "Windows
 builds only".
+## D1133: rg is ripgrep's crates/core with the seams patched
+date: 2026-11-07 · by: infra · issue: 0013
+`crates/psh-utils/src/rg/` is ripgrep 91f5d22 (15.2.0): `flags/` whole, `main.rs`,
+`search.rs`, `haystack.rs`, `messages.rs`, and lexopt 0.3.2, every change marked `psh:`.
+Small stand-ins replace the crates ripgrep uses there: `anyhow.rs` (a chain of messages
+that keeps an I/O error's kind), `textwrap.rs` (textwrap 0.16.2's first fit, for
+`--help`), `cli.rs` (grep-cli's size and pattern-file helpers; stdout as a termcolor
+stream over the utility's `SyncWriter`). The module is formatted in ripgrep's style
+(`rg/rustfmt.toml`, `#[rustfmt::skip]` on the module; `rustfmt --config-path` by hand), so
+it stays a reviewable diff from upstream. The seams: the front end parses argv (with
+`RIPGREP_CONFIG_PATH` read through the utility's file system), prints help and version,
+and runs the search as a blocking utility (D1130); message and error state is a
+thread-local installed for one run (search threads never print messages), written to the
+utility's stderr; no `process::exit`, no logger (`--debug`/`--trace` run the real rg).
+cwd, environment, TTY (headings, line numbers, color `auto` decided by TERM/NO_COLOR of
+the utility's environment, ANSI or none) and the stdin heuristic come from `SyncCtx`. The
+walk is the walker seam (D1132) with `walk_builder`'s settings; it is always sorted by
+name. More than one thread only natively: the walk stays on the rg thread, haystacks go
+to scoped search threads with a buffer each, output is written in walk order (at most
+4×threads ahead), so it equals the single-threaded output. Errors are worded as ripgrep's
+parallel walker words them when real rg would use it (more than one thread). Memory maps
+are off (`MmapChoice::auto` is unsafe). Real rg runs (D1082) for `--pre`, `-z`, `-P`,
+`--engine auto`, `--json` (until psh's JSON sink) and `--debug/--trace`. Windows: `/` is
+the default path separator and CRLF a line end unless `--crlf`/`--no-crlf` is given
+(D030). The version is `ripgrep 15.2.0 (psh)`; `--help` is upstream's otherwise. The
+classifier's rg table is checked against ripgrep's flag table (missing value flags such as
+`--pre`, `--engine`, `--type-clear` added). On wasm32-unknown-unknown rg reports that it is
+unavailable: grep-printer reads `std::time::Instant`, which panics there (a patched
+grep-printer follows).
+
+## D1134: The recording image has the upstream rg 15.2.0 and fd 10.5.1 binaries
+date: 2026-11-07 · by: infra · issue: 0013 (supersedes the ripgrep part of D1310)
+The oracle for rg and fd is the version psh implements: `docker/Dockerfile` downloads the
+upstream static musl release binaries of ripgrep 15.2.0 and fd 10.5.1 for the image's
+architecture (arm64, amd64), each pinned by sha256, into `/usr/local/bin`; Debian's
+ripgrep 14.1 is gone. Re-recording the agent layer with it changed no golden.

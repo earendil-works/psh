@@ -155,7 +155,7 @@ impl HiArgs {
         let stats = stats(&low);
         let types = types(&low)?;
         globs(&state, &low)?;
-        let walk = walk_options(&low, types.clone());
+        let mut walk = walk_options(&low, types.clone());
         let native = Walker::new(&*ctx, walk.clone())?.is_native();
 
         let color = match low.color {
@@ -187,6 +187,17 @@ impl HiArgs {
         };
         let path_terminator = if low.null { Some(b'\x00') } else { None };
         let quit_after_match = stats.is_none() && low.quiet;
+        // psh: ripgrep's own choice: with more than one thread, its parallel walker
+        // words errors without walkdir's prefix; psh walks on one thread, so it is
+        // told.
+        let rg_threads = if low.sort.is_some() || paths.is_one_file {
+            1
+        } else if let Some(threads) = low.threads {
+            threads
+        } else {
+            std::thread::available_parallelism().map_or(1, |n| n.get()).min(12)
+        };
+        walk.parallel_errors = rg_threads > 1;
         let threads = if low.sort.is_some() || paths.is_one_file || !native {
             1
         } else if let Some(threads) = low.threads {
@@ -882,6 +893,7 @@ fn walk_options(low: &LowArgs, types: ignore::types::Types) -> WalkOptions {
         same_file_system: low.one_file_system,
         max_filesize: low.max_filesize,
         force_virtual: false,
+        parallel_errors: false,
     }
 }
 

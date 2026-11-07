@@ -111,6 +111,9 @@ pub struct WalkOptions {
     pub max_filesize: Option<u64>,
     /// Use the virtual walker even on the process's file system (tests).
     pub force_virtual: bool,
+    /// Word I/O errors as `ignore`'s parallel walker does: `PATH: reason`, without
+    /// walkdir's "IO error for operation on PATH: " (rg with more than one thread).
+    pub parallel_errors: bool,
 }
 
 impl Default for WalkOptions {
@@ -135,6 +138,7 @@ impl Default for WalkOptions {
             same_file_system: false,
             max_filesize: None,
             force_virtual: false,
+            parallel_errors: false,
         }
     }
 }
@@ -323,7 +327,9 @@ impl<'h> Walker<'h> {
                     {
                         continue;
                     }
-                    Err(map_error(e, &|p| map(p, cur).map(|(d, _)| to_path(&d))))
+                    Err(map_error(e, o.parallel_errors, &|p| {
+                        map(p, cur).map(|(d, _)| to_path(&d))
+                    }))
                 }
                 Ok(dent) => {
                     if let Some(s) = &skipped {
@@ -352,9 +358,11 @@ impl<'h> Walker<'h> {
                         continue;
                     };
                     let kind = dent.file_type().map_or(FileKind::Other, file_kind);
-                    let err = dent
-                        .error()
-                        .map(|e| map_error(e.clone(), &|p| map(p, cur).map(|(d, _)| to_path(&d))));
+                    let err = dent.error().map(|e| {
+                        map_error(e.clone(), o.parallel_errors, &|p| {
+                            map(p, cur).map(|(d, _)| to_path(&d))
+                        })
+                    });
                     Ok(Entry {
                         path,
                         abs,
@@ -408,27 +416,28 @@ pub fn build_overrides(root: &Path, globs: &[(String, bool)]) -> Result<Override
 }
 
 /// Rewrites the paths in a walk error (`map` gives the display path of an OS path).
-fn map_error(e: Error, map: &dyn Fn(&Path) -> Option<PathBuf>) -> Error {
+/// `plain`: walkdir's wording of I/O errors is dropped ([`WalkOptions::parallel_errors`]).
+fn map_error(e: Error, plain: bool, map: &dyn Fn(&Path) -> Option<PathBuf>) -> Error {
     let mp = |p: PathBuf| map(&p).unwrap_or(p);
     match e {
         Error::Partial(errs) => {
-            Error::Partial(errs.into_iter().map(|e| map_error(e, map)).collect())
+            Error::Partial(errs.into_iter().map(|e| map_error(e, plain, map)).collect())
         }
         Error::WithLineNumber { line, err } => Error::WithLineNumber {
             line,
-            err: Box::new(map_error(*err, map)),
+            err: Box::new(map_error(*err, plain, map)),
         },
         Error::WithPath { path, err } => {
             let shown = mp(path.clone());
-            let err = map_error(*err, map);
+            let err = map_error(*err, plain, map);
             Error::WithPath {
-                err: Box::new(reword_walkdir(err, &path, &shown)),
+                err: Box::new(reword_walkdir(err, &path, &shown, plain)),
                 path: shown,
             }
         }
         Error::WithDepth { depth, err } => Error::WithDepth {
             depth,
-            err: Box::new(map_error(*err, map)),
+            err: Box::new(map_error(*err, plain, map)),
         },
         Error::Loop { ancestor, child } => Error::Loop {
             ancestor: mp(ancestor),
@@ -440,16 +449,17 @@ fn map_error(e: Error, map: &dyn Fn(&Path) -> Option<PathBuf>) -> Error {
 
 /// walkdir names the path in its I/O messages ("IO error for operation on PATH: ..."):
 /// the display path replaces the OS one there too.
-fn reword_walkdir(e: Error, os: &Path, shown: &Path) -> Error {
+fn reword_walkdir(e: Error, os: &Path, shown: &Path, plain: bool) -> Error {
     match e {
         Error::WithDepth { depth, err } => Error::WithDepth {
             depth,
-            err: Box::new(reword_walkdir(*err, os, shown)),
+            err: Box::new(reword_walkdir(*err, os, shown, plain)),
         },
         Error::Io(io) if io.get_ref().is_some() => {
             let msg = io.to_string();
             let prefix = format!("IO error for operation on {}: ", os.display());
             match msg.strip_prefix(&prefix) {
+                Some(rest) if plain => Error::Io(io::Error::new(io.kind(), rest.to_string())),
                 Some(rest) => Error::Io(io::Error::new(
                     io.kind(),
                     format!("IO error for operation on {}: {rest}", shown.display()),

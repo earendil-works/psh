@@ -381,6 +381,14 @@ impl Host for WindowsHost {
     }
 
     fn open(&self, p: &[u8], opts: OpenOptions) -> HostFuture<io::Result<Rc<dyn HostFile>>> {
+        let dev = match p {
+            b"/dev/zero" => Some(file::Dev::Zero),
+            b"/dev/urandom" | b"/dev/random" => Some(file::Dev::Random),
+            _ => None,
+        };
+        if let Some(d) = dev {
+            return ready(Ok(Rc::new(WinFile::dev(d)) as Rc<dyn HostFile>));
+        }
         let r = path::native(p).and_then(|np| {
             open_file(&np, opts)
                 .map(|f| Rc::new(WinFile::new(OwnedHandle::from(f))) as Rc<dyn HostFile>)

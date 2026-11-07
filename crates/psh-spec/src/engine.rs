@@ -251,14 +251,33 @@ impl Engine for External {
                 Status::Exit(-1)
             }
         };
+        // A shell binary reports the commands it did not find only on stderr.
+        let notes = not_found_in(&stderr);
         Ok(RunOutput {
             stdout,
             stderr,
             status,
-            notes: Vec::new(),
+            notes,
             leaked,
         })
     }
+}
+
+/// The commands a shell's stderr says it did not find (`...: NAME: command not found`),
+/// for the platform ratchets' "needs external" (the in-process engine notes them from
+/// its lookups instead).
+fn not_found_in(stderr: &[u8]) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    for line in String::from_utf8_lossy(stderr).lines() {
+        if let Some(head) = line.strip_suffix(": command not found")
+            && let Some(name) = head.rsplit(": ").next()
+            && !name.is_empty()
+            && !out.iter().any(|n| n == name)
+        {
+            out.push(name.to_string());
+        }
+    }
+    out
 }
 
 /// psh in-process: a fresh shell per case on its own engine thread (with the stack the
@@ -799,6 +818,12 @@ impl psh_engine::Host for Noting {
 
 #[cfg(test)]
 mod noting_tests {
+    #[test]
+    fn commands_not_found_on_stderr() {
+        let e = b"psh: line 1: sh: command not found\nx\npsh: line 2: grep: command not found\npsh: line 3: sh: command not found\n";
+        assert_eq!(super::not_found_in(e), ["sh", "grep"]);
+    }
+
     /// `Noting` must forward every `Host` method: one left to its default would quietly
     /// change what the cases see (a file system change "not supported").
     #[test]

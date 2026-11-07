@@ -77,6 +77,15 @@ enum Kind {
     Shared(File),
     /// Our end of a pump pipe, run by a helper thread.
     Pump(Arc<Pump>),
+    /// `/dev/zero` (zeros; writes vanish) or `/dev/urandom`, `/dev/random` (the
+    /// system's random bytes), which Windows has no files for (D1075).
+    Dev(Dev),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Dev {
+    Zero,
+    Random,
 }
 
 impl WinFile {
@@ -102,12 +111,17 @@ impl WinFile {
         Ok(WinFile::new(h))
     }
 
+    /// One of the emulated devices.
+    pub(crate) fn dev(d: Dev) -> WinFile {
+        WinFile { kind: Kind::Dev(d) }
+    }
+
     /// The handle to give a child (duplicated by the spawner), or `None` for a pump
-    /// end, which only its thread holds.
+    /// end, which only its thread holds, and for an emulated device.
     pub(crate) fn raw_handle(&self) -> Option<RawHandle> {
         match &self.kind {
             Kind::Sync(f) | Kind::Shared(f) => Some(f.as_raw_handle()),
-            Kind::Pump(_) => None,
+            Kind::Pump(_) | Kind::Dev(_) => None,
         }
     }
 }
@@ -117,7 +131,7 @@ impl Drop for WinFile {
         match &self.kind {
             Kind::Shared(f) => poller::forget(f.as_raw_handle() as HANDLE),
             Kind::Pump(p) => p.close(),
-            Kind::Sync(_) => {}
+            Kind::Sync(_) | Kind::Dev(_) => {}
         }
     }
 }
@@ -172,6 +186,11 @@ impl HostFile for WinFile {
                 }
             }
             Kind::Pump(p) => p.poll_read(cx, buf),
+            Kind::Dev(Dev::Zero) => {
+                buf.fill(0);
+                Poll::Ready(Ok(buf.len()))
+            }
+            Kind::Dev(Dev::Random) => Poll::Ready(random_bytes(buf).map(|()| buf.len())),
         }
     }
 
@@ -187,6 +206,7 @@ impl HostFile for WinFile {
                 }
             },
             Kind::Pump(p) => p.poll_write(cx, buf),
+            Kind::Dev(_) => Poll::Ready(Ok(buf.len())),
         }
     }
 
@@ -201,6 +221,29 @@ impl HostFile for WinFile {
             _ => false,
         }
     }
+}
+
+/// The system's cryptographic random bytes.
+fn random_bytes(buf: &mut [u8]) -> io::Result<()> {
+    use windows_sys::Win32::Security::Cryptography::{
+        BCRYPT_USE_SYSTEM_PREFERRED_RNG, BCryptGenRandom,
+    };
+    for chunk in buf.chunks_mut(u32::MAX as usize) {
+        // SAFETY: `chunk` is writable for its length; no algorithm handle with the
+        // system-preferred flag.
+        let st = unsafe {
+            BCryptGenRandom(
+                std::ptr::null_mut(),
+                chunk.as_mut_ptr(),
+                chunk.len() as u32,
+                BCRYPT_USE_SYSTEM_PREFERRED_RNG,
+            )
+        };
+        if st < 0 {
+            return Err(io::Error::other(format!("BCryptGenRandom: {st:#x}")));
+        }
+    }
+    Ok(())
 }
 
 /// Bytes waiting in a pipe; `Err` with a broken-pipe code when its writers are gone and
@@ -884,6 +927,24 @@ mod tests {
         assert!(matches!(r.poll_read(&mut cx, &mut buf), Poll::Ready(Ok(2))));
         drop(w);
         assert!(matches!(r.poll_read(&mut cx, &mut buf), Poll::Ready(Ok(0))));
+    }
+
+    #[test]
+    fn emulated_devices() {
+        let mut cx = Context::from_waker(Waker::noop());
+        let z = WinFile::dev(Dev::Zero);
+        let mut buf = [7u8; 16];
+        assert!(matches!(
+            z.poll_read(&mut cx, &mut buf),
+            Poll::Ready(Ok(16))
+        ));
+        assert_eq!(buf, [0; 16]);
+        assert!(matches!(z.poll_write(&mut cx, b"gone"), Poll::Ready(Ok(4))));
+        let r = WinFile::dev(Dev::Random);
+        let (mut a, mut b) = ([0u8; 32], [0u8; 32]);
+        assert!(matches!(r.poll_read(&mut cx, &mut a), Poll::Ready(Ok(32))));
+        assert!(matches!(r.poll_read(&mut cx, &mut b), Poll::Ready(Ok(32))));
+        assert_ne!(a, b);
     }
 
     #[test]

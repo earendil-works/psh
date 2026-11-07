@@ -6,7 +6,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
-| 0031 | Grow the L3 agent layer to the shapes agents actually use | shapes | .worktrees/shapes |
+| 0033 | Per-platform ratchets and the platform tag | shapes | .worktrees/shapes |
 | 0030 | Process follow-ups: run-in-shell, host info, signal robustness | procs | .worktrees/procs |
 | 0007 | Windows: part A merged (bad4d63, rework 6ca3d08); part B in progress | windows | .worktrees/windows |
 | 0008-wasm | JS host: Host::now/mode (D1069), then 0013 | infra | .worktrees/infra |
@@ -68,3 +68,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0028 | Shell options, errexit and traps | 08e81d0 (shapes) |
 | 0008 | Utility framework and first batch | d4241b1 (infra) |
 | 0026 | Arrays and the rest of word expansion | a9cf1e1 (engine) |
+| 0031 | Grow the L3 agent layer (144 → 701 cases) | 2cb78fe (shapes) |

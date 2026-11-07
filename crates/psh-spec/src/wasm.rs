@@ -137,6 +137,7 @@ impl Engine for WasmEngine {
                 stderr: format!("psh: {msg}\n").into_bytes(),
                 status: Status::Exit(2),
                 notes: Vec::new(),
+                leaked: Vec::new(),
             })
         };
         let (source, arg0, script_args, options, dash_c, stdin) = match parse_args(&args) {
@@ -180,6 +181,7 @@ impl Engine for WasmEngine {
                             .into_bytes(),
                             status: Status::Exit(127),
                             notes: Vec::new(),
+                            leaked: Vec::new(),
                         });
                     }
                 }
@@ -265,6 +267,7 @@ impl Engine for WasmEngine {
                 Status::Exit(status)
             },
             notes,
+            leaked: Vec::new(),
         })
     }
 }

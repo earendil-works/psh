@@ -624,3 +624,23 @@ fn unsafe_free_ppid() -> u32 {
         .unwrap();
     String::from_utf8_lossy(&o.stdout).trim().parse().unwrap()
 }
+
+#[test]
+fn a_runner_host_kills_detached_externals_too() {
+    let h = UnixHost::new(UnixConfig {
+        grace: Duration::from_millis(300),
+        detached_survive: false,
+        ..UnixConfig::default()
+    });
+    let mut spec = sh("sleep 30", nulls());
+    spec.detach = true;
+    let p = h.spawn(spec).unwrap().proc;
+    let g = p.pid().unwrap() as i32;
+    drop(p);
+    assert!(alive(g));
+    drop(h);
+    assert!(
+        wait_gone(g),
+        "the detached process survived a runner's host"
+    );
+}

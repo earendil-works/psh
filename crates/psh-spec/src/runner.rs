@@ -257,6 +257,7 @@ impl Runner<'_> {
                 stderr: paths.apply(&output.stderr),
                 status: output.status,
                 notes: output.notes,
+                leaked: output.leaked,
             },
             files: files
                 .into_iter()

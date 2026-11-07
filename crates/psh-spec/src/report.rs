@@ -20,6 +20,8 @@ pub struct CaseResult<'a> {
     pub status_ok: bool,
     pub files_ok: bool,
     pub stderr_ok: bool,
+    /// Nothing the case started outlived it (0030).
+    pub leak_ok: bool,
     /// stdout, status and files match. stderr is scored separately.
     pub pass: bool,
     /// The case could not be checked (no golden, the shell did not start, ...).
@@ -45,6 +47,9 @@ impl CaseResult<'_> {
         }
         if !self.stderr_ok {
             parts.push("stderr");
+        }
+        if !self.leak_ok {
+            parts.push("leak");
         }
         parts.join(" ")
     }
@@ -80,6 +85,7 @@ pub fn compare<'a>(
         status_ok: false,
         files_ok: false,
         stderr_ok: false,
+        leak_ok: true,
         pass: false,
         error: None,
         expected: None,
@@ -105,7 +111,8 @@ pub fn compare<'a>(
     r.stderr_ok = norm(&golden.stderr, GOLDEN_SHELL) == norm(&observed.output.stderr, shell);
     r.status_ok = golden.status == observed.output.status;
     r.files_ok = golden.files == observed.files;
-    r.pass = r.stdout_ok && r.status_ok && r.files_ok;
+    r.leak_ok = observed.output.leaked.is_empty();
+    r.pass = r.stdout_ok && r.status_ok && r.files_ok && r.leak_ok;
     r.expected = Some(golden.clone());
     r.actual = Some(observed);
     r
@@ -363,6 +370,9 @@ pub fn print_diffs(results: &[CaseResult]) {
                 "--- stderr\n{}",
                 line_diff(&block(&e.stderr), &block(&a.output.stderr))
             );
+        }
+        if !r.leak_ok {
+            println!("--- leaked (killed): {}", a.output.leaked.join(", "));
         }
     }
 }

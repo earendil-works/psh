@@ -56,6 +56,10 @@ pub struct UnixConfig {
     /// a test run as a background job) are not the shell's, and every signal then
     /// starts at its default unless the script ignores it.
     pub inherit_ignored: bool,
+    /// Detached externals (`nohup`, `setsid`) outlive the run. Off for a test runner,
+    /// where nothing a case started may survive it: they are killed with the run's
+    /// leftovers then (0030).
+    pub detached_survive: bool,
 }
 
 impl UnixConfig {
@@ -70,6 +74,7 @@ impl Default for UnixConfig {
             pid: None,
             leftovers: Leftovers::Kill,
             inherit_ignored: false,
+            detached_survive: true,
         }
     }
 }
@@ -89,6 +94,14 @@ pub struct RunKiller(Arc<Shared>);
 impl RunKiller {
     pub fn kill_all(&self) {
         self.0.kill_all();
+    }
+
+    /// The run's groups that still have a live member (zombies included), as
+    /// [`UnixHost::leftovers`]; usable after the host is gone (leak checks).
+    pub fn leftovers(&self) -> Vec<i32> {
+        let mut scopes = self.0.scopes.lock().unwrap_or_else(|e| e.into_inner());
+        scopes.retain(|s| s.alive());
+        scopes.iter().map(|s| s.id()).collect()
     }
 }
 
@@ -118,6 +131,7 @@ impl UnixHost {
                 } else {
                     Default::default()
                 },
+                detached_survive: cfg.detached_survive,
                 fork_only: Default::default(),
             }),
             pid: cfg.pid,

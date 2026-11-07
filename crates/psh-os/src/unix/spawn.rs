@@ -188,6 +188,8 @@ pub(crate) struct Shared {
     pub(crate) scopes: Mutex<Vec<Scope>>,
     /// Signals ignored when the host was made ([`ignored_now`]).
     pub(crate) ignored_at_start: [bool; NSIG as usize],
+    /// `UnixConfig::detached_survive`.
+    pub(crate) detached_survive: bool,
     /// Tests: take the fork path everywhere.
     pub(crate) fork_only: std::sync::atomic::AtomicBool,
 }
@@ -475,7 +477,7 @@ pub(crate) fn spawn(shared: &Arc<Shared>, mut spec: SpawnSpec) -> io::Result<Spa
     } else {
         Scope::Process(pid)
     };
-    if !spec.detach {
+    if !spec.detach || !shared.detached_survive {
         shared.record(scope);
     }
     let tracker = Arc::new(Tracker::new());

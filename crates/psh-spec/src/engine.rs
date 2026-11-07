@@ -52,6 +52,9 @@ pub struct RunOutput {
     /// Engine remarks about the run: the wasm engine lists the commands the case looked
     /// for and did not find (it needed external programs).
     pub notes: Vec<String>,
+    /// Processes the case left running that the runner had to kill (0030): the case
+    /// fails with them.
+    pub leaked: Vec<String>,
 }
 
 pub trait Engine: Sync {
@@ -185,6 +188,29 @@ impl Engine for External {
         #[cfg(unix)]
         kill_group(child.id());
         let _ = child.kill();
+        // The case's group must empty once killed (0030); a member that outlives KILL
+        // (a process stuck in the kernel) is a leak.
+        #[cfg(unix)]
+        let leaked = {
+            let pgid = child.id() as i32;
+            let until = Instant::now() + Duration::from_secs(2);
+            let alive = || match psh_os::unix::kill(-pgid, 0) {
+                Ok(()) => true,
+                Err(e) => e.kind() == std::io::ErrorKind::PermissionDenied,
+            };
+            // The leader is reaped below; the others are reaped by init.
+            let _ = child.try_wait();
+            while alive() && Instant::now() < until {
+                std::thread::sleep(Duration::from_millis(5));
+            }
+            if alive() {
+                vec![format!("process group {pgid}")]
+            } else {
+                Vec::new()
+            }
+        };
+        #[cfg(not(unix))]
+        let leaked = Vec::new();
         let exit = match exit {
             Some(status) => status,
             None => child.wait()?,
@@ -230,6 +256,7 @@ impl Engine for External {
             stderr,
             status,
             notes: Vec::new(),
+            leaked,
         })
     }
 }
@@ -248,33 +275,64 @@ impl InProcess {
     }
 }
 
+/// Runs after a case: the processes it left that had to be killed.
+type LeakCheck = Box<dyn FnOnce() -> Vec<String> + Send>;
+
 /// Turns an OS file into a file of the host.
 type WrapFile = fn(std::fs::File) -> std::rc::Rc<dyn psh_engine::HostFile>;
 
-/// The OS host for an in-process shell whose `$$` is `pid`, and how it wraps files.
+/// The OS host for an in-process shell whose `$$` is `pid`, how it wraps files, and the
+/// leak check to run once the shell and the host are gone.
 #[cfg(unix)]
-fn os_host(pid: u32) -> (std::rc::Rc<dyn psh_engine::Host>, WrapFile) {
+fn os_host(pid: u32) -> (std::rc::Rc<dyn psh_engine::Host>, WrapFile, LeakCheck) {
     use psh_os::unix::{UnixConfig, UnixFile, UnixHost};
     let host = UnixHost::new(UnixConfig {
         pid: Some(pid),
+        // Nothing a case starts may outlive it, `nohup` jobs included.
+        detached_survive: false,
         ..UnixConfig::default()
     });
-    (std::rc::Rc::new(host), |f| {
-        std::rc::Rc::new(UnixFile::new(f))
-    })
+    let killer = host.killer();
+    // Dropping the host killed what the run left (TERM, KILL after the grace period):
+    // whatever is still alive a little after that is a leak (0030).
+    let check: LeakCheck = Box::new(move || {
+        let deadline =
+            Instant::now() + psh_os::unix::UnixConfig::DEFAULT_GRACE + Duration::from_secs(1);
+        loop {
+            let left = killer.leftovers();
+            if left.is_empty() {
+                return Vec::new();
+            }
+            if Instant::now() >= deadline {
+                for g in &left {
+                    let _ = psh_os::unix::kill(-g, 9);
+                }
+                return left.iter().map(|g| format!("process group {g}")).collect();
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    });
+    (
+        std::rc::Rc::new(host),
+        |f| std::rc::Rc::new(UnixFile::new(f)),
+        check,
+    )
 }
 
 /// The OS host for an in-process shell whose `$$` is `pid`, and how it wraps files.
 #[cfg(windows)]
-fn os_host(pid: u32) -> (std::rc::Rc<dyn psh_engine::Host>, WrapFile) {
+fn os_host(pid: u32) -> (std::rc::Rc<dyn psh_engine::Host>, WrapFile, LeakCheck) {
     use psh_os::windows::{WinFile, WindowsConfig, WindowsHost};
     let host = WindowsHost::new(WindowsConfig {
         pid: Some(pid),
         ..WindowsConfig::default()
     });
-    (std::rc::Rc::new(host), |f| {
-        std::rc::Rc::new(WinFile::new(std::os::windows::io::OwnedHandle::from(f)))
-    })
+    (
+        std::rc::Rc::new(host),
+        |f| std::rc::Rc::new(WinFile::new(std::os::windows::io::OwnedHandle::from(f))),
+        // Windows: the job objects of the host kill what is left; no check yet.
+        Box::new(Vec::new),
+    )
 }
 
 fn file_from_writer(w: std::io::PipeWriter) -> std::fs::File {
@@ -323,6 +381,7 @@ impl Engine for InProcess {
                 stderr: format!("psh: {msg}\n").into_bytes(),
                 status: Status::Exit(2),
                 notes: Vec::new(),
+                leaked: Vec::new(),
             })
         };
         // A child of an in-process shell is a child of the runner, in its process
@@ -378,6 +437,7 @@ impl Engine for InProcess {
                                 .into_bytes(),
                             status: Status::Exit(127),
                             notes: Vec::new(),
+                            leaked: Vec::new(),
                         });
                     }
                 }
@@ -433,7 +493,7 @@ impl Engine for InProcess {
         let (done_tx, done_rx) = std::sync::mpsc::channel();
         let _engine = engine_thread(move || {
             // `$$` must not be the runner: cases `kill $$`. No pid is this large.
-            let (host, file) = os_host(99_999_999);
+            let (host, file, leak_check) = os_host(99_999_999);
             let mut cfg = ShellConfig::new(host);
             cfg.utilities = psh_utils::policy(false);
             cfg.env = env;
@@ -448,14 +508,14 @@ impl Engine for InProcess {
             shell.start(script);
             let r = drive_until(&mut shell, Some(deadline));
             drop(shell);
-            let _ = done_tx.send(r);
+            let _ = done_tx.send((r, leak_check()));
         })?;
         // A shell stuck in the kernel (a v1 host limit) cannot be cancelled: give up
         // on it a little after the deadline and leave its thread behind.
         let wait = deadline.saturating_duration_since(Instant::now()) + Duration::from_secs(2);
-        let result = match done_rx.recv_timeout(wait) {
+        let (result, leaked) = match done_rx.recv_timeout(wait) {
             Ok(r) => r,
-            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => None,
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => (None, Vec::new()),
             Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => {
                 return Err(std::io::Error::other("the engine thread panicked"));
             }
@@ -488,6 +548,7 @@ impl Engine for InProcess {
             stderr,
             status,
             notes: Vec::new(),
+            leaked,
         })
     }
 }

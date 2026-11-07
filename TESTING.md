@@ -258,7 +258,11 @@ wrong skip. Never weaken a leg to get green.
 - Everything that runs a shell goes under `scripts/timeout.sh` (macOS has no
   `timeout`).
 - Every process test checks afterwards that no process of the case survived (leak
-  check by process group or job).
+  check by process group or job). psh-spec does the same for every case (D1305): an
+  in-process case's host kills what the run left, `nohup` jobs included, and a group
+  still alive after the grace period fails the case as `leak`; a binary-run case's
+  process group must empty once the runner killed it. Processes that move into a
+  session of their own (`setsid` inside a script) are out of its reach.
 - Read goldens instead of running bash; if you think a golden is wrong, say so in your
   issue log and tell the coordinator.
 - Cap parallelism (`-j 6`) to leave cores for other agents.

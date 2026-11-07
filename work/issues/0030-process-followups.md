@@ -78,6 +78,14 @@ Close the process-layer follow-ups from 0006 and the coordinator's queue.
 - D1303: the "Terminated" / "line N: PID Killed" report after a foreground simple
   command; `wait`'s report pads the pid to 5 columns. L5 test.
 
+### 2026-11-07 part 4: psh-spec per-case leak check (D1305)
+- `RunOutput::leaked` and `CaseResult::leak_ok` (pass requires it; `what_failed` says
+  `leak`, `--diff` lists the groups). In-process: a `RunKiller` probe after the host is
+  dropped (`RunKiller::leftovers`, new); `UnixConfig::detached_survive` off for the
+  runner. Binary: the killed group must empty. psh-os unit test for detached kills.
+  Full run: no leaks, no regressions; ppid-1 check after a full run: nothing from cases.
+  TESTING.md updated.
+
 ## Follow-ups
 
 ## Result

@@ -1811,3 +1811,14 @@ shapes at three levels: exact (placeholders unified), args (argument lists colla
 tool subcommands kept) and syntax (every word a word). "args" is the reported number:
 the share of the commands the shapes stand for that have a case with the same command
 structure (49.7% with 701 cases). The script reads only committed files.
+## D1305: psh-spec checks every case for leaked processes
+date: 2026-11-07 · by: procs · issue: 0030
+In-process cases use a host with `UnixConfig::detached_survive` off (new; default on):
+`nohup`/`setsid` jobs are recorded and killed with the run's leftovers too. When the
+shell and the host are gone (TERM, KILL after the grace period), the case's recorded
+groups must empty within the grace plus 1 s; what is still alive is killed and the case
+fails with `leak` (`RunOutput::leaked`, shown by `--diff`). Cases run in the `psh`
+binary: the runner already kills the binary's process group after it exits; a group
+that does not empty within 2 s fails the case likewise. Out of reach: a process that
+calls setsid itself (a session of its own is invisible to group checks), and, in the
+binary, `nohup`/`setsid` jobs (psh detaches them as designed). Windows: no check yet.

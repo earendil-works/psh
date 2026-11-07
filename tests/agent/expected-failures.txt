@@ -1,12 +1,8 @@
 # Ratchet for layer agent: active cases that may fail (TESTING.md "Ratchets").
 # One case id per line, optionally `id: reason`. psh-spec --update-ratchet removes
 # cases that pass; never add a line to hide a regression.
-agent/globs-status/2
-agent/redirects/1
-agent/control/6: needs [[ ]] (parser/engine, 0027)
 agent/files/4: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/files/5: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
-agent/files/7: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/files/42: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/files/43: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/files/47: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
@@ -57,6 +53,7 @@ agent/search/37: needs psh's rg (utilities, search batch); rg is not on the runn
 agent/text/7: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/text/13: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/text/45: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
+agent/text/13: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/top-shapes/9: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
 agent/top-shapes/10: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
 agent/top-shapes/11: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS

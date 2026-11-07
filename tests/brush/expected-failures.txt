@@ -364,14 +364,6 @@ brush/compat/path_search/9
 brush/compat/path_search/10
 brush/compat/path_search/12
 brush/compat/path_search/13
-brush/compat/patterns/filename_expansion/32
-brush/compat/patterns/filename_expansion/38
-brush/compat/patterns/filename_expansion/39
-brush/compat/patterns/filename_expansion/40
-brush/compat/patterns/filename_expansion/41
-brush/compat/patterns/patterns/1
-brush/compat/patterns/patterns/2
-brush/compat/patterns/patterns/3
 brush/compat/patterns/patterns/8
 brush/compat/patterns/patterns/9
 brush/compat/pipeline/4

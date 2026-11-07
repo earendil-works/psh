@@ -162,9 +162,6 @@ oils/builtin-vars/26
 oils/builtin-vars/32
 oils/command-sub/8
 oils/command-sub/9
-oils/command-sub-ksh/0
-oils/command-sub-ksh/3
-oils/command-sub/16
 oils/command_/0
 oils/command_/15
 oils/divergence/2
@@ -267,6 +264,4 @@ oils/vars-special/19
 oils/vars-special/20
 oils/vars-special/25
 oils/vars-special/28
-oils/word-split/45
-oils/vars-special/36
 oils/xtrace/2

@@ -38,6 +38,12 @@ pub(crate) enum Dynamic {
     BashArgc,
     /// The host's groups (D1328).
     Groups,
+    /// `$0`; assigning sets it (D1329).
+    BashArgv0,
+    /// The aliases as an associative array; assigning an element defines one.
+    BashAliases,
+    BashMonoseconds,
+    Lineno,
 }
 
 /// `declare -l` / `-u` (and `-c` is not bash 5.3's).

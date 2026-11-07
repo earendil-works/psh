@@ -1,7 +1,6 @@
 # Ratchet for layer oils: active cases that may fail (TESTING.md "Ratchets").
 # One case id per line, optionally `id: reason`. psh-spec --update-ratchet removes
 # cases that pass; never add a line to hide a regression.
-oils/bugs/13: ulimit is not supported yet (fails on Linux; macOS lacks /dev/full, so it is host-specific there)
 oils/arg-parse/1
 oils/arg-parse/2
 oils/arith/7
@@ -54,6 +53,7 @@ oils/brace-expansion/29
 oils/brace-expansion/42
 oils/bugs/5
 oils/bugs/10
+oils/bugs/13: ulimit is not supported yet (fails on Linux; macOS lacks /dev/full, so it is host-specific there)
 oils/bugs/19
 oils/bugs/21
 oils/builtin-bash/0
@@ -89,7 +89,6 @@ oils/builtin-meta/4
 oils/builtin-meta/6
 oils/builtin-meta/10: tr is an always-on psh utility (mode S, D015), so a tr script earlier on PATH does not shadow it
 oils/builtin-misc/0
-oils/builtin-misc/1
 oils/builtin-printf/3
 oils/builtin-process/4
 oils/builtin-process/10: passed via macOS /usr/bin wrapper
@@ -138,7 +137,6 @@ oils/builtin-type-bash/14
 oils/builtin-type-bash/16: S-mode psh utility shadows the PATH file (D1083, D1151); type reports what runs
 oils/builtin-type-bash/21
 oils/builtin-type-bash/22
-oils/builtin-type-bash/27
 oils/builtin-type-bash/30
 oils/builtin-umask/10
 oils/builtin-umask/11
@@ -147,11 +145,6 @@ oils/builtin-vars/17
 oils/builtin-vars/24
 oils/builtin-vars/26
 oils/builtin-vars/32
-oils/command-sub/8
-oils/command-sub/9
-oils/command_/0
-oils/command-sub-ksh/0
-oils/command-sub-ksh/3
 oils/command_/15
 oils/divergence/2
 oils/dparen/10
@@ -166,28 +159,7 @@ oils/glob/31
 oils/glob-bash/4
 oils/glob-bash/5
 oils/globignore/1
-oils/globignore/7
 oils/globignore/8
-oils/globstar/4
-oils/globignore/9
-oils/globignore/10
-oils/globignore/11
-oils/globignore/12
-oils/globignore/13
-oils/globignore/15
-oils/globignore/16
-oils/globignore/17
-oils/here-doc/16
-oils/here-doc/17
-oils/here-doc/26
-oils/globignore/9
-oils/globignore/10
-oils/globignore/11
-oils/globignore/12
-oils/globignore/13
-oils/globignore/15
-oils/globignore/16
-oils/globignore/17
 oils/introspect/1
 oils/let/1
 oils/loop/17
@@ -206,25 +178,14 @@ oils/nul-bytes/12
 oils/parse-errors/22
 oils/redirect/3
 oils/redirect/27
-oils/redirect-command/8
-oils/redirect/36
-oils/redirect/39
 oils/serialize/3
 oils/serialize/5
 oils/sh-options-bash/4
-oils/sh-options-bash/6
-oils/smoke/6
-oils/smoke/7
-oils/smoke/14: platform-dependent: GNU ls exits 2 for a missing file, macOS BSD ls 1 (passes on Linux; per-platform ratchet or psh ls later)
 oils/tilde/7
 oils/tilde/13
 oils/toysh/1
 oils/toysh/2
 oils/toysh/5
-oils/tilde/11
-oils/toysh/1
-oils/toysh/2
-oils/toysh/6
 oils/type-compat/3
 oils/var-op-bash/17
 oils/var-op-bash/19
@@ -234,12 +195,9 @@ oils/var-op-patsub/12
 oils/var-op-patsub/23
 oils/var-op-patsub/26
 oils/var-op-slice/20
-oils/var-op-strip/10
-oils/var-op-test/17
 oils/var-op-test/35
 oils/var-ref/3
 oils/var-ref/4
-oils/var-ref/8
 oils/var-ref/10
 oils/var-ref/26
 oils/var-ref/28
@@ -248,11 +206,8 @@ oils/var-ref/30
 oils/var-sub-quote/25
 oils/var-sub-quote/33
 oils/vars-bash/0
-oils/vars-special/2
 oils/vars-special/3
 oils/vars-special/4
-oils/vars-special/5
 oils/vars-special/15
-oils/vars-special/25
 oils/vars-special/28
 oils/xtrace/2

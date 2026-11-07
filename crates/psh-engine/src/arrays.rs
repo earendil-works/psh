@@ -94,8 +94,12 @@ impl Vp {
             let v = self.convert(&name, value, old, append)?;
             let var = self.vars.entry(&name);
             var.declared_only = false;
+            let aliases = var.dynamic == Some(crate::vars::Dynamic::BashAliases);
             if let Value::Assoc(a) = &mut var.value {
-                a.insert(sub.to_vec(), v);
+                a.insert(sub.to_vec(), v.clone());
+            }
+            if aliases {
+                self.aliases.set(sub, &v);
             }
             return Ok(());
         }

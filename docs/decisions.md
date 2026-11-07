@@ -2188,3 +2188,17 @@ still falls through to the real program (D010). Agents on macOS write GNU `find`
 the whole process tree and behaves the same everywhere; a find and a timeout that act
 the same on every platform is the agent-first choice. `sort` was already S. A
 consequence: `type -t find` says `builtin` (D1083), two Oils cases expect `file`.
+## D1329: Well-known variables bash sets at startup; `$(…)` CRLF follows the host
+date: 2026-11-08 · by: engine · issue: 0032
+Set when the environment has none: `PATH` (bash's default list; not on Windows, whose
+PATH conventions differ), `PS4="+ "`, `TERM=dumb`, `COMP_WORDBREAKS`, `OPTERR=1`,
+`OPTIND` (an integer). Inherited `PS1`/`PS2` are dropped, as a non-interactive bash
+does. Dynamic: `BASH_ARGV0` (`$0`; assigning sets it), `BASH_ALIASES` (the aliases;
+assigning an element defines one), `BASH_MONOSECONDS`, `LINENO`. `BASH_VERSINFO[5]` is
+the host's `MACHTYPE`. `unset` refuses `BASH_SOURCE`, `BASH_LINENO`, `BASH_ARGV`,
+`BASH_ARGC`. A pipeline stage that is a `( … )` is that subshell itself (one
+`BASH_SUBSHELL` level, as in bash). Not set: `BASH`, `SHELL` (the host reports no
+executable path or login shell), `HISTCMD`, `DIRSTACK`, `BASH_CMDS`, `BASH_COMMAND`.
+The CRLF rule of command substitution moves from `cfg!(windows)` to
+`Host::strips_crlf()` (D1292) when that method lands, superseding D1324's "Windows
+builds only".

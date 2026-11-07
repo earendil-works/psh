@@ -255,6 +255,7 @@ async fn run_pipeline_stages(vp: &mut Vp, code: &Rc<Code>, p: &Pipeline) -> R {
         }
         let mut sub = enter(vp).await?;
         sub.jobs = Rc::new(std::cell::RefCell::new(vp.jobs.borrow().for_stage()));
+        sub.stage_subshell = matches!(code.ast.cmd(stage.cmd).kind, CommandKind::Subshell(_));
         if let Some(r) = next_in.take() {
             sub.fds.set(0, r);
         }
@@ -596,6 +597,10 @@ fn run_compound<'a>(vp: &'a mut Vp, code: &'a Rc<Code>, cmd: &'a Command) -> Loc
 }
 
 async fn run_subshell(vp: &mut Vp, code: &Rc<Code>, list: ListId) -> R {
+    // A pipeline stage that is this subshell: the stage's vproc is it already.
+    if std::mem::take(&mut vp.stage_subshell) {
+        return run_list(vp, code, list).await;
+    }
     let sub = enter(vp).await?;
     let join = spawn_sub(sub, code.clone(), Body::List(list));
     // A bash subshell is a process: it runs on when the shell dies of a signal (D1903).

@@ -269,6 +269,11 @@ impl Shell {
             ("BASH_LINENO", vars::Dynamic::BashLineno),
             ("BASH_ARGV", vars::Dynamic::BashArgv),
             ("BASH_ARGC", vars::Dynamic::BashArgc),
+            ("GROUPS", vars::Dynamic::Groups),
+            ("BASH_ARGV0", vars::Dynamic::BashArgv0),
+            ("BASH_ALIASES", vars::Dynamic::BashAliases),
+            ("BASH_MONOSECONDS", vars::Dynamic::BashMonoseconds),
+            ("LINENO", vars::Dynamic::Lineno),
         ] {
             let v = vars.entry(name);
             v.dynamic = Some(d);
@@ -284,9 +289,13 @@ impl Shell {
                     | vars::Dynamic::BashLineno
                     | vars::Dynamic::BashArgv
                     | vars::Dynamic::BashArgc
+                    | vars::Dynamic::Groups
             ) {
                 v.value = vars::Value::Indexed(Default::default());
                 v.declared_only = true;
+            }
+            if d == vars::Dynamic::BashAliases {
+                v.value = vars::Value::Assoc(Default::default());
             }
         }
         // Who and where the shell runs, from the host (D1328). As in bash: UID and
@@ -316,26 +325,55 @@ impl Shell {
                 vars.insert(name, Var::scalar(v));
             }
         }
-        vars.entry("GROUPS").dynamic = Some(vars::Dynamic::Groups);
         // psh's compatibility target; scripts gate bash-isms on these (D1264).
         vars.insert("BASH_VERSION", Var::scalar(b"5.3.9(1)-release".to_vec()));
-        let mut info = std::collections::BTreeMap::new();
-        for (i, v) in ["5", "3", "9", "1", "release", std::env::consts::ARCH]
+        let mut versinfo = std::collections::BTreeMap::new();
+        for (i, v) in ["5", "3", "9", "1", "release", &info.machtype]
             .iter()
             .enumerate()
         {
-            info.insert(i as i64, v.as_bytes().to_vec());
+            versinfo.insert(i as i64, v.as_bytes().to_vec());
         }
         vars.insert(
             "BASH_VERSINFO",
             Var {
-                value: vars::Value::Indexed(info),
+                value: vars::Value::Indexed(versinfo),
                 readonly: true,
                 ..Var::default()
             },
         );
         // getopts' state, as bash starts it.
-        vars.insert("OPTIND", Var::scalar(b"1".to_vec()));
+        vars.insert(
+            "OPTIND",
+            Var {
+                integer: true,
+                ..Var::scalar(b"1".to_vec())
+            },
+        );
+        vars.insert("OPTERR", Var::scalar(b"1".to_vec()));
+        // What bash sets when the environment has none (D1329). Prompts belong to
+        // interactive shells: a non-interactive bash drops inherited PS1 and PS2.
+        vars.remove("PS1");
+        vars.remove("PS2");
+        let defaults: [(&str, &[u8]); 3] = [
+            ("PS4", b"+ "),
+            ("TERM", b"dumb"),
+            ("COMP_WORDBREAKS", b" \t\n\"'@><=;|&(:"),
+        ];
+        for (name, v) in defaults {
+            if vars.get(name).is_none() {
+                vars.insert(name, Var::scalar(v.to_vec()));
+            }
+        }
+        // bash's default PATH; on Windows the host's PATH conventions differ.
+        if vars.get("PATH").is_none() && !cfg!(windows) {
+            vars.insert(
+                "PATH",
+                Var::scalar(
+                    b"/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:.".to_vec(),
+                ),
+            );
+        }
         vars.insert(
             "PSH_VERSION",
             Var::scalar(env!("CARGO_PKG_VERSION").as_bytes().to_vec()),
@@ -382,6 +420,7 @@ impl Shell {
             getopts: (0, 0),
             subst_fds: Vec::new(),
             var_fds: Vec::new(),
+            stage_subshell: false,
             last_args: Vec::new(),
             subshell_level: 0,
             bashpid: cfg.host.pid(),

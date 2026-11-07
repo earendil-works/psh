@@ -494,6 +494,18 @@ async fn unset(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             status = 1;
             continue;
         }
+        // The call stack but FUNCNAME stays (bash).
+        if vp.vars.get(&n).is_some_and(|v| {
+            use crate::vars::Dynamic::*;
+            matches!(
+                v.dynamic,
+                Some(BashSource | BashLineno | BashArgv | BashArgc)
+            )
+        }) {
+            vp.error(&format!("unset: {n}: cannot unset")).await;
+            status = 1;
+            continue;
+        }
         vp.vars.remove(&n);
     }
     Ok(status)

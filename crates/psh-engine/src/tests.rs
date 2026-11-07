@@ -913,3 +913,16 @@ fn host_info_variables() {
         &format!("declare -ir UID=\"{}\"\n", i.uid),
     );
 }
+
+#[test]
+fn well_known_variables() {
+    check(
+        "echo \"$OPTERR $PS4|\"; BASH_ARGV0=x; echo $0; alias q=w; echo ${BASH_ALIASES[q]}; BASH_ALIASES[z]=y; alias z",
+        "1 + |\nx\nw\nalias z='y'\n",
+    );
+    check(
+        ": | ( echo $BASH_SUBSHELL ); ( echo $BASH_SUBSHELL ) | cat; echo $(: | ( echo $BASH_SUBSHELL ))",
+        "1\n1\n2\n",
+    );
+    check("unset BASH_SOURCE 2>/dev/null || echo kept", "kept\n");
+}

@@ -190,6 +190,9 @@ pub(crate) struct Vp {
     /// `{var}>` redirections of the running command: they outlast it (D1326), so the
     /// restore of its descriptors applies them again (`None`: closed).
     pub var_fds: Vec<(u32, Option<crate::fd::Fd>)>,
+    /// This vproc is a pipeline stage that is a `( … )`: the subshell is the stage
+    /// itself (bash counts it once in `BASH_SUBSHELL`).
+    pub stage_subshell: bool,
     /// The last words of the simple commands running, innermost last: `$_` once each
     /// completes.
     pub last_args: Vec<Vec<u8>>,
@@ -280,6 +283,7 @@ impl Vp {
         );
         sub.jobs = Default::default();
         sub.subshell_level += 1;
+        sub.stage_subshell = false;
         sub.bashpid = self.core.next_job_id();
         sub
     }
@@ -331,6 +335,25 @@ impl Vp {
                 }
                 return;
             }
+            Dynamic::BashArgv0 => {
+                let a0 = self.arg0.clone();
+                if let Some(var) = self.vars.get_mut(name) {
+                    var.value = Value::Str(a0);
+                }
+                return;
+            }
+            Dynamic::BashAliases => {
+                let mut a = crate::vars::Assoc::default();
+                for (k, v) in self.aliases.iter() {
+                    a.insert(k.to_vec(), v.to_vec());
+                }
+                if let Some(var) = self.vars.get_mut(name) {
+                    var.value = Value::Assoc(a);
+                }
+                return;
+            }
+            Dynamic::BashMonoseconds => now.as_secs().to_string(),
+            Dynamic::Lineno => self.line.to_string(),
             Dynamic::BashPid => self.bashpid.to_string(),
             Dynamic::BashSubshell => self.subshell_level.to_string(),
         };
@@ -420,6 +443,11 @@ impl Vp {
                 .core
                 .rng
                 .set((n as u64).wrapping_mul(0x9e37_79b9_7f4a_7c15) | 1),
+            Some(Dynamic::BashArgv0) => {
+                if let Some(v) = var.get() {
+                    self.arg0 = v.to_vec();
+                }
+            }
             Some(Dynamic::Seconds) => {
                 let now = self.core.host.now().as_nanos() as i128;
                 self.core

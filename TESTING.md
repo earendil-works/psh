@@ -112,6 +112,11 @@ matching rule decides, unmatched cases are active, and every rule has a reason:
   separately.
 - **active:** everything else. The ratchet applies here.
 
+`[[serial]]` tables (same keys) are not a group: they mark cases that use fixed paths
+outside their directory (`/tmp/oil-spec-test/pwd`), which race when two run at once.
+Each such case holds a machine-wide lock (a file lock in the temporary directory) while
+it runs, so they never overlap, in one run or across concurrent runs (D1224).
+
 Moving cases between groups is a coordinator decision.
 
 ## Ratchets

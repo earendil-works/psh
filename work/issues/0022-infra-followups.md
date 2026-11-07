@@ -67,6 +67,15 @@ measure the parser in the gate.
   --target all` for every crate (D1223). Checked by hand: an unlisted, a stale and an
   uncited line each fail the leg. AGENTS.md's "Allowed dependencies" paragraph could
   point at the list (coordinator's file).
+- 2026-11-07, serial cases (branch issue/0022-serial-cases, asked for after the merge):
+  `oils/builtin-cd/10` flaked under `-j` because `oils/builtin-cd/13` removes the shared
+  `/tmp/oil-spec-test/pwd`. New `[[serial]]` tables in tests/spec.toml mark the 24 Oils
+  cases that use fixed `/tmp` paths (builtin-cd, builtin-dirs, builtin-type-bash; brush's
+  `/tmp` uses carry `$$`); each holds an exclusive lock on
+  `$TMPDIR/psh-spec-serial.lock` while it runs, so they also stay apart across concurrent
+  psh-spec runs of other worktrees (D1224). A per-worker `/tmp` is not possible without
+  OS isolation. The race did not reproduce here in 60 runs either way; the lock is
+  covered by a unit test that fails without it.
 
 ## Follow-ups
 - Platform-dependent cases (coordinator's plan, implement when the macOS/Windows spec

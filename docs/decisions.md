@@ -1022,3 +1022,13 @@ aliases are untouched. Alternatives: textual pre-expansion of the line (wrong: b
 decides command positions while parsing) and a token stream with pushed-back text (no
 token stream here). Known gap: a quote opened in alias text does not continue into the
 script, as it does in bash.
+
+## D1224: Serial cases hold a machine-wide lock
+date: 2026-11-07 · by: infra · issue: 0022
+Cases that use fixed paths outside their own directory race when two run at the same
+time. `tests/spec.toml` marks them with `[[serial]]` tables (match/tag, reason; not a
+group), and psh-spec runs each such case while holding an exclusive `File::lock` on
+`$TMPDIR/psh-spec-serial.lock`: serial cases never overlap, neither between workers nor
+between concurrent psh-spec runs (gates of other worktrees, recordings). Other cases stay
+parallel. Alternatives: a per-worker `/tmp` (needs OS isolation; not portable), or running
+serial cases in a separate phase (does not cover other processes).

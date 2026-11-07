@@ -1,7 +1,7 @@
 # 0014: Utilities batch C: sed
 
-status: open
-agent: -
+status: in-progress
+agent: parser
 branch: issue/0014-utils-sed
 depends-on: 0008, 0027 (psh-regex)
 touches: crates/psh-utils/src/sed*, tests/utils/sed/

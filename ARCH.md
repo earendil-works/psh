@@ -169,8 +169,10 @@ runtime in D005's sense: no runtime crate, no threads, the embedder steps and pa
 - **Shell builtins** (`cd`, `export`, `set`, `trap`, `read`, `printf`, `test`, `kill`,
   `wait`, ...) are part of the engine, async functions on the calling vproc. Job control
   is limited to `&`, `wait`, `kill`, `$!`, `jobs` (D002). When a script ends, detached
-  vprocs (`cmd &`) get one more round; their externals still running are released,
-  not killed (bash leaves background jobs running).
+  vprocs (`cmd &`) get one more round; then, by `ShellConfig::exit_grace`, their
+  externals still running are released (`None`, bash parity: background jobs outlive
+  the shell) or waited for up to the grace and then abandoned (embedders that must
+  leave nothing behind; psh-spec uses 500 ms).
 - **Expansion** (brace expansion, tilde, parameters, command substitution, arithmetic
   as 64-bit, word splitting, globbing, quote removal) is engine code over the AST;
   globbing reads directories through the host. Arithmetic is psh-syntax's

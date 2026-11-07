@@ -1,0 +1,634 @@
+# Goldens for tests/utils/grep/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: lines, line numbers, file names
+status: 0
+bash-n: 0
+--- stdout
+|alpha
+|alphabet
+|1:alpha
+|3:alphabet
+|f:alpha
+|f:alphabet
+|f:beta
+|g:beta
+|beta
+|beta
+--- file f
+|alpha
+|beta
+|alphabet
+--- file g
+|alpha
+|beta
+|alphabet
+
+=== 1: -c, -l, -L, -q and the exit status
+status: 0
+bash-n: 0
+--- stdout
+|f:2
+|g:0
+|f
+|g
+|L=0
+|q=0
+|q=1
+|none=1
+--- file f
+|a
+|b
+|a
+--- file g
+|x
+
+=== 2: -v, -i, -w, -x
+status: 0
+bash-n: 0
+--- stdout
+|FOO
+|--
+|foo bar
+|foobar
+|FOO
+|foo_x
+|x foo
+|--
+|foo bar
+|x foo
+|--
+|FOO
+|FOO
+--- file f
+|foo bar
+|foobar
+|FOO
+|foo_x
+|x foo
+
+=== 3: -E, -F and the BRE operators
+status: 0
+bash-n: 0
+--- stdout
+|ab
+|aab
+|--
+|a+b
+|--
+|ab
+|aab
+|--
+|a|b
+|--
+|ab
+|(a)
+|--
+|ab
+|aab
+|a+b
+|a|b
+|(a)
+--- file f
+|ab
+|aab
+|a+b
+|a|b
+|(a)
+
+=== 4: egrep and fgrep
+status: 0
+bash-n: 0
+--- stdout
+|ab
+|a.b
+|a.b
+--- file f
+|ab
+|a.b
+
+=== 5: brackets, classes and anchors
+status: 0
+bash-n: 0
+--- stdout
+|a1
+|b 2
+|1
+|C
+|1
+|C
+--- file f
+|a1
+|b 2
+|C
+|
+
+=== 6: back-references
+status: 0
+bash-n: 0
+--- stdout
+|abab
+|xyzzy
+|zz
+--- file f
+|abab
+|abcd
+|xyzzy
+
+=== 7: multiple -e, a newline in a pattern, -f
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|--
+|one
+|three
+|--
+|one
+|three
+|--
+|0
+|st=1
+--- file f
+|one
+|two
+|three
+--- file pats
+|one
+|three
+
+=== 8: an empty pattern matches every line
+status: 0
+bash-n: 0
+--- stdout
+|3
+|3
+|3
+--- file f
+|a
+|
+|b
+--- file p
+|
+
+=== 9: -o: every match, leftmost-longest
+status: 0
+bash-n: 0
+--- stdout
+|abcdy
+|ab
+|abcd
+|ab
+|xabcdy
+|ab
+|one
+|two
+|10:o
+|16:o
+--- file f
+|xabcdy ab
+|one two
+
+=== 10: -o with -w, -i and several patterns
+status: 0
+bash-n: 0
+--- stdout
+|foobar
+|foo
+|foo
+|foo
+|foo
+|FOO
+|foob
+|foo
+|foo
+--- file f
+|foobar foo foo_ FOO
+
+=== 11: context: -A, -B, -C, -NUM and group separators
+status: 0
+bash-n: 0
+--- stdout
+|1a
+|2
+|--
+|4a
+|5
+|--
+|8a
+|9
+|==
+|3
+|4a
+|==
+|3-3
+|4:4a
+|5-5
+|==
+|7
+|8a
+|9
+|==
+|1a
+|4a
+|8a
+--- file f
+|1a
+|2
+|3
+|4a
+|5
+|6
+|7
+|8a
+|9
+
+=== 12: context across files
+status: 0
+bash-n: 0
+--- stdout
+|f-1
+|f:2a
+|f-3
+|--
+|g-1
+|g:2a
+|g-3
+--- file f
+|1
+|2a
+|3
+--- file g
+|1
+|2a
+|3
+
+=== 13: --group-separator, --no-group-separator
+status: 2
+bash-n: 0
+--- stderr
+|grep: unrecognized option `--group-separator=XX'
+|usage: grep [-abcdDEFGHhIiJLlMmnOopqRSsUVvwXxZz] [-A num] [-B num] [-C[num]]
+|	[-e pattern] [-f file] [--binary-files=value] [--color=when]
+|	[--context[=num]] [--directories=action] [--label] [--line-buffered]
+|	[--null] [pattern] [file ...]
+|grep: unrecognized option `--no-group-separator'
+|usage: grep [-abcdDEFGHhIiJLlMmnOopqRSsUVvwXxZz] [-A num] [-B num] [-C[num]]
+|	[-e pattern] [-f file] [--binary-files=value] [--color=when]
+|	[--context[=num]] [--directories=action] [--label] [--line-buffered]
+|	[--null] [pattern] [file ...]
+--- file f
+|1a
+|2
+|3a
+
+=== 14: -m, also with context and -c
+status: 0
+bash-n: 0
+--- stdout
+|a1
+|a1
+|b
+|a2
+|c
+|2
+|b
+--- file f
+|a1
+|b
+|a2
+|c
+|a3
+
+=== 15: -b byte offsets
+status: 0
+bash-n: 0
+--- stdout
+|0:ab
+|3:cab
+|1:b
+|5:b
+--- file f
+|ab
+|cab
+
+=== 16: -Z after file names
+status: 0
+bash-n: 0
+--- stdout
+|0000000 f : a \n g : a \n
+|0000010
+|0000000 f \n g \n
+|0000004
+--- file f
+|a
+--- file g
+|a
+
+=== 17: -z: NUL-terminated lines
+status: 0
+bash-n: 0
+--- stdout
+|0000000 o n e \0 o n e t w o \0
+|0000014
+
+=== 18: stdin, -, --label
+status: 0
+bash-n: 0
+--- stdout
+|x
+|(standard input):x
+|(standard input):x
+|f:x
+|IN:1
+|f:1
+--- file f
+|x
+
+=== 19: -s and errors: a missing file, a directory
+status: 0
+bash-n: 0
+--- stdout
+|f:x
+|st=2
+|st=2
+|st=2
+|f:x
+|st=0
+--- stderr
+|grep: nope: No such file or directory
+|grep: d: Is a directory
+--- dir d
+--- file f
+|x
+
+=== 20: -q succeeds despite an error once a line is selected
+status: 0
+bash-n: 0
+--- stdout
+|st=0
+|st=0
+|st=2
+--- stderr
+|grep: nope: No such file or directory
+|grep: nope: No such file or directory
+--- file f
+|x
+
+=== 21: pattern errors and usage
+status: 0
+bash-n: 0
+--- stdout
+|st=2
+|st=2
+|st=1
+|st=2
+|st=2
+|st=2
+--- stderr
+|grep: braces not balanced
+|grep: parentheses not balanced
+|usage: grep [-abcdDEFGHhIiJLlMmnOopqRSsUVvwXxZz] [-A num] [-B num] [-C[num]]
+|	[-e pattern] [-f file] [--binary-files=value] [--color=when]
+|	[--context[=num]] [--directories=action] [--label] [--line-buffered]
+|	[--null] [pattern] [file ...]
+|grep: Invalid argument
+|grep: option requires an argument -- e
+|usage: grep [-abcdDEFGHhIiJLlMmnOopqRSsUVvwXxZz] [-A num] [-B num] [-C[num]]
+|	[-e pattern] [-f file] [--binary-files=value] [--color=when]
+|	[--context[=num]] [--directories=action] [--label] [--line-buffered]
+|	[--null] [pattern] [file ...]
+
+=== 22: ERE: a leading repetition operator, a literal brace
+status: 2
+bash-n: 0
+--- stdout
+|--
+--- stderr
+|grep: repetition-operator operand invalid
+|grep: braces not balanced
+--- file f
+|a
+|*a
+|x{1
+
+=== 23: binary files
+status: 0
+bash-n: 0
+--- stdout
+|Binary file b matches
+|st=0
+|2
+|b
+|0000000 t e x t a \n b i n \0 a r y a
+|0000020 \n
+|0000021
+|t:a
+|st=0
+--- file b
+|text a
+\bin\x00ary a
+--- file t
+|a
+
+=== 24: -r: hidden files searched, .gitignore not read, ./ only when given
+status: 0
+bash-n: 0
+--- stdout
+|d/.hid/c:hit
+|d/a.txt:hit
+|d/sub/b.rs:hit
+|--
+|./.hid/c:hit
+|./a.txt:hit
+|./sub/b.rs:hit
+|--
+|./.hid/c
+|./a.txt
+|./sub/b.rs
+--- dir d
+--- file d/.gitignore
+|*.txt
+--- dir d/.hid
+--- file d/.hid/c
+|hit
+--- file d/a.txt
+|hit
+--- dir d/sub
+--- file d/sub/b.rs
+|hit
+
+=== 25: -r: one file operand has no name
+status: 0
+bash-n: 0
+--- stdout
+|d/f:hit
+|d/f:1
+|./f:hit
+--- dir d
+--- file d/f
+|hit
+
+=== 26: --include, --exclude, --exclude-dir
+status: 0
+bash-n: 0
+--- stdout
+|d/a.txt:hit
+|d/skip/e.txt:hit
+|d/sub/c.txt:hit
+|--
+|d/b.rs:hit
+|--
+|d/a.txt:hit
+|d/b.rs:hit
+|d/sub/c.txt:hit
+|--
+|d/b.rs
+--- dir d
+--- file d/a.txt
+|hit
+--- file d/b.rs
+|hit
+--- dir d/skip
+--- file d/skip/e.txt
+|hit
+--- dir d/sub
+--- file d/sub/c.txt
+|hit
+
+=== 27: --include and --exclude: the last matching glob wins
+status: 0
+bash-n: 0
+--- stdout
+|d/b.txt:hit
+|--
+|d/a.txt:hit
+|d/b.txt:hit
+--- dir d
+--- file d/a.txt
+|hit
+--- file d/b.txt
+|hit
+--- file d/c.rs
+|hit
+
+=== 28: --include on command-line files, braces are literal
+status: 0
+bash-n: 0
+--- stdout
+|a.txt:hit
+|b.rs:hit
+|st=1
+--- file a.txt
+|hit
+--- file b.rs
+|hit
+
+=== 29: -r: symbolic links followed with -R only
+status: 1
+bash-n: 0
+--- stdout
+|d/real/f:hit
+|--
+|d/real/f:hit
+|--
+--- dir d
+--- link d/flink -> real/f
+--- link d/link -> real
+--- dir d/real
+--- file d/real/f
+|hit
+
+=== 30: --color=always
+status: 0
+bash-n: 0
+--- stdout
+|0000000 1 033 [ 0 1 ; 3 1 m 033 [ K a 033 [ m
+|0000020 033 [ K \n 3 033 [ 0 1 ; 3 1 m 033 [ K
+|0000040 a 033 [ m 033 [ K \n
+|0000050
+|0000000 f : 1 : 1 033 [ 0 1 ; 3 1 m 033 [ K
+|0000020 a 033 [ m 033 [ K \n f - 2 - 2 \n f :
+|0000040 3 : 3 033 [ 0 1 ; 3 1 m 033 [ K a 033
+|0000060 [ m 033 [ K \n - - \n g : 1 : 1 033 [
+|0000100 0 1 ; 3 1 m 033 [ K a 033 [ m 033 [ K
+|0000120 \n g - 2 - 2 \n g : 3 : 3 033 [ 0 1
+|0000140 ; 3 1 m 033 [ K a 033 [ m 033 [ K \n
+|0000157
+--- file f
+|1a
+|2
+|3a
+--- file g
+|1a
+|2
+|3a
+
+=== 31: --color: -o, -c, -l and -v context
+status: 0
+bash-n: 0
+--- stdout
+|0000000 033 [ 0 1 ; 3 1 m 033 [ K a 033 [ m 033
+|0000020 [ K \n
+|0000023
+|0000000 f : 1 \n g : 1 \n
+|0000010
+|0000000 f \n g \n
+|0000004
+|0000000 2 \n
+|0000002
+--- file f
+|1a
+|2
+--- file g
+|1a
+|2
+
+=== 32: GREP_COLORS
+status: 0
+bash-n: 0
+--- stdout
+|0000000 f : 1 033 [ 0 1 ; 3 1 m 033 [ K a 033
+|0000020 [ m 033 [ K \n
+|0000026
+|0000000 1 033 [ 0 1 ; 3 1 m 033 [ K a 033 [ m
+|0000020 033 [ K \n 2 \n
+|0000026
+--- file f
+|1a
+|2
+
+=== 33: --color=auto and never are plain when not a terminal
+status: 0
+bash-n: 0
+--- stdout
+|a
+|a
+|a
+--- file f
+|a
+
+=== 34: -P with what Rust's regex takes
+status: 2
+bash-n: 0
+--- stderr
+|grep: invalid option -- P
+|usage: grep [-abcdDEFGHhIiJLlMmnOopqRSsUVvwXxZz] [-A num] [-B num] [-C[num]]
+|	[-e pattern] [-f file] [--binary-files=value] [--color=when]
+|	[--context[=num]] [--directories=action] [--label] [--line-buffered]
+|	[--null] [pattern] [file ...]
+|grep: invalid option -- P
+|usage: grep [-abcdDEFGHhIiJLlMmnOopqRSsUVvwXxZz] [-A num] [-B num] [-C[num]]
+|	[-e pattern] [-f file] [--binary-files=value] [--color=when]
+|	[--context[=num]] [--directories=action] [--label] [--line-buffered]
+|	[--null] [pattern] [file ...]
+|grep: invalid option -- P
+|usage: grep [-abcdDEFGHhIiJLlMmnOopqRSsUVvwXxZz] [-A num] [-B num] [-C[num]]
+|	[-e pattern] [-f file] [--binary-files=value] [--color=when]
+|	[--context[=num]] [--directories=action] [--label] [--line-buffered]
+|	[--null] [pattern] [file ...]
+--- file f
+|a1
+|b	c

@@ -217,6 +217,9 @@ pub(crate) struct Config {
     pub terminal: bool,
     /// The file operands (the pattern taken out).
     pub operands: Vec<Vec<u8>>,
+    /// No patterns (`-f /dev/null`) and no `-v`: GNU selects nothing without reading
+    /// (no errors, no counts; `-L` lists the operands).
+    pub nothing: bool,
 }
 
 const USAGE: &str =
@@ -273,6 +276,7 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         utf8: ctx.utf8(),
         terminal: ctx.is_terminal(1),
         operands: Vec::new(),
+        nothing: false,
     };
     let (mut icase, mut word, mut line) = (false, false, false);
     let mut patterns: Vec<Vec<u8>> = Vec::new();
@@ -409,6 +413,7 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         patterns.extend(first.split(|&b| b == b'\n').map(<[u8]>::to_vec));
     }
     cfg.operands = operands;
+    cfg.nothing = patterns.is_empty() && !cfg.invert;
 
     let on = match color {
         None => false,

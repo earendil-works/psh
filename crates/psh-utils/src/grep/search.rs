@@ -31,6 +31,22 @@ pub(crate) fn run_sync(ctx: &mut SyncCtx, (cfg, m): (Config, Matchers)) -> i32 {
         error: false,
         stop: false,
     };
+    if cfg.nothing {
+        let mut out = out.borrow_mut();
+        if cfg.list == Some(List::NonMatching) {
+            let ops = if cfg.operands.is_empty() {
+                vec![cfg.label.clone()]
+            } else {
+                cfg.operands.clone()
+            };
+            for op in ops {
+                let _ = out.write(&op);
+                let _ = out.write(if cfg.null { b"\0" } else { b"\n" });
+            }
+        }
+        let _ = out.flush();
+        return 1;
+    }
     let mut searcher = searcher(&cfg);
     match &m.lines {
         LineMatcher::Fast(rm) => run.all(ctx, rm, &mut searcher),

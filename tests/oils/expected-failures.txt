@@ -82,6 +82,7 @@ oils/builtin-dirs/17: passed via macOS /usr/bin wrapper
 oils/builtin-getopts/6
 oils/builtin-getopts/13
 oils/builtin-getopts/14
+oils/builtin-meta/1: grep is an always-on psh utility (mode S, D015, D1151), so command -v prints its name, not a PATH file
 oils/builtin-meta/4
 oils/builtin-meta/6
 oils/builtin-meta/10: tr is an always-on psh utility (mode S, D015), so a tr script earlier on PATH does not shadow it

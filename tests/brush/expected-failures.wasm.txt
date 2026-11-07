@@ -20,3 +20,4 @@ brush/compat/signals/32: signals a process (`kill $$`, a shell dying of a signal
 brush/compat/extended_tests/11: needs host files: /bin/sh, /etc/os-release (as builtins/test/2)
 brush/compat/assignments/6: the JS host has no home_dir (~root stays as written)
 brush/compat/well_known_vars/3: the JS host reports no OS (OSTYPE is unknown)
+brush/compat/well_known_vars/4: `env -v` (FreeBSD and GNU 9.x) is not psh's env and the JS host has no real env to fall through to (D1082)

@@ -1,11 +1,13 @@
-//! A simple host on the standard library, good enough for the `psh` binary and the
-//! conformance runner until `psh-os` (0006) replaces it: std `Command` spawns, a waiter
-//! thread per child, helper threads for the pipes between the engine and children.
+//! A simple host on the standard library, for simple embedders and tests (utility unit
+//! tests run on it); the `psh` binary and psh-spec run on `psh-os`'s hosts but use
+//! the helpers here: `drive`/`drive_until` (stepping a shell to its end on the calling
+//! thread) and `engine_thread` (a thread with the stack a shell needs).
 //!
-//! Known limits, all for 0006: no process groups; `signal` and abandon send KILL (std
-//! has no TERM); the waiter polls `try_wait` with backoff instead of `waitid`;
-//! `access` approximates from permission bits; reads and writes of regular files and
-//! of the shell's own stdio are synchronous.
+//! Its limits, which psh-os does not have: std `Command` spawns, a waiter thread per
+//! child polling `try_wait` with backoff, helper threads for the pipes between the
+//! engine and children; no process groups; `signal` and abandon send KILL (std has no
+//! TERM); `access` approximates from permission bits; reads and writes of regular files
+//! and of the shell's own stdio are synchronous.
 
 use std::collections::VecDeque;
 use std::ffi::OsString;

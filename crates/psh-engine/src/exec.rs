@@ -475,7 +475,11 @@ fn after_command<'a>(
     if check
         && !vp.in_subst
         && matches!(cmd.kind, CommandKind::Simple(_))
-        && vp.core.fg_signal.get().is_some_and(|(sig, _)| status == 128 + sig)
+        && vp
+            .core
+            .fg_signal
+            .get()
+            .is_some_and(|(sig, _)| status == 128 + sig)
     {
         return Some(Box::pin(async move {
             report_signal_death(vp, code, cmd, status).await;

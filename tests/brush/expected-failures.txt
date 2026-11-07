@@ -643,7 +643,6 @@ brush/compat/signals/9
 brush/compat/signals/10
 brush/compat/signals/11
 brush/compat/signals/12
-brush/compat/signals/13: a race: when the loop writes before head starts, the pipe is pumped and the engine's 64 KiB buffer plus the pump hold the rest of the 192 KiB, so no write fails (bash: always 141)
 brush/compat/signals/15
 brush/compat/signals/16
 brush/compat/signals/17: passed in-process only because `kill $$` could not reach the shell; now runs in the binary (D1056); needs trap

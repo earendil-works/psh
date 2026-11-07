@@ -295,7 +295,9 @@ fn push_quoted(out: &mut Rhs, v: &[u8], mode: Mode) {
         Mode::Regex => (b"$()*+.?[\\^{|", b"$()*+.?[\\^{|"),
     };
     for &b in v {
-        if special.contains(&b) {
+        // In a pattern, any quoted punctuation is literal, also inside a bracket
+        // expression (`[a\-z]`, `[\^]`).
+        if special.contains(&b) || (mode == Mode::Pattern && b.is_ascii_punctuation()) {
             out.text.push(b'\\');
         }
         out.text.push(b);

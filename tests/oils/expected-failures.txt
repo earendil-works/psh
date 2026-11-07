@@ -183,7 +183,6 @@ oils/var-ref/28
 oils/var-ref/29
 oils/var-ref/30
 oils/var-sub-quote/25
-oils/var-sub-quote/33
 oils/vars-bash/0
 oils/vars-special/3
 oils/vars-special/4

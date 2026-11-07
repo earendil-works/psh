@@ -108,6 +108,19 @@ hand-written lexer and recursive-descent parser, byte spans on every node, a pri
 - deser-json added with `default-features = false, features = ["std"]` (+ `deser-core`,
   its own dependency, for the trait): the build pulls deser-core, deser-json, itoa, zmij.
 
+### 2026-11-08: hit-list fixes (via the coordinator, from 0032)
+- `$'…'` in a double-quoted `${…}` operand is decoded (extquote): brush params/53, /63.
+- An io number above `i32::MAX` is a word, not a redirection: brush redirection/44, /45.
+- A here-doc tag `$'…'` is decoded (also in both printers): brush here/84.
+- Here-docs a `$(…)` leaves without a body read theirs first, in order, before the
+  ones of the line around it: brush here/65 (bash's warning about it is not printed).
+- In an unquoted here-doc body, line continuations inside single quotes in a `$(…)` are
+  removed (the quoted text becomes literal pieces in double quotes): brush here/22.
+- Not done: here/71 (a line continuation after `$(cat <<EOF)`: bash reads the body
+  from the next physical line, before the continuation; brush fails it too).
+- Also (0027's cond.rs): quoted punctuation in a `[[ == ]]` pattern is literal inside
+  bracket expressions too (`[a\-z]`, `[\^]`): brush patterns/patterns/8, /9.
+
 ## Follow-ups
 - Guide page `docs/guide/syntax.md` (not written): what psh parses, spans, `--parse`.
 - The L0 leg and `tests/l0/expected-failures.txt` (infra, 0002): container verdicts for

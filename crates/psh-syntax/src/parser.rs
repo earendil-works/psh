@@ -453,6 +453,8 @@ struct Pending {
     delim: Vec<u8>,
     strip: bool,
     quoted: bool,
+    /// Left without a body by the `$(…)` it is in.
+    leaked: bool,
 }
 
 struct Checkpoint {
@@ -485,6 +487,9 @@ struct P<'a> {
     depth: u32,
     /// Nesting of `$(…)`, for here-doc delimiters followed by `)`.
     comsub: u32,
+    /// Inside the body of an unquoted here-doc, where bash removes line continuations
+    /// before anything else, even within single quotes in a `$(…)`.
+    heredoc_body: u32,
     /// The closing token of the innermost `$(…)`, `<(…)` or `${ …; }`, for "while
     /// looking for matching" in error messages.
     closer: Option<&'static str>,
@@ -587,6 +592,7 @@ impl<'a> P<'a> {
             pending: Vec::new(),
             depth: 0,
             comsub: 0,
+            heredoc_body: 0,
             closer: None,
         })
     }
@@ -964,7 +970,10 @@ impl<'a> P<'a> {
                 // is reported then, not as a syntax error of the script.
                 let cp = self.checkpoint();
                 let (depth, comsub) = (self.depth, self.comsub);
-                if let Err(e) = self.parse_parts(Ctx::HereDoc { strip: p.strip }, &mut parts) {
+                self.heredoc_body += 1;
+                let r = self.parse_parts(Ctx::HereDoc { strip: p.strip }, &mut parts);
+                self.heredoc_body -= 1;
+                if let Err(e) = r {
                     self.rewind(cp);
                     (self.depth, self.comsub) = (depth, comsub);
                     parts.clear();
@@ -992,9 +1001,18 @@ impl<'a> P<'a> {
         core::mem::take(&mut self.pending)
     }
 
-    fn unstash_pending(&mut self, mut outer: Vec<Pending>) {
-        outer.append(&mut self.pending);
-        self.pending = outer;
+    /// Here-docs a `$(…)` left without a body (`echo "$(cat <<B)"`) read theirs first,
+    /// in order, before those of the line around it (bash).
+    fn unstash_pending(&mut self, outer: Vec<Pending>) {
+        let inner = core::mem::take(&mut self.pending);
+        let (leaked, direct): (Vec<Pending>, Vec<Pending>) =
+            outer.into_iter().partition(|p| p.leaked);
+        self.pending = leaked;
+        self.pending.extend(inner.into_iter().map(|mut p| {
+            p.leaked = true;
+            p
+        }));
+        self.pending.extend(direct);
     }
 
     /// At the end of the input, here-docs still waiting for a body get an empty one.
@@ -1116,7 +1134,8 @@ impl<'a> P<'a> {
                     .saturating_add((self.b[j] - b'0') as u32);
                 j += 1;
             }
-            if j < self.end && matches!(self.b[j], b'<' | b'>') {
+            // A number too large for a descriptor (bash: an int) is a word.
+            if j < self.end && matches!(self.b[j], b'<' | b'>') && n <= i32::MAX as u32 {
                 fd = Some(RedirFd::Number(n));
                 i = j;
             } else {
@@ -2019,6 +2038,7 @@ impl<'a> P<'a> {
                     delim,
                     strip,
                     quoted,
+                    leaked: false,
                 });
                 RedirTarget::HereDoc(id)
             }
@@ -2061,7 +2081,7 @@ impl<'a> P<'a> {
                     }
                     Part::AnsiC => {
                         *quoted = true;
-                        out.extend_from_slice(&text[2..text.len() - 1]);
+                        out.extend(crate::words::decode_ansi_c(&text[2..text.len() - 1]));
                     }
                     Part::Double(inner) => {
                         *quoted = true;
@@ -2620,10 +2640,7 @@ impl<'a> P<'a> {
                             return Err(self.unterminated("'"));
                         }
                         self.pos += 1;
-                        out.push(WordPart {
-                            span: sp(start, self.pos),
-                            kind: Part::Single,
-                        });
+                        out.push(self.single_quoted(start, self.pos));
                     }
                 }
                 b'"' => match ctx {
@@ -2761,6 +2778,40 @@ impl<'a> P<'a> {
             }
         }
         Ok(())
+    }
+
+    /// `'…'` from `start` to `end`. In a here-doc body its line continuations are gone
+    /// (bash removes them first): then it is the same text as literal pieces in
+    /// double quotes, which keeps the spans on the script.
+    fn single_quoted(&self, start: usize, end: usize) -> WordPart {
+        let inner = &self.b[start + 1..end - 1];
+        if self.heredoc_body == 0 || !inner.windows(2).any(|w| w == b"\\\n") {
+            return WordPart {
+                span: sp(start, end),
+                kind: Part::Single,
+            };
+        }
+        let mut pieces = Vec::new();
+        let mut s = start + 1;
+        let mut i = s;
+        while i < end - 1 {
+            if self.b[i] == b'\\' && self.b.get(i + 1) == Some(&b'\n') && i + 1 < end - 1 {
+                if i > s {
+                    push_lit(&mut pieces, s, i);
+                }
+                i += 2;
+                s = i;
+            } else {
+                i += 1;
+            }
+        }
+        if end - 1 > s {
+            push_lit(&mut pieces, s, end - 1);
+        }
+        WordPart {
+            span: sp(start, end),
+            kind: Part::Double(pieces),
+        }
     }
 
     fn extglob_in(&self, ctx: Ctx) -> bool {
@@ -2962,7 +3013,9 @@ impl<'a> P<'a> {
                 let part = self.parse_braced_param(dq)?;
                 out.push(part);
             }
-            Some(b'\'') if !dq => {
+            // `$'…'` also in a double-quoted `${…}` operand (bash's extquote, on by
+            // default).
+            Some(b'\'') if !dq || matches!(ctx, Ctx::Operand { dq: true, .. }) => {
                 self.pos += 2;
                 loop {
                     match self.peek() {

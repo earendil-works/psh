@@ -212,11 +212,8 @@ brush/compat/errors/67
 brush/compat/errors/77
 brush/compat/functions/9
 brush/compat/functions/21
-brush/compat/here/22
 brush/compat/here/24
-brush/compat/here/65
 brush/compat/here/71
-brush/compat/here/84
 brush/compat/ifs/60
 brush/compat/ifs/96
 brush/compat/line_continuation/3
@@ -276,15 +273,11 @@ brush/compat/path_search/9
 brush/compat/path_search/10
 brush/compat/path_search/12
 brush/compat/path_search/13
-brush/compat/patterns/patterns/8
-brush/compat/patterns/patterns/9
 brush/compat/pipeline/8
 brush/compat/pipeline/17
 brush/compat/process/0
 brush/compat/redirection/15
 brush/compat/redirection/34
-brush/compat/redirection/44
-brush/compat/redirection/45
 brush/compat/redirection/47
 brush/compat/signals/2
 brush/compat/signals/3
@@ -327,7 +320,5 @@ brush/compat/well_known_vars/23
 brush/compat/well_known_vars/25
 brush/compat/word_expansion/braces/0
 brush/compat/word_expansion/braces/7
-brush/compat/word_expansion/params/53
-brush/compat/word_expansion/params/63
 brush/compat/word_expansion/tilde/1
 brush/compat/word_expansion/tilde/3

@@ -789,7 +789,9 @@ fn delimiter_text(ast: &Ast, w: &Word) -> String {
             match &p.kind {
                 Part::Escaped => out.push_str(&text[1..]),
                 Part::Single => out.push_str(&text[1..text.len() - 1]),
-                Part::AnsiC => out.push_str(&text[2..text.len() - 1]),
+                Part::AnsiC => out.push_str(&String::from_utf8_lossy(
+                    &crate::words::decode_ansi_c(&text.as_bytes()[2..text.len() - 1]),
+                )),
                 Part::Double(inner) | Part::Locale(inner) => walk(ast, inner, out),
                 _ => out.push_str(text),
             }

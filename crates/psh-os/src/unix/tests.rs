@@ -577,3 +577,50 @@ fn the_umask_probe_agrees() {
         Some(super::spawn::process_umask())
     );
 }
+
+#[test]
+fn info_matches_the_system() {
+    let h = host();
+    let i = h.info();
+    let out = |cmd: &str| {
+        let s = h.spawn(sh(cmd, piped_out())).unwrap();
+        String::from_utf8(read_all(&s.pipes[0].1)).unwrap()
+    };
+    assert_eq!(out("id -u").trim(), i.uid.to_string());
+    assert_eq!(out("id -u").trim(), i.euid.to_string());
+    let groups: Vec<u32> = out("id -G")
+        .split_whitespace()
+        .map(|g| g.parse().unwrap())
+        .collect();
+    for g in &groups {
+        assert!(i.groups.contains(g), "{g} not in {:?}", i.groups);
+    }
+    assert_eq!(out("hostname").trim().as_bytes(), &i.hostname[..]);
+    assert_eq!(i.ppid, Some(unsafe_free_ppid()));
+    assert_eq!(i.hosttype, std::env::consts::ARCH);
+    if cfg!(target_os = "macos") {
+        assert_eq!(i.ostype, format!("darwin{}", out("uname -r").trim()));
+        assert!(
+            i.machtype
+                .starts_with(&format!("{}-apple-darwin", i.hosttype))
+        );
+    }
+    if cfg!(all(target_os = "linux", target_env = "gnu")) {
+        assert_eq!(i.ostype, "linux-gnu");
+    }
+    // Embedded (a fake `$$`): the parent is the embedding process.
+    let e = UnixHost::new(UnixConfig {
+        pid: Some(99_999_999),
+        ..UnixConfig::default()
+    });
+    assert_eq!(e.info().ppid, Some(std::process::id()));
+}
+
+/// The test process's parent, from `ps` (no unsafe in the tests).
+fn unsafe_free_ppid() -> u32 {
+    let o = std::process::Command::new("ps")
+        .args(["-o", "ppid=", "-p", &std::process::id().to_string()])
+        .output()
+        .unwrap();
+    String::from_utf8_lossy(&o.stdout).trim().parse().unwrap()
+}

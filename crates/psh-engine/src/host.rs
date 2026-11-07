@@ -256,6 +256,45 @@ pub struct Spawned {
     pub pipes: Vec<(u32, Rc<dyn HostFile>)>,
 }
 
+/// Facts about the process and the machine that bash reports in variables (D1301):
+/// `UID`, `EUID`, `GROUPS`, `PPID`, `HOSTNAME`, `OSTYPE`, `MACHTYPE`, `HOSTTYPE`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct HostInfo {
+    pub uid: u32,
+    pub euid: u32,
+    /// The supplementary groups, the real group first (bash's `GROUPS`).
+    pub groups: Vec<u32>,
+    /// The shell's parent process; `None` where there is no such thing.
+    pub ppid: Option<u32>,
+    pub hostname: Vec<u8>,
+    /// As bash reports them: `linux-gnu`, `darwin25.6.0`; `msys` proposed for
+    /// Windows (agents' scripts take their Windows branch on it, and psh accepts
+    /// `/c/...` paths).
+    pub ostype: String,
+    /// `x86_64-pc-linux-gnu`, `aarch64-unknown-linux-gnu`, `aarch64-apple-darwin25.6.0`.
+    pub machtype: String,
+    /// The processor: `x86_64`, `aarch64`.
+    pub hosttype: String,
+}
+
+impl Default for HostInfo {
+    /// For hosts without an OS underneath (the test host, WASM): a plain user on an
+    /// unknown system.
+    fn default() -> Self {
+        let arch = std::env::consts::ARCH.to_string();
+        HostInfo {
+            uid: 1000,
+            euid: 1000,
+            groups: vec![1000],
+            ppid: None,
+            hostname: b"localhost".to_vec(),
+            ostype: "unknown".into(),
+            machtype: format!("{arch}-unknown-unknown"),
+            hosttype: arch,
+        }
+    }
+}
+
 /// The engine's view of the outside world. Minimal on purpose; it grows with the
 /// features that need it (ARCH.md lists what is planned).
 pub trait Host {
@@ -292,6 +331,11 @@ pub trait Host {
     fn kill(&self, pid: i32, sig: Signal) -> io::Result<()> {
         let _ = (pid, sig);
         Err(io::ErrorKind::Unsupported.into())
+    }
+    /// User, group, parent and machine facts for the shell's variables (D1301). Asked
+    /// once per shell.
+    fn info(&self) -> HostInfo {
+        HostInfo::default()
     }
     /// The process's file mode creation mask when the host was made: where the shell's
     /// own mask (`umask`) starts. Hosts without one report `0o022`.

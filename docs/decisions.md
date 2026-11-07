@@ -1588,3 +1588,19 @@ cannot hold them (MemHost's clock is `Date.now()`, replaceable as `new MemHost({
 `OpenOptions::mode` rides in `K_OPEN`'s flags (`F_MODE`, bits in 16..28); MemHost gives a
 created file those bits. `printf '%(…)T'` now reads the Host's clock instead of
 `SystemTime`, so it has the time in wasm too. `ABI_VERSION` is 2.
+
+## D1301: Host::info: user, group, parent and machine facts
+date: 2026-11-07 · by: procs · issue: 0030
+`Host::info() -> HostInfo { uid, euid, groups, ppid, hostname, ostype, machtype,
+hosttype }`, additive with a default (uid/euid 1000, groups [1000], no parent,
+`localhost`, `unknown`, `ARCH-unknown-unknown`, the compile-time arch) for hosts without an
+OS (test host, WASM). The Unix host answers from the running system, in bash's formats:
+`OSTYPE` `linux-gnu` (`linux-musl`, `linux-android`) or `darwin` + the kernel release
+(`darwin25.6.0`: bash bakes in its build machine's; the running one is more useful),
+`MACHTYPE` `x86_64-pc-linux-gnu` / `aarch64-unknown-linux-gnu` / `aarch64-apple-darwin…`,
+`HOSTTYPE` the arch; `GROUPS` from `getgroups` with the real group first if missing;
+`PPID` the parent, or, embedded (a fake `$$`), the embedding process itself. Proposed for
+Windows: `OSTYPE=msys`, `MACHTYPE=x86_64-pc-msys` (`aarch64-…` on arm64), as Git Bash
+reports, so agents' scripts take their Windows branch (psh accepts `/c/...` paths); uid
+and euid 197609-style values are not needed: report 1000 (or the RID if cheap), groups
+[1000]. The engine wires the variables (readonly `UID`, `EUID`, `PPID`; `GROUPS` array).

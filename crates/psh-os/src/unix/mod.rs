@@ -417,6 +417,10 @@ impl Host for UnixHost {
         kill(pid, sig)
     }
 
+    fn info(&self) -> psh_engine::host::HostInfo {
+        info(self.pid.is_some())
+    }
+
     fn umask(&self) -> u32 {
         spawn::process_umask()
     }
@@ -433,6 +437,107 @@ impl Host for UnixHost {
 
     fn pid(&self) -> u32 {
         self.pid.unwrap_or_else(std::process::id)
+    }
+}
+
+/// The process and machine facts (D1301). Embedded (`fake_pid`), the shell's parent is
+/// the process it runs in.
+fn info(fake_pid: bool) -> psh_engine::host::HostInfo {
+    // SAFETY: plain calls without pointers.
+    let (uid, euid, gid, ppid) = unsafe {
+        (
+            libc::getuid(),
+            libc::geteuid(),
+            libc::getgid(),
+            libc::getppid(),
+        )
+    };
+    let mut groups = vec![gid];
+    // SAFETY: a zero-length query returns the count; the second call fills at most
+    // `n` entries of a buffer that long.
+    unsafe {
+        let n = libc::getgroups(0, std::ptr::null_mut());
+        if n > 0 {
+            let mut buf = vec![0 as libc::gid_t; n as usize];
+            let got = libc::getgroups(n, buf.as_mut_ptr());
+            if got > 0 {
+                buf.truncate(got as usize);
+                groups = buf;
+                if !groups.contains(&gid) {
+                    groups.insert(0, gid);
+                }
+            }
+        }
+    }
+    let mut hostname = vec![0u8; 256];
+    // SAFETY: the buffer is writable for its length.
+    let rc = unsafe { libc::gethostname(hostname.as_mut_ptr().cast(), hostname.len()) };
+    if rc == 0 {
+        let end = hostname
+            .iter()
+            .position(|&b| b == 0)
+            .unwrap_or(hostname.len());
+        hostname.truncate(end);
+    } else {
+        hostname = b"localhost".to_vec();
+    }
+    let arch = std::env::consts::ARCH.to_string();
+    let (ostype, machtype) = os_names(&arch);
+    psh_engine::host::HostInfo {
+        uid,
+        euid,
+        groups,
+        ppid: Some(if fake_pid {
+            std::process::id()
+        } else {
+            ppid as u32
+        }),
+        hostname,
+        ostype,
+        machtype,
+        hosttype: arch,
+    }
+}
+
+/// `OSTYPE` and `MACHTYPE` as bash reports them, from the running kernel.
+fn os_names(arch: &str) -> (String, String) {
+    if cfg!(target_os = "macos") {
+        let release = uname_release();
+        let os = format!("darwin{release}");
+        let mach = format!("{arch}-apple-{os}");
+        (os, mach)
+    } else if cfg!(target_os = "linux") {
+        let libc_name = if cfg!(target_env = "musl") {
+            "musl"
+        } else {
+            "gnu"
+        };
+        let os = format!("linux-{libc_name}");
+        let vendor = if arch == "x86_64" { "pc" } else { "unknown" };
+        (os.clone(), format!("{arch}-{vendor}-{os}"))
+    } else if cfg!(target_os = "android") {
+        (
+            "linux-android".into(),
+            format!("{arch}-unknown-linux-android"),
+        )
+    } else {
+        let os = std::env::consts::OS.to_string();
+        let mach = format!("{arch}-unknown-{os}");
+        (os, mach)
+    }
+}
+
+/// The kernel release (`uname -r`).
+fn uname_release() -> String {
+    // SAFETY: utsname is plain data, filled by uname; its fields are NUL-terminated.
+    unsafe {
+        let mut u: libc::utsname = std::mem::zeroed();
+        if libc::uname(&raw mut u) != 0 {
+            return String::new();
+        }
+        std::ffi::CStr::from_ptr(u.release.as_ptr())
+            .to_string_lossy()
+            .into_owned()
     }
 }
 

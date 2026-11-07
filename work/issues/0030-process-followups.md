@@ -45,6 +45,12 @@ Close the process-layer follow-ups from 0006 and the coordinator's queue.
 - Windows (for the windows agent): return `RunInShell::error()` from `spawn` for the
   D1079 cases; nothing else needed.
 
+### 2026-11-07 part 2: Host::info (D1301)
+- host.rs: `HostInfo` + `Host::info()` (default for OS-less hosts). psh-os: getuid,
+  geteuid, getgroups, getppid (embedded: the embedding process), gethostname, uname
+  release for darwin; unit test against `id`, `hostname`, `uname -r`, `ps` (macOS and
+  Linux). Windows values proposed in D1301. The engine agent wires the variables.
+
 ## Follow-ups
 
 ## Result

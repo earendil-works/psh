@@ -1604,3 +1604,13 @@ Windows: `OSTYPE=msys`, `MACHTYPE=x86_64-pc-msys` (`aarch64-…` on arm64), as G
 reports, so agents' scripts take their Windows branch (psh accepts `/c/...` paths); uid
 and euid 197609-style values are not needed: report 1000 (or the RID if cheap), groups
 [1000]. The engine wires the variables (readonly `UID`, `EUID`, `PPID`; `GROUPS` array).
+## D1225: Flaky cases are quarantined, never retried
+date: 2026-11-07 · by: infra · issue: 0022
+`tests/spec.toml` `[[flaky]]` tables (the `match`/`tag` keys of the groups, `reason`
+required) mark cases whose result depends on timing. They run normally and count in
+their group's numbers, but never fail psh-spec or the gate, never appear in a ratchet
+(shared or platform; `--update-ratchet`/`--add-failures` skip them, and a stray entry
+is stale), and psh-spec and `scripts/status` print them separately: count, how many
+passed this run, each id with its reason. No retries: a retry turns a real intermittent
+bug into a green run. The reason names the race and the owner who fixes it; known real
+bugs (as opposed to races in the test itself) do not go there.

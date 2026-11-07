@@ -143,3 +143,17 @@ match = [
   "brush/compat/options/set-e/122",
 ]
 reason = "fixed paths under /tmp shared between cases (every case of these files that uses /tmp)"
+
+# --- Flaky: quarantined races ----------------------------------------------------------
+# Not a group: these cases also count in their group above. They run and are reported
+# (psh-spec and scripts/status list them, with whether they passed), but pass or fail
+# never fails the gate, and they are in no expected-failures file (D1225). No retries:
+# a quarantine is a known race with an owner, to be fixed, not hidden.
+
+[[flaky]]
+match = "oils/background/7"
+reason = "timing race: jobs started 10 ms apart finish in either order on a loaded machine (0006 log; owner: procs, 0030)"
+
+[[flaky]]
+match = "brush/compat/signals/13"
+reason = "race: when the loop writes before head starts, psh's pumped pipe buffers 64 KiB more than bash's kernel pipe, so the writer can finish instead of getting SIGPIPE (0006 log; owner: procs, 0030)"

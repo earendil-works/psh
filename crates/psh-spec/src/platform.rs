@@ -63,7 +63,7 @@ pub fn check<'a>(
         let mut plat = Ratchet::parse(&std::fs::read_to_string(&file).unwrap_or_default());
         let active: Vec<&CaseResult> = results
             .iter()
-            .filter(|r| r.case.layer == layer && r.group == Group::Active)
+            .filter(|r| r.case.layer == layer && r.group == Group::Active && r.case.flaky.is_none())
             .collect();
         let mut stale = Vec::new();
         let mut new = Vec::new();

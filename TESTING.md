@@ -123,6 +123,14 @@ outside their directory (`/tmp/oil-spec-test/pwd`), which race when two run at o
 Each such case holds a machine-wide lock (a file lock in the temporary directory) while
 it runs, so they never overlap, in one run or across concurrent runs (D1224).
 
+`[[flaky]]` tables (same keys, a `reason` naming the race and its owner) are not a group
+either: they quarantine cases that pass or fail by timing. A flaky case runs as usual and
+counts in its group, but its result never fails the run or the gate, it is in no
+expected-failures file (`--update-ratchet` and `--add-failures` leave it alone), and
+every run and `scripts/status` list the flaky cases with their reasons and whether they
+passed. There are no retries: a retry would hide real bugs. A case goes into the
+quarantine only for a documented race, and its owner takes it out by fixing it (D1225).
+
 Moving cases between groups is a coordinator decision.
 
 ## Ratchets

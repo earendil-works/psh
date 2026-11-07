@@ -325,6 +325,7 @@ fn run(opts: Options) -> Result<ExitCode, String> {
     cases.retain(|c| selected(c, &opts.filters));
     for c in &mut cases {
         c.serial = groups.is_serial(c);
+        c.flaky = groups.flaky_reason(c).map(str::to_string);
     }
     let items: Vec<Item> = cases
         .iter()
@@ -432,6 +433,7 @@ fn run(opts: Options) -> Result<ExitCode, String> {
 
     if opts.status {
         print!("{}", status::render_status(&results, &items, &opts.layers));
+        print!("{}", report::flaky(&results));
         let append = !opts.no_append && opts.filters.is_empty() && engine.name() == "psh";
         print!("{}", status::l0_section(&root, opts.jobs, append)?);
         if append {
@@ -458,9 +460,10 @@ fn run(opts: Options) -> Result<ExitCode, String> {
         let path = root.join(layer.ratchet_path());
         let text = std::fs::read_to_string(&path).unwrap_or_default();
         let mut ratchet = Ratchet::parse(&text);
+        // Flaky cases are quarantined (D1225): never a regression, never in the ratchet.
         let layer_results: Vec<&report::CaseResult> = results
             .iter()
-            .filter(|r| r.case.layer == layer && r.group == Group::Active)
+            .filter(|r| r.case.layer == layer && r.group == Group::Active && r.case.flaky.is_none())
             .collect();
         let mut stale = Vec::new();
         for r in &layer_results {
@@ -543,6 +546,7 @@ fn run(opts: Options) -> Result<ExitCode, String> {
         )?);
     }
     report::print_summary(&results, &items, &opts.layers);
+    print!("{}", report::flaky(&results));
     if opts.diff {
         report::print_diffs(&results);
     }

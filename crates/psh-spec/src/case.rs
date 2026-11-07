@@ -111,6 +111,9 @@ pub struct Case {
     /// Runs alone (tests/spec.toml `[[serial]]`): the case uses fixed paths outside its
     /// directory (`/tmp/oil-spec-test`), which parallel cases or runs would share.
     pub serial: bool,
+    /// Quarantined (tests/spec.toml `[[flaky]]`, D1225): run and reported, never gated,
+    /// never in a ratchet. The reason.
+    pub flaky: Option<String>,
     /// The golden to match: `## expect: gnu | bsd | both` in L4 (default both); GNU's
     /// for every other layer.
     pub expect: Dialect,
@@ -236,6 +239,7 @@ fn load_oils(layer: Layer, file: &str, text: &str) -> Result<Vec<Case>, String> 
                 timeout: OILS_TIMEOUT,
                 tags: tags.clone(),
                 serial: false,
+                flaky: None,
                 expect,
                 ignore_stdout: false,
                 ignore_whitespace: false,
@@ -333,6 +337,7 @@ fn load_brush(file: &str, text: &str, dir: &Path) -> Result<Vec<Case>, String> {
             timeout,
             tags,
             serial: false,
+            flaky: None,
             expect: Dialect::Gnu,
             ignore_stdout: flag("ignore_stdout"),
             ignore_whitespace: flag("ignore_whitespace"),

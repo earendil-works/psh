@@ -207,6 +207,29 @@ pub fn print_summary(results: &[CaseResult], items: &[Item], layers: &[Layer]) {
     }
 }
 
+/// The quarantined cases of this run (`[[flaky]]`, D1225), so they stay visible: each
+/// with whether it passed and why it is there. Empty when none ran.
+pub fn flaky(results: &[CaseResult]) -> String {
+    let flaky: Vec<&CaseResult> = results.iter().filter(|r| r.case.flaky.is_some()).collect();
+    if flaky.is_empty() {
+        return String::new();
+    }
+    let passed = flaky.iter().filter(|r| r.pass).count();
+    let mut out = format!(
+        "\nflaky (quarantined, not gated): {} cases, {passed} passed this run\n",
+        flaky.len()
+    );
+    for r in flaky {
+        out.push_str(&format!(
+            "  {} {}: {}\n",
+            if r.pass { "pass" } else { "FAIL" },
+            r.case.id,
+            r.case.flaky.as_deref().unwrap_or("")
+        ));
+    }
+    out
+}
+
 pub fn markdown(results: &[CaseResult], items: &[Item], layers: &[Layer]) -> String {
     let files = tally(results, items);
     let counts = layer_counts(results, items);

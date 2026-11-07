@@ -14,6 +14,10 @@
 //! concurrently with each other, in this run or another psh-spec run on the machine,
 //! because they use fixed paths outside their directory.
 //!
+//! `[[flaky]]` tables (same keys, `reason` required) are not a group either: they
+//! quarantine cases that pass or fail by timing (D1225). Such a case runs as usual and
+//! is reported, but never fails the run and is never in a ratchet.
+//!
 //! Rules are tried in file order; the first that matches decides. A rule may be
 //! `[[active]]` to carve an exception out of a later, broader rule. Unmatched cases
 //! are active. Only this subset of TOML is accepted: arrays of tables, and string or
@@ -60,13 +64,17 @@ pub struct Groups {
     pub rules: Vec<Rule>,
     /// `[[serial]]` rules; their `group` field is unused.
     pub serial: Vec<Rule>,
+    /// `[[flaky]]` rules; their `group` field is unused.
+    pub flaky: Vec<Rule>,
 }
 
 impl Groups {
     pub fn parse(text: &str) -> Result<Groups, String> {
         let mut rules: Vec<Rule> = Vec::new();
-        // Indexes into `rules` of the `[[serial]]` tables, split off at the end.
+        // Indexes into `rules` of the `[[serial]]` and `[[flaky]]` tables, split off at
+        // the end.
         let mut serial_at: Vec<usize> = Vec::new();
+        let mut flaky_at: Vec<usize> = Vec::new();
         let mut lines = text.lines().enumerate().peekable();
         while let Some((n, raw)) = lines.next() {
             let err = |m: &str| format!("spec.toml line {}: {m}", n + 1);
@@ -75,11 +83,13 @@ impl Groups {
                 continue;
             }
             if let Some(name) = line.strip_prefix("[[").and_then(|l| l.strip_suffix("]]")) {
-                if name.trim() == "serial" {
-                    serial_at.push(rules.len());
+                match name.trim() {
+                    "serial" => serial_at.push(rules.len()),
+                    "flaky" => flaky_at.push(rules.len()),
+                    _ => {}
                 }
                 let group = match name.trim() {
-                    "serial" => Group::Active,
+                    "serial" | "flaky" => Group::Active,
                     "skip" => Group::Skip,
                     "later" => Group::Later,
                     "active" => Group::Active,
@@ -128,12 +138,25 @@ impl Groups {
                 return Err(format!("spec.toml line {}: rule matches nothing", r.line));
             }
         }
-        let mut serial = Vec::new();
-        for i in serial_at.into_iter().rev() {
-            serial.push(rules.remove(i));
+        let (mut serial, mut flaky) = (Vec::new(), Vec::new());
+        let mut split: Vec<(usize, bool)> = serial_at.into_iter().map(|i| (i, true)).collect();
+        split.extend(flaky_at.into_iter().map(|i| (i, false)));
+        split.sort_unstable();
+        for (i, is_serial) in split.into_iter().rev() {
+            let r = rules.remove(i);
+            if is_serial {
+                serial.push(r)
+            } else {
+                flaky.push(r)
+            }
         }
         serial.reverse();
-        Ok(Groups { rules, serial })
+        flaky.reverse();
+        Ok(Groups {
+            rules,
+            serial,
+            flaky,
+        })
     }
 
     /// The rule that decides a case's group, if any.
@@ -144,6 +167,14 @@ impl Groups {
     /// Whether a `[[serial]]` rule matches the case.
     pub fn is_serial(&self, case: &Case) -> bool {
         self.serial.iter().any(|r| r.matches(case))
+    }
+
+    /// The reason of the `[[flaky]]` rule that matches the case, if any.
+    pub fn flaky_reason(&self, case: &Case) -> Option<&str> {
+        self.flaky
+            .iter()
+            .find(|r| r.matches(case))
+            .map(|r| r.reason.as_str())
     }
 }
 
@@ -290,6 +321,13 @@ reason = "needs a terminal"
         assert!(Groups::parse("[[skip]]\nmatch = \"x\"\n").is_err());
         let g = Groups::parse("[[serial]]\nmatch = \"a/*\"\nreason = \"r\"\n[[skip]]\nmatch = \"b\"\nreason = \"r\"\n").unwrap();
         assert_eq!(g.serial.len(), 1);
+        let g = Groups::parse(
+            "[[flaky]]\nmatch = \"a/1\"\nreason = \"race\"\n[[serial]]\nmatch = \"a/2\"\nreason = \"r\"\n[[skip]]\nmatch = \"b\"\nreason = \"r\"\n",
+        )
+        .unwrap();
+        assert_eq!((g.rules.len(), g.serial.len(), g.flaky.len()), (1, 1, 1));
+        assert_eq!(g.flaky[0].reason, "race");
+        assert!(Groups::parse("[[flaky]]\nmatch = \"a/1\"\n").is_err());
         assert_eq!(g.rules.len(), 1);
         assert_eq!(g.rules[0].group, Group::Skip);
         assert!(Groups::parse("[[nope]]\n").is_err());

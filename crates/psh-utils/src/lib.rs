@@ -52,6 +52,7 @@ mod tr;
 mod uniq;
 
 mod find;
+mod jq;
 mod xargs;
 
 mod base64;
@@ -74,6 +75,12 @@ pub static REGISTRY: &[UtilEntry] = &[
         mode: Mode::PathFallback,
         destructive: false,
         run: util_fn!(awk::run),
+    },
+    UtilEntry {
+        names: &["jq"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(jq::run),
     },
     UtilEntry {
         names: &["find"],
@@ -336,6 +343,7 @@ pub static SPECS: &[opts::Spec] = &[
     timeout::SPEC,
     xargs::SPEC,
     find::SPEC,
+    jq::SPEC,
     head::SPEC,
     tail::SPEC,
     cat::SPEC,

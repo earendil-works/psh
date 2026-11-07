@@ -1,0 +1,37 @@
+# jq's and jaq's test suites against psh's jq (crates/psh-utils/src/jq/upstream.rs):
+# cases psh does not pass, with the reason. A listed case that passes fails the test;
+# PSH_JQ_UPDATE=1 cargo test -p psh-utils upstream_suites rewrites this file.
+jq-1.7.1/jq.test:1119: jaq updates `|= empty` path by path; jq deletes all the paths at once
+jq-1.7.1/jq.test:1131: jaq's path error does not say which access failed
+jq-1.7.1/jq.test:1135: jaq's path error does not say which access failed
+jq-1.7.1/jq.test:114: jq rejects a constant non-string object key when compiling; psh fails when it runs
+jq-1.7.1/jq.test:1143: jaq's path error names the input, jq's the result of the expression
+jq-1.7.1/jq.test:118: jq rejects a constant non-string object key when compiling; psh fails when it runs
+jq-1.7.1/jq.test:1584: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1588: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1592: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1596: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1601: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1605: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1609: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1613: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1618: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1622: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1626: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1630: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1634: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1638: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1641: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1645: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1649: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1661: modules (import, include, modulemeta, -L) are not supported
+jq-1.7.1/jq.test:1722: jaq's lexer wants a digit before the decimal point (`.5`)
+jq-1.7.1/jq.test:1922: `$__loc__` as an object key shorthand
+jq-1.7.1/jq.test:1942: jq reads `nan1234` as NaN (a strtod quirk); psh rejects it
+jq-1.7.1/jq.test:292: jq's syntax error text (bison) is not reproduced
+jq-1.7.1/jq.test:782: jaq has no `$name: pattern` object destructuring
+jq-1.7.1/jq.test:976: jaq's path error does not say which access failed
+jq-1.7.1/jq.test:980: jaq's path error does not say which access failed
+jq-1.7.1/jq.test:984: jaq's path error does not say which access failed
+jq-1.7.1/onig.test:102: the regex crate has no look-around (Oniguruma has)
+jq-1.7.1/onig.test:2: an empty repetition's group: Oniguruma reports an empty capture, the regex crate none

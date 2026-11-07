@@ -81,7 +81,7 @@ fn lock<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
 
 impl Poller {
     fn start() -> Poller {
-        let started = io::pipe().and_then(|(r, w)| {
+        let started = super::pipe().and_then(|(r, w)| {
             set_nonblocking(w.as_raw_fd())?;
             set_nonblocking(r.as_raw_fd())?;
             crate::spawn_helper("psh-ready", 128 << 10, move || run(r))?;

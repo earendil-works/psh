@@ -148,6 +148,14 @@ impl Engine for External {
             let _guard = crate::sandbox::SPAWN_LOCK
                 .read()
                 .unwrap_or_else(|e| e.into_inner());
+            // Exclusive: the child inherits every descriptor that is not close-on-exec
+            // yet, and on macOS std (here, in other cases' threads) and psh-os make
+            // pipes in two steps. A pipe of another case held open by this shell would
+            // keep that case waiting for its output until this one ends (D1905).
+            #[cfg(unix)]
+            let _fds = psh_os::unix::FD_LOCK
+                .write()
+                .unwrap_or_else(|e| e.into_inner());
             cmd.spawn()?
         };
         let deadline = Instant::now() + req.timeout;
@@ -261,6 +269,14 @@ impl Engine for External {
             leaked,
         })
     }
+}
+
+/// A pipe made so that no shell spawned at the same time inherits it (D1905).
+fn pipe() -> std::io::Result<(std::io::PipeReader, std::io::PipeWriter)> {
+    #[cfg(unix)]
+    return psh_os::unix::pipe();
+    #[cfg(not(unix))]
+    return std::io::pipe();
 }
 
 /// The commands a shell's stderr says it did not find (`...: NAME: command not found`),
@@ -505,8 +521,8 @@ impl Engine for InProcess {
             ),
         };
 
-        let (out_r, out_w) = std::io::pipe()?;
-        let (err_r, err_w) = std::io::pipe()?;
+        let (out_r, out_w) = pipe()?;
+        let (err_r, err_w) = pipe()?;
         let stdin_file = match &stdin_data {
             Some(_) => None,
             None => Some(std::fs::File::open(if cfg!(windows) {
@@ -515,7 +531,7 @@ impl Engine for InProcess {
                 "/dev/null"
             })?),
         };
-        let (in_r, in_w) = std::io::pipe()?;
+        let (in_r, in_w) = pipe()?;
         let stdin_thread = match stdin_data {
             Some(data) => {
                 let mut w = in_w;

@@ -2617,3 +2617,18 @@ when `Host::strips_crlf()` (D1292) is true: the Windows host, or the test host s
 on. A `\r\n` inside the output stays. A property of the host, not of the build: an
 embedder with its own host decides, and tests cover both rules on every platform;
 `read` follows the same method (builtins).
+
+## D1905: No descriptor of another thread leaks into a spawned process
+date: 2026-11-07 · by: procs · issue: 0030
+std on macOS makes pipes with `pipe` + `fcntl(FD_CLOEXEC)` (there is no `pipe2`), so a
+process spawned by another thread in between inherits the pipe for good. Under gate load
+that made trivial brush `kill` cases time out (kill/5, 6, 19–23): a psh binary run by
+psh-spec hung for its full timeout (a known failure) while holding another case's
+output pipe, so that case never saw its end. Fixes: psh-os's fork path (umask, signals
+to ignore) closes every descriptor the child does not keep (`proc_pidinfo` on macOS,
+`close_range` on Linux), as its posix_spawn path already does with
+`POSIX_SPAWN_CLOEXEC_DEFAULT`; psh-os makes its pipes under `psh_os::unix::FD_LOCK`
+(shared), which an embedder holds exclusively around a std `Command` spawn (psh-spec
+does, and makes its in-process cases' pipes through `psh_os::unix::pipe`). A stress run
+(two full suites and four loops of brush kill/signals at once, 200 rounds) went from
+about 9 spurious timeouts to none.

@@ -364,3 +364,19 @@ fn signal_numbers_are_linuxs_everywhere() {
         );
     }
 }
+
+#[test]
+fn stray_descriptors_do_not_reach_forked_externals() {
+    // A descriptor another thread left without close-on-exec (std on macOS creates
+    // pipes with pipe + fcntl) must not live on in an external started by the fork path
+    // (`trap ''` makes psh fork), or a reader of that pipe never sees its end (D1905).
+    let (r, w) = std::io::pipe().expect("a pipe");
+    let fd = std::os::fd::AsRawFd::as_raw_fd(&w);
+    // SAFETY: fcntl on a descriptor this test owns.
+    unsafe { libc::fcntl(fd, libc::F_SETFD, 0) };
+    let out = run(&format!(
+        "trap '' USR1; sh -c 'if [ -e /dev/fd/{fd} ]; then echo leaked; else echo closed; fi'"
+    ));
+    drop((r, w));
+    assert_eq!(out.stdout, "closed\n", "{out:?}");
+}

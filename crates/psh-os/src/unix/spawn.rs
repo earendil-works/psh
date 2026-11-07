@@ -105,7 +105,7 @@ pub(crate) fn process_umask() -> u32 {
 }
 
 pub(crate) fn umask_probe() -> Option<u32> {
-    let (mut r, w) = io::pipe().ok()?;
+    let (mut r, w) = super::pipe().ok()?;
     let wfd = w.as_raw_fd();
     // SAFETY: the child calls only async-signal-safe functions (umask, write, _exit)
     // and never returns.
@@ -371,7 +371,7 @@ pub(crate) fn spawn(shared: &Arc<Shared>, mut spec: SpawnSpec) -> io::Result<Spa
                 sources.len() - 1
             }
             ChildFd::Pipe { input } => {
-                let (r, w) = io::pipe()?;
+                let (r, w) = super::pipe()?;
                 let (ours, theirs) = if input {
                     (OwnedFd::from(w), OwnedFd::from(r))
                 } else {
@@ -517,14 +517,112 @@ fn launch(exec: &Exec, fds: &[(i32, RawFd)], setup: &Setup, floor: RawFd) -> io:
     fork_exec(exec, fds, setup, floor)
 }
 
+/// Closes, in a forked child, every descriptor not kept: on macOS from the process's own
+/// descriptor list (`proc_pidinfo`, a plain system call, into a buffer allocated before
+/// the fork), on Linux with `close_range` over the gaps between the kept ones.
+struct Strays {
+    #[cfg(target_os = "macos")]
+    buf: Vec<libc::proc_fdinfo>,
+}
+
+impl Strays {
+    /// Before the fork: room for the descriptors open now, and some more.
+    fn prepare() -> Strays {
+        #[cfg(target_os = "macos")]
+        {
+            // SAFETY: with a null buffer proc_pidinfo only returns the size needed.
+            let size = unsafe {
+                libc::proc_pidinfo(
+                    libc::getpid(),
+                    libc::PROC_PIDLISTFDS,
+                    0,
+                    std::ptr::null_mut(),
+                    0,
+                )
+            };
+            let n = usize::try_from(size).unwrap_or(0) / std::mem::size_of::<libc::proc_fdinfo>();
+            Strays {
+                buf: Vec::with_capacity(n + 256),
+            }
+        }
+        #[cfg(not(target_os = "macos"))]
+        Strays {}
+    }
+
+    /// In the forked child (async-signal-safe: system calls on memory prepared before
+    /// the fork). `keep` is sorted.
+    fn close(&mut self, keep: &[RawFd]) {
+        #[cfg(target_os = "macos")]
+        {
+            let cap = self.buf.capacity();
+            let bytes = cap * std::mem::size_of::<libc::proc_fdinfo>();
+            // Repeated while the buffer comes back full: each pass closes what it lists.
+            loop {
+                // SAFETY: the buffer has room for `cap` entries; proc_pidinfo writes at
+                // most `bytes` bytes and returns how many it wrote.
+                let got = unsafe {
+                    libc::proc_pidinfo(
+                        libc::getpid(),
+                        libc::PROC_PIDLISTFDS,
+                        0,
+                        self.buf.as_mut_ptr().cast(),
+                        i32::try_from(bytes).unwrap_or(i32::MAX),
+                    )
+                };
+                let n =
+                    usize::try_from(got).unwrap_or(0) / std::mem::size_of::<libc::proc_fdinfo>();
+                let mut closed = false;
+                for i in 0..n.min(cap) {
+                    // SAFETY: proc_pidinfo initialized the first `n` entries.
+                    let fd = unsafe { (*self.buf.as_ptr().add(i)).proc_fd };
+                    if keep.binary_search(&fd).is_err() {
+                        // SAFETY: closing a descriptor of this (forked) process.
+                        unsafe { libc::close(fd) };
+                        closed = true;
+                    }
+                }
+                if n < cap || !closed {
+                    break;
+                }
+            }
+        }
+        #[cfg(target_os = "linux")]
+        {
+            let mut from: RawFd = 0;
+            for &k in keep.iter().chain(std::iter::once(&RawFd::MAX)) {
+                if k > from {
+                    let last = if k == RawFd::MAX {
+                        u32::MAX
+                    } else {
+                        (k - 1) as u32
+                    };
+                    // SAFETY: close_range only closes descriptors of this (forked)
+                    // process; an old kernel without it returns ENOSYS, which leaves
+                    // things as they were.
+                    unsafe { libc::syscall(libc::SYS_close_range, from as u32, last, 0u32) };
+                }
+                from = k.saturating_add(1);
+            }
+        }
+        #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+        let _ = keep;
+    }
+}
+
 /// The fork path: the child sets itself up with async-signal-safe calls only, on data
 /// prepared before the fork, and reports a failed `chdir` or `execve` by writing its
 /// errno into a close-on-exec pipe (nothing arrives when the exec succeeded).
 fn fork_exec(exec: &Exec, fds: &[(i32, RawFd)], setup: &Setup, floor: RawFd) -> io::Result<i32> {
-    let (err_r, err_w) = io::pipe()?;
+    let (err_r, err_w) = super::pipe()?;
     // Above every target, so no dup2 in the child closes it.
     let err_w = dup_above(OwnedFd::from(err_w).as_raw_fd(), floor)?;
     let err_fd = err_w.as_raw_fd();
+    // The descriptors the child keeps: its installed targets and the error pipe.
+    let mut keep: Vec<RawFd> = fds.iter().map(|&(t, _)| t).collect();
+    keep.extend([0, 1, 2, err_fd]);
+    keep.sort_unstable();
+    keep.dedup();
+    let mut strays = Strays::prepare();
     // Every signal stays blocked across the fork: the child must not run the host's
     // handlers before its dispositions are reset.
     // SAFETY: sigset_t is plain data, initialized by sigfillset; the calls only read
@@ -559,6 +657,11 @@ fn fork_exec(exec: &Exec, fds: &[(i32, RawFd)], setup: &Setup, floor: RawFd) -> 
                     fail(errno());
                 }
             }
+            // A descriptor another thread opened without close-on-exec, or before it
+            // could set it (std on macOS makes pipes with `pipe` + `fcntl`), would live
+            // on in the program: a pipe kept open that way keeps its reader from ever
+            // seeing the end (D1905). posix_spawn has CLOEXEC_DEFAULT for this.
+            strays.close(&keep);
             if let Some(m) = setup.umask {
                 libc::umask(m);
             }

@@ -37,6 +37,19 @@ pub use crate::Leftovers;
 pub use file::UnixFile;
 pub use spawn::{Placement, settle};
 
+/// Held shared while psh-os makes a descriptor that is not close-on-exec from the
+/// start (std on macOS creates pipes with `pipe` + `fcntl`: no `pipe2` there); an
+/// embedder that starts processes inheriting its descriptors (std's `Command`) holds it
+/// exclusively around the spawn, so no pipe of a shell leaks into such a process
+/// (D1905). psh-os's own spawns need not: they close every stray descriptor.
+pub static FD_LOCK: std::sync::RwLock<()> = std::sync::RwLock::new(());
+
+/// A pipe, close-on-exec, made under [`FD_LOCK`].
+pub fn pipe() -> io::Result<(io::PipeReader, io::PipeWriter)> {
+    let _guard = FD_LOCK.read().unwrap_or_else(|e| e.into_inner());
+    io::pipe()
+}
+
 use spawn::Shared;
 
 /// Settings of a [`UnixHost`].
@@ -496,7 +509,7 @@ impl Host for UnixHost {
     }
 
     fn pipe(&self) -> io::Result<(Rc<dyn HostFile>, Rc<dyn HostFile>)> {
-        let (r, w) = io::pipe()?;
+        let (r, w) = pipe()?;
         Ok((Rc::new(UnixFile::new(r)), Rc::new(UnixFile::new(w))))
     }
 

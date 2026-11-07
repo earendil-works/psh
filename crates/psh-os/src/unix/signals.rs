@@ -163,7 +163,7 @@ pub fn is_ignored(sig: Signal) -> bool {
 /// Catches `sigs` (except those ignored now) and calls `callback` for each delivery,
 /// on a watcher thread. Once per process.
 pub fn catch(sigs: &[Signal], callback: impl Fn(Signal) + Send + 'static) -> io::Result<()> {
-    let (mut r, w) = io::pipe()?;
+    let (mut r, w) = super::pipe()?;
     super::ready::set_nonblocking(w.as_raw_fd())?;
     let wfd = w.into_raw_fd();
     if WAKE_FD

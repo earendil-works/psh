@@ -104,11 +104,22 @@ cases must pass for real).
 - Scores (macOS, ratchet run): oils 1215/2511, brush 1150/3171, agent 119/144 — lower
   than part 1 only because of the stubs; without them oils 1279, brush 1263, agent 120.
 
+### 2026-11-07 part 3
+- Part 2 landed at dd4ad01 (squashed after repeated rebases onto 0026, 0028, 0006).
+  Most wrapper-pass ratchet lines are gone again: those builtins landed. Still stubbed:
+  ulimit, dirs/pushd/popd, bg/fg, suspend, bind/complete/compgen/compopt, fc.
+- `read -a` (arrays from 0026: all fields, a trailing separator makes no empty field;
+  readonly and associative targets refused before reading), and every `read` assignment
+  goes through `Vp::assign` (readonly, `-i`, `-l`/`-u`, namerefs). Counts and fds take
+  `+N` and blanks, `-t +1` too.
+- `echo` honours `shopt -s xpg_echo` (`Shopt::XpgEcho` added to options.rs: one
+  variant, 0028's file).
+- Scores (macOS): oils 1980/2511, brush 2419/3171, agent 133/144.
+
 ## Follow-ups
-- `read -a` (needs 0026's arrays); `read` reads a byte at a time: a regular file could
-  be read in blocks and the rest given back with a Host seek.
+- `read` reads a byte at a time: a regular file could be read in blocks and the rest
+  given back with a Host seek.
 - Host: `umask()`, `OpenOptions::mode`, `now()` (proposal in part 2's log).
-- `xpg_echo` for `echo` once 0028's `shopt` exists.
 - `BASH_SOURCE`/`FUNCNAME`/`BASH_LINENO` arrays from `Vp::calls` once arrays exist; a
   `main` frame for script files.
 - `run_text` (builtins/eval.rs) and lib.rs `run_script` are two chunk loops; factor one

@@ -218,7 +218,10 @@ fn help_and_stubs() {
 
 #[test]
 fn read_arrays_and_attributes() {
-    check("read -a a <<< ' x  y z '; echo \"${#a[@]} ${a[1]}\"", "3 y\n");
+    check(
+        "read -a a <<< ' x  y z '; echo \"${#a[@]} ${a[1]}\"",
+        "3 y\n",
+    );
     check("IFS='x ' read -a a <<< 'a b x x'; echo ${#a[@]}", "3\n");
     check("a=(9 9 9); read -a a <<< 1; echo ${#a[@]}", "1\n");
     check("declare -A h; read -a h <<< x 2>/dev/null; echo $?", "1\n");
@@ -229,5 +232,8 @@ fn read_arrays_and_attributes() {
 
 #[test]
 fn echo_xpg() {
-    check("shopt -s xpg_echo; echo 'a\\tb'; echo -E 'a\\tb'", "a\tb\na\\tb\n");
+    check(
+        "shopt -s xpg_echo; echo 'a\\tb'; echo -E 'a\\tb'",
+        "a\tb\na\\tb\n",
+    );
 }

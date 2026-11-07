@@ -142,10 +142,6 @@ oils/builtin-process/24
 oils/builtin-process/25
 oils/builtin-read/19
 oils/builtin-read/24
-oils/builtin-read/28
-oils/builtin-read/54: read -a needs arrays (0026); passed via the macOS /usr/bin/read wrapper
-oils/builtin-read/55
-oils/builtin-read/57
 oils/builtin-read/63
 oils/builtin-set/5
 oils/builtin-set/6

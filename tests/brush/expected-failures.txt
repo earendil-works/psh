@@ -23,7 +23,6 @@ brush/brush/scripting/6
 brush/brush/scripting/7
 brush/brush/scripting/8
 brush/brush/scripting/11
-brush/brush/scripting/21
 brush/brush/scripting/27
 brush/compat/arguments/23
 brush/compat/arguments/38
@@ -112,7 +111,6 @@ brush/compat/builtins/declare/155
 brush/compat/builtins/dot/1
 brush/compat/builtins/dot/15
 brush/compat/builtins/echo/2
-brush/compat/builtins/echo/7
 brush/compat/builtins/echo/8
 brush/compat/builtins/exec/1: needs [[ ]]; passed because bare exec ended the script
 brush/compat/builtins/exec/5
@@ -210,22 +208,6 @@ brush/compat/builtins/pwd/2
 brush/compat/builtins/pwd/3
 brush/compat/builtins/pwd/5
 brush/compat/builtins/pwd/7
-brush/compat/builtins/read/2
-brush/compat/builtins/read/3
-brush/compat/builtins/read/10
-brush/compat/builtins/read/11
-brush/compat/builtins/read/12
-brush/compat/builtins/read/13
-brush/compat/builtins/read/14
-brush/compat/builtins/read/15
-brush/compat/builtins/read/37
-brush/compat/builtins/read/47
-brush/compat/builtins/read/49
-brush/compat/builtins/read/60
-brush/compat/builtins/read/64
-brush/compat/builtins/read/65
-brush/compat/builtins/read/74
-brush/compat/builtins/read/75
 brush/compat/builtins/readonly/8
 brush/compat/builtins/return/1
 brush/compat/builtins/return/9

@@ -283,7 +283,13 @@ pub(super) async fn read(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             split_all(&line, ifs)
         };
         let var = vp.vars.entry(&name);
-        var.value = Value::Indexed(fields.into_iter().enumerate().map(|(k, f)| (k as i64, f)).collect());
+        var.value = Value::Indexed(
+            fields
+                .into_iter()
+                .enumerate()
+                .map(|(k, f)| (k as i64, f))
+                .collect(),
+        );
         return Ok(status);
     }
     let values: Vec<Vec<u8>> = if names.is_empty() {

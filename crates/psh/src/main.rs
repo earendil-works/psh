@@ -223,10 +223,12 @@ impl Signals {
     fn catch() -> Signals {
         let control: Control = Default::default();
         let c = control.clone();
-        let _ = psh_os::unix::signals::catch(&CAUGHT, move |sig| {
-            // The handler set the signal's bit already; this wakes the shell.
+        let _ = psh_os::unix::signals::catch(&CAUGHT, move |_sig| {
+            // The handler set the signal's bit already (once the shell exists): this
+            // only wakes the shell. Setting the bit again would deliver it twice when
+            // the shell took the first already.
             if let Some(ctl) = &*c.lock().unwrap_or_else(|e| e.into_inner()) {
-                ctl.signal(sig);
+                ctl.wake();
             }
         });
         // Only the engine thread takes these signals (it unblocks them): a `kill $$`

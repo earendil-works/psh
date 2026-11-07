@@ -51,6 +51,18 @@ Close the process-layer follow-ups from 0006 and the coordinator's queue.
   release for darwin; unit test against `id`, `hostname`, `uname -r`, `ps` (macOS and
   Linux). Windows values proposed in D1301. The engine agent wires the variables.
 
+### 2026-11-07 fix: a trap ran twice for one signal (D1302)
+- Cause: the handler set the pending bit and the watcher thread then called
+  `ControlHandle::signal`, setting it again; if the shell took the first bit in
+  between, the trap ran twice. The watcher now only wakes (`ControlHandle::wake`).
+  30/30 alone and 60/60 under 12 parallel runs × 4 threads.
+- Note: running the standalone tests from a backgrounded shell job (`cmd &` in an
+  interactive shell) makes `int_and_hup_too` fail: the job starts with SIGINT ignored and
+  psh keeps it ignored, as bash does. Not a psh bug; run them in the foreground or via
+  `xargs -P`.
+- oils/process-sub/5 and /7 under `-j 8` load (reported by infra): not reproduced in ~90
+  loaded runs; need a diff when it recurs.
+
 ## Follow-ups
 
 ## Result

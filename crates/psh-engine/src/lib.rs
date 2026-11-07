@@ -182,6 +182,13 @@ impl ControlHandle {
         }
     }
 
+    /// Wakes the embedder's waker without changing anything: after a signal handler set
+    /// a bit in [`ControlHandle::signal_word`] itself (calling `signal` then would
+    /// deliver the signal a second time if the shell took the first already).
+    pub fn wake(&self) {
+        self.shared.wake_outer();
+    }
+
     /// The pending-signal mask [`ControlHandle::signal`] sets (bit n = Linux signal n):
     /// an atomic or into it is that call without the wakeup, and async-signal-safe (a
     /// standalone shell's signal handler sets it; its driver then calls `signal`, D1903).

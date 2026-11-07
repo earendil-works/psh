@@ -1614,3 +1614,11 @@ is stale), and psh-spec and `scripts/status` print them separately: count, how m
 passed this run, each id with its reason. No retries: a retry turns a real intermittent
 bug into a green run. The reason names the race and the owner who fixes it; known real
 bugs (as opposed to races in the test itself) do not go there.
+
+## D1302: The signal watcher only wakes the shell
+date: 2026-11-07 · by: procs · issue: 0030
+Amends D1903. The standalone handler sets the signal's bit in the shell's pending mask;
+the watcher thread now only wakes the shell (`ControlHandle::wake`, new) instead of
+calling `ControlHandle::signal`, which set the bit a second time: when the shell had
+already taken the first (a trap ran), the second delivery ran the trap again
+(`traps_run_for_signals_from_outside` failed about half the time).

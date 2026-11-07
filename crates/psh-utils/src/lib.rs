@@ -9,8 +9,8 @@ mod common;
 mod fsutil;
 mod modes;
 pub mod opts;
-mod timefmt;
 mod textio;
+mod timefmt;
 
 mod cat;
 mod env;

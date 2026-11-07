@@ -1,6 +1,6 @@
 # 0034: The psh binary's own command line on `argument`
 
-status: in-progress
+status: done
 agent: cli
 branch: issue/0034-psh-cli
 depends-on: -
@@ -15,23 +15,57 @@ depends only on `argument-parser`). It gives a static spec, a plain parse loop a
 generated help pages, usage lines and errors.
 
 ## Acceptance criteria
-- [ ] psh's own surface on `argument`: `--parse`, `--classify` (with `--compact`, `-O`),
+- [x] psh's own surface on `argument`: `--parse`, `--classify` (with `--compact`, `-O`),
       `--help`/`-h` with a generated help page, `--version`, and room for future modes
       (e.g. `--utils` listing, `--force-utils`). Help text explains the modes.
-- [ ] bash-compatible invocation keeps working exactly as today and as bash does:
+- [x] bash-compatible invocation keeps working exactly as today and as bash does:
       `psh -c CMD [NAME [ARGS…]]`, `psh FILE ARGS…`, stdin scripts, combined short
       options (`-euc`, `-ec`), `+o`/`-o NAME`, `-O`/`+O shopt`, `--` and the first
       non-option ending option parsing (the shell's own rules from invocation.rs).
       Evaluate whether `argument` can express these; if not (e.g. `+o`), keep
       invocation.rs for the bash-compatible part and use `argument` for the psh-specific
       modes and the help page — record which part uses what.
-- [ ] Non-UTF-8 arguments still work (args_os), on Windows too.
-- [ ] Dependency recorded in scripts/deps-allowlist.txt citing D035; size effect noted.
-- [ ] Tests: CLI tests for every mode and the bash invocation forms; L1/L2 invocation
+- [x] Non-UTF-8 arguments still work (args_os), on Windows too.
+- [x] Dependency recorded in scripts/deps-allowlist.txt citing D035; size effect noted.
+- [x] Tests: CLI tests for every mode and the bash invocation forms; L1/L2 invocation
       cases (oils `sh-options`, brush invocation) unchanged.
 
 ## Log
+- Evaluated `argument` (0.1.0) for bash's invocation: it cannot express it. `+e`/`+o NAME`
+  are positionals to argument-parser; `-o`/`-O` must take the *next* argument even inside
+  a cluster (`-eo pipefail`; argument-parser would take `pipefail` only as `-opipefail`);
+  `-c` is a flag whose command is the first operand (`-c -- CMD`); `-h` is `set -h`;
+  bash's errors (`psh: -Z: invalid option`) are worded differently.
+- Split by position (bash's own rule: GNU long options first): `crates/psh/src/cli.rs`
+  runs `argument` over the leading `--name` arguments; bash's long options
+  (`invocation::LONG_OPTIONS`, new const) pass through, the first other argument and
+  everything after it go to `invocation::parse_args` unchanged. `--parse`/`--classify`
+  are `argument` sub-specs (`p.subcommand`), so `psh --parse --help` / `-h` work and
+  usage reads `psh --parse [OPTIONS] [FILE]`. D1340.
+- `--classify` gained `-O extglob` (parse_with + classify_ast in main.rs).
+- `--help` now prints the generated page to stdout with 0 (bash does the same), not the
+  old usage on stderr with 2; `psh -e --help` (Help from invocation.rs) prints it too.
+- Non-UTF-8: `OsString` throughout (`raw_value`, `raw_arg`); a unix CLI test passes
+  `caf\xe9` to `-c`'s `$1` and to `--parse -c`. On Windows args stay lossy UTF-8 as before.
+  clippy clean for x86_64-pc-windows-msvc.
+- Tests: unit tests in cli.rs (pass-through of bash forms, modes, error kinds, help page
+  without `-h`/`-V`); CLI tests for help/version/mode help, errors on both sides, bash
+  forms (`-euc`, `+o`, `-eo`, `-O`/`+O`, `-c --`, `--norc`, `--posix`), stdin scripts
+  (`-s`, none, `-e`), non-UTF-8, classify with extglob. The helper now pipes stdin.
+- L1/L2 unchanged: oils sh-options* 7/9, brush compat/arguments 77/92, no ratchet change.
+- Size: release psh 8,874,176 → 8,985,456 bytes (+109 KiB, macOS arm64).
+- Docs: ARCH.md "The `psh` binary" updated; no guide page affected (cli.md does not exist).
 
 ## Follow-ups
+- Guide page `cli.md` (the binary's modes and the help page) is still to be written.
+- `--utils` (list the utilities and their mode) and `--force-utils` fit as more
+  top-level `Opt`s / sub-specs in cli.rs.
+- bash rejects GNU long options after single-letter ones (`bash -e --norc` is an error);
+  invocation.rs still accepts them anywhere among the options (unchanged here).
 
 ## Result
+psh's own command line is on `argument` (`crates/psh/src/cli.rs`): `--parse` and
+`--classify` (each with `-c COMMAND`, `--compact`, `-O extglob`, `FILE`, own `--help`/`-h`),
+`--help` and `--version`, with generated help pages, usage and suggestions on typos.
+bash's invocation stays in `psh_engine::invocation` (shared with psh-spec) and behaves as
+before. Known gaps: see Follow-ups.

@@ -53,7 +53,8 @@ crates/
                  shell builtins; the utility API (UtilCtx)
   psh-os/        OS hosts: Unix and Windows                        psh-engine, libc / windows-sys
   psh-utils/     in-process utilities and their registry           psh-engine, psh-classify,
-                                                                   psh-regex, ripgrep crates (D020)
+                                                                   psh-regex, ripgrep crates (D020),
+                                                                   deser-json (rg --json, D1136)
   psh/           the `psh` binary                                  all of the above, deser-json,
                                                                    argument (D035)
   psh-spec/      the conformance runner (TESTING.md)               engine, syntax, os, utils
@@ -598,8 +599,9 @@ textwrap and grep-cli. The seams are patched: argument parsing, help and
 `RIPGREP_CONFIG_PATH` through the utility's context; message and error state per run;
 no `process::exit`, no logger; cwd, environment, TTY (headings, line numbers, color
 from `TERM`/`NO_COLOR`) from `SyncCtx`. It runs as a blocking utility. Memory maps are
-off. The real rg runs for `--pre`, `-z`, `-P`, `--engine auto`, `--json` (until psh's
-JSON sink on deser-json, D029) and `--debug`/`--trace`. The version reads `ripgrep
+off. `--json` is grep-printer's JSON printer with serde replaced by deser-json, byte for
+byte the real rg's output (D1136). The real rg runs for `--pre`, `-z`, `-P`, `--engine
+auto` and `--debug`/`--trace`. The version reads `ripgrep
 15.2.0 (psh)`; `--help` is upstream's.
 
 **Walker seam (D1132).** `search::walk::Walker` runs one of two walks with identical

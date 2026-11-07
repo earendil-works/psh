@@ -1,0 +1,23 @@
+[package]
+name = "psh-os"
+description = "The psh OS hosts: processes, pipes and files of the real system (ARCH.md \"psh-os\")"
+edition.workspace = true
+rust-version.workspace = true
+version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+# psh-engine for the Host trait; libc on Unix (D024). windows-sys arrives with the
+# Windows host (0007).
+[dependencies]
+psh-engine.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.191"
+
+# The one crate allowed `unsafe` (AGENTS.md): every block says why it is sound.
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+undocumented_unsafe_blocks = "deny"

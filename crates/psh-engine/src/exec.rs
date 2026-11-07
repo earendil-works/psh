@@ -1902,9 +1902,13 @@ pub(crate) async fn command_subst(
 /// The trailing newlines a command substitution drops. On Windows, native programs end
 /// lines with `\r\n`: a `\r` before each removed newline goes too (D1324).
 fn strip_newlines(out: &mut Vec<u8>) {
+    strip_newlines_with(out, cfg!(windows));
+}
+
+pub(crate) fn strip_newlines_with(out: &mut Vec<u8>, crlf: bool) {
     while out.last() == Some(&b'\n') {
         out.pop();
-        if cfg!(windows) && out.last() == Some(&b'\r') {
+        if crlf && out.last() == Some(&b'\r') {
             out.pop();
         }
     }

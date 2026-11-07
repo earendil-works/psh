@@ -875,3 +875,24 @@ fn globignore() {
     );
     assert_eq!(o.stdout, ".c.txt a.txt\na.txt b.txt\n", "{}", o.stderr);
 }
+
+#[test]
+fn command_subst_crlf() {
+    use crate::exec::strip_newlines_with;
+    let strip = |s: &[u8], crlf| {
+        let mut v = s.to_vec();
+        strip_newlines_with(&mut v, crlf);
+        v
+    };
+    assert_eq!(strip(b"sub\r\n", true), b"sub");
+    assert_eq!(strip(b"a\r\n\r\n\n", true), b"a");
+    assert_eq!(strip(b"a\r\nb\r", true), b"a\r\nb\r");
+    assert_eq!(strip(b"sub\r\n", false), b"sub\r");
+    // End to end: the platform's rule, for `$(…)`, backticks and `${ …; }`.
+    let n = if cfg!(windows) { "1" } else { "4" };
+    let want = format!("{n} {n} {n}\n");
+    check(
+        "x=$(printf 'a\\r\\n\\r\\n'); y=`printf 'a\\r\\n\\r\\n'`; z=${ printf 'a\\r\\n\\r\\n'; }; echo ${#x} ${#y} ${#z}",
+        &want,
+    );
+}

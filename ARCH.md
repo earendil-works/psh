@@ -353,8 +353,9 @@ From `research/execution-core.md` §5; the pitfalls listed there are requirement
   shell variables.
 - Output of native programs in the ANSI code page can be decoded where the engine reads
   it, in the host (D1078, an option, off by default).
-- CRLF: scripts with `\r\n` parse; `$(…)` and `read` strip a trailing `\r` from native
-  output.
+- CRLF: scripts with `\r\n` parse; `$(…)` (also backticks, `$(< f)`, `${ …; }`) drops
+  the `\r` before each trailing newline it removes, on Windows builds only (D1324);
+  `read` follows the same rule.
 - Utilities whose names collide with System32 programs (`find`, `sort`, `timeout`,
   `tree`, `more`, `hostname`, `whoami`) are always the builtin on Windows.
 - `ln -s`: symlink, else a junction for directories, else a clear error; never a silent

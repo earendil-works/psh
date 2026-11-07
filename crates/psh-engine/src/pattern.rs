@@ -421,7 +421,11 @@ fn class_matches(name: &str, c: Unit) -> bool {
 /// Escapes the pattern chars of literal text, so that it matches only itself.
 pub(crate) fn escape(text: &[u8], out: &mut Vec<u8>) {
     for &b in text {
-        if matches!(b, b'*' | b'?' | b'[' | b']' | b'\\') {
+        // Also the chars of extglob groups.
+        if matches!(
+            b,
+            b'*' | b'?' | b'[' | b']' | b'\\' | b'(' | b')' | b'|' | b'!' | b'@' | b'+'
+        ) {
             out.push(b'\\');
         }
         out.push(b);
@@ -521,22 +525,65 @@ pub(crate) fn replace(
     mode: ReplaceMode,
     utf8: bool,
 ) -> Vec<u8> {
-    replace_with(
-        text,
-        pat,
-        rep,
-        mode,
-        MatchOpts {
-            utf8,
-            ..MatchOpts::default()
-        },
-    )
+    let rep = [Rep::Lit(rep.to_vec())];
+    let opts = MatchOpts {
+        utf8,
+        ..MatchOpts::default()
+    };
+    replace_with(text, pat, &rep, mode, opts)
+}
+
+/// A piece of a replacement: text, or the matched text (`&`, `patsub_replacement`).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) enum Rep {
+    Lit(Vec<u8>),
+    Match,
+}
+
+/// A `patsub_replacement` replacement, its quoted `\` and `&` escaped: an unescaped
+/// `&` is the match, `\&` and `\\` are the char; other backslashes stay.
+pub(crate) fn replacement(pat: &[u8]) -> Vec<Rep> {
+    let mut out = Vec::new();
+    let mut lit = Vec::new();
+    let mut i = 0;
+    while i < pat.len() {
+        match pat[i] {
+            b'\\' if matches!(pat.get(i + 1), Some(b'\\' | b'&')) => {
+                lit.push(pat[i + 1]);
+                i += 2;
+            }
+            b'&' => {
+                if !lit.is_empty() {
+                    out.push(Rep::Lit(std::mem::take(&mut lit)));
+                }
+                out.push(Rep::Match);
+                i += 1;
+            }
+            b => {
+                lit.push(b);
+                i += 1;
+            }
+        }
+    }
+    if !lit.is_empty() {
+        out.push(Rep::Lit(lit));
+    }
+    out
+}
+
+fn put(out: &mut Vec<u8>, rep: &[Rep], matched: &[u8]) {
+    for r in rep {
+        match r {
+            Rep::Lit(l) => out.extend_from_slice(l),
+            Rep::Match => out.extend_from_slice(matched),
+        }
+    }
 }
 
 pub(crate) fn replace_with(
     text: &[u8],
     pat: &[u8],
-    rep: &[u8],
+    rep: &[Rep],
     mode: ReplaceMode,
     opts: MatchOpts,
 ) -> Vec<u8> {
@@ -548,7 +595,8 @@ pub(crate) fn replace_with(
         ReplaceMode::Prefix => {
             for k in (0..=n).rev() {
                 if p.matches_units(&u[..k]) {
-                    let mut out = rep.to_vec();
+                    let mut out = Vec::new();
+                    put(&mut out, rep, &text[..offs[k]]);
                     out.extend_from_slice(&text[offs[k]..]);
                     return out;
                 }
@@ -559,7 +607,7 @@ pub(crate) fn replace_with(
             for k in 0..=n {
                 if p.matches_units(&u[k..]) {
                     let mut out = text[..offs[k]].to_vec();
-                    out.extend_from_slice(rep);
+                    put(&mut out, rep, &text[offs[k]..]);
                     return out;
                 }
             }
@@ -574,7 +622,7 @@ pub(crate) fn replace_with(
                 match found {
                     Some(e) => {
                         out.extend_from_slice(&text[offs[last]..offs[i]]);
-                        out.extend_from_slice(rep);
+                        put(&mut out, rep, &text[offs[i]..offs[e]]);
                         i = e;
                         last = e;
                         if mode == ReplaceMode::First {

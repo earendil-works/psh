@@ -151,6 +151,7 @@ pub(crate) enum Shopt {
     Nocaseglob,
     Nocasematch,
     Nullglob,
+    PatsubReplacement,
     XpgEcho,
 }
 
@@ -168,6 +169,7 @@ impl Shopt {
             Shopt::InheritErrexit => "inherit_errexit",
             Shopt::Lastpipe => "lastpipe",
             Shopt::Nullglob => "nullglob",
+            Shopt::PatsubReplacement => "patsub_replacement",
             Shopt::XpgEcho => "xpg_echo",
         }
     }

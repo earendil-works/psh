@@ -334,7 +334,7 @@ pub(crate) fn xtrace_word(w: &[u8]) -> Vec<u8> {
 }
 
 /// `$'…'` quoting: C escapes, octal for other control chars and invalid bytes.
-fn ansi_c_quote(w: &[u8]) -> Vec<u8> {
+pub(crate) fn ansi_c_quote(w: &[u8]) -> Vec<u8> {
     let mut out = b"$'".to_vec();
     let mut i = 0;
     while i < w.len() {

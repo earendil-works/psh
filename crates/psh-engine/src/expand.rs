@@ -52,6 +52,10 @@ pub(crate) struct Fields {
     /// The status of the last command substitution, for `$?` after an assignment-only
     /// command.
     pub subst_status: Option<i32>,
+    /// A `patsub_replacement` replacement: quoting escapes only `\` and `&` (D1325).
+    rep: bool,
+    /// An assignment value: operands (`x=${u-~:~}`) get its tilde rules.
+    assign: bool,
 }
 
 fn is_ifs_ws(b: u8) -> bool {
@@ -71,6 +75,8 @@ impl Fields {
             ifs,
             split,
             subst_status: None,
+            rep: false,
+            assign: false,
         }
     }
 
@@ -93,7 +99,16 @@ impl Fields {
     pub(crate) fn quoted(&mut self, s: &[u8]) {
         self.begin();
         self.cur.text.extend_from_slice(s);
-        pattern::escape(s, &mut self.cur.pat);
+        if self.rep {
+            for &b in s {
+                if b == b'\\' || b == b'&' {
+                    self.cur.pat.push(b'\\');
+                }
+                self.cur.pat.push(b);
+            }
+        } else {
+            pattern::escape(s, &mut self.cur.pat);
+        }
         self.cur.started = true;
     }
 
@@ -339,6 +354,7 @@ pub(crate) async fn expand_single(
     ctx: Ctx,
 ) -> Result<(Vec<u8>, Option<i32>), Unwind> {
     let mut f = Fields::new(vp, false);
+    f.assign = ctx == Ctx::Assign;
     let pieces: Vec<Piece> = word.parts.iter().map(Piece::Part).collect();
     expand_pieces(vp, code, &pieces, false, &mut f, ctx).await?;
     f.finish_word();
@@ -406,6 +422,9 @@ pub(crate) enum Ctx {
     /// The word of `${x-word}` and friends: unquoted, its literal text is split like
     /// an expansion's; in double quotes, single quotes are literal (bash).
     Operand,
+    /// `"…"` inside the operand of a double-quoted `"${x:+"…"}"`: a backslash quotes
+    /// any char there (bash).
+    OperandDouble,
 }
 
 fn expand_pieces<'a>(
@@ -488,7 +507,8 @@ fn literal_with_tilde(vp: &Vp, text: &[u8], first: bool, ctx: Ctx, f: &mut Field
         if at_start && rest.first() == Some(&b'~') {
             let end = rest
                 .iter()
-                .position(|&b| b == b'/' || (ctx == Ctx::Assign && b == b':'))
+                // A `:` ends the prefix in any word (`~:x` is `$HOME:x`, bash).
+                .position(|&b| b == b'/' || b == b':')
                 .unwrap_or(rest.len());
             // Only a tilde prefix that ends the literal text or a slash counts; a
             // quoted char right after it (`~"x"`) makes it literal, which we cannot
@@ -529,11 +549,25 @@ async fn expand_part(
     let text = code.ast.bytes(part.span);
     match &part.kind {
         Part::Lit => {
-            if quoted {
+            if ctx == Ctx::OperandDouble && text.contains(&b'\\') {
+                // A backslash quotes any char here: `"${v:+"a\xb"}"` is `axb`.
+                let mut out = Vec::with_capacity(text.len());
+                let mut i = 0;
+                while i < text.len() {
+                    if text[i] == b'\\' && i + 1 < text.len() {
+                        i += 1;
+                    }
+                    out.push(text[i]);
+                    i += 1;
+                }
+                f.quoted(&out);
+            } else if quoted {
                 f.quoted(text);
             } else if ctx == Ctx::Operand {
                 // `${x-a b}` unquoted: two words.
-                if first && text.first() == Some(&b'~') {
+                if f.assign && text.contains(&b'~') {
+                    literal_with_tilde(vp, text, first, Ctx::Assign, f);
+                } else if first && text.first() == Some(&b'~') {
                     literal_with_tilde(vp, text, first, Ctx::Word, f);
                 } else {
                     f.unquoted(text);
@@ -548,7 +582,10 @@ async fn expand_part(
             let c = &text[1..];
             // In double quotes (a `${x-\z}` operand) only `$ ` " \ }` and newline are
             // escapes; the backslash of anything else stays.
-            if quoted && !matches!(c.first(), Some(b'$' | b'`' | b'"' | b'\\' | b'}' | b'\n')) {
+            if quoted
+                && ctx != Ctx::OperandDouble
+                && !matches!(c.first(), Some(b'$' | b'`' | b'"' | b'\\' | b'}' | b'\n'))
+            {
                 f.quoted(text);
             } else {
                 f.quoted(c);
@@ -567,7 +604,12 @@ async fn expand_part(
             if inner.is_empty() || !inner.iter().all(is_at) {
                 f.quoted(b"");
             }
-            expand_parts(vp, code, inner, true, f, Ctx::Word).await?;
+            let inner_ctx = if quoted && ctx == Ctx::Operand {
+                Ctx::OperandDouble
+            } else {
+                Ctx::Word
+            };
+            expand_parts(vp, code, inner, true, f, inner_ctx).await?;
         }
         Part::Param(p) => param(vp, code, p, part, quoted, f).await?,
         Part::BadSubst => {
@@ -673,6 +715,10 @@ fn is_at(p: &WordPart) -> bool {
                     at && matches!(
                         p.op,
                         ParamOp::None
+                            | ParamOp::Default {
+                                kind: DefaultKind::Alternative,
+                                ..
+                            }
                             | ParamOp::Substring { .. }
                             | ParamOp::RemovePrefix { .. }
                             | ParamOp::RemoveSuffix { .. }
@@ -835,6 +881,16 @@ async fn param(
         let name = vp.resolve(code.ast.text(p.name_span)).into_owned();
         let keys = vp.vars.get(&name).map(|v| v.keys()).unwrap_or_default();
         let star = matches!(p.index, Some(Subscript::Star));
+        // `${!a[@]-DEF}` of an empty array: no keys is unset.
+        if keys.is_empty()
+            && let ParamOp::Default { kind, word, .. } = &p.op
+        {
+            match kind {
+                DefaultKind::Use => return expand_operand(vp, code, word, quoted, f).await,
+                DefaultKind::Alternative => return Ok(()),
+                _ => return bad(vp).await,
+            }
+        }
         // Unquoted with an empty IFS, `${!a[*]}` is one word, joined by spaces (bash).
         if star && !quoted && f.ifs.is_empty() {
             return emit_val(vp, f, Val::Str(keys.join(&b' ')), quoted);
@@ -845,6 +901,7 @@ async fn param(
     if let ParamOp::Substring { offset, length } = &p.op
         && p.prefix == ParamPrefix::None
         && (is_list || matches!(p.name, ParamName::Special(b'@' | b'*')))
+        && !(p.name == ParamName::Var && is_scalar(vp, code.ast.text(p.name_span)))
     {
         let off = arith_word(vp, code, offset).await?;
         let len = match length {
@@ -863,7 +920,8 @@ async fn param(
                     .enumerate()
                     .map(|(i, a)| (i as i64 + 1, a.clone())),
             );
-            slice_items(&all, off, len)
+            let past = vp.args.len() as i64 + 1;
+            slice_items(&all, off, len, past)
         };
         let items = match items {
             Ok(items) => items,
@@ -878,6 +936,15 @@ async fn param(
         // `$LINENO`: the line of the command running (in a trap, the line it fired at).
         ParamName::Var if code.ast.text(p.name_span) == "LINENO" && p.index.is_none() => {
             Val::Str(vp.line.to_string().into_bytes())
+        }
+        ParamName::Var
+            if code.ast.text(p.name_span) == "LINENO"
+                && matches!(p.index, Some(Subscript::At | Subscript::Star)) =>
+        {
+            Val::List(
+                vec![vp.line.to_string().into_bytes()],
+                matches!(p.index, Some(Subscript::Star)),
+            )
         }
         ParamName::Var => match vp.target(code.ast.text(p.name_span)) {
             // A nameref to an element (`declare -n r='a[2]'`).
@@ -1052,7 +1119,14 @@ async fn param(
                         .await;
                         return Err(Unwind::Abort(1));
                     }
-                    let (v, _) = expand_single(vp, code, word, Ctx::Word).await?;
+                    // The operand as `${x-word}` would expand it, as one word.
+                    let v = {
+                        let mut sub = Fields::new(vp, false);
+                        sub.assign = f.assign;
+                        expand_operand(vp, code, word, quoted, &mut sub).await?;
+                        sub.finish_word();
+                        sub.joined()
+                    };
                     let name = code.ast.text(p.name_span);
                     let r = match &p.index {
                         Some(Subscript::Expr(w)) => {
@@ -1107,8 +1181,20 @@ async fn param(
             replacement,
         } => {
             let pat = expand_pattern(vp, code, pattern).await?;
+            // `patsub_replacement`: an unquoted `&` is the match (D1325).
             let rep = match replacement {
-                Some(w) => expand_single(vp, code, w, Ctx::Word).await?.0,
+                Some(w) if vp.opts.shopt(Shopt::PatsubReplacement) => {
+                    let mut f = Fields::new(vp, false);
+                    f.rep = true;
+                    let pieces: Vec<Piece> = w.parts.iter().map(Piece::Part).collect();
+                    expand_pieces(vp, code, &pieces, false, &mut f, Ctx::Word).await?;
+                    f.finish_word();
+                    let pat: Vec<u8> = f.out.into_iter().flat_map(|x| x.pat).collect();
+                    pattern::replacement(&pat)
+                }
+                Some(w) => vec![pattern::Rep::Lit(
+                    expand_single(vp, code, w, Ctx::Word).await?.0,
+                )],
                 None => Vec::new(),
             };
             let mode = match kind {
@@ -1117,11 +1203,13 @@ async fn param(
                 ReplaceKind::Prefix => ReplaceMode::Prefix,
                 ReplaceKind::Suffix => ReplaceMode::Suffix,
             };
+            // `nocasematch` applies to `${x/…}` but not to `${x#…}` (bash).
+            let rep_opts = vp.match_opts(vp.opts.shopt(Shopt::Nocasematch));
             let val = map_val(val, |s| {
                 if pat.is_empty() && mode != ReplaceMode::Prefix && mode != ReplaceMode::Suffix {
                     s.to_vec()
                 } else {
-                    pattern::replace_with(s, &pat, &rep, mode, mopts)
+                    pattern::replace_with(s, &pat, &rep, mode, rep_opts)
                 }
             });
             emit_val(vp, f, val, quoted)
@@ -1189,13 +1277,21 @@ async fn param(
 /// its value.
 fn transform_var(vp: &Vp, code: &Rc<Code>, p: &psh_syntax::Param, op: u8, val: Val) -> Val {
     use crate::builtins::declare::{declaration, value_quote};
-    let var = match p.name {
-        ParamName::Var => vp.var_ref(code.ast.text(p.name_span)).cloned(),
-        _ => None,
-    };
-    let name = match p.name {
+    let mut name = match p.name {
         ParamName::Var => vp.resolve(code.ast.text(p.name_span)).into_owned(),
         _ => String::new(),
+    };
+    // `${!ref@a}`: the variable `ref` names.
+    if p.prefix == ParamPrefix::Indirect && p.name == ParamName::Var {
+        name = vp
+            .var(&name)
+            .map(|v| String::from_utf8_lossy(v).into_owned())
+            .unwrap_or_default();
+        name = vp.resolve(&name).into_owned();
+    }
+    let var = match p.name {
+        ParamName::Var => vp.var_ref(&name).cloned(),
+        _ => None,
     };
     let list = matches!(p.index, Some(Subscript::At | Subscript::Star));
     let star = matches!(p.index, Some(Subscript::Star));
@@ -1226,8 +1322,15 @@ fn transform_var(vp: &Vp, code: &Rc<Code>, p: &psh_syntax::Param, op: u8, val: V
                 d.pop();
                 return Val::Str(d);
             }
-            let Val::Str(s) = val else { return Val::Unset };
             let flags = var.flags();
+            let Val::Str(s) = val else {
+                // An array without element 0: its declaration alone.
+                return if var.is_array() && !list {
+                    Val::Str(format!("declare -{flags} {name}").into_bytes())
+                } else {
+                    Val::Unset
+                };
+            };
             let mut out = Vec::new();
             if flags != "-" {
                 out.extend_from_slice(format!("declare -{flags} ").as_bytes());
@@ -1243,8 +1346,8 @@ fn transform_var(vp: &Vp, code: &Rc<Code>, p: &psh_syntax::Param, op: u8, val: V
                 (Some(v), true) if v.is_array() => v.keys().into_iter().zip(v.values()).collect(),
                 _ => {
                     return match val {
-                        Val::Str(s) if op == b'K' => Val::Str(quote(&s)),
-                        Val::List(items, st) if op == b'K' => {
+                        Val::Str(s) => Val::Str(quote(&s)),
+                        Val::List(items, st) => {
                             Val::List(items.iter().map(|s| quote(s)).collect(), st)
                         }
                         other => other,
@@ -1408,6 +1511,20 @@ async fn arith_word(vp: &mut Vp, code: &Rc<Code>, w: &Word) -> Result<i64, Unwin
     }
 }
 
+/// A set variable that is not an array (`${s[@]:1:2}` slices its string, bash), LINENO
+/// included.
+fn is_scalar(vp: &mut Vp, name: &str) -> bool {
+    if name == "LINENO" {
+        return true;
+    }
+    let name = vp.resolve(name).into_owned();
+    vp.refresh_dynamic(&name);
+    matches!(
+        vp.vars.get(&name).map(|v| &v.value),
+        Some(crate::vars::Value::Str(_))
+    )
+}
+
 /// `${a[@]:off:len}`: elements by index (`off` counts from after the last index when
 /// negative), at most `len` of them.
 fn slice_array(vp: &Vp, name: &str, off: i64, len: Option<i64>) -> Result<Vec<Vec<u8>>, String> {
@@ -1421,24 +1538,25 @@ fn slice_array(vp: &Vp, name: &str, off: i64, len: Option<i64>) -> Result<Vec<Ve
                 .enumerate()
                 .map(|(i, (_, v))| (i as i64 + 1, v.to_vec()))
                 .collect();
-            return slice_items(&items, if off == 0 { 1 } else { off }, len);
+            let past = items.len() as i64;
+            return slice_items(&items, if off == 0 { 1 } else { off }, len, past);
         }
-        Some(crate::vars::Value::Str(s)) => vec![(0, s.clone())],
         _ => Vec::new(),
     };
-    slice_items(&items, off, len)
+    let past = items.last().map_or(0, |(k, _)| *k);
+    slice_items(&items, off, len, past)
 }
 
-fn slice_items(
+/// A slice of numbered items. A negative length is an error, unless the slice is empty
+/// anyway: no items, a negative offset before the first, or an offset beyond `past`
+/// (bash: the highest subscript of an indexed array, the count of an associative one,
+/// one more than `$#` for the positional parameters).
+pub(crate) fn slice_items(
     items: &[(i64, Vec<u8>)],
     off: i64,
     len: Option<i64>,
+    past: i64,
 ) -> Result<Vec<Vec<u8>>, String> {
-    if let Some(l) = len
-        && l < 0
-    {
-        return Err(l.to_string());
-    }
     let start = if off < 0 {
         // One past the last index; bash's arithmetic wraps when that is i64::MAX + 1,
         // and a negative offset then selects nothing.
@@ -1450,8 +1568,13 @@ fn slice_items(
     } else {
         off
     };
-    if off < 0 && start < 0 {
+    if off < 0 && start < 0 || items.is_empty() || start > past {
         return Ok(Vec::new());
+    }
+    if let Some(l) = len
+        && l < 0
+    {
+        return Err(l.to_string());
     }
     let it = items
         .iter()
@@ -1487,6 +1610,13 @@ fn substring(s: &[u8], off: i64, len: Option<i64>, utf8: bool) -> Result<Vec<u8>
 
 /// `${x@Q}`: quoted for reuse as shell input.
 pub(crate) fn quote(s: &[u8]) -> Vec<u8> {
+    // Control chars and invalid UTF-8 need `$'…'`; a lone quote is `\'` (bash).
+    if s.iter().any(|&b| b.is_ascii_control()) || std::str::from_utf8(s).is_err() {
+        return crate::builtins::set::ansi_c_quote(s);
+    }
+    if s == b"'" {
+        return b"\\'".to_vec();
+    }
     let mut out = vec![b'\''];
     for &b in s {
         if b == b'\'' {
@@ -1667,7 +1797,19 @@ fn unescape(p: &[u8]) -> Vec<u8> {
 /// The paths matching a pattern, sorted; empty if none.
 pub(crate) async fn glob(vp: &Vp, pat: &[u8]) -> Vec<Vec<u8>> {
     let opts = vp.match_opts(vp.opts.shopt(Shopt::Nocaseglob));
-    let dotglob = vp.opts.shopt(Shopt::Dotglob);
+    // A non-empty GLOBIGNORE turns dotglob on (bash).
+    let ignore: Vec<Pattern> = vp
+        .var("GLOBIGNORE")
+        .filter(|v| !v.is_empty())
+        .map(|v| {
+            v.split(|&b| b == b':')
+                .filter(|p| !p.is_empty())
+                .map(|p| Pattern::with(p, opts))
+                .collect()
+        })
+        .unwrap_or_default();
+    let globignore = vp.var("GLOBIGNORE").is_some_and(|v| !v.is_empty());
+    let dotglob = vp.opts.shopt(Shopt::Dotglob) || globignore;
     let globstar = vp.opts.shopt(Shopt::Globstar);
     let absolute = pat.first() == Some(&b'/');
     let comps: Vec<&[u8]> = pat
@@ -1760,6 +1902,8 @@ pub(crate) async fn glob(vp: &Vp, pat: &[u8]) -> Vec<Vec<u8>> {
         } else {
             let p = Pattern::with(comp, opts);
             let dot_ok = comp.first() == Some(&b'.') || dotglob;
+            // `dir/*/`: only directories.
+            let need_dir = !last || pat.ends_with(b"/");
             for (shown, abs) in &cur {
                 let Ok(mut entries) = vp.host().read_dir(abs).await else {
                     continue;
@@ -1773,7 +1917,7 @@ pub(crate) async fn glob(vp: &Vp, pat: &[u8]) -> Vec<Vec<u8>> {
                         continue;
                     }
                     let full = join(abs, &e.name);
-                    if !last && !is_dir(full.clone()).await {
+                    if need_dir && !is_dir(full.clone()).await {
                         continue;
                     }
                     next.push((join(shown, &e.name), full));
@@ -1786,6 +1930,12 @@ pub(crate) async fn glob(vp: &Vp, pat: &[u8]) -> Vec<Vec<u8>> {
         }
     }
     let mut out: Vec<Vec<u8>> = cur.into_iter().map(|(s, _)| s).collect();
+    if globignore {
+        out.retain(|o| {
+            let base = o.rsplit(|&b| b == b'/').next().unwrap_or(o);
+            base != b"." && base != b".." && !ignore.iter().any(|p| p.matches(o, opts.utf8))
+        });
+    }
     if pat.ends_with(b"/") {
         for o in &mut out {
             if o.last() != Some(&b'/') {

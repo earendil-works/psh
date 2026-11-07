@@ -2363,6 +2363,7 @@ top-level help lists bash's options for display only; hidden `-h` and `-V` entri
 release binary grows by about 110 KB (8.87 MB → 8.99 MB on macOS arm64).
 ## D1920: The whole psh-spec runs on Windows in the gate
 ## D1930: The whole psh-spec runs on Windows in the gate
+## D1920: The whole psh-spec runs on Windows in the gate
 date: 2026-11-07 · by: windows · issue: 0007
 The Windows leg's `spec` runs every layer (L1 Oils, L2 brush, L3 agent, L4 utils) in the
 VM against the shared goldens and `tests/<layer>/expected-failures.windows.txt` (D1331,

@@ -327,6 +327,6 @@ exec` until the repository has a remote, then on GitHub Actions (D027):
 - `spec`: the whole psh-spec (L1–L4) in the VM against the shared goldens, with the
   `windows` platform ratchets (`tests/<layer>/expected-failures.windows.txt`): a case
   may fail only if it needs a program Windows lacks or the file lists it with its
-  reason (D1914, D1930). About 85 s.
+  reason (D1914, D1920). About 85 s.
 - Not on Windows: the bash/perl script legs and the `deps` and `wasm` legs, which are
   the same on every host.

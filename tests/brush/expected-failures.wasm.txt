@@ -2,6 +2,10 @@
 # (not in expected-failures.txt) but may fail here, each with its reason. Cases
 # that need external programs are not listed. psh-spec --update-ratchet removes
 # cases that pass; never add a regression.
+brush/compat/background_jobs/6: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+brush/compat/background_jobs/7: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+brush/compat/builtins/cd/3: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+brush/compat/builtins/cd/10: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
 brush/compat/builtins/kill/2: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/builtins/kill/4: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/builtins/kill/5: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
@@ -11,9 +15,18 @@ brush/compat/builtins/kill/13: signals a process (`kill $$`, a shell dying of a 
 brush/compat/builtins/kill/15: the runner's fake `$$` is 99999999, the pid this case uses as one that does not exist
 brush/compat/builtins/kill/31: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/builtins/test/2: needs host files: /bin/sh, /etc/os-release
+brush/compat/builtins/test/3: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+brush/compat/builtins/test/4: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+brush/compat/builtins/test/19: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+brush/compat/builtins/test/21: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+brush/compat/builtins/test/22: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+brush/compat/patterns/filename_expansion/27: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+brush/compat/patterns/filename_expansion/45: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
 brush/compat/signals/7: a shell a signal's default action ends reports 128+n: no process to die by it (D1903)
 brush/compat/signals/8: a shell a signal's default action ends reports 128+n: no process to die by it (D1903)
 brush/compat/signals/9: a shell a signal's default action ends reports 128+n: no process to die by it (D1903)
 brush/compat/signals/19: a shell a signal's default action ends reports 128+n: no process to die by it (D1903)
 brush/compat/signals/26: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/signals/32: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
+brush/compat/word_expansion/tilde/0: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+brush/compat/word_expansion/tilde/2: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has

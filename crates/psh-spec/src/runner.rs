@@ -172,6 +172,13 @@ impl Runner<'_> {
     }
 
     pub fn run(&self, case: &Case, n: usize) -> Result<Observed, String> {
+        // Serial cases hold a machine-wide lock: they share fixed paths with each other,
+        // across workers and across concurrent psh-spec runs (gates in other worktrees).
+        let _serial = if case.serial {
+            Some(serial_lock()?)
+        } else {
+            None
+        };
         let sb = Sandbox::create(&self.dir.cases, n, case).map_err(|e| format!("sandbox: {e}"))?;
         let env = self.env(case, &sb);
         let timeout = self.timeout.unwrap_or(case.timeout);
@@ -258,6 +265,20 @@ impl Runner<'_> {
     }
 }
 
+/// The machine-wide lock of serial cases: an exclusive lock on a file in the temporary
+/// directory, released when the returned file is dropped.
+fn serial_lock() -> Result<std::fs::File, String> {
+    let path = std::env::temp_dir().join("psh-spec-serial.lock");
+    let file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&path)
+        .map_err(|e| format!("{}: {e}", path.display()))?;
+    file.lock()
+        .map_err(|e| format!("{}: {e}", path.display()))?;
+    Ok(file)
+}
+
 /// Maps `f` over `items` on `jobs` threads, keeping the order.
 pub fn parallel_map<T: Sync, R: Send>(
     items: &[T],
@@ -284,4 +305,23 @@ pub fn parallel_map<T: Sync, R: Send>(
     });
     drop(slots);
     results.into_iter().map(Option::unwrap).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn serial_lock_excludes_other_holders() {
+        let inside = AtomicUsize::new(0);
+        let max = AtomicUsize::new(0);
+        parallel_map(&[(); 8], 8, |_, _| {
+            let _lock = serial_lock().unwrap();
+            let now = inside.fetch_add(1, Ordering::SeqCst) + 1;
+            max.fetch_max(now, Ordering::SeqCst);
+            std::thread::sleep(std::time::Duration::from_millis(20));
+            inside.fetch_sub(1, Ordering::SeqCst);
+        });
+        assert_eq!(max.load(Ordering::SeqCst), 1);
+    }
 }

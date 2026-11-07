@@ -95,6 +95,9 @@ pub struct Case {
     pub timeout: Duration,
     /// Labels that group rules can match (`pty`, `interactive`, ...).
     pub tags: Vec<String>,
+    /// Runs alone (tests/spec.toml `[[serial]]`): the case uses fixed paths outside its
+    /// directory (`/tmp/oil-spec-test`), which parallel cases or runs would share.
+    pub serial: bool,
     /// Brush's judgement that stdout is not comparable (e.g. it lists the host).
     pub ignore_stdout: bool,
     pub ignore_whitespace: bool,
@@ -197,6 +200,7 @@ fn load_oils(layer: Layer, file: &str, text: &str) -> Result<Vec<Case>, String> 
                 home_dir: None,
                 timeout: OILS_TIMEOUT,
                 tags: tags.clone(),
+                serial: false,
                 ignore_stdout: false,
                 ignore_whitespace: false,
             }
@@ -292,6 +296,7 @@ fn load_brush(file: &str, text: &str, dir: &Path) -> Result<Vec<Case>, String> {
             home_dir: c.get("home_dir").and_then(Yaml::as_str).map(str::to_string),
             timeout,
             tags,
+            serial: false,
             ignore_stdout: flag("ignore_stdout"),
             ignore_whitespace: flag("ignore_whitespace"),
         });

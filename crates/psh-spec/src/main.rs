@@ -279,6 +279,9 @@ fn run(opts: Options) -> Result<ExitCode, String> {
         cases.extend(case::load_layer(&root, layer)?);
     }
     cases.retain(|c| selected(c, &opts.filters));
+    for c in &mut cases {
+        c.serial = groups.is_serial(c);
+    }
     let items: Vec<Item> = cases
         .iter()
         .map(|c| {

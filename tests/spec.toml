@@ -102,3 +102,39 @@ reason = "nondeterministic in bash itself (pids, clock, $RANDOM, timing)"
 [[later]]
 match = ["brush/compat/compound_cmds/coproc/*"]
 reason = "coproc: bash feature outside the first milestone"
+
+# --- Serial: cases that must not run at the same time --------------------------------
+# Not a group: these cases also count in their group above. They use fixed paths outside
+# their own directory (`/tmp/oil-spec-test/pwd`, `/tmp/spam`, `/tmp/oils-spec`, ...), so
+# two of them running at once, in this run or another psh-spec run on the machine,
+# race (one removes the directory another is in). Each holds a machine-wide lock while
+# it runs.
+
+[[serial]]
+match = [
+  "oils/builtin-cd/9",
+  "oils/builtin-cd/10",
+  "oils/builtin-cd/11",
+  "oils/builtin-cd/12",
+  "oils/builtin-cd/13",
+  "oils/builtin-cd/22",
+  "oils/builtin-cd/23",
+  "oils/builtin-cd/25",
+  "oils/builtin-cd/27",
+  "oils/builtin-dirs/0",
+  "oils/builtin-dirs/1",
+  "oils/builtin-dirs/4",
+  "oils/builtin-dirs/6",
+  "oils/builtin-dirs/7",
+  "oils/builtin-dirs/8",
+  "oils/builtin-dirs/9",
+  "oils/builtin-dirs/10",
+  "oils/builtin-dirs/11",
+  "oils/builtin-dirs/12",
+  "oils/builtin-dirs/13",
+  "oils/builtin-dirs/14",
+  "oils/builtin-dirs/15",
+  "oils/builtin-type-bash/8",
+  "oils/builtin-type-bash/16",
+]
+reason = "fixed paths under /tmp shared between cases (every case of these files that uses /tmp)"

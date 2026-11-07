@@ -10,6 +10,10 @@
 //! reason = "..."
 //! ```
 //!
+//! `[[serial]]` tables (same keys) are not a group: they mark cases that must not run
+//! concurrently with each other, in this run or another psh-spec run on the machine,
+//! because they use fixed paths outside their directory.
+//!
 //! Rules are tried in file order; the first that matches decides. A rule may be
 //! `[[active]]` to carve an exception out of a later, broader rule. Unmatched cases
 //! are active. Only this subset of TOML is accepted: arrays of tables, and string or
@@ -34,6 +38,13 @@ impl Group {
     }
 }
 
+impl Rule {
+    fn matches(&self, case: &Case) -> bool {
+        self.patterns.iter().any(|p| glob(p, &case.id))
+            || self.tags.iter().any(|t| case.tags.contains(t))
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Rule {
     pub group: Group,
@@ -47,11 +58,15 @@ pub struct Rule {
 #[derive(Debug, Default)]
 pub struct Groups {
     pub rules: Vec<Rule>,
+    /// `[[serial]]` rules; their `group` field is unused.
+    pub serial: Vec<Rule>,
 }
 
 impl Groups {
     pub fn parse(text: &str) -> Result<Groups, String> {
         let mut rules: Vec<Rule> = Vec::new();
+        // Indexes into `rules` of the `[[serial]]` tables, split off at the end.
+        let mut serial_at: Vec<usize> = Vec::new();
         let mut lines = text.lines().enumerate().peekable();
         while let Some((n, raw)) = lines.next() {
             let err = |m: &str| format!("spec.toml line {}: {m}", n + 1);
@@ -60,7 +75,11 @@ impl Groups {
                 continue;
             }
             if let Some(name) = line.strip_prefix("[[").and_then(|l| l.strip_suffix("]]")) {
+                if name.trim() == "serial" {
+                    serial_at.push(rules.len());
+                }
                 let group = match name.trim() {
+                    "serial" => Group::Active,
                     "skip" => Group::Skip,
                     "later" => Group::Later,
                     "active" => Group::Active,
@@ -109,15 +128,22 @@ impl Groups {
                 return Err(format!("spec.toml line {}: rule matches nothing", r.line));
             }
         }
-        Ok(Groups { rules })
+        let mut serial = Vec::new();
+        for i in serial_at.into_iter().rev() {
+            serial.push(rules.remove(i));
+        }
+        serial.reverse();
+        Ok(Groups { rules, serial })
     }
 
     /// The rule that decides a case's group, if any.
     pub fn rule_for(&self, case: &Case) -> Option<&Rule> {
-        self.rules.iter().find(|r| {
-            r.patterns.iter().any(|p| glob(p, &case.id))
-                || r.tags.iter().any(|t| case.tags.contains(t))
-        })
+        self.rules.iter().find(|r| r.matches(case))
+    }
+
+    /// Whether a `[[serial]]` rule matches the case.
+    pub fn is_serial(&self, case: &Case) -> bool {
+        self.serial.iter().any(|r| r.matches(case))
     }
 }
 
@@ -262,6 +288,10 @@ reason = "needs a terminal"
         assert_eq!(g.rules[1].reason, "because \"reasons\"");
         assert_eq!(g.rules[2].tags, vec!["pty"]);
         assert!(Groups::parse("[[skip]]\nmatch = \"x\"\n").is_err());
+        let g = Groups::parse("[[serial]]\nmatch = \"a/*\"\nreason = \"r\"\n[[skip]]\nmatch = \"b\"\nreason = \"r\"\n").unwrap();
+        assert_eq!(g.serial.len(), 1);
+        assert_eq!(g.rules.len(), 1);
+        assert_eq!(g.rules[0].group, Group::Skip);
         assert!(Groups::parse("[[nope]]\n").is_err());
     }
 }

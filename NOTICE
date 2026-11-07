@@ -82,3 +82,36 @@ Files containing code adapted from std:
 
 crates/psh-os/src/windows/cmdline.rs (from sys/args/windows.rs: MSVCRT argument quoting and the batch file quoting of CVE-2024-24576)
 crates/psh-os/src/windows/file.rs (the named-pipe pattern of sys/pal/windows/pipe.rs for pump pipes)
+
+-------------------------------------------------------------------------------
+ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22) and walkdir
+(https://github.com/BurntSushi/walkdir, 2.5.0); dual-licensed MIT or Unlicense,
+used under the MIT License
+-------------------------------------------------------------------------------
+
+The MIT License (MIT)
+
+Copyright (c) 2015 Andrew Gallant
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+Files containing code adapted from ripgrep and walkdir:
+
+crates/psh-utils/src/search/vwalk.rs (the ignore chain of ignore/src/dir.rs; the traversal rules of ignore/src/walk.rs and walkdir's lib.rs)
+crates/psh-utils/src/search/gitconfig.rs (gitconfig_excludes_path and its helpers from ignore/src/gitignore.rs)

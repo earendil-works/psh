@@ -1776,6 +1776,51 @@ rules, `error`, and a synchronous fs view (`open` for reading, `stat`, `read_dir
 Incremental searching in wasm (`yes | grep x | head -1`) needs the search crates driven
 over chunks by an async utility; it is 0013 follow-up work, not this mechanism.
 
+## D1131: POSIX patterns for the search utilities: psh-regex parses, regex matches
+date: 2026-11-07 · by: infra · issue: 0013
+The BRE/ERE translator the search utilities share (grep, later sed and `find -regex`)
+is `psh_regex::to_rust_syntax`, built on psh-regex's parser (D1270), not a second
+parser: syntax, GNU extensions, error messages and bracket rules are the ones psh-regex
+was verified with against glibc. It emits a pattern for `regex-syntax` whose meaning
+does not depend on the caller's parser flags except case folding: anchors, `.` and
+negated sets are spelled out from `Options::newline` (`(?m:^)`, `[^\n]`, or `(?s:.)`),
+a C-locale pattern is `(?-u)` bytes, POSIX classes in UTF-8 follow psh-regex's `Class`
+(ASCII members plus Unicode properties), undecodable bytes are `(?-u:\xHH)`. Two
+flags tell the caller when to use `psh_regex::Regex` instead: `pattern: None`
+(back-references) and `ambiguous` (an alternation, or more than one variable-length
+part: only then can a leftmost-first match end elsewhere than the leftmost-longest one;
+line selection is the same, spans can differ). A unit test runs psh-regex's GNU corpus
+through the translation: every unambiguous case gives glibc's bounds, every ambiguous
+one its match/no-match.
+
+## D1132: The walker seam: `ignore::Walk` natively, the same walk over WalkHost otherwise
+date: 2026-11-07 · by: infra · issue: 0013
+`search::walk::Walker` runs one of two walks with identical results, checked by a
+parity test over fixture trees (nested `.gitignore`/`.ignore`/custom ignore files,
+`.git/info/exclude`, negations, parent-directory rules, `require_git`, hidden files,
+symlinks and loops, globs, types, depth and size limits, unreadable directories, ignore
+file errors, skip and quit).
+- **Order**: depth first, a directory's entries sorted by name (`--sort path`) in both,
+  so output is deterministic. A multithreaded search keeps this order by searching in
+  parallel behind a sequential walk (part of rg), not by `WalkParallel`.
+- **Native** when the file system is the process's (`native_path` exists): `ignore::Walk`
+  over absolute OS roots without `.` components, `current_dir` = the shell's cwd;
+  entry and error paths (including walkdir's "IO error for operation on PATH") are
+  mapped back to the user's spelling. `min_depth` is applied by the seam, not by
+  `ignore` (whose `Walk` would skip the root's own ignore files). Not native when the
+  process environment names another global gitignore than the shell's (HOME,
+  USERPROFILE, XDG_CONFIG_HOME, GIT_CONFIG_GLOBAL, GIT_CONFIG_SYSTEM differ) or when
+  explicit ignore files are given (`ignore` matches those against the walk's own,
+  absolute, spelling of paths).
+- **Virtual** otherwise: `ignore`'s traversal and ignore chain re-implemented over
+  `WalkHost` (`SyncCtx` implements it), with `ignore`'s `gitignore`/`overrides`/`types`
+  matchers; the chain is adapted from `ignore/src/dir.rs` (attribution in NOTICE). Paths
+  are matched as `ignore` matches a walk rooted at the user's spelling; parents are
+  canonicalized lexically (no realpath in the fs view); the global excludes file is
+  found from the shell's environment (`search::gitconfig`). Hidden means a leading `.`
+  only (no Windows attribute in the fs view); loops are found by (dev, ino) where the
+  host has them.
+
 ## D1115: wasm ABI 3: the D1150 file system in the JS host
 date: 2026-11-07 · by: infra · issue: 0011
 D1150's Host operations reach JS through three host_call kinds. `K_FS` (async, like

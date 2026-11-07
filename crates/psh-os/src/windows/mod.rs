@@ -17,6 +17,7 @@ mod cmdline;
 mod file;
 mod path;
 mod poller;
+pub mod signals;
 mod spawn;
 
 use std::io;

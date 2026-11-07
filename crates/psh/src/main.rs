@@ -234,11 +234,16 @@ impl Signals {
         Signals { control }
     }
 
-    #[cfg(not(unix))]
+    #[cfg(windows)]
     fn catch() -> Signals {
-        Signals {
-            control: Default::default(),
-        }
+        let control: Control = Default::default();
+        let c = control.clone();
+        let _ = psh_os::windows::signals::catch(move |sig| {
+            if let Some(ctl) = &*c.lock().unwrap_or_else(|e| e.into_inner()) {
+                ctl.signal(sig);
+            }
+        });
+        Signals { control }
     }
 
     /// The shell exists, on the engine thread: it takes the signals from now on (the
@@ -254,6 +259,11 @@ impl Signals {
             psh_os::unix::signals::forward_to(word);
             psh_os::unix::signals::unblock_in_thread(&CAUGHT);
         }
+        // A console event before the shell existed.
+        #[cfg(windows)]
+        if let Some(sig) = psh_os::windows::signals::first_caught() {
+            ctl.signal(sig);
+        }
         *control.lock().unwrap_or_else(|e| e.into_inner()) = Some(ctl);
     }
 
@@ -265,6 +275,12 @@ impl Signals {
             let grace = psh_os::unix::UnixConfig::DEFAULT_GRACE;
             psh_os::unix::settle(grace + std::time::Duration::from_secs(1));
             psh_os::unix::signals::die_by(sig);
+        }
+        #[cfg(windows)]
+        if let Some(sig) = killed_by {
+            let grace = psh_os::windows::WindowsConfig::DEFAULT_GRACE;
+            psh_os::windows::settle(grace + std::time::Duration::from_secs(1));
+            psh_os::windows::signals::die_by(sig);
         }
         let _ = (self, killed_by);
     }

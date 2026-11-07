@@ -240,3 +240,66 @@ fn parse_keeps_bytes_that_are_not_utf8() {
     );
     assert!(out.stdout.contains("caf\u{f7e9}"), "{}", out.stdout);
 }
+
+/// A ctrl-break to psh's console group cancels the run: its externals are killed and
+/// psh ends with 128 + TERM.
+#[cfg(windows)]
+#[test]
+fn ctrl_break_cancels_the_run() {
+    use psh_engine::host::{ChildFd, ExitStatus, Host, SIGTERM, SpawnSpec};
+    use psh_os::windows::{WindowsConfig, WindowsHost};
+    use std::task::{Context, Poll, Waker};
+
+    let host = WindowsHost::new(WindowsConfig::default());
+    let exe = env!("CARGO_BIN_EXE_psh").replace('\\', "/");
+    let spec = SpawnSpec {
+        program: exe.clone().into_bytes(),
+        argv: vec![
+            exe.into_bytes(),
+            b"-c".to_vec(),
+            b"echo start; \"$SystemRoot/System32/ping.exe\" -n 30 127.0.0.1 >/dev/null; echo after $?".to_vec(),
+        ],
+        env: std::env::vars()
+            .map(|(k, v)| (k.into_bytes(), v.into_bytes()))
+            .collect(),
+        cwd: std::env::temp_dir()
+            .to_string_lossy()
+            .replace('\\', "/")
+            .into_bytes(),
+        fds: vec![
+            (0, ChildFd::Null),
+            (1, ChildFd::Pipe { input: false }),
+            (2, ChildFd::Dup(1)),
+        ],
+        ..SpawnSpec::default()
+    };
+    let spawned = host.spawn(spec).expect("spawn psh");
+    let mut p = spawned.proc;
+    let out = spawned.pipes[0].1.clone();
+    std::thread::sleep(Duration::from_millis(1500));
+    p.signal(SIGTERM);
+    let mut cx = Context::from_waker(Waker::noop());
+    let deadline = Instant::now() + Duration::from_secs(15);
+    let status = loop {
+        if let Poll::Ready(s) = p.poll_wait(&mut cx) {
+            break s;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "psh did not end after a ctrl-break"
+        );
+        std::thread::sleep(Duration::from_millis(20));
+    };
+    let mut text = Vec::new();
+    let mut buf = [0u8; 1024];
+    while let Poll::Ready(Ok(n)) = out.poll_read(&mut cx, &mut buf) {
+        if n == 0 {
+            break;
+        }
+        text.extend_from_slice(&buf[..n]);
+    }
+    let text = String::from_utf8_lossy(&text);
+    assert_eq!(status, ExitStatus::Exited(143), "{text}");
+    drop(p);
+    assert!(host.leftovers().is_empty(), "{:?}", host.leftovers());
+}

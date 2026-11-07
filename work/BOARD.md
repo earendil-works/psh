@@ -8,7 +8,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | --- | --- | --- | --- |
 | 0034b | cli.md guide page, psh --utils | cli | .worktrees/cli |
 | 0020 | Utilities I: diff, checksums, base64, date, env, nice, nohup, which | shapes | .worktrees/shapes |
-| 0018 | Utilities G: jq (jaq) | procs | .worktrees/procs |
+| 0035 | Tier 2: process and host utilities | procs | .worktrees/procs |
 | 0007 | Windows: part A merged (bad4d63, rework 6ca3d08); part B in progress | windows | .worktrees/windows |
 | 0008-wasm | JS host: Host::now/mode (D1069), then 0013 | infra | .worktrees/infra |
 | 0015 | Utilities D: files and paths | files | .worktrees/files |
@@ -70,3 +70,5 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0033 | Per-platform ratchets and the platform tag | 4c0aee4 (shapes) |
 | 0017 | Utilities F: find, xargs | f817046 (procs) |
 | 0034 | psh binary command line on argument (D035) | 4e79b31 (cli) |
+| 0018 | Utilities G: jq | af40922 (procs) |
+| 0014 | Utilities C: sed | 888caeb (parser) |

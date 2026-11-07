@@ -8,7 +8,11 @@ fn main() {
     let mut args = std::env::args().skip(1);
     let depth: usize = args.next().and_then(|a| a.parse().ok()).unwrap_or(95);
     let stack: usize = args.next().and_then(|a| a.parse().ok()).unwrap_or(1 << 20);
-    let src = format!("{}echo deep{}", "{ ".repeat(depth), "; }".repeat(depth));
+    let src = if std::env::args().nth(3).as_deref() == Some("func") {
+        format!("f() {{ if [ $1 -lt {depth} ]; then f $(( $1 + 1 )); else echo deep; fi; }}; f 0")
+    } else {
+        format!("{}echo deep{}", "{ ".repeat(depth), "; }".repeat(depth))
+    };
     let t = std::thread::Builder::new()
         .stack_size(stack)
         .spawn(move || psh_engine::run_on_test_host(&src))

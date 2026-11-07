@@ -43,6 +43,10 @@ pub(crate) fn find(name: &[u8]) -> Option<Builtin> {
         b"set" => (builtin!(set), true),
         b"shift" => (builtin!(shift), true),
         b"return" => (builtin!(return_), true),
+        b"break" => (builtin!(break_), true),
+        b"continue" => (builtin!(continue_), true),
+        b"local" => (builtin!(local), false),
+        b"let" => (builtin!(let_), false),
         b"test" => (builtin!(test::test), false),
         b"[" => (builtin!(test::bracket), false),
         _ => return None,
@@ -366,6 +370,7 @@ async fn readonly(vp: &mut Vp, args: &[Vec<u8>]) -> R {
 
 async fn unset(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     let mut i = 1;
+    let (mut funcs, mut vars_only) = (false, false);
     while i < args.len() && args[i].first() == Some(&b'-') && args[i].len() > 1 {
         if args[i] == b"--" {
             i += 1;
@@ -376,17 +381,26 @@ async fn unset(vp: &mut Vp, args: &[Vec<u8>]) -> R {
                 .await;
             return Ok(2);
         }
+        funcs |= args[i].contains(&b'f');
+        vars_only |= args[i].contains(&b'v');
         i += 1;
     }
     let mut status = 0;
     for a in &args[i..] {
+        let n = std::str::from_utf8(a).unwrap_or_default();
+        // `-f`, or no option and no such variable: the function.
+        if (funcs && !vars_only)
+            || (!vars_only && vp.vars.get(n).is_none() && vp.funcs.contains_key(n))
+        {
+            std::rc::Rc::make_mut(&mut vp.funcs).remove(n);
+            continue;
+        }
         if !is_name(a) {
             vp.error(&format!("unset: `{}': not a valid identifier", s(a)))
                 .await;
             status = 1;
             continue;
         }
-        let n = std::str::from_utf8(a).unwrap_or_default();
         if vp.vars.get(n).is_some_and(|v| v.readonly) {
             vp.error(&format!("unset: {n}: cannot unset: readonly variable"))
                 .await;
@@ -459,11 +473,155 @@ async fn set(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     Ok(0)
 }
 
-async fn return_(vp: &mut Vp, _args: &[Vec<u8>]) -> R {
-    // No functions or `source` yet: always outside of one.
-    vp.error("return: can only `return' from a function or sourced script")
+async fn return_(vp: &mut Vp, args: &[Vec<u8>]) -> R {
+    if vp.frames.is_empty() {
+        vp.error("return: can only `return' from a function or sourced script")
+            .await;
+        return Ok(2);
+    }
+    let mut rest = &args[1..];
+    if rest.first().is_some_and(|a| a == b"--") {
+        rest = &rest[1..];
+    }
+    match rest.first() {
+        None => Err(Unwind::Return(vp.status)),
+        Some(a) => match parse_int(a) {
+            Some(n) => Err(Unwind::Return((n & 0xff) as i32)),
+            None => {
+                vp.error(&format!("return: {}: numeric argument required", s(a)))
+                    .await;
+                Err(Unwind::Return(2))
+            }
+        },
+    }
+}
+
+async fn break_(vp: &mut Vp, args: &[Vec<u8>]) -> R {
+    loop_control(vp, args, "break").await
+}
+
+async fn continue_(vp: &mut Vp, args: &[Vec<u8>]) -> R {
+    loop_control(vp, args, "continue").await
+}
+
+async fn loop_control(vp: &mut Vp, args: &[Vec<u8>], name: &str) -> R {
+    let n = match args.get(1) {
+        None => 1,
+        Some(a) => match parse_int(a) {
+            Some(n) if n >= 1 => n,
+            Some(_) => {
+                vp.error(&format!("{name}: {}: loop count out of range", s(a)))
+                    .await;
+                return Err(Unwind::Exit(1));
+            }
+            None => {
+                vp.error(&format!("{name}: {}: numeric argument required", s(a)))
+                    .await;
+                return Err(Unwind::Exit(1));
+            }
+        },
+    };
+    if vp.loops == 0 {
+        vp.error(&format!(
+            "{name}: only meaningful in a `for', `while', or `until' loop"
+        ))
         .await;
-    Ok(2)
+        return Ok(0);
+    }
+    let n = n.min(i64::from(vp.loops)) as u32;
+    Err(if name == "break" {
+        Unwind::Break(n)
+    } else {
+        Unwind::Continue(n)
+    })
+}
+
+async fn local(vp: &mut Vp, args: &[Vec<u8>]) -> R {
+    if vp.frames.is_empty() {
+        vp.error("local: can only be used in a function").await;
+        return Ok(1);
+    }
+    let mut i = 1;
+    let (mut readonly, mut export) = (false, false);
+    while i < args.len() && args[i].len() > 1 && (args[i][0] == b'-' || args[i][0] == b'+') {
+        if args[i] == b"--" {
+            i += 1;
+            break;
+        }
+        for c in &args[i][1..] {
+            match c {
+                b'r' => readonly = args[i][0] == b'-',
+                b'x' => export = args[i][0] == b'-',
+                _ => {
+                    return crate::expand::unsupported(vp, &format!("local -{}", *c as char)).await;
+                }
+            }
+        }
+        i += 1;
+    }
+    let mut status = 0;
+    for a in &args[i..] {
+        let (n, value) = match a.iter().position(|&b| b == b'=') {
+            Some(eq) => (&a[..eq], Some(a[eq + 1..].to_vec())),
+            None => (&a[..], None),
+        };
+        let (n, append) = match n.strip_suffix(b"+") {
+            Some(n) if value.is_some() => (n, true),
+            _ => (n, false),
+        };
+        if !is_name(n) {
+            vp.error(&format!("local: `{}': not a valid identifier", s(a)))
+                .await;
+            status = 1;
+            continue;
+        }
+        let n = std::str::from_utf8(n).unwrap_or_default().to_string();
+        if vp.vars.get(&n).is_some_and(|v| v.readonly) {
+            vp.error(&format!("local: {n}: readonly variable")).await;
+            status = 1;
+            continue;
+        }
+        let fresh = vp
+            .frames
+            .last()
+            .is_some_and(|f| !f.saved.iter().any(|(s, _)| *s == n));
+        vp.make_local(&n);
+        let old = vp.var(&n).map(<[u8]>::to_vec);
+        let var = vp.vars.entry(&n);
+        if fresh {
+            *var = crate::state::Var::default();
+        }
+        match value {
+            Some(v) if append => {
+                let mut o = old.unwrap_or_default();
+                o.extend_from_slice(&v);
+                var.value = Some(o);
+            }
+            Some(v) => var.value = Some(v),
+            None => {}
+        }
+        var.readonly |= readonly;
+        var.exported |= export;
+    }
+    Ok(status)
+}
+
+async fn let_(vp: &mut Vp, args: &[Vec<u8>]) -> R {
+    if args.len() < 2 {
+        vp.error("let: expression expected").await;
+        return Ok(1);
+    }
+    let mut last = 0;
+    for a in &args[1..] {
+        match crate::arith::eval(vp, a) {
+            Ok(v) => last = v,
+            Err(msg) => {
+                vp.error(&format!("let: {msg}")).await;
+                return Ok(1);
+            }
+        }
+    }
+    Ok(i32::from(last == 0))
 }
 
 async fn shift(vp: &mut Vp, args: &[Vec<u8>]) -> R {

@@ -145,6 +145,25 @@ pub(crate) struct Vp {
     pub depth: u32,
     /// `$!`
     pub last_bg: Option<u32>,
+    /// Function definitions; shared with subshells until one defines or unsets.
+    pub funcs: Rc<HashMap<String, Rc<Func>>>,
+    /// One frame per running function call: the variables its `local`s shadow.
+    pub frames: Vec<Frame>,
+    /// Loops running in this function body (or at top level): `break`/`continue`.
+    pub loops: u32,
+}
+
+/// A function: its body command in the chunk that defined it.
+pub(crate) struct Func {
+    pub code: Rc<Code>,
+    pub body: psh_syntax::CmdId,
+}
+
+/// A function call's locals: each shadowed variable with its value before the call
+/// (`None`: it did not exist), restored when the call returns (dynamic scope).
+#[derive(Clone, Default)]
+pub(crate) struct Frame {
+    pub saved: Vec<(String, Option<Var>)>,
 }
 
 impl Vp {
@@ -152,11 +171,23 @@ impl Vp {
         &*self.core.host
     }
 
-    /// A copy for a subshell, one level deeper; `None` past the nesting limit.
+    /// A copy for a subshell, one level deeper. Loops of the parent cannot be broken
+    /// out of from it.
     pub(crate) fn subshell(&self) -> Vp {
         let mut sub = self.clone();
         sub.depth += 1;
+        sub.loops = 0;
         sub
+    }
+
+    /// Makes `name` local to the innermost function call (saving its outer value once).
+    pub(crate) fn make_local(&mut self, name: &str) {
+        let old = self.vars.get(name).cloned();
+        if let Some(frame) = self.frames.last_mut()
+            && !frame.saved.iter().any(|(n, _)| n == name)
+        {
+            frame.saved.push((name.to_string(), old));
+        }
     }
 
     pub(crate) fn fd(&self, n: u32) -> Option<Fd> {

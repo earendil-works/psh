@@ -23,6 +23,7 @@
 //! `std::task::Waker`s, never by blocking the thread, and runs no threads itself. A
 //! [`Shell`] is `!Send`: create and step it on one thread.
 
+mod arith;
 mod builtins;
 mod escape;
 mod exec;
@@ -237,6 +238,9 @@ impl Shell {
             line: 0,
             depth: 0,
             last_bg: None,
+            funcs: Rc::new(Default::default()),
+            frames: Vec::new(),
+            loops: 0,
         };
         Shell {
             core,

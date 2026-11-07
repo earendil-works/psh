@@ -376,3 +376,148 @@ fn nesting_limit() {
     while !matches!(shell.step(1000), Step::Done(_)) {}
     assert!(String::from_utf8_lossy(&host.stderr()).contains("maximum nesting level exceeded"));
 }
+
+#[test]
+fn functions_and_locals() {
+    check("f() { echo \"f:$1:$#\"; }; f a b; f", "f:a:2\nf::0\n");
+    check("f() { return 3; echo no; }; f; echo $?", "3\n");
+    check(
+        "x=g; f() { local x=l; echo $x; g; }; g() { echo $x; }; f; echo $x",
+        "l\nl\ng\n",
+    );
+    check(
+        "f() { local x; echo \"${x-unset}\"; }; x=1; f; echo $x",
+        "unset\n1\n",
+    );
+    check("function f { echo kw; }; f", "kw\n");
+    check(
+        "f() { echo $1; }; set -- top; f inner; echo $1",
+        "inner\ntop\n",
+    );
+    check("f() { echo out; } > /tmp/fo; f; cat /tmp/fo", "out\n");
+    check("f() { echo hi; }; unset -f f; f; echo $?", "127\n");
+    check(
+        "echo() { builtin_missing=1; printf 'fn\\n'; }; echo x",
+        "fn\n",
+    );
+    check("f() { echo ${X-u}; }; X=2 f; echo ${X-u}", "2\nu\n");
+    let o = run("local x");
+    assert_eq!(
+        o.stderr,
+        "psh: line 1: local: can only be used in a function\n"
+    );
+}
+
+#[test]
+fn control_flow() {
+    check(
+        "if true; then echo a; elif true; then echo b; else echo c; fi",
+        "a\n",
+    );
+    check(
+        "if false; then echo a; elif true; then echo b; else echo c; fi",
+        "b\n",
+    );
+    check("if false; then echo a; fi; echo $?", "0\n");
+    check("for i in a 'b c'; do echo \"$i\"; done", "a\nb c\n");
+    check("set -- x y; for i; do echo $i; done", "x\ny\n");
+    check(
+        "i=0; while [ $i -lt 3 ]; do echo $i; i=$((i+1)); done",
+        "0\n1\n2\n",
+    );
+    check(
+        "i=0; until [ $i -ge 2 ]; do echo $i; i=$((i+1)); done",
+        "0\n1\n",
+    );
+    check(
+        "for i in 1 2 3; do [ $i = 2 ] && continue; echo $i; done",
+        "1\n3\n",
+    );
+    check(
+        "for i in a b; do for j in 1 2; do echo $i$j; break 2; done; done",
+        "a1\n",
+    );
+    check(
+        "for i in a b; do for j in 1 2; do continue 2; echo no; done; echo no; done; echo $i$j",
+        "b1\n",
+    );
+    check("case abc in a*) echo A;; *) echo star;; esac", "A\n");
+    check(
+        "case x in a|x) echo hit;& b) echo fell;; c) echo no;; esac",
+        "hit\nfell\n",
+    );
+    check(
+        "case ab in a*) echo 1;;& *b) echo 2;; *) echo 3;; esac",
+        "1\n2\n",
+    );
+    check(
+        "x='*'; case a in \"$x\") echo lit;; $x) echo glob;; esac",
+        "glob\n",
+    );
+    check("for i in 1 2 3; do echo $i; done | wc", "3\n");
+    let o = run("break; echo $?");
+    assert_eq!(o.stdout, "0\n");
+}
+
+#[test]
+fn arithmetic() {
+    check(
+        "echo $((1 + 2 * 3)) $((7 / 2)) $((-7 % 3)) $((2 ** 10))",
+        "7 3 -1 1024\n",
+    );
+    check("x=5; echo $((x + 1)) $((x++)) $x $((++x))", "6 5 6 7\n");
+    check("((1 > 2)); echo $?; ((2 > 1)); echo $?", "1\n0\n");
+    check("for ((i = 0; i < 3; i++)); do echo $i; done", "0\n1\n2\n");
+    check("for ((;;)); do echo once; break; done", "once\n");
+    check("let x=2+3 y=x*2; echo $x $y $?", "5 10 0\n");
+    check("a=b; b=7; echo $((a + 1))", "8\n");
+    let o = run("echo $((1+)); echo after");
+    assert_eq!(o.status, 1);
+    assert_eq!(o.stdout, "");
+    assert_eq!(
+        o.stderr,
+        "psh: line 1: 1+: arithmetic syntax error: operand expected (error token is \"+\")\n"
+    );
+    let o = run("((1/0)); echo $?");
+    assert_eq!(o.stdout, "1\n");
+}
+
+#[test]
+fn deep_recursion() {
+    // 1000 nested calls need ~15 MiB of stack in debug builds (D1050): run on a
+    // thread sized as embedders are told to.
+    let t = std::thread::Builder::new()
+        .stack_size(
+            crate::ShellConfig::DEFAULT_MAX_DEPTH as usize * crate::ShellConfig::STACK_PER_LEVEL
+                + (4 << 20),
+        )
+        .spawn(|| {
+            let o = run(
+                "f() { if [ $1 -lt 999 ]; then f $(( $1 + 1 )); else echo depth $1; fi; }; f 0",
+            );
+            assert_eq!(o.stdout, "depth 999\n");
+            // Past the limit: an error, not a stack overflow.
+            let o = run("f() { f; }; f; echo after");
+            assert!(
+                o.stderr
+                    .contains("f: maximum function nesting level exceeded (1000)"),
+                "{}",
+                o.stderr
+            );
+            assert_eq!(o.status, 1);
+        })
+        .unwrap();
+    t.join().unwrap();
+}
+
+#[test]
+fn loops_yield_at_safepoints() {
+    let host = Rc::new(TestHost::new());
+    let mut shell = Shell::new(host.config());
+    shell.start(Script::command("while true; do :; done"));
+    for _ in 0..100 {
+        assert_eq!(shell.step(50), Step::Yield);
+    }
+    shell.control().cancel();
+    assert_eq!(shell.step(50), Step::Done(143));
+}

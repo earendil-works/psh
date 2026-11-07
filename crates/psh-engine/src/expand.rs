@@ -543,8 +543,19 @@ async fn expand_part(
             f.subst_status = Some(st);
             emit(f, &out, quoted);
         }
-        Part::Arith(_) => {
-            return unsupported(vp, "arithmetic expansion").await;
+        Part::Arith(w) => {
+            let (text, st) = expand_single(vp, code, w, Ctx::Word).await?;
+            if st.is_some() {
+                f.subst_status = st;
+            }
+            match crate::arith::eval(vp, &text) {
+                Ok(v) => emit(f, v.to_string().as_bytes(), quoted),
+                Err(msg) => {
+                    // An error in an arithmetic expansion ends a non-interactive shell.
+                    vp.error(&msg).await;
+                    return Err(Unwind::Exit(1));
+                }
+            }
         }
         Part::Brace(_) => {
             // Only reached where brace expansion does not apply: the text as is.

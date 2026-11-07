@@ -9,8 +9,8 @@ use std::sync::Arc;
 use std::task::Poll;
 
 use psh_syntax::{
-    AndOr, AndOrOp, AssignValue, CmdId, Command, CommandKind, ListId, Pipeline, RedirFd, RedirOp,
-    RedirTarget, Redirect, SimpleCommand,
+    AndOr, AndOrOp, AssignValue, CaseTerminator, CmdId, Command, CommandKind, ListId, Pipeline,
+    RedirFd, RedirOp, RedirTarget, Redirect, SimpleCommand,
 };
 
 use crate::builtins;
@@ -19,7 +19,7 @@ use crate::fd::{Fd, FdObj, Pump};
 use crate::host::{ChildFd, OpenOptions, SpawnSpec, error_text};
 use crate::pipe;
 use crate::sched::{Join, LocalBoxFuture, safepoint};
-use crate::state::{Code, R, Unwind, Vp};
+use crate::state::{Code, Frame, Func, R, Unwind, Vp, is_name};
 
 const DEFAULT_PATH: &[u8] = b"/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
 
@@ -32,10 +32,19 @@ pub(crate) fn run_list<'a>(
         let list = code.ast.list(id);
         let mut status = vp.status;
         for (i, item) in list.items.iter().enumerate() {
+            let p = &item.first;
             status = if item.background {
-                run_background(vp, code, id, i).await?
+                Box::pin(run_background(vp, code, id, i)).await?
+            } else if item.rest.is_empty()
+                && p.stages.len() == 1
+                && !p.negated()
+                && p.time.is_none()
+            {
+                // The common case, without the and-or and pipeline frames: less stack
+                // per nesting level (D1050).
+                run_command(vp, code, p.stages[0].cmd).await?
             } else {
-                run_andor(vp, code, item).await?
+                Box::pin(run_andor(vp, code, item)).await?
             };
             vp.status = status;
         }
@@ -50,13 +59,13 @@ async fn run_background(vp: &mut Vp, code: &Rc<Code>, list: ListId, item: usize)
     vp.last_bg = Some(vp.core.next_job_id());
     vp.core.sched.spawn_task(Box::pin(async move {
         let ao = &code.ast.list(list).items[item];
-        let _ = run_andor(&mut sub, &code, ao).await;
+        let _ = Box::pin(run_andor(&mut sub, &code, ao)).await;
     }));
     Ok(0)
 }
 
 async fn run_andor(vp: &mut Vp, code: &Rc<Code>, ao: &AndOr) -> R {
-    let mut status = run_pipeline(vp, code, &ao.first).await?;
+    let mut status = Box::pin(run_pipeline(vp, code, &ao.first)).await?;
     for (op, p) in &ao.rest {
         vp.status = status;
         let run = match op {
@@ -64,7 +73,7 @@ async fn run_andor(vp: &mut Vp, code: &Rc<Code>, ao: &AndOr) -> R {
             AndOrOp::Or => status != 0,
         };
         if run {
-            status = run_pipeline(vp, code, p).await?;
+            status = Box::pin(run_pipeline(vp, code, p)).await?;
         }
     }
     Ok(status)
@@ -150,11 +159,12 @@ pub(crate) fn run_command<'a>(
         let cmd = code.ast.cmd(id);
         match &cmd.kind {
             CommandKind::Simple(s) => run_simple(vp, code, cmd, s).await,
-            CommandKind::Brace(_) | CommandKind::Subshell(_) => with_redirects(vp, code, cmd).await,
-            _ => {
+            CommandKind::Select(_) | CommandKind::Cond(_) | CommandKind::Coproc(_) => {
                 vp.line = code.line(cmd.span.start);
                 expand::unsupported(vp, compound_name(&cmd.kind)).await
             }
+            _ if cmd.redirects.is_empty() => run_compound(vp, code, cmd).await,
+            _ => Box::pin(with_redirects(vp, code, cmd)).await,
         }
     })
 }
@@ -183,7 +193,7 @@ async fn with_redirects(vp: &mut Vp, code: &Rc<Code>, cmd: &Command) -> R {
         None
     } else {
         let saved = vp.fds.clone();
-        match apply_redirects(vp, code, &cmd.redirects).await {
+        match Box::pin(apply_redirects(vp, code, &cmd.redirects)).await {
             Ok(true) => {}
             Ok(false) => {
                 vp.fds = saved;
@@ -196,21 +206,324 @@ async fn with_redirects(vp: &mut Vp, code: &Rc<Code>, cmd: &Command) -> R {
         }
         Some(saved)
     };
-    let r = match &cmd.kind {
-        CommandKind::Brace(list) => run_list(vp, code, *list).await,
-        CommandKind::Subshell(list) => match enter(vp).await {
-            Ok(sub) => Ok(spawn_sub(sub, code.clone(), Body::List(*list)).await),
-            Err(u) => Err(u),
-        },
-        _ => Ok(0),
-    };
+    let r = run_compound(vp, code, cmd).await;
     if let Some(saved) = saved {
         vp.fds = saved;
     }
     r
 }
 
-async fn run_simple(vp: &mut Vp, code: &Rc<Code>, cmd: &Command, s: &SimpleCommand) -> R {
+/// Dispatches a compound command to its own boxed future: a plain function, so it adds
+/// no frame of its own to the stack (D1050).
+fn run_compound<'a>(vp: &'a mut Vp, code: &'a Rc<Code>, cmd: &'a Command) -> LocalBoxFuture<'a, R> {
+    match &cmd.kind {
+        CommandKind::Brace(list) => run_list(vp, code, *list),
+        CommandKind::Subshell(list) => Box::pin(run_subshell(vp, code, *list)),
+        CommandKind::If(c) => Box::pin(run_if(vp, code, c)),
+        CommandKind::While(w) => Box::pin(async move {
+            vp.loops += 1;
+            let r = run_while(vp, code, w).await;
+            vp.loops -= 1;
+            r
+        }),
+        CommandKind::For(f) => Box::pin(run_for(vp, code, cmd, f)),
+        CommandKind::ArithFor(f) => Box::pin(async move {
+            vp.line = code.line(cmd.span.start);
+            vp.loops += 1;
+            let r = run_arith_for(vp, code, f).await;
+            vp.loops -= 1;
+            r
+        }),
+        CommandKind::Case(c) => Box::pin(run_case(vp, code, cmd, c)),
+        CommandKind::Arith(w) => Box::pin(async move {
+            vp.line = code.line(cmd.span.start);
+            match arith_command(vp, code, w, "((: ").await? {
+                Some(v) => Ok(i32::from(v == 0)),
+                None => Ok(1),
+            }
+        }),
+        CommandKind::Function(f) => Box::pin(define_function(vp, code, cmd, f)),
+        _ => Box::pin(std::future::ready(Ok(0))),
+    }
+}
+
+async fn run_subshell(vp: &mut Vp, code: &Rc<Code>, list: ListId) -> R {
+    let sub = enter(vp).await?;
+    Ok(spawn_sub(sub, code.clone(), Body::List(list)).await)
+}
+
+async fn run_if(vp: &mut Vp, code: &Rc<Code>, c: &psh_syntax::IfCommand) -> R {
+    for br in &c.branches {
+        if run_list(vp, code, br.cond).await? == 0 {
+            return run_list(vp, code, br.body).await;
+        }
+    }
+    match c.else_body {
+        Some(e) => run_list(vp, code, e).await,
+        None => Ok(0),
+    }
+}
+
+async fn define_function(
+    vp: &mut Vp,
+    code: &Rc<Code>,
+    cmd: &Command,
+    f: &psh_syntax::FunctionDef,
+) -> R {
+    vp.line = code.line(cmd.span.start);
+    let Some(name) = psh_syntax::literal_text(&code.ast, &f.name) else {
+        vp.error(&format!(
+            "`{}': not a valid identifier",
+            code.ast.text(f.name.span)
+        ))
+        .await;
+        return Ok(1);
+    };
+    Rc::make_mut(&mut vp.funcs).insert(
+        name,
+        Rc::new(Func {
+            code: code.clone(),
+            body: f.body,
+        }),
+    );
+    Ok(0)
+}
+
+/// What a loop does with an unwind from its body: `Some(r)` ends the loop with `r`.
+fn loop_unwind(u: Unwind, status: i32) -> Option<R> {
+    match u {
+        Unwind::Break(n) if n > 1 => Some(Err(Unwind::Break(n - 1))),
+        Unwind::Break(_) => Some(Ok(status)),
+        Unwind::Continue(n) if n > 1 => Some(Err(Unwind::Continue(n - 1))),
+        Unwind::Continue(_) => None,
+        other => Some(Err(other)),
+    }
+}
+
+async fn run_while(vp: &mut Vp, code: &Rc<Code>, w: &psh_syntax::WhileCommand) -> R {
+    let mut status = 0;
+    loop {
+        safepoint(&vp.core.sched).await;
+        let c = match run_list(vp, code, w.cond).await {
+            Ok(c) => c,
+            Err(u) => match loop_unwind(u, status) {
+                Some(r) => return r,
+                None => continue,
+            },
+        };
+        if (c == 0) == w.until {
+            return Ok(status);
+        }
+        match run_list(vp, code, w.body).await {
+            Ok(s) => status = s,
+            Err(u) => {
+                if let Some(r) = loop_unwind(u, vp.status) {
+                    return r;
+                }
+                status = vp.status;
+            }
+        }
+    }
+}
+
+async fn run_for(vp: &mut Vp, code: &Rc<Code>, cmd: &Command, f: &psh_syntax::ForCommand) -> R {
+    vp.line = code.line(cmd.span.start);
+    let Some(name) = psh_syntax::literal_text(&code.ast, &f.var).filter(|n| is_name(n.as_bytes()))
+    else {
+        vp.error(&format!(
+            "`{}': not a valid identifier",
+            code.ast.text(f.var.span)
+        ))
+        .await;
+        return Ok(1);
+    };
+    let items: Vec<Vec<u8>> = match &f.words {
+        Some(words) => Box::pin(expand::expand_words(vp, code, words))
+            .await?
+            .out
+            .into_iter()
+            .map(|f| f.text)
+            .collect(),
+        None => vp.args.clone(),
+    };
+    vp.loops += 1;
+    let r = run_for_items(vp, code, &name, items, f.body).await;
+    vp.loops -= 1;
+    r
+}
+
+async fn run_for_items(
+    vp: &mut Vp,
+    code: &Rc<Code>,
+    name: &str,
+    items: Vec<Vec<u8>>,
+    body: ListId,
+) -> R {
+    let mut status = 0;
+    for item in items {
+        safepoint(&vp.core.sched).await;
+        if vp.vars.get(name).is_some_and(|v| v.readonly) {
+            vp.error(&format!("{name}: readonly variable")).await;
+            return Ok(1);
+        }
+        vp.set_var(name, item);
+        match run_list(vp, code, body).await {
+            Ok(s) => status = s,
+            Err(u) => {
+                if let Some(r) = loop_unwind(u, vp.status) {
+                    return r;
+                }
+                status = vp.status;
+            }
+        }
+    }
+    Ok(status)
+}
+
+async fn run_arith_for(vp: &mut Vp, code: &Rc<Code>, f: &psh_syntax::ArithForCommand) -> R {
+    if arith_command(vp, code, &f.init, "((: ").await?.is_none() {
+        return Ok(1);
+    }
+    let mut status = 0;
+    loop {
+        safepoint(&vp.core.sched).await;
+        match arith_command(vp, code, &f.cond, "((: ").await? {
+            None => return Ok(1),
+            // An empty condition is true.
+            Some(0) if !f.cond.parts.is_empty() => return Ok(status),
+            Some(_) => {}
+        }
+        match run_list(vp, code, f.body).await {
+            Ok(s) => status = s,
+            Err(u) => {
+                if let Some(r) = loop_unwind(u, vp.status) {
+                    return r;
+                }
+                status = vp.status;
+            }
+        }
+        if arith_command(vp, code, &f.step, "((: ").await?.is_none() {
+            return Ok(1);
+        }
+    }
+}
+
+/// Expands and evaluates an arithmetic word for a command (`((…))`, `for ((…))`):
+/// errors print `PREFIX…` and give `None` (status 1), not an exit.
+async fn arith_command(
+    vp: &mut Vp,
+    code: &Rc<Code>,
+    w: &psh_syntax::Word,
+    prefix: &str,
+) -> Result<Option<i64>, Unwind> {
+    let (text, _) = Box::pin(expand::expand_single(vp, code, w, Ctx::Word)).await?;
+    match crate::arith::eval(vp, &text) {
+        Ok(v) => Ok(Some(v)),
+        Err(msg) => {
+            vp.error(&format!("{prefix}{msg}")).await;
+            Ok(None)
+        }
+    }
+}
+
+async fn run_case(vp: &mut Vp, code: &Rc<Code>, cmd: &Command, c: &psh_syntax::CaseCommand) -> R {
+    vp.line = code.line(cmd.span.start);
+    let (word, _) = Box::pin(expand::expand_single(vp, code, &c.word, Ctx::Word)).await?;
+    let utf8 = vp.utf8();
+    let mut status = 0;
+    let mut i = 0;
+    let mut fall = false;
+    while i < c.items.len() {
+        let item = &c.items[i];
+        let mut hit = fall;
+        if !hit {
+            for p in &item.patterns {
+                let pat = Box::pin(expand::expand_pattern(vp, code, p)).await?;
+                if crate::pattern::Pattern::new(&pat, utf8).matches(&word, utf8) {
+                    hit = true;
+                    break;
+                }
+            }
+        }
+        fall = false;
+        if hit {
+            status = match item.body {
+                Some(b) => run_list(vp, code, b).await?,
+                None => 0,
+            };
+            match item.terminator {
+                CaseTerminator::Break => return Ok(status),
+                CaseTerminator::FallThrough => fall = true,
+                CaseTerminator::Continue => {}
+            }
+        }
+        i += 1;
+    }
+    Ok(status)
+}
+
+/// Calls a function: new positional parameters and a frame for its locals.
+async fn call_function(
+    vp: &mut Vp,
+    f: Rc<Func>,
+    argv: Vec<Vec<u8>>,
+    assigns: Vec<(String, Vec<u8>)>,
+) -> R {
+    if vp.depth >= vp.core.max_depth {
+        vp.error(&format!(
+            "{}: maximum function nesting level exceeded ({})",
+            String::from_utf8_lossy(&argv[0]),
+            vp.core.max_depth
+        ))
+        .await;
+        return Err(Unwind::Exit(1));
+    }
+    let mut args: Vec<Vec<u8>> = argv.into_iter().skip(1).collect();
+    std::mem::swap(&mut vp.args, &mut args);
+    let loops = std::mem::take(&mut vp.loops);
+    vp.depth += 1;
+    // Assignments in front of a function call last for the call, like locals.
+    let mut frame = Frame::default();
+    for (n, _) in &assigns {
+        if !frame.saved.iter().any(|(s, _)| s == n) {
+            frame.saved.push((n.clone(), vp.vars.get(n).cloned()));
+        }
+    }
+    vp.frames.push(frame);
+    for (n, v) in assigns {
+        let var = vp.vars.entry(&n);
+        var.value = Some(v);
+        var.exported = true;
+    }
+    let r = run_command(vp, &f.code, f.body).await;
+    if let Some(frame) = vp.frames.pop() {
+        for (n, old) in frame.saved.into_iter().rev() {
+            match old {
+                Some(v) => vp.vars.insert(&n, v),
+                None => {
+                    vp.vars.remove(&n);
+                }
+            }
+        }
+    }
+    vp.depth -= 1;
+    vp.loops = loops;
+    vp.args = args;
+    match r {
+        Err(Unwind::Return(s)) => Ok(s),
+        Err(Unwind::Break(_) | Unwind::Continue(_)) => Ok(vp.status),
+        r => r,
+    }
+}
+
+/// Expands a simple command: `Done` when there is nothing to run (assignments and
+/// redirections only, or an error), else the words and the assignments for the command.
+async fn prepare_simple(
+    vp: &mut Vp,
+    code: &Rc<Code>,
+    cmd: &Command,
+    s: &SimpleCommand,
+) -> Result<Prepared, Unwind> {
     vp.line = code.line(cmd.span.start);
     let decl = s
         .words
@@ -218,9 +531,9 @@ async fn run_simple(vp: &mut Vp, code: &Rc<Code>, cmd: &Command, s: &SimpleComma
         .and_then(|w| psh_syntax::literal_text(&code.ast, w))
         .is_some_and(|t| builtins::is_declaration(t.as_bytes()));
     let fields = if decl {
-        expand::expand_decl_words(vp, code, &s.words).await?
+        Box::pin(expand::expand_decl_words(vp, code, &s.words)).await?
     } else {
-        expand::expand_words(vp, code, &s.words).await?
+        Box::pin(expand::expand_words(vp, code, &s.words)).await?
     };
     let mut subst_status = fields.subst_status;
     let argv: Vec<Vec<u8>> = fields.out.into_iter().map(|f| f.text).collect();
@@ -230,17 +543,23 @@ async fn run_simple(vp: &mut Vp, code: &Rc<Code>, cmd: &Command, s: &SimpleComma
     for a in &s.assigns {
         let name = code.ast.text(a.name).to_string();
         if a.index.is_some() {
-            return expand::unsupported(vp, "array assignment").await;
+            return expand::unsupported(vp, "array assignment")
+                .await
+                .map(Prepared::Done);
         }
         let value = match &a.value {
             AssignValue::Scalar(w) => {
-                let (v, st) = expand::assign_value(vp, code, w).await?;
+                let (v, st) = Box::pin(expand::assign_value(vp, code, w)).await?;
                 if st.is_some() {
                     subst_status = st;
                 }
                 v
             }
-            AssignValue::Array(_) => return expand::unsupported(vp, "array assignment").await,
+            AssignValue::Array(_) => {
+                return expand::unsupported(vp, "array assignment")
+                    .await
+                    .map(Prepared::Done);
+            }
         };
         let value = if a.append {
             let mut old = vp.var(&name).map(<[u8]>::to_vec).unwrap_or_default();
@@ -253,7 +572,7 @@ async fn run_simple(vp: &mut Vp, code: &Rc<Code>, cmd: &Command, s: &SimpleComma
             // Assigned at once: later assignments see earlier ones (`a=1 b=$a`).
             if vp.vars.get(&name).is_some_and(|v| v.readonly) {
                 vp.error(&format!("{name}: readonly variable")).await;
-                return Ok(1);
+                return Ok(Prepared::Done(1));
             }
             vp.set_var(&name, value);
         } else {
@@ -264,43 +583,95 @@ async fn run_simple(vp: &mut Vp, code: &Rc<Code>, cmd: &Command, s: &SimpleComma
     if argv.is_empty() {
         let status = subst_status.unwrap_or(0);
         if cmd.redirects.is_empty() {
-            return Ok(status);
+            return Ok(Prepared::Done(status));
         }
         let saved = vp.fds.clone();
-        let ok = apply_redirects(vp, code, &cmd.redirects).await;
+        let ok = Box::pin(apply_redirects(vp, code, &cmd.redirects)).await;
         vp.fds = saved;
-        return Ok(if ok? { status } else { 1 });
+        return Ok(Prepared::Done(if ok? { status } else { 1 }));
     }
+    Ok(Prepared::Run(argv, assigns))
+}
 
-    let name = String::from_utf8_lossy(&argv[0]).into_owned();
-    // `exec` without a command keeps its redirections.
-    if name == "exec" && argv.len() == 1 {
-        return Ok(if apply_redirects(vp, code, &cmd.redirects).await? {
-            0
-        } else {
-            1
-        });
-    }
+enum Prepared {
+    Done(i32),
+    Run(Vec<Vec<u8>>, Vec<(String, Vec<u8>)>),
+}
 
-    let saved = vp.fds.clone();
-    match apply_redirects(vp, code, &cmd.redirects).await {
-        Ok(true) => {}
-        Ok(false) => {
-            vp.fds = saved;
-            return Ok(1);
+fn run_simple<'a>(
+    vp: &'a mut Vp,
+    code: &'a Rc<Code>,
+    cmd: &'a Command,
+    s: &'a SimpleCommand,
+) -> LocalBoxFuture<'a, R> {
+    Box::pin(async move {
+        vp.line = code.line(cmd.span.start);
+        let (argv, assigns) = match Box::pin(prepare_simple(vp, code, cmd, s)).await? {
+            Prepared::Done(status) => return Ok(status),
+            Prepared::Run(argv, assigns) => (argv, assigns),
+        };
+        if cmd.redirects.is_empty() {
+            return run_argv(vp, argv, assigns).await;
         }
-        Err(u) => {
-            vp.fds = saved;
-            return Err(u);
+
+        let name = String::from_utf8_lossy(&argv[0]).into_owned();
+        // `exec` without a command keeps its redirections.
+        if name == "exec" && argv.len() == 1 {
+            return Ok(
+                if Box::pin(apply_redirects(vp, code, &cmd.redirects)).await? {
+                    0
+                } else {
+                    1
+                },
+            );
         }
-    }
-    let r = run_argv(vp, argv, assigns).await;
-    vp.fds = saved;
-    r
+
+        let saved = vp.fds.clone();
+        match Box::pin(apply_redirects(vp, code, &cmd.redirects)).await {
+            Ok(true) => {}
+            Ok(false) => {
+                vp.fds = saved;
+                return Ok(1);
+            }
+            Err(u) => {
+                vp.fds = saved;
+                return Err(u);
+            }
+        }
+        let r = run_argv(vp, argv, assigns).await;
+        vp.fds = saved;
+        r
+    })
 }
 
 /// Runs an expanded command: a builtin or an external.
-async fn run_argv(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec<u8>)>) -> R {
+fn run_argv(
+    vp: &mut Vp,
+    argv: Vec<Vec<u8>>,
+    assigns: Vec<(String, Vec<u8>)>,
+) -> LocalBoxFuture<'_, R> {
+    let name = &argv[0];
+    // Functions come first, even before special builtins (bash outside POSIX mode).
+    if let Some(f) = std::str::from_utf8(name)
+        .ok()
+        .and_then(|n| vp.funcs.get(n))
+        .cloned()
+    {
+        return Box::pin(call_function(vp, f, argv, assigns));
+    }
+    if builtins::find(name).is_none() {
+        if name == b"exec" {
+            return Box::pin(async move {
+                let r = run_external(vp, argv[1..].to_vec(), assigns).await?;
+                Err(Unwind::Exit(r))
+            });
+        }
+        return Box::pin(run_external(vp, argv, assigns));
+    }
+    Box::pin(run_builtin(vp, argv, assigns))
+}
+
+async fn run_builtin(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec<u8>)>) -> R {
     let name = argv[0].clone();
     if let Some(b) = builtins::find(&name) {
         if b.special {
@@ -328,11 +699,7 @@ async fn run_argv(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec<u8>
         }
         return r;
     }
-    if name == b"exec" {
-        let r = run_external(vp, argv[1..].to_vec(), assigns).await?;
-        return Err(Unwind::Exit(r));
-    }
-    run_external(vp, argv, assigns).await
+    Ok(0)
 }
 
 /// Starts an external command and waits for it, pumping its pipes to engine objects.
@@ -526,7 +893,7 @@ async fn apply_redirect(vp: &mut Vp, code: &Rc<Code>, r: &Redirect) -> Result<bo
                     vp.error(&e.message).await;
                     return Ok(false);
                 }
-                expand::expand_heredoc(vp, code, &doc.body).await?
+                Box::pin(expand::expand_heredoc(vp, code, &doc.body)).await?
             };
             vp.fds
                 .set(fd, Rc::new(FdObj::PipeRead(pipe::preloaded(&body))));
@@ -536,7 +903,7 @@ async fn apply_redirect(vp: &mut Vp, code: &Rc<Code>, r: &Redirect) -> Result<bo
             let RedirTarget::Word(w) = &r.target else {
                 return Ok(true);
             };
-            let (mut body, _) = expand::expand_single(vp, code, w, Ctx::Word).await?;
+            let (mut body, _) = Box::pin(expand::expand_single(vp, code, w, Ctx::Word)).await?;
             body.push(b'\n');
             vp.fds
                 .set(fd, Rc::new(FdObj::PipeRead(pipe::preloaded(&body))));
@@ -547,7 +914,7 @@ async fn apply_redirect(vp: &mut Vp, code: &Rc<Code>, r: &Redirect) -> Result<bo
     let RedirTarget::Word(word) = &r.target else {
         return Ok(true);
     };
-    let Some(target) = expand::expand_target(vp, code, word).await? else {
+    let Some(target) = Box::pin(expand::expand_target(vp, code, word)).await? else {
         vp.error(&format!("{}: ambiguous redirect", code.ast.text(word.span)))
             .await;
         return Ok(false);

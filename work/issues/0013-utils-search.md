@@ -131,6 +131,19 @@ Parts, each merged on its own:
 5. **fd.**
 Checkouts: `vendor/ripgrep` (91f5d22), `vendor/fd` (193d0df) in the primary checkout.
 
+### part 1: blocking utilities (D1130)
+- `crates/psh-engine/src/util/blocking.rs`: `SyncCtx`, `BlockingOptions`, `SyncFn`,
+  `UtilCtx::run_blocking`. Thread backend: `Pipe` (mutex + condvar) between the worker
+  and an engine pump loop on the utility's vproc; inline backend: stdin pre-read,
+  output collected, Host futures polled once (`Waker::noop`).
+- `Host::native_paths` (additive, default `None`): StdHost and psh-os (unix:
+  bytes as OsStr; windows: `path::native`) answer it. Touches psh-os minimally (two
+  three-line impls) and std_host (`metadata` made `pub(crate)`).
+- Tests: `util::blocking::tests` (inline over TestHost incl. relative paths, panics,
+  the output bound; thread over StdHost: redirections, engine pipes both ways, EPIPE
+  stops an endless writer, the fs view, panics).
+- ARCH "Interface" updated.
+
 ## Follow-ups
 
 ## Result

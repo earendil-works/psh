@@ -99,6 +99,15 @@ impl RunKiller {
     pub fn kill_all(&self) {
         self.0.kill_all();
     }
+
+    /// Like [`WindowsHost::leftovers`], also after the host is gone (leak checks).
+    pub fn leftovers(&self) -> Vec<i32> {
+        let jobs = self.0.jobs.lock().unwrap_or_else(|e| e.into_inner());
+        jobs.iter()
+            .filter(|j| j.active() > 0)
+            .map(|j| j.pid() as i32)
+            .collect()
+    }
 }
 
 impl Drop for WindowsHost {

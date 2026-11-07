@@ -37,7 +37,18 @@ unsafe_op_in_unsafe_fn = "deny"
 [lints.clippy]
 undocumented_unsafe_blocks = "deny"
 
-# L5: the process tests (TESTING.md), in tests/process/ at the root.
+# L5: the process tests (TESTING.md), in tests/process/ at the root: the Unix cases
+# (main.rs) and the Windows cases (windows.rs), with a helper program for both.
 [[test]]
 name = "process"
 path = "../../tests/process/main.rs"
+
+[[test]]
+name = "process-windows"
+path = "../../tests/process/windows.rs"
+
+[[bin]]
+name = "psh-test-helper"
+path = "../../tests/process/helper.rs"
+test = false
+doc = false

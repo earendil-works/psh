@@ -57,8 +57,18 @@ fn native_str(s: &str) -> String {
         let t = String::from_utf8_lossy(&temp_dir()).into_owned();
         return backslashes(&format!("{t}{rest}"));
     }
-    // `/c` and `/c/...`: a drive, as Git Bash writes it.
+    // `/C:/...`: a drive path the engine's normalization gave a leading slash.
     let b = s.as_bytes();
+    if b.len() >= 3
+        && b[0] == b'/'
+        && b[1].is_ascii_alphabetic()
+        && b[2] == b':'
+        && (b.len() == 3 || b[3] == b'/')
+    {
+        let rest = if b.len() == 3 { "/" } else { &s[3..] };
+        return backslashes(&format!("{}:{rest}", (b[1] as char).to_ascii_uppercase()));
+    }
+    // `/c` and `/c/...`: a drive, as Git Bash writes it.
     if b.len() >= 2 && b[0] == b'/' && b[1].is_ascii_alphabetic() && (b.len() == 2 || b[2] == b'/')
     {
         let drive = (b[1] as char).to_ascii_uppercase();
@@ -150,6 +160,8 @@ mod tests {
         assert_eq!(n("C:/Users/x"), r"C:\Users\x");
         assert_eq!(n("/c/Users/x"), r"C:\Users\x");
         assert_eq!(n("/d"), r"D:\");
+        assert_eq!(n("/C:/Users/x"), r"C:\Users\x");
+        assert_eq!(n("/c:"), r"C:\");
         assert_eq!(n("/dev/null"), "NUL");
         assert_eq!(n("//server/share/f"), r"\\server\share\f");
         assert_eq!(n("/cd/x"), r"\cd\x");

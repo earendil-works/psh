@@ -1,6 +1,6 @@
 # 0005: Minimal interpreter
 
-status: in-progress
+status: done
 agent: engine
 branch: issue/0005-minimal-interpreter
 depends-on: 0002, 0004
@@ -15,27 +15,27 @@ and assignments, basic expansion, exit status. It fixes the engine's shape (step
 control handle, waker, Host trait, virtual processes) that everything later builds on.
 
 ## Acceptance criteria
-- [ ] `Shell::step(budget) -> Step` (`Done`, `Blocked`, `Yield`, `Idle`), a
+- [x] `Shell::step(budget) -> Step` (`Done`, `Blocked`, `Yield`, `Idle`), a
       `ControlHandle` checked at safepoints (cancel works), wakeups via
       `std::task::Waker` only. No threads inside the engine, no runtime.
-- [ ] A first `Host` trait (spawn with `poll_wait`, fs ops that may return `Pending`,
+- [x] A first `Host` trait (spawn with `poll_wait`, fs ops that may return `Pending`,
       files with `poll_read`/`poll_write`, timers, env) and a test host with an
       in-memory fs and fake processes, including a mode where every op is `Pending`
       once before it completes.
-- [ ] Virtual processes: pipeline stages run concurrently, in-memory pipes between
+- [x] Virtual processes: pipeline stages run concurrently, in-memory pipes between
       them; subshells `( )` as vprocs.
-- [ ] Language: simple commands with assignments, redirections (`>`, `>>`, `<`, `2>&1`,
+- [x] Language: simple commands with assignments, redirections (`>`, `>>`, `<`, `2>&1`,
       `&>`, `n>&m`, here-docs, here-strings), `&&`, `||`, `;`, `!`, `{ }`, `( )`,
       `$?`, parameter expansion `$x ${x} ${x:-y}`, quoting and quote removal, word
       splitting on IFS, `$(…)`. Shell builtins: `echo`, `printf` (basic), `true`,
       `false`, `:`, `cd`, `pwd`, `export`, `unset`, `exit`, `test`/`[`.
-- [ ] A simple Unix host good enough for the runner: std `Command` spawn with a waiter
+- [x] A simple Unix host good enough for the runner: std `Command` spawn with a waiter
       thread per child that wakes the engine, helper threads for pipes. 0006 replaces
       it; keep it small.
-- [ ] `psh -c CMD` and `psh FILE` run through a standalone driver (step, park on
+- [x] `psh -c CMD` and `psh FILE` run through a standalone driver (step, park on
       `Blocked`).
-- [ ] psh-spec runs psh in-process; ratchets updated; the Result records the scores.
-- [ ] The engine builds for `wasm32-unknown-unknown` (gate).
+- [x] psh-spec runs psh in-process; ratchets updated; the Result records the scores.
+- [x] The engine builds for `wasm32-unknown-unknown` (gate).
 
 ## Notes
 - Read `research/execution-core.md` §5 "Pitfalls" before designing; all 14 points
@@ -186,3 +186,22 @@ glob). Please keep `HostFuture`, `HostFile` (`&self`, `Any`), drop semantics and
 - Children get only fds 0–2 (`exec 3>f; cmd` does not pass 3): 0006.
 
 ## Result
+Landed in two parts (part 1: a0eaa1b..f409212; part 2 on top).
+- `psh-engine`: the stepped engine (async fns + own scheduler, D1050), `Shell::step` /
+  `ControlHandle` / waker API (D1051), `Host` trait v1 (D1052, contract in the log),
+  test host with latency mode and leak counters, std host (v1, for 0006 to replace),
+  vprocs with in-memory pipes and pumps, here-docs as preloaded pipes. Language: simple
+  commands, assignments, all redirections but `{var}>` and process substitution,
+  pipelines, and-or, `!`, `&`, `{ }`, `( )`, functions and locals, if/while/until/for/
+  case, `for ((;;))`, `((…))`, parameter expansion (incl. `# % / ^ ,` ops, `${!x}`,
+  `${#x}`, `@Q/E/U/L/u`), `$(…)`, backquotes, `$((…))`, brace expansion, tilde, IFS
+  splitting, globbing. Builtins: `echo printf true false : cd pwd export readonly unset
+  exit set -- shift return break continue local let getopts test [`.
+- `psh -c CMD [NAME ARGS]`, `psh FILE ARGS`, script on stdin (`psh_engine::invocation`),
+  driven on an engine thread with `ENGINE_STACK`.
+- psh-spec runs psh in-process (D1056). Scores (macOS): L1 oils 1105/2511 active, L2
+  brush 1061/3171, L3 agent 115/144.
+- Not yet (next cuts): arrays, `[[ ]]`, `set -e/-u/-o`, `shopt`, aliases, `eval`,
+  `source`, `read`, `trap`, `wait`/`kill`/`jobs`, `declare`, process substitution,
+  `${x:off:len}`, `${ …; }`, extglob, `select`, `coproc`; see the "not supported yet"
+  histogram in the log. Known v1 limits are listed under Follow-ups.

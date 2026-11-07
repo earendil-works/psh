@@ -127,6 +127,7 @@ pub(crate) async fn run(
         env,
         out: Vec::new(),
         write_error: None,
+        zone: None,
     };
     // A signal that ends the shell ends the utility, as it ends the wait for an
     // external (D1903). The vproc is the utility's now: watch with what it needs.
@@ -177,6 +178,8 @@ pub struct UtilCtx<'v> {
     /// A failed stdout write (a flush before a read, say): every later write fails with
     /// it, so a utility writing into a closed pipe stops (EPIPE).
     write_error: Option<io::ErrorKind>,
+    /// The time zone, once [`UtilCtx::load_zone`] ran (`Some(None)`: none readable).
+    zone: Option<Option<crate::builtins::strftime::Zone>>,
 }
 
 /// How [`UtilCtx::spawn`] changes the environment of the command it runs.
@@ -549,10 +552,47 @@ impl UtilCtx<'_> {
         self.vp.host().group_name(gid)
     }
 
-    /// The local time's offset east of UTC at `epoch_secs`, in seconds: the host's time
-    /// zone, or UTC when the command's `TZ` names UTC (`UTC`, `UTC0`, `GMT`, `Etc/UTC`,
-    /// empty).
+    /// Loads the command's time zone (its `TZ`: a zone file, a path or a POSIX rule;
+    /// else `/etc/localtime`), so that [`utc_offset`](Self::utc_offset) follows it and
+    /// [`zone_abbr`](Self::zone_abbr) names it. Without zone files (wasm, Windows) the
+    /// host's offset stays in use.
+    pub async fn load_zone(&mut self) {
+        if self.zone.is_none() {
+            let tz = self.var(b"TZ").map(<[u8]>::to_vec);
+            let z = crate::builtins::strftime::load(self.vp.host(), tz.as_deref()).await;
+            self.zone = Some(z);
+        }
+    }
+
+    /// Uses UTC from now on, whatever `TZ` says (`date -u`).
+    pub fn use_utc(&mut self) {
+        self.zone = Some(Some(crate::builtins::strftime::Zone::utc()));
+    }
+
+    /// The zone's abbreviation at `epoch_secs` (`UTC`, `CEST`), once [`load_zone`]
+    /// found one; else `UTC` for a zero offset and the numeric offset (`+0100`).
+    ///
+    /// [`load_zone`]: Self::load_zone
+    pub fn zone_abbr(&self, epoch_secs: i64) -> String {
+        if let Some(Some(z)) = &self.zone {
+            return String::from_utf8_lossy(&z.local_at(epoch_secs).1).into_owned();
+        }
+        let off = self.utc_offset(epoch_secs);
+        if off == 0 {
+            return "UTC".into();
+        }
+        let a = off.abs();
+        let sign = if off < 0 { '-' } else { '+' };
+        format!("{sign}{:02}{:02}", a / 3600, a / 60 % 60)
+    }
+
+    /// The local time's offset east of UTC at `epoch_secs`, in seconds: the loaded zone
+    /// ([`load_zone`](Self::load_zone)), else the host's time zone, or UTC when the
+    /// command's `TZ` names UTC (`UTC`, `UTC0`, `GMT`, `Etc/UTC`, empty).
     pub fn utc_offset(&self, epoch_secs: i64) -> i32 {
+        if let Some(Some(z)) = &self.zone {
+            return z.local_at(epoch_secs).0 as i32;
+        }
         if let Some(tz) = self.var(b"TZ") {
             let tz = tz.strip_prefix(b":").unwrap_or(tz);
             if matches!(

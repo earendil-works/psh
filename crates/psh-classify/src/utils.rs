@@ -463,8 +463,8 @@ pub static UTILITIES: &[Utility] = &[
     v(
         "date",
         Read,
-        "dfrjv",
-        &["--date", "--reference"],
+        "dfrsv",
+        &["--date", "--reference", "--file", "--set", "--rfc-3339"],
         NoOps,
         &[("-s", Mutates), ("--set", Mutates)],
     ),

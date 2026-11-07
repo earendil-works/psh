@@ -17,7 +17,7 @@ mod printf;
 mod read;
 pub(crate) mod set;
 mod shopt;
-mod strftime;
+pub(crate) mod strftime;
 pub(crate) mod test;
 pub(crate) mod trap;
 mod umask;

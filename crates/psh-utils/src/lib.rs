@@ -56,6 +56,7 @@ mod xargs;
 
 mod base64;
 mod cmp;
+mod date;
 mod sum;
 mod which;
 
@@ -295,6 +296,12 @@ pub static REGISTRY: &[UtilEntry] = &[
         run: util_fn!(sum::run_shasum),
     },
     UtilEntry {
+        names: &["date"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(date::run),
+    },
+    UtilEntry {
         names: &["which"],
         mode: Mode::Always,
         destructive: false,
@@ -347,6 +354,7 @@ pub static SPECS: &[opts::Spec] = &[
     sum::MD5_SPEC,
     sum::SHASUM_SPEC,
     which::SPEC,
+    date::SPEC,
     env::PRINTENV_SPEC,
 ];
 

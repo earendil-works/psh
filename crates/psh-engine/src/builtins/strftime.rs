@@ -337,12 +337,20 @@ pub(crate) async fn zone(vp: &Vp) -> Zone {
         .get("TZ")
         .filter(|v| v.exported)
         .and_then(|v| v.get().map(<[u8]>::to_vec));
-    let files: Vec<Vec<u8>> = match &tz {
+    load(vp.host(), tz.as_deref())
+        .await
+        .unwrap_or_else(Zone::utc)
+}
+
+/// The zone a `TZ` value names (`None`: unset, the system's `/etc/localtime`), or `None`
+/// when nothing could be read (no zone files, as in wasm, and no POSIX rule).
+pub(crate) async fn load(host: &dyn crate::Host, tz: Option<&[u8]>) -> Option<Zone> {
+    let files: Vec<Vec<u8>> = match tz {
         None => vec![b"/etc/localtime".to_vec()],
         Some(t) => {
             let t = t.strip_prefix(b":").unwrap_or(t);
             if t.is_empty() {
-                return Zone::utc();
+                return Some(Zone::utc());
             }
             if t.first() == Some(&b'/') {
                 vec![t.to_vec()]
@@ -365,26 +373,34 @@ pub(crate) async fn zone(vp: &Vp) -> Zone {
         }
     };
     for f in files {
-        if let Ok(file) = vp.host().open(&f, OpenOptions::read()).await {
+        if let Ok(file) = host.open(&f, OpenOptions::read()).await {
             let obj = crate::fd::FdObj::File(file);
             let mut data = Vec::new();
             if obj.read_to_end(&mut data).await.is_ok()
                 && let Some(z) = parse_tzif(&data)
             {
-                return z;
+                return Some(z);
             }
         }
     }
-    if let Some(t) = &tz
+    if let Some(t) = tz
         && let Some(rule) = parse_rule(t.strip_prefix(b":").unwrap_or(t))
     {
-        return Zone {
+        return Some(Zone {
             transitions: Vec::new(),
             types: Vec::new(),
             rule: Some(rule),
-        };
+        });
     }
-    Zone::utc()
+    None
+}
+
+impl Zone {
+    /// The offset east of UTC and the abbreviation at `t` (seconds since the epoch).
+    pub(crate) fn local_at(&self, t: i64) -> (i64, Vec<u8>) {
+        let l = self.at(t);
+        (l.utoff, l.abbr)
+    }
 }
 
 fn is_leap(y: i64) -> bool {

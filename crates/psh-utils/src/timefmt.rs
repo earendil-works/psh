@@ -32,7 +32,7 @@ pub fn civil_from_days(z: i64) -> (i64, u32, u32) {
     (if m <= 2 { y + 1 } else { y }, m, d)
 }
 
-fn days_in_month(y: i64, m: u32) -> u32 {
+pub fn days_in_month(y: i64, m: u32) -> u32 {
     match m {
         2 if (y % 4 == 0 && y % 100 != 0) || y % 400 == 0 => 29,
         2 => 28,
@@ -86,7 +86,7 @@ pub fn local(ctx: &UtilCtx<'_>, ns: i64) -> Tm {
 }
 
 /// Seconds since the epoch of a wall-clock time; `offset` given, or the local zone's.
-fn epoch_of(ctx: &UtilCtx<'_>, wall: i64, offset: Option<i32>) -> i64 {
+pub fn epoch_of(ctx: &UtilCtx<'_>, wall: i64, offset: Option<i32>) -> i64 {
     match offset {
         Some(o) => wall - i64::from(o),
         None => {
@@ -96,7 +96,7 @@ fn epoch_of(ctx: &UtilCtx<'_>, wall: i64, offset: Option<i32>) -> i64 {
     }
 }
 
-fn wall_secs(y: i64, m: u32, d: u32, h: u32, mi: u32, s: u32) -> i64 {
+pub fn wall_secs(y: i64, m: u32, d: u32, h: u32, mi: u32, s: u32) -> i64 {
     days_from_civil(y, m, d) * 86400 + i64::from(h * 3600 + mi * 60 + s)
 }
 
@@ -196,6 +196,48 @@ struct Parsed {
     months: i64,
     days: i64,
     secs: i64,
+    /// A day of the week (0 = Sunday) and its ordinal: `this`/none 0, `next` 1, `last`
+    /// -1, `2 monday` 2.
+    weekday: Option<(u32, i64)>,
+}
+
+/// A day name or its abbreviation (`mon`, `tues`, `wednes`, `thur`, `thurs`).
+fn weekday_named(w: &str) -> Option<u32> {
+    const DAYS: [&str; 7] = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+    ];
+    let extra = ["tues", "wednes", "thur", "thurs"];
+    DAYS.iter()
+        .position(|d| {
+            *d == w || (w.len() == 3 && d.starts_with(w)) || extra.contains(&w) && d.starts_with(w)
+        })
+        .map(|i| i as u32)
+}
+
+/// A zone abbreviation GNU's parser knows (a subset): its offset east of UTC.
+fn zone_named(w: &str) -> Option<i32> {
+    let h = 3600;
+    Some(match w {
+        "utc" | "gmt" | "ut" | "z" | "wet" => 0,
+        "bst" | "west" | "cet" | "met" => h,
+        "cest" | "mest" | "eet" => 2 * h,
+        "eest" | "msk" => 3 * h,
+        "jst" | "kst" => 9 * h,
+        "edt" => -4 * h,
+        "est" | "cdt" => -5 * h,
+        "cst" | "mdt" => -6 * h,
+        "mst" | "pdt" => -7 * h,
+        "pst" => -8 * h,
+        "akst" => -9 * h,
+        "hst" => -10 * h,
+        _ => return None,
+    })
 }
 
 struct Lexer<'a> {
@@ -344,11 +386,26 @@ pub fn parse_date(ctx: &UtilCtx<'_>, s: &[u8], now_ns: i64) -> Option<i64> {
         let v = whole.parse::<i64>().ok()?.checked_mul(NS)? + f.parse::<i64>().ok()?;
         return Some(if neg { -v } else { v });
     }
+    // `+ 2 weeks`: a sign apart from its number.
+    let mut joined = Vec::with_capacity(text.len());
+    let tb = text.as_bytes();
+    let mut k = 0;
+    while k < tb.len() {
+        joined.push(tb[k]);
+        if matches!(tb[k], b'+' | b'-') {
+            let mut j = k + 1;
+            while tb.get(j) == Some(&b' ') {
+                j += 1;
+            }
+            if j > k + 1 && tb.get(j).is_some_and(u8::is_ascii_digit) {
+                k = j;
+                continue;
+            }
+        }
+        k += 1;
+    }
     let mut p = Parsed::default();
-    let mut lx = Lexer {
-        s: text.as_bytes(),
-        i: 0,
-    };
+    let mut lx = Lexer { s: &joined, i: 0 };
     // The last relative item, for `ago`.
     let mut last_rel: Option<(i64, i64, i64)> = None;
     loop {
@@ -439,6 +496,22 @@ pub fn parse_date(ctx: &UtilCtx<'_>, s: &[u8], now_ns: i64) -> Option<i64> {
                 p.date = Some((y, mon, n));
                 continue;
             }
+            if let Some(wd) = weekday_named(&w).filter(|_| sign == 1 && c != b'+') {
+                // `2 monday`.
+                lx.skip_space();
+                lx.word();
+                p.weekday = Some((wd, i64::from(n)));
+                continue;
+            }
+            if len == 8 && sign == 1 && c != b'+' && unit(&w).is_none() {
+                // `20240115`.
+                let (y, m, d) = (i64::from(n / 10000), n / 100 % 100, n % 100);
+                if !(1..=12).contains(&m) || d == 0 || d > days_in_month(y, m) {
+                    return None;
+                }
+                p.date = Some((y, m, d));
+                continue;
+            }
             if let Some((months, secs)) = unit(&w) {
                 lx.skip_space();
                 lx.word();
@@ -467,8 +540,12 @@ pub fn parse_date(ctx: &UtilCtx<'_>, s: &[u8], now_ns: i64) -> Option<i64> {
             "now" | "today" => (0, 0, 0),
             "yesterday" => (0, -1, 0),
             "tomorrow" => (0, 1, 0),
-            "utc" | "gmt" | "ut" | "z" => {
-                p.zone = Some(0);
+            z if zone_named(z).is_some() => {
+                p.zone = zone_named(z);
+                continue;
+            }
+            d if weekday_named(d).is_some() => {
+                p.weekday = weekday_named(d).map(|wd| (wd, 0));
                 continue;
             }
             "ago" => {
@@ -479,12 +556,16 @@ pub fn parse_date(ctx: &UtilCtx<'_>, s: &[u8], now_ns: i64) -> Option<i64> {
             "last" | "next" | "this" => {
                 lx.skip_space();
                 let u = lx.word();
-                let (months, secs) = unit(&u)?;
                 let k = match w.as_str() {
                     "last" => -1,
                     "next" => 1,
                     _ => 0,
                 };
+                if let Some(wd) = weekday_named(&u) {
+                    p.weekday = Some((wd, k));
+                    continue;
+                }
+                let (months, secs) = unit(&u)?;
                 (months * k, 0, secs * k)
             }
             _ => {
@@ -499,10 +580,23 @@ pub fn parse_date(ctx: &UtilCtx<'_>, s: &[u8], now_ns: i64) -> Option<i64> {
     let now = local(ctx, now_ns);
     let base_off = p.zone;
     let (mut y, mut m, mut d) = p.date.unwrap_or((now.year, now.mon, now.day));
-    let (h, mi, s, ns) = match (p.time, p.date) {
-        (Some(t), _) => t,
-        (None, Some(_)) => (0, 0, 0, 0),
-        (None, None) => (now.hour, now.min, now.sec, now.nsec),
+    // A day of the week moves a date that was not given (GNU ignores it otherwise).
+    let mut dated = p.date.is_some();
+    if let (Some((wd, ord)), None) = (p.weekday, p.date) {
+        let ahead = i64::from((wd + 7 - now.wday) % 7);
+        let shift = match ord {
+            0 => ahead,
+            n if n < 0 => ahead + 7 * n,
+            n => ahead + 7 * (n - i64::from(ahead > 0)),
+        };
+        let (yy, mm, dd) = civil_from_days(days_from_civil(y, m, d) + shift);
+        (y, m, d) = (yy, mm, dd);
+        dated = true;
+    }
+    let (h, mi, s, ns) = match p.time {
+        Some(t) => t,
+        None if dated => (0, 0, 0, 0),
+        None => (now.hour, now.min, now.sec, now.nsec),
     };
     if p.months != 0 {
         let total = y * 12 + i64::from(m - 1) + p.months;
@@ -535,6 +629,238 @@ fn add_rel(p: &mut Parsed, (m, d, s): (i64, i64, i64)) {
     p.months += m;
     p.days += d;
     p.secs += s;
+}
+
+pub const DAY_NAMES: [&str; 7] = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+];
+pub const MONTH_NAMES: [&str; 12] = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+];
+
+fn is_leap(y: i64) -> bool {
+    (y % 4 == 0 && y % 100 != 0) || y % 400 == 0
+}
+
+/// The ISO 8601 week-based year and week of a broken-down time.
+fn iso_week(tm: &Tm) -> (i64, i64) {
+    let wday = i64::from((tm.wday + 6) % 7); // Monday = 0
+    let yday = i64::from(tm.yday);
+    let week = (yday - wday + 10) / 7;
+    if week < 1 {
+        let py = tm.year - 1;
+        let pyday = yday + if is_leap(py) { 366 } else { 365 };
+        return (py, (pyday - wday + 10) / 7);
+    }
+    let ydays = if is_leap(tm.year) { 366 } else { 365 };
+    if week == 53 && yday - wday + 3 >= ydays {
+        return (tm.year + 1, 1);
+    }
+    (tm.year, week)
+}
+
+/// `+HHMM` with `colons` colons (`%z`, `%:z`, `%::z`), or for 3 the shortest of `+HH`,
+/// `+HH:MM`, `+HH:MM:SS` (`%:::z`).
+fn numeric_zone(off: i32, colons: usize) -> String {
+    let sign = if off < 0 { '-' } else { '+' };
+    let a = off.unsigned_abs();
+    let (h, m, s) = (a / 3600, a / 60 % 60, a % 60);
+    match colons {
+        0 => format!("{sign}{h:02}{m:02}"),
+        1 => format!("{sign}{h:02}:{m:02}"),
+        2 => format!("{sign}{h:02}:{m:02}:{s:02}"),
+        _ if s != 0 => format!("{sign}{h:02}:{m:02}:{s:02}"),
+        _ if m != 0 => format!("{sign}{h:02}:{m:02}"),
+        _ => format!("{sign}{h:02}"),
+    }
+}
+
+/// Formats a broken-down time like GNU `date +FORMAT` in the C locale: C's `strftime`
+/// conversions plus `%N` (nanoseconds; a width truncates), `%q`, `%P`, `%:z %::z
+/// %:::z`, `%s`, the flags `- _ 0 ^ #` and field widths. `abbr` is the zone's name
+/// for `%Z`; `epoch` the seconds for `%s`.
+pub fn format(fmt: &[u8], tm: &Tm, abbr: &str, epoch: i64) -> Vec<u8> {
+    let mut out = Vec::new();
+    format_into(&mut out, fmt, tm, abbr, epoch);
+    out
+}
+
+enum Field {
+    Text(String),
+    Num(i64, usize, u8),
+    Sub(&'static [u8]),
+}
+
+fn format_into(out: &mut Vec<u8>, fmt: &[u8], tm: &Tm, abbr: &str, epoch: i64) {
+    let mut i = 0;
+    while i < fmt.len() {
+        if fmt[i] != b'%' {
+            out.push(fmt[i]);
+            i += 1;
+            continue;
+        }
+        let start = i;
+        i += 1;
+        let (mut pad_flag, mut upper, mut swap) = (None, false, false);
+        while let Some(&f) = fmt.get(i) {
+            match f {
+                b'-' | b'_' | b'0' => pad_flag = Some(f),
+                b'^' => upper = true,
+                b'#' => swap = true,
+                _ => break,
+            }
+            i += 1;
+        }
+        let wstart = i;
+        while fmt.get(i).is_some_and(u8::is_ascii_digit) {
+            i += 1;
+        }
+        let width: Option<usize> = std::str::from_utf8(&fmt[wstart..i])
+            .ok()
+            .and_then(|w| w.parse().ok());
+        let mut colons = 0;
+        while fmt.get(i) == Some(&b':') {
+            colons += 1;
+            i += 1;
+        }
+        while matches!(fmt.get(i), Some(b'E' | b'O')) {
+            i += 1;
+        }
+        let Some(&c) = fmt.get(i) else {
+            out.extend_from_slice(&fmt[start..]);
+            break;
+        };
+        i += 1;
+        if colons > 0 && c != b'z' {
+            out.extend_from_slice(&fmt[start..i]);
+            continue;
+        }
+        let num = |v: i64, w: usize, pad: u8| Field::Num(v, w, pad);
+        let hour12 = i64::from((tm.hour + 11) % 12 + 1);
+        let field = match c {
+            b'a' => Field::Text(DAY_NAMES[tm.wday as usize][..3].into()),
+            b'A' => Field::Text(DAY_NAMES[tm.wday as usize].into()),
+            b'b' | b'h' => Field::Text(MONTH_NAMES[tm.mon as usize - 1][..3].into()),
+            b'B' => Field::Text(MONTH_NAMES[tm.mon as usize - 1].into()),
+            b'c' => Field::Sub(b"%a %b %e %H:%M:%S %Y"),
+            b'C' => num(tm.year.div_euclid(100), 2, b'0'),
+            b'd' => num(i64::from(tm.day), 2, b'0'),
+            b'D' | b'x' => Field::Sub(b"%m/%d/%y"),
+            b'e' => num(i64::from(tm.day), 2, b' '),
+            b'F' => Field::Sub(b"%Y-%m-%d"),
+            b'g' => num(iso_week(tm).0.rem_euclid(100), 2, b'0'),
+            b'G' => num(iso_week(tm).0, 1, b'0'),
+            b'H' => num(i64::from(tm.hour), 2, b'0'),
+            b'I' => num(hour12, 2, b'0'),
+            b'j' => num(i64::from(tm.yday) + 1, 3, b'0'),
+            b'k' => num(i64::from(tm.hour), 2, b' '),
+            b'l' => num(hour12, 2, b' '),
+            b'm' => num(i64::from(tm.mon), 2, b'0'),
+            b'M' => num(i64::from(tm.min), 2, b'0'),
+            b'n' => Field::Text("\n".into()),
+            b'N' => {
+                let digits = format!("{:09}", tm.nsec);
+                let w = width.unwrap_or(9);
+                let mut d = digits[..w.min(9)].to_string();
+                while d.len() < w {
+                    d.push('0');
+                }
+                out.extend_from_slice(d.as_bytes());
+                continue;
+            }
+            b'p' => {
+                let t = if tm.hour < 12 { "AM" } else { "PM" };
+                Field::Text(if swap {
+                    t.to_ascii_lowercase()
+                } else {
+                    t.into()
+                })
+            }
+            b'P' => Field::Text(if tm.hour < 12 { "am" } else { "pm" }.into()),
+            b'q' => num(i64::from((tm.mon - 1) / 3 + 1), 1, b'0'),
+            b'r' => Field::Sub(b"%I:%M:%S %p"),
+            b'R' => Field::Sub(b"%H:%M"),
+            b's' => num(epoch, 1, b'0'),
+            b'S' => num(i64::from(tm.sec), 2, b'0'),
+            b't' => Field::Text("\t".into()),
+            b'T' | b'X' => Field::Sub(b"%H:%M:%S"),
+            b'u' => num(i64::from((tm.wday + 6) % 7 + 1), 1, b'0'),
+            b'U' => num(i64::from((tm.yday + 7 - tm.wday) / 7), 2, b'0'),
+            b'V' => num(iso_week(tm).1, 2, b'0'),
+            b'w' => num(i64::from(tm.wday), 1, b'0'),
+            b'W' => num(i64::from((tm.yday + 7 - (tm.wday + 6) % 7) / 7), 2, b'0'),
+            b'y' => num(tm.year.rem_euclid(100), 2, b'0'),
+            b'Y' => num(tm.year, 1, b'0'),
+            b'z' => Field::Text(numeric_zone(tm.offset, colons)),
+            b'Z' => Field::Text(if swap {
+                abbr.to_ascii_lowercase()
+            } else {
+                abbr.to_string()
+            }),
+            b'%' => Field::Text("%".into()),
+            _ => {
+                out.extend_from_slice(&fmt[start..i]);
+                continue;
+            }
+        };
+        let text = match field {
+            Field::Sub(f) => {
+                let mut sub = Vec::new();
+                format_into(&mut sub, f, tm, abbr, epoch);
+                String::from_utf8_lossy(&sub).into_owned()
+            }
+            Field::Text(t) => t,
+            Field::Num(v, w, pad) => {
+                let w = width.unwrap_or(w);
+                let pad = match pad_flag {
+                    Some(b'-') => None,
+                    Some(b'_') => Some(b' '),
+                    Some(b'0') => Some(b'0'),
+                    _ => Some(pad),
+                };
+                let digits = v.unsigned_abs().to_string();
+                let sign = if v < 0 { "-" } else { "" };
+                let fill = pad.map_or(0, |_| w.saturating_sub(sign.len() + digits.len()));
+                let s = match pad {
+                    Some(b'0') => format!("{sign}{}{digits}", "0".repeat(fill)),
+                    _ => format!("{}{sign}{digits}", " ".repeat(fill)),
+                };
+                out.extend_from_slice(s.as_bytes());
+                continue;
+            }
+        };
+        let text = if upper || (swap && !matches!(c, b'p' | b'Z')) {
+            text.to_uppercase()
+        } else {
+            text
+        };
+        if let Some(w) = width
+            && pad_flag != Some(b'-')
+        {
+            let pad = if pad_flag == Some(b'0') { b'0' } else { b' ' };
+            for _ in text.len()..w {
+                out.push(pad);
+            }
+        }
+        out.extend_from_slice(text.as_bytes());
+    }
 }
 
 #[cfg(test)]

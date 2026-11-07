@@ -1,0 +1,179 @@
+# Goldens for tests/utils/date/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: the default format
+status: 0
+bash-n: 0
+--- stdout
+|Tue Nov 14 22:13:20 UTC 2023
+|Tue Nov 14 17:13:20 EST 2023
+--- file f
+
+=== 1: +FORMAT conversions
+status: 0
+bash-n: 0
+--- stdout
+|2023-11-14 22:13:20 UTC +0000 318 2 2 Tue Tuesday Nov November 14 20 23
+|11/14/23 2023-11-14 22:13:20 22:13 10:13:20 PM Tue Nov 14 22:13:20 2023 11/14/23 22:13:20 46 46 46 2023 23 Nov 10 PM 1700000000 %
+--- file f
+
+=== 2: +FORMAT flags and widths (GNU)
+status: 0
+bash-n: 0
+--- stdout
+|14 11 00014 TUE    Tuesday|Tuesday|utc
+--- file f
+
+=== 3: GNU conversions: %N %:z %P %k %l %q
+status: 0
+bash-n: 0
+--- stdout
+|500000000 500 +00:00 +00:00:00 +00 pm 22 10 4
+
+=== 4: -d parses GNU date strings
+status: 0
+bash-n: 0
+--- stdout
+|Tue Nov 14 22:13:20 UTC 2023
+|1705276800
+|1705314600
+|1705314600
+|1705307400
+|1705343400
+|2024-01-15
+|2024-01-15
+|2024-01-15 15:00:00
+|2024-01-15
+
+=== 5: -d relative items
+status: 0
+bash-n: 0
+--- stdout
+|2024-03-02
+|2024-01-14
+|2024-01-29
+|2024-03-19 12:00:00
+|2024-03-10
+|2024-01-15 07:00:00
+
+=== 6: -d an invalid date
+status: 0
+bash-n: 0
+--- stdout
+|st=1
+--- stderr
+|date: invalid date ‘garbage’
+
+=== 7: -I and --iso-8601
+status: 0
+bash-n: 0
+--- stdout
+|2023-11-14
+|2023-11-14T22:13:20+00:00
+|2023-11-14T22+00:00
+|2023-11-14T22:13+00:00
+|2023-11-14T22:13:20,000000000+00:00
+--- file f
+
+=== 8: -R
+status: 0
+bash-n: 0
+--- stdout
+|Tue, 14 Nov 2023 22:13:20 +0000
+|Wed, 15 Nov 2023 03:43:20 +0530
+--- file f
+
+=== 9: --rfc-3339 and --rfc-email
+status: 0
+bash-n: 0
+--- stdout
+|2023-11-14
+|2023-11-14 22:13:20+00:00
+|2023-11-14 22:13:20.000000000+00:00
+|Tue, 14 Nov 2023 22:13:20 +0000
+|2023-11-14T22:13+00:00
+
+=== 10: -u and TZ
+status: 0
+bash-n: 0
+--- stdout
+|2024-07-01 12:00:00 CEST +0200
+|2024-07-01 10:00:00 UTC +0000
+|Tue Nov 14 17:13:20 EST 2023
+|UTC
+--- file f
+--- file summer
+
+=== 11: -r FILE is the file's time
+status: 0
+bash-n: 0
+--- stdout
+|2024-01-15 10:00:00
+|st=1
+--- stderr
+|date: nofile: No such file or directory
+--- file f
+
+=== 12: -r SECONDS (BSD, D016)
+status: 1
+bash-n: 0
+--- stderr
+|date: 1700000000: No such file or directory
+|date: 0: No such file or directory
+
+=== 13: -v adjusts (BSD)
+status: 1
+bash-n: 0
+--- stderr
+|date: invalid option -- 'j'
+|Try 'date --help' for more information.
+|date: invalid option -- 'j'
+|Try 'date --help' for more information.
+|date: invalid option -- 'j'
+|Try 'date --help' for more information.
+|date: invalid option -- 'j'
+|Try 'date --help' for more information.
+|date: invalid option -- 'j'
+|Try 'date --help' for more information.
+|date: invalid option -- 'v'
+|Try 'date --help' for more information.
+
+=== 14: -j -f parses with a format (BSD)
+status: 0
+bash-n: 0
+--- stdout
+|st=1
+--- stderr
+|date: invalid option -- 'j'
+|Try 'date --help' for more information.
+|date: invalid option -- 'j'
+|Try 'date --help' for more information.
+|date: invalid option -- 'j'
+|Try 'date --help' for more information.
+|date: invalid option -- 'j'
+|Try 'date --help' for more information.
+|date: invalid option -- 'j'
+|Try 'date --help' for more information.
+
+=== 15: -j with a [[[mm]dd]HH]MM date (BSD)
+status: 1
+bash-n: 0
+--- stderr
+|date: invalid option -- 'j'
+|Try 'date --help' for more information.
+|date: invalid option -- 'j'
+|Try 'date --help' for more information.
+
+=== 16: errors
+status: 0
+bash-n: 0
+--- stdout
+|st=1
+|st=1
+--- stderr
+|date: the options to specify dates for printing are mutually exclusive
+|Try 'date --help' for more information.
+|date: extra operand ‘extra’
+|Try 'date --help' for more information.
+--- file f

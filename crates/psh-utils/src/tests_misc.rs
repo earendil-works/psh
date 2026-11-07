@@ -78,3 +78,35 @@ fn env_flags() {
         "env: cannot change directory to '/nodir': No such file or directory\n",
     );
 }
+
+#[test]
+fn date() {
+    // The test host's clock: 2023-11-14T22:13:20Z, a Tuesday.
+    check("date", "Tue Nov 14 22:13:20 UTC 2023\n");
+    check("date +%s", "1700000000\n");
+    check("date -d tuesday +%F", "2023-11-14\n");
+    check("date -d 'next tuesday' +%F", "2023-11-21\n");
+    check("date -d 'last tuesday' +%F", "2023-11-07\n");
+    check("date -d friday +%F", "2023-11-17\n");
+    check("date -d 'last friday' +%F", "2023-11-10\n");
+    check("date -d '2 friday' +%F", "2023-11-24\n");
+    check("date -d 'mon 10:00' '+%F %T'", "2023-11-20 10:00:00\n");
+    check("date -d yesterday +%F", "2023-11-13\n");
+    check("date -d '1 hour ago' +%T", "21:13:20\n");
+    check("date -d '+ 2 days' +%F", "2023-11-16\n");
+    // A POSIX TZ rule needs no zone files.
+    check("TZ=EST5EDT date", "Tue Nov 14 17:13:20 EST 2023\n");
+    check("TZ=EST5EDT date -u +%Z", "UTC\n");
+    check(
+        "date -j -f %Y-%m-%d 2024-01-15 '+%F %T'",
+        "2024-01-15 22:13:20\n",
+    );
+    check("date -v+1d -v-2H '+%F %T'", "2023-11-15 20:13:20\n");
+    check_all(
+        "date -d nonsense",
+        "",
+        1,
+        "",
+        "date: invalid date 'nonsense'\n",
+    );
+}

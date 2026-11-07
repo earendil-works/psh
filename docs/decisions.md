@@ -2413,3 +2413,20 @@ commit through `scripts/with-merge-lock.sh`, then takes it again. The cost: a
 coordinator commit waits for a running gate, and merges queue; merge-to-main's lock wait
 (`PSH_MERGE_LOCK_WAIT`) defaults to 4 hours, with-merge-lock's stays 1 hour. The
 lost-race counter is gone. (D1341 is `psh --utils`, so this is D1342.)
+## D1204: date: one parser, the command's zone, GNU ∪ BSD flags
+date: 2026-11-07 · by: shapes · issue: 0020
+`date` uses timefmt's date-string parser (shared with `touch -d` and `find -newermt`),
+extended with days of the week (`friday`, `next friday`, `last friday`, `2 friday`; GNU
+ignores them next to a calendar date, so do we), `YYYYMMDD`, US/European zone
+abbreviations (`PST`, `CEST`) and a sign apart from its number (`+ 2 weeks`); no
+`parse_datetime` dependency (D028's alternative). Its own GNU `strftime` (`%N`, `%:z`
+`%::z` `%:::z`, `%q`, `%P`, flags and widths) is in timefmt. The zone is the command's:
+`UtilCtx::load_zone` reads its `TZ` (zone file, path or POSIX rule) or `/etc/localtime`
+through the engine's TZif reader (the one `printf %(…)T` uses), so `TZ=Asia/Tokyo date`
+and `%Z` work; without zone files (wasm, Windows) the host's offset stays and `%Z` is
+`UTC` or the numeric offset. `-u` is `UtilCtx::use_utc`. BSD: `-j`, `-f INFMT` with
+`-j` (strptime; unnamed fields from now, as BSD does), `-v` (months clamp the day, as
+macOS does: Jan 31 + 1 month is Feb 29), `-j [[[mm]dd]HH]MM[[cc]yy][.SS]`. `-r`:
+D016's rule. `-f FILE` without `-j` is GNU's dates file. Setting the clock (`-s`, a date
+operand without `-j`) runs the real program, or fails in a sandbox. GNU's quirk of
+reading `10:00 -3 hours` as a zone is not reproduced.

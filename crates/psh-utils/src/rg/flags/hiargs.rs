@@ -64,6 +64,9 @@ pub(crate) struct HiArgs {
     context: ContextMode,
     context_separator: ContextSeparator,
     crlf: bool,
+    /// psh: CRLF line ends for matching only (`$` before `\r\n`), the Windows
+    /// default (D030); output keeps `\n` as real rg's on Windows does.
+    crlf_match: bool,
     dfa_size_limit: Option<usize>,
     encoding: EncodingMode,
     engine: EngineChoice,
@@ -257,7 +260,8 @@ impl HiArgs {
         // psh: no memory maps (`MmapChoice::auto` is unsafe; D1133).
         let mmap_choice = grep_searcher::MmapChoice::never();
         // psh: CRLF line ends and `/` separators by default on Windows (D030).
-        let crlf = low.crlf
+        let crlf = low.crlf;
+        let crlf_match = low.crlf
             || (cfg!(windows) && !low.crlf_explicit && !low.null_data);
         let path_separator = low.path_separator.or(if cfg!(windows) {
             Some(b'/')
@@ -280,6 +284,7 @@ impl HiArgs {
             context: low.context,
             context_separator: low.context_separator,
             crlf,
+            crlf_match,
             dfa_size_limit: low.dfa_size_limit,
             encoding: low.encoding,
             engine: low.engine,
@@ -442,12 +447,12 @@ impl HiArgs {
         }
         if self.multiline {
             builder.dot_matches_new_line(self.multiline_dotall);
-            if self.crlf {
+            if self.crlf_match {
                 builder.crlf(true).line_terminator(None);
             }
         } else {
             builder.line_terminator(Some(b'\n')).dot_matches_new_line(false);
-            if self.crlf {
+            if self.crlf_match {
                 builder.crlf(true);
             }
             // We don't need to set this in multiline mode since multiline

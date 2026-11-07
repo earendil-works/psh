@@ -21,6 +21,7 @@ fn inline(src: &str) -> (i32, String, String) {
     fs.write_file("/w/sub/skip.rs", b"foo skipped\n");
     fs.write_file("/w/pats", b"one\ntwo\n");
     fs.write_file("/w/rc", b"# config\n--line-number\n");
+    fs.write_file("/w/crlf", b"ax\r\nb\r\n");
     let mut cfg = host.config();
     cfg.utilities = crate::policy(false);
     cfg.cwd = b"/w".to_vec();
@@ -57,7 +58,7 @@ fn virtual_walk() {
     assert_eq!(out("rg -l foo . </dev/null"), "./a.txt\n./sub/c.rs\n");
     assert_eq!(
         out("rg --files --hidden </dev/null"),
-        ".gitignore\n.hidden\na.txt\npats\nrc\nsub/.ignore\nsub/c.rs\n"
+        ".gitignore\n.hidden\na.txt\ncrlf\npats\nrc\nsub/.ignore\nsub/c.rs\n"
     );
     assert_eq!(
         out("rg -c foo -uu </dev/null"),
@@ -110,6 +111,20 @@ fn stdin_config_and_status() {
     );
     assert!(out("rg --version").starts_with("ripgrep 15.2.0 (psh)\n"));
     assert!(out("rg -h").starts_with("ripgrep 15.2.0 (psh)\nAndrew Gallant"));
+}
+
+/// CRLF is a line end for matching on Windows (D030); output stays `\n` there.
+#[test]
+fn crlf() {
+    let windows = cfg!(windows);
+    assert_eq!(out("rg -c 'x$' crlf"), if windows { "1\n" } else { "" });
+    assert_eq!(out("rg -c --crlf 'x$' crlf"), "1\r\n");
+    assert_eq!(out("rg -c --no-crlf 'x$' crlf"), "");
+    assert_eq!(out("rg -l x crlf a.txt"), "crlf\n");
+    assert_eq!(
+        out("rg -o 'a.*' crlf"),
+        if windows { "ax\n" } else { "ax\r\n" }
+    );
 }
 
 #[test]

@@ -829,6 +829,7 @@ impl<'a> P<'a> {
                         return Ok(true);
                     }
                     Some(b'\n') => {
+                        ao.newline = true;
                         items.push(ao);
                         self.newline()?;
                         return Ok(true);
@@ -882,7 +883,8 @@ impl<'a> P<'a> {
                     ao.background = true;
                 }
                 _ => match self.peek() {
-                    None | Some(b'\n') => {}
+                    None => {}
+                    Some(b'\n') => ao.newline = true,
                     _ if self.at_term(term) => {}
                     _ => return Err(self.unexpected()),
                 },
@@ -935,6 +937,7 @@ impl<'a> P<'a> {
             first,
             rest,
             background: false,
+            newline: false,
         })
     }
 

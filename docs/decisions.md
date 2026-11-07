@@ -831,3 +831,15 @@ A construct the engine does not run yet (`if`, functions, arrays, arithmetic, `s
 ...) prints `NAME: line N: X: not supported yet` and fails with status 2; inside an
 expansion it ends the (sub)shell like other expansion errors. Never a silent
 different behavior; the messages double as a feature histogram for the hit list.
+## D1232: A second printer in bash's `declare -f` layout
+date: 2026-11-07 · by: parser · issue: 0023
+`psh_syntax::print_function_bash(ast, id)` prints a function definition exactly as bash
+5.3's `declare -f` does (`type` adds `NAME is a function` before it); `print` (D1044) stays
+the round-trip printer. The layout rules were derived only from bash's output, by
+differential testing (`work/scratch/0023/fncompare.sh`): every one of the 1027 functions
+in the Oils and brush case scripts, and 99% of ~2000 randomly generated functions,
+print identically. The remaining differences are in bash's handling of here-documents
+inside `$((…) )` text that is not arithmetic. To reproduce bash, the AST records whether
+a list item ended at a newline (`AndOr::newline`), which bash keeps inside substitutions,
+and `decode_ansi_c` decodes `$'…'` (bash prints it single-quoted). `tests/l0/declare-f.txt`
+holds 206 cases with bash's output.

@@ -1,0 +1,4560 @@
+# Function definitions and what `declare -f NAME` prints for them in GNU bash 5.3.
+#
+# Format: `#### N` starts a case; the source runs to `## declare -f:`, bash's output to
+# `## end`. psh-syntax's `tests/declare_f.rs` checks `print_function_bash` against every
+# case. Sources: hand-written probes and randomly generated functions (the generator is
+# described in the 0023 issue log); every source parses in bash.
+#
+#### 0
+f1() { echo a; echo b | cat; }
+## declare -f:
+f1 () 
+{ 
+    echo a;
+    echo b | cat
+}
+## end
+
+#### 1
+f2() { if a; then b; elif c; then d; else e; fi; }
+## declare -f:
+f2 () 
+{ 
+    if a; then
+        b;
+    else
+        if c; then
+            d;
+        else
+            e;
+        fi;
+    fi
+}
+## end
+
+#### 2
+f3() { while a; do b; done; until c; do d; done; }
+## declare -f:
+f3 () 
+{ 
+    while a; do
+        b;
+    done;
+    until c; do
+        d;
+    done
+}
+## end
+
+#### 3
+f4() { for i in 1 2 "$@"; do echo $i; done; for j; do :; done; for ((i=0;i<3;i++)); do :; done; }
+## declare -f:
+f4 () 
+{ 
+    for i in 1 2 "$@";
+    do
+        echo $i;
+    done;
+    for j in "$@";
+    do
+        :;
+    done;
+    for ((i=0; i<3; i++))
+    do
+        :;
+    done
+}
+## end
+
+#### 4
+f5() { case $x in a|b) echo ab;; *) echo other ;& z) ;;& esac; }
+## declare -f:
+f5 () 
+{ 
+    case $x in 
+        a | b)
+            echo ab
+        ;;
+        *)
+            echo other
+        ;&
+        z)
+
+        ;;&
+    esac
+}
+## end
+
+#### 5
+f6() { { a; b; } > out 2>&1; (c; d) & e && f || ! g; }
+## declare -f:
+f6 () 
+{ 
+    { 
+        a;
+        b
+    } > out 2>&1;
+    ( c;
+    d ) & e && f || ! g
+}
+## end
+
+#### 6
+f7() { cat <<EOF
+hello $x
+EOF
+cat <<-'Q'
+	tab
+	Q
+}
+## declare -f:
+f7 () 
+{ 
+    cat <<EOF
+hello $x
+EOF
+
+    cat <<-'Q'
+tab
+Q
+
+}
+## end
+
+#### 7
+f8() { [[ -f x && $a == b* || ! ( c =~ ^d ) ]]; (( x = 1 + 2 )); x=1 y=(1 2) cmd; local z=$(ls) w=`pwd`; }
+## declare -f:
+f8 () 
+{ 
+    [[ -f x && $a == b* || ! ( c =~ ^d ) ]];
+    (( x = 1 + 2 ));
+    x=1 y=(1 2) cmd;
+    local z=$(ls) w=`pwd`
+}
+## end
+
+#### 8
+f9() ( subshell body )
+## declare -f:
+f9 () 
+{ 
+    ( subshell body )
+}
+## end
+
+#### 9
+function f10 { :; }
+## declare -f:
+f10 () 
+{ 
+    :
+}
+## end
+
+#### 10
+f11() { echo "a b" 'c' $'d' ${x:-y} $((1+2)) <(ls) >(cat); time -p ls; coproc { cat; }; }
+## declare -f:
+f11 () 
+{ 
+    echo "a b" 'c' 'd' ${x:-y} $((1+2)) <(ls) >(cat);
+    time -p ls;
+    coproc COPROC { 
+        cat
+    }
+}
+## end
+
+#### 11
+f12() { select x in a b; do break; done; }
+## declare -f:
+f12 () 
+{ 
+    select x in a b;
+    do
+        break;
+    done
+}
+## end
+
+#### 12
+f13() { echo a; } >/dev/null
+## declare -f:
+f13 () 
+{ 
+    echo a
+} > /dev/null
+## end
+
+#### 13
+f14() { :; }
+## declare -f:
+f14 () 
+{ 
+    :
+}
+## end
+
+#### 14
+f15() { a &
+b; c & }
+## declare -f:
+f15 () 
+{ 
+    a & b;
+    c &
+}
+## end
+
+#### 15
+g() { inner; }
+## declare -f:
+g () 
+{ 
+    inner
+}
+## end
+
+#### 16
+f16() { g() { inner; }; }
+## declare -f:
+f16 () 
+{ 
+    function g () 
+    { 
+        inner
+    }
+}
+## end
+
+#### 17
+f17() { echo 2>&1 >&3 3<&- <in {fd}>x <<<"here" &>both; }
+## declare -f:
+f17 () 
+{ 
+    echo 2>&1 1>&3 3>&- < in {fd}> x <<< "here" &> both
+}
+## end
+
+#### 18
+f18() { a; # comment
+b; }
+## declare -f:
+f18 () 
+{ 
+    a;
+    b
+}
+## end
+
+#### 19
+f19() { echo $(cat <<EOF
+x
+EOF
+); }
+## declare -f:
+f19 () 
+{ 
+    echo $(cat <<EOF
+x
+EOF
+)
+}
+## end
+
+#### 20
+w1() { echo $'a\nb' $'it\'s' $"loc" a\ b "x\
+y" ab\
+cd 'q
+r' ~/x {a,b} *.c "$(echo  "  spaced  " )" `echo  hi` ${a[@]} ${#x} $(( 1+2 )) $[3] a=b; }
+## declare -f:
+w1 () 
+{ 
+    echo 'a
+b' 'it'\''s' "loc" a\ b "xy" abcd 'q
+r' ~/x {a,b} *.c "$(echo "  spaced  ")" `echo  hi` ${a[@]} ${#x} $(( 1+2 )) $[3] a=b
+}
+## end
+
+#### 21
+w2() { x=$'\t' y=$"z" arr=([0]=a [k]=$'b') ; declare -a q=(1 $'2'); }
+## declare -f:
+w2 () 
+{ 
+    x='	' y="z" arr=([0]=a [k]='b');
+    declare -a q=(1 '2')
+}
+## end
+
+#### 22
+w3() { echo hi >| f 2>> g <> h <&3 >&2- &>> i 0< j 1> k; }
+## declare -f:
+w3 () 
+{ 
+    echo hi >| f 2>> g <> h 0<&3 1>&2- &>> i < j > k
+}
+## end
+
+#### 23
+w4() { cat <<"E1" <<E2
+q1
+E1
+q2 $x
+E2
+echo after; }
+## declare -f:
+w4 () 
+{ 
+    cat <<'E1' <<E2
+q1
+E1
+q2 $x
+E2
+
+    echo after
+}
+## end
+
+#### 24
+w5() { echo a | cat |& cat; ! a | b; time a; }
+## declare -f:
+w5 () 
+{ 
+    echo a | cat 2>&1 | cat;
+    ! a | b;
+    time a
+}
+## end
+
+#### 25
+w6() { a && { b; c; } || ( d ); }
+## declare -f:
+w6 () 
+{ 
+    a && { 
+        b;
+        c
+    } || ( d )
+}
+## end
+
+#### 26
+w7() { if a; then :; fi > out; while :; do :; done 2>/dev/null; case x in y) ;; esac < in; [[ a ]] >x; ((1)) >y; }
+## declare -f:
+w7 () 
+{ 
+    if a; then
+        :;
+    fi > out;
+    while :; do
+        :;
+    done 2> /dev/null;
+    case x in 
+        y)
+
+        ;;
+    esac < in;
+    [[ -n a ]] > x;
+    ((1)) > y
+}
+## end
+
+#### 27
+w8() { a; b & c; d &
+}
+## declare -f:
+w8 () 
+{ 
+    a;
+    b & c;
+    d &
+}
+## end
+
+#### 28
+w9() { :; } 2>/dev/null >&2
+## declare -f:
+w9 () 
+{ 
+    :
+} 2> /dev/null 1>&2
+## end
+
+#### 29
+c1() { echo $(a; b) $(a | b && c) $(if a; then b; fi) $( (a) ) $(a &) $(
+ a
+ b
+) <(a;b) "$(case x in y) z;; esac)" ${ a; b; }; }
+## declare -f:
+c1 () 
+{ 
+    echo $(a; b) $(a | b && c) $(if a; then
+    b;
+fi) $( ( a )) $(a &) $(a
+b) <(a; b) "$(case x in y)
+        z
+    ;;
+esac)" ${ a; b; }
+}
+## end
+
+#### 30
+c2() { if a; b; then c; fi; while a; b; do c; done; }
+## declare -f:
+c2 () 
+{ 
+    if a;
+    b; then
+        c;
+    fi;
+    while a;
+    b; do
+        c;
+    done
+}
+## end
+
+#### 31
+c3() { for i in a; do if x; then y; fi; done; }
+## declare -f:
+c3 () 
+{ 
+    for i in a;
+    do
+        if x; then
+            y;
+        fi;
+    done
+}
+## end
+
+#### 32
+c4() { ! { a; }; time { b; } ; a | { b; } | (c); { a; } && (b) || while x; do y; done; }
+## declare -f:
+c4 () 
+{ 
+    ! { 
+        a
+    };
+    time { 
+        b
+    };
+    a | { 
+        b
+    } | ( c );
+    { 
+        a
+    } && ( b ) || while x; do
+        y;
+    done
+}
+## end
+
+#### 33
+c5() { coproc cat; coproc N cat; coproc N2 (a); }
+## declare -f:
+c5 () 
+{ 
+    coproc cat;
+    coproc N cat;
+    coproc N2 ( a )
+}
+## end
+
+#### 34
+f() (sub)
+## declare -f:
+f () 
+{ 
+    ( sub )
+}
+## end
+
+#### 35
+function h { :; } > o
+## declare -f:
+h () 
+{ 
+    :
+} > o
+## end
+
+#### 36
+c6() { f() (sub); function h { :; } > o; }
+## declare -f:
+c6 () 
+{ 
+    function f () 
+    { 
+        ( sub )
+    };
+    function h () 
+    { 
+        :
+    } > o
+}
+## end
+
+#### 37
+c7() { case x in (a) b; c;; esac; case y in *) ;; esac; }
+## declare -f:
+c7 () 
+{ 
+    case x in 
+        a)
+            b;
+            c
+        ;;
+    esac;
+    case y in 
+        *)
+
+        ;;
+    esac
+}
+## end
+
+#### 38
+c8() { a & b & c; }
+## declare -f:
+c8 () 
+{ 
+    a & b & c
+}
+## end
+
+#### 39
+c9() { { a & } ; ( b & ) ; }
+## declare -f:
+c9 () 
+{ 
+    { 
+        a &
+    };
+    ( b & )
+}
+## end
+
+#### 40
+c10() { if a; then b & fi; }
+## declare -f:
+c10 () 
+{ 
+    if a; then
+        b &
+    fi
+}
+## end
+
+#### 41
+c11() { x=1; y=; z=( ); w=(a
+b); }
+## declare -f:
+c11 () 
+{ 
+    x=1;
+    y=;
+    z=();
+    w=(a b)
+}
+## end
+
+#### 42
+c12() { echo "$(echo 'a;b')" "${x//\//}" "${x:-$(echo d)}"; }
+## declare -f:
+c12 () 
+{ 
+    echo "$(echo 'a;b')" "${x//\//}" "${x:-$(echo d)}"
+}
+## end
+
+#### 43
+f() { x; }
+## declare -f:
+f () 
+{ 
+    x
+}
+## end
+
+#### 44
+d1() { echo $(a &
+b) $(a;
+b) $(if a; then b
+c; fi) ${| a; } $(for i in 1; do x; done) $(while a; do b; done) $({ a; b; }) $(a && b
+c) $(f() { x; }) $( # comment
+a) $(cat <<EOF
+x
+EOF
+echo y); }
+## declare -f:
+d1 () 
+{ 
+    echo $(a & b) $(a; b) $(if a; then
+    b
+c;
+fi) ${|a; } $(for i in 1;
+do
+    x;
+done) $(while a; do
+    b;
+done) $({ a; b; }) $(a && b
+c) $(function f () 
+{ 
+    x
+}) $(a) $(cat <<EOF
+x
+EOF
+
+echo y)
+}
+## end
+
+#### 45
+d2() { for (( i = 0 ; i < 3 ; i++ )); do :; done; for ((;;)); do :; done; }
+## declare -f:
+d2 () 
+{ 
+    for ((i = 0 ; i < 3 ; i++ ))
+    do
+        :;
+    done;
+    for ((1; 1; 1))
+    do
+        :;
+    done
+}
+## end
+
+#### 46
+d3() { if a; then cat <<EOF
+x
+EOF
+fi; }
+## declare -f:
+d3 () 
+{ 
+    if a; then
+        cat <<EOF
+x
+EOF
+
+    fi
+}
+## end
+
+#### 47
+f() ( x ) > o
+## declare -f:
+f () 
+{ 
+    ( x ) > o
+}
+## end
+
+#### 48
+d4() { f() ( x ) > o; }
+## declare -f:
+d4 () 
+{ 
+    function f () 
+    { 
+        ( x ) > o
+    }
+}
+## end
+
+#### 49
+d5() ( x ) > o
+## declare -f:
+d5 () 
+{ 
+    ( x ) > o
+}
+## end
+
+#### 50
+d6() if a; then b; fi
+## declare -f:
+d6 () 
+{ 
+    if a; then
+        b;
+    fi
+}
+## end
+
+#### 51
+d7() { x=$'\x01' y=$'\e' z=$'a b' w=$'\'' v=$'\\'; }
+## declare -f:
+d7 () 
+{ 
+    x='' y='' z='a b' w=\' v='\'
+}
+## end
+
+#### 52
+e1() { cat <<EOF | grep x
+body
+EOF
+}
+## declare -f:
+e1 () 
+{ 
+    cat <<EOF |
+body
+EOF
+  grep x
+}
+## end
+
+#### 53
+e2() { cat <<EOF && echo ok
+body
+EOF
+}
+## declare -f:
+e2 () 
+{ 
+    cat <<EOF && 
+body
+EOF
+ echo ok
+}
+## end
+
+#### 54
+e3() { while read l; do echo; done <<EOF
+body
+EOF
+}
+## declare -f:
+e3 () 
+{ 
+    while read l; do
+        echo;
+    done <<EOF
+body
+EOF
+
+}
+## end
+
+#### 55
+e4() { cat <<EOF & echo
+body
+EOF
+}
+## declare -f:
+e4 () 
+{ 
+    cat <<EOF &
+body
+EOF
+  echo
+}
+## end
+
+#### 56
+e5() { cat <<A; cat <<B
+a
+A
+b
+B
+}
+## declare -f:
+e5 () 
+{ 
+    cat <<A
+a
+A
+
+    cat <<B
+b
+B
+
+}
+## end
+
+#### 57
+e6() { x=$(cat <<EOF
+in
+EOF
+) y=2; }
+## declare -f:
+e6 () 
+{ 
+    x=$(cat <<EOF
+in
+EOF
+) y=2
+}
+## end
+
+#### 58
+e7() { case x in a) cat <<EOF
+b
+EOF
+;; esac; }
+## declare -f:
+e7 () 
+{ 
+    case x in 
+        a)
+            cat <<EOF
+b
+EOF
+
+        ;;
+    esac
+}
+## end
+
+#### 59
+h1() { cat <<EOF
+x
+EOF
+while a; do b; done; while c; do d; done; }
+## declare -f:
+h1 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    while a;    do
+        b;
+    done;
+    while c; do
+        d;
+    done
+}
+## end
+
+#### 60
+h2() { cat <<EOF
+x
+EOF
+if a; then b; fi; if c; then d; fi; }
+## declare -f:
+h2 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    if a;    then
+        b;
+    fi;
+    if c; then
+        d;
+    fi
+}
+## end
+
+#### 61
+h3() { cat <<EOF
+x
+EOF
+for i in 1; do b; done; }
+## declare -f:
+h3 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    for i in 1;
+    do
+        b;
+    done
+}
+## end
+
+#### 62
+h4() { cat <<EOF
+x
+EOF
+echo a; echo b; }
+## declare -f:
+h4 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    echo a
+    echo b
+}
+## end
+
+#### 63
+h5() { cat <<EOF
+x
+EOF
+until a; do b; done; }
+## declare -f:
+h5 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    until a;    do
+        b;
+    done
+}
+## end
+
+#### 64
+h6() { cat <<EOF
+x
+EOF
+{ a; }; ( b ); case x in y) z;; esac; }
+## declare -f:
+h6 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    { 
+        a
+    };
+    ( b );
+    case x in 
+        y)
+            z
+        ;;
+    esac
+}
+## end
+
+#### 65
+h7() { cat <<EOF
+x
+EOF
+a && while b; do c; done; }
+## declare -f:
+h7 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    a && while b;    do
+        c;
+    done
+}
+## end
+
+#### 66
+h8() { cat <<EOF
+x
+EOF
+while a; do cat <<E2
+y
+E2
+done; while b; do c; done; }
+## declare -f:
+h8 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    while a;    do
+        cat <<E2
+y
+E2
+
+    done
+    while b; do
+        c;
+    done
+}
+## end
+
+#### 67
+i1() { cat <<EOF
+x
+EOF
+echo a; echo b; echo c; }
+## declare -f:
+i1 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    echo a
+    echo b;
+    echo c
+}
+## end
+
+#### 68
+i2() { cat <<EOF
+x
+EOF
+( a; b ); c; }
+## declare -f:
+i2 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    ( a
+    b );
+    c
+}
+## end
+
+#### 69
+i3() { cat <<EOF
+x
+EOF
+case x in y) z; w;; esac; c; d; }
+## declare -f:
+i3 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    case x in 
+        y)
+            z
+            w
+        ;;
+    esac;
+    c;
+    d
+}
+## end
+
+#### 70
+i4() { cat <<EOF
+x
+EOF
+a | b; c; d; }
+## declare -f:
+i4 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    a | b
+    c;
+    d
+}
+## end
+
+#### 71
+i5() { cat <<EOF
+x
+EOF
+{ a; b; }; c; d; }
+## declare -f:
+i5 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    { 
+        a
+        b
+    };
+    c;
+    d
+}
+## end
+
+#### 72
+f() { a; }
+## declare -f:
+f () 
+{ 
+    a
+}
+## end
+
+#### 73
+i6() { cat <<EOF
+x
+EOF
+f() { a; }; c; d; }
+## declare -f:
+i6 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    function f () 
+    { 
+        a
+    };
+    c;
+    d
+}
+## end
+
+#### 74
+i7() { cat <<EOF
+x
+EOF
+[[ a ]]; c; d; }
+## declare -f:
+i7 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    [[ -n a ]]
+    c;
+    d
+}
+## end
+
+#### 75
+i8() { cat <<EOF
+x
+EOF
+for i in 1; do a; done; c; d; }
+## declare -f:
+i8 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    for i in 1;
+    do
+        a;
+    done
+    c;
+    d
+}
+## end
+
+#### 76
+i9() { cat <<EOF
+x
+EOF
+a & b; c; }
+## declare -f:
+i9 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    a & b
+    c
+}
+## end
+
+#### 77
+j1() { cat <<EOF
+x
+EOF
+a | b > o; c; d; }
+## declare -f:
+j1 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    a | b > o;
+    c;
+    d
+}
+## end
+
+#### 78
+j2() { cat <<EOF
+x
+EOF
+a > o; c; d; }
+## declare -f:
+j2 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    a > o;
+    c;
+    d
+}
+## end
+
+#### 79
+j3() { cat <<EOF
+x
+EOF
+a |& b; c; d; }
+## declare -f:
+j3 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    a 2>&1 | b;
+    c;
+    d
+}
+## end
+
+#### 80
+j4() { while a; do cat <<EOF
+x
+EOF
+done | b; c; d; }
+## declare -f:
+j4 () 
+{ 
+    while a; do
+        cat <<EOF
+x
+EOF
+
+    done | b
+    c;
+    d
+}
+## end
+
+#### 81
+j5() { cat <<EOF
+x
+EOF
+a 2>&1; c; d; }
+## declare -f:
+j5 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    a 2>&1;
+    c;
+    d
+}
+## end
+
+#### 82
+j6() { cat <<EOF
+x
+EOF
+((a)); c; d; }
+## declare -f:
+j6 () 
+{ 
+    cat <<EOF
+x
+EOF
+
+    ((a))
+    c;
+    d
+}
+## end
+
+#### 83
+k1() { echo $(( a; b) ) $(( a
+b) ); x=$((echo $'q' $"r") ); }
+## declare -f:
+k1 () 
+{ 
+    echo $(( a; b) ) $(( a
+b) );
+    x=$((echo 'q' "r") )
+}
+## end
+
+#### 84
+k2() { x=$(while a; do b; c; done); y=$(a; while a; do b; done); z=$(f 2>/dev/null; while a; do b; c; done); }
+## declare -f:
+k2 () 
+{ 
+    x=$(while a; do
+    b; c;
+done);
+    y=$(a; while a; do
+    b;
+done);
+    z=$(f 2> /dev/null; while a; do
+    b; c;
+done)
+}
+## end
+
+#### 85
+k3() { echo <(while a; do b; done); }
+## declare -f:
+k3 () 
+{ 
+    echo <(while a; do
+    b;
+done)
+}
+## end
+
+#### 86
+f0() {
+time ( ! true "$y";
+while echo && ! for (( i = 0 ; i < 3 ; i++ )); do true a {p,q} |& echo $(a; b) {p,q};
+time true & true && true $z; done; do f
+time while ! f $(a; b) |& true | f <<-E1
+	line $x
+	E1
+ do cat ~/d x 2>&1 & ! B=(1 2) true; done;
+true b 1> one; done )
+}
+## declare -f:
+f0 () 
+{ 
+    time ( ! true "$y";
+    while echo && ! for ((i = 0 ; i < 3 ; i++ ))
+    do
+        true a {p,q} 2>&1 | echo $(a; b) {p,q};
+        time true & true && true $z;
+    done; do
+        f;
+        time while ! f $(a; b) 2>&1 | true | f <<-E1
+line $x
+E1
+        do
+            cat ~/d x 2>&1 & ! B=(1 2) true;
+        done;
+        true b > one;
+    done )
+}
+## end
+
+#### 87
+f1() {
+f b ~/d 'q r' & f a;
+until ! echo <(ls) |& true | g() { ! echo $(a
+b) $'t\n' $(a
+b) && while time A=1 f a\ b a\ b
+time A=1 echo b {p,q}; do cat || echo a k=v >> o || echo $z $((1+2)) $z &> both & ! f <<-'E2'
+	plain
+	E2
+ done |& ((a+b)) >&2;
+cat ${v:-w} $((1+2)) <<'E3'
+two
+lines
+E3
+ }; do C=$x f a\ b && ! A=1 echo 0< zero; done |& cat 'q r' |& cat $(a
+b) 2> /dev/null
+}
+## declare -f:
+f1 () 
+{ 
+    f b ~/d 'q r' & f a;
+    until ! echo <(ls) 2>&1 | true | function g () 
+    { 
+        ! echo $(a
+b) 't
+' $(a
+b) && while time A=1 f a\ b a\ b;
+        time A=1 echo b {p,q}; do
+            cat || echo a k=v >> o || echo $z $((1+2)) $z &> both & ! f <<-'E2'
+plain
+E2
+
+        done 2>&1 | ((a+b)) 1>&2;
+        cat ${v:-w} $((1+2)) <<'E3'
+two
+lines
+E3
+
+    }; do
+        C=$x f a\ b && ! A=1 echo < zero;
+    done 2>&1 | cat 'q r' 2>&1 | cat $(a
+b) 2> /dev/null
+}
+## end
+
+#### 88
+f4() {
+cat | echo a {fd}> f
+}
+## declare -f:
+f4 () 
+{ 
+    cat | echo a {fd}> f
+}
+## end
+
+#### 89
+f5() {
+echo b ${v:-w} x <<"E24" | select i in a b; do ! { { cat <(ls) x &> both <<-'E25'
+line $x
+E24
+	plain
+	E25
+ };
+true 'q r' k=v ${v:-w} |& B=(1 2) true $(a; b) x b || ! for ((;;)); do time cat x >| c && true $z ${v:-w} <(ls) <<-"E26" |& true $(a; b) $'t\n' {p,q}
+	line $x
+	E26
+ done {fd}> f; }; done || true <<"E27" || f <(ls);
+plain
+E27
+for i in a b; do cat ~/d 2> /dev/null;
+g() { echo ~/d $z |& cat b a 2>&1; } | cat < i; time [[ ! a ]]; done < i || ! true $(a
+b) |& for i in; do time cat $(a
+b) $(a
+b); [[ ( a < b ) ]] 0< zero; done |& cat >> o
+}
+## declare -f:
+f5 () 
+{ 
+    echo b ${v:-w} x <<'E24' |
+line $x
+E24
+  select i in a b;
+    do
+        ! { 
+            { 
+                cat <(ls) x &> both <<-'E25'
+plain
+E25
+
+            };
+            true 'q r' k=v ${v:-w} 2>&1 | B=(1 2) true $(a; b) x b || ! for ((1; 1; 1))
+            do
+                time cat x >| c && true $z ${v:-w} <(ls) <<-'E26' 2>&1 |
+line $x
+E26
+  true $(a; b) 't
+' {p,q};
+            done {fd}> f
+        };
+    done || true <<'E27' || 
+plain
+E27
+ f <(ls)
+    for i in a b;
+    do
+        cat ~/d 2> /dev/null;
+        function g () 
+        { 
+            echo ~/d $z 2>&1 | cat b a 2>&1
+        } | cat < i;
+        time [[ ! -n a ]];
+    done < i || ! true $(a
+b) 2>&1 | for i in ;
+    do
+        time cat $(a
+b) $(a
+b);
+        [[ ( a < b ) ]] < zero;
+    done 2>&1 | cat >> o
+}
+## end
+
+#### 90
+f6() {
+true $'t\n' 2> /dev/null
+}
+## declare -f:
+f6 () 
+{ 
+    true 't
+' 2> /dev/null
+}
+## end
+
+#### 91
+f7() {
+(( x++ ))
+}
+## declare -f:
+f7 () 
+{ 
+    (( x++ ))
+}
+## end
+
+#### 92
+f11() {
+( ! echo && C=$x true >> o && f {p,q} {fd}> f )
+}
+## declare -f:
+f11 () 
+{ 
+    ( ! echo && C=$x true >> o && f {p,q} {fd}> f )
+}
+## end
+
+#### 93
+f12() {
+true $z `echo bt` && cat $(a
+b); ! echo x {fd}> f
+}
+## declare -f:
+f12 () 
+{ 
+    true $z `echo bt` && cat $(a
+b);
+    ! echo x {fd}> f
+}
+## end
+
+#### 94
+f16() {
+cat "$y" k=v $(a
+b) {fd}> f; C=$x f {p,q} k=v *.c >| c
+}
+## declare -f:
+f16 () 
+{ 
+    cat "$y" k=v $(a
+b) {fd}> f;
+    C=$x f {p,q} k=v *.c >| c
+}
+## end
+
+#### 95
+f18() {
+echo "$y" <<E111;
+line $x
+E111
+select i in a b; do true ~/d <(ls); done < i || select i in a b; do echo $"l" | B=(1 2) echo $((1+2)) $"l" <<< "s" <<E112
+plain
+E112
+time f |& for i in "$@"; do ! echo "$(echo in)" $'t\n'; time ( time true *.c |& echo $z
+C=$x true <<'E113'
+plain
+E113
+ )
+plain
+E113
+C=$x f $"l" <<-E114 && A=1 true $((1+2)) $'t\n' $((1+2)) |& true {p,q} a |& C=$x echo || while cat $z x &
+	two
+	lines
+	E114
+! cat $(a; b); time B=(1 2) cat; do ! f $(a; b) "$(echo in)" "$(echo in)" & cat *.c x $"l" >&$fd; done 0< zero; done
+! C=$x f ~/d $"l"; done
+}
+## declare -f:
+f18 () 
+{ 
+    echo "$y" <<E111
+line $x
+E111
+
+    select i in a b;
+    do
+        true ~/d <(ls);
+    done < i || select i in a b;
+    do
+        echo "l" | B=(1 2) echo $((1+2)) "l" <<< "s" <<E112
+plain
+E112
+
+        time f 2>&1 | for i in "$@";
+        do
+            ! echo "$(echo in)" 't
+';
+            time ( time true *.c 2>&1 | echo $z;
+            C=$x true <<'E113'
+plain
+E113
+ );
+            plain;
+            E113;
+            C=$x f "l" <<-E114 && 
+two
+lines
+E114
+ A=1 true $((1+2)) 't
+' $((1+2)) 2>&1 | true {p,q} a 2>&1 | C=$x echo || while cat $z x & ! cat $(a; b);
+            time B=(1 2) cat; do
+                ! f $(a; b) "$(echo in)" "$(echo in)" & cat *.c x "l" >&$fd;
+            done < zero;
+        done;
+        ! C=$x f ~/d "l";
+    done
+}
+## end
+
+#### 96
+f21() {
+for ((i=0;i<3;i++)); do ! [[ a ]] |& f ${v:-w} |& true a x | f "$(echo in)" "$y" <(ls); done 2> /dev/null
+time echo x $z $((1+2)) 3<&- & echo $z <<-"E129" && time echo ~/d $(a
+b) x {fd}> f | cat
+	plain
+	E129
+
+}
+## declare -f:
+f21 () 
+{ 
+    for ((i=0; i<3; i++))
+    do
+        ! [[ -n a ]] 2>&1 | f ${v:-w} 2>&1 | true a x | f "$(echo in)" "$y" <(ls);
+    done 2> /dev/null;
+    time echo x $z $((1+2)) 3>&- & echo $z <<-'E129' && 
+plain
+E129
+ time echo ~/d $(a
+b) x {fd}> f | cat
+}
+## end
+
+#### 97
+f23() {
+time A=1 echo {fd}> f
+cat x $"l" <<< "s"
+echo `echo bt` *.c 0< zero
+}
+## declare -f:
+f23 () 
+{ 
+    time A=1 echo {fd}> f;
+    cat x "l" <<< "s";
+    echo `echo bt` *.c < zero
+}
+## end
+
+#### 98
+f24() {
+for i; do time f x ${v:-w} a\ b |& while ! true k=v &> both && for i in; do ! B=(1 2) echo a `echo bt` "$y" && true "$y" && f {p,q} *.c; done
+C=$x echo "$y" x; do ! true ${v:-w} `echo bt` 1> one && ! cat;
+time select i in a b; do true $(a
+b) b >> o; done; done
+true $((1+2)) <<< "s"; done && case $x in a)  ;& a) f; for i; do until ! C=$x cat && echo ~/d || C=$x echo b 'q r' && true {fd}> f;
+f <(ls) a\ b {p,q} <<E143 |& true $"l" |& f "$(echo in)" ${v:-w} a\ b
+line $x
+E143
+ do ! echo 'q r' 'q r' |& true b "$(echo in)" & time echo $'t\n' k=v 1> one && echo a\ b b; cat {p,q}; done; done & cat $'t\n' {p,q} $((1+2)) && ! f $z | { f $(a
+b) || echo <(ls) x >> o; } ;; esac; true $(a
+b) "$y" ${v:-w} 2> /dev/null; { cat x `echo bt` $(a; b) >> o; } 3<&-
+}
+## declare -f:
+f24 () 
+{ 
+    for i in "$@";
+    do
+        time f x ${v:-w} a\ b 2>&1 | while ! true k=v &> both && for i in ;
+        do
+            ! B=(1 2) echo a `echo bt` "$y" && true "$y" && f {p,q} *.c;
+        done;
+        C=$x echo "$y" x; do
+            ! true ${v:-w} `echo bt` > one && ! cat;
+            time select i in a b;
+            do
+                true $(a
+b) b >> o;
+            done;
+        done;
+        true $((1+2)) <<< "s";
+    done && case $x in 
+        a)
+
+        ;&
+        a)
+            f;
+            for i in "$@";
+            do
+                until ! C=$x cat && echo ~/d || C=$x echo b 'q r' && true {fd}> f;
+                f <(ls) a\ b {p,q} <<E143 2>&1 |
+line $x
+E143
+  true "l" 2>&1 | f "$(echo in)" ${v:-w} a\ b; do
+                    ! echo 'q r' 'q r' 2>&1 | true b "$(echo in)" & time echo 't
+' k=v > one && echo a\ b b;
+                    cat {p,q};
+                done;
+            done & cat 't
+' {p,q} $((1+2)) && ! f $z | { 
+                f $(a
+b) || echo <(ls) x >> o
+            }
+        ;;
+    esac;
+    true $(a
+b) "$y" ${v:-w} 2> /dev/null;
+    { 
+        cat x `echo bt` $(a; b) >> o
+    } 3>&-
+}
+## end
+
+#### 99
+f25() {
+B=(1 2) true *.c $(a
+b)
+}
+## declare -f:
+f25 () 
+{ 
+    B=(1 2) true *.c $(a
+b)
+}
+## end
+
+#### 100
+f27() {
+cat $((1+2)) | true `echo bt` 2>&1 <<E146 | cat "$(echo in)" | ((a+b))
+plain
+E146
+
+}
+## declare -f:
+f27 () 
+{ 
+    cat $((1+2)) | true `echo bt` 2>&1 <<E146 |
+plain
+E146
+  cat "$(echo in)" | ((a+b))
+}
+## end
+
+#### 101
+f28() {
+cat "$(echo in)" $((1+2)) && ! ( true a "$y" |& case $x in a)  ;; esac & (( x++ )) | cat {p,q}; select i in a b; do time f >&2;
+g() { time cat ${v:-w} *.c |& A=1 true $((1+2)) $((1+2)) {p,q} 2> /dev/null; true $z 2> /dev/null || ! f $'t\n' <<-"E147"
+	two
+	lines
+	E147
+ } & ! echo $((1+2)) *.c "$(echo in)" >> o | for ((;;)); do cat k=v <(ls); done; done ) || cat x $((1+2)) ~/d || for (( i = 0 ; i < 3 ; i++ )); do time g() { ! true ~/d $(a; b) $(a
+b) |& echo <<-E148 &
+	plain
+	E148
+time f 3<&-; } & { f {p,q} *.c ${v:-w} >> o && cat x <(ls) & f $((1+2)) {p,q} "$(echo in)" <<E149;
+plain
+E149
+! cat 'q r' `echo bt` ${v:-w}; } >> o && cat "$(echo in)" ~/d;
+! g() { ! cat $z; ! cat; }; done
+}
+## declare -f:
+f28 () 
+{ 
+    cat "$(echo in)" $((1+2)) && ! ( true a "$y" 2>&1 | case $x in 
+        a)
+
+        ;;
+    esac & (( x++ )) | cat {p,q};
+    select i in a b;
+    do
+        time f 1>&2;
+        function g () 
+        { 
+            time cat ${v:-w} *.c 2>&1 | A=1 true $((1+2)) $((1+2)) {p,q} 2> /dev/null;
+            true $z 2> /dev/null || ! f 't
+' <<-'E147'
+two
+lines
+E147
+
+        } & ! echo $((1+2)) *.c "$(echo in)" >> o | for ((1; 1; 1))
+        do
+            cat k=v <(ls);
+        done;
+    done ) || cat x $((1+2)) ~/d || for ((i = 0 ; i < 3 ; i++ ))
+    do
+        time function g () 
+        { 
+            ! true ~/d $(a; b) $(a
+b) 2>&1 | echo <<-E148 &
+plain
+E148
+  time f 3>&-
+        } & { 
+            f {p,q} *.c ${v:-w} >> o && cat x <(ls) & f $((1+2)) {p,q} "$(echo in)" <<E149
+plain
+E149
+
+            ! cat 'q r' `echo bt` ${v:-w}
+        } >> o && cat "$(echo in)" ~/d;
+        ! function g () 
+        { 
+            ! cat $z;
+            ! cat
+        };
+    done
+}
+## end
+
+#### 102
+f29() {
+! f k=v {p,q} *.c >| c;
+f $"l" 1> one;
+B=(1 2) true $((1+2)) $'t\n' a\ b
+}
+## declare -f:
+f29 () 
+{ 
+    ! f k=v {p,q} *.c >| c;
+    f "l" > one;
+    B=(1 2) true $((1+2)) 't
+' a\ b
+}
+## end
+
+#### 103
+f30() {
+((x=1))
+}
+## declare -f:
+f30 () 
+{ 
+    ((x=1))
+}
+## end
+
+#### 104
+f32() {
+true b && f a\ b
+}
+## declare -f:
+f32 () 
+{ 
+    true b && f a\ b
+}
+## end
+
+#### 105
+f33() {
+for i in a b; do ! for i; do ! true "$y" a\ b {p,q} 0< zero
+echo {fd}> f;
+until f;
+B=(1 2) cat *.c 'q r' $z >> o <<E156;
+line $x
+E156
+echo $(a; b) 3<&-; do time echo *.c b $(a; b); ! true $(a; b); time true ~/d $((1+2)) $z; done; done;
+! select i in a b; do time C=$x true ${v:-w} *.c >&2 <<E157 &
+plain
+E157
+time echo $(a
+b) | true "$(echo in)" ~/d "$(echo in)" | for i in; do ! true "$(echo in)" ~/d {fd}> f <<E158
+line $x
+E158
+A=1 echo 0< zero; done >&2; done & time until ! true {fd}> f; do time g() { echo <<"E159"
+line $x
+E159
+true; }; done; done;
+cat "$(echo in)" $(a
+b) |& f "$y" {p,q} $(a
+b) <<< "s" || time B=(1 2) echo ~/d "$y" $'t\n' {fd}> f
+}
+## declare -f:
+f33 () 
+{ 
+    for i in a b;
+    do
+        ! for i in "$@";
+        do
+            ! true "$y" a\ b {p,q} < zero;
+            echo {fd}> f;
+            until f;
+            B=(1 2) cat *.c 'q r' $z >> o <<E156
+line $x
+E156
+
+            echo $(a; b) 3>&-; do
+                time echo *.c b $(a; b);
+                ! true $(a; b);
+                time true ~/d $((1+2)) $z;
+            done;
+        done;
+        ! select i in a b;
+        do
+            time C=$x true ${v:-w} *.c 1>&2 <<E157 &
+plain
+E157
+  time echo $(a
+b) | true "$(echo in)" ~/d "$(echo in)" | for i in ;
+            do
+                ! true "$(echo in)" ~/d {fd}> f <<E158
+line $x
+E158
+
+                A=1 echo < zero;
+            done 1>&2;
+        done & time until ! true {fd}> f; do
+            time function g () 
+            { 
+                echo <<'E159'
+line $x
+E159
+
+                true
+            };
+        done;
+    done;
+    cat "$(echo in)" $(a
+b) 2>&1 | f "$y" {p,q} $(a
+b) <<< "s" || time B=(1 2) echo ~/d "$y" 't
+' {fd}> f
+}
+## end
+
+#### 106
+f34() {
+! while ! select i in a b; do ((a+b)); done >&2; do for ((i=0; ;)); do ! { C=$x cat $((1+2)) k=v {p,q}; }; f $'t\n' |& echo ~/d x {p,q} <<< "s" |& cat k=v a\ b "$(echo in)"; done & time true ${v:-w} "$(echo in)" | echo <<< "s" <<-"E160"
+	two
+	lines
+	E160
+ done & true
+}
+## declare -f:
+f34 () 
+{ 
+    ! while ! select i in a b;
+    do
+        ((a+b));
+    done 1>&2; do
+        for ((i=0; 1; 1))
+        do
+            ! { 
+                C=$x cat $((1+2)) k=v {p,q}
+            };
+            f 't
+' 2>&1 | echo ~/d x {p,q} <<< "s" 2>&1 | cat k=v a\ b "$(echo in)";
+        done & time true ${v:-w} "$(echo in)" | echo <<< "s" <<-'E160'
+two
+lines
+E160
+
+    done & true
+}
+## end
+
+#### 107
+f35() {
+echo <(ls) a\ b;
+time select i in a b; do ! cat <<"E161"
+plain
+E161
+ done
+}
+## declare -f:
+f35 () 
+{ 
+    echo <(ls) a\ b;
+    time select i in a b;
+    do
+        ! cat <<'E161'
+plain
+E161
+
+    done
+}
+## end
+
+#### 108
+f40() {
+time cat "$(echo in)" || echo <(ls) {p,q} $(a
+b) | [[ a ]] && true || while ! for i in "$@"; do ! { time cat x *.c $"l" && ! echo $(a; b) "$y" < i; echo; f >> o; } 0< zero; done >> o && select i in a b; do if ! B=(1 2) echo a *.c x & cat && true <<< "s" <<-"E187" | B=(1 2) true `echo bt`;
+	plain
+	E187
+true a\ b "$y" x || echo &> both <<-'E188' |& true >| c |& f | cat a\ b $(a
+b) | cat <<"E189"
+	plain
+	E188
+plain
+E189
+ then echo a\ b <<-"E190" |& f &> both &
+	plain
+	E190
+f; elif echo $(a
+b); then true $(a; b) & true |& C=$x cat <(ls) | true $(a
+b) x $(a; b) 3<&-; else cat "$(echo in)" $(a; b) $z; fi; done >| c; do true >&$fd | for i in "$@"; do B=(1 2) f <(ls) 'q r' 1> one |& A=1 true "$y"; done; time cat $((1+2)) <(ls) <(ls) |& cat $'t\n' {p,q} $(a; b) > o | cat x a; done && f $((1+2)) && ((x=1))
+}
+## declare -f:
+f40 () 
+{ 
+    time cat "$(echo in)" || echo <(ls) {p,q} $(a
+b) | [[ -n a ]] && true || while ! for i in "$@";
+    do
+        ! { 
+            time cat x *.c "l" && ! echo $(a; b) "$y" < i;
+            echo;
+            f >> o
+        } < zero;
+    done >> o && select i in a b;
+    do
+        if ! B=(1 2) echo a *.c x & cat && true <<< "s" <<-'E187' |
+plain
+E187
+  B=(1 2) true `echo bt`
+        true a\ b "$y" x || echo &> both <<-'E188' 2>&1 |
+plain
+E188
+  true >| c 2>&1 | f | cat a\ b $(a
+b) | cat <<'E189'
+plain
+E189
+    then
+            echo a\ b <<-'E190' 2>&1 |
+plain
+E190
+  f &> both & f;
+        else
+            if echo $(a
+b); then
+                true $(a; b) & true 2>&1 | C=$x cat <(ls) | true $(a
+b) x $(a; b) 3>&-;
+            else
+                cat "$(echo in)" $(a; b) $z;
+            fi;
+        fi;
+    done >| c; do
+        true >&$fd | for i in "$@";
+        do
+            B=(1 2) f <(ls) 'q r' > one 2>&1 | A=1 true "$y";
+        done;
+        time cat $((1+2)) <(ls) <(ls) 2>&1 | cat 't
+' {p,q} $(a; b) > o | cat x a;
+    done && f $((1+2)) && ((x=1))
+}
+## end
+
+#### 109
+f45() {
+B=(1 2) cat {p,q} 2>&1
+}
+## declare -f:
+f45 () 
+{ 
+    B=(1 2) cat {p,q} 2>&1
+}
+## end
+
+#### 110
+f46() {
+true <<-'E241' | echo k=v 'q r' |& case $x in *) 
+	line $x
+	E241
+ ;& a) A=1 cat ${v:-w} $((1+2)) ${v:-w}; [[ -f x ]] >&$fd;
+time for i in "$@"; do ! case $x in c|d) ! cat $"l" | A=1 f $'t\n' $"l" ;; esac;
+[[ a && b || c ]] || A=1 true *.c;
+for (( i = 0 ; i < 3 ; i++ )); do cat $((1+2)) a\ b $'t\n'; done; done && time ((x=1)) ;;& a) time echo "$y" $z $"l" 0< zero
+cat a <(ls) <<'E242'
+two
+lines
+E242
+ ;& esac | cat $"l"
+}
+## declare -f:
+f46 () 
+{ 
+    true <<-'E241' |
+line $x
+E241
+  echo k=v 'q r' 2>&1 | case $x in 
+        *)
+
+        ;&
+        a)
+            A=1 cat ${v:-w} $((1+2)) ${v:-w};
+            [[ -f x ]] >&$fd;
+            time for i in "$@";
+            do
+                ! case $x in 
+                    c | d)
+                        ! cat "l" | A=1 f 't
+' "l"
+                    ;;
+                esac;
+                [[ -n a && -n b || -n c ]] || A=1 true *.c;
+                for ((i = 0 ; i < 3 ; i++ ))
+                do
+                    cat $((1+2)) a\ b 't
+';
+                done;
+            done && time ((x=1))
+        ;;&
+        a)
+            time echo "$y" $z "l" < zero;
+            cat a <(ls) <<'E242'
+two
+lines
+E242
+
+        ;&
+    esac | cat "l"
+}
+## end
+
+#### 111
+f49() {
+! ( time until ! for (( i = 0 ; i < 3 ; i++ )); do true | echo || B=(1 2) cat
+time f ${v:-w} 'q r' $((1+2)) <<"E261"
+line $x
+E261
+ done; do ! true |& select i in a b; do time true {fd}> f & cat | true <<"E262" || time true a <(ls) $(a; b) &
+line $x
+E262
+true && cat *.c || echo $(a; b) "$y" >&$fd | f $'t\n' $(a; b) $'t\n' < i; done; done > o )
+f `echo bt` $(a; b) $(a
+b) & time f <<"E263" | cat x $'t\n' ~/d
+plain
+E263
+
+}
+## declare -f:
+f49 () 
+{ 
+    ! ( time until ! for ((i = 0 ; i < 3 ; i++ ))
+    do
+        true | echo || B=(1 2) cat;
+        time f ${v:-w} 'q r' $((1+2)) <<'E261'
+line $x
+E261
+
+    done;    do
+        ! true 2>&1 | select i in a b;
+        do
+            time true {fd}> f & cat | true <<'E262' || 
+line $x
+E262
+ time true a <(ls) $(a; b) & true && cat *.c || echo $(a; b) "$y" >&$fd | f 't
+' $(a; b) 't
+' < i;
+        done;
+    done > o );
+    f `echo bt` $(a; b) $(a
+b) & time f <<'E263' |
+plain
+E263
+  cat x 't
+' ~/d
+}
+## end
+
+#### 112
+f50() {
+select i in a b; do ! while ! true a\ b x 3<&- <<-"E264"
+	two
+	lines
+	E264
+ do ! for i in a b; do echo a\ b "$(echo in)" k=v || time echo `echo bt` *.c & cat *.c `echo bt` a >> o; done; f $(a
+b) `echo bt`;
+until time f {p,q} & true "$(echo in)" |& cat $((1+2)) $z <<"E265" |& C=$x echo $(a
+b)
+two
+lines
+E265
+ do ! cat a `echo bt` |& C=$x f b a;
+cat <<< "s" && echo a\ b $"l" $(a; b) |& echo || time echo "$(echo in)" ${v:-w} ~/d & time B=(1 2) cat 2>&1; done; done || until f a\ b 2>&1 & echo b &> both; { ! B=(1 2) cat $((1+2)) $(a; b) >&$fd; } < i; do true $(a
+b) 2> /dev/null |& true *.c $'t\n' "$y"; done; done |& cat <<E266
+plain
+E266
+
+}
+## declare -f:
+f50 () 
+{ 
+    select i in a b;
+    do
+        ! while ! true a\ b x 3>&- <<-'E264'
+two
+lines
+E264
+        do
+            ! for i in a b;
+            do
+                echo a\ b "$(echo in)" k=v || time echo `echo bt` *.c & cat *.c `echo bt` a >> o;
+            done;
+            f $(a
+b) `echo bt`;
+            until time f {p,q} & true "$(echo in)" 2>&1 | cat $((1+2)) $z <<'E265' 2>&1 |
+two
+lines
+E265
+  C=$x echo $(a
+b);            do
+                ! cat a `echo bt` 2>&1 | C=$x f b a;
+                cat <<< "s" && echo a\ b "l" $(a; b) 2>&1 | echo || time echo "$(echo in)" ${v:-w} ~/d & time B=(1 2) cat 2>&1;
+            done;
+        done || until f a\ b 2>&1 & echo b &> both;
+        { 
+            ! B=(1 2) cat $((1+2)) $(a; b) >&$fd
+        } < i; do
+            true $(a
+b) 2> /dev/null 2>&1 | true *.c 't
+' "$y";
+        done;
+    done 2>&1 | cat <<E266
+plain
+E266
+
+}
+## end
+
+#### 113
+f53() {
+((x=1));
+true $'t\n' $(a; b)
+}
+## declare -f:
+f53 () 
+{ 
+    ((x=1));
+    true 't
+' $(a; b)
+}
+## end
+
+#### 114
+f54() {
+! cat 'q r' $"l" $z
+}
+## declare -f:
+f54 () 
+{ 
+    ! cat 'q r' "l" $z
+}
+## end
+
+#### 115
+f59() {
+time ( f a $'t\n' <<-'E331';
+	two
+	lines
+	E331
+time echo $((1+2)) $(a
+b) >| c || ((a+b)) ) | f 0< zero
+}
+## declare -f:
+f59 () 
+{ 
+    time ( f a 't
+' <<-'E331'
+two
+lines
+E331
+
+    time echo $((1+2)) $(a
+b) >| c || ((a+b)) ) | f < zero
+}
+## end
+
+#### 116
+f63() {
+time echo $((1+2)) $'t\n' k=v >&2 |& for ((i=0;i<3;i++)); do for i in a b; do time case $x in c|d) echo $"l" $"l" ;& esac; true "$y" $(a; b) k=v | until f a\ b `echo bt` "$y" | echo b $(a; b) $(a; b); do f x | C=$x echo |& cat <<-E344
+	line $x
+	E344
+ done | cat k=v {fd}> f; done; done >&2
+}
+## declare -f:
+f63 () 
+{ 
+    time echo $((1+2)) 't
+' k=v 1>&2 2>&1 | for ((i=0; i<3; i++))
+    do
+        for i in a b;
+        do
+            time case $x in 
+                c | d)
+                    echo "l" "l"
+                ;&
+            esac;
+            true "$y" $(a; b) k=v | until f a\ b `echo bt` "$y" | echo b $(a; b) $(a; b); do
+                f x | C=$x echo 2>&1 | cat <<-E344
+line $x
+E344
+
+            done | cat k=v {fd}> f;
+        done;
+    done 1>&2
+}
+## end
+
+#### 117
+f64() {
+echo 3<&-
+}
+## declare -f:
+f64 () 
+{ 
+    echo 3>&-
+}
+## end
+
+#### 118
+f65() {
+time B=(1 2) echo `echo bt` $(a; b) <<< "s"
+}
+## declare -f:
+f65 () 
+{ 
+    time B=(1 2) echo `echo bt` $(a; b) <<< "s"
+}
+## end
+
+#### 119
+f70() {
+! C=$x true $((1+2)) <<-"E386"
+	plain
+	E386
+
+}
+## declare -f:
+f70 () 
+{ 
+    ! C=$x true $((1+2)) <<-'E386'
+plain
+E386
+
+}
+## end
+
+#### 120
+f72() {
+time C=$x true <<E417 | f 'q r' $(a
+b)
+plain
+E417
+
+}
+## declare -f:
+f72 () 
+{ 
+    time C=$x true <<E417 |
+plain
+E417
+  f 'q r' $(a
+b)
+}
+## end
+
+#### 121
+f74() {
+( time true $((1+2)) "$(echo in)" x & [[ $x =~ ^a(b|c)$ ]] 2>&1 ); A=1 true ${v:-w} <<-'E420'
+	two
+	lines
+	E420
+
+}
+## declare -f:
+f74 () 
+{ 
+    ( time true $((1+2)) "$(echo in)" x & [[ $x =~ ^a(b|c)$ ]] 2>&1 );
+    A=1 true ${v:-w} <<-'E420'
+two
+lines
+E420
+
+}
+## end
+
+#### 122
+f77() {
+f <<E441
+line $x
+E441
+
+}
+## declare -f:
+f77 () 
+{ 
+    f <<E441
+line $x
+E441
+
+}
+## end
+
+#### 123
+f78() {
+f {p,q} a;
+! C=$x f &> both
+}
+## declare -f:
+f78 () 
+{ 
+    f {p,q} a;
+    ! C=$x f &> both
+}
+## end
+
+#### 124
+f84() {
+time f || ! cat a {fd}> f |& echo "$y" |& for ((i=0; ;)); do echo $'t\n' "$(echo in)" $(a
+b) | f $((1+2)); done | true a\ b
+}
+## declare -f:
+f84 () 
+{ 
+    time f || ! cat a {fd}> f 2>&1 | echo "$y" 2>&1 | for ((i=0; 1; 1))
+    do
+        echo 't
+' "$(echo in)" $(a
+b) | f $((1+2));
+    done | true a\ b
+}
+## end
+
+#### 125
+f85() {
+time f b
+}
+## declare -f:
+f85 () 
+{ 
+    time f b
+}
+## end
+
+#### 126
+f88() {
+echo <(ls) *.c; time echo > o
+}
+## declare -f:
+f88 () 
+{ 
+    echo <(ls) *.c;
+    time echo > o
+}
+## end
+
+#### 127
+f91() {
+((x=1))
+}
+## declare -f:
+f91 () 
+{ 
+    ((x=1))
+}
+## end
+
+#### 128
+f94() {
+f a\ b && select i in a b; do time cat "$y" & { echo $"l" a\ b 3<&-; { echo $((1+2)) $'t\n' <<-E498
+	plain
+	E498
+ }
+echo 2> /dev/null || while ! true `echo bt` a\ b |& echo $((1+2)); do true "$y" $((1+2)) &> both <<-E499 || echo
+	plain
+	E499
+ done < i |& true $"l" <(ls) $"l" | f <(ls) > o; } > o; done || time ((x=1)) || for (( i = 0 ; i < 3 ; i++ )); do true "$y" "$y" && ! true $'t\n';
+A=1 f b ~/d "$(echo in)" <<-E500
+	two
+	lines
+	E500
+cat | true $(a
+b) <(ls); done && cat ~/d "$y" ~/d & [[ ! a ]] || until echo "$y" ~/d 1> one <<"E501"
+plain
+E501
+ do time for ((i=0;i<3;i++)); do for ((i=0; ;)); do ! echo <(ls) k=v; done & for i in a b; do time A=1 cat || time f x <(ls); cat ${v:-w} < i; cat $(a; b); done && time g() { time cat {fd}> f; }; done; done |& cat
+}
+## declare -f:
+f94 () 
+{ 
+    f a\ b && select i in a b;
+    do
+        time cat "$y" & { 
+            echo "l" a\ b 3>&-;
+            { 
+                echo $((1+2)) 't
+' <<-E498
+plain
+E498
+
+            };
+            echo 2> /dev/null || while ! true `echo bt` a\ b 2>&1 | echo $((1+2)); do
+                true "$y" $((1+2)) &> both <<-E499 || 
+plain
+E499
+ echo;
+            done < i 2>&1 | true "l" <(ls) "l" | f <(ls) > o
+        } > o;
+    done || time ((x=1)) || for ((i = 0 ; i < 3 ; i++ ))
+    do
+        true "$y" "$y" && ! true 't
+';
+        A=1 f b ~/d "$(echo in)" <<-E500
+two
+lines
+E500
+
+        cat | true $(a
+b) <(ls);
+    done && cat ~/d "$y" ~/d & [[ ! -n a ]] || until echo "$y" ~/d > one <<'E501'
+plain
+E501
+    do
+        time for ((i=0; i<3; i++))
+        do
+            for ((i=0; 1; 1))
+            do
+                ! echo <(ls) k=v;
+            done & for i in a b;
+            do
+                time A=1 cat || time f x <(ls);
+                cat ${v:-w} < i;
+                cat $(a; b);
+            done && time function g () 
+            { 
+                time cat {fd}> f
+            };
+        done;
+    done 2>&1 | cat
+}
+## end
+
+#### 129
+f95() {
+time if g() { f a\ b; f $"l" $z {p,q}; } | echo |& [[ a ]];
+f < i; then ! [[ ( a < b ) ]] & time ((x=1)); fi | cat <(ls) k=v "$(echo in)" && cat {p,q} {p,q} & f "$(echo in)" <(ls) $(a
+b) <<-E502
+	plain
+	E502
+
+}
+## declare -f:
+f95 () 
+{ 
+    time if function g () 
+    { 
+        f a\ b;
+        f "l" $z {p,q}
+    } | echo 2>&1 | [[ -n a ]];
+    f < i; then
+        ! [[ ( a < b ) ]] & time ((x=1));
+    fi | cat <(ls) k=v "$(echo in)" && cat {p,q} {p,q} & f "$(echo in)" <(ls) $(a
+b) <<-E502
+plain
+E502
+
+}
+## end
+
+#### 130
+f99() {
+until ! f |& cat k=v $z; do f b "$(echo in)" & while time echo a b $'t\n'
+f || ! g() { time f k=v a\ b $((1+2)); f $z {fd}> f; } | [[ a ]] >&2 | g() { time f "$(echo in)"; }; do ! select i in a b; do B=(1 2) cat `echo bt` 'q r' `echo bt`
+echo 'q r' $z $(a
+b) || B=(1 2) true a\ b ${v:-w} b & f a\ b *.c b <<E509
+two
+lines
+E509
+ done; done; done 2> /dev/null
+}
+## declare -f:
+f99 () 
+{ 
+    until ! f 2>&1 | cat k=v $z; do
+        f b "$(echo in)" & while time echo a b 't
+';
+        f || ! function g () 
+        { 
+            time f k=v a\ b $((1+2));
+            f $z {fd}> f
+        } | [[ -n a ]] 1>&2 | function g () 
+        { 
+            time f "$(echo in)"
+        }; do
+            ! select i in a b;
+            do
+                B=(1 2) cat `echo bt` 'q r' `echo bt`;
+                echo 'q r' $z $(a
+b) || B=(1 2) true a\ b ${v:-w} b & f a\ b *.c b <<E509
+two
+lines
+E509
+
+            done;
+        done;
+    done 2> /dev/null
+}
+## end
+
+#### 131
+f104() {
+select i in a b; do ! ( ! f *.c b $'t\n' <<-'E536'
+	plain
+	E536
+! while true $'t\n' $(a; b) `echo bt` >| c && ! echo 'q r'; do cat 'q r' k=v $z >| c; echo |& B=(1 2) true b $'t\n' |& echo "$(echo in)" <(ls) "$y"; done |& if cat k=v $(a
+b) x 3<&-; then f $((1+2)) $(a
+b) `echo bt`; fi || ! { cat <(ls) a; echo; };
+for ((i=0; ;)); do time true 'q r' $'t\n' {fd}> f || time cat b <<-"E537"
+	plain
+	E537
+ done | { cat x > o; C=$x f $((1+2)) a\ b || f;
+f ~/d <(ls) ~/d; } ) < i; g() { ( time cat $z {fd}> f;
+cat x $((1+2)) ) & if f 1> one & ! f $(a
+b) "$y" 1> one |& echo && ! B=(1 2) echo $"l" *.c $'t\n'; then f;
+! cat b $(a; b) {p,q}; elif time f $z `echo bt` > o || echo $'t\n'
+echo *.c k=v `echo bt` 3<&-;
+echo ~/d ~/d <<-"E538"
+	plain
+	E538
+ then A=1 cat a x >&2 <<-E539 &
+	two
+	lines
+	E539
+time B=(1 2) cat;
+time f *.c x $(a
+b) 2>&1; fi & true a a\ b $z <<< "s"; }; done
+}
+## declare -f:
+f104 () 
+{ 
+    select i in a b;
+    do
+        ! ( ! f *.c b 't
+' <<-'E536'
+plain
+E536
+
+        ! while true 't
+' $(a; b) `echo bt` >| c && ! echo 'q r'; do
+            cat 'q r' k=v $z >| c;
+            echo 2>&1 | B=(1 2) true b 't
+' 2>&1 | echo "$(echo in)" <(ls) "$y";
+        done 2>&1 | if cat k=v $(a
+b) x 3>&-; then
+            f $((1+2)) $(a
+b) `echo bt`;
+        fi || ! { 
+            cat <(ls) a;
+            echo
+        };
+        for ((i=0; 1; 1))
+        do
+            time true 'q r' 't
+' {fd}> f || time cat b <<-'E537'
+plain
+E537
+
+        done | { 
+            cat x > o;
+            C=$x f $((1+2)) a\ b || f;
+            f ~/d <(ls) ~/d
+        } ) < i;
+        function g () 
+        { 
+            ( time cat $z {fd}> f;
+            cat x $((1+2)) ) & if f > one & ! f $(a
+b) "$y" > one 2>&1 | echo && ! B=(1 2) echo "l" *.c 't
+'; then
+                f;
+                ! cat b $(a; b) {p,q};
+            else
+                if time f $z `echo bt` > o || echo 't
+';
+                echo *.c k=v `echo bt` 3>&-;
+                echo ~/d ~/d <<-'E538'
+plain
+E538
+    then
+                    A=1 cat a x 1>&2 <<-E539 &
+two
+lines
+E539
+  time B=(1 2) cat
+                    time f *.c x $(a
+b) 2>&1;
+                fi;
+            fi & true a a\ b $z <<< "s"
+        };
+    done
+}
+## end
+
+#### 132
+f105() {
+time echo 'q r'
+}
+## declare -f:
+f105 () 
+{ 
+    time echo 'q r'
+}
+## end
+
+#### 133
+f107() {
+cat 'q r'
+}
+## declare -f:
+f107 () 
+{ 
+    cat 'q r'
+}
+## end
+
+#### 134
+f109() {
+B=(1 2) f $(a; b) >&$fd
+true a\ b || f "$y" {p,q} "$y"
+}
+## declare -f:
+f109 () 
+{ 
+    B=(1 2) f $(a; b) >&$fd;
+    true a\ b || f "$y" {p,q} "$y"
+}
+## end
+
+#### 135
+f112() {
+cat 'q r' $(a
+b) $(a; b)
+}
+## declare -f:
+f112 () 
+{ 
+    cat 'q r' $(a
+b) $(a; b)
+}
+## end
+
+#### 136
+f114() {
+time [[ a && b || c ]] 3<&-;
+echo <<-E586
+	line $x
+	E586
+A=1 true $(a; b) "$y" $(a
+b) 3<&-
+}
+## declare -f:
+f114 () 
+{ 
+    time [[ -n a && -n b || -n c ]] 3>&-;
+    echo <<-E586
+line $x
+E586
+
+    A=1 true $(a; b) "$y" $(a
+b) 3>&-
+}
+## end
+
+#### 137
+f116() {
+time (( x++ )) | echo a\ b `echo bt` |& f {p,q}
+}
+## declare -f:
+f116 () 
+{ 
+    time (( x++ )) | echo a\ b `echo bt` 2>&1 | f {p,q}
+}
+## end
+
+#### 138
+f122() {
+cat $'t\n' *.c 'q r'
+}
+## declare -f:
+f122 () 
+{ 
+    cat 't
+' *.c 'q r'
+}
+## end
+
+#### 139
+f123() {
+true $(a; b) {p,q} $((1+2)) | g() { time echo | select i in a b; do cat 'q r' >&$fd <<-'E651' && (( x++ ))
+	plain
+	E651
+cat $'t\n' a\ b; done; }
+true
+}
+## declare -f:
+f123 () 
+{ 
+    true $(a; b) {p,q} $((1+2)) | function g () 
+    { 
+        time echo | select i in a b;
+        do
+            cat 'q r' >&$fd <<-'E651' && 
+plain
+E651
+ (( x++ ))
+            cat 't
+' a\ b;
+        done
+    };
+    true
+}
+## end
+
+#### 140
+f124() {
+time cat "$y" >&$fd | echo | C=$x true a\ b; { time until true *.c b; do g() { ! f b k=v $z | cat $'t\n' | f $(a
+b) 0< zero; true x "$(echo in)"
+cat $(a
+b) $z b; } |& f;
+f k=v x $'t\n'; done
+! g() { f "$y" x ~/d; f $((1+2)) {p,q} {p,q} |& select i in a b; do ! cat 2> /dev/null; done
+! true "$(echo in)" *.c >&$fd <<-'E652'
+	line $x
+	E652
+ } & case $x in a)  ;& esac >&$fd | echo <<-E653
+	two
+	lines
+	E653
+ }; cat < i | true `echo bt` && time echo $z $'t\n' "$y" && time f k=v a $(a
+b)
+}
+## declare -f:
+f124 () 
+{ 
+    time cat "$y" >&$fd | echo | C=$x true a\ b;
+    { 
+        time until true *.c b; do
+            function g () 
+            { 
+                ! f b k=v $z | cat 't
+' | f $(a
+b) < zero;
+                true x "$(echo in)";
+                cat $(a
+b) $z b
+            } 2>&1 | f;
+            f k=v x 't
+';
+        done;
+        ! function g () 
+        { 
+            f "$y" x ~/d;
+            f $((1+2)) {p,q} {p,q} 2>&1 | select i in a b;
+            do
+                ! cat 2> /dev/null;
+            done;
+            ! true "$(echo in)" *.c >&$fd <<-'E652'
+line $x
+E652
+
+        } & case $x in 
+            a)
+
+            ;&
+        esac >&$fd | echo <<-E653
+two
+lines
+E653
+
+    };
+    cat < i | true `echo bt` && time echo $z 't
+' "$y" && time f k=v a $(a
+b)
+}
+## end
+
+#### 141
+f126() {
+! f {p,q} 'q r' $'t\n'
+for (( i = 0 ; i < 3 ; i++ )); do ! true $(a; b) |& cat ~/d || time true x; done && ! ( select i in a b; do until time A=1 echo "$y" {p,q} $z; time cat $z ~/d a\ b; do ! A=1 cat ${v:-w} $(a
+b) 3<&-; done; (( x++ )); done;
+while true $z $'t\n' $z <<< "s" & time ( time true $(a
+b) "$(echo in)" `echo bt` &> both <<"E658";
+plain
+E658
+f || cat a *.c <<'E659' &
+plain
+E659
+true ${v:-w} $((1+2)) <<'E660' && echo <(ls) |& echo x *.c < i && cat $(a; b) $"l"
+two
+lines
+E660
+ )
+two
+lines
+E660
+ do cat $(a
+b) $((1+2)) $(a; b) <<< "s" |& echo {p,q} $(a; b) {p,q} > o; A=1 true && true <(ls) <<-E661 && ((x=1)) 2>&1
+	two
+	lines
+	E661
+ done 0< zero & time f ) || cat `echo bt` $(a
+b) > o
+}
+## declare -f:
+f126 () 
+{ 
+    ! f {p,q} 'q r' 't
+';
+    for ((i = 0 ; i < 3 ; i++ ))
+    do
+        ! true $(a; b) 2>&1 | cat ~/d || time true x;
+    done && ! ( select i in a b;
+    do
+        until time A=1 echo "$y" {p,q} $z;
+        time cat $z ~/d a\ b; do
+            ! A=1 cat ${v:-w} $(a
+b) 3>&-;
+        done;
+        (( x++ ));
+    done;
+    while true $z 't
+' $z <<< "s" & time ( time true $(a
+b) "$(echo in)" `echo bt` &> both <<'E658'
+plain
+E658
+
+    f || cat a *.c <<'E659' &
+plain
+E659
+  true ${v:-w} $((1+2)) <<'E660' && 
+two
+lines
+E660
+ echo <(ls) 2>&1 | echo x *.c < i && cat $(a; b) "l" );
+    two;
+    lines;
+    E660; do
+        cat $(a
+b) $((1+2)) $(a; b) <<< "s" 2>&1 | echo {p,q} $(a; b) {p,q} > o;
+        A=1 true && true <(ls) <<-E661 && 
+two
+lines
+E661
+ ((x=1)) 2>&1;
+    done < zero & time f ) || cat `echo bt` $(a
+b) > o
+}
+## end
+
+#### 142
+f127() {
+! select i in a b; do C=$x true b $'t\n'; done
+}
+## declare -f:
+f127 () 
+{ 
+    ! select i in a b;
+    do
+        C=$x true b 't
+';
+    done
+}
+## end
+
+#### 143
+f128() {
+until for ((i=0; ;)); do if time echo && cat ${v:-w} b; then f ~/d; else time cat "$y" k=v 1> one;
+cat $(a
+b) k=v; fi; done &> both && g() { ! cat k=v 1> one
+! for i; do true ~/d || time cat ${v:-w} x; done; echo {p,q} | { cat; }; };
+cat $(a
+b); do time for i in; do ! g() { true k=v $(a
+b) >&2
+true a x *.c |& cat 3<&-; };
+case $x in *) ! f 0< zero ;;& *)  ;& esac; done >> o & ! f *.c; true 2> /dev/null; done; echo $(a; b)
+((a+b))
+}
+## declare -f:
+f128 () 
+{ 
+    until for ((i=0; 1; 1))
+    do
+        if time echo && cat ${v:-w} b; then
+            f ~/d;
+        else
+            time cat "$y" k=v > one;
+            cat $(a
+b) k=v;
+        fi;
+    done &> both && function g () 
+    { 
+        ! cat k=v > one;
+        ! for i in "$@";
+        do
+            true ~/d || time cat ${v:-w} x;
+        done;
+        echo {p,q} | { 
+            cat
+        }
+    };
+    cat $(a
+b); do
+        time for i in ;
+        do
+            ! function g () 
+            { 
+                true k=v $(a
+b) 1>&2;
+                true a x *.c 2>&1 | cat 3>&-
+            };
+            case $x in 
+                *)
+                    ! f < zero
+                ;;&
+                *)
+
+                ;&
+            esac;
+        done >> o & ! f *.c;
+        true 2> /dev/null;
+    done;
+    echo $(a; b);
+    ((a+b))
+}
+## end
+
+#### 144
+f129() {
+! f
+time echo 1> one |& if true k=v a\ b a |& cat <(ls) | select i in a b; do echo > o
+A=1 cat `echo bt` "$y" $'t\n' 3<&-; done; then echo b ~/d "$y" >> o;
+true b $(a
+b) k=v; else time cat $'t\n'; select i in a b; do time [[ a ]] & ( echo $z 2>&1 <<-'E662' && f a\ b "$(echo in)" 2> /dev/null
+	two
+	lines
+	E662
+ ) | until ! f b {p,q} | echo;
+	two
+	lines
+	E662
+time echo & f ~/d `echo bt` <(ls) 0< zero; do ! B=(1 2) f $"l" a | C=$x true `echo bt` `echo bt` && echo | C=$x f $(a
+b) && ! echo
+time cat {p,q} $(a; b) 1> one || B=(1 2) f $(a
+b) <<-E663;
+	two
+	lines
+	E663
+echo a $(a; b) $z; done || for i in; do time cat b {p,q} "$y";
+echo <(ls) $z & f {p,q} 1> one || true <<< "s" && f a\ b 'q r'; done;
+! echo $(a; b) k=v a <<< "s"; done |& f {p,q} $"l"; fi 3<&-; (( x++ ))
+}
+## declare -f:
+f129 () 
+{ 
+    ! f;
+    time echo > one 2>&1 | if true k=v a\ b a 2>&1 | cat <(ls) | select i in a b;
+    do
+        echo > o;
+        A=1 cat `echo bt` "$y" 't
+' 3>&-;
+    done; then
+        echo b ~/d "$y" >> o;
+        true b $(a
+b) k=v;
+    else
+        time cat 't
+';
+        select i in a b;
+        do
+            time [[ -n a ]] & ( echo $z 2>&1 <<-'E662' && 
+two
+lines
+E662
+ f a\ b "$(echo in)" 2> /dev/null ) | until ! f b {p,q} | echo;
+            two;
+            lines;
+            E662;
+            time echo & f ~/d `echo bt` <(ls) < zero; do
+                ! B=(1 2) f "l" a | C=$x true `echo bt` `echo bt` && echo | C=$x f $(a
+b) && ! echo;
+                time cat {p,q} $(a; b) > one || B=(1 2) f $(a
+b) <<-E663
+two
+lines
+E663
+
+                echo a $(a; b) $z;
+            done || for i in ;
+            do
+                time cat b {p,q} "$y"
+                echo <(ls) $z & f {p,q} > one || true <<< "s" && f a\ b 'q r';
+            done;
+            ! echo $(a; b) k=v a <<< "s";
+        done 2>&1 | f {p,q} "l";
+    fi 3>&-;
+    (( x++ ))
+}
+## end
+
+#### 145
+f130() {
+f
+A=1 cat b "$(echo in)" b |& f & cat x | B=(1 2) true ${v:-w} *.c | f $(a; b) k=v <<< "s" && time echo $'t\n' "$(echo in)" $(a; b)
+}
+## declare -f:
+f130 () 
+{ 
+    f;
+    A=1 cat b "$(echo in)" b 2>&1 | f & cat x | B=(1 2) true ${v:-w} *.c | f $(a; b) k=v <<< "s" && time echo 't
+' "$(echo in)" $(a; b)
+}
+## end
+
+#### 146
+f0() {
+cat ${v:-w} <(ls)
+}
+## declare -f:
+f0 () 
+{ 
+    cat ${v:-w} <(ls)
+}
+## end
+
+#### 147
+f2() {
+time C=$x echo ${ time while time C=$x f || ! for ((;;)); do time C=$x true $"l" x $"l" 2> /dev/null; ! B=(1 2) true k=v *.c "$(echo in)"; cat a ~/d; done; do [[ $x =~ ^a(b|c)$ ]] |& echo *.c; true >&2;
+! cat $(a
+b) `echo bt` *.c; done; } $"l" < i;
+cat $(a
+b) >| c <<-"E10"
+	two
+	lines
+	E10
+
+}
+## declare -f:
+f2 () 
+{ 
+    time C=$x echo ${ time while time C=$x f || ! for ((1; 1; 1))
+do
+    time C=$x true "l" x "l" 2> /dev/null; ! B=(1 2) true k=v *.c "$(echo in)"; cat a ~/d;
+done; do
+    [[ $x =~ ^a(b|c)$ ]] 2>&1 | echo *.c; true 1>&2; ! cat $(a
+b) `echo bt` *.c;
+done; } "l" < i;
+    cat $(a
+b) >| c <<-'E10'
+two
+lines
+E10
+
+}
+## end
+
+#### 148
+f3() {
+f `echo bt` $(a; b) 'q r' &> both
+}
+## declare -f:
+f3 () 
+{ 
+    f `echo bt` $(a; b) 'q r' &> both
+}
+## end
+
+#### 149
+f4() {
+time true *.c {p,q} <<'E11'
+two
+lines
+E11
+
+}
+## declare -f:
+f4 () 
+{ 
+    time true *.c {p,q} <<'E11'
+two
+lines
+E11
+
+}
+## end
+
+#### 150
+f7() {
+f ${ B=(1 2) true k=v >&$fd;
+time echo |& case $x in *)  ;;& a) cat "$y" a\ b a\ b & A=1 true $'t\n' x a || B=(1 2) f $"l" ${v:-w} $(a; b) 0< zero ;; esac; } 'q r' $(a; b) && f *.c 2> /dev/null
+}
+## declare -f:
+f7 () 
+{ 
+    f ${ B=(1 2) true k=v >&$fd; time echo 2>&1 | case $x in *)
+
+    ;;&
+    a)
+        cat "$y" a\ b a\ b & A=1 true 't
+' x a || B=(1 2) f "l" ${v:-w} $(a; b) < zero
+    ;;
+esac; } 'q r' $(a; b) && f *.c 2> /dev/null
+}
+## end
+
+#### 151
+f11() {
+echo; time case $x in a) echo;
+C=$x echo k=v ~/d *.c <<-'E60'
+	plain
+	E60
+ ;; esac
+}
+## declare -f:
+f11 () 
+{ 
+    echo;
+    time case $x in 
+        a)
+            echo;
+            C=$x echo k=v ~/d *.c <<-'E60'
+plain
+E60
+
+        ;;
+    esac
+}
+## end
+
+#### 152
+f22() {
+time f `echo bt`
+}
+## declare -f:
+f22 () 
+{ 
+    time f `echo bt`
+}
+## end
+
+#### 153
+f23() {
+time true b "$(! true k=v a\ b
+time A=1 true || time ( ! [[ a ]] |& [[ a && b || c ]] 0< zero );
+(( x++ )) |& true)" <<< "s"
+}
+## declare -f:
+f23 () 
+{ 
+    time true b "$(! true k=v a\ b
+time A=1 true || time ( ! [[ -n a ]] 2>&1 | [[ -n a && -n b || -n c ]] < zero ); (( x++ )) 2>&1 | true)" <<< "s"
+}
+## end
+
+#### 154
+f24() {
+! until time select i in a b; do time echo || ((x=1))
+f k=v $(time true 'q r' {p,q}; ! true $'t\n' > o; cat "$y" && time true $(a; b) $(a; b) 3<&-) |& for i in "$@"; do echo $"l" $z 'q r' >&$fd |& true b x {p,q}; ! true $"l"; done; done & f 2> /dev/null
+! cat $"l" ~/d || while until cat {fd}> f;
+f {p,q} "$(echo in)"; do true <(ls) {p,q} $'t\n' <<'E184' &
+plain
+E184
+echo; ! cat b $'t\n' 3<&- || echo a ~/d; done {fd}> f | { ! echo "$y" {fd}> f;
+echo; } && echo *.c & { time f ~/d {p,q} *.c | echo "$y" $((1+2)) 2> /dev/null |& C=$x true >> o & f 2>&1; }; do ! g() { cat x ${v:-w} <<-E185
+	line $x
+	E185
+ }
+f $z $'t\n' | cat; done; do g() { { ! echo; }; }; done &> both
+}
+## declare -f:
+f24 () 
+{ 
+    ! until time select i in a b;
+    do
+        time echo || ((x=1));
+        f k=v $(time true 'q r' {p,q}; ! true 't
+' > o; cat "$y" && time true $(a; b) $(a; b) 3>&-) 2>&1 | for i in "$@";
+        do
+            echo "l" $z 'q r' >&$fd 2>&1 | true b x {p,q};
+            ! true "l";
+        done;
+    done & f 2> /dev/null;
+    ! cat "l" ~/d || while until cat {fd}> f;
+    f {p,q} "$(echo in)"; do
+        true <(ls) {p,q} 't
+' <<'E184' &
+plain
+E184
+  echo
+        ! cat b 't
+' 3>&- || echo a ~/d;
+    done {fd}> f | { 
+        ! echo "$y" {fd}> f;
+        echo
+    } && echo *.c & { 
+        time f ~/d {p,q} *.c | echo "$y" $((1+2)) 2> /dev/null 2>&1 | C=$x true >> o & f 2>&1
+    }; do
+        ! function g () 
+        { 
+            cat x ${v:-w} <<-E185
+line $x
+E185
+
+        };
+        f $z 't
+' | cat;
+    done; do
+        function g () 
+        { 
+            { 
+                ! echo
+            }
+        };
+    done &> both
+}
+## end
+
+#### 155
+f28() {
+echo
+}
+## declare -f:
+f28 () 
+{ 
+    echo
+}
+## end
+
+#### 156
+f29() {
+B=(1 2) f $(time ( select i in a b; do true k=v k=v a\ b 2>&1
+true >> o; done &> both | ((x=1)); true {fd}> f;
+true $(a; b) ~/d *.c 2> /dev/null ) || echo & select i in a b; do ! f; ! true b |& ( echo ${v:-w} {p,q} k=v |& B=(1 2) f k=v <<-E208
+	line $x
+	E208
+C=$x cat >> o;
+time echo a 1> one && f >> o || time cat <(ls) $"l" `echo bt` ) | ( time cat x $((1+2)) |& A=1 f 3<&- <<-'E209';
+	plain
+	E209
+! echo $z |& true *.c "$(echo in)" *.c ) && ! true 'q r' 'q r' 1> one; done || C=$x true $((1+2)) 'q r') {p,q} *.c
+}
+## declare -f:
+f29 () 
+{ 
+    B=(1 2) f $(time ( select i in a b;
+do
+    true k=v k=v a\ b 2>&1
+true >> o;
+done &> both | ((x=1)); true {fd}> f; true $(a; b) ~/d *.c 2> /dev/null ) || echo & select i in a b;
+do
+    ! f; ! true b 2>&1 | ( echo ${v:-w} {p,q} k=v 2>&1 | B=(1 2) f k=v <<-E208
+line $x
+E208
+
+    C=$x cat >> o; time echo a > one && f >> o || time cat <(ls) "l" `echo bt` ) | ( time cat x $((1+2)) 2>&1 | A=1 f 3>&- <<-'E209'
+plain
+E209
+ ! echo $z 2>&1 | true *.c "$(echo in)" *.c ) && ! true 'q r' 'q r' > one;
+done || C=$x true $((1+2)) 'q r') {p,q} *.c
+}
+## end
+
+#### 157
+f31() {
+f "$y" $z x & true k=v ~/d $'t\n'
+}
+## declare -f:
+f31 () 
+{ 
+    f "$y" $z x & true k=v ~/d 't
+'
+}
+## end
+
+#### 158
+f32() {
+true <(ls) ~/d 'q r' <<"E214"
+two
+lines
+E214
+echo $(a
+b) x | [[ a ]]
+}
+## declare -f:
+f32 () 
+{ 
+    true <(ls) ~/d 'q r' <<'E214'
+two
+lines
+E214
+
+    echo $(a
+b) x | [[ -n a ]]
+}
+## end
+
+#### 159
+f33() {
+[[ -f x ]] >&$fd && for (( i = 0 ; i < 3 ; i++ )); do [[ ( a < b ) ]]; done 2> /dev/null & ! (( x++ ));
+f {p,q}
+}
+## declare -f:
+f33 () 
+{ 
+    [[ -f x ]] >&$fd && for ((i = 0 ; i < 3 ; i++ ))
+    do
+        [[ ( a < b ) ]];
+    done 2> /dev/null & ! (( x++ ));
+    f {p,q}
+}
+## end
+
+#### 160
+f34() {
+! f b 2> /dev/null && true "$y" "$(echo in)" < i
+time for (( i = 0 ; i < 3 ; i++ )); do time ((x=1)) {fd}> f
+time f $(a; b) x $(a; b); done >&2
+}
+## declare -f:
+f34 () 
+{ 
+    ! f b 2> /dev/null && true "$y" "$(echo in)" < i;
+    time for ((i = 0 ; i < 3 ; i++ ))
+    do
+        time ((x=1)) {fd}> f;
+        time f $(a; b) x $(a; b);
+    done 1>&2
+}
+## end
+
+#### 161
+f35() {
+time f a & ! cat a\ b; f |& cat "$y" ${ ! echo a\ b > o; ! for i; do g() { C=$x echo $"l" |& f; time echo ~/d & time true | echo x ~/d *.c && cat >&$fd; }; done; } 3<&-
+}
+## declare -f:
+f35 () 
+{ 
+    time f a & ! cat a\ b;
+    f 2>&1 | cat "$y" ${ ! echo a\ b > o; ! for i in "$@";
+do
+    function g () 
+    { 
+        C=$x echo "l" 2>&1 | f;
+        time echo ~/d & time true | echo x ~/d *.c && cat >&$fd
+    };
+done; } 3>&-
+}
+## end
+
+#### 162
+f39() {
+! B=(1 2) echo x
+}
+## declare -f:
+f39 () 
+{ 
+    ! B=(1 2) echo x
+}
+## end
+
+#### 163
+f40() {
+cat ${v:-w} |& [[ -f x ]]
+}
+## declare -f:
+f40 () 
+{ 
+    cat ${v:-w} 2>&1 | [[ -f x ]]
+}
+## end
+
+#### 164
+f45() {
+{ time true >| c |& until time C=$x true; do ! cat {p,q} $((1+2)); done & (( x++ )); } || time B=(1 2) echo *.c $z x <<-"E275"
+	two
+	lines
+	E275
+
+}
+## declare -f:
+f45 () 
+{ 
+    { 
+        time true >| c 2>&1 | until time C=$x true; do
+            ! cat {p,q} $((1+2));
+        done & (( x++ ))
+    } || time B=(1 2) echo *.c $z x <<-'E275'
+two
+lines
+E275
+
+}
+## end
+
+#### 165
+f46() {
+true $"l" <(ls) x && ! { ! ( select i in a b; do ! echo;
+f $((1+2)) ${v:-w}; true {p,q} ~/d; done {fd}> f; echo 2>&1 );
+time for ((;;)); do ! true `echo bt` $'t\n' k=v || ! C=$x true b b; for ((i=0;i<3;i++)); do ! echo $((1+2)) |& echo 2> /dev/null |& f k=v | f |& C=$x cat x;
+true $z `echo bt` $(a
+b) & cat && true && ! f "$y" $(a
+b) | echo "$(echo in)" `echo bt`; done >&$fd; done || true {p,q} || for i; do ! select i in a b; do B=(1 2) f a\ b 1> one; done; done; }
+}
+## declare -f:
+f46 () 
+{ 
+    true "l" <(ls) x && ! { 
+        ! ( select i in a b;
+        do
+            ! echo;
+            f $((1+2)) ${v:-w};
+            true {p,q} ~/d;
+        done {fd}> f;
+        echo 2>&1 );
+        time for ((1; 1; 1))
+        do
+            ! true `echo bt` 't
+' k=v || ! C=$x true b b;
+            for ((i=0; i<3; i++))
+            do
+                ! echo $((1+2)) 2>&1 | echo 2> /dev/null 2>&1 | f k=v | f 2>&1 | C=$x cat x;
+                true $z `echo bt` $(a
+b) & cat && true && ! f "$y" $(a
+b) | echo "$(echo in)" `echo bt`;
+            done >&$fd;
+        done || true {p,q} || for i in "$@";
+        do
+            ! select i in a b;
+            do
+                B=(1 2) f a\ b > one;
+            done;
+        done
+    }
+}
+## end
+
+#### 166
+f48() {
+! echo $(a
+b) <(ls)
+}
+## declare -f:
+f48 () 
+{ 
+    ! echo $(a
+b) <(ls)
+}
+## end
+
+#### 167
+f50() {
+true $(a
+b) $z && cat "$y" "$(echo in)" ${ cat 'q r' $"l"; }
+}
+## declare -f:
+f50 () 
+{ 
+    true $(a
+b) $z && cat "$y" "$(echo in)" ${ cat 'q r' "l"; }
+}
+## end
+
+#### 168
+f54() {
+true b & cat $'t\n'
+}
+## declare -f:
+f54 () 
+{ 
+    true b & cat 't
+'
+}
+## end
+
+#### 169
+f55() {
+time cat <(ls) || A=1 true $((1+2)) "$(echo in)"
+}
+## declare -f:
+f55 () 
+{ 
+    time cat <(ls) || A=1 true $((1+2)) "$(echo in)"
+}
+## end
+
+#### 170
+f56() {
+true & time ((x=1))
+}
+## declare -f:
+f56 () 
+{ 
+    true & time ((x=1))
+}
+## end
+
+#### 171
+f58() {
+time f <(! g() { time until ! true | true {p,q} |& true $'t\n' $(a
+b); do echo
+C=$x echo $"l"
+! f *.c a *.c && A=1 echo $'t\n' $(a
+b) b 3<&- && echo ~/d $z; done;
+! ((a+b)) 1> one || time echo & time f $(a
+b) && time f "$y" b 'q r' < i <<"E336" && cat ${v:-w} 2> /dev/null
+plain
+E336
+ } |& for ((;;)); do ! f $(f `echo bt` 'q r') k=v 'q r';
+while f ${v:-w} >| c || f <<-'E337' || time cat &
+	two
+	lines
+	E337
+f <<"E338" || B=(1 2) cat ~/d 'q r' || cat a\ b > o
+line $x
+E338
+! cat; do cat $(a; b) 'q r' && cat <(ls)
+cat `echo bt` |& f b a\ b "$y" < i
+f x <(ls) >> o; done && ! f | f && C=$x cat < i; g() { ! f || cat; }; done {fd}> f) x & ! for i in; do echo ${v:-w} <<'E339';
+line $x
+E339
+for i in a b; do A=1 cat b $"l" "$(echo 2> /dev/null |& echo "$(echo in)" {fd}> f
+cat <<-"E340";
+	plain
+	E340
+time B=(1 2) echo)"; done; done || true
+}
+## declare -f:
+f58 () 
+{ 
+    time f <(! function g () 
+{ 
+    time until ! true | true {p,q} 2>&1 | true 't
+' $(a
+b); do
+        echo
+
+        C=$x echo "l"
+
+        ! f *.c a *.c && A=1 echo 't
+' $(a
+b) b 3>&- && echo ~/d $z;
+    done;
+    ! ((a+b)) > one || time echo & time f $(a
+b) && time f "$y" b 'q r' < i <<'E336' && 
+plain
+E336
+ cat ${v:-w} 2> /dev/null
+} 2>&1 | for ((1; 1; 1))
+do
+    ! f $(f `echo bt` 'q r') k=v 'q r'; while f ${v:-w} >| c || f <<-'E337' || 
+two
+lines
+E337
+ time cat & f <<'E338' || 
+line $x
+E338
+ B=(1 2) cat ~/d 'q r' || cat a\ b > o
+! cat; do
+        cat $(a; b) 'q r' && cat <(ls)
+cat `echo bt` 2>&1 | f b a\ b "$y" < i
+f x <(ls) >> o;
+    done && ! f | f && C=$x cat < i; function g () 
+    { 
+        ! f || cat
+    };
+done {fd}> f) x & ! for i in ;
+    do
+        echo ${v:-w} <<'E339'
+line $x
+E339
+
+        for i in a b;
+        do
+            A=1 cat b "l" "$(echo 2> /dev/null 2>&1 | echo "$(echo in)" {fd}> f
+cat <<-'E340'
+plain
+E340
+ time B=(1 2) echo)";
+        done;
+    done || true
+}
+## end
+
+#### 172
+f62() {
+{ time f ${v:-w} <<-'E393'
+	line $x
+	E393
+ }
+}
+## declare -f:
+f62 () 
+{ 
+    { 
+        time f ${v:-w} <<-'E393'
+line $x
+E393
+
+    }
+}
+## end
+
+#### 173
+f63() {
+! echo $"l" k=v &> both
+! true $"l" & f k=v <(echo x;
+[[ ( a < b ) ]]) >&$fd
+}
+## declare -f:
+f63 () 
+{ 
+    ! echo "l" k=v &> both;
+    ! true "l" & f k=v <(echo x; [[ ( a < b ) ]]) >&$fd
+}
+## end
+
+#### 174
+f66() {
+f
+}
+## declare -f:
+f66 () 
+{ 
+    f
+}
+## end
+
+#### 175
+f67() {
+cat "$(for ((i=0; ;)); do B=(1 2) echo $((1+2)) & f x 'q r' >| c & time true $(a
+b) $(a
+b) ${v:-w} || [[ a && b || c ]]; done | while echo <<"E422" |& select i in a b; do ! echo | echo "$y" $z &
+plain
+E422
+! echo "$(echo in)" <(ls) $(a
+b) 1> one; done 1> one || ! { ! echo $(a
+b);
+f `echo bt` a\ b || ! cat x <(ls) $(a
+b) & ! cat b $z <(ls) || ! f {p,q} a; } | C=$x cat & ! true <(! true $z x ~/d & time f 'q r' <(ls) <<E423;
+plain
+E423
+! f `echo bt` $(a; b) b 0< zero || echo); do echo 'q r' 'q r'; done | C=$x f $(a; b) `echo bt` $"l")" & C=$x f {p,q} $(a
+b) < i |& f b k=v <<E424
+plain
+E424
+
+}
+## declare -f:
+f67 () 
+{ 
+    cat "$(for ((i=0; 1; 1))
+do
+    B=(1 2) echo $((1+2)) & f x 'q r' >| c & time true $(a
+b) $(a
+b) ${v:-w} || [[ -n a && -n b || -n c ]];
+done | while echo <<'E422' 2>&1 |
+plain
+E422
+  select i in a b;
+do
+    ! echo | echo "$y" $z & ! echo "$(echo in)" <(ls) $(a
+b) > one;
+done > one || ! { ! echo $(a
+b); f `echo bt` a\ b || ! cat x <(ls) $(a
+b) & ! cat b $z <(ls) || ! f {p,q} a; } | C=$x cat & ! true <(! true $z x ~/d & time f 'q r' <(ls) <<E423
+plain
+E423
+ ! f `echo bt` $(a; b) b < zero || echo); do
+    echo 'q r' 'q r';
+done | C=$x f $(a; b) `echo bt` "l")" & C=$x f {p,q} $(a
+b) < i 2>&1 | f b k=v <<E424
+plain
+E424
+
+}
+## end
+
+#### 176
+f71() {
+while f a\ b
+! cat a\ b b a 0< zero; do ( time while ! cat $z $"l"; do ! B=(1 2) true ${v:-w} ${v:-w} ~/d >| c | B=(1 2) true 'q r' <(ls) <(ls) && ! f & true $((1+2)) a $((1+2)) >| c; cat; done || echo ~/d |& f a\ b *.c $z {fd}> f || select i in a b; do true $z k=v; done ) |& A=1 f | f k=v >&$fd; done >> o
+}
+## declare -f:
+f71 () 
+{ 
+    while f a\ b;
+    ! cat a\ b b a < zero; do
+        ( time while ! cat $z "l"; do
+            ! B=(1 2) true ${v:-w} ${v:-w} ~/d >| c | B=(1 2) true 'q r' <(ls) <(ls) && ! f & true $((1+2)) a $((1+2)) >| c;
+            cat;
+        done || echo ~/d 2>&1 | f a\ b *.c $z {fd}> f || select i in a b;
+        do
+            true $z k=v;
+        done ) 2>&1 | A=1 f | f k=v >&$fd;
+    done >> o
+}
+## end
+
+#### 177
+f73() {
+! true "$(echo in)" $'t\n' $"l"
+}
+## declare -f:
+f73 () 
+{ 
+    ! true "$(echo in)" 't
+' "l"
+}
+## end
+
+#### 178
+f74() {
+cat $'t\n' b |& ((x=1)) |& echo $z {p,q}
+}
+## declare -f:
+f74 () 
+{ 
+    cat 't
+' b 2>&1 | ((x=1)) 2>&1 | echo $z {p,q}
+}
+## end
+
+#### 179
+f75() {
+A=1 true
+}
+## declare -f:
+f75 () 
+{ 
+    A=1 true
+}
+## end
+
+#### 180
+f76() {
+time for i in; do f <(ls); for i in a b; do f $(a; b) <(! echo && true $((1+2)) a\ b <<-E464
+	plain
+	E464
+f "$(echo in)" b 2>&1 || cat 'q r' $"l" <<-E465 || ! true ${v:-w} *.c;
+	plain
+	E465
+cat {p,q} | cat *.c $((1+2)) `echo bt` && cat 1> one && echo < i |& echo <<-"E466"
+	two
+	lines
+	E466
+); done; done
+true k=v ~/d & f $z $(a
+b) x && [[ $x =~ ^a(b|c)$ ]]
+}
+## declare -f:
+f76 () 
+{ 
+    time for i in ;
+    do
+        f <(ls);
+        for i in a b;
+        do
+            f $(a; b) <(! echo && true $((1+2)) a\ b <<-E464
+plain
+E464
+
+f "$(echo in)" b 2>&1 || cat 'q r' "l" <<-E465 || 
+plain
+E465
+ ! true ${v:-w} *.c cat {p,q} | cat *.c $((1+2)) `echo bt` && cat > one && echo < i 2>&1 | echo <<-'E466'
+two
+lines
+E466
+);
+        done;
+    done;
+    true k=v ~/d & f $z $(a
+b) x && [[ $x =~ ^a(b|c)$ ]]
+}
+## end
+
+#### 181
+f77() {
+[[ -f x ]] |& A=1 cat ${v:-w}; ! B=(1 2) true $z
+}
+## declare -f:
+f77 () 
+{ 
+    [[ -f x ]] 2>&1 | A=1 cat ${v:-w};
+    ! B=(1 2) true $z
+}
+## end
+
+#### 182
+f78() {
+! ((a+b))
+B=(1 2) cat >| c |& [[ a == b* ]]
+}
+## declare -f:
+f78 () 
+{ 
+    ! ((a+b));
+    B=(1 2) cat >| c 2>&1 | [[ a == b* ]]
+}
+## end
+
+#### 183
+f80() {
+true k=v || time f <(echo <<-'E494' && time select i in a b; do ! (( x++ ))
+	two
+	lines
+	E494
+B=(1 2) echo a a\ b b |& true "$(echo in)"; done >&$fd) $z < i
+}
+## declare -f:
+f80 () 
+{ 
+    true k=v || time f <(echo <<-'E494' && 
+two
+lines
+E494
+ time select i in a b;
+do
+    ! (( x++ ))
+    B=(1 2) echo a a\ b b 2>&1 | true "$(echo in)";
+done >&$fd) $z < i
+}
+## end
+
+#### 184
+f81() {
+true | B=(1 2) echo $z && true >> o;
+echo "$(f $"l" & echo $(for ((i=0; ;)); do cat b 1> one <<-'E495'
+	line $x
+	E495
+time true 'q r' x $(a; b) <<-'E496' &
+	line $x
+	E496
+! cat $'t\n' ${v:-w}; done < i | cat $(echo a <(ls) b
+true "$(echo in)" $z; time true {p,q} {p,q} || cat a b $(a
+b)) $"l"
+C=$x echo "$y" a\ b $(a
+b) || [[ ! a ]]; f a {p,q} ~/d | echo *.c b 'q r' <<< "s") ~/d "$(echo in)"
+cat)" "$(cat k=v ${v:-w} & ! g() { cat; }
+echo a\ b ${ echo & time { time true *.c 0< zero <<'E497' | f $"l" >&$fd;
+plain
+E497
+! B=(1 2) echo ~/d $z $z; } 2>&1 && time echo a; } $(a; b) <<'E498' |& ((x=1)) 0< zero
+line $x
+E498
+)" |& true $"l" $(a; b)
+}
+## declare -f:
+f81 () 
+{ 
+    true | B=(1 2) echo $z && true >> o;
+    echo "$(f "l" & echo $(for ((i=0; 1; 1))
+do
+    cat b > one <<-'E495'
+line $x
+E495
+
+    time true 'q r' x $(a; b) <<-'E496' &
+line $x
+E496
+  ! cat 't
+' ${v:-w};
+done < i | cat $(echo a <(ls) b
+true "$(echo in)" $z; time true {p,q} {p,q} || cat a b $(a
+b)) "l"
+C=$x echo "$y" a\ b $(a
+b) || [[ ! -n a ]]; f a {p,q} ~/d | echo *.c b 'q r' <<< "s") ~/d "$(echo in)"
+cat)" "$(cat k=v ${v:-w} & ! function g () 
+{ 
+    cat
+}
+echo a\ b ${ echo & time { time true *.c < zero <<'E497' |
+plain
+E497
+  f "l" >&$fd; ! B=(1 2) echo ~/d $z $z; } 2>&1 && time echo a; } $(a; b) <<'E498' 2>&1 |
+line $x
+E498
+  ((x=1)) < zero)" 2>&1 | true "l" $(a; b)
+}
+## end
+
+#### 185
+f82() {
+f 'q r' ${ { ! cat >| c; until ! f $'t\n' 'q r' | f "$y" b |& f $z *.c *.c & echo;
+cat <<E499 | f <<-E500 || f ${v:-w}
+two
+lines
+E499
+	line $x
+	E500
+ do C=$x cat $(a
+b) >&2 & time echo *.c
+B=(1 2) true $(a; b) "$(echo in)" *.c | echo <(ls) $(a; b) |& echo a\ b ${v:-w} 'q r' 3<&-; done
+while ! f `echo bt` {fd}> f |& cat <<"E501";
+line $x
+E501
+time A=1 echo 'q r' 'q r' k=v & f $(a
+b) $z $(a
+b) || ! f $"l"; do cat $(a
+b); done; }; } $(C=$x echo k=v $(a
+b)) >&2
+}
+## declare -f:
+f82 () 
+{ 
+    f 'q r' ${ { ! cat >| c; until ! f 't
+' 'q r' | f "$y" b 2>&1 | f $z *.c *.c & echo; cat <<E499 |
+two
+lines
+E499
+  f <<-E500 || 
+line $x
+E500
+ f ${v:-w};do
+    C=$x cat $(a
+b) 1>&2 & time echo *.c
+B=(1 2) true $(a; b) "$(echo in)" *.c | echo <(ls) $(a; b) 2>&1 | echo a\ b ${v:-w} 'q r' 3>&-;
+done
+while ! f `echo bt` {fd}> f 2>&1 | cat <<'E501'
+line $x
+E501
+ time A=1 echo 'q r' 'q r' k=v & f $(a
+b) $z $(a
+b) || ! f "l";do
+    cat $(a
+b);
+done; }; } $(C=$x echo k=v $(a
+b)) 1>&2
+}
+## end
+
+#### 186
+f89() {
+time case $x in a)  ;;& esac > o
+}
+## declare -f:
+f89 () 
+{ 
+    time case $x in 
+        a)
+
+        ;;&
+    esac > o
+}
+## end
+
+#### 187
+f94() {
+! g() { cat >&2 && ! for i; do echo ~/d |& echo a x 'q r' 3<&-
+cat "$y" *.c `echo bt` |& for ((;;)); do ! B=(1 2) f $z $"l" <(ls) >&2 || cat &> both; cat >| c <<-"E627" | echo b $(a
+b) `echo bt` >&$fd && time echo "$(echo in)" ~/d 1> one | echo && cat;
+	plain
+	E627
+! cat a $"l"; done; done; };
+! f
+}
+## declare -f:
+f94 () 
+{ 
+    ! function g () 
+    { 
+        cat 1>&2 && ! for i in "$@";
+        do
+            echo ~/d 2>&1 | echo a x 'q r' 3>&-;
+            cat "$y" *.c `echo bt` 2>&1 | for ((1; 1; 1))
+            do
+                ! B=(1 2) f $z "l" <(ls) 1>&2 || cat &> both;
+                cat >| c <<-'E627' |
+plain
+E627
+  echo b $(a
+b) `echo bt` >&$fd && time echo "$(echo in)" ~/d > one | echo && cat;
+                ! cat a "l";
+            done;
+        done
+    };
+    ! f
+}
+## end
+
+#### 188
+f95() {
+time f 3<&-
+true a a && time cat 'q r' `echo bt` b 2> /dev/null <<-E628;
+	line $x
+	E628
+! true $((1+2)) 2> /dev/null
+}
+## declare -f:
+f95 () 
+{ 
+    time f 3>&-;
+    true a a && time cat 'q r' `echo bt` b 2> /dev/null <<-E628
+line $x
+E628
+
+    ! true $((1+2)) 2> /dev/null
+}
+## end
+
+#### 189
+f96() {
+! f & cat $(a
+b) 2>&1 | f & echo <(time f k=v >> o; ! cat | true $z $z <(ls) > o && if ! cat 'q r' *.c & true $'t\n' a\ b; then g() { f && true || echo <<E629;
+plain
+E629
+! f <<E630;
+plain
+E630
+echo a $(a
+b) <<"E631"
+two
+lines
+E631
+ }; A=1 cat ${ time true || f a | true "$y" "$y"; } |& if true "$(echo in)" $(a; b) && time true x <<-E632
+	two
+	lines
+	E632
+cat 'q r' || time true 2>&1 & true 2>&1 || ! f; then echo *.c && time f <<-E633
+	two
+	lines
+	E633
+echo |& f |& f; true k=v ${v:-w}; else echo $'t\n' k=v | echo a\ b "$(echo in)"; fi || cat >> o && time (( x++ )); time g() { C=$x f b >| c; } | while time echo *.c b x; do f 'q r' "$(echo in)" $((1+2)); time true; done | for ((i=0;i<3;i++)); do ! true 'q r' "$y" | echo "$(echo in)"; C=$x true && ! cat x $(a; b) a; done; fi) "$y" &> both
+}
+## declare -f:
+f96 () 
+{ 
+    ! f & cat $(a
+b) 2>&1 | f & echo <(time f k=v >> o; ! cat | true $z $z <(ls) > o && if ! cat 'q r' *.c & true 't
+' a\ b; then
+    function g () 
+    { 
+        f && true || echo <<E629
+plain
+E629
+
+        ! f <<E630
+plain
+E630
+
+        echo a $(a
+b) <<'E631'
+two
+lines
+E631
+
+    }; A=1 cat ${ time true || f a | true "$y" "$y"; } 2>&1 | if true "$(echo in)" $(a; b) && time true x <<-E632
+two
+lines
+E632
+
+    cat 'q r' || time true 2>&1 & true 2>&1 || ! f; then
+        echo *.c && time f <<-E633
+two
+lines
+E633
+
+        echo 2>&1 | f 2>&1 | f; true k=v ${v:-w};
+    else
+        echo 't
+' k=v | echo a\ b "$(echo in)";
+    fi || cat >> o && time (( x++ )); time function g () 
+    { 
+        C=$x f b >| c
+    } | while time echo *.c b x; do
+        f 'q r' "$(echo in)" $((1+2)); time true;
+    done | for ((i=0; i<3; i++))
+    do
+        ! true 'q r' "$y" | echo "$(echo in)"; C=$x true && ! cat x $(a; b) a;
+    done;
+fi) "$y" &> both
+}
+## end
+
+#### 190
+f98() {
+time A=1 f | echo 'q r' >| c
+}
+## declare -f:
+f98 () 
+{ 
+    time A=1 f | echo 'q r' >| c
+}
+## end
+
+#### 191
+f105() {
+time echo $((1+2))
+}
+## declare -f:
+f105 () 
+{ 
+    time echo $((1+2))
+}
+## end
+
+#### 192
+f106() {
+! select i in a b; do [[ a && b || c ]]; done
+}
+## declare -f:
+f106 () 
+{ 
+    ! select i in a b;
+    do
+        [[ -n a && -n b || -n c ]];
+    done
+}
+## end
+
+#### 193
+f110() {
+true b a <<'E766' | [[ ! a ]]
+line $x
+E766
+
+}
+## declare -f:
+f110 () 
+{ 
+    true b a <<'E766' |
+line $x
+E766
+  [[ ! -n a ]]
+}
+## end
+
+#### 194
+f111() {
+true $"l"; true {p,q} 1> one
+}
+## declare -f:
+f111 () 
+{ 
+    true "l";
+    true {p,q} > one
+}
+## end
+
+#### 195
+f116() {
+cat $(a; b) *.c b 2> /dev/null; ! cat *.c;
+! true "$(echo in)" 0< zero
+}
+## declare -f:
+f116 () 
+{ 
+    cat $(a; b) *.c b 2> /dev/null;
+    ! cat *.c;
+    ! true "$(echo in)" < zero
+}
+## end
+
+#### 196
+f117() {
+f $((1+2)) <(ls) 'q r' 2> /dev/null && ! for i; do A=1 f; done; time f "$y" "$y"
+}
+## declare -f:
+f117 () 
+{ 
+    f $((1+2)) <(ls) 'q r' 2> /dev/null && ! for i in "$@";
+    do
+        A=1 f;
+    done;
+    time f "$y" "$y"
+}
+## end
+
+#### 197
+f118() {
+while ! B=(1 2) f; while f ${ ! C=$x true ~/d $((1+2)) & ! cat || echo; } `echo bt` | echo
+{ cat $'t\n' *.c < i
+f `echo bt` k=v | cat 2> /dev/null <<-"E806"
+	plain
+	E806
+cat $"l" *.c $(a
+b) |& true k=v; } < i; do ( ! B=(1 2) f $"l" < i;
+time f *.c ) || time cat "$(echo in)" x <(cat $(a
+b) & f $'t\n' *.c) <<-E807
+	two
+	lines
+	E807
+for i in; do time cat $((1+2)) a ~/d;
+! echo; done; done;
+g() { echo k=v "$(echo in)" || until f 3<&- & echo k=v 3<&- |& true x a\ b 0< zero
+f $"l"; do time A=1 f "$(echo in)" b *.c; ! f {p,q} <(ls) $(a; b) | echo 'q r' || echo ~/d $z $((1+2)) & time true `echo bt` > o || ! true $(a; b) > o; done < i; }; do C=$x cat ~/d `echo bt`; done; true 0< zero
+}
+## declare -f:
+f118 () 
+{ 
+    while ! B=(1 2) f;
+    while f ${ ! C=$x true ~/d $((1+2)) & ! cat || echo; } `echo bt` | echo;
+    { 
+        cat 't
+' *.c < i;
+        f `echo bt` k=v | cat 2> /dev/null <<-'E806'
+plain
+E806
+
+        cat "l" *.c $(a
+b) 2>&1 | true k=v
+    } < i; do
+        ( ! B=(1 2) f "l" < i;
+        time f *.c ) || time cat "$(echo in)" x <(cat $(a
+b) & f 't
+' *.c) <<-E807
+two
+lines
+E807
+
+        for i in ;
+        do
+            time cat $((1+2)) a ~/d
+            ! echo;
+        done;
+    done;
+    function g () 
+    { 
+        echo k=v "$(echo in)" || until f 3>&- & echo k=v 3>&- 2>&1 | true x a\ b < zero;
+        f "l"; do
+            time A=1 f "$(echo in)" b *.c;
+            ! f {p,q} <(ls) $(a; b) | echo 'q r' || echo ~/d $z $((1+2)) & time true `echo bt` > o || ! true $(a; b) > o;
+        done < i
+    }; do
+        C=$x cat ~/d `echo bt`;
+    done;
+    true < zero
+}
+## end
+
+#### 198
+f119() {
+f |& [[ $x =~ ^a(b|c)$ ]]
+! cat "$y" 'q r' <<"E808"
+plain
+E808
+
+}
+## declare -f:
+f119 () 
+{ 
+    f 2>&1 | [[ $x =~ ^a(b|c)$ ]];
+    ! cat "$y" 'q r' <<'E808'
+plain
+E808
+
+}
+## end
+
+#### 199
+f120() {
+true a
+cat >> o <<-"E809";
+	line $x
+	E809
+cat 'q r' &> both && ! for (( i = 0 ; i < 3 ; i++ )); do f x >| c; done
+}
+## declare -f:
+f120 () 
+{ 
+    true a;
+    cat >> o <<-'E809'
+line $x
+E809
+
+    cat 'q r' &> both && ! for ((i = 0 ; i < 3 ; i++ ))
+    do
+        f x >| c;
+    done
+}
+## end
+
+#### 200
+f123() {
+time echo "$y" >| c
+}
+## declare -f:
+f123 () 
+{ 
+    time echo "$y" >| c
+}
+## end
+
+#### 201
+f124() {
+(( x++ ))
+}
+## declare -f:
+f124 () 
+{ 
+    (( x++ ))
+}
+## end
+
+#### 202
+f126() {
+g() { time select i in a b; do ! g() { ! true; }; done; }
+}
+## declare -f:
+f126 () 
+{ 
+    function g () 
+    { 
+        time select i in a b;
+        do
+            ! function g () 
+            { 
+                ! true
+            };
+        done
+    }
+}
+## end
+
+#### 203
+f127() {
+! f "$(echo in)" <<-'E841' &
+	two
+	lines
+	E841
+! if ! for (( i = 0 ; i < 3 ; i++ )); do time until echo b;
+true $(a
+b) k=v >&2; do ! cat $(a; b) a; done;
+! { time true && echo a\ b; }; done
+cat "$(echo in)"; ! echo; then ! ((x=1)); else ( if echo ${v:-w} "$y" $(a
+b) > o; echo a |& cat ~/d $'t\n' $"l"; then time f |& true a\ b >&$fd | A=1 echo
+B=(1 2) f k=v *.c a; else cat $(a
+b) $(a; b) || time echo <<-"E842"
+	plain
+	E842
+f 'q r' a "$y" >> o; fi & ! [[ ! a ]] & time (( x++ )) 3<&- ) && C=$x echo b $((1+2)); fi >&2;
+A=1 echo
+}
+## declare -f:
+f127 () 
+{ 
+    ! f "$(echo in)" <<-'E841' &
+two
+lines
+E841
+  ! if ! for ((i = 0 ; i < 3 ; i++ ))
+    do
+        time until echo b
+        true $(a
+b) k=v 1>&2; do
+            ! cat $(a; b) a;
+        done;
+        ! { 
+            time true && echo a\ b
+        };
+    done;
+    cat "$(echo in)";
+    ! echo; then
+        ! ((x=1));
+    else
+        ( if echo ${v:-w} "$y" $(a
+b) > o;
+        echo a 2>&1 | cat ~/d 't
+' "l"; then
+            time f 2>&1 | true a\ b >&$fd | A=1 echo;
+            B=(1 2) f k=v *.c a;
+        else
+            cat $(a
+b) $(a; b) || time echo <<-'E842'
+plain
+E842
+
+            f 'q r' a "$y" >> o;
+        fi & ! [[ ! -n a ]] & time (( x++ )) 3>&- ) && C=$x echo b $((1+2));
+    fi 1>&2;
+    A=1 echo
+}
+## end
+
+#### 204
+f131() {
+echo $'t\n' $"l" <<E914
+line $x
+E914
+
+}
+## declare -f:
+f131 () 
+{ 
+    echo 't
+' "l" <<E914
+line $x
+E914
+
+}
+## end
+
+#### 205
+f133() {
+time echo $(a
+b) "$y" <(ls) |& select i in a b; do ! until ! f "$(echo in)" b 0< zero <<-"E917"
+	two
+	lines
+	E917
+ do g() { cat b b $((1+2)) & time echo || time true $z $(a; b) 1> one <<"E918" |& echo 'q r'
+two
+lines
+E918
+ } |& true 2> /dev/null |& echo
+time echo <(! echo
+time f 'q r' <(ls) || true a <<< "s" && echo $((1+2)) 0< zero <<E919 &
+plain
+E919
+echo ${v:-w}) a\ b k=v >| c
+{ ! echo "$(echo in)" "$y" *.c;
+true || cat {fd}> f <<'E920' && echo k=v k=v <<"E921"
+two
+lines
+E920
+two
+lines
+E921
+ }; done | cat ${ ! A=1 f $"l" ~/d 3<&-
+echo *.c $z b &> both; f "$(echo in)" ${v:-w}; }; done 0< zero |& for ((;;)); do ( ! for ((i=0; ;)); do f |& echo *.c a\ b; done >| c; until time echo a x $z;
+! cat k=v $'t\n' a\ b <<-E922;
+	plain
+	E922
+time f *.c; do f k=v ~/d {p,q}; done > o; cat $(C=$x echo $z) ); done >&$fd | A=1 cat |& ((a+b))
+time f $z *.c b 2>&1 & true "$(echo in)"
+}
+## declare -f:
+f133 () 
+{ 
+    time echo $(a
+b) "$y" <(ls) 2>&1 | select i in a b;
+    do
+        ! until ! f "$(echo in)" b < zero <<-'E917'
+two
+lines
+E917
+        do
+            function g () 
+            { 
+                cat b b $((1+2)) & time echo || time true $z $(a; b) > one <<'E918' 2>&1 |
+two
+lines
+E918
+  echo 'q r'
+            } 2>&1 | true 2> /dev/null 2>&1 | echo;
+            time echo <(! echo
+time f 'q r' <(ls) || true a <<< "s" && echo $((1+2)) < zero <<E919 &
+plain
+E919
+  echo ${v:-w}) a\ b k=v >| c;
+            { 
+                ! echo "$(echo in)" "$y" *.c;
+                true || cat {fd}> f <<'E920' && 
+two
+lines
+E920
+ echo k=v k=v <<'E921'
+two
+lines
+E921
+
+            };
+        done | cat ${ ! A=1 f "l" ~/d 3>&-
+echo *.c $z b &> both; f "$(echo in)" ${v:-w}; };
+    done < zero 2>&1 | for ((1; 1; 1))
+    do
+        ( ! for ((i=0; 1; 1))
+        do
+            f 2>&1 | echo *.c a\ b;
+        done >| c;
+        until time echo a x $z;
+        ! cat k=v 't
+' a\ b <<-E922
+plain
+E922
+
+        time f *.c;        do
+            f k=v ~/d {p,q};
+        done > o;
+        cat $(C=$x echo $z) );
+    done >&$fd | A=1 cat 2>&1 | ((a+b));
+    time f $z *.c b 2>&1 & true "$(echo in)"
+}
+## end

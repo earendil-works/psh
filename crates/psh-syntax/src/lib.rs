@@ -16,6 +16,7 @@ extern crate alloc;
 mod arith;
 mod arith_eval;
 mod ast;
+mod bash_print;
 mod brace;
 mod dump;
 mod error;
@@ -35,9 +36,10 @@ pub use arith_eval::{
     ARITH_RECURSION_LIMIT, ArithEnv, ArithIndex, EvalError, eval_arith, eval_arith_expr,
 };
 pub use ast::*;
+pub use bash_print::print_function_bash;
 pub use dump::dump;
 pub use error::ParseError;
 pub use parser::{Options, Parser, parse, parse_with};
 pub use printer::print;
 pub use span::{LineCol, LineIndex, Span};
-pub use words::{backtick_body, literal_text};
+pub use words::{backtick_body, decode_ansi_c, literal_text};

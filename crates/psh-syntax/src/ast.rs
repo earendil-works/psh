@@ -98,6 +98,12 @@ impl Ast {
         self.cmds.len()
     }
 
+    /// Every command in the arena, nested ones included, in the order they were parsed
+    /// (children before their parents).
+    pub fn cmd_ids(&self) -> impl Iterator<Item = CmdId> + '_ {
+        (0..self.cmds.len() as u32).map(CmdId)
+    }
+
     /// Number of lists in the arena.
     pub fn list_count(&self) -> usize {
         self.lists.len()
@@ -141,6 +147,9 @@ pub struct AndOr {
     pub rest: Vec<(AndOrOp, Pipeline)>,
     /// Terminated by `&`.
     pub background: bool,
+    /// Ended by a newline rather than `;`, `&` or the end of the list. Bash's printer
+    /// keeps this distinction inside `$(…)`.
+    pub newline: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

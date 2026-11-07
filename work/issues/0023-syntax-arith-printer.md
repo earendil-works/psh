@@ -113,6 +113,34 @@ fuzzing against bash 5.3 (`work/scratch/0023/fuzz.py`, `fuzzeval.py`, through
 difference is `let --`, which is `let`'s option end), and 9k random expressions agree on
 value, side effects and runtime error text.
 
+### 2026-11-07: part 2, the bash-format printer
+- `print_function_bash(&ast, cmd_id) -> String`: what `declare -f NAME` prints (no
+  trailing newline); `type NAME` prints `NAME is a function` and then the same. Also new:
+  `decode_ansi_c(&[u8]) -> Vec<u8>` (bash's `$'…'` escapes, for the engine too),
+  `Ast::cmd_ids()`, and `AndOr::newline` (the item ended at a newline; bash keeps
+  that inside substitutions).
+- Rules derived from bash's output only (D1232), with a differential harness:
+  `examples/fncheck.rs` (`extract` function definitions from scripts, `print` them) and
+  `work/scratch/0023/fncompare.sh DIR` (runs `bash -c 'source F; declare -f NAME'` per
+  function and diffs), plus `work/scratch/0023/genfn.py DIR SEED N` (random function
+  bodies: nested compounds, here-docs, redirections, substitutions).
+- Results: all 1027 functions defined in the Oils and brush case scripts print
+  identically; random functions: 2,0xx valid ones over seeds 1–8, all identical except
+  10 that put here-docs and further substitutions inside a `$((…) )` that is not
+  arithmetic (bash keeps that text but re-lexes parts of it in ways I did not pin down).
+- Bash quirks reproduced (all in tests): `elif` printed as `else if … fi`; `;` after every
+  command of loop and `if` bodies but not brace groups; `for` puts `do` on its own line;
+  `for ((;;))` prints `((1; 1; 1))`; redirections normalized (`>&2` → `1>&2`, `3<&-` →
+  `3>&-`, `0<f` → `< f`); `|&` → `2>&1 |`; `[[ a ]]` → `[[ -n a ]]`; coproc names
+  `COPROC`; nested functions get `function`; `$'…'` → `'…'`; comments and line
+  continuations dropped; here-doc bodies after the next operator, after which bash
+  leaves out the next `;` (until a redirection or brace group) and writes
+  `while a;    do`; inside `$(…)` the separators stay as written and brace groups stay
+  on one line; `$((…) )` that is not arithmetic is kept as written.
+- `tests/l0/declare-f.txt` (206 cases: probes + random functions, bash 5.3 output) is
+  checked by `crates/psh-syntax/tests/declare_f.rs`. Format: `#### N`, source,
+  `## declare -f:`, bash's output, `## end`.
+
 ## Follow-ups
 
 ## Result

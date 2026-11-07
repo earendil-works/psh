@@ -1451,3 +1451,53 @@ with "cannot execute binary file: Exec format error" (126). Messages name `$0` p
 now (`Vp::msg_name` uses `arg0`, syntax errors and `-c` wording use the vproc's
 options), so the script's errors say `./s: line N:`. Also: `trap '' SIG` passes on to
 externals (`SpawnSpec::sig_ignore`, D1284), which 0006 had left unwired.
+## D1080: Utilities are async and run on the engine scheduler; blocking ones are the exception
+date: 2026-11-07 · by: infra · issue: 0008
+Supersedes ARCH's "the engine runs utilities on worker threads". A utility is an async
+function over a context (`UtilCtx`, D1081), called on the vproc that runs the command,
+where shell builtins run; pipeline stages are concurrent vprocs already. Its I/O is the
+command's own descriptors (engine pipes, host files), awaited; its file system is the
+Host; cancel (and `timeout`) is dropping its future; `ctx.check().await` in long loops
+yields when the step budget is spent. The same code runs natively and in wasm, needs no
+thread, keeps output order deterministic and keeps `cat f | head` in-process.
+Ported code (uutils' `Read`/`Write` loops) is rewritten onto the context; algorithms are
+reused. The exception, for code built on synchronous crates (0013's ripgrep crates and
+walker, jaq, a large `sort`): blocking utilities, `fn(&mut SyncCtx) -> i32` with std
+`Read`/`Write` stdio. Natively with the OS host they run on a worker thread whose stdio
+are channels the engine pumps; cancel sets a flag and closes the channels; the command's
+status comes only after the thread ended or can no longer write. In wasm or with a
+sandbox host they run inline: stdin is read to its end first, within a bound (64 MiB or
+the run's time budget, whichever comes first; beyond it the utility fails with
+`NAME: input too large for the in-process NAME in this environment` and status 2, never
+a hang: `yes | grep x | head -1` ends there with that error), and their fs view makes
+synchronous host calls the host must answer at once. Rejected: synchronous utilities on
+threads natively plus another strategy in wasm (inline synchronous code deadlocks on a
+pipe fed by another vproc; threads make cancel and output order approximate).
+
+## D1081: UtilCtx, version 1
+date: 2026-11-07 · by: infra · issue: 0008
+`psh_engine::util` is the utility API every batch builds on; `UTIL_API_VERSION` = 1 and
+any change is a new decision. A utility is `for<'a> fn(&'a mut UtilCtx<'_>, &'a
+[Vec<u8>]) -> LocalBoxFuture<'a, i32>` (argv[0] is the name it was called by). The
+context offers: the shell's cwd and the environment the command sees (prefix assignments
+included); stdin reads (`read`, `read_to_end`); buffered stdout writes (`write`,
+`flush`); stderr writes (`error`, `error_raw`); the Host's file operations resolved
+against the cwd (`open`, `stat`, `read_dir`, `access`, `canonicalize`); `sleep`;
+`is_terminal(fd)`; `utf8()` (the locale); `check()` (safepoint); and `spawn(argv, env)`,
+which starts a command as a child vproc for the wrappers and returns a handle with
+`wait()` and `signal(sig)`. Output buffering rule: stdout is buffered (64 KiB) and
+flushed when full, at exit, before every stdin read (so `cat | while read` and prompts
+never wait on a buffer), before every stderr write (so stdout and stderr interleave as a
+line-buffered program's would) and before `spawn`; output to a terminal is flushed at
+every line end.
+
+## D1082: Utility options are declared and checked against the classifier
+date: 2026-11-07 · by: infra · issue: 0008
+Each utility declares its options as data (`opts::Spec`: short and long names, whether
+they take a value, plus a per-utility argv rewrite for forms like `head -5`), parsed by
+one shared parser with GNU conventions (permutation, `--`, `-n5`, `-n 5`, `--name=v`,
+unambiguous long prefixes). An option outside the spec goes through one helper: the real
+program from PATH if there is one (unless the utility is the only one, as in wasm), else
+`NAME: unsupported option 'X' (psh built-in NAME)` and status 2. A test compares every
+utility's spec with its `psh_classify::utils` entry (D1090): the same value-taking short
+and long options, and every effect option the classifier lists is accepted.

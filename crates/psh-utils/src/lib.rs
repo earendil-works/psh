@@ -321,6 +321,8 @@ pub static REGISTRY: &[UtilEntry] = &[
         mode: Mode::Always,
         destructive: false,
         run: util_fn!(env::run_printenv),
+    },
+    UtilEntry {
         names: &["sed"],
         mode: Mode::Always,
         destructive: false,

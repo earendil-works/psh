@@ -26,6 +26,12 @@ pub enum Invocation {
     Help,
 }
 
+/// bash's long options that psh takes (before the single-letter ones, as with bash):
+/// `--posix` is refused, the others change nothing in a non-interactive shell. The psh
+/// binary hands these to [`parse_args`] and parses its own long options (`--parse`,
+/// `--help`, …) itself (D1340).
+pub const LONG_OPTIONS: [&str; 4] = ["--posix", "--norc", "--noprofile", "--noediting"];
+
 /// Parses the arguments after the program name: `-c`, `-s`, and `set`'s and `shopt`'s
 /// options (`-e`, `+x`, `-o pipefail`, `-O extglob`, `--posix`), which come back in
 /// `options` for `Script::options` (D1280).
@@ -47,10 +53,11 @@ pub fn parse_args(args: &[Vec<u8>]) -> Result<Invocation, String> {
             break;
         }
         if a.starts_with(b"--") {
-            match a.as_slice() {
-                b"--posix" => return Err("--posix: POSIX mode is not supported".into()),
-                b"--norc" | b"--noprofile" | b"--noediting" => {}
-                _ => return Err(format!("{}: invalid option", String::from_utf8_lossy(a))),
+            if a == b"--posix" {
+                return Err("--posix: POSIX mode is not supported".into());
+            }
+            if !LONG_OPTIONS.iter().any(|o| o.as_bytes() == a.as_slice()) {
+                return Err(format!("{}: invalid option", String::from_utf8_lossy(a)));
             }
             i += 1;
             continue;

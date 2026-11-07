@@ -2340,3 +2340,24 @@ serde_json does, so the output is the real rg's byte for byte (begin/match/conte
 grep-printer's field order; rg's summary with its keys sorted, as serde_json's `json!`
 map sorts them). psh-utils depends on deser-json and deser-core for it. Real rg no longer
 runs for `--json`.
+
+## D1340: The psh binary's command line: `argument` for psh's own options, invocation.rs for bash's
+date: 2026-11-07 · by: cli · issue: 0034
+`argument` cannot express bash's invocation: `+e`/`+o NAME` are options, `-o` and `-O`
+take the *next* argument even inside a cluster (`-eo pipefail`, not `-opipefail`), `-c`
+is a flag whose command is the first operand (`-c -- CMD`, `-euc CMD`), and `-h` is
+`set -h`. So the split is by position, as bash's own rule allows (GNU long options come
+before the single-letter ones): `crates/psh/src/cli.rs` runs `argument` over the leading
+`--name` arguments only. bash's long options (`invocation::LONG_OPTIONS`: `--norc`,
+`--noprofile`, `--noediting`, `--posix`) are passed on untouched; any other `--name`
+is psh's own (`--parse`, `--classify`, `--help`, `--version`, later modes such as
+`--utils`) or an `argument` error with a suggestion (`--pars` → `--parse`). The first
+argument that is not a `--name` (an option, `--`, `-`, an operand) and everything after
+it go to `psh_engine::invocation::parse_args` unchanged, which the conformance runner
+shares; its errors keep bash's wording (`psh: -Z: invalid option`) followed by the
+generated usage. `--parse` and `--classify` are `argument` sub-specs (`psh --parse
+--help`, `-h` works there) with `-c COMMAND`, `--compact`, `-O extglob` and `FILE`. The
+top-level help lists bash's options for display only; hidden `-h` and `-V` entries keep
+`argument` from showing them as help/version. Values stay `OsString` (bytes on Unix).
+`--help` exits 0 on stdout now (as bash), not the old usage on stderr with 2. Size: the
+release binary grows by about 110 KB (8.87 MB → 8.99 MB on macOS arm64).

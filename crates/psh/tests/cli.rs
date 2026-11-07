@@ -1,7 +1,8 @@
 //! Invocation tests for the `psh` binary. Every spawned process runs under a deadline
 //! (AGENTS.md: timeouts on everything that runs a shell).
 
-use std::io::Read;
+use std::ffi::OsStr;
+use std::io::{Read, Write};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
@@ -24,13 +25,42 @@ fn run_limit() -> Duration {
 
 /// Runs psh with `args`, killing it if it has not exited within [`run_limit`].
 fn psh(args: &[&str]) -> Output {
+    psh_with(args, b"")
+}
+
+/// [`psh`] with `stdin` as its standard input.
+fn psh_with(args: &[&str], stdin: &[u8]) -> Output {
+    let args: Vec<&OsStr> = args.iter().map(OsStr::new).collect();
+    let out = psh_bytes(&args, stdin);
+    Output {
+        status: out.status,
+        stdout: String::from_utf8(out.stdout).expect("UTF-8 stdout"),
+        stderr: String::from_utf8(out.stderr).expect("UTF-8 stderr"),
+    }
+}
+
+struct BytesOutput {
+    status: Option<i32>,
+    stdout: Vec<u8>,
+    stderr: Vec<u8>,
+}
+
+/// Runs psh with arguments that need not be UTF-8, `stdin` as its input.
+fn psh_bytes(args: &[&OsStr], stdin: &[u8]) -> BytesOutput {
     let mut child = Command::new(env!("CARGO_BIN_EXE_psh"))
         .args(args)
-        .stdin(Stdio::null())
+        // A fixed width for the help pages.
+        .env("COLUMNS", "100")
+        .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .expect("spawn psh");
+    // A few bytes at most, well below the pipe buffer: writing cannot block. psh may
+    // exit without reading them.
+    let mut input = child.stdin.take().unwrap();
+    input.write_all(stdin).ok();
+    drop(input);
     let limit = run_limit();
     let deadline = Instant::now() + limit;
     let status = loop {
@@ -46,21 +76,21 @@ fn psh(args: &[&str]) -> Output {
     };
     // The tests write a few lines at most, well below the pipe buffer, so reading after
     // the exit cannot deadlock.
-    let mut stdout = String::new();
-    let mut stderr = String::new();
+    let mut stdout = Vec::new();
+    let mut stderr = Vec::new();
     child
         .stdout
         .take()
         .unwrap()
-        .read_to_string(&mut stdout)
+        .read_to_end(&mut stdout)
         .unwrap();
     child
         .stderr
         .take()
         .unwrap()
-        .read_to_string(&mut stderr)
+        .read_to_end(&mut stderr)
         .unwrap();
-    Output {
+    BytesOutput {
         status: status.code(),
         stdout,
         stderr,
@@ -135,10 +165,187 @@ fn no_arguments_reads_stdin() {
 }
 
 #[test]
-fn help_prints_usage() {
+fn help_page() {
     let out = psh(&["--help"]);
+    assert_eq!(out.status, Some(0), "{}", out.stderr);
+    assert!(
+        out.stdout.starts_with("psh is a portable"),
+        "{}",
+        out.stdout
+    );
+    for line in [
+        "Usage: psh [OPTIONS] [FILE [ARGS]...]\n",
+        "       psh [OPTIONS] -c COMMAND [NAME [ARGS]...]\n",
+        "      --parse ",
+        "      --classify ",
+        "      --help ",
+        "Shell options (as bash):\n",
+        "  -o <NAME> ",
+    ] {
+        assert!(out.stdout.contains(line), "{line:?} in {}", out.stdout);
+    }
+    // `-h` is bash's hashall, not the help.
+    assert!(!out.stdout.contains("-h, --help"), "{}", out.stdout);
+    let out = psh(&["-h", "-c", "echo ok"]);
+    assert_eq!(out.stdout, "ok\n");
+    // After bash's options too.
+    let out = psh(&["--norc", "--help"]);
+    assert!(
+        out.stdout.starts_with("psh is a portable"),
+        "{}",
+        out.stdout
+    );
+    assert_eq!(out.status, Some(0));
+}
+
+#[test]
+fn version() {
+    let out = psh(&["--version"]);
+    assert_eq!(out.status, Some(0));
+    assert_eq!(out.stdout, format!("psh {}\n", env!("CARGO_PKG_VERSION")));
+}
+
+#[test]
+fn mode_help_pages() {
+    for (mode, usage) in [
+        ("--parse", "Usage: psh --parse [OPTIONS] [FILE]\n"),
+        ("--classify", "Usage: psh --classify [OPTIONS] [FILE]\n"),
+    ] {
+        for help in ["--help", "-h"] {
+            let out = psh(&[mode, help]);
+            assert_eq!(out.status, Some(0), "{}", out.stderr);
+            assert!(out.stdout.contains(usage), "{}", out.stdout);
+            assert!(out.stdout.contains("--compact"), "{}", out.stdout);
+        }
+    }
+}
+
+#[test]
+fn command_line_errors() {
+    // psh's own options: `argument`'s errors, with a suggestion.
+    let out = psh(&["--pars", "-c", "x"]);
     assert_eq!(out.status, Some(2));
-    assert!(out.stderr.starts_with("usage: psh"), "{}", out.stderr);
+    assert!(
+        out.stderr
+            .starts_with("error: unexpected argument '--pars' found\n"),
+        "{}",
+        out.stderr
+    );
+    assert!(
+        out.stderr
+            .contains("tip: a similar option exists: '--parse'"),
+        "{}",
+        out.stderr
+    );
+    let out = psh(&["--parse", "-O", "nullglob", "-c", "x"]);
+    assert_eq!(out.status, Some(2));
+    assert!(
+        out.stderr.contains("possible values: extglob"),
+        "{}",
+        out.stderr
+    );
+    let out = psh(&["--classify", "-c", "x", "file.sh"]);
+    assert_eq!(out.status, Some(2));
+    assert_eq!(out.stdout, "");
+    // bash's options: bash's message, then the usage.
+    let out = psh(&["-Z", "-c", "x"]);
+    assert_eq!(out.status, Some(2));
+    assert!(
+        out.stderr
+            .starts_with("psh: -Z: invalid option\nUsage: psh [OPTIONS]"),
+        "{}",
+        out.stderr
+    );
+    let out = psh(&["-o", "bogus", "-c", "x"]);
+    assert_eq!(out.status, Some(2));
+    assert!(
+        out.stderr.starts_with("psh: bogus: invalid option name\n"),
+        "{}",
+        out.stderr
+    );
+}
+
+/// The invocation forms bash takes, combined and with `+`.
+#[test]
+fn bash_option_forms() {
+    let out = psh(&["-euc", "case $- in *e*u*) echo eu;; esac; false; echo not"]);
+    assert_eq!((out.stdout.as_str(), out.status), ("eu\n", Some(1)));
+    let out = psh(&["-e", "+o", "errexit", "-c", "false; echo ran"]);
+    assert_eq!(out.stdout, "ran\n");
+    let out = psh(&["-o", "pipefail", "-c", "false | true; echo $?"]);
+    assert_eq!(out.stdout, "1\n");
+    let out = psh(&["-eo", "pipefail", "-c", "false | true; echo not"]);
+    assert_eq!((out.stdout.as_str(), out.status), ("", Some(1)));
+    let out = psh(&["-O", "extglob", "-c", "shopt -q extglob && echo on"]);
+    assert_eq!(out.stdout, "on\n");
+    let out = psh(&[
+        "-O",
+        "extglob",
+        "+O",
+        "extglob",
+        "-c",
+        "shopt -q extglob || echo off",
+    ]);
+    assert_eq!(out.stdout, "off\n");
+    // `--` ends the options; the command is still the first operand.
+    let out = psh(&["-c", "--", "echo \"$0 $1\"", "n", "a"]);
+    assert_eq!(out.stdout, "n a\n");
+    // A command that looks like psh's own option is a command.
+    let out = psh(&["-c", "echo \"$0\"", "--parse"]);
+    assert_eq!(out.stdout, "--parse\n");
+    let out = psh(&["--norc", "--noprofile", "--noediting", "-c", "echo ok"]);
+    assert_eq!(out.stdout, "ok\n");
+    let out = psh(&["--posix", "-c", "echo ok"]);
+    assert_eq!(out.status, Some(2));
+}
+
+#[test]
+fn stdin_scripts() {
+    let out = psh_with(&["-s", "a", "b"], b"echo \"stdin $1 $2\"\n");
+    assert_eq!(out.stdout, "stdin a b\n");
+    let out = psh_with(&[], b"echo \"$#\"; case $- in *s*) echo s;; esac\n");
+    assert_eq!(out.stdout, "0\ns\n");
+    let out = psh_with(&["-e"], b"false; echo not\n");
+    assert_eq!((out.stdout.as_str(), out.status), ("", Some(1)));
+}
+
+/// Arguments that are not UTF-8 reach the script and `--parse` byte for byte.
+#[cfg(unix)]
+#[test]
+fn arguments_that_are_not_utf8() {
+    use std::os::unix::ffi::OsStrExt;
+    let arg = OsStr::from_bytes(b"caf\xe9");
+    let out = psh_bytes(
+        &[
+            OsStr::new("-c"),
+            OsStr::new("printf %s \"$1\""),
+            OsStr::new("n"),
+            arg,
+        ],
+        b"",
+    );
+    assert_eq!(out.stdout, b"caf\xe9");
+    let out = psh_bytes(
+        &[
+            OsStr::new("--parse"),
+            OsStr::new("--compact"),
+            OsStr::new("-c"),
+            OsStr::from_bytes(b"echo caf\xe9 ok"),
+        ],
+        b"",
+    );
+    let json = String::from_utf8(out.stdout).unwrap();
+    assert!(json.contains(r#""span":[10,12],"text":"ok""#), "{json}");
+    assert!(json.contains(r#""utf8":false"#), "{json}");
+}
+
+#[test]
+fn classify_with_extglob() {
+    let out = psh(&["--classify", "--compact", "-c", "ls !(x)"]);
+    assert_eq!(out.status, Some(2));
+    let out = psh(&["--classify", "--compact", "-O", "extglob", "-c", "ls !(x)"]);
+    assert_eq!(out.status, Some(0), "{}", out.stdout);
+    assert!(out.stdout.contains(r#""read_only":true"#), "{}", out.stdout);
 }
 
 #[test]

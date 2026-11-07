@@ -5,10 +5,13 @@
 //! `psh --parse [--compact] [-O extglob] [-c CMD | FILE]` prints the syntax tree as
 //! JSON (stdin when neither `-c` nor a file is given); status 0 if it parses, 2 if not.
 //!
-//! `psh --classify [--compact] [-c CMD | FILE]` prints what the script does as JSON
-//! (`classify_json.rs`); status 0 if it parses, 2 if not.
+//! `psh --classify [--compact] [-O extglob] [-c CMD | FILE]` prints what the script does
+//! as JSON (`classify_json.rs`); status 0 if it parses, 2 if not.
+//!
+//! `cli.rs` splits the command line between psh's own modes and bash's invocation.
 
 mod classify_json;
+mod cli;
 mod json;
 mod parse_json;
 
@@ -88,36 +91,30 @@ fn os_path(b: &[u8]) -> std::path::PathBuf {
     }
 }
 
-fn usage() -> ExitCode {
-    eprintln!("usage: psh [-c COMMAND [NAME [ARGS...]] | FILE [ARGS...]]");
-    eprintln!("       psh --parse [--compact] [-O extglob] [-c COMMAND | FILE]");
-    eprintln!("       psh --classify [--compact] [-c COMMAND | FILE]");
+/// A shell invocation error: bash's message, then the usage, status 2.
+fn usage_error(msg: &str) -> ExitCode {
+    eprintln!("psh: {msg}\n{}", cli::usage_hint());
     ExitCode::from(2)
 }
 
 fn main() -> ExitCode {
-    let args: Vec<Vec<u8>> = std::env::args_os().skip(1).map(os_bytes).collect();
-    if args.first().is_some_and(|a| a == b"--parse") {
-        let rest: Vec<String> = args[1..]
-            .iter()
-            .map(|a| String::from_utf8_lossy(a).into_owned())
-            .collect();
-        return parse_command(&rest);
-    }
-    if args.first().is_some_and(|a| a == b"--classify") {
-        let rest: Vec<String> = args[1..]
-            .iter()
-            .map(|a| String::from_utf8_lossy(a).into_owned())
-            .collect();
-        return classify_command(&rest);
-    }
+    let args = match cli::parse(std::env::args_os().skip(1).collect()) {
+        Ok(cli::Mode::Shell(args)) => args,
+        Ok(cli::Mode::Parse(d)) => return parse_command(d),
+        Ok(cli::Mode::Classify(d)) => return classify_command(d),
+        Err(e) => {
+            e.print();
+            return ExitCode::from(e.exit_code() as u8);
+        }
+    };
     let text = |b: &[u8]| String::from_utf8_lossy(b).into_owned();
     let script = match parse_args(&args) {
-        Err(msg) => {
-            eprintln!("psh: {msg}");
-            return usage();
+        Err(msg) => return usage_error(&msg),
+        // `--help` after bash's options (`psh -e --help`).
+        Ok(Invocation::Help) => {
+            println!("{}", cli::help_text());
+            return ExitCode::SUCCESS;
         }
-        Ok(Invocation::Help) => return usage(),
         Ok(Invocation::Command {
             source,
             arg0,
@@ -301,101 +298,57 @@ impl Signals {
     }
 }
 
-fn parse_command(args: &[String]) -> ExitCode {
-    let mut compact = false;
-    let mut opts = psh_syntax::Options::default();
-    let mut source = None;
-    let mut it = args.iter();
-    while let Some(arg) = it.next() {
-        match arg.as_str() {
-            "--compact" => compact = true,
-            "-O" => match it.next().map(String::as_str) {
-                Some("extglob") => opts.extglob = true,
-                Some(other) => {
-                    eprintln!("psh: --parse: -O {other}: only extglob affects parsing");
-                    return ExitCode::from(2);
-                }
-                None => {
-                    eprintln!("psh: -O: option requires an argument");
-                    return ExitCode::from(2);
-                }
-            },
-            "-c" => match it.next() {
-                Some(cmd) => source = Some(cmd.clone().into_bytes()),
-                None => {
-                    eprintln!("psh: -c: option requires an argument");
-                    return ExitCode::from(2);
-                }
-            },
-            path if source.is_none() && !path.starts_with('-') => match std::fs::read(path) {
-                Ok(bytes) => source = Some(bytes),
-                Err(e) => {
-                    eprintln!("psh: {path}: {e}");
-                    return ExitCode::from(2);
-                }
-            },
-            _ => return usage(),
-        }
-    }
-    let Some(bytes) = read_bytes(source) else {
+fn parse_command(d: cli::Diag) -> ExitCode {
+    let Some(bytes) = read_source(d.source) else {
         return ExitCode::from(2);
     };
-    let (json, ok) = parse_json::parse_to_json(&bytes, opts);
-    print_json(&json, compact, ok)
+    let (json, ok) = parse_json::parse_to_json(&bytes, d.options);
+    print_json(&json, d.compact, ok)
 }
 
-fn classify_command(args: &[String]) -> ExitCode {
-    let mut compact = false;
-    let mut source = None;
-    let mut it = args.iter();
-    while let Some(arg) = it.next() {
-        match arg.as_str() {
-            "--compact" => compact = true,
-            "-c" => match it.next() {
-                Some(cmd) => source = Some(cmd.clone().into_bytes()),
-                None => {
-                    eprintln!("psh: -c: option requires an argument");
-                    return ExitCode::from(2);
-                }
-            },
-            path if source.is_none() && !path.starts_with('-') => match std::fs::read(path) {
-                Ok(bytes) => source = Some(bytes),
-                Err(e) => {
-                    eprintln!("psh: {path}: {e}");
-                    return ExitCode::from(2);
-                }
-            },
-            _ => return usage(),
-        }
-    }
-    let Some(text) = read_input(source) else {
+fn classify_command(d: cli::Diag) -> ExitCode {
+    // Invalid UTF-8 becomes U+FFFD, which moves the byte offsets after it.
+    let Some(text) = read_source(d.source).map(|b| String::from_utf8_lossy(&b).into_owned()) else {
         return ExitCode::from(2);
     };
-    let c = psh_classify::classify(&text);
+    let c = match psh_syntax::parse_with(&text, d.options) {
+        Ok(ast) => psh_classify::classify_ast(&ast),
+        // As `psh_classify::classify` reports a script that does not parse.
+        Err(e) => {
+            let mut c = psh_classify::Classification::default();
+            c.categories.insert(psh_classify::Category::Unknown);
+            c.error = Some(e);
+            c
+        }
+    };
     let ok = c.error.is_none();
-    print_json(&classify_json::to_json(&c, &text), compact, ok)
+    print_json(&classify_json::to_json(&c, &text), d.compact, ok)
 }
 
-/// The script from `-c` or a file, else stdin, as text: invalid UTF-8 becomes U+FFFD,
-/// which moves the byte offsets after it.
-fn read_input(source: Option<Vec<u8>>) -> Option<String> {
-    read_bytes(source).map(|b| String::from_utf8_lossy(&b).into_owned())
-}
-
-/// The script from `-c` or a file, else stdin, byte for byte.
-fn read_bytes(source: Option<Vec<u8>>) -> Option<Vec<u8>> {
-    let bytes = match source {
-        Some(b) => b,
-        None => {
+/// The script of `--parse` and `--classify`, byte for byte.
+fn read_source(source: cli::Source) -> Option<Vec<u8>> {
+    match source {
+        cli::Source::Command(b) => Some(b),
+        cli::Source::File(path) => match std::fs::read(&path) {
+            Ok(b) => Some(b),
+            Err(e) => {
+                eprintln!(
+                    "psh: {}: {}",
+                    path.display(),
+                    psh_engine::host::error_text(&e)
+                );
+                None
+            }
+        },
+        cli::Source::Stdin => {
             let mut b = Vec::new();
             if let Err(e) = std::io::stdin().read_to_end(&mut b) {
-                eprintln!("psh: stdin: {e}");
+                eprintln!("psh: stdin: {}", psh_engine::host::error_text(&e));
                 return None;
             }
-            b
+            Some(b)
         }
-    };
-    Some(bytes)
+    }
 }
 
 /// Prints the JSON; status 0 if the input parsed, 2 if not or if stdout fails.

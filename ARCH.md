@@ -667,7 +667,9 @@ the daemon build, on by default (D031).
 `psh --parse [--compact] [-O extglob] [-c CMD | FILE]` prints the AST as JSON with spans
 (D1047); `psh --classify` prints the classification. Modes, flags and help are parsed
 with the `argument` crate, while bash's invocation rules (`+o`, combined `-euc`) stay
-with the invocation parser (D035). The binary installs the utility policy (with
+with the invocation parser, which the conformance runner shares (D035): `argument` reads
+the leading `--name` arguments that are not bash's, and the first other argument starts
+bash's part (D1340). The binary installs the utility policy (with
 `PSH_UTILS_FORCE`, D1192), drives the engine with `std_host::drive` (step; on `Blocked`
 park until the waker fires), keeps its externals in its own process group (D1067),
 catches the trappable signals on the engine thread and dies by a fatal one (D1903).

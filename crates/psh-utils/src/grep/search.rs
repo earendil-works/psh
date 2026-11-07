@@ -5,8 +5,8 @@
 use std::cell::RefCell;
 use std::io::{self, Read};
 
-use grep_matcher::Matcher;
 use grep_matcher::LineTerminator;
+use grep_matcher::Matcher;
 use grep_searcher::{BinaryDetection, Searcher, SearcherBuilder};
 use ignore::WalkState;
 use psh_engine::host::{FileKind, error_text};
@@ -14,7 +14,7 @@ use psh_engine::util::SyncCtx;
 
 use super::pattern::{LineMatcher, Matchers, Pats};
 use super::sink::{GrepSink, Out};
-use super::{Binary, Config, Dirs, List};
+use super::{BinaryFiles, Config, Dirs, List};
 use crate::search::walk::{WalkOptions, Walker};
 
 pub(crate) fn run_sync(ctx: &mut SyncCtx, (cfg, m): (Config, Matchers)) -> i32 {
@@ -78,18 +78,22 @@ pub(crate) fn run_sync(ctx: &mut SyncCtx, (cfg, m): (Config, Matchers)) -> i32 {
 fn searcher(cfg: &Config) -> Searcher {
     let shows_lines = !cfg.quiet && cfg.list.is_none() && !cfg.count;
     let mut b = SearcherBuilder::new();
-    b.line_terminator(LineTerminator::byte(if cfg.null_data { b'\0' } else { b'\n' }))
-        .invert_match(cfg.invert)
-        .line_number(cfg.line_number || cfg.context)
-        .before_context(if shows_lines { cfg.before } else { 0 })
-        .after_context(if shows_lines { cfg.after } else { 0 })
-        .max_matches(cfg.max_count)
-        .bom_sniffing(false)
-        .binary_detection(if cfg.binary == Binary::Text || cfg.null_data {
-            BinaryDetection::none()
-        } else {
-            BinaryDetection::convert(b'\0')
-        });
+    b.line_terminator(LineTerminator::byte(if cfg.null_data {
+        b'\0'
+    } else {
+        b'\n'
+    }))
+    .invert_match(cfg.invert)
+    .line_number(cfg.line_number || cfg.context)
+    .before_context(if shows_lines { cfg.before } else { 0 })
+    .after_context(if shows_lines { cfg.after } else { 0 })
+    .max_matches(cfg.max_count)
+    .bom_sniffing(false)
+    .binary_detection(if cfg.binary == BinaryFiles::Text || cfg.null_data {
+        BinaryDetection::none()
+    } else {
+        BinaryDetection::convert(b'\0')
+    });
     b.build()
 }
 
@@ -173,7 +177,14 @@ impl Run<'_> {
 
     /// GNU's recursion: hidden files too, no ignore files, symbolic links followed with
     /// `-R` only; devices, FIFOs and sockets found on the way are skipped.
-    fn walk<M: Matcher>(&mut self, ctx: &SyncCtx, m: &M, s: &mut Searcher, root: &[u8], implicit: bool) {
+    fn walk<M: Matcher>(
+        &mut self,
+        ctx: &SyncCtx,
+        m: &M,
+        s: &mut Searcher,
+        root: &[u8],
+        implicit: bool,
+    ) {
         let cfg = self.cfg;
         let opts = WalkOptions {
             hidden: false,
@@ -227,14 +238,29 @@ impl Run<'_> {
         });
     }
 
-    fn file<M: Matcher>(&mut self, ctx: &SyncCtx, m: &M, s: &mut Searcher, path: &[u8], shown: &[u8], show: bool) {
+    fn file<M: Matcher>(
+        &mut self,
+        ctx: &SyncCtx,
+        m: &M,
+        s: &mut Searcher,
+        path: &[u8],
+        shown: &[u8],
+        show: bool,
+    ) {
         match ctx.open(path) {
             Ok(mut f) => self.search(m, s, &mut f, shown, show),
             Err(e) => self.file_error(shown, &e),
         }
     }
 
-    fn search<M: Matcher, R: Read>(&mut self, m: &M, s: &mut Searcher, mut rdr: R, name: &[u8], show: bool) {
+    fn search<M: Matcher, R: Read>(
+        &mut self,
+        m: &M,
+        s: &mut Searcher,
+        mut rdr: R,
+        name: &[u8],
+        show: bool,
+    ) {
         let cfg = self.cfg;
         // GNU decides on binary data per buffer it reads, the first one before any
         // output; the searcher's decoder hands its first bytes over in pieces, so the
@@ -248,8 +274,8 @@ impl Run<'_> {
             }
         };
         head.truncate(n);
-        let binary = cfg.binary != Binary::Text && !cfg.null_data && head.contains(&0);
-        let (count, suppressed) = if binary && cfg.binary == Binary::WithoutMatch {
+        let binary = cfg.binary != BinaryFiles::Text && !cfg.null_data && head.contains(&0);
+        let (count, suppressed) = if binary && cfg.binary == BinaryFiles::WithoutMatch {
             (0, false)
         } else {
             let mut sink = GrepSink::new(cfg, self.spans, self.out, name, show);
@@ -304,7 +330,10 @@ impl Run<'_> {
             return;
         }
         if suppressed {
-            out.error(&format!("{}: binary file matches", String::from_utf8_lossy(name)));
+            out.error(&format!(
+                "{}: binary file matches",
+                String::from_utf8_lossy(name)
+            ));
         }
     }
 
@@ -347,13 +376,21 @@ impl Run<'_> {
 }
 
 /// The path, I/O error and loop (its child) in a walk error.
-fn dissect(e: &ignore::Error) -> (Option<&std::path::Path>, Option<&io::Error>, Option<&std::path::Path>) {
+fn dissect(
+    e: &ignore::Error,
+) -> (
+    Option<&std::path::Path>,
+    Option<&io::Error>,
+    Option<&std::path::Path>,
+) {
     match e {
         ignore::Error::WithPath { path, err } => {
             let (p, io, l) = dissect(err);
             (p.or(Some(path)), io, l)
         }
-        ignore::Error::WithDepth { err, .. } | ignore::Error::WithLineNumber { err, .. } => dissect(err),
+        ignore::Error::WithDepth { err, .. } | ignore::Error::WithLineNumber { err, .. } => {
+            dissect(err)
+        }
         ignore::Error::Loop { child, .. } => (None, None, Some(child)),
         ignore::Error::Io(io) => (None, Some(io), None),
         ignore::Error::Partial(errs) => errs.first().map_or((None, None, None), dissect),
@@ -394,7 +431,10 @@ fn suffixes(name: &[u8]) -> Vec<&[u8]> {
 /// searched unless the first glob is an `--include`.
 fn included(cfg: &Config, names: &[&[u8]]) -> bool {
     for (include, g) in cfg.filters.iter().rev() {
-        if names.iter().any(|n| g.is_match(crate::search::walk::to_path(n))) {
+        if names
+            .iter()
+            .any(|n| g.is_match(crate::search::walk::to_path(n)))
+        {
             return *include;
         }
     }
@@ -402,9 +442,11 @@ fn included(cfg: &Config, names: &[&[u8]]) -> bool {
 }
 
 fn excluded_dir(cfg: &Config, names: &[&[u8]]) -> bool {
-    cfg.exclude_dirs
-        .iter()
-        .any(|g| names.iter().any(|n| g.is_match(crate::search::walk::to_path(n))))
+    cfg.exclude_dirs.iter().any(|g| {
+        names
+            .iter()
+            .any(|n| g.is_match(crate::search::walk::to_path(n)))
+    })
 }
 
 /// stdin for the searcher; stdout is flushed before each read (D1081), so a pipeline

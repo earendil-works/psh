@@ -247,7 +247,42 @@ Checkouts: `vendor/ripgrep` (91f5d22), `vendor/fd` (193d0df) in the primary chec
   cases (times removed with sed). Only `--pre`, `-z`, PCRE2 and `--debug/--trace` still
   run the real rg.
 
+### part 4: grep, egrep, fgrep (D1137)
+- `crates/psh-utils/src/grep/`: `mod.rs` (options, patterns, `-NUM`, colors), `pattern.rs`
+  (GNU pre-pass, line matcher, span matcher `Pats` with `psh_regex` for back-references
+  and ambiguous spans), `sink.rs` (GNU sink and output buffer), `search.rs` (operands,
+  recursion on the walker seam, binary rules, exit status). Registered as mode S for
+  `grep egrep fgrep`; SPEC/EGREP_SPEC/FGREP_SPEC checked against the classifier.
+- Oracle loop: `work/scratch/0013/gb.sh` builds a Linux psh into target/record,
+  `gc.sh SETUP < cmds` runs each command with GNU grep and psh in the recording image;
+  ~180 probe commands agree (agent-style `-rn --include`, contexts, colors, -o, -w,
+  binary, UTF-8, CRLF, -z).
+- Found (GNU 3.11): the binary message is `grep: F: binary file matches` on stderr;
+  lines that are invalid UTF-8 are left out (with the message) in C.UTF-8; `-A0` still
+  separates groups; `-f /dev/null` reads no file at all (`-c` prints nothing, `-L` lists);
+  ERE leading `*` is dropped with a warning, `x{1` is literal, `^*a` = `a`; `-m -1` is no
+  limit; `--include` braces are literal; output to /dev/null makes GNU stop at the first
+  match (measure with a file). grep-searcher's decoder returns the first 3 bytes on their
+  own (BOM peek), so its binary detection came after the first line: grep reads the
+  first 96 KiB itself.
+- psh-classify: grep/egrep/fgrep tables now list every GNU value option (`--include`
+  etc. were missing) and `--exclude-from` as a read (data only, outside my touches).
+- L4: tests/utils/grep/basic.test.sh, 35 cases, GNU and BSD recorded; 17 `## expect:
+  gnu` with the D016 reason. Pass natively and in wasm.
+- Ratchets: oils/builtin-meta/1 (`command -v grep` prints the name, D1151);
+  brush well_known_vars/4 on wasm (`env -v` now reached; the JS host has no env);
+  utils/grep/basic/29 on Windows (file symlinks).
+- Speed (Linux, 1M lines, 76 MB): on par with GNU grep (-c 0.06 s vs 0.04 s, -o 0.2 s vs
+  1.5 s, back-references 2.3 s vs 5.1 s, `-rn` over vendor/ripgrep 0.58 s vs 0.47 s).
+- Docs: ARCH "Search" grep paragraph. Guide: none of the written pages describes grep;
+  processes.md's `seq 1 1000000 | grep 7 | wc -l` "real kernel pipes" example names three
+  psh utilities now (follow-up for the docs agent).
+
 ## Follow-ups
+- grep: `-T/--initial-tab` falls through; GNU's "input file is also the output" check
+  (`grep -r x . > out`) is not done (same need as rg's skip_stdout).
+- docs: guide/processes.md's pipe example (`seq | grep | wc`) now names psh utilities, not
+  programs.
 - rg: `skip_stdout` (real rg skips the file stdout is redirected to, `rg x . > out`) is not
   done; needs the identity of fd 1 from the utility context.
 

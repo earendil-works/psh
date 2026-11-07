@@ -17,6 +17,7 @@ utils/find/basic/30: the Windows VM cannot create symlinks to files (no Develope
 utils/find/basic/31: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
 utils/find/basic/32: Windows: a directory symlink is a junction, whose target is absolute (D1150)
 utils/find/basic/38: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/grep/basic/29: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
 utils/ln/basic/0: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
 utils/ln/basic/1: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
 utils/ln/basic/11: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied

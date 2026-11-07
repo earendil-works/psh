@@ -97,7 +97,7 @@ pub(crate) enum Syntax {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum Binary {
+pub(crate) enum BinaryFiles {
     /// Output stops at the first NUL; lines that are not valid in the locale are not
     /// printed; `grep: FILE: binary file matches` after.
     Binary,
@@ -193,7 +193,7 @@ pub(crate) struct Config {
     pub only_matching: bool,
     pub quiet: bool,
     pub no_messages: bool,
-    pub binary: Binary,
+    pub binary: BinaryFiles,
     pub dirs: Dirs,
     pub skip_devices: bool,
     /// `-R`: follow symbolic links while recursing.
@@ -257,7 +257,7 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         only_matching: false,
         quiet: false,
         no_messages: false,
-        binary: Binary::Binary,
+        binary: BinaryFiles::Binary,
         dirs: Dirs::Read,
         skip_devices: false,
         deref: false,
@@ -327,20 +327,22 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
             "quiet" | "silent" => cfg.quiet = true,
             "binary-files" => {
                 cfg.binary = match v {
-                    b"binary" => Binary::Binary,
-                    b"text" => Binary::Text,
-                    b"without-match" => Binary::WithoutMatch,
+                    b"binary" => BinaryFiles::Binary,
+                    b"text" => BinaryFiles::Text,
+                    b"without-match" => BinaryFiles::WithoutMatch,
                     _ => return fail(ctx, "unknown binary-files type").await,
                 }
             }
-            "text" => cfg.binary = Binary::Text,
-            "I" => cfg.binary = Binary::WithoutMatch,
+            "text" => cfg.binary = BinaryFiles::Text,
+            "I" => cfg.binary = BinaryFiles::WithoutMatch,
             "directories" => {
                 cfg.dirs = match v {
                     b"read" => Dirs::Read,
                     b"skip" => Dirs::Skip,
                     b"recurse" => Dirs::Recurse,
-                    _ => return crate::textio::fall_through(ctx, argv, "--directories value").await,
+                    _ => {
+                        return crate::textio::fall_through(ctx, argv, "--directories value").await;
+                    }
                 }
             }
             "devices" => {
@@ -430,8 +432,10 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         if let Some(old) = ctx.var(b"GREP_COLOR").filter(|v| !v.is_empty()) {
             let old = String::from_utf8_lossy(old).into_owned();
             ctx.error_raw(
-                format!("grep: warning: GREP_COLOR='{old}' is deprecated; use GREP_COLORS='mt={old}'\n")
-                    .as_bytes(),
+                format!(
+                    "grep: warning: GREP_COLOR='{old}' is deprecated; use GREP_COLORS='mt={old}'\n"
+                )
+                .as_bytes(),
             )
             .await;
             colors.ms = old.clone();
@@ -452,7 +456,8 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
             }
         }
         for w in warnings {
-            ctx.error_raw(format!("grep: warning: {w}\n").as_bytes()).await;
+            ctx.error_raw(format!("grep: warning: {w}\n").as_bytes())
+                .await;
         }
     }
     let shows_lines = !cfg.quiet && cfg.list.is_none() && !cfg.count;
@@ -562,7 +567,8 @@ enum Number {
 fn parse_number(v: &[u8]) -> Option<Number> {
     let s = std::str::from_utf8(v).ok()?.trim_start();
     if let Some(n) = s.strip_prefix('-') {
-        return (!n.is_empty() && n.bytes().all(|b| b.is_ascii_digit())).then_some(Number::Negative);
+        return (!n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()))
+            .then_some(Number::Negative);
     }
     let s = s.strip_prefix('+').unwrap_or(s);
     if s.is_empty() || !s.bytes().all(|b| b.is_ascii_digit()) {

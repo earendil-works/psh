@@ -623,11 +623,15 @@ parent-directory rules, hidden files, symlinks and loops, globs, types, limits, 
 its filters, `exec/` (`-x`/`-X` through `spawn`) and `fmt/` copied with attribution;
 none of fd's other dependencies. `--base-directory` never changes the process cwd.
 
-**grep** (**Planned**, 0013) shares the matcher, `grep-searcher`, the walker and the
-0/1/2 exit rules with rg, but not its front end: POSIX patterns through psh-regex
-(above), GNU's output through psh's own `Sink` (`file:line:text`, `--` between groups,
-`Binary file X matches`), GNU recursion (`-r` without a path means `.`, hidden files
-searched, `.gitignore` ignored, `-R` follows symlinks).
+**grep** (`grep`, `egrep`, `fgrep`; D1137) is GNU grep 3.11's command line and output,
+written for psh, on the same matcher, `grep-searcher` and walker as rg, with its own
+front end and a GNU `Sink`: POSIX patterns through psh-regex (above; back-references and
+leftmost-longest spans by `psh_regex` itself, GNU's ERE extensions as a pre-pass),
+`file:line:text`, `--` between groups, GREP_COLORS, `grep: FILE: binary file matches`
+on stderr, GNU recursion (`-r` without a path means `.`, hidden files searched, no ignore
+files, `-R` follows symlinks, `--include`/`--exclude` by GNU's suffix rules). It runs as
+a blocking utility; `-P` patterns the regex crate rejects and options psh lacks (`-T`)
+run the real grep.
 
 **find** walks on its own, over the utility's asynchronous file system (D1171): its
 actions (`-exec`, `-delete`, `-prune`, `-quit`) interleave with the walk, which the

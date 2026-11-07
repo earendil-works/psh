@@ -66,7 +66,11 @@ pub(crate) enum PatternError {
 /// ignores a `*`, `+` or `?` there, so the pattern returned leaves it out). Also GNU's
 /// ERE extensions over POSIX: a `{` that starts no interval is literal, `^*` is no
 /// anchor.
-pub(crate) fn diagnose(p: &[u8], extended: bool, warnings: &mut Vec<String>) -> Result<Vec<u8>, String> {
+pub(crate) fn diagnose(
+    p: &[u8],
+    extended: bool,
+    warnings: &mut Vec<String>,
+) -> Result<Vec<u8>, String> {
     let mut out = Vec::with_capacity(p.len());
     let mut i = 0;
     let mut at_start = true;
@@ -158,7 +162,10 @@ fn bracket_end(p: &[u8], start: usize) -> usize {
 
 /// `N}`, `N,}`, `N,M}` or `,M}` follows (an ERE interval).
 fn is_interval(rest: &[u8]) -> bool {
-    let n = rest.iter().take_while(|b| b.is_ascii_digit() || **b == b',').count();
+    let n = rest
+        .iter()
+        .take_while(|b| b.is_ascii_digit() || **b == b',')
+        .count();
     n > 0 && rest.get(n) == Some(&b'}')
 }
 
@@ -214,7 +221,10 @@ pub(crate) fn build(patterns: &[Vec<u8>], o: MatchOptions) -> Result<Matchers, P
 
     let all_rust = prepared.iter().all(|p| p.rust.is_some());
     let fast = if all_rust && !prepared.is_empty() {
-        let rust: Vec<&str> = prepared.iter().map(|p| p.rust.as_deref().unwrap()).collect();
+        let rust: Vec<&str> = prepared
+            .iter()
+            .map(|p| p.rust.as_deref().unwrap())
+            .collect();
         fast_matcher(&rust, o)
     } else {
         None
@@ -562,7 +572,10 @@ mod tests {
     fn word_and_line() {
         let mut o = opts(Syntax::Extended);
         o.word = true;
-        assert_eq!(spans(&["foo|foobar"], o, "foobar foo_ foo"), vec![(0, 6), (12, 15)]);
+        assert_eq!(
+            spans(&["foo|foobar"], o, "foobar foo_ foo"),
+            vec![(0, 6), (12, 15)]
+        );
         assert_eq!(spans(&["ab*"], o, "abb_ ab"), vec![(5, 7)]);
         o.word = false;
         o.line = true;

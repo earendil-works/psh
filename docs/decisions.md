@@ -2533,3 +2533,54 @@ choice: macOS agents otherwise get BSD awk, whose behavior differs (83 of the 77
 vendored cases). Options psh does not implement still fall through to the real program
 (D1082). Basis: the vendored suites pass but for documented, ratcheted cases (767/772,
 onetrueawk's T.* only 3 checks beyond gawk's), and the 69 L4 cases pass on GNU's goldens.
+## D1137: grep, egrep, fgrep: GNU grep 3.11 on the shared search layer
+date: 2026-11-08 · by: infra · issue: 0013
+`grep`, `egrep` and `fgrep` are always-on utilities (mode S) written for psh after GNU
+grep's manual and its observed behavior (3.11, the recording container); BSD-only flags
+and conflicts follow D016 (GNU). A blocking utility (D1130): the front end parses options
+and patterns (`-f`, `--exclude-from` read through the utility's file system, `-f -` from
+stdin), the body searches with `grep-searcher` and psh's own GNU sink.
+- **Matching.** Patterns are one per line of `-e`/`-f`/the operand. Line selection is
+  `grep-regex` over every pattern's `psh_regex::to_rust_syntax` translation (D1131), with
+  `-i`/`-w`/`-x` as its options (`-w` is GNU's: no word character on either side).
+  A pattern with back-references has no translation: then lines are matched one at a
+  time, those patterns by `psh_regex`. Spans (`-o`, `--color`) are GNU's leftmost-longest:
+  an `ambiguous` pattern goes to `psh_regex`; several patterns are matched separately and
+  the leftmost, then longest match wins; `-F` literals are one alternation sorted longest
+  first. `-P` uses the regex crate as is (Perl's leftmost-first); a pattern it rejects,
+  or several `-P` patterns, run the real grep.
+- **GNU's dfa extensions** are a pre-pass over BRE/ERE patterns, since psh-regex is
+  glibc's `regcomp`: ERE `*`/`+`/`?` at the start of an expression warn and are dropped,
+  `{...}` there warns, a `{` that starts no interval is literal, `^*` is no anchor; a
+  class outside brackets (`[:space:]`) is GNU's error.
+- **Binary files.** grep reads each file's first 96 KiB itself (GNU's buffer; the
+  searcher's decoder hands its first bytes over in pieces, so its own detection would
+  come after the first line). A NUL there, or later in a buffer before its lines are
+  matched (`BinaryDetection::convert`), stops all output of the file; a later selected
+  line ends the search and `grep: FILE: binary file matches` goes to stderr, as in GNU
+  3.5+. In a UTF-8 locale an output line (or `-o` part) that is not valid UTF-8 is left
+  out with the same message. `-a` searches as text, `-I` makes a binary file not match;
+  `-z` has no binary detection.
+- **Recursion** is the walker seam with every ignore source off and hidden files in;
+  `-R` follows links, `-r` only those named on the command line; devices, FIFOs and
+  sockets met while recursing are skipped; a loop is a warning, not an error. Order is
+  by name (GNU's is the directory's). `--include`/`--exclude` match the base name while
+  recursing and any name suffix after a `/` for operands, last matching glob wins, no
+  match means included unless the first is an `--include`; `--exclude-dir` likewise for
+  directories (not the implicit `.`). Globs are fnmatch without `FNM_PATHNAME`: `*`
+  matches `/`, braces are literal.
+- **Output** goes through grep's own 64 KiB buffer, flushed before each stdin read and
+  stderr write (D1081), at every line with `--line-buffered` or on a terminal. GREP_COLORS
+  (`ms mc sl cx fn ln bn se rv ne`) and the deprecated GREP_COLOR with GNU's warning.
+  Messages say `grep:` for all three names (Debian's egrep/fgrep run grep). A closed
+  pipe ends grep with 141; the exit status is otherwise 0 (a line selected), 1 or 2 (an
+  error, unless `-q` selected a line). With no pattern at all and no `-v`, GNU reads no
+  file (no errors, no counts, `-L` lists the operands): so does psh.
+- **Fall-through** (D1082): options psh does not implement (`-T`, `--help`, `--version`,
+  BSD's `-O -S -p -J -X -M`), unknown `--color`/`-d`/`-D` values.
+- The classifier's grep/egrep/fgrep tables now list all GNU value options (`--include`,
+  `--exclude`, `--exclude-dir`, `--exclude-from`, `--group-separator` were missing, so
+  `grep --include '*.rs' x` misread the glob as the pattern), and `--exclude-from` as a
+  file read.
+Incremental search in wasm (`yes | grep x | head -1`) is still D1130's follow-up: the
+inline backend reads stdin first.

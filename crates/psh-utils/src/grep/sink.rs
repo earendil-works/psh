@@ -9,7 +9,7 @@ use grep_searcher::{Searcher, Sink, SinkContext, SinkMatch};
 use psh_engine::util::SyncWriter;
 
 use super::pattern::{Pats, char_len};
-use super::{Binary, Colors, Config};
+use super::{BinaryFiles, Colors, Config};
 
 /// stdout through a buffer (flushed when full, at every line with `--line-buffered`
 /// or on a terminal, and before stderr is written, D1081), and stderr.
@@ -80,7 +80,12 @@ impl Out {
     }
 
     /// `text` in the color `cap` (none when empty or colors are off).
-    pub(crate) fn colored(&mut self, colors: Option<&Colors>, cap: &str, text: &[u8]) -> io::Result<()> {
+    pub(crate) fn colored(
+        &mut self,
+        colors: Option<&Colors>,
+        cap: &str,
+        text: &[u8],
+    ) -> io::Result<()> {
         match colors {
             Some(c) if !cap.is_empty() => {
                 self.sgr_start(c, cap)?;
@@ -146,7 +151,13 @@ impl<'a> GrepSink<'a> {
     }
 
     /// A selected or context line, with its terminator.
-    fn line(&mut self, selected: bool, bytes: &[u8], lnum: Option<u64>, offset: u64) -> io::Result<()> {
+    fn line(
+        &mut self,
+        selected: bool,
+        bytes: &[u8],
+        lnum: Option<u64>,
+        offset: u64,
+    ) -> io::Result<()> {
         let cfg = self.cfg;
         let term = self.term();
         let raw = bytes.strip_suffix(&[term]).unwrap_or(bytes);
@@ -154,16 +165,17 @@ impl<'a> GrepSink<'a> {
         let colors = cfg.colors.as_ref();
         if cfg.context {
             let adjacent = matches!((self.last_line, lnum), (Some(l), Some(n)) if n == l + 1);
-            if !adjacent && out.printed_group {
-                if let Some(sep) = &cfg.group_separator {
-                    out.colored(colors, colors.map_or("", |c| &c.se), sep)?;
-                    out.write(b"\n")?;
-                }
+            if !adjacent
+                && out.printed_group
+                && let Some(sep) = &cfg.group_separator
+            {
+                out.colored(colors, colors.map_or("", |c| &c.se), sep)?;
+                out.write(b"\n")?;
             }
             self.last_line = lnum;
             out.printed_group = true;
         }
-        let checks_encoding = cfg.utf8 && cfg.binary == Binary::Binary;
+        let checks_encoding = cfg.utf8 && cfg.binary == BinaryFiles::Binary;
         let sep = if selected { b':' } else { b'-' };
         if cfg.only_matching {
             if !selected {
@@ -224,7 +236,14 @@ impl<'a> GrepSink<'a> {
 
     /// A line with its matches colored (in selected lines, or in context lines with
     /// `-v`, where those are the matching ones) and the line's own color around.
-    fn highlighted(&self, out: &mut Out, c: &Colors, pats: &Pats, selected: bool, raw: &[u8]) -> io::Result<()> {
+    fn highlighted(
+        &self,
+        out: &mut Out,
+        c: &Colors,
+        pats: &Pats,
+        selected: bool,
+        raw: &[u8],
+    ) -> io::Result<()> {
         let invert = self.cfg.invert;
         let (line_cap, match_cap) = if selected {
             (if invert && c.rv { &c.cx } else { &c.sl }, &c.ms)
@@ -306,15 +325,15 @@ impl Sink for GrepSink<'_> {
 
     fn binary_data(&mut self, _: &Searcher, _offset: u64) -> Result<bool, io::Error> {
         match self.cfg.binary {
-            Binary::Binary => {
+            BinaryFiles::Binary => {
                 self.binary_seen = true;
                 Ok(true)
             }
-            Binary::WithoutMatch => {
+            BinaryFiles::WithoutMatch => {
                 self.binary_skip = true;
                 Ok(false)
             }
-            Binary::Text => Ok(true),
+            BinaryFiles::Text => Ok(true),
         }
     }
 }

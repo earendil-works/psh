@@ -200,9 +200,9 @@ Hosts:
 
 | Host | Where | Notes |
 | --- | --- | --- |
-| `psh-os::unix` | macOS, Linux, Android | Below (0006) |
+| `psh-os::unix` | macOS, Linux, Android; `psh` and psh-spec there | Below (D1060–D1062) |
 | `psh-os::windows` | Windows | Below |
-| `psh_engine::std_host` | `psh`, psh-spec until 0006 | std `Command`, a waiter thread per child polling `try_wait`, helper threads per pump, KILL only, no process groups; regular files and the shell's own stdio are read and written synchronously |
+| `psh_engine::std_host` | `psh`, psh-spec on Windows until 0007 | std `Command`, a waiter thread per child polling `try_wait`, helper threads per pump, KILL only, no process groups; regular files and the shell's own stdio are read and written synchronously |
 | test host | `psh_engine::testhost` | In-memory fs, fake commands written as futures, captured stdio; a latency mode makes every op `Pending` once to prove no engine path expects synchronous answers; counts live processes, pipes and files for leak checks |
 | JS host | `psh-wasm` | Virtual fs, host-provided commands, driven from the JS event loop |
 
@@ -211,19 +211,27 @@ Hosts:
 From `research/execution-core.md` §5; the pitfalls listed there are requirements.
 
 **Unix.**
-- Spawn: `posix_spawn` with its own session or process group per external, `SETSIGDEF`
-  for all non-ignored signals (SIGPIPE back to default), an empty signal mask,
-  `CLOEXEC_DEFAULT` on macOS, `addchdir_np` where available; `fork`+`exec` fallback for
-  umask, ignored signals and child-side FIFO opens.
+- Spawn (D1060): `posix_spawn` with a session of its own per external (`SETSID`),
+  `SETSIGDEF` for every catchable signal (SIGPIPE back to default), an empty signal
+  mask, `CLOEXEC_DEFAULT` on macOS, `addchdir_np` where available (glibc ≥ 2.29, found
+  with `dlsym`); a bare `fork`+`execve` elsewhere and, later, for umask and ignored
+  signals. The standalone `psh` in the foreground of a terminal keeps externals in its
+  own group instead (`Placement::Inherit`), so terminal programs work. A file without
+  `#!` runs in `/bin/sh` until the engine runs it itself (D1063).
 - Wait: a pooled waiter thread per running external in `waitid(..., WNOWAIT)`, which
   wakes the engine. No SIGCHLD handler. Exited group leaders stay unreaped while their
-  group may still be signalled (no pid reuse). pidfd parking on Linux is a later
-  optimization.
-- Pumps (engine ↔ external): v1 is a bounded helper thread per pump doing blocking
-  `read`/`write` into an engine pipe object. Later a single readiness thread (`poll`;
-  `select` on macOS, where `poll` misses FIFO writer close). Never set `O_NONBLOCK` on
-  inherited or shared fds.
-- Kill: TERM to the group, KILL after a grace period, background reap.
+  group may still be signalled (no pid reuse). One party reaps, under the lifecycle
+  lock (`psh_os::lifecycle`, D1062). pidfd parking on Linux is a later optimization.
+- Files and pumps (D1061): no thread per pump. The engine's pumps poll host files; our
+  private pipe ends to externals are `O_NONBLOCK`, and I/O that would wait registers the
+  waker with one process-wide readiness thread (`poll`; `select` on macOS, where `poll`
+  misses FIFO writer close). Shared and inherited descriptors (the shell's stdio,
+  redirections) keep their flags: a zero-timeout readiness check before each read or
+  write, writes to streams capped at `PIPE_BUF`. FIFO opens run on a helper thread.
+  Timers run on one process-wide thread.
+- Kill: TERM (and CONT) to the group, KILL to the group after a grace period (default
+  2 s), then a reap. `UnixHost::leftovers()` lists groups with live members (leak
+  checks).
 - Signals: embedded, install no handlers at all. Standalone `psh`, handlers only set
   atomic bits and wake the driver; SIGPIPE is reset to default for children.
 

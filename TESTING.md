@@ -46,7 +46,7 @@ plan behind this is `research/hillclimb.md`.
 | L2 brush cases | `brush-shell/tests/cases/**/*.yaml` | MIT, vendored in `tests/brush/` | the same, ~3.7k cases; the files hold no expectations, so the goldens come from our recording |
 | L3 agent shapes | our own cases written to the patterns in `research/corpus.md`, in the Oils format, run as `bash -c` | ours, `tests/agent/` | what agents do: `cd X && …`, `\| head`, `2>&1`, quoted here-docs, `timeout`, globs that match nothing; 144 cases, growing toward ~500 |
 | L4 utilities | per-utility cases, differential against GNU (container) and BSD (macOS) where flags differ | ours; uutils/GNU tests may be *run* for reference, never vendored | each in-process utility, including "unsupported flag → fall through or clear error" |
-| L5 process | Rust integration tests | ours | cancel; `timeout` kills the whole tree; no orphans; here-docs past the pipe buffer; SIGPIPE in `\| head`; background jobs; encodings; Job Objects |
+| L5 process | Rust integration tests in `tests/process/` (`cargo test -p psh-os --test process`), each under a deadline and with a leak check (D1064) | ours | cancel; `timeout` kills the whole tree; no orphans; here-docs past the pipe buffer; SIGPIPE in `\| head`; background jobs; encodings; Job Objects |
 | L6 stress | L1–L3 re-run under perturbation | – | cancel at a random step (no leaked process, shell still usable); pause/resume at every k-th safepoint; a host where every op is `Pending`; tiny pipe buffers; slow consumers |
 
 For L4, where GNU and BSD agree both goldens must match; where they conflict, the
@@ -168,10 +168,11 @@ at scale) and syntax ranking. Running anything is never involved.
 
 - Reads the Oils `.test.sh` format (following Oils' `sh_spec.py` exactly, so each case
   runs the same bytes) and the subset of brush's YAML the cases use (hand parser).
-- Runs psh **in-process** (a new shell per case on its own engine thread over the std
-  host, the case's cwd and environment, OS pipes for stdout and stderr, a fake `$$`)
-  wherever possible; cases that mention `$PPID` run in the `psh` binary, since their
-  children signal their parent (D1056); `--shell PATH` runs a shell binary as a subprocess
+- Runs psh **in-process** (a new shell per case on its own engine thread over the OS
+  host: psh-os on Unix, the std host on Windows until 0007; the case's cwd and
+  environment, OS pipes for stdout and stderr, a fake `$$`) wherever possible; cases
+  that mention `$PPID` run in the `psh` binary, since their children signal their
+  parent (D1056); `--shell PATH` runs a shell binary as a subprocess
   in its own process group, killed with all its children on timeout and after it exits.
   The same comparison checks the runner itself: bash 5.3 must pass its own goldens
   except for documented platform differences (on macOS: BSD utilities, libc, a

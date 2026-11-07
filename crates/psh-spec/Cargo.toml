@@ -12,6 +12,8 @@ publish.workspace = true
 [dependencies]
 psh-engine.workspace = true
 psh-syntax.workspace = true
+# The OS host for in-process shells (0006).
+psh-os.workspace = true
 
 [lints]
 workspace = true

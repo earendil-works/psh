@@ -333,6 +333,7 @@ dependencies = [
  "deser-json",
  "psh-classify",
  "psh-engine",
+ "psh-os",
  "psh-syntax",
 ]
 
@@ -355,10 +356,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "psh-os"
+version = "0.0.0"
+dependencies = [
+ "libc",
+ "psh-engine",
+]
+
+[[package]]
 name = "psh-spec"
 version = "0.0.0"
 dependencies = [
  "psh-engine",
+ "psh-os",
  "psh-syntax",
 ]
 

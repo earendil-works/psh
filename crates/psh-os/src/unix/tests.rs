@@ -72,7 +72,7 @@ fn fork_path() {
     assert_eq!(h.spawn(spec).err().unwrap().kind(), io::ErrorKind::NotFound);
     let mut p = h
         .spawn(sh(
-            "yes",
+            "exec yes",
             vec![
                 (0, ChildFd::Null),
                 (1, ChildFd::Pipe { input: false }),
@@ -227,7 +227,7 @@ fn sigpipe_is_default_in_children() {
     let h = host();
     let s = h
         .spawn(sh(
-            "yes",
+            "exec yes",
             vec![
                 (0, ChildFd::Null),
                 (1, ChildFd::Pipe { input: false }),

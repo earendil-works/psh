@@ -861,3 +861,64 @@ and classifier, whose words are text for UTF-8 scripts anyway). `parse(&str)`,
 `Ast::source_bytes`, `LineIndex::from_bytes` and `line_col_bytes` are the byte forms.
 Collision: a script that is not UTF-8 and also contains real U+F780..U+F7FF chars would
 restore those chars as bytes; such scripts are not expected.
+## D1060: The Unix host places every external in a session of its own
+date: 2026-11-07 · by: procs · issue: 0006
+`psh_os::unix::UnixHost` spawns with `posix_spawn` (macOS; glibc with
+`addchdir_np`, looked up with `dlsym` so glibc < 2.29 still loads) and `POSIX_SPAWN_SETSID`,
+`SETSIGDEF` over every catchable signal (undoing Rust's ignored SIGPIPE), an empty mask and
+`CLOEXEC_DEFAULT` on macOS; elsewhere (musl, Android, old glibc) a bare `fork` + `execve`
+with async-signal-safe setup and a close-on-exec error pipe. Placement `Session` is the
+default (embedding, psh-spec, L5): a cancel or `signal` reaches the whole tree and no
+external touches the terminal's foreground. The `psh` binary uses `Inherit` (externals in
+psh's own group, signals narrow to the pid) when its stdin is a terminal whose foreground
+group is psh's, so a person's terminal programs and Ctrl-C work as under bash. Alternatives:
+`setpgid` groups in psh's session (background groups stop on terminal reads), std
+`Command` (no setsid + signal reset + exact errno without `pre_exec`).
+
+## D1061: One readiness thread instead of pump helper threads
+date: 2026-11-07 · by: procs · issue: 0006
+Supersedes the "bounded helper thread per pump" v1 of ARCH.md for Unix (coordinator-approved).
+The engine's pumps (D1054) poll host files; the Unix host makes those files never wait in
+the kernel: our private pipe ends to externals are `O_NONBLOCK` (only we hold them), and
+`EAGAIN` registers the task's waker with one process-wide readiness thread (`poll`;
+`select` on macOS, where `poll`/kqueue miss a FIFO's last writer closing and `poll` gives
+`POLLNVAL` for terminals; descriptors ≥ `FD_SETSIZE` rechecked by `poll` every 20 ms).
+Shared or inherited descriptors (the shell's stdio, files from redirections, FIFOs) keep
+their flags (pitfall 5): a zero-timeout readiness check comes before every read or write,
+and a write to such a stream carries at most `PIPE_BUF` bytes, which a writable pipe takes
+without waiting. Each pump keeps its own bounded buffer (16 KiB, in the engine) and
+returns `Pending` alone, so a wedged consumer stalls only its own pump. Several tasks may
+wait on one descriptor (all are woken). Reasons: no thread per pump, no read-ahead that
+could swallow bytes meant for a later reader of a shared stdin, and the same mechanism
+covers pitfall 1 for every stream, not only pumps. Remaining risk, accepted: a second
+reader of a shared pipe in another process can take the data between the check and the
+read, which then waits.
+
+## D1062: Exit observation, reaping and abandonment
+date: 2026-11-07 · by: procs · issue: 0006
+Pooled waiter threads (up to 8 idle, 64 KiB stacks) block in `waitid(WEXITED | WNOWAIT)`
+per external; macOS stop reports are consumed with a non-reaping `waitid`. A process is
+never reaped while its `ExtProc` exists (signals cannot hit a recycled id). Reaping is
+owned by exactly one party under the lifecycle lock (`psh_os::lifecycle`, platform-neutral
+for 0007): the `ExtProc`'s drop after a collected exit; the waiter for a released process;
+the escalation thread for an abandoned one. Abandon: TERM and CONT to the group at once,
+then after the grace period (default 2 s) KILL to the group, also when the leader exited
+meanwhile (its unreaped zombie pins the group id), then reap. Released externals are not
+leaks. `UnixHost::leftovers()` lists the groups it created that still have a member: the
+leak check of L5 tests and later of psh-spec.
+
+## D1063: Files without `#!` run in /bin/sh for now
+date: 2026-11-07 · by: procs · issue: 0006
+When `execve` fails with `ENOEXEC`, the Unix host retries with `/bin/sh FILE ARGS…`, as
+`execvp` (and so std's `Command`, the std host) does; the cases that passed on the std
+host keep passing. bash runs such files in a copy of itself; the engine should do that
+(0005 follow-up), and then this fallback goes.
+
+## D1064: L5 process tests run in-process with a leak check
+date: 2026-11-07 · by: procs · issue: 0006
+`tests/process/` is an integration test of `psh-os` (`cargo test -p psh-os --test
+process`): each test runs a script on an engine thread over `UnixHost` (grace 300 ms) with
+OS pipes for stdout and stderr read to their end, under a 30 s deadline, then waits for
+`leftovers()` to be empty and fails if a group survives. A test of the check itself
+leaves a grandchild on purpose. Tests that need the `psh` binary (standalone signals) come
+with it.

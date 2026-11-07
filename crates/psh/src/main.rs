@@ -17,8 +17,46 @@ use std::process::ExitCode;
 use std::rc::Rc;
 
 use psh_engine::invocation::{Invocation, parse_args};
-use psh_engine::std_host::{StdFile, StdHost, drive, engine_thread};
-use psh_engine::{HostFile, Script, Shell, ShellConfig};
+use psh_engine::std_host::{drive, engine_thread};
+use psh_engine::{Host, HostFile, Script, Shell, ShellConfig};
+
+/// The shell's descriptors 0, 1 and 2.
+type Stdio = [Option<Rc<dyn HostFile>>; 3];
+
+/// The OS host. A shell in the foreground of a terminal (a person ran it) keeps its
+/// externals in its own process group, so terminal programs work as under bash;
+/// otherwise every external leads a session of its own, so a cancel reaches its tree.
+#[cfg(unix)]
+fn os_host() -> (Rc<dyn Host>, Stdio) {
+    use psh_os::unix::{Placement, UnixConfig, UnixFile, UnixHost, terminal_foreground};
+    let placement = if terminal_foreground(0) {
+        Placement::Inherit
+    } else {
+        Placement::Session
+    };
+    let host = UnixHost::new(UnixConfig {
+        placement,
+        ..UnixConfig::default()
+    });
+    let stdio = |n| {
+        UnixFile::stdio(n)
+            .ok()
+            .map(|f| Rc::new(f) as Rc<dyn HostFile>)
+    };
+    (Rc::new(host), [stdio(0), stdio(1), stdio(2)])
+}
+
+/// The OS host (Windows: the std host until 0007).
+#[cfg(not(unix))]
+fn os_host() -> (Rc<dyn Host>, Stdio) {
+    use psh_engine::std_host::{StdFile, StdHost};
+    let stdio = |n| {
+        StdFile::stdio(n)
+            .ok()
+            .map(|f| Rc::new(f) as Rc<dyn HostFile>)
+    };
+    (Rc::new(StdHost::new()), [stdio(0), stdio(1), stdio(2)])
+}
 
 fn os_bytes(s: std::ffi::OsString) -> Vec<u8> {
     #[cfg(unix)]
@@ -96,7 +134,8 @@ fn main() -> ExitCode {
         }
     };
     let thread = engine_thread(move || {
-        let mut cfg = ShellConfig::new(Rc::new(StdHost::new()));
+        let (host, [stdin, stdout, stderr]) = os_host();
+        let mut cfg = ShellConfig::new(host);
         cfg.env = std::env::vars_os()
             .map(|(k, v)| (os_bytes(k), os_bytes(v)))
             .collect();
@@ -110,14 +149,9 @@ fn main() -> ExitCode {
                 .map(|&b| if b == b'\\' { b'/' } else { b })
                 .collect();
         }
-        let stdio = |n| {
-            StdFile::stdio(n)
-                .ok()
-                .map(|f| Rc::new(f) as Rc<dyn HostFile>)
-        };
-        cfg.stdin = stdio(0);
-        cfg.stdout = stdio(1);
-        cfg.stderr = stdio(2);
+        cfg.stdin = stdin;
+        cfg.stdout = stdout;
+        cfg.stderr = stderr;
         let mut shell = Shell::new(cfg);
         shell.start(script);
         drive(&mut shell)

@@ -17,4 +17,5 @@ check_deps() {
 check_deps psh-syntax ""
 check_deps psh-engine "psh-syntax"
 check_deps psh-classify "psh-syntax"
-check_deps psh-spec "psh-engine psh-syntax"
+check_deps psh-os "libc psh-engine psh-syntax"
+check_deps psh-spec "libc psh-engine psh-os psh-syntax"

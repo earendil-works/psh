@@ -11,6 +11,7 @@ publish.workspace = true
 psh-engine.workspace = true
 psh-syntax.workspace = true
 psh-classify.workspace = true
+psh-os.workspace = true
 # JSON output of `--parse` and `--classify` (D029). Serialization only, so no parsing speedups;
 # deser-core is deser-json's own dependency, named for the `Serialize` trait.
 deser-json = { version = "0.10.1", default-features = false, features = ["std"] }

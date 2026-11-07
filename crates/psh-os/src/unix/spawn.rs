@@ -160,14 +160,17 @@ struct Exec {
 }
 
 impl Exec {
-    fn new(spec: &SpawnSpec) -> io::Result<Exec> {
-        let argv = spec
-            .argv
+    fn new(
+        program: &[u8],
+        argv: &[Vec<u8>],
+        env: &[(Vec<u8>, Vec<u8>)],
+        cwd: &[u8],
+    ) -> io::Result<Exec> {
+        let argv = argv
             .iter()
             .map(|a| cstring(a))
             .collect::<io::Result<Vec<_>>>()?;
-        let env = spec
-            .env
+        let env = env
             .iter()
             .map(|(k, v)| {
                 let mut kv = Vec::with_capacity(k.len() + v.len() + 1);
@@ -184,8 +187,8 @@ impl Exec {
                 .collect()
         };
         Ok(Exec {
-            path: cstring(&spec.program)?,
-            cwd: cstring(&spec.cwd)?,
+            path: cstring(program)?,
+            cwd: cstring(cwd)?,
             argv_ptrs: ptrs(&argv),
             env_ptrs: ptrs(&env),
             _argv: argv,
@@ -223,15 +226,16 @@ fn dup_above(fd: RawFd, floor: RawFd) -> io::Result<OwnedFd> {
     Ok(unsafe { OwnedFd::from_raw_fd(n) })
 }
 
-pub(crate) fn spawn(shared: &Arc<Shared>, spec: SpawnSpec) -> io::Result<Spawned> {
-    let exec = Exec::new(&spec)?;
+pub(crate) fn spawn(shared: &Arc<Shared>, mut spec: SpawnSpec) -> io::Result<Spawned> {
+    let mut exec = Exec::new(&spec.program, &spec.argv, &spec.env, &spec.cwd)?;
+    let mut tried_sh = false;
     let mut sources: Vec<Src> = Vec::new();
     // (child fd, index into `sources`)
     let mut installs: Vec<(i32, usize)> = Vec::new();
     let mut held: Vec<Rc<dyn HostFile>> = Vec::new();
     let mut pipes: Vec<(u32, Rc<dyn HostFile>)> = Vec::new();
     let mut null: Option<usize> = None;
-    for (n, fd) in spec.fds {
+    for (n, fd) in std::mem::take(&mut spec.fds) {
         let target = i32::try_from(n).map_err(|_| invalid("descriptor out of range"))?;
         let idx = match fd {
             ChildFd::File(f) => {
@@ -304,6 +308,15 @@ pub(crate) fn spawn(shared: &Arc<Shared>, spec: SpawnSpec) -> io::Result<Spawned
             Err(e) if e.raw_os_error() == Some(libc::ETXTBSY) && tries < 200 => {
                 tries += 1;
                 std::thread::sleep(Duration::from_millis(1));
+            }
+            // A file without `#!` that the kernel refuses runs in `/bin/sh`, as `execvp`
+            // does. bash runs such files itself; until the engine does (a follow-up),
+            // this keeps them working.
+            Err(e) if e.raw_os_error() == Some(libc::ENOEXEC) && !tried_sh => {
+                tried_sh = true;
+                let mut argv = vec![b"sh".to_vec(), spec.program.clone()];
+                argv.extend(spec.argv.iter().skip(1).cloned());
+                exec = Exec::new(b"/bin/sh", &argv, &spec.env, &spec.cwd)?;
             }
             Err(e) => return Err(e),
         }

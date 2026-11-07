@@ -324,6 +324,14 @@ impl Host for UnixHost {
     }
 }
 
+/// Whether descriptor `fd` is a terminal whose foreground process group is ours: the
+/// shell runs in the foreground of a terminal (a person ran it), so externals should
+/// share the terminal ([`Placement::Inherit`]).
+pub fn terminal_foreground(fd: i32) -> bool {
+    // SAFETY: plain syscalls without pointers.
+    unsafe { libc::isatty(fd) == 1 && libc::tcgetpgrp(fd) == libc::getpgrp() }
+}
+
 /// Sends `sig` to process `pid` (negative: a process group), as `kill(2)`.
 pub fn kill(pid: i32, sig: Signal) -> io::Result<()> {
     // SAFETY: plain syscall without pointers.

@@ -228,6 +228,31 @@ impl InProcess {
     }
 }
 
+/// Turns an OS file into a file of the host.
+type WrapFile = fn(std::fs::File) -> std::rc::Rc<dyn psh_engine::HostFile>;
+
+/// The OS host for an in-process shell whose `$$` is `pid`, and how it wraps files.
+#[cfg(unix)]
+fn os_host(pid: u32) -> (std::rc::Rc<dyn psh_engine::Host>, WrapFile) {
+    use psh_os::unix::{UnixConfig, UnixFile, UnixHost};
+    let host = UnixHost::new(UnixConfig {
+        pid: Some(pid),
+        ..UnixConfig::default()
+    });
+    (std::rc::Rc::new(host), |f| {
+        std::rc::Rc::new(UnixFile::new(f))
+    })
+}
+
+/// The OS host (Windows: the std host until 0007).
+#[cfg(not(unix))]
+fn os_host(pid: u32) -> (std::rc::Rc<dyn psh_engine::Host>, WrapFile) {
+    use psh_engine::std_host::{StdFile, StdHost};
+    (std::rc::Rc::new(StdHost::with_pid(pid)), |f| {
+        std::rc::Rc::new(StdFile::new(f))
+    })
+}
+
 fn file_from_writer(w: std::io::PipeWriter) -> std::fs::File {
     #[cfg(unix)]
     {
@@ -265,9 +290,8 @@ impl Engine for InProcess {
 
     fn run(&self, req: &RunRequest) -> std::io::Result<RunOutput> {
         use psh_engine::invocation::{Invocation, parse_args};
-        use psh_engine::std_host::{StdFile, StdHost, drive_until, engine_thread};
-        use psh_engine::{HostFile, Script, Shell, ShellConfig};
-        use std::rc::Rc;
+        use psh_engine::std_host::{drive_until, engine_thread};
+        use psh_engine::{Script, Shell, ShellConfig};
 
         let fail = |msg: String| {
             Ok(RunOutput {
@@ -368,12 +392,13 @@ impl Engine for InProcess {
         let err_file = file_from_writer(err_w);
         let engine = engine_thread(move || {
             // `$$` must not be the runner: cases `kill $$`. No pid is this large.
-            let mut cfg = ShellConfig::new(Rc::new(StdHost::with_pid(99_999_999)));
+            let (host, file) = os_host(99_999_999);
+            let mut cfg = ShellConfig::new(host);
             cfg.env = env;
             cfg.cwd = cwd;
-            cfg.stdin = Some(Rc::new(StdFile::new(stdin_file)) as Rc<dyn HostFile>);
-            cfg.stdout = Some(Rc::new(StdFile::new(out_file)) as Rc<dyn HostFile>);
-            cfg.stderr = Some(Rc::new(StdFile::new(err_file)) as Rc<dyn HostFile>);
+            cfg.stdin = Some(file(stdin_file));
+            cfg.stdout = Some(file(out_file));
+            cfg.stderr = Some(file(err_file));
             let mut shell = Shell::new(cfg);
             shell.start(script);
             drive_until(&mut shell, Some(deadline))

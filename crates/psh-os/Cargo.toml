@@ -21,3 +21,8 @@ unsafe_op_in_unsafe_fn = "deny"
 
 [lints.clippy]
 undocumented_unsafe_blocks = "deny"
+
+# L5: the process tests (TESTING.md), in tests/process/ at the root.
+[[test]]
+name = "process"
+path = "../../tests/process/main.rs"

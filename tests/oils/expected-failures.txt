@@ -1247,8 +1247,6 @@ oils/globstar/1
 oils/globstar/2
 oils/globstar/3
 oils/globstar/4
-oils/here-doc/3
-oils/here-doc/4
 oils/here-doc/9
 oils/here-doc/16
 oils/here-doc/17

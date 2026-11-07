@@ -2321,3 +2321,13 @@ unspecified, gawk's and BSD's hash orders cannot be reproduced, and insertion or
 stable and what people expect. `system()`, `cmd | getline` and `print | cmd` run the
 command in psh's shell (`spawn_shell`, D1191), never /bin/sh. The switch to S mode is
 the coordinator's, once the suites pass.
+
+## D035: The psh binary's own command line uses the `argument` crate
+date: 2026-11-07 · by: coordinator (owner request) · issue: 0034
+The psh binary parses its own modes and flags (`--parse`, `--classify`, `--help`,
+`--version`, future modes) with `argument` (crates.io, Apache-2.0, depends only on
+`argument-parser`): a static spec, a plain parse loop and generated help, usage and error
+text. The shell language and bash's invocation rules are not affected; where `argument`
+cannot express bash's invocation (`+o`, combined `-euc`), the existing invocation parser
+stays for that part. Allowed in the `psh` binary crate (and the repository's tool
+binaries if useful), not in library crates.

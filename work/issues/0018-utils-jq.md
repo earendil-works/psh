@@ -17,7 +17,11 @@ decisions: D1180–D1189
 - [ ] jq behavior where jaq differs: `-s` over several files gives one array; `?//`;
       `. |= empty`; number formatting; error text. Each difference left in place is
       listed with a reason.
-- [ ] jaq's `jq-tests.jq` runs; failures listed.
+- [ ] Upstream test suites (owner request): jq's own `tests/*.test` (jq is MIT; check each
+      file's license and the man-page-derived tests) and jaq's tests (MIT) vendored at
+      pinned commits with attribution, run through a small runner (program, input,
+      expected outputs) against psh's `jq`; own ratchet with reasons; pass counts in the
+      Result.
 - [ ] Each utility registered with its mode; unsupported flags fall through or fail
       clearly (tested per utility).
 - [ ] L4 cases in `tests/utils/<name>/` for every flag listed above, recorded against

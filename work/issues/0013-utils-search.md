@@ -60,7 +60,12 @@ fd (S)
       and the rest of fd's documented flags; `-x`/`-X` through the command runner;
       `--base-directory` never changes the process cwd. `--changed-*` falls through
       until the shared date parser exists (0020).
-- [ ] fd's own tests consulted or ported as L4 cases.
+- [ ] Upstream test suites (owner request): ripgrep's integration tests (`tests/`, MIT/Unlicense)
+      and fd's (`tests/tests.rs`, MIT/Apache-2.0) vendored (pinned commit, attribution in
+      NOTICE) and run against psh's rg/fd through a small adapter (their harnesses build
+      a temp tree and run the binary: port the macros/TestEnv to run `psh -c` or the
+      utility in-process). Its own ratchet of expected failures with reasons; the pass
+      count in the Result. GNU grep's tests are GPL: run for reference only, never vendored.
 
 grep, egrep, fgrep (S)
 - [ ] Shares matcher, searcher, walker and exit rules (0/1/2, `-q` beats errors) with

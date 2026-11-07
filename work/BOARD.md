@@ -6,6 +6,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
+| 0031 | Grow the L3 agent layer to the shapes agents actually use | shapes | .worktrees/shapes |
 | 0030 | Process follow-ups: run-in-shell, host info, signal robustness | procs | .worktrees/procs |
 | 0007 | Windows: part A merged (bad4d63, rework 6ca3d08); part B in progress | windows | .worktrees/windows |
 | 0008 | Utility framework and first batch | infra | .worktrees/infra |

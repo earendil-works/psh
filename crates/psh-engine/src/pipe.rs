@@ -4,12 +4,23 @@
 //! writer exists; writing a full pipe waits while a reader exists; writing without
 //! readers is `BrokenPipe` (the vproc's SIGPIPE). Both sides are tasks of the same
 //! scheduler, so waiting never blocks a thread.
+//!
+//! **Materialized pipes (D1068).** When an external is started on an end of a pipe
+//! whose buffer is empty, the pipe becomes an OS pipe of the host (`Host::pipe`): the
+//! external gets the OS end itself, so `a | b` of two externals moves no byte through
+//! the engine. From then on vproc writes go to the OS write end (the buffer was empty,
+//! so nothing overtakes), and vproc reads take the buffer first, refilling it from the
+//! OS read end (a read-ahead is safe: an external started later on a pipe with buffered
+//! bytes gets them through a pump, buffer first). The engine holds each OS end while it
+//! holds a reader or writer of that side; the kernel counts the externals' copies.
 
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::io;
 use std::rc::Rc;
 use std::task::{Context, Poll, Waker};
+
+use crate::host::{Host, HostFile};
 
 /// The capacity of a pipe, as on Linux.
 pub(crate) const PIPE_CAPACITY: usize = 64 * 1024;
@@ -20,6 +31,9 @@ struct Inner {
     writers: usize,
     read_wakers: Vec<Waker>,
     write_wakers: Vec<Waker>,
+    /// The OS pipe once materialized: (read end, write end), each dropped when the
+    /// engine's last reader or writer goes.
+    os: Option<(Option<Rc<dyn HostFile>>, Option<Rc<dyn HostFile>>)>,
 }
 
 fn register(list: &mut Vec<Waker>, w: &Waker) {
@@ -44,6 +58,7 @@ pub(crate) fn pipe() -> (PipeReader, PipeWriter) {
         writers: 1,
         read_wakers: Vec::new(),
         write_wakers: Vec::new(),
+        os: None,
     }));
     (PipeReader(inner.clone()), PipeWriter(inner))
 }
@@ -58,10 +73,37 @@ pub(crate) fn preloaded(data: &[u8]) -> PipeReader {
         writers: 0,
         read_wakers: Vec::new(),
         write_wakers: Vec::new(),
+        os: None,
     })))
 }
 
+/// The OS end for an external started on a pipe end: `reading` = the read end.
+/// Materializes the pipe if its buffer is empty and the host has OS pipes; `None` means
+/// the external needs a pump (buffered bytes come first, or no OS pipes).
+fn os_end(inner: &Rc<RefCell<Inner>>, reading: bool, host: &dyn Host) -> Option<Rc<dyn HostFile>> {
+    let mut p = inner.borrow_mut();
+    if !p.buf.is_empty() {
+        return None;
+    }
+    if p.os.is_none() {
+        let (r, w) = host.pipe().ok()?;
+        let r = (p.readers > 0).then_some(r);
+        let w = (p.writers > 0).then_some(w);
+        p.os = Some((r, w));
+        // Waiting vprocs poll the OS ends from now on.
+        wake_all(&mut p.read_wakers);
+        wake_all(&mut p.write_wakers);
+    }
+    let (r, w) = p.os.as_ref()?;
+    if reading { r.clone() } else { w.clone() }
+}
+
 impl PipeReader {
+    /// See [`os_end`].
+    pub(crate) fn os_end(&self, host: &dyn Host) -> Option<Rc<dyn HostFile>> {
+        os_end(&self.0, true, host)
+    }
+
     pub(crate) fn poll_read(
         &self,
         cx: &mut Context<'_>,
@@ -70,6 +112,24 @@ impl PipeReader {
         let mut p = self.0.borrow_mut();
         if out.is_empty() {
             return Poll::Ready(Ok(0));
+        }
+        if p.buf.is_empty()
+            && let Some((Some(r), _)) = &p.os
+        {
+            // Refill the buffer from the OS pipe: one read of what is there.
+            let r = r.clone();
+            drop(p);
+            let mut chunk = vec![0u8; PIPE_CAPACITY.min(16 * 1024)];
+            let n = match r.poll_read(cx, &mut chunk) {
+                Poll::Ready(Ok(n)) => n,
+                Poll::Ready(Err(e)) => return Poll::Ready(Err(e)),
+                Poll::Pending => return Poll::Pending,
+            };
+            if n == 0 {
+                return Poll::Ready(Ok(0));
+            }
+            p = self.0.borrow_mut();
+            p.buf.extend(&chunk[..n]);
         }
         if !p.buf.is_empty() {
             let n = out.len().min(p.buf.len());
@@ -88,7 +148,19 @@ impl PipeReader {
 }
 
 impl PipeWriter {
+    /// See [`os_end`].
+    pub(crate) fn os_end(&self, host: &dyn Host) -> Option<Rc<dyn HostFile>> {
+        os_end(&self.0, false, host)
+    }
+
     pub(crate) fn poll_write(&self, cx: &mut Context<'_>, data: &[u8]) -> Poll<io::Result<usize>> {
+        let p = self.0.borrow();
+        if let Some((_, Some(w))) = &p.os {
+            let w = w.clone();
+            drop(p);
+            return w.poll_write(cx, data);
+        }
+        drop(p);
         let mut p = self.0.borrow_mut();
         if p.readers == 0 {
             return Poll::Ready(Err(io::ErrorKind::BrokenPipe.into()));
@@ -114,6 +186,9 @@ impl Drop for PipeReader {
         p.readers -= 1;
         if p.readers == 0 {
             p.buf.clear();
+            if let Some((r, _)) = &mut p.os {
+                *r = None;
+            }
             wake_all(&mut p.write_wakers);
         }
     }
@@ -124,6 +199,9 @@ impl Drop for PipeWriter {
         let mut p = self.0.borrow_mut();
         p.writers -= 1;
         if p.writers == 0 {
+            if let Some((_, w)) = &mut p.os {
+                *w = None;
+            }
             wake_all(&mut p.read_wakers);
         }
     }

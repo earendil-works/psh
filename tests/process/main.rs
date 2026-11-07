@@ -217,3 +217,29 @@ fn keep_leaves_background_jobs_running() {
         .go();
     assert_eq!(r.stdout, "started\n", "{r:?}");
 }
+
+#[test]
+fn builtins_and_externals_share_a_pipe_in_order() {
+    // The pipe may become an OS pipe in the middle (D1068): order must hold either way.
+    for _ in 0..20 {
+        let r = run(
+            "{ echo a; seq 2 3; echo b; sh -c 'echo c'; echo d; } | cat; seq 1 3 | { cat; echo e; } | tr -d '\\n'",
+        );
+        assert_eq!(r.stdout, "a\n2\n3\nb\nc\nd\n123e", "{r:?}");
+    }
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn two_externals_share_one_os_pipe() {
+    // (dash moves its own fds around for `>&2`: ask from outside.)
+    let r = run("cd \"$TMPDIR_CASE\"; \
+        sh -c 'echo $$ > a; sleep 0.5' | sh -c 'echo $$ > b; cat' & \
+        sleep 0.3; readlink /proc/$(cat a)/fd/1 /proc/$(cat b)/fd/0");
+    let lines: Vec<&str> = r.stdout.lines().collect();
+    assert_eq!(lines.len(), 2, "{r:?}");
+    assert!(
+        lines[0].starts_with("pipe:") && lines[0] == lines[1],
+        "{r:?}"
+    );
+}

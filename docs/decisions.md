@@ -1136,3 +1136,17 @@ found under `/usr/bin/NAME` by every PATH lookup; anything else is "command not 
 recorded in `host.missing`. Signals cannot stop a JS function: a signalled command counts
 as killed at once and its later output goes nowhere. Hosts with other storage (OPFS, a
 remote pi-env) implement the same methods.
+## D1068: Engine pipes become OS pipes when an external starts on them
+date: 2026-11-07 · by: procs · issue: 0006
+`Host::pipe()` (default `Unsupported`) returns two host files. When `run_external` maps
+an engine pipe end to a child descriptor and the pipe's buffer is empty, the pipe is
+materialized once: both OS ends are kept in the pipe object, the external gets its end
+as `ChildFd::File`, and from then on vproc writes go to the OS write end and vproc reads
+take the engine buffer, refilled by one read of the OS read end at a time. Order holds
+because nothing was buffered at the switch; read-ahead is safe because an external
+started later on a pipe with buffered bytes gets a pump that reads buffer first. The
+engine drops an OS end when its last reader or writer of that side goes; the kernel
+counts the externals' copies, so EOF and EPIPE are the kernel's. Here-documents
+(preloaded) and hosts without pipes keep pumps. Measured: 1 GB through
+`head -c | cat | cat | wc -c` in 1.8 s with 0.12 s of psh CPU (release, macOS). Alternative:
+deciding statically which stages are externals (impossible before expansion).

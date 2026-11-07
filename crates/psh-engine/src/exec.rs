@@ -755,8 +755,15 @@ pub(crate) async fn run_external_with(
             _ if let Some((m, _)) = seen.iter().find(|(_, o)| Rc::ptr_eq(o, fd)) => {
                 ChildFd::Dup(*m)
             }
-            FdObj::PipeRead(_) => ChildFd::Pipe { input: true },
-            FdObj::PipeWrite(_) => ChildFd::Pipe { input: false },
+            // An OS pipe passed as it is when possible (D1068), else a pump.
+            FdObj::PipeRead(r) => match r.os_end(vp.host()) {
+                Some(f) => ChildFd::File(f),
+                None => ChildFd::Pipe { input: true },
+            },
+            FdObj::PipeWrite(w) => match w.os_end(vp.host()) {
+                Some(f) => ChildFd::File(f),
+                None => ChildFd::Pipe { input: false },
+            },
         };
         seen.push((n, fd));
         if (n as usize) < 3 {

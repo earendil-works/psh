@@ -159,8 +159,11 @@ runtime in D005's sense: no runtime crate, no threads, the embedder steps and pa
   pumps stop when the external exits (so a vproc writing to it gets EPIPE); the command
   completes when the external has exited *and* its output pumps reached EOF.
   Descriptors that share one engine object (`|&`, `2>&1` into a pipe) share one host
-  pipe, so ordering survives. Pipes between two externals are still pumped in v1;
-  passing OS pipes directly is for 0006.
+  pipe, so ordering survives. A pipe whose buffer is empty when an external starts on
+  one of its ends becomes an OS pipe of the host (`Host::pipe`, D1068): externals get
+  the OS end directly (no pump between two externals), vprocs write to it and read
+  through the engine buffer, refilled from it. Pipes with buffered bytes (here-docs)
+  and hosts without OS pipes keep pumps.
 - **Here-docs and here-strings (D1054)** are pipes preloaded with the expanded body and
   no writer: nothing is written into a kernel pipe before its consumer runs. Large
   seekable bodies through a host temp file are a later option.

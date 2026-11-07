@@ -198,6 +198,14 @@ can express neither); `pid()`; `kill()`.
   6 new (4 `sh -c 'trap "exit 0" TERM; …; while :; do sleep 0.05; done'` loops from the
   binary-run cases, 2 `sleep`s).
 
+### 2026-11-07 part 2: direct OS pipes (D1068)
+- `pipe.rs`: materialization (`os_end`), read-ahead from the OS read end, OS ends dropped
+  with the last engine reader/writer; `exec.rs` `run_external` only: the fd mapping asks
+  `os_end` before falling back to `ChildFd::Pipe`.
+- Tests: L5 builtins and externals sharing a pipe keep order (20 rounds, the switch can
+  happen mid-stream); Linux: both externals' ends are one kernel pipe (`/proc/PID/fd`).
+  1 GB through three externals: 1.8 s, 0.12 s psh CPU. psh-spec: oils/loop/11 passes now.
+
 ## Follow-ups
 - guide: `processes.md` (placement, cancel and abandonment, leak checks).
 - Engine: run files without `#!` in psh itself (bash does), then drop D1063's fallback.

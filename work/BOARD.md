@@ -6,7 +6,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
-| 0034 | psh binary command line on argument (D035) | cli | .worktrees/cli |
+| 0034b | cli.md guide page, psh --utils | cli | .worktrees/cli |
 | 0020 | Utilities I: diff, checksums, base64, date, env, nice, nohup, which | shapes | .worktrees/shapes |
 | 0018 | Utilities G: jq (jaq) | procs | .worktrees/procs |
 | 0007 | Windows: part A merged (bad4d63, rework 6ca3d08); part B in progress | windows | .worktrees/windows |
@@ -69,3 +69,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0030 | Process follow-ups | 4617d8f (procs) |
 | 0033 | Per-platform ratchets and the platform tag | 4c0aee4 (shapes) |
 | 0017 | Utilities F: find, xargs | f817046 (procs) |
+| 0034 | psh binary command line on argument (D035) | 4e79b31 (cli) |

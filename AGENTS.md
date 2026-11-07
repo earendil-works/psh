@@ -61,12 +61,14 @@ GNU bash 5.3 is the reference (TESTING.md "Oracle"):
 - Rust edition 2024, a Cargo workspace with `crates/*`. Develop on current stable, but
   the MSRV is **1.96** (pi-env's pin, D025): use no language or library feature newer
   than 1.96. `cargo fmt` and clippy with `-D warnings` must be clean.
-- `psh-syntax` (and `psh-classify`) are `#![no_std]` + `alloc` with zero dependencies
-  (D023); never force std into them from the engine. `psh-engine` uses std and must
+- `psh-syntax`, `psh-regex` and `psh-classify` are `#![no_std]` + `alloc` (D023);
+  never force std into them from the engine. `psh-engine` uses std and must
   build for `wasm32-unknown-unknown` (gate).
-- Allowed dependencies so far: the ripgrep crate set (D020/D021) in `psh-utils`,
-  `libc`/`windows-sys` in `psh-os` (D024), jaq for `jq` (D028), `deser-json` for all
-  JSON (D029). Anything else needs a decision.
+- Allowed dependencies so far: the ripgrep crate set (D020/D021) in `psh-utils`
+  (`grep-printer` patched in `third_party/`, D1135), `libc`/`windows-sys` in `psh-os`
+  (D024), jaq for `jq` (D028), `deser-json` for all JSON (D029), `argument` in the `psh`
+  binary only (D035). `scripts/deps-allowlist.txt` lists every pair with its decision
+  and the gate checks it (D1223); anything else needs a decision first.
 - No `unsafe` outside the OS host crates (`psh-os`) and the wasm export layer
   (`psh-wasm`: only its JS import and its `no_mangle` exports, D1110) unless a decision
   records why. Every `unsafe` block says which invariant makes it sound.

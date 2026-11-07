@@ -528,6 +528,11 @@ fn parameters() {
         d("echo ${a#x} ${a##x} ${a%y} ${a%%y} ${a/p/r} ${a//p} ${a/#p/r} ${a/%p/r}"),
         "(list (cmd <\"echo\"> <${a #<\"x\">}> <${a ##<\"x\">}> <${a %<\"y\">}> <${a %%<\"y\">}> <${a /<\"p\">/<\"r\">}> <${a //<\"p\">}> <${a /#<\"p\">/<\"r\">}> <${a /%<\"p\">/<\"r\">}>))"
     );
+    // After `//`, a `/` starts the pattern (bash); after `/#` it ends an empty one.
+    assert_eq!(
+        d("echo ${x////c} ${x///} ${x///c/Z} ${x/#//X}"),
+        "(list (cmd <\"echo\"> <${x //<\"/\">/<\"c\">}> <${x //<\"/\">}> <${x //<\"/c\">/<\"Z\">}> <${x /#<>/<\"/X\">}>))"
+    );
     assert_eq!(
         d(
             "echo ${a:1} ${a: -1:2} ${a^} ${a^^} ${a,} ${a,,x} ${a~} ${a@Q} ${a[i+1]} ${#} ${##} ${!}"

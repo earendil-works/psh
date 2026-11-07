@@ -121,6 +121,12 @@ hand-written lexer and recursive-descent parser, byte spans on every node, a pri
 - Also (0027's cond.rs): quoted punctuation in a `[[ == ]]` pattern is literal inside
   bracket expressions too (`[a\-z]`, `[\^]`): brush patterns/patterns/8, /9.
 
+### 2026-11-08: `${x////c}`
+- After `//`, a `/` starts the pattern rather than ending an empty one (bash:
+  `${x////c}` replaces `/` with `c`, `${x///}` removes slashes; after `/#`/`/%` a `/`
+  still ends the empty pattern): oils var-op-patsub/11, /12, /26. var-op-slice/20
+  (`${a[@]:}`) already passed on main.
+
 ## Follow-ups
 - Guide page `docs/guide/syntax.md` (not written): what psh parses, spans, `--parse`.
 - The L0 leg and `tests/l0/expected-failures.txt` (infra, 0002): container verdicts for

@@ -171,10 +171,7 @@ oils/type-compat/3
 oils/var-op-bash/17
 oils/var-op-bash/19
 oils/var-op-bash/23
-oils/var-op-patsub/11
-oils/var-op-patsub/12
 oils/var-op-patsub/23
-oils/var-op-patsub/26
 oils/var-op-test/35
 oils/var-ref/3
 oils/var-ref/4

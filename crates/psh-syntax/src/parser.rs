@@ -3265,7 +3265,32 @@ impl<'a> P<'a> {
                     }
                     _ => ReplaceKind::First,
                 };
-                let pattern = self.operand_word(operand(b'/'))?;
+                // After `//`, a `/` starts the pattern rather than ending an empty one
+                // (`${x////c}` replaces `/` with `c`; bash).
+                let slash = (kind == ReplaceKind::All && self.peek() == Some(b'/')).then(|| {
+                    self.pos += 1;
+                    self.pos - 1
+                });
+                let mut pattern = self.operand_word(operand(b'/'))?;
+                if let Some(at) = slash {
+                    let mut parts = Vec::new();
+                    push_lit(&mut parts, at, at + 1);
+                    for part in core::mem::take(&mut pattern.parts) {
+                        match (parts.last_mut(), &part.kind) {
+                            (Some(last), Part::Lit)
+                                if matches!(last.kind, Part::Lit)
+                                    && last.span.end == part.span.start =>
+                            {
+                                last.span.end = part.span.end;
+                            }
+                            _ => parts.push(part),
+                        }
+                    }
+                    pattern = Word {
+                        span: sp(at, pattern.span.end as usize),
+                        parts,
+                    };
+                }
                 let replacement = if self.peek() == Some(b'/') {
                     self.pos += 1;
                     Some(self.operand_word(operand(0))?)

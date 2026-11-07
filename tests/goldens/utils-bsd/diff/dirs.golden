@@ -1,0 +1,180 @@
+# Goldens for tests/utils/diff/dirs.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: the tree
+status: 0
+bash-n: 0
+--- stdout
+|Only in b: bfile
+|Only in b: bonly
+|diff a/f b/f
+|1c1
+|< 1
+|---
+|> 2
+|Only in a: only
+|Only in a: onlyfile
+|Common subdirectories: a/sub and b/sub
+|st=1
+--- dir a
+--- file a/f
+|1
+--- dir a/only
+--- file a/onlyfile
+|o
+--- file a/same
+|same
+--- dir a/sub
+--- file a/sub/x
+|s
+--- dir b
+--- file b/bfile
+|p
+--- dir b/bonly
+--- file b/f
+|2
+--- file b/same
+|same
+--- dir b/sub
+--- file b/sub/x
+|t
+
+=== 1: -r recurses
+status: 0
+bash-n: 0
+--- stdout
+|Only in b: bfile
+|diff -r a/f b/f
+|1c1
+|< 1
+|---
+|> 2
+|Only in a/sub: gone
+|diff -r a/sub/x b/sub/x
+|1c1
+|< s
+|---
+|> t
+|st=1
+--- dir a
+--- file a/f
+|1
+--- dir a/sub
+--- file a/sub/gone
+|q
+--- file a/sub/x
+|s
+--- dir b
+--- file b/bfile
+|p
+--- file b/f
+|2
+--- dir b/sub
+--- file b/sub/x
+|t
+
+=== 2: -ru and -rq
+status: 1
+bash-n: 0
+--- stdout
+|diff -ru a/f b/f
+|--- a/f	2024-01-15 10:00:00
+|+++ b/f	2024-01-15 10:00:00
+|@@ -1 +1 @@
+|-1
+|+2
+|diff -ru a/sub/x b/sub/x
+|--- a/sub/x	2024-01-15 10:00:00
+|+++ b/sub/x	2024-01-15 10:00:00
+|@@ -1 +1 @@
+|-s
+|+t
+|Files a/f and b/f differ
+|Files a/sub/x and b/sub/x differ
+--- dir a
+--- file a/f
+|1
+--- dir a/sub
+--- file a/sub/x
+|s
+--- dir b
+--- file b/f
+|2
+--- dir b/sub
+--- file b/sub/x
+|t
+
+=== 3: -rN compares absent files as empty
+status: 1
+bash-n: 0
+--- stdout
+|diff -rN a/bfile b/bfile
+|0a1
+|> p
+|diff -rN a/f b/f
+|1c1
+|< 1
+|---
+|> 2
+|diff -rN a/sub/gone b/sub/gone
+|1d0
+|< q
+--- dir a
+--- file a/f
+|1
+--- dir a/sub
+--- file a/sub/gone
+|q
+--- dir b
+--- file b/bfile
+|p
+--- file b/f
+|2
+--- dir b/sub
+
+=== 4: -x excludes names
+status: 0
+bash-n: 0
+--- stdout
+|diff -r -x *.log -x sub a/f b/f
+|1c1
+|< 1
+|---
+|> 2
+|diff -r --exclude=sub --exclude=f* a/skip.log b/skip.log
+|1c1
+|< z
+|---
+|> y
+|st=1
+--- dir a
+--- file a/f
+|1
+--- file a/skip.log
+|z
+--- dir a/sub
+--- file a/sub/x
+|s
+--- dir b
+--- file b/f
+|2
+--- file b/skip.log
+|y
+--- dir b/sub
+--- file b/sub/x
+|t
+
+=== 5: identical trees
+status: 0
+bash-n: 0
+--- stdout
+|st=0
+--- dir a
+--- dir a/s
+--- file a/s/f
+|1
+--- dir b
+--- dir b/s
+--- file b/s/f
+|1

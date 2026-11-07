@@ -321,13 +321,14 @@ pub static UTILITIES: &[Utility] = &[
     v(
         "diff",
         Read,
-        "UCxXIFL",
+        "UCxXIFLW",
         &[
-            "--unified",
-            "--context",
             "--exclude",
+            "--exclude-from",
             "--label",
             "--ignore-matching-lines",
+            "--width",
+            "--show-function-line",
         ],
         Reads,
         &[],

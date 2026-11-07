@@ -1,0 +1,578 @@
+# Goldens for tests/utils/diff/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: identical files
+status: 0
+bash-n: 0
+--- stdout
+|st=0
+--- file 1
+|a
+|b
+--- file 2
+|a
+|b
+
+=== 1: the normal format
+status: 1
+bash-n: 0
+--- stdout
+|2c2
+|< b
+|---
+|> B
+|5a6
+|> f
+|st=1
+|2c2
+|< B
+|---
+|> b
+|6d5
+|< f
+--- file 1
+|a
+|b
+|c
+|d
+|e
+--- file 2
+|a
+|B
+|c
+|d
+|e
+|f
+
+=== 2: insertions and deletions
+status: 1
+bash-n: 0
+--- stdout
+|2a3
+|> b
+|3d2
+|< b
+|10d9
+|< 10
+|3,4d2
+|< a
+|< b
+--- file 1
+|a
+|b
+--- file 2
+|a
+|b
+|b
+--- file s1
+|1
+|2
+|3
+|4
+|5
+|6
+|7
+|8
+|9
+|10
+|11
+|12
+|13
+|14
+|15
+|16
+|17
+|18
+|19
+|20
+--- file s3
+|1
+|2
+|3
+|4
+|5
+|6
+|7
+|8
+|9
+|11
+|12
+|13
+|14
+|15
+|16
+|17
+|18
+|19
+|20
+--- file t1
+|a
+|b
+|a
+|b
+--- file t2
+|a
+|b
+
+=== 3: a missing newline at the end
+status: 1
+bash-n: 0
+--- stdout
+|2c2
+|< y
+|\ No newline at end of file
+|---
+|> z
+|\ No newline at end of file
+|2c2
+|< y
+|\ No newline at end of file
+|---
+|> y
+--- file 1
+|x
+|y
+~ no newline at end
+--- file 2
+|x
+|z
+~ no newline at end
+--- file 3
+|x
+|y
+
+=== 4: -u with labels
+status: 0
+bash-n: 0
+--- stdout
+|--- L1
+|+++ L2
+|@@ -1,5 +1,6 @@
+| a
+|-b
+|+B
+| c
+| d
+| e
+|+f
+|st=1
+--- file 1
+|a
+|b
+|c
+|d
+|e
+--- file 2
+|a
+|B
+|c
+|d
+|e
+|f
+
+=== 5: -U N and hunk merging
+status: 1
+bash-n: 0
+--- stdout
+|--- a
+|+++ b
+|@@ -5 +5 @@
+|-5
+|+five
+|@@ -15 +15 @@
+|-15
+|+fifteen
+|--- a
+|+++ b
+|@@ -2,7 +2,7 @@
+| 2
+| 3
+| 4
+|-5
+|+five
+| 6
+| 7
+| 8
+|@@ -12,7 +12,7 @@
+| 12
+| 13
+| 14
+|-15
+|+fifteen
+| 16
+| 17
+| 18
+|--- a
+|+++ b
+|@@ -4,3 +4,3 @@
+| 4
+|-5
+|+five
+| 6
+|@@ -14,3 +14,3 @@
+| 14
+|-15
+|+fifteen
+| 16
+|--- a
+|+++ b
+|@@ -1,20 +1,20 @@
+| 1
+| 2
+| 3
+| 4
+|-5
+|+five
+| 6
+| 7
+| 8
+| 9
+| 10
+| 11
+| 12
+| 13
+| 14
+|-15
+|+fifteen
+| 16
+| 17
+| 18
+| 19
+| 20
+--- file s1
+|1
+|2
+|3
+|4
+|5
+|6
+|7
+|8
+|9
+|10
+|11
+|12
+|13
+|14
+|15
+|16
+|17
+|18
+|19
+|20
+--- file s2
+|1
+|2
+|3
+|4
+|five
+|6
+|7
+|8
+|9
+|10
+|11
+|12
+|13
+|14
+|fifteen
+|16
+|17
+|18
+|19
+|20
+
+=== 6: -u against an empty file and without newlines
+status: 1
+bash-n: 0
+--- stdout
+|--- x
+|+++ y
+|@@ -0,0 +1,2 @@
+|+a
+|+b
+|--- x
+|+++ y
+|@@ -1,2 +0,0 @@
+|-a
+|-b
+|--- x
+|+++ y
+|@@ -1,2 +1,2 @@
+| x
+|-y
+|\ No newline at end of file
+|+z
+|\ No newline at end of file
+--- file 1
+|a
+|b
+--- file 5
+|x
+|y
+~ no newline at end
+--- file 6
+|x
+|z
+~ no newline at end
+--- file e
+
+=== 7: -u headers carry the modification times
+status: 1
+bash-n: 0
+--- stdout
+|--- a	2024-01-15 10:00:30
+|+++ b	2024-01-15 10:00:30
+|@@ -1 +1 @@
+|-1
+|+2
+--- file a
+|1
+--- file b
+|2
+
+=== 8: -c
+status: 1
+bash-n: 0
+--- stdout
+|*** L1
+|--- L2
+|***************
+|*** 1,5 ****
+|  a
+|! b
+|  c
+|  d
+|  e
+|--- 1,6 ----
+|  a
+|! B
+|  c
+|  d
+|  e
+|+ f
+|*** a
+|--- b
+|***************
+|*** 9,11 ****
+|  9
+|- 10
+|  11
+|--- 9,10 ----
+|*** a
+|--- b
+|***************
+|*** 1,2 ****
+|--- 1,3 ----
+|  a
+|  b
+|+ b
+--- file 1
+|a
+|b
+|c
+|d
+|e
+--- file 2
+|a
+|B
+|c
+|d
+|e
+|f
+--- file 3
+|a
+|b
+|b
+--- file 4
+|a
+|b
+--- file s1
+|1
+|2
+|3
+|4
+|5
+|6
+|7
+|8
+|9
+|10
+|11
+|12
+|13
+|14
+|15
+|16
+|17
+|18
+|19
+|20
+--- file s3
+|1
+|2
+|3
+|4
+|5
+|6
+|7
+|8
+|9
+|11
+|12
+|13
+|14
+|15
+|16
+|17
+|18
+|19
+|20
+
+=== 9: -q and -s
+status: 1
+bash-n: 0
+--- stdout
+|Files 1 and 2 differ
+|st=1
+|st=0
+|Files 1 and 1 are identical
+|Files 1 and 2 differ
+--- file 1
+|a
+--- file 2
+|b
+
+=== 10: missing files are trouble
+status: 0
+bash-n: 0
+--- stdout
+|st=2
+|0a1
+|> a
+|st=1
+--- stderr
+|diff: nope: No such file or directory
+--- file 1
+|a
+
+=== 11: -w -b -i
+status: 0
+bash-n: 0
+--- stdout
+|st=0
+|st=0
+|1c1
+|< a b
+|---
+|> ab
+|st=1
+|st=0
+|st=0
+--- file w1
+|a b
+--- file w2
+|a  b 
+--- file w3
+|ab
+--- file w4
+|A B
+
+=== 12: -B ignores blank-line changes
+status: 1
+bash-n: 0
+--- stdout
+|st=0
+|2d1
+|< 
+|3a3,4
+|> 
+|> 
+--- file b1
+|a
+|
+|b
+--- file b2
+|a
+|b
+|
+|
+
+=== 13: -I ignores matching changes
+status: 1
+bash-n: 0
+--- stdout
+|st=0
+|2,3c2,3
+|< # x
+|< b
+|---
+|> # y
+|> c
+--- file i1
+|a
+|# x
+|b
+--- file i2
+|a
+|# y
+|b
+--- file i3
+|a
+|# y
+|c
+
+=== 14: --strip-trailing-cr
+status: 0
+bash-n: 0
+--- stdout
+|st=0
+--- file c1
+\a\x0d
+\b\x0d
+--- file c2
+|a
+|b
+
+=== 15: binary files
+status: 1
+bash-n: 0
+--- stdout
+|Binary files bin1 and bin2 differ
+|st=1
+|Files bin1 and bin2 differ
+--- file bin1
+\a\x00b
+~ no newline at end
+--- file bin2
+\a\x00c
+~ no newline at end
+
+=== 16: stdin as -
+status: 0
+bash-n: 0
+--- stdout
+|2c2
+|< b
+|---
+|> c
+|st=1
+--- file 1
+|a
+|b
+
+=== 17: a file against a directory
+status: 0
+bash-n: 0
+--- stdout
+|1c1
+|< 1
+|---
+|> 2
+|st=1
+--- dir d
+--- file d/f
+|2
+--- file f
+|1

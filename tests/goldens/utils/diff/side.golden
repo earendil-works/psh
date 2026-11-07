@@ -1,0 +1,192 @@
+# Goldens for tests/utils/diff/side.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: -y
+status: 1
+bash-n: 0
+--- stdout
+|a								a
+|b							      |	B
+|c								c
+|d								d
+|e								e
+|							      >	f
+|st=1
+|a			a
+|b		   |	B
+|c			c
+|d			d
+|e			e
+|		   >	f
+|b							      |	B
+|							      >	f
+--- file 1
+|a
+|b
+|c
+|d
+|e
+--- file 2
+|a
+|B
+|c
+|d
+|e
+|f
+
+=== 1: -y widths
+status: 1
+bash-n: 0
+--- stdout
+|b     |	B
+|xxxxx |	yyyyy
+|c	c
+|b	  |	B
+|xxxxx	  |	yyyyy
+|c		c
+|b	    |	B
+|xxxxxxxxx   |	yyyyyyyyy
+|c		c
+|b	      |	B
+|xxxxxxxxxxxxx |	yyyyyyyyyyyyy
+|c		c
+|b		   |	B
+|xxxxxxxxxxxxxxx	   |	yyyyyyyyyyyyyyy
+|c			c
+|b		   |	B
+|xxxxxxxxxxxxxxxx   |	yyyyyyyyyyyyyyyy
+|c			c
+|b		    |	B
+|xxxxxxxxxxxxxxxxx   |	yyyyyyyyyyyyyyyyy
+|c			c
+|b			     |	B
+|xxxxxxxxxxxxxxxxxxxxxxxxxxxx |	yyyyyyyyyyyyyyyyyyyyyyyyyyyy
+|c				c
+|b				      |	B
+|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx |	yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+|c					c
+|b					      |	B
+|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx |	yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+|c						c
+--- file 1
+|b
+|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+|c
+--- file 2
+|B
+|yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+|c
+
+=== 2: --left-column (GNU)
+status: 1
+bash-n: 0
+--- stdout
+|a	      (
+|b	      |	B
+|c	      (
+--- file 1
+|a
+|b
+|c
+--- file 2
+|a
+|B
+|c
+
+=== 3: --color=always
+status: 1
+bash-n: 0
+--- stdout
+\\x1b[1m--- a\x1b[0m
+\\x1b[1m+++ b\x1b[0m
+\\x1b[36m@@ -1,5 +1,6 @@\x1b[0m
+| a
+\\x1b[31m-b\x1b[0m
+\\x1b[32m+B\x1b[0m
+| c
+| d
+| e
+\\x1b[32m+f\x1b[0m
+\\x1b[36m2c2\x1b[0m
+\\x1b[31m< b\x1b[0m
+|---
+\\x1b[32m> B\x1b[0m
+\\x1b[36m5a6\x1b[0m
+\\x1b[32m> f\x1b[0m
+|2c2
+|< b
+|---
+|> B
+|5a6
+|> f
+\\x1b[1m*** x\x1b[0m
+\\x1b[1m--- y\x1b[0m
+|***************
+\\x1b[36m*** 1,5 ****\x1b[0m
+\\x1b[31m  a\x1b[0m
+\\x1b[31m! b\x1b[0m
+\\x1b[31m  c\x1b[0m
+\\x1b[31m  d\x1b[0m
+\\x1b[31m  e\x1b[0m
+\\x1b[36m--- 1,6 ----\x1b[0m
+\\x1b[32m  a\x1b[0m
+\\x1b[32m! B\x1b[0m
+\\x1b[32m  c\x1b[0m
+\\x1b[32m  d\x1b[0m
+\\x1b[32m  e\x1b[0m
+\\x1b[32m+ f\x1b[0m
+--- file 1
+|a
+|b
+|c
+|d
+|e
+--- file 2
+|a
+|B
+|c
+|d
+|e
+|f
+
+=== 4: -p shows the function
+status: 1
+bash-n: 0
+--- stdout
+|--- a
+|+++ b
+|@@ -4,5 +4,5 @@ int f()
+|   b;
+|   c;
+|   d;
+|-  e;
+|+  E;
+| }
+|--- a
+|+++ b
+|@@ -4,5 +4,5 @@ int f()
+|   b;
+|   c;
+|   d;
+|-  e;
+|+  E;
+| }
+--- file 1
+|int f()
+|{
+|  a;
+|  b;
+|  c;
+|  d;
+|  e;
+|}
+--- file 2
+|int f()
+|{
+|  a;
+|  b;
+|  c;
+|  d;
+|  E;
+|}

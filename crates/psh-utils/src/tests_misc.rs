@@ -110,3 +110,24 @@ fn date() {
         "date: invalid date 'nonsense'\n",
     );
 }
+
+#[test]
+fn diff() {
+    check_all("diff /tmp/f /tmp/f; echo $?", "", 0, "0\n", "");
+    check(
+        "diff /tmp/g /tmp/nonl",
+        "1c1,2\n< a b c\n---\n> x\n> y\n\\ No newline at end of file\n",
+    );
+    check(
+        "head -n 2 /tmp/f > /tmp/h; diff -u --label a --label b /tmp/f /tmp/h",
+        "--- a\n+++ b\n@@ -1,4 +1,2 @@\n one\n two\n-three\n-four\n",
+    );
+    check_all(
+        "diff /tmp/f /tmp/nope; echo $?",
+        "",
+        0,
+        "2\n",
+        "diff: /tmp/nope: No such file or directory\n",
+    );
+    check("diff -q /tmp/f /tmp/g", "Files /tmp/f and /tmp/g differ\n");
+}

@@ -30,6 +30,7 @@ mod realpath;
 mod rmdir;
 mod touch;
 
+mod awk;
 mod chmod;
 // Formatted in ripgrep's style (rg/rustfmt.toml), not the workspace's, so the copied code stays a
 // small diff from upstream.
@@ -64,6 +65,12 @@ use common::util_fn;
 
 /// Every utility, with its names, mode (D015) and group.
 pub static REGISTRY: &[UtilEntry] = &[
+    UtilEntry {
+        names: &["awk", "gawk"],
+        mode: Mode::PathFallback,
+        destructive: false,
+        run: util_fn!(awk::run),
+    },
     UtilEntry {
         names: &["find"],
         mode: Mode::Always,
@@ -303,6 +310,7 @@ pub static REGISTRY: &[UtilEntry] = &[
 
 /// The option specs, for the classifier check (D1082).
 pub static SPECS: &[opts::Spec] = &[
+    awk::SPEC,
     timeout::SPEC,
     xargs::SPEC,
     find::SPEC,

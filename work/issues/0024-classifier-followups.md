@@ -1,7 +1,7 @@
 # 0024: Classifier follow-ups and its guide page
 
-status: open
-agent: -
+status: in-progress
+agent: shapes
 branch: issue/0024-classifier-followups
 depends-on: 0009
 touches: crates/psh-classify/, tests/classify/, docs/guide/classify.md, docs/guide/SUMMARY.md (one line)

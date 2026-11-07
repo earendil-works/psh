@@ -51,9 +51,9 @@ pub enum Placement {
 
 /// The highest signal number the child's dispositions are reset for.
 #[cfg(target_os = "linux")]
-const NSIG: i32 = 65;
+pub(crate) const NSIG: i32 = 65;
 #[cfg(not(target_os = "linux"))]
-const NSIG: i32 = 32;
+pub(crate) const NSIG: i32 = 32;
 
 /// How the child starts besides its descriptors.
 pub(crate) struct Setup {

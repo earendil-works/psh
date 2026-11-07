@@ -1871,3 +1871,12 @@ on dictionary order. Rejected: falling through in non-C locales (the output woul
 by OS, which is what the utilities exist to avoid). Known cost: `sort` in en_US.UTF-8
 orders `B` before `a`, unlike GNU and BSD there; a real `join` or `comm` (not psh's) in
 such a locale may call psh's output unsorted.
+
+## D1330: The gate type-checks for Linux
+date: 2026-11-07 · by: shapes · issue: 0033
+The gate runs on macOS and Windows, so `cfg(target_os = "linux")` code was never
+compiled: main stopped building for Linux (`[bool; 65]` has no `Default`) and only a
+Docker build noticed. Leg `linux` (`scripts/gate.d/72-linux.sh`) runs `cargo check
+--workspace --all-targets` for `aarch64-unknown-linux-musl` and `x86_64-unknown-linux-musl`:
+seconds, no linker or C toolchain, both targets installed with rustup. Running the spec
+cases on Linux needs Docker and stays a manual step (`scripts/spec-linux`, 0033).

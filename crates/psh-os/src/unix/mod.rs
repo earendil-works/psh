@@ -129,7 +129,8 @@ impl UnixHost {
                 ignored_at_start: if cfg.inherit_ignored {
                     spawn::ignored_now()
                 } else {
-                    Default::default()
+                    // Not Default: arrays implement it only up to 32 (Linux has 65).
+                    [false; spawn::NSIG as usize]
                 },
                 detached_survive: cfg.detached_survive,
                 fork_only: Default::default(),

@@ -224,7 +224,9 @@ reaches `main` (AGENTS.md). Legs, as they come into existence:
    every dependency of every workspace crate (direct or transitive, any target) is
    listed in `scripts/deps-allowlist.txt` with the decision that allows it, and nothing
    else is (0022, D1223).
-3. `cargo check` with Rust 1.96, the MSRV (D025, 0001); the scripts parse and the
+3. `cargo check` with Rust 1.96, the MSRV (D025, 0001); `linux`: `cargo check` of the
+   workspace, tests included, for `aarch64-` and `x86_64-unknown-linux-musl` (0033,
+   D1330), since no other leg compiles Linux-only code; the scripts parse and the
    tests of `timeout.sh` and `merge-to-main.sh` pass (0001, D1013).
    `shapes`: the shape corpus passes its privacy check (0003, D1030).
    `guide`: `psh-docs check` holds the guide to its writing rules (0012, D1120).

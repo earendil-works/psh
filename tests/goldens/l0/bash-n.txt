@@ -1,4 +1,4 @@
-# bash -n verdicts for tests/l0/syntax.txt (fnv1a64 4b7d6ae06bc0598f, 228 inputs),
+# bash -n verdicts for tests/l0/syntax.txt (fnv1a64 534cf0eb854b2edf, 237 inputs),
 # recorded by scripts/record-goldens with GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
 # KEY<TAB>STATUS<TAB>STDERR for each input bash rejects; unlisted ones parse.
 41	2	bash: line 1: syntax error near unexpected token `)'\nbash: line 1: `echo )'\n
@@ -79,3 +79,9 @@
 216	2	bash: line 3: syntax error: unexpected end of file from `{' command on line 2\n
 217	2	bash: line 3: syntax error: unexpected end of file from `if' command on line 2\n
 218	2	bash: line 2: syntax error near unexpected token `then'\nbash: line 2: `'\n
+228	2	bash: line 1: syntax error near unexpected token `&&'\nbash: line 1: `! && echo x'\n
+229	2	bash: line 1: syntax error near unexpected token `||'\nbash: line 1: `! || echo x'\n
+230	2	bash: line 1: syntax error near unexpected token `&&'\nbash: line 1: `time && echo x'\n
+231	2	bash: line 1: syntax error near unexpected token `|'\nbash: line 1: `time | echo'\n
+232	2	bash: line 1: syntax error near unexpected token `|'\nbash: line 1: `! | echo'\n
+233	2	bash: line 1: syntax error near unexpected token `)'\nbash: line 1: `( ! )'\n

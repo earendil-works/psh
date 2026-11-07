@@ -1053,3 +1053,45 @@ echo $((echo a) )
 #### 227
 x=$(( 1 / 0 ))
 ## status: 0
+
+#### 228
+! && echo x
+## status: 2
+## message: syntax error near unexpected token `&&'
+
+#### 229
+! || echo x
+## status: 2
+## message: syntax error near unexpected token `||'
+
+#### 230
+time && echo x
+## status: 2
+## message: syntax error near unexpected token `&&'
+
+#### 231
+time | echo
+## status: 2
+## message: syntax error near unexpected token `|'
+
+#### 232
+! | echo
+## status: 2
+## message: syntax error near unexpected token `|'
+
+#### 233
+( ! )
+## status: 2
+## message: syntax error near unexpected token `)'
+
+#### 234
+{ ! ; }
+## status: 0
+
+#### 235
+! &
+## status: 0
+
+#### 236
+true && !
+## status: 0

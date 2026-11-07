@@ -1171,3 +1171,47 @@ fn alias_spans() {
     assert_eq!(e.message, "syntax error near unexpected token `)'");
     assert_eq!(e.span, Span::new(8, 11));
 }
+
+#[test]
+fn alias_corners_found_by_fuzzing() {
+    // Each checked against bash 5.3 with a toy runner (examples/aliasrun.rs).
+    // An alias with empty or blank text is as if the word were not there.
+    let (d, _) = chunks_with(
+        "e x\ntrue && e\nfalse\ntrue; s\necho z",
+        &[("e", ""), ("s", " "), ("x", "echo X")],
+    );
+    assert_eq!(
+        d,
+        [
+            "(list (cmd <\"echo\"> <\"X\">))",
+            "(list (andor (cmd <\"true\">) && (cmd <\"false\">)))",
+            "(list (cmd <\"true\">))",
+            "(list (cmd <\"echo\"> <\"z\">))",
+        ]
+    );
+    let mut table = Aliases::new();
+    table.set(b"q", b"");
+    let mut p = Parser::new("l || q; echo", Options::default());
+    p.set_aliases(Some(&table));
+    assert_eq!(
+        p.next_chunk().unwrap().unwrap_err().message,
+        "syntax error near unexpected token `;'"
+    );
+    // A comment in alias text runs on into the line.
+    let (d, _) = chunks_with("c there\necho next", &[("c", "echo hi # x")]);
+    assert_eq!(
+        d,
+        [
+            "(list (cmd <\"echo\"> <\"hi\">))",
+            "(list (cmd <\"echo\"> <\"next\">))"
+        ]
+    );
+    // `!` from an alias, then `&&`: an error, as `! && x` is.
+    table.set(b"a", b"!");
+    let mut p = Parser::new("a && echo", Options::default());
+    p.set_aliases(Some(&table));
+    assert_eq!(
+        p.next_chunk().unwrap().unwrap_err().message,
+        "syntax error near unexpected token `&&'"
+    );
+}

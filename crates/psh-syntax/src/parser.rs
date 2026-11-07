@@ -751,15 +751,17 @@ impl<'a> P<'a> {
             self.skip_blanks();
             self.alias_next = false;
             let run = self.run();
-            if run.is_empty()
-                || run
+            let expand = !run.is_empty()
+                && !run
                     .iter()
                     .any(|c| matches!(c, b'\'' | b'"' | b'\\' | b'$' | b'`'))
-                || self.segs.iter().any(|s| s.name == run)
-            {
-                return;
-            }
-            let Some((s, e)) = lookup(run, self.uses.len()) else {
+                && !self.segs.iter().any(|s| s.name == run);
+            let found = if expand {
+                lookup(run, self.uses.len())
+            } else {
+                None
+            };
+            let Some((s, e)) = found else {
                 return;
             };
             let word = sp(self.pos, self.pos + run.len());
@@ -1158,7 +1160,8 @@ impl<'a> P<'a> {
                 },
             }
             items.push(ao);
-            self.skip_blanks();
+            // After `;` or `&`: an alias here may leave nothing but the line end.
+            self.maybe_alias();
             match self.peek() {
                 None => return Ok(true),
                 Some(b'\n') => {
@@ -1250,6 +1253,9 @@ impl<'a> P<'a> {
             };
             self.pos += n;
             self.skip_linebreaks()?;
+            // An alias with empty text here leaves the place where newlines may be.
+            self.maybe_alias();
+            self.skip_linebreaks()?;
             rest.push((op, self.parse_pipeline()?));
         }
         let span = match rest.last() {
@@ -1306,10 +1312,7 @@ impl<'a> P<'a> {
             // A bare `time` or `!` is a complete pipeline.
             let at_end = match self.peek() {
                 None | Some(b'\n') => true,
-                _ => matches!(
-                    self.peek_op(),
-                    Some((Op::Semi | Op::Amp | Op::AndIf | Op::OrIf | Op::RParen, _))
-                ),
+                _ => matches!(self.peek_op(), Some((Op::Semi | Op::Amp, _))),
             };
             if at_end {
                 return Ok(Pipeline {
@@ -1335,6 +1338,8 @@ impl<'a> P<'a> {
                 }
                 _ => break,
             }
+            self.skip_linebreaks()?;
+            self.maybe_alias();
             self.skip_linebreaks()?;
         }
         let end = self.cmds[stages.last().unwrap().cmd.index()].span.end;
@@ -1927,20 +1932,7 @@ impl<'a> P<'a> {
             words.push(word);
         }
         if assigns.is_empty() && words.is_empty() && redirects.is_empty() {
-            // An alias whose text is empty (`alias e=''`) leaves an empty command.
-            if let Some(u) = self
-                .uses
-                .iter()
-                .rev()
-                .find(|u| u.word.start as usize >= start)
-            {
-                let word = u.word;
-                return Ok(self.push_cmd(Command {
-                    span: word,
-                    kind: CommandKind::Simple(SimpleCommand { assigns, words }),
-                    redirects,
-                }));
-            }
+            // (An alias with empty text is as if the word were not there.)
             return Err(self.unexpected());
         }
         Ok(self.push_cmd(Command {

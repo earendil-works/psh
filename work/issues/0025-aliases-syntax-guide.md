@@ -102,6 +102,22 @@ Engine side (proposal; the engine agent owns exec.rs/lib.rs):
   raw), statuses and option handling; unit tests against the container's output. The
   module comment shows the wrapper the engine registers.
 
+### 2026-11-07: alias fuzzing; guide page
+- Toy runner `examples/aliasrun.rs` (executes only `shopt -s expand_aliases`, `alias`,
+  `unalias`, `echo`, `true`/`false`, `if`, groups, `&&`/`||`) against bash in the
+  recording container, on random scripts of alias definitions and uses
+  (`work/scratch/0025/genalias.py`, `cmp.py`): 5,800 scripts, all agree on output and
+  on syntax errors. Fixed on the way: an alias with empty or blank text is as if the word
+  were not there (it never leaves an empty command; after `&&`/`||`/`|` newlines are
+  skipped again; `l || q;` is an error), and a non-alias bug: a bare `!` or `time` before
+  `&&`, `||`, `|` or `)` is a syntax error (bash; only `;`, `&`, newline and the end may
+  follow). Snippets added to `tests/l0/syntax.txt`, L0 verdicts re-recorded.
+- `docs/guide/syntax.md` written ("The parser: spans and printing" in SUMMARY.md), with
+  "Not built yet" notes where the engine has not wired arithmetic, `declare -f` or the
+  alias table; `psh-docs check` passes.
+- Merge of part 1 was attempted once during the Windows gate rework (VM error
+  `PrlJob_GetRetCode`); waiting for the merge freeze to lift.
+
 ## Follow-ups
 
 ## Result

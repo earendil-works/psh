@@ -82,7 +82,6 @@ brush/compat/builtins/command/41
 brush/compat/builtins/command/43
 brush/compat/builtins/command/44
 brush/compat/builtins/command/45
-brush/compat/builtins/common/0
 brush/compat/builtins/common/2
 brush/compat/builtins/declare/1
 brush/compat/builtins/declare/24: passed via macOS /usr/bin wrapper
@@ -364,7 +363,6 @@ brush/compat/compound_cmds/for/27
 brush/compat/compound_cmds/for/29
 brush/compat/compound_cmds/for/31
 brush/compat/compound_cmds/for/33
-brush/compat/compound_cmds/subshell/4
 brush/compat/errors/31
 brush/compat/errors/33
 brush/compat/errors/42
@@ -460,10 +458,10 @@ brush/compat/here/6
 brush/compat/here/7
 brush/compat/here/8
 brush/compat/here/9
+brush/compat/functions/22
 brush/compat/here/22
 brush/compat/here/23
 brush/compat/here/24
-brush/compat/here/34
 brush/compat/here/43
 brush/compat/here/65
 brush/compat/here/71
@@ -491,6 +489,9 @@ brush/compat/nameref/141
 brush/compat/nameref/142
 brush/compat/nameref/143
 brush/compat/nameref/166
+brush/compat/nameref/167
+brush/compat/nameref/168
+brush/compat/nameref/169
 brush/compat/nameref/174
 brush/compat/nameref/185
 brush/compat/nameref/199
@@ -603,12 +604,10 @@ brush/compat/patterns/patterns/15
 brush/compat/patterns/patterns/16
 brush/compat/patterns/patterns/17
 brush/compat/pipeline/1
+brush/compat/piped_script/9
 brush/compat/pipeline/4
-brush/compat/pipeline/6
 brush/compat/pipeline/8
 brush/compat/pipeline/9
-brush/compat/pipeline/13
-brush/compat/pipeline/15
 brush/compat/pipeline/17
 brush/compat/process/0
 brush/compat/redirection/14
@@ -720,7 +719,6 @@ brush/compat/word_expansion/braces/0
 brush/compat/word_expansion/braces/7
 brush/compat/word_expansion/braces/18
 brush/compat/word_expansion/braces/28
-brush/compat/word_expansion/command_substitution/1
 brush/compat/word_expansion/command_substitution/10
 brush/compat/word_expansion/command_substitution/12
 brush/compat/word_expansion/command_substitution/27

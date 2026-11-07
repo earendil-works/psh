@@ -13,6 +13,9 @@ pub struct OilsCase {
     /// 1-based line of the `####` header.
     pub line: usize,
     pub code: String,
+    /// The case's own `## key: value` lines (qualified ones included, without their
+    /// qualifier); our L4 cases use `## expect:`.
+    pub meta: Vec<(String, String)>,
 }
 
 #[derive(Debug, Default)]
@@ -166,7 +169,10 @@ impl<'a> Tokens<'a> {
 }
 
 /// Consumes contiguous metadata; returns a `## code:` value if one was given.
-fn key_values<'a>(t: &mut Tokens<'a>) -> Result<Option<&'a str>, String> {
+fn key_values<'a>(
+    t: &mut Tokens<'a>,
+    meta: &mut Vec<(String, String)>,
+) -> Result<Option<&'a str>, String> {
     let mut code = None;
     loop {
         match t.cur {
@@ -184,6 +190,8 @@ fn key_values<'a>(t: &mut Tokens<'a>) -> Result<Option<&'a str>, String> {
             Tok::KeyValue { name, value } => {
                 if name == "code" {
                     code = Some(value);
+                } else {
+                    meta.push((name.to_string(), value.to_string()));
                 }
                 t.advance(Mode::Outer)?;
             }
@@ -212,7 +220,8 @@ pub fn parse(source: &str) -> Result<OilsFile, String> {
         };
         let line = t.cur_line;
         t.advance(Mode::Outer)?;
-        let code = if let Some(code) = key_values(&mut t)? {
+        let mut meta = Vec::new();
+        let code = if let Some(code) = key_values(&mut t, &mut meta)? {
             code.to_string()
         } else {
             let mut code = String::new();
@@ -226,13 +235,14 @@ pub fn parse(source: &str) -> Result<OilsFile, String> {
                 code.push_str(l);
                 t.advance(Mode::Raw)?;
             }
-            key_values(&mut t)?;
+            key_values(&mut t, &mut meta)?;
             code
         };
         file.cases.push(OilsCase {
             desc: desc.to_string(),
             line,
             code,
+            meta,
         });
     }
 }

@@ -335,6 +335,7 @@ dependencies = [
  "psh-engine",
  "psh-os",
  "psh-syntax",
+ "psh-utils",
 ]
 
 [[package]]
@@ -371,6 +372,7 @@ dependencies = [
  "psh-engine",
  "psh-os",
  "psh-syntax",
+ "psh-utils",
 ]
 
 [[package]]
@@ -382,6 +384,7 @@ name = "psh-utils"
 version = "0.0.0"
 dependencies = [
  "psh-classify",
+ "psh-engine",
 ]
 
 [[package]]
@@ -393,6 +396,7 @@ dependencies = [
  "psh-classify",
  "psh-engine",
  "psh-syntax",
+ "psh-utils",
 ]
 
 [[package]]

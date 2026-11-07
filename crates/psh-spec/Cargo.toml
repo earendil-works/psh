@@ -14,6 +14,8 @@ psh-engine.workspace = true
 psh-syntax.workspace = true
 # The OS host for in-process shells (0006).
 psh-os.workspace = true
+# The in-process utilities, as the psh binary has them (D1080).
+psh-utils.workspace = true
 
 [lints]
 workspace = true

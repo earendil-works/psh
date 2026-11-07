@@ -66,7 +66,9 @@ pub struct UtilPolicy {
 
 /// The utility that runs for `name`, if any: off switches and modes applied.
 pub(crate) async fn lookup(vp: &Vp, name: &[u8]) -> Option<&'static UtilEntry> {
-    if name.contains(&b'/') {
+    // A path, or a name bound to a path with `hash -p` (or remembered from running the
+    // program), names the program.
+    if name.contains(&b'/') || crate::builtins::hash::hashed(vp, name).is_some() {
         return None;
     }
     let policy = &vp.core.utilities;
@@ -342,6 +344,30 @@ impl UtilCtx<'_> {
     /// A safepoint for long loops: yields when the step's budget is spent.
     pub async fn check(&self) {
         crate::sched::safepoint(&self.vp.core.sched).await;
+    }
+
+    /// Runs the real program of this name from `PATH` with these arguments, for an
+    /// option the utility does not implement (D1082): its status, or `None` when there
+    /// is no such program (or the shell is a sandbox, where none exist).
+    pub async fn run_program(&mut self, argv: Vec<Vec<u8>>) -> Option<i32> {
+        if self.vp.core.utilities.sandbox || argv.is_empty() {
+            return None;
+        }
+        crate::builtins::hash::search(self.vp, &argv[0], None).await?;
+        let _ = self.flush().await;
+        let mut sub = self.vp.subshell();
+        for (k, v) in &self.env {
+            if let Ok(name) = std::str::from_utf8(k)
+                && crate::state::is_name(k)
+            {
+                let var = sub.vars.entry(name);
+                var.set(v.clone());
+                var.exported = true;
+            }
+        }
+        let r = crate::exec::run_external(&mut sub, argv, Vec::new()).await;
+        let last = sub.status;
+        Some(r.unwrap_or_else(|u| u.status(last)))
     }
 
     /// Starts a command for a wrapper (`env`, `timeout`, `xargs`, `find -exec`): a

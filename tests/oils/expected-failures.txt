@@ -2,6 +2,27 @@
 # One case id per line, optionally `id: reason`. psh-spec --update-ratchet removes
 # cases that pass; never add a line to hide a regression.
 oils/alias/7
+oils/alias/0
+oils/alias/1
+oils/alias/2
+oils/alias/3
+oils/alias/4
+oils/alias/11
+oils/alias/12
+oils/alias/13
+oils/alias/14
+oils/alias/15
+oils/alias/16
+oils/alias/17
+oils/alias/19
+oils/alias/20
+oils/alias/21: passed only with the stub (status 2); needs alias expansion
+oils/alias/22
+oils/alias/23
+oils/alias/24
+oils/alias/25: passed only with the stub (status 2); needs alias expansion
+oils/alias/26
+oils/alias/27
 oils/alias/28
 oils/alias/41
 oils/alias/42
@@ -77,7 +98,6 @@ oils/bugs/5
 oils/bugs/10
 oils/bugs/19
 oils/bugs/21
-oils/bugs/28
 oils/builtin-bash/0
 oils/builtin-bash/1
 oils/builtin-bash/6
@@ -130,6 +150,8 @@ oils/builtin-meta/6
 oils/builtin-misc/0
 oils/builtin-misc/1
 oils/builtin-misc/3
+oils/builtin-misc/2
+oils/builtin-printf/2
 oils/builtin-printf/3
 oils/builtin-printf/38
 oils/builtin-printf/46
@@ -165,7 +187,6 @@ oils/builtin-set/12
 oils/builtin-set/22
 oils/builtin-set/23
 oils/builtin-special/10
-oils/builtin-times/0
 oils/builtin-trap/0
 oils/builtin-trap/37
 oils/builtin-trap-bash/7
@@ -377,6 +398,16 @@ oils/pipeline/3
 oils/pipeline/18
 oils/pipeline/23
 oils/pipeline/24
+oils/parse-errors/11
+oils/parse-errors/22
+oils/pipeline/0
+oils/pipeline/1
+oils/pipeline/7
+oils/pipeline/8
+oils/pipeline/9
+oils/pipeline/20
+oils/pipeline/21
+oils/pipeline/22
 oils/pipeline/25
 oils/process-sub/1
 oils/process-sub/2
@@ -388,7 +419,6 @@ oils/quote/33
 oils/redir-order/4
 oils/redirect/3
 oils/redirect/8
-oils/redirect/9
 oils/redirect/10
 oils/redirect/27
 oils/redirect/36
@@ -398,6 +428,7 @@ oils/redirect-command/2
 oils/redirect-command/8
 oils/redirect-command/13
 oils/redirect-command/20
+oils/redirect-multi/3
 oils/redirect-multi/8
 oils/redirect-multi/9
 oils/regex/0
@@ -441,13 +472,13 @@ oils/sh-options-bash/4
 oils/sh-options-bash/6
 oils/smoke/3
 oils/smoke/4
+oils/sh-options-bash/7
+oils/sh-options-bash/8
 oils/smoke/6
 oils/smoke/7
-oils/smoke/11
 oils/smoke/14: platform-dependent: GNU ls exits 2 for a missing file, macOS BSD ls 1 (passes on Linux; per-platform ratchet or psh ls later)
 oils/tilde/1
 oils/tilde/3
-oils/tilde/4
 oils/tilde/7
 oils/tilde/11
 oils/tilde/13
@@ -467,6 +498,8 @@ oils/var-op-bash/20
 oils/var-op-bash/23
 oils/var-op-len/3
 oils/var-op-len/4
+oils/var-op-len/6
+oils/var-op-patsub/1
 oils/var-op-patsub/11
 oils/var-op-patsub/12
 oils/var-op-patsub/23

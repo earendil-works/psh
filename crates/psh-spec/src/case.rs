@@ -20,16 +20,28 @@ pub enum Layer {
     Oils,
     Brush,
     Agent,
+    /// L4: in-process utilities against GNU and BSD goldens (`tests/utils/NAME/*.test.sh`).
+    Utils,
+}
+
+/// Which recording a case must match (L4, D016): GNU's (the container), BSD's (macOS),
+/// or both, which must then agree.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Dialect {
+    Gnu,
+    Bsd,
+    Both,
 }
 
 impl Layer {
-    pub const ALL: [Layer; 3] = [Layer::Oils, Layer::Brush, Layer::Agent];
+    pub const ALL: [Layer; 4] = [Layer::Oils, Layer::Brush, Layer::Agent, Layer::Utils];
 
     pub fn name(self) -> &'static str {
         match self {
             Layer::Oils => "oils",
             Layer::Brush => "brush",
             Layer::Agent => "agent",
+            Layer::Utils => "utils",
         }
     }
 
@@ -43,6 +55,7 @@ impl Layer {
             Layer::Oils => "tests/oils/spec",
             Layer::Brush => "tests/brush/brush-shell/tests/cases",
             Layer::Agent => "tests/agent",
+            Layer::Utils => "tests/utils",
         }
     }
 
@@ -98,6 +111,9 @@ pub struct Case {
     /// Runs alone (tests/spec.toml `[[serial]]`): the case uses fixed paths outside its
     /// directory (`/tmp/oil-spec-test`), which parallel cases or runs would share.
     pub serial: bool,
+    /// The golden to match: `## expect: gnu | bsd | both` in L4 (default both); GNU's
+    /// for every other layer.
+    pub expect: Dialect,
     /// Brush's judgement that stdout is not comparable (e.g. it lists the host).
     pub ignore_stdout: bool,
     pub ignore_whitespace: bool,
@@ -131,7 +147,7 @@ pub fn load_layer(root: &Path, layer: Layer) -> Result<Vec<Case>, String> {
         let text =
             std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
         let loaded = match layer {
-            Layer::Oils | Layer::Agent => load_oils(layer, &file, &text),
+            Layer::Oils | Layer::Agent | Layer::Utils => load_oils(layer, &file, &text),
             Layer::Brush => load_brush(&file, &text, path.parent().unwrap()),
         };
         cases.extend(loaded.map_err(|e| format!("{}: {e}", path.display()))?);
@@ -180,8 +196,27 @@ fn load_oils(layer: Layer, file: &str, text: &str) -> Result<Vec<Case>, String> 
         .into_iter()
         .enumerate()
         .map(|(index, c)| {
+            let expect = c
+                .meta
+                .iter()
+                .find(|(k, _)| k == "expect")
+                .map(|(_, v)| {
+                    let v = v.trim_start();
+                    if v.starts_with("gnu") {
+                        Dialect::Gnu
+                    } else if v.starts_with("bsd") {
+                        Dialect::Bsd
+                    } else {
+                        Dialect::Both
+                    }
+                })
+                .unwrap_or(if layer == Layer::Utils {
+                    Dialect::Both
+                } else {
+                    Dialect::Gnu
+                });
             let (args, stdin) = match layer {
-                Layer::Agent => (vec!["-c".to_string(), c.code.clone()], None),
+                Layer::Agent | Layer::Utils => (vec!["-c".to_string(), c.code.clone()], None),
                 _ => (Vec::new(), Some(c.code.clone().into_bytes())),
             };
             Case {
@@ -201,6 +236,7 @@ fn load_oils(layer: Layer, file: &str, text: &str) -> Result<Vec<Case>, String> 
                 timeout: OILS_TIMEOUT,
                 tags: tags.clone(),
                 serial: false,
+                expect,
                 ignore_stdout: false,
                 ignore_whitespace: false,
             }
@@ -297,6 +333,7 @@ fn load_brush(file: &str, text: &str, dir: &Path) -> Result<Vec<Case>, String> {
             timeout,
             tags,
             serial: false,
+            expect: Dialect::Gnu,
             ignore_stdout: flag("ignore_stdout"),
             ignore_whitespace: flag("ignore_whitespace"),
         });

@@ -8,6 +8,8 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+# The utility API (psh_engine::util, D1081).
+psh-engine.workspace = true
 # The per-utility option tables the utilities check their parsers against (D1090).
 psh-classify.workspace = true
 

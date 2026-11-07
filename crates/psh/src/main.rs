@@ -166,6 +166,7 @@ fn main() -> ExitCode {
     let thread = engine_thread(move || {
         let (host, [stdin, stdout, stderr]) = os_host();
         let mut cfg = ShellConfig::new(host);
+        cfg.utilities = psh_utils::policy(false);
         cfg.env = std::env::vars_os()
             .map(|(k, v)| (os_bytes(k), os_bytes(v)))
             .collect();

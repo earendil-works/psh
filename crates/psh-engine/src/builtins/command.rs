@@ -201,7 +201,8 @@ pub(super) async fn command(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     if let Some(b) = super::get(vp, name) {
         return (b.run)(vp, rest).await;
     }
-    if let Some(e) = crate::util::lookup(vp, name).await {
+    // `command -p` asks for the standard program from the default PATH.
+    if !default_path && let Some(e) = crate::util::lookup(vp, name).await {
         return crate::util::run(vp, e, rest.to_vec(), Vec::new()).await;
     }
     let opts = ExtOpts {

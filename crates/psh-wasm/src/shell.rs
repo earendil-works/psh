@@ -84,6 +84,8 @@ fn new_shell(cfg: &[u8]) -> Option<Shell> {
         n => n.min(MAX_DEPTH),
     };
     let mut config = ShellConfig::new(Rc::new(JsHost));
+    // No programs exist in wasm: every utility runs in-process (D1080).
+    config.utilities = psh_utils::policy(true);
     config.cwd = cwd;
     config.env = env;
     config.stdin = file(stdin);

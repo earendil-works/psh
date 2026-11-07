@@ -435,6 +435,7 @@ impl Engine for InProcess {
             // `$$` must not be the runner: cases `kill $$`. No pid is this large.
             let (host, file) = os_host(99_999_999);
             let mut cfg = ShellConfig::new(host);
+            cfg.utilities = psh_utils::policy(false);
             cfg.env = env;
             cfg.cwd = cwd;
             cfg.stdin = Some(file(stdin_file));

@@ -54,6 +54,7 @@ Engines:
 
 Modes:
   --record            record goldens with --shell (scripts/record-goldens does this)
+  --bsd               with --record: the BSD goldens of L4 (macOS, scripts/record-goldens --bsd)
   --list              list the selected cases with their group
   --status            the scoreboard per layer and area (scripts/status); appends a
                       line per layer to tests/scores/status.tsv (unless --no-append,
@@ -99,6 +100,7 @@ struct Options {
     diff_goldens: Option<(PathBuf, PathBuf)>,
     record_shapes: bool,
     wasm: bool,
+    bsd: bool,
     l0: bool,
     status: bool,
     hitlist: bool,
@@ -126,6 +128,7 @@ fn parse_args(args: Vec<String>) -> Result<Options, String> {
         diff_goldens: None,
         record_shapes: false,
         wasm: false,
+        bsd: false,
         l0: false,
         status: false,
         hitlist: false,
@@ -165,6 +168,7 @@ fn parse_args(args: Vec<String>) -> Result<Options, String> {
             "--record-l0" => o.record_shapes = true,
             "--l0" => o.l0 = true,
             "--wasm" => o.wasm = true,
+            "--bsd" => o.bsd = true,
             "--status" => o.status = true,
             "--hitlist" => {
                 o.status = true;
@@ -180,6 +184,10 @@ fn parse_args(args: Vec<String>) -> Result<Options, String> {
             s if s.starts_with('-') && s.len() > 1 => return Err(format!("unknown option {s}")),
             _ => o.filters.push(a),
         }
+    }
+    if o.bsd {
+        // Only L4 has BSD goldens.
+        o.layers = vec![Layer::Utils];
     }
     if o.layers.is_empty() {
         o.layers = Layer::ALL.to_vec();
@@ -251,6 +259,33 @@ pub struct Item<'a> {
 
 fn golden_path(goldens: &Path, layer: Layer, file: &str) -> PathBuf {
     goldens.join(layer.name()).join(format!("{file}.golden"))
+}
+
+/// The BSD recordings of L4 (macOS, `--record --bsd`), next to the GNU ones.
+const BSD_SET: &str = "utils-bsd";
+
+fn bsd_golden_path(goldens: &Path, file: &str) -> PathBuf {
+    goldens.join(BSD_SET).join(format!("{file}.golden"))
+}
+
+fn load_goldens(path: &Path) -> Result<Vec<Golden>, String> {
+    std::fs::read_to_string(path)
+        .map_err(|e| format!("{}: {e}", path.display()))
+        .and_then(|t| golden::parse_file(&t).map_err(|e| format!("{}: {e}", path.display())))
+}
+
+/// The golden of a case in a loaded set, checked against the case's name.
+fn golden_of<'g>(set: &'g Result<Vec<Golden>, String>, case: &Case) -> Result<&'g Golden, String> {
+    let gs = set.as_ref().map_err(Clone::clone)?;
+    let g = gs
+        .iter()
+        .find(|g| g.index == case.index)
+        .ok_or_else(|| "no golden for this case".to_string())?;
+    if g.name == case.name.replace('\n', " ") {
+        Ok(g)
+    } else {
+        Err(format!("stale golden (recorded as {:?})", g.name))
+    }
 }
 
 fn run(opts: Options) -> Result<ExitCode, String> {
@@ -345,6 +380,7 @@ fn run(opts: Options) -> Result<ExitCode, String> {
         dir: &dir,
         timeout: opts.timeout,
         parse_check: opts.record,
+        bsd: opts.bsd,
     };
 
     if opts.record {
@@ -355,34 +391,41 @@ fn run(opts: Options) -> Result<ExitCode, String> {
         .iter()
         .filter(|it| opts.all_groups || it.group != Group::Skip)
         .collect();
-    let mut golden_cache: HashMap<(Layer, String), Result<Vec<Golden>, String>> = HashMap::new();
+    // Golden sets by (set, file): a layer's own, and for L4 also the BSD one.
+    let mut golden_cache: HashMap<(String, String), Result<Vec<Golden>, String>> = HashMap::new();
     for it in &to_run {
-        let key = (it.case.layer, it.case.file.clone());
-        golden_cache.entry(key).or_insert_with(|| {
-            let path = golden_path(&goldens_dir, it.case.layer, &it.case.file);
-            std::fs::read_to_string(&path)
-                .map_err(|e| format!("{}: {e}", path.display()))
-                .and_then(|t| {
-                    golden::parse_file(&t).map_err(|e| format!("{}: {e}", path.display()))
-                })
-        });
+        let c = it.case;
+        if c.expect != case::Dialect::Bsd {
+            golden_cache
+                .entry((c.layer.name().to_string(), c.file.clone()))
+                .or_insert_with(|| load_goldens(&golden_path(&goldens_dir, c.layer, &c.file)));
+        }
+        if c.expect != case::Dialect::Gnu {
+            golden_cache
+                .entry((BSD_SET.to_string(), c.file.clone()))
+                .or_insert_with(|| load_goldens(&bsd_golden_path(&goldens_dir, &c.file)));
+        }
     }
     let observed = runner::parallel_map(&to_run, opts.jobs, |n, it| runner.run(it.case, n));
     let mut results = Vec::new();
     for (it, obs) in to_run.iter().zip(observed) {
-        let golden = match &golden_cache[&(it.case.layer, it.case.file.clone())] {
-            Ok(gs) => gs
-                .iter()
-                .find(|g| g.index == it.case.index)
-                .ok_or_else(|| "no golden for this case".to_string())
-                .and_then(|g| {
-                    if g.name == it.case.name.replace('\n', " ") {
-                        Ok(g)
-                    } else {
-                        Err(format!("stale golden (recorded as {:?})", g.name))
-                    }
-                }),
-            Err(e) => Err(e.clone()),
+        let c = it.case;
+        let own = || {
+            golden_of(
+                &golden_cache[&(c.layer.name().to_string(), c.file.clone())],
+                c,
+            )
+        };
+        let bsd = || golden_of(&golden_cache[&(BSD_SET.to_string(), c.file.clone())], c);
+        let golden = match c.expect {
+            case::Dialect::Gnu => own(),
+            case::Dialect::Bsd => bsd(),
+            // Both recordings must agree on what decides a pass (D016).
+            case::Dialect::Both => match (own(), bsd()) {
+                (Ok(g), Ok(b)) if g.stdout == b.stdout && g.status == b.status && g.files == b.files => Ok(g),
+                (Ok(_), Ok(_)) => Err("the GNU and BSD goldens disagree: declare `## expect: gnu` or `## expect: bsd` (and the D016 rule)".to_string()),
+                (Err(e), _) | (_, Err(e)) => Err(e),
+            },
         };
         results.push(report::compare(it, golden, obs, engine.name()));
     }
@@ -583,7 +626,11 @@ fn record(
     }
     let mut written = 0;
     for ((layer, file), recorded) in by_file {
-        let path = golden_path(goldens_dir, layer, &file);
+        let path = if opts.bsd {
+            bsd_golden_path(goldens_dir, &file)
+        } else {
+            golden_path(goldens_dir, layer, &file)
+        };
         // A filtered recording replaces only its cases in an existing file.
         let mut goldens: BTreeMap<usize, Golden> = if opts.filters.is_empty() {
             BTreeMap::new()

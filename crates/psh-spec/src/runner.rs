@@ -127,9 +127,13 @@ pub struct Runner<'a> {
     pub timeout: Option<Duration>,
     /// Also run `SHELL -n` on the script (for the goldens' L0 verdict).
     pub parse_check: bool,
+    /// Recording the BSD goldens (macOS): only the system's own directories on PATH,
+    /// so no GNU tool from /usr/local or Homebrew answers.
+    pub bsd: bool,
 }
 
 const SYSTEM_PATH: &str = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+const BSD_PATH: &str = "/usr/bin:/bin:/usr/sbin:/sbin";
 
 impl Runner<'_> {
     fn env(&self, case: &Case, sb: &Sandbox) -> Vec<(String, String)> {
@@ -142,7 +146,11 @@ impl Runner<'_> {
         let mut env = vec![
             (
                 "PATH".to_string(),
-                format!("{}{sep}{SYSTEM_PATH}", s(&self.dir.bin)),
+                format!(
+                    "{}{sep}{}",
+                    s(&self.dir.bin),
+                    if self.bsd { BSD_PATH } else { SYSTEM_PATH }
+                ),
             ),
             ("HOME".to_string(), s(&home)),
             ("USER".to_string(), "spec".to_string()),
@@ -160,7 +168,7 @@ impl Runner<'_> {
                 env.push(("LC_ALL".into(), "C".into()));
                 env.push(("PS1".into(), "test$ ".into()));
             }
-            Layer::Agent => {
+            Layer::Agent | Layer::Utils => {
                 env.push(("LC_ALL".into(), "C.UTF-8".into()));
             }
         }

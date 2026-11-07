@@ -40,3 +40,6 @@ utils/rg/basic/29: ripgrep's default path color is cyan on Windows (grep-printer
 utils/rm/basic/13: Windows: a read-only directory does not keep its entries from being removed
 utils/rm/basic/8: Windows: a directory symlink is a junction, whose target is absolute (D1150)
 utils/sum/basic/5: Windows file names cannot hold a newline
+utils/date/basic/0: Windows has no zone files: TZ=Region/City falls back to the host's offset, %Z to the number
+utils/date/basic/8: Windows has no zone files: TZ=Region/City falls back to the host's offset, %Z to the number
+utils/date/basic/10: Windows has no zone files: TZ=Region/City falls back to the host's offset, %Z to the number

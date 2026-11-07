@@ -61,6 +61,7 @@ mod diff;
 mod diff_algo;
 mod sum;
 mod which;
+mod sed;
 
 use psh_engine::util::{Mode, UtilEntry, UtilPolicy};
 
@@ -320,6 +321,10 @@ pub static REGISTRY: &[UtilEntry] = &[
         mode: Mode::Always,
         destructive: false,
         run: util_fn!(env::run_printenv),
+        names: &["sed"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(sed::run),
     },
 ];
 
@@ -365,6 +370,7 @@ pub static SPECS: &[opts::Spec] = &[
     date::SPEC,
     diff::SPEC,
     env::PRINTENV_SPEC,
+    sed::SPEC,
 ];
 
 /// The policy for a shell: every utility on. `sandbox`: no real programs exist (wasm),

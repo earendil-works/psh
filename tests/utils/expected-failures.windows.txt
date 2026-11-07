@@ -1,0 +1,31 @@
+# Ratchet for layer utils on windows (D1914): active cases that pass natively
+# (not in expected-failures.txt) but may fail here, each with its reason. Cases
+# that need external programs are not listed. psh-spec --update-ratchet removes
+# cases that pass; never add a regression.
+utils/chmod/basic/11: Windows keeps no execute bits (chmod +x is not tracked yet; 0015 follow-up)
+utils/cp/basic/17: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/cp/basic/18: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/cp/basic/19: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/cp/basic/20: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/cp/basic/21: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/cp/basic/24: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/ln/basic/0: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/ln/basic/1: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/ln/basic/3: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/ln/basic/4: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/ln/basic/5: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/ln/basic/7: Windows: a directory symlink is a junction, whose target is absolute (D1150)
+utils/ln/basic/11: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/ln/basic/12: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/ln/basic/13: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/ln/basic/14: Windows: a directory symlink is a junction, whose target is absolute (D1150)
+utils/readlink/basic/0: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/readlink/basic/2: Windows: a directory symlink is a junction, whose target is absolute (D1150)
+utils/readlink/basic/5: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/readlink/basic/7: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/readlink/basic/8: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/readlink/basic/10: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/realpath/basic/1: Windows: a directory symlink is a junction, whose target is absolute (D1150)
+utils/realpath/basic/7: Windows: a directory symlink is a junction, whose target is absolute (D1150)
+utils/rm/basic/8: Windows: a directory symlink is a junction, whose target is absolute (D1150)
+utils/rm/basic/13: Windows: a read-only directory does not keep its entries from being removed

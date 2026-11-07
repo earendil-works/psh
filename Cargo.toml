@@ -20,3 +20,13 @@ psh-os = { path = "crates/psh-os" }
 # OS host crates (AGENTS.md); psh-os declares its own lint table when it lands.
 [workspace.lints.rust]
 unsafe_code = "forbid"
+
+# The wasm modules (scripts/build-wasm): small rather than fast, one codegen unit, no
+# symbols. Panics abort on wasm32 anyway.
+[profile.wasm]
+inherits = "release"
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

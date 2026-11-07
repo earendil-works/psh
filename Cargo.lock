@@ -377,6 +377,17 @@ name = "psh-syntax"
 version = "0.0.0"
 
 [[package]]
+name = "psh-wasm"
+version = "0.0.0"
+dependencies = [
+ "deser-core",
+ "deser-json",
+ "psh-classify",
+ "psh-engine",
+ "psh-syntax",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"

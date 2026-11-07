@@ -1,0 +1,185 @@
+//! Operations in flight on the JS side, and their answers (`psh_complete`).
+
+use std::cell::{Cell, RefCell};
+use std::collections::HashMap;
+use std::future::Future;
+use std::io;
+use std::pin::Pin;
+use std::task::{Context, Poll, Waker};
+
+use crate::{export, sys, take_input};
+
+/// The JS side's answer to an operation.
+#[derive(Debug, Clone, Default)]
+pub struct Answer {
+    /// 0, or an errno (`ENOENT` = 2, ...).
+    pub err: i32,
+    pub value: f64,
+    pub data: Vec<u8>,
+}
+
+impl Answer {
+    pub fn result(self) -> io::Result<Answer> {
+        if self.err == 0 {
+            Ok(self)
+        } else {
+            Err(errno_error(self.err))
+        }
+    }
+}
+
+/// The errors the JS host reports, as errno numbers (Linux numbering).
+pub fn errno_error(err: i32) -> io::Error {
+    use io::ErrorKind::*;
+    let kind = match err {
+        1 | 13 => PermissionDenied,
+        2 => NotFound,
+        17 => AlreadyExists,
+        20 => NotADirectory,
+        21 => IsADirectory,
+        22 => InvalidInput,
+        30 => ReadOnlyFilesystem,
+        32 => BrokenPipe,
+        36 => InvalidFilename,
+        39 => DirectoryNotEmpty,
+        95 => Unsupported,
+        _ => Other,
+    };
+    io::Error::new(kind, ErrorText(kind))
+}
+
+/// The message of an error from the JS host: `psh_engine::host::error_text` prints its
+/// kind's text, so the message only matters for kinds without one.
+#[derive(Debug)]
+struct ErrorText(io::ErrorKind);
+
+impl std::fmt::Display for ErrorText {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for ErrorText {}
+
+enum Slot {
+    Waiting(Option<Waker>),
+    Done(Answer),
+}
+
+thread_local! {
+    static NEXT: Cell<u32> = const { Cell::new(1) };
+    static OPS: RefCell<HashMap<u32, Slot>> = RefCell::new(HashMap::new());
+}
+
+/// Starts an operation: registers it, then asks the JS side (which may answer at once).
+pub fn start(kind: u32, arg: u32, data: &[u8]) -> u32 {
+    let op = new_op();
+    sys::call(kind, op, arg, data);
+    op
+}
+
+/// [`start`] with a length and no payload (`K_READ`).
+pub fn start_len(kind: u32, arg: u32, len: usize) -> u32 {
+    let op = new_op();
+    sys::call_len(kind, op, arg, std::ptr::null(), len);
+    op
+}
+
+fn new_op() -> u32 {
+    let op = NEXT.with(|n| {
+        let op = n.get();
+        n.set(op.wrapping_add(1).max(1));
+        op
+    });
+    OPS.with(|o| o.borrow_mut().insert(op, Slot::Waiting(None)));
+    op
+}
+
+/// The answer, if it came; else remembers the waker.
+pub fn poll(op: u32, cx: &mut Context<'_>) -> Poll<Answer> {
+    OPS.with(|o| {
+        let mut ops = o.borrow_mut();
+        match ops.remove(&op) {
+            Some(Slot::Done(a)) => Poll::Ready(a),
+            Some(Slot::Waiting(_)) | None => {
+                ops.insert(op, Slot::Waiting(Some(cx.waker().clone())));
+                Poll::Pending
+            }
+        }
+    })
+}
+
+/// The answer of an operation the JS side must have answered during its call.
+pub fn take_now(op: u32) -> Option<Answer> {
+    OPS.with(|o| match o.borrow_mut().remove(&op) {
+        Some(Slot::Done(a)) => Some(a),
+        _ => None,
+    })
+}
+
+/// Forgets an operation whose result nobody wants any more; a late answer is ignored.
+pub fn forget(op: u32) {
+    OPS.with(|o| o.borrow_mut().remove(&op));
+}
+
+fn complete(op: u32, answer: Answer) {
+    let waker = OPS.with(|o| {
+        let mut ops = o.borrow_mut();
+        match ops.get_mut(&op) {
+            Some(slot) => match std::mem::replace(slot, Slot::Done(answer)) {
+                Slot::Waiting(w) => w,
+                Slot::Done(_) => None,
+            },
+            None => None,
+        }
+    });
+    // Woken outside the borrow: the waker may call back into the module.
+    if let Some(w) = waker {
+        w.wake();
+    }
+}
+
+export! {
+    /// The answer to operation `op`: an errno (0 for success), a number, and `len`
+    /// bytes of data in the input buffer.
+    fn psh_complete(op: u32, err: i32, value: f64, len: usize) {
+        let data = take_input(len);
+        complete(op, Answer { err, value, data });
+    }
+}
+
+/// A future over one operation.
+pub struct OpFuture {
+    op: u32,
+    done: bool,
+}
+
+impl OpFuture {
+    pub fn new(op: u32) -> OpFuture {
+        OpFuture { op, done: false }
+    }
+}
+
+impl Future for OpFuture {
+    type Output = Answer;
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Answer> {
+        let r = poll(self.op, cx);
+        if r.is_ready() {
+            self.done = true;
+        }
+        r
+    }
+}
+
+impl Drop for OpFuture {
+    fn drop(&mut self) {
+        if !self.done {
+            forget(self.op);
+        }
+    }
+}
+
+#[cfg(test)]
+pub fn complete_for_test(op: u32, answer: Answer) {
+    complete(op, answer);
+}

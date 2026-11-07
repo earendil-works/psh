@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Builds the two wasm modules (crates/psh-wasm, profile `wasm`) into target/wasm/:
+#
+#   psh.wasm         the shell: psh-engine over the JS host, plus parse and classify
+#   psh-parser.wasm  the parser module: psh-syntax and psh-classify only
+#
+# and prints their sizes, raw and gzipped (gzip -9). js/psh.mjs loads either.
+#
+#   scripts/build-wasm [--sizes]   --sizes: print only the size lines
+set -euo pipefail
+cd "$(dirname "$0")/.."
+quiet=0
+[ "${1:-}" = --sizes ] && quiet=1
+mkdir -p target/wasm
+build() { # build OUT CARGO-ARGS...
+  local out=$1
+  shift
+  # Separate target directories: the two feature sets would rebuild each other.
+  cargo build -q -p psh-wasm --target wasm32-unknown-unknown --profile wasm \
+    --target-dir "target/wasm/build-$out" "$@"
+  cp "target/wasm/build-$out/wasm32-unknown-unknown/wasm/psh_wasm.wasm" "target/wasm/$out.wasm"
+  printf '%-16s %8d bytes, %7d gzipped\n' "$out.wasm" \
+    "$(wc -c <"target/wasm/$out.wasm" | tr -d ' ')" "$(gzip -9c "target/wasm/$out.wasm" | wc -c | tr -d ' ')"
+}
+[ $quiet = 1 ] || echo "== building target/wasm/psh.wasm and target/wasm/psh-parser.wasm"
+build psh
+build psh-parser --no-default-features

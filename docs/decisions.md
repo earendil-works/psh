@@ -1750,7 +1750,7 @@ USR1 USR2 ALRM.
 ## D1130: Blocking utilities: `UtilCtx::run_blocking` and `SyncCtx`
 date: 2026-11-07 · by: infra · issue: 0013
 Builds D1080's exception, additively (UtilCtx v1 is unchanged: `UtilFn` and `UtilEntry`
-stay; `UTIL_API_VERSION` stays 1, the new items are extra). A utility on synchronous
+stay; the new items are additive and need no version bump). A utility on synchronous
 crates is an ordinary async utility whose front end parses arguments on the engine
 thread (so `run_program` fall-through stays async), then awaits
 `ctx.run_blocking(BlockingOptions { stdin }, arg, body)` with `body: fn(&mut SyncCtx,

@@ -1,0 +1,17 @@
+# Ratchet for layer agent on wasm (D1113): active cases that pass natively
+# (not in expected-failures.txt) but may fail here, each with its reason. Cases
+# that need external programs are not listed. psh-spec --update-ratchet removes
+# cases that pass; never add a regression.
+agent/cd-chains/0: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+agent/cd-chains/2: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+agent/cd-chains/6: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+agent/cd-chains/7: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+agent/cd-chains/8: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+agent/cd-chains/9: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+agent/cd-chains/10: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+agent/cd-chains/11: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+agent/cd-chains/12: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+agent/cd-chains/14: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+agent/cd-chains/15: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+agent/control/22: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+agent/globs-status/7: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has

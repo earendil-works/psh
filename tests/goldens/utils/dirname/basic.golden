@@ -1,0 +1,43 @@
+# Goldens for tests/utils/dirname/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: the usual paths
+status: 0
+bash-n: 0
+--- stdout
+|/usr/lib
+|dir
+|.
+
+=== 1: trailing and repeated slashes
+status: 0
+bash-n: 0
+--- stdout
+|/a
+|.
+|/
+|/
+
+=== 2: several names
+status: 0
+bash-n: 0
+--- stdout
+|a
+|c/d
+|.
+
+=== 3: -z ends names with NUL
+status: 0
+bash-n: 0
+--- stdout
+|a@c@
+
+=== 4: no operand
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|dirname: missing operand
+|Try 'dirname --help' for more information.

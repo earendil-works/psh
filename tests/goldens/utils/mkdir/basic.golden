@@ -1,0 +1,127 @@
+# Goldens for tests/utils/mkdir/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: one and several directories
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+--- dir a
+--- dir b
+--- dir c
+
+=== 1: an existing name fails
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|mkdir: cannot create directory ‘a’: File exists
+|mkdir: cannot create directory ‘f’: File exists
+--- dir a
+--- file f
+
+=== 2: a missing parent fails
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|mkdir: cannot create directory ‘x/y’: No such file or directory
+
+=== 3: -p makes the parents and accepts existing directories
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|made
+--- dir a
+--- dir a/b
+--- dir a/b/c
+
+=== 4: -p through dot and dot-dot
+status: 0
+bash-n: 0
+--- stdout
+|made
+--- dir d
+--- dir d/e
+--- dir d/f
+
+=== 5: -p over a file fails
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|mkdir: cannot create directory ‘f’: File exists
+|mkdir: cannot create directory ‘f’: Not a directory
+--- file f
+
+=== 6: -v reports each directory
+status: 0
+bash-n: 0
+--- stdout
+|mkdir: created directory 'a'
+|mkdir: created directory 'a/b'
+|mkdir: created directory 'c'
+--- dir a
+--- dir a/b
+--- dir c
+
+=== 7: -m sets the mode exactly
+status: 0
+bash-n: 0
+--- stdout
+|drwx------
+|dr-xr-xr-x
+--- dir private
+--- dir ro
+
+=== 8: -m takes a symbolic mode from a=rwx
+status: 0
+bash-n: 0
+--- stdout
+|drwxr-x---
+|drwxr-xr-x
+--- dir m1
+--- dir m2
+
+=== 9: the umask applies without -m
+status: 0
+bash-n: 0
+--- stdout
+|drwx------
+|drwxr-xr-x
+--- dir a
+--- dir b
+
+=== 10: an invalid mode
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|none
+--- stderr
+|mkdir: invalid mode ‘bad’
+
+=== 11: --parents and --mode
+status: 0
+bash-n: 0
+--- stdout
+|drwxr-x---
+--- dir a
+--- dir a/b
+
+=== 12: no operand
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|mkdir: missing operand
+|Try 'mkdir --help' for more information.

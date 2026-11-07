@@ -1,0 +1,131 @@
+# Goldens for tests/utils/touch/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: creates missing files
+status: 0
+bash-n: 0
+--- stdout
+|made
+--- file a
+--- file b
+
+=== 1: keeps the contents of existing files
+status: 0
+bash-n: 0
+--- stdout
+|data
+--- file f
+|data
+
+=== 2: -c does not create
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+|none
+
+=== 3: a missing directory fails
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|touch: cannot touch 'x/y': No such file or directory
+
+=== 4: the umask applies to new files
+status: 0
+bash-n: 0
+--- stdout
+|-rw-------
+--- file a
+
+=== 5: -t sets a time
+status: 0
+bash-n: 0
+--- stdout
+|newer
+--- file newer
+--- file old
+
+=== 6: -t with a two-digit year
+status: 0
+bash-n: 0
+--- stdout
+|same
+--- file a
+--- file b
+
+=== 7: -r copies another file's times
+status: 0
+bash-n: 0
+--- stdout
+|same
+--- file f
+--- file ref
+
+=== 8: -d with an ISO date
+status: 0
+bash-n: 0
+--- stdout
+|same
+--- file a
+--- file b
+
+=== 9: -d with the BSD form
+status: 0
+bash-n: 0
+--- stdout
+|same
+--- file a
+--- file b
+
+=== 10: -d with a relative date
+status: 0
+bash-n: 0
+--- stdout
+|ordered
+--- file a
+--- file b
+--- file c
+
+=== 11: -d with epoch seconds
+status: 0
+bash-n: 0
+--- stdout
+|same
+--- file a
+--- file b
+
+=== 12: -m changes only the modification time
+status: 0
+bash-n: 0
+--- stdout
+|same
+--- file a
+--- file b
+
+=== 13: an invalid -t stamp
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|touch: invalid date format ‘99’
+
+=== 14: an invalid -d date
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|touch: invalid date format ‘not a date’
+
+=== 15: no operand
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|touch: missing file operand
+|Try 'touch --help' for more information.

@@ -3,3 +3,18 @@
 # that need external programs are not listed. psh-spec --update-ratchet removes
 # cases that pass; never add a regression.
 oils/bugs/13: ulimit is not supported yet; natively it passes only where /dev/full is missing (macOS)
+oils/builtin-bracket/36: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/builtin-cd/2: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/builtin-cd/7: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/builtin-cd/9: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/builtin-cd/10: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/builtin-cd/13: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/builtin-cd/16: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/builtin-cd/18: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/builtin-echo/26: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/builtin-eval-source/19: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/builtin-eval-source/21: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/builtin-eval-source/22: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/builtin-read/46: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/builtin-read/47: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/builtin-read/48: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has

@@ -1,0 +1,97 @@
+# Goldens for tests/utils/readlink/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: a symlink's target as stored
+status: 0
+bash-n: 0
+--- stdout
+|some/where
+--- link l -> some/where
+
+=== 1: not a symlink: status 1, no message
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- file f
+
+=== 2: -f resolves every link
+status: 0
+bash-n: 0
+--- stdout
+|<case>/d/sub
+|<case>/d/sub
+--- dir d
+--- link d/back -> ../l
+--- dir d/sub
+--- link l -> d/sub
+
+=== 3: -f with a missing last component
+status: 1
+bash-n: 0
+
+=== 4: -f with a missing directory fails
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 5: -e needs every component
+status: 1
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|readlink: illegal option -- e
+|usage: readlink [-fn] [file ...]
+|readlink: illegal option -- e
+|usage: readlink [-fn] [file ...]
+--- link dangling -> nowhere
+--- file f
+
+=== 6: -m needs none
+status: 1
+bash-n: 0
+--- stderr
+|readlink: illegal option -- m
+|usage: readlink [-fn] [file ...]
+|readlink: illegal option -- m
+|usage: readlink [-fn] [file ...]
+
+=== 7: -n drops the newline
+status: 0
+bash-n: 0
+--- stdout
+|target|
+--- link l -> target
+
+=== 8: -n with several names is ignored
+status: 0
+bash-n: 0
+--- stdout
+|t1t2
+~ no newline at end
+--- link a -> t1
+--- link b -> t2
+
+=== 9: -v reports why
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|readlink: illegal option -- v
+|usage: readlink [-fn] [file ...]
+--- file f
+
+=== 10: a link chain resolves to its end
+status: 0
+bash-n: 0
+--- stdout
+|one
+|<case>/end
+--- file end
+--- link one -> end
+--- link two -> one

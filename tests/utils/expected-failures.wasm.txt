@@ -1,0 +1,20 @@
+# Ratchet for layer utils on wasm (D1113): active cases that pass natively
+# (not in expected-failures.txt) but may fail here, each with its reason. Cases
+# that need external programs are not listed. psh-spec --update-ratchet removes
+# cases that pass; never add a regression.
+utils/cat/basic/12: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/mkdir/basic/1: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/mkdir/basic/3: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/mkdir/basic/4: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/mkdir/basic/6: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/realpath/basic/0: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/realpath/basic/8: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/realpath/basic/9: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/realpath/basic/12: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/rmdir/basic/1: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/rmdir/basic/5: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/rmdir/basic/6: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/rmdir/basic/7: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/touch/basic/5: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/touch/basic/6: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/touch/basic/10: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has

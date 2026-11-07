@@ -1,0 +1,79 @@
+# Goldens for tests/utils/basename/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: a path and a suffix
+status: 0
+bash-n: 0
+--- stdout
+|libc
+|file
+
+=== 1: trailing slashes and the root
+status: 0
+bash-n: 0
+--- stdout
+|b
+|/
+|/
+
+=== 2: a suffix equal to the name stays
+status: 0
+bash-n: 0
+--- stdout
+|.c
+
+=== 3: -a takes several names
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+
+=== 4: -s removes a suffix from every name
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c.h
+
+=== 5: --suffix and --multiple
+status: 1
+bash-n: 0
+--- stderr
+|basename: illegal option -- -
+|usage: basename string [suffix]
+|       basename [-a] [-s suffix] string [...]
+|basename: illegal option -- -
+|usage: basename string [suffix]
+|       basename [-a] [-s suffix] string [...]
+
+=== 6: -z ends names with NUL
+status: 0
+bash-n: 0
+--- stdout
+|
+--- stderr
+|basename: illegal option -- z
+|usage: basename string [suffix]
+|       basename [-a] [-s suffix] string [...]
+
+=== 7: an extra operand
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+|status=0
+
+=== 8: no operand
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|usage: basename string [suffix]
+|       basename [-a] [-s suffix] string [...]

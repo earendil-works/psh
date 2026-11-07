@@ -1,0 +1,73 @@
+# Goldens for tests/utils/basename/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: a path and a suffix
+status: 0
+bash-n: 0
+--- stdout
+|libc
+|file
+
+=== 1: trailing slashes and the root
+status: 0
+bash-n: 0
+--- stdout
+|b
+|/
+|/
+
+=== 2: a suffix equal to the name stays
+status: 0
+bash-n: 0
+--- stdout
+|.c
+
+=== 3: -a takes several names
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+
+=== 4: -s removes a suffix from every name
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c.h
+
+=== 5: --suffix and --multiple
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|q
+|r
+
+=== 6: -z ends names with NUL
+status: 0
+bash-n: 0
+--- stdout
+|b@
+
+=== 7: an extra operand
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|basename: extra operand ‘c’
+|Try 'basename --help' for more information.
+
+=== 8: no operand
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|basename: missing operand
+|Try 'basename --help' for more information.

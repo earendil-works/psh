@@ -1,0 +1,125 @@
+# Goldens for tests/utils/realpath/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: files and directories
+status: 0
+bash-n: 0
+--- stdout
+|<case>/d/f
+|<case>/d/sub
+|<case>/d
+|<case>
+--- dir d
+--- file d/f
+--- dir d/sub
+
+=== 1: symlinks are resolved
+status: 0
+bash-n: 0
+--- stdout
+|<case>/d/sub
+|<case>/d
+--- dir d
+--- dir d/sub
+--- link l -> d/sub
+
+=== 2: a missing last component is fine
+status: 0
+bash-n: 0
+--- stdout
+|<case>/missing
+
+=== 3: a missing directory fails
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|realpath: missing/x: No such file or directory
+
+=== 4: a file used as a directory fails
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|realpath: f/: Not a directory
+|realpath: f/x: Not a directory
+--- file f
+
+=== 5: -e needs every component
+status: 0
+bash-n: 0
+--- stdout
+|<case>/f
+|status=1
+--- stderr
+|realpath: missing: No such file or directory
+--- file f
+
+=== 6: -m needs none
+status: 0
+bash-n: 0
+--- stdout
+|<case>/f/y
+|<case>/nope/z
+--- file f
+
+=== 7: -s keeps symlinks
+status: 0
+bash-n: 0
+--- stdout
+|<case>/l
+|<case>
+--- dir d
+--- dir d/sub
+--- link l -> d/sub
+
+=== 8: --relative-to
+status: 0
+bash-n: 0
+--- stdout
+|../../c/f
+|c/f
+|a
+|.
+--- dir a
+--- dir a/b
+--- dir c
+--- file c/f
+
+=== 9: --relative-base
+status: 0
+bash-n: 0
+--- stdout
+|a/b
+|/
+|..
+|/
+--- dir a
+--- dir a/b
+
+=== 10: -q is quiet
+status: 0
+bash-n: 0
+--- stdout
+|<case>/f
+|status=1
+--- file f
+
+=== 11: -z ends names with NUL
+status: 0
+bash-n: 0
+--- stdout
+|d@d@
+--- dir d
+
+=== 12: no operand means the working directory
+status: 1
+bash-n: 0
+--- stderr
+|realpath: missing operand
+|Try 'realpath --help' for more information.
+--- dir d

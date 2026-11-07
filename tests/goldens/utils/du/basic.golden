@@ -1,0 +1,125 @@
+# Goldens for tests/utils/du/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: an empty file
+status: 0
+bash-n: 0
+--- stdout
+|0	f
+--- file f
+
+=== 1: a file of one block
+status: 0
+bash-n: 0
+--- stdout
+|4	f
+--- file f
+|x
+~ no newline at end
+
+=== 2: -h
+status: 0
+bash-n: 0
+--- stdout
+|4.0K	f
+--- file f
+|x
+~ no newline at end
+
+=== 3: -c totals
+status: 0
+bash-n: 0
+--- stdout
+|4	a
+|4	b
+|8	total
+--- file a
+|x
+~ no newline at end
+--- file b
+|y
+~ no newline at end
+
+=== 4: apparent sizes
+status: 0
+bash-n: 0
+--- stdout
+|5	d/e
+|8	d
+|3000	d/a
+|5000	d/e/b
+|5000	d/e
+|8000	d
+--- dir d
+--- file d/a
+|                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+~ no newline at end
+--- dir d/e
+--- file d/e/b
+|                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+~ no newline at end
+
+=== 5: BSD -A
+status: 1
+bash-n: 0
+--- stderr
+|du: invalid option -- 'A'
+|Try 'du --help' for more information.
+--- file f
+|                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+~ no newline at end
+
+=== 6: -s, -d and --max-depth
+status: 0
+bash-n: 0
+--- stdout
+|2000	d
+|2000	d/e
+|2000	d
+|2000	d
+--- dir d
+--- dir d/e
+--- dir d/e/f
+--- file d/e/f/x
+|                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+~ no newline at end
+
+=== 7: --exclude
+status: 0
+bash-n: 0
+--- stdout
+|100	d/a
+|0	d/e
+|100	d
+|100	d
+--- dir d
+--- file d/a
+|                                                                                                    
+~ no newline at end
+--- dir d/e
+--- file d/e/b
+|                                                                                                                                                                                                        
+~ no newline at end
+
+=== 8: hard links count once
+status: 0
+bash-n: 0
+--- stdout
+|100	d
+|200	d
+--- dir d
+--- file d/a
+|                                                                                                    
+~ no newline at end
+--- file d/b
+|                                                                                                    
+~ no newline at end
+
+=== 9: a missing file
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|du: cannot access 'nope': No such file or directory

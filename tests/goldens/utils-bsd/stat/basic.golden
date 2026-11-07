@@ -1,0 +1,135 @@
+# Goldens for tests/utils/stat/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: GNU -c
+status: 1
+bash-n: 0
+--- stderr
+|stat: illegal option -- c
+|usage: stat [-FLnq] [-f format | -l | -r | -s | -x] [-t timefmt] [file ...]
+--- file f
+|12345
+~ no newline at end
+
+=== 1: GNU -c times
+status: 1
+bash-n: 0
+--- stderr
+|stat: illegal option -- c
+|usage: stat [-FLnq] [-f format | -l | -r | -s | -x] [-t timefmt] [file ...]
+|stat: illegal option -- c
+|usage: stat [-FLnq] [-f format | -l | -r | -s | -x] [-t timefmt] [file ...]
+--- file f
+
+=== 2: GNU %N and -L for symlinks
+status: 1
+bash-n: 0
+--- stderr
+|stat: illegal option -- c
+|usage: stat [-FLnq] [-f format | -l | -r | -s | -x] [-t timefmt] [file ...]
+|stat: illegal option -- c
+|usage: stat [-FLnq] [-f format | -l | -r | -s | -x] [-t timefmt] [file ...]
+--- file f
+--- link l -> f
+
+=== 3: GNU --printf and --format
+status: 1
+bash-n: 0
+--- stderr
+|stat: illegal option -- -
+|usage: stat [-FLnq] [-f format | -l | -r | -s | -x] [-t timefmt] [file ...]
+|stat: illegal option -- -
+|usage: stat [-FLnq] [-f format | -l | -r | -s | -x] [-t timefmt] [file ...]
+--- file f
+|abc
+~ no newline at end
+
+=== 4: GNU file types
+status: 1
+bash-n: 0
+--- stderr
+|stat: illegal option -- c
+|usage: stat [-FLnq] [-f format | -l | -r | -s | -x] [-t timefmt] [file ...]
+--- dir d
+--- file e
+--- file f
+|x
+~ no newline at end
+
+=== 5: GNU widths
+status: 1
+bash-n: 0
+--- stderr
+|stat: illegal option -- c
+|usage: stat [-FLnq] [-f format | -l | -r | -s | -x] [-t timefmt] [file ...]
+--- file f
+|123456
+~ no newline at end
+
+=== 6: GNU -t terse
+status: 0
+bash-n: 0
+--- stdout
+|2105028599 336
+--- file f
+|12
+~ no newline at end
+
+=== 7: GNU default output
+status: 0
+bash-n: 0
+--- stdout
+|16777232 245100616 -rw-r--r-- 1 mitsuhiko staff 0 2 "Nov  7 15:19:17 2026" "Nov  7 15:19:17 2026" "Nov  7 15:19:17 2026" "Nov  7 15:19:17 2026" 4096 8 0 f
+--- file f
+|12
+~ no newline at end
+
+=== 8: BSD -f
+status: 0
+bash-n: 0
+--- stdout
+|5 f 640 -rw-r----- 100640
+--- file f
+|12345
+~ no newline at end
+
+=== 9: BSD -f times and -t
+status: 0
+bash-n: 0
+--- stdout
+|1704164645
+|2024-01-02 03:04:05
+|2024-01-02
+--- file f
+
+=== 10: BSD file types and links
+status: 0
+bash-n: 0
+--- stdout
+|f Regular File
+|d Directory
+|l Symbolic Link -> f
+|d/
+|l@
+--- dir d
+--- file f
+--- link l -> f
+
+=== 11: BSD widths
+status: 0
+bash-n: 0
+--- stdout
+|[         6|f   |00644]
+--- file f
+|123456
+~ no newline at end
+
+=== 12: a missing file
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|stat: illegal option -- c
+|usage: stat [-FLnq] [-f format | -l | -r | -s | -x] [-t timefmt] [file ...]

@@ -1,0 +1,87 @@
+# Goldens for tests/utils/mktemp/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: a file from a template here
+status: 0
+bash-n: 0
+--- stdout
+|shape
+|file
+|-rw-------
+
+=== 1: a directory
+status: 0
+bash-n: 0
+--- stdout
+|dir
+|drwx------
+
+=== 2: -p puts it in a directory
+status: 0
+bash-n: 0
+--- stdout
+|shape
+|1
+
+=== 3: the default template in TMPDIR
+status: 0
+bash-n: 0
+--- stdout
+|shape
+
+=== 4: -t with a template (GNU)
+status: 0
+bash-n: 0
+--- stdout
+|shape
+
+=== 5: -t with a prefix (BSD)
+status: 0
+bash-n: 0
+--- stderr
+|mktemp: too few X's in template ‘foo’
+
+=== 6: -u does not create
+status: 0
+bash-n: 0
+--- stdout
+|none
+
+=== 7: every name differs
+status: 0
+bash-n: 0
+--- stdout
+|differ
+|2
+
+=== 8: too few X's
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|mktemp: too few X's in template ‘x’
+
+=== 9: a missing directory
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 10: --suffix
+status: 0
+bash-n: 0
+--- stdout
+|shape
+
+=== 11: several templates
+status: 1
+bash-n: 0
+--- stdout
+|0
+--- stderr
+|mktemp: too many templates
+|Try 'mktemp --help' for more information.
+|rm: missing operand
+|Try 'rm --help' for more information.

@@ -47,8 +47,13 @@ mod mv;
 mod nl;
 mod paste;
 mod rm;
+
+mod du;
+mod ls;
+mod mktemp;
 mod seq;
 mod sort;
+mod stat;
 mod tee;
 mod tr;
 mod uniq;
@@ -349,6 +354,30 @@ pub static REGISTRY: &[UtilEntry] = &[
         destructive: false,
         run: util_fn!(sed::run),
     },
+    UtilEntry {
+        names: &["ls"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(ls::run),
+    },
+    UtilEntry {
+        names: &["stat"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(stat::run),
+    },
+    UtilEntry {
+        names: &["du"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(du::run),
+    },
+    UtilEntry {
+        names: &["mktemp"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(mktemp::run),
+    },
 ];
 
 /// The option specs, for the classifier check (D1082).
@@ -399,6 +428,10 @@ pub static SPECS: &[opts::Spec] = &[
     diff::SPEC,
     env::PRINTENV_SPEC,
     sed::SPEC,
+    ls::SPEC,
+    stat::SPEC,
+    du::SPEC,
+    mktemp::SPEC,
 ];
 
 /// The policy for a shell: every utility on. `sandbox`: no real programs exist (wasm),

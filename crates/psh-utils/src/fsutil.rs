@@ -224,6 +224,38 @@ pub fn is_below(path: &[u8], base: &[u8]) -> bool {
     a.len() >= b.len() && a[..b.len()] == b[..]
 }
 
+/// GNU's `-h` sizes: below the base as is, else one decimal under 10 and whole numbers
+/// above, always rounded up (`1.0K`, `1.5K`, `12K`, `1.1M`); `base` 1000 is `--si`.
+pub fn human(n: u64, base: u64) -> String {
+    if n < base {
+        return n.to_string();
+    }
+    let units: &[u8] = if base == 1000 {
+        b"kMGTPEZY"
+    } else {
+        b"KMGTPEZY"
+    };
+    let mut unit = 0;
+    let mut div = base as u128;
+    let n = n as u128;
+    while n >= div * base as u128 && unit + 1 < units.len() {
+        div *= base as u128;
+        unit += 1;
+    }
+    loop {
+        let tenths = (n * 10).div_ceil(div);
+        if tenths < 100 {
+            return format!("{}.{}{}", tenths / 10, tenths % 10, units[unit] as char);
+        }
+        let whole = n.div_ceil(div);
+        if whole < base as u128 || unit + 1 == units.len() {
+            return format!("{whole}{}", units[unit] as char);
+        }
+        div *= base as u128;
+        unit += 1;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -244,6 +276,14 @@ mod tests {
         assert_eq!(relative_to(b"/tmp/f", b"/usr/bin"), b"../../tmp/f");
         assert_eq!(relative_to(b"/a", b"/a"), b".");
         assert_eq!(relative_to(b"/a/b/c", b"/a"), b"b/c");
+        assert_eq!(human(1023, 1024), "1023");
+        assert_eq!(human(1024, 1024), "1.0K");
+        assert_eq!(human(1025, 1024), "1.1K");
+        assert_eq!(human(10240, 1024), "10K");
+        assert_eq!(human(10239, 1024), "10K");
+        assert_eq!(human(1048575, 1024), "1.0M");
+        assert_eq!(human(1500000, 1024), "1.5M");
+        assert_eq!(human(1000, 1000), "1.0k");
         assert!(is_below(b"/a/b", b"/a") && !is_below(b"/ab", b"/a") && is_below(b"/x", b"/"));
     }
 }

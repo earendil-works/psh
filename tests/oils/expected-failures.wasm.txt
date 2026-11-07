@@ -15,3 +15,4 @@ oils/builtin-process/23: the JS host has no resource limits (Host::rlimit is Non
 oils/builtin-process/24: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
 oils/globignore/7: the case's files are written back to the case-insensitive macOS file system (A and a are one file)
 oils/builtin-process/10: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+oils/var-sub/1: the JS MemHost has no /bin/ls file (ls itself runs in-process)

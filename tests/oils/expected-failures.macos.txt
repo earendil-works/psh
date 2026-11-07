@@ -3,6 +3,22 @@
 # psh-spec --update-ratchet removes cases that pass; never add a regression.
 oils/alias/47: BSD ls: other messages and exit status than GNU ls
 oils/builtin-bracket/31: BSD touch -d does not take this date format
+oils/builtin-echo/17: BSD od pads its columns differently from GNU od
+oils/builtin-echo/18: BSD od pads its columns differently from GNU od
+oils/builtin-echo/19: BSD od pads its columns differently from GNU od
+oils/builtin-echo/20: BSD od pads its columns differently from GNU od
+oils/builtin-echo/21: BSD od pads its columns differently from GNU od
+oils/builtin-echo/22: BSD od pads its columns differently from GNU od
+oils/builtin-echo/23: BSD od pads its columns differently from GNU od
+oils/builtin-echo/24: BSD od pads its columns differently from GNU od
+oils/builtin-echo/25: BSD od pads its columns differently from GNU od
+oils/builtin-misc/1: the case's external echo is BSD's, without -e
+oils/builtin-printf/38: BSD od pads its columns differently from GNU od
+oils/builtin-printf/58: BSD od pads its columns differently from GNU od
+oils/command-sub/8: macOS has no tac
+oils/command-sub/9: macOS has no tac
+oils/builtin-type/1: the case puts only some directories on PATH; on macOS sed is not in them
+oils/builtin-type-bash/27: the case puts only some directories on PATH; on macOS sed is not in them
 oils/globignore/7: APFS is case-insensitive (A and a are one file)
 oils/here-doc/16: macOS has no tac
 oils/here-doc/17: macOS has no tac
@@ -26,5 +42,4 @@ oils/redirect-command/8: macOS has no tac
 oils/sh-options-bash/6: the bash on macOS's PATH is 3.2, which prints set -o differently
 oils/smoke/6: macOS has no tac
 oils/smoke/7: macOS has no tac
-oils/smoke/14: BSD ls: other messages and exit status than GNU ls
 oils/var-op-strip/10: BSD od pads its columns differently from GNU od

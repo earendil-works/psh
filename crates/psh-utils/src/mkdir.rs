@@ -75,6 +75,10 @@ async fn make(
     Ok(())
 }
 
+fn is_drive(c: &[u8]) -> bool {
+    cfg!(windows) && c.len() == 2 && c[0].is_ascii_alphabetic() && c[1] == b':'
+}
+
 /// `-p`: every missing directory on the way, the parents with `u+wx` so the next level
 /// can be made, the last with `mode`; an existing directory is fine.
 async fn make_parents(
@@ -85,7 +89,9 @@ async fn make_parents(
     verbose: bool,
 ) -> Result<(), (Vec<u8>, io::Error)> {
     let parent_mode = (0o777 & !umask) | 0o300;
-    let comps: Vec<&[u8]> = dir.split(|&b| b == b'/').collect();
+    let comps: Vec<&[u8]> = dir
+        .split(|&b| b == b'/' || (cfg!(windows) && b == b'\\'))
+        .collect();
     let last = comps.iter().rposition(|c| !c.is_empty()).unwrap_or(0);
     let mut cur: Vec<u8> = Vec::new();
     for (i, c) in comps.iter().enumerate() {
@@ -93,7 +99,8 @@ async fn make_parents(
             cur.push(b'/');
         }
         cur.extend_from_slice(c);
-        if c.is_empty() || *c == b"." {
+        // A drive (`C:` of `C:/x`) is a root, like the empty first component of `/x`.
+        if c.is_empty() || *c == b"." || (i == 0 && is_drive(c)) {
             continue;
         }
         let m = if i == last { mode } else { parent_mode };

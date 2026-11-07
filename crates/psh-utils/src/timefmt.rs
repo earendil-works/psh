@@ -459,6 +459,18 @@ pub fn parse_date(ctx: &UtilCtx<'_>, s: &[u8], now_ns: i64) -> Option<i64> {
                 continue;
             }
             if sign == 1 && c != b'+' && lx.eat(b'/') {
+                if len == 4 {
+                    // YYYY/MM/DD.
+                    let (m, _) = lx.digits()?;
+                    lx.eat(b'/').then_some(())?;
+                    let (d, _) = lx.digits()?;
+                    let y = i64::from(n);
+                    if !(1..=12).contains(&m) || d == 0 || d > days_in_month(y, m) {
+                        return None;
+                    }
+                    p.date = Some((y, m, d));
+                    continue;
+                }
                 // US date: MM/DD[/YYYY].
                 let (d, _) = lx.digits()?;
                 let y = if lx.eat(b'/') {
@@ -700,6 +712,18 @@ pub fn format(fmt: &[u8], tm: &Tm, abbr: &str, epoch: i64) -> Vec<u8> {
     let mut out = Vec::new();
     format_into(&mut out, fmt, tm, abbr, epoch);
     out
+}
+
+/// `format` for a broken-down time alone (`ls --time-style`, `stat -t`): `%Z` is `UTC`
+/// at offset 0, else the numeric offset; `%s` from the fields.
+pub fn strftime(fmt: &[u8], t: &Tm) -> Vec<u8> {
+    let epoch = wall_secs(t.year, t.mon, t.day, t.hour, t.min, t.sec) - i64::from(t.offset);
+    let abbr = if t.offset == 0 {
+        "UTC".to_string()
+    } else {
+        numeric_zone(t.offset, 0)
+    };
+    format(fmt, t, &abbr, epoch)
 }
 
 enum Field {

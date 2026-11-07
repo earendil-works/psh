@@ -47,3 +47,39 @@ utils/date/basic/10: Windows has no zone files: TZ=Region/City falls back to the
 utils/fd/basic/10: the Windows VM cannot create symlinks to files (no Developer Mode), and Windows keeps no execute bits (chmod +x is not tracked yet; 0015 follow-up)
 utils/fd/basic/11: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
 utils/fd/basic/26: the Windows VM cannot create symlinks to files (no Developer Mode), and Windows keeps no execute bits (chmod +x is not tracked yet; 0015 follow-up)
+utils/chmod/basic/0: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/chmod/basic/1: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/chmod/basic/3: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/chmod/basic/4: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/chmod/basic/5: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/chmod/basic/6: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/chmod/basic/7: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/chmod/basic/8: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/chmod/basic/12: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/cp/basic/1: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/cp/basic/2: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/cp/basic/16: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/du/basic/1: the Windows host reports no allocated blocks: du counts the size in 512-byte units
+utils/du/basic/2: the Windows host reports no allocated blocks: du counts the size in 512-byte units
+utils/du/basic/3: the Windows host reports no allocated blocks: du counts the size in 512-byte units
+utils/ln/basic/6: Windows: a directory symlink is a junction, whose target is absolute (D1150)
+utils/ln/basic/15: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/ls/basic/6: Windows keeps no execute bits and the VM cannot create file symlinks (no -F markers for them)
+utils/ls/basic/9: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/ls/basic/10: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/ls/basic/16: Windows: a directory symlink is a junction, whose target is absolute (D1150)
+utils/ls/basic/17: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/mkdir/basic/7: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/mkdir/basic/8: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/mkdir/basic/9: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/mkdir/basic/11: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/mktemp/basic/0: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/mktemp/basic/1: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/mv/basic/16: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/stat/basic/0: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/stat/basic/2: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/stat/basic/4: the Windows host cannot stat /dev/null (NUL: Incorrect function)
+utils/stat/basic/8: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/stat/basic/10: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/touch/basic/4: Windows keeps only the read-only attribute: other permission bits are not kept (D1150)
+utils/sed/options/19: Windows keeps only the read-only attribute: other permission bits are not kept (D1150); ls runs in-process now

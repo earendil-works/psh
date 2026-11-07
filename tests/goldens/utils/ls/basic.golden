@@ -1,0 +1,335 @@
+# Goldens for tests/utils/ls/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: names in byte order, one per line off a terminal
+status: 0
+bash-n: 0
+--- stdout
+|D
+|_x
+|a
+|b
+|c
+--- file D
+--- file _x
+--- file a
+--- file b
+--- file c
+
+=== 1: hidden names need -a or -A
+status: 0
+bash-n: 0
+--- stdout
+|x
+|--
+|.
+|..
+|.h
+|x
+|--
+|.h
+|x
+--- file .h
+--- file x
+
+=== 2: -1 and -d
+status: 0
+bash-n: 0
+--- stdout
+|f
+|d
+--- dir d
+--- file d/f
+
+=== 3: files first, then directories with headers
+status: 0
+bash-n: 0
+--- stdout
+|f
+|
+|d:
+|x
+|
+|e:
+|y
+--- dir d
+--- file d/x
+--- dir e
+--- file e/y
+--- file f
+
+=== 4: a missing operand
+status: 0
+bash-n: 0
+--- stdout
+|f
+|status=2
+--- stderr
+|ls: cannot access 'nope': No such file or directory
+--- file f
+
+=== 5: -R
+status: 0
+bash-n: 0
+--- stdout
+|d:
+|e
+|f
+|
+|d/e:
+|g
+|h
+|
+|d/e/g:
+--- dir d
+--- dir d/e
+--- dir d/e/g
+--- file d/e/h
+--- file d/f
+
+=== 6: -F and -p
+status: 0
+bash-n: 0
+--- stdout
+|d/
+|f
+|l@
+|x*
+|--
+|d/
+|f
+|l
+|x
+--- dir d
+--- file f
+--- link l -> f
+--- file x
+
+=== 7: -t newest first, -r reverses
+status: 0
+bash-n: 0
+--- stdout
+|b
+|c
+|a
+|--
+|a
+|c
+|b
+--- file a
+--- file b
+--- file c
+
+=== 8: -S largest first
+status: 0
+bash-n: 0
+--- stdout
+|b
+|c
+|a
+|--
+|a
+|c
+|b
+--- file a
+|1
+~ no newline at end
+--- file b
+|123
+~ no newline at end
+--- file c
+|12
+~ no newline at end
+
+=== 9: the long format
+status: 0
+bash-n: 0
+--- stdout
+|-rw-r----- 1 5 Jan 2 2020 f
+--- file f
+|12345
+~ no newline at end
+
+=== 10: the long format of a directory listing
+status: 0
+bash-n: 0
+--- stdout
+|3 Jan 2 2020 a
+|1 Jan 2 2020 l -> a
+|-
+|l
+--- dir d
+--- file d/a
+|123
+~ no newline at end
+--- link d/l -> a
+
+=== 11: -h sizes
+status: 0
+bash-n: 0
+--- stdout
+|2.0K a
+|1.5M b
+|1 c
+--- file a
+|                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+~ no newline at end
+--- bigfile b 1500000 4397ce8a782736a5
+--- file c
+|x
+~ no newline at end
+
+=== 12: -n numeric ids
+status: 0
+bash-n: 0
+--- stdout
+|-rw-r--r-- 0 Jan 2 2020 f
+--- file f
+
+=== 13: --time-style
+status: 0
+bash-n: 0
+--- stdout
+|2020-01-02 03:04:05.000000000 +0000 f
+|2020-01-02 03:04 f
+|2020-01-02 f
+|1577934245 f
+|2020-01-02 03:04:05.000000000 +0000 f
+--- file f
+
+=== 14: -T shows full times (BSD)
+status: 0
+bash-n: 0
+--- stderr
+|ls: invalid tab size: ‘f’
+--- file f
+
+=== 15: -G is BSD's color: none off a terminal
+status: 0
+bash-n: 0
+--- stdout
+|f
+|8
+--- file f
+
+=== 16: a symlink to a directory as an operand
+status: 0
+bash-n: 0
+--- stdout
+|x
+|l
+|l -> d
+|l
+--- dir d
+--- file d/x
+--- link l -> d
+
+=== 17: -L follows symlinks
+status: 0
+bash-n: 0
+--- stdout
+|-
+--- file f
+--- link l -> f
+
+=== 18: -i prints the inode
+status: 0
+bash-n: 0
+--- stdout
+|2
+--- file f
+
+=== 19: -s on an empty file
+status: 0
+bash-n: 0
+--- stdout
+|0 f
+--- file f
+
+=== 20: -C fills columns with tab stops
+status: 0
+bash-n: 0
+--- stdout
+|aaaaaaaaaa	 cc		     e		     gggggggggggggggggggggg
+|bbbbbbbbbbbbbbb  dddddddddddddddddd  ffffffffffffff  hh
+|aaaaaaaaaa
+|bbbbbbbbbbbbbbb
+|cc
+|dddddddddddddddddd
+|e
+|ffffffffffffff
+|gggggggggggggggggggggg
+|hh
+|aaaaaaaaaa
+|bbbbbbbbbbbbbbb
+|cc
+|dddddddddddddddddd
+|e
+|ffffffffffffff
+|gggggggggggggggggggggg
+|hh
+--- file aaaaaaaaaa
+--- file bbbbbbbbbbbbbbb
+--- file cc
+--- file dddddddddddddddddd
+--- file e
+--- file ffffffffffffff
+--- file gggggggggggggggggggggg
+--- file hh
+
+=== 21: -m separates with commas
+status: 0
+bash-n: 0
+--- stdout
+|aaaa, bbbb, cccc, dddd
+|aaaa, bbbb,
+|cccc, dddd
+--- file aaaa
+--- file bbbb
+--- file cccc
+--- file dddd
+
+=== 22: -I and --hide
+status: 0
+bash-n: 0
+--- stdout
+|b.h
+|a.c
+|c.c
+|5
+--- file a.c
+--- file b.h
+--- file c.c
+
+=== 23: -v and -X
+status: 0
+bash-n: 0
+--- stdout
+|a.z
+|b.a
+|f1
+|f9
+|f10
+|--
+|f1
+|f10
+|f9
+|b.a
+|a.z
+--- file a.z
+--- file b.a
+--- file f1
+--- file f10
+--- file f9
+
+=== 24: --group-directories-first
+status: 0
+bash-n: 0
+--- stdout
+|b
+|a
+|c
+--- file a
+--- dir b
+--- file c

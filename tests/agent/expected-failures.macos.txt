@@ -1,12 +1,5 @@
 # Ratchet for layer agent on macos (D1113, D1331): active cases that may fail here
 # but pass on Linux (they are not in expected-failures.txt), each with its reason.
 # psh-spec --update-ratchet removes cases that pass; never add a regression.
-agent/files/4: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
-agent/files/5: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
-agent/globs-status/2: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
-agent/procs/40: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
-agent/procs/42: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
-agent/redirects/1: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
-agent/scripts/35: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
 agent/text/13: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
 agent/view/34: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself

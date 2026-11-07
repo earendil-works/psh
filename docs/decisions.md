@@ -2694,3 +2694,34 @@ binary is the oracle). A blocking utility (D1130) with an async front end:
   only), so a command behaves the same everywhere (dot files are hidden on Windows too).
 - The classifier's fd table lists every value option now (`-C`, `--and`, `--size`,
   `--format`, `--search-path`, ... were missing) and `--ignore-file` as a file read.
+## D1152: ls -G and -T take their BSD meanings
+date: 2026-11-07 · by: files · issue: 0015
+Settles D034 for `ls`. Corpus (295,401 commands, 6,849 `ls` with flags): `-T` appears 23
+times, every one BSD's full-time form (`ls -lT`, `ls -la -T PATH`, `ls -laT`), never
+GNU's `-T COLS`; `-G` once, as `ls -laG` (BSD color). So `-T` shows full times in the
+long format (`Jan  2 03:04:05 2024`) and takes no value; `-G` is BSD's color flag, and
+psh's `ls` prints no color (as macOS `ls` does off a terminal, which is where agents
+run). GNU's `-G` (no group) has `-o` (long without the group; GNU's meaning, where BSD's
+`-o` shows file flags); GNU's `-T COLS` is not accepted. The rest of
+`ls` is GNU's: `total` in 1 KiB blocks, aligned columns with single spaces, `-C` with
+tab stops of 8, exit 2 for a missing operand, byte-order sorting (the C locale's).
+
+## D1153: stat: GNU and BSD formats side by side
+date: 2026-11-07 · by: files · issue: 0015
+`stat -c/--format/--printf` are GNU's directives (with flags, width and precision,
+`%.3Y`); `-f FORMAT` with a `%` is BSD's `%[flags][width][.prec][DOUXFS][HML]datum`,
+psh's own formatter written from the macOS manual. `-t` is ambiguous: with a BSD format
+present, or an argument containing `%`, it is BSD's time format for `%S` times;
+otherwise GNU's terse flag and the word after it a file. `-f` before plain file names is
+GNU's file-system status, which needs statfs: it falls through to the real `stat` or
+fails clearly. The default output is GNU's; BSD's `-l`, `-s`, `-x`, `-r` fall through.
+
+## D1154: mktemp takes BSD's prefix and several templates
+date: 2026-11-07 · by: files · issue: 0015
+`mktemp -t ARG`: `ARG` with `XXX` is GNU's template in `$TMPDIR` (else `/tmp`), any
+other is BSD's prefix (`ARG.XXXXXXXXXX` there), `-t` as the last word is GNU's flag
+(D016). Several templates are created one by one (BSD); fewer than three X's fail
+(GNU; BSD would create the name as written). Names are 62 letters and digits from a
+splitmix64 stream seeded by `/dev/urandom` where it exists and the clock; creation is
+exclusive (`O_EXCL`, mode 0600; directories 0700) with retries, so predictability only
+costs retries. psh uses `$TMPDIR` where macOS's `mktemp` prefers its per-user directory.

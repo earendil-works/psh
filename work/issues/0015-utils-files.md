@@ -1,6 +1,6 @@
 # 0015: Utilities batch D: files and paths
 
-status: in-progress
+status: done
 agent: files
 branch: issue/0015-utils-files
 depends-on: 0008
@@ -82,12 +82,65 @@ group (off switch).
   symlinks inside, `-v/-c`, `--reference`.
 - D1151 (coordinator's call): `type`/`type -p`/`-f`/`command -v` report the utility that
   runs; `type -P` prints the PATH file. Two Oils type cases ratcheted with that reason.
+- The JS host (0011, D1115) and the Windows host gained D1150 meanwhile; the wasm lines
+  for it went away with them.
+- Windows L4 leg (D1914): `tests/utils/expected-failures.windows.txt` lists what the
+  Windows host cannot show: no file symlinks without Developer Mode, junctions with
+  absolute targets for directory links, only the read-only bit of a mode, no allocated
+  block counts, no stat of /dev/null, read-only directories that do not protect their
+  entries.
+- Part 3: `ls stat du mktemp`. `ls` (D1152: `-G`/`-T` are BSD's, corpus: 23 `-T`, all
+  `-lT`-style, one `-laG`): GNU long format, `total` in KiB, `-h`/`--si` rounding up,
+  `-C`/`-x` with GNU's grid and tab stops (strictly narrower than the width), `-m`,
+  `-R`, `-F -p -i -s -n -g -o -L -H -d -a -A -t -S -U -v -X -c -u -r -I --hide
+  --time-style --full-time --group-directories-first --sort --time -w`; command-line
+  symlinks to directories listed as directories unless `-l/-d/-F`; byte-order names;
+  `--color=always` and birth times fall through. `stat` (D1153): GNU `-c/--printf/-t`
+  and default output, BSD `-f` formatter of our own, `-t` disambiguated; GNU `-f`
+  (statfs) falls through. `du`: GNU units, `-A`/`-g` from BSD, hard links and repeated
+  directories once, apparent sizes count directories as 0 (as GNU here). `mktemp`
+  (D1154). Shared: `fsutil::human`, `timefmt::strftime` (GNU flags `-_0^`, `%N`, `%:z`),
+  `ls::glob` (fnmatch subset, used by du). Classifier: ls value options, du's long
+  values, mktemp's `--tmpdir` takes an optional value only.
+- `ls` in-process ended 23 agent/oils/brush ratchet lines (BSD `ls` differences on
+  macOS); two more D1151 cases (`command -v ls`, `type -t ls`). The env L4 case that used
+  `ls` as an example external now uses `sh` (env's case, minimal edit).
+- Guide pages: utilities.md and the utilities reference are not written yet; nothing to
+  update (follow-up below).
 
 ## Follow-ups
 - Windows: `chmod +x` should be tracked for shebang execution (the read-only bit is
   mapped by set_mode); `rm -r` relies on the host's lstat reporting junctions as
   symlinks and remove_file removing them.
-- JS host (psh-wasm, js/psh.mjs) and Windows host: implement the D1150 operations
-  (coordinator assigns to infra/windows).
+- Windows host: file symlinks need Developer Mode (else "Permission denied" today; ARCH
+  wants symlink → junction → clear error), x bits and group/other bits are not kept,
+  `stat /dev/null` fails with "Incorrect function", allocated blocks are unknown (du
+  shows sizes in 512-byte units).
+- Guide: a utilities page for the file utilities (dialect choices: D016 cp/stat/mktemp
+  rules, D1151, D1152, D1153, D1154; what falls through).
+- Not done: `ls` colors and terminal quoting of names, `stat -f` (statfs) and BSD
+  `stat -l/-s/-x/-r`, numbered backups (`--backup=numbered`), `touch -d` beyond the
+  common subset, `rm -i`/`-I` prompting (all fall through or fail clearly).
+- Flaky, not caused here: oils/builtin-trap/31 (USR1 to a child shell 0.1 s after start)
+  failed once in four runs under load.
 
 ## Result
+Landed (D1150–D1154): the Host's file system changes and `UtilCtx` v2 (stat_extra, mkdir,
+remove_file, remove_dir, rename, symlink, hard_link, read_link, set_mode, set_times,
+user/group names, utc_offset, now, umask) with implementations in psh-os unix, std_host
+and the test host; and 16 S-mode utilities, all written for psh after the manuals (no
+ported code, NOTICE unchanged): `basename dirname realpath readlink mkdir rmdir touch`
+(part 1), `rm mv cp ln chmod` (part 2; `rm mv cp ln` in the destructive group), `ls stat
+du mktemp` (part 3). `pwd` stays the shell builtin. Shared helpers for later batches:
+`fsutil.rs` (GNU quoting, path resolution, relative paths, `human` sizes), `modes.rs`
+(chmod modes, `mode_string`), `timefmt.rs` (calendar, local time, GNU date strings for
+`touch -d`, `strftime`), `ls::glob`.
+
+L4: 229 cases in tests/utils/{basename,dirname,readlink,realpath,mkdir,rmdir,touch,rm,
+mv,cp,ln,chmod,ls,stat,du,mktemp}, recorded against GNU and BSD with the dialect or D016
+rule named where they differ; all pass natively (utils 493/493 with the other batches),
+wasm and Windows platform ratchets list the host limits. Unit tests in
+psh-utils/src/tests/files.rs (latency mode, a host without D1150, unsupported options).
+
+How to use: nothing to configure; the registry entries are in psh-utils' lib.rs. Known
+gaps: see Follow-ups (Windows host limits, colors, statfs, prompting, numbered backups).

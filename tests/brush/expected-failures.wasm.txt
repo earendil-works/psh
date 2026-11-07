@@ -43,3 +43,4 @@ brush/compat/builtins/ulimit/4: the JS host has no resource limits (Host::rlimit
 brush/compat/fd_management/0: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
 brush/compat/fd_management/1: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
 brush/compat/fd_management/2: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/command/9: ls --help falls through to the real ls, which the wasm host does not have

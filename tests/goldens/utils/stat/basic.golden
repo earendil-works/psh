@@ -1,0 +1,174 @@
+# Goldens for tests/utils/stat/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: GNU -c
+status: 0
+bash-n: 0
+--- stdout
+|5 f 640 -rw-r----- regular file
+--- file f
+|12345
+~ no newline at end
+
+=== 1: GNU -c times
+status: 0
+bash-n: 0
+--- stdout
+|1704164645 2024-01-02 03:04:05.000000000 +0000
+|1704164645.000
+--- file f
+
+=== 2: GNU %N and -L for symlinks
+status: 0
+bash-n: 0
+--- stdout
+|'l' -> 'f' symbolic link
+|l regular empty file
+--- file f
+--- link l -> f
+
+=== 3: GNU --printf and --format
+status: 0
+bash-n: 0
+--- stdout
+|f	3
+|f=3
+--- file f
+|abc
+~ no newline at end
+
+=== 4: GNU file types
+status: 0
+bash-n: 0
+--- stdout
+|directory
+|regular empty file
+|regular file
+|character special file
+--- dir d
+--- file e
+--- file f
+|x
+~ no newline at end
+
+=== 5: GNU widths
+status: 0
+bash-n: 0
+--- stdout
+|[         6|f   |00644]
+--- file f
+|123456
+~ no newline at end
+
+=== 6: GNU -t terse
+status: 0
+bash-n: 0
+--- stdout
+|f 2
+--- file f
+|12
+~ no newline at end
+
+=== 7: GNU default output
+status: 0
+bash-n: 0
+--- stdout
+|  File: f
+|Size: 2
+--- file f
+|12
+~ no newline at end
+
+=== 8: BSD -f
+status: 1
+bash-n: 0
+--- stdout
+|  File: "f"
+|    ID: eafae4887bca19a5 Namelen: 255     Type: overlayfs
+|Block size: 4096       Fundamental block size: 4096
+|Blocks: Total: 528161516  Free: 442176317  Available: 415328689
+|Inodes: Total: 134217728  Free: 125280302
+--- stderr
+|stat: cannot read file system information for '%z %N %Lp %Sp %p': No such file or directory
+--- file f
+|12345
+~ no newline at end
+
+=== 9: BSD -f times and -t
+status: 1
+bash-n: 0
+--- stdout
+|  File: "f"
+|    ID: eafae4887bca19a5 Namelen: 255     Type: overlayfs
+|Block size: 4096       Fundamental block size: 4096
+|Blocks: Total: 528161516  Free: 442176316  Available: 415328688
+|Inodes: Total: 134217728  Free: 125280301
+|f eafae4887bca19a5 255 794c7630 4096 4096 528161516 442176316 415328688 134217728 125280301
+|f eafae4887bca19a5 255 794c7630 4096 4096 528161516 442176316 415328688 134217728 125280301
+--- stderr
+|stat: cannot read file system information for '%m': No such file or directory
+|stat: cannot read file system information for '%Sm': No such file or directory
+|stat: cannot read file system information for '%Y-%m-%d %H:%M:%S': No such file or directory
+|stat: cannot read file system information for '%F': No such file or directory
+|stat: cannot read file system information for '%Sm': No such file or directory
+--- file f
+
+=== 10: BSD file types and links
+status: 1
+bash-n: 0
+--- stdout
+|  File: "f"
+|    ID: eafae4887bca19a5 Namelen: 255     Type: overlayfs
+|Block size: 4096       Fundamental block size: 4096
+|Blocks: Total: 528161516  Free: 442176343  Available: 415328715
+|Inodes: Total: 134217728  Free: 125280339
+|  File: "d"
+|    ID: eafae4887bca19a5 Namelen: 255     Type: overlayfs
+|Block size: 4096       Fundamental block size: 4096
+|Blocks: Total: 528161516  Free: 442176343  Available: 415328715
+|Inodes: Total: 134217728  Free: 125280339
+|  File: "l"
+|    ID: eafae4887bca19a5 Namelen: 255     Type: overlayfs
+|Block size: 4096       Fundamental block size: 4096
+|Blocks: Total: 528161516  Free: 442176343  Available: 415328715
+|Inodes: Total: 134217728  Free: 125280339
+|  File: "d"
+|    ID: eafae4887bca19a5 Namelen: 255     Type: overlayfs
+|Block size: 4096       Fundamental block size: 4096
+|Blocks: Total: 528161516  Free: 442176347  Available: 415328719
+|Inodes: Total: 134217728  Free: 125280343
+|  File: "l"
+|    ID: eafae4887bca19a5 Namelen: 255     Type: overlayfs
+|Block size: 4096       Fundamental block size: 4096
+|Blocks: Total: 528161516  Free: 442176347  Available: 415328719
+|Inodes: Total: 134217728  Free: 125280343
+--- stderr
+|stat: cannot read file system information for '%N %HT%SY': No such file or directory
+|stat: cannot read file system information for '%N%T': No such file or directory
+--- dir d
+--- file f
+--- link l -> f
+
+=== 11: BSD widths
+status: 1
+bash-n: 0
+--- stdout
+|  File: "f"
+|    ID: eafae4887bca19a5 Namelen: 255     Type: overlayfs
+|Block size: 4096       Fundamental block size: 4096
+|Blocks: Total: 528161516  Free: 442176326  Available: 415328698
+|Inodes: Total: 134217728  Free: 125280319
+--- stderr
+|stat: cannot read file system information for '[%10z|%-4N|%05Lp]': No such file or directory
+--- file f
+|123456
+~ no newline at end
+
+=== 12: a missing file
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|stat: cannot statx 'nope': No such file or directory

@@ -516,8 +516,8 @@ Around the modes:
 | `md5`/`shasum` vs `md5sum`/`sha256sum` | Output format keyed on the name; never unified (D1201) |
 | `awk` | gawk's behavior where gawk and BSD awk differ; `for (k in a)` in insertion order (D1193) |
 
-  `ls -G`/`-T` (BSD color / full time vs GNU no-group / tab size) are decided in their
-  issue and fall through until then (D034).
+  `ls -G`/`-T` take the macOS meaning: BSD color, printed as none, and full times in the
+  long format (D1152).
 - Values in messages are quoted as GNU quotes them for the locale (`‘x’` in UTF-8,
   `'x'` otherwise), one helper for all utilities (D1163).
 - `uname`, `hostname`, `id` and friends report the real host. psh never pretends to be

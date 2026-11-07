@@ -71,7 +71,13 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
                     while end > 0 && cur[end - 1] == b'/' {
                         end -= 1;
                     }
-                    if end == 0 {
+                    // Stop at the root: `/`, or a drive (`C:`).
+                    if end == 0
+                        || (cfg!(windows)
+                            && end == 2
+                            && cur[0].is_ascii_alphabetic()
+                            && cur[1] == b':')
+                    {
                         break;
                     }
                     cur.truncate(end);

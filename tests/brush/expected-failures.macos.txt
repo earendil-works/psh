@@ -6,8 +6,6 @@ brush/compat/builtins/command/9: BSD ls: other messages and exit status than GNU
 brush/compat/builtins/echo/2: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it
 brush/compat/builtins/exec/12: macOS's /usr/bin/printf has no -v
 brush/compat/pipeline/4: macOS's /bin/sh (bash 3.2, POSIX mode) has an echo that prints -n
-brush/compat/redirection/18: BSD ls: other messages and exit status than GNU ls
-brush/compat/redirection/22: BSD ls: other messages and exit status than GNU ls
 brush/compat/well_known_vars/3: OSTYPE is darwin* on macOS
 brush/compat/word_expansion/command_substitution/33: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it
 brush/compat/word_expansion/command_substitution/34: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it

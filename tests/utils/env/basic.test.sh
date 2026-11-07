@@ -30,5 +30,5 @@ echo "status=$?"
 printf 'a\nb\n' | env head -n 1
 
 #### PATH changes the lookup of the command
-env PATH=/nonexistent ls 2>/dev/null
+env PATH=/nonexistent sh -c true 2>/dev/null
 echo "status=$?"

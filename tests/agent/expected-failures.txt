@@ -11,27 +11,11 @@ agent/files/42: macOS BSD utility output differs from GNU (wc/uniq padding, ls, 
 agent/files/43: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/files/47: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/globs-status/2: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
-agent/globs-status/18: needs psh's timeout (utilities); macOS has none
-agent/globs-status/19: needs psh's timeout (utilities); macOS has none
-agent/heredocs/14: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/pipes/8: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
-agent/pipes/9: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
-agent/procs/0: needs psh's timeout (utilities); macOS has none
-agent/procs/1: needs psh's timeout (utilities); macOS has none
-agent/procs/2: needs psh's timeout (utilities); macOS has none
-agent/procs/3: needs psh's timeout (utilities); macOS has none
-agent/procs/4: needs psh's timeout (utilities); macOS has none
-agent/procs/5: needs psh's timeout (utilities); macOS has none
-agent/procs/6: needs psh's timeout (utilities); macOS has none
-agent/procs/8: needs psh's timeout (utilities); macOS has none
 agent/procs/40: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/procs/42: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/redirects/1: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
-agent/redirects/8: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
-agent/redirects/10: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
-agent/scripts/27: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/scripts/35: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
-agent/scripts/39: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/search/0: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
 agent/search/1: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
 agent/search/2: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
@@ -70,11 +54,9 @@ agent/search/34: needs psh's rg (utilities, search batch); rg is not on the runn
 agent/search/35: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
 agent/search/36: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
 agent/search/37: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
-agent/search/66: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/text/7: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/text/13: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/text/45: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
-agent/text/47: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/top-shapes/9: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
 agent/top-shapes/10: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
 agent/top-shapes/11: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
@@ -90,10 +72,6 @@ agent/top-shapes/20: needs psh's rg (utilities, search batch); rg is not on the 
 agent/top-shapes/21: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
 agent/top-shapes/22: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
 agent/top-shapes/23: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
-agent/vars-quotes/20: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/view/30: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/view/34: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/view/37: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
-agent/view/54: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
-agent/view/58: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
-agent/view/59: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux

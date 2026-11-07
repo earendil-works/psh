@@ -390,7 +390,6 @@ brush/compat/signals/3
 brush/compat/signals/6
 brush/compat/signals/10
 brush/compat/signals/11
-brush/compat/signals/12
 brush/compat/signals/15
 brush/compat/signals/16
 brush/compat/signals/18

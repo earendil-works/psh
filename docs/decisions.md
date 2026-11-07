@@ -1880,3 +1880,10 @@ Docker build noticed. Leg `linux` (`scripts/gate.d/72-linux.sh`) runs `cargo che
 --workspace --all-targets` for `aarch64-unknown-linux-musl` and `x86_64-unknown-linux-musl`:
 seconds, no linker or C toolchain, both targets installed with rustup. Running the spec
 cases on Linux needs Docker and stays a manual step (`scripts/spec-linux`, 0033).
+## D1306: Blocking reads give way to signals
+date: 2026-11-07 · by: procs · issue: 0030
+Extends D1903 to the waits of the shell's own vproc that read: an open that waits (a
+FIFO) and a command substitution's output give way to a signal whose default action
+ends the shell (the open fails, the substitution yields `128+n`; the shell ends at its
+next safepoint); `read` runs the trap of a trapped signal while it goes on reading, as
+bash does outside POSIX mode, and a fatal one ends the shell.

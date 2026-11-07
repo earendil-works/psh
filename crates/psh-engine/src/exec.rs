@@ -1754,7 +1754,19 @@ async fn open_to(
         return Ok(false);
     }
     let path = vp.abs_path(target);
-    match vp.host().open(&path, opts).await {
+    // An open that waits (a FIFO) gives way to a signal that ends the shell (D1306).
+    let opened = crate::signals::or_signal(
+        vp,
+        crate::signals::Gives::Fatal,
+        vp.host().open(&path, opts),
+    )
+    .await;
+    let opened = match opened {
+        Ok(r) => r,
+        // The command fails; the shell takes the signal at its next safepoint.
+        Err(_) => return Ok(false),
+    };
+    match opened {
         Ok(f) => {
             let obj: Fd = Rc::new(FdObj::File(f));
             for &n in fds {
@@ -1907,9 +1919,18 @@ async fn subst(vp: &mut Vp, code: Rc<Code>, list: ListId) -> Result<(Vec<u8>, i3
     let join = spawn_sub(sub, code, Body::List(list));
     let reader = FdObj::PipeRead(r);
     let mut out = Vec::new();
-    let _ = reader.read_to_end(&mut out).await;
-    drop(reader);
-    let status = join.await;
+    // The substitution's output and status, unless a signal that ends the shell comes
+    // first (D1306): the shell then ends at its next safepoint.
+    let collected = crate::signals::or_signal(vp, crate::signals::Gives::Fatal, async {
+        let _ = reader.read_to_end(&mut out).await;
+        drop(reader);
+        join.await
+    })
+    .await;
+    let status = match collected {
+        Ok(s) => s,
+        Err(sig) => 128 + sig,
+    };
     vp.status = status;
     if out.contains(&0) {
         vp.error("warning: command substitution: ignored null byte in input")

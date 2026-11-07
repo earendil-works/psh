@@ -213,7 +213,14 @@ pub(super) async fn read(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         {
             break;
         }
-        let b = match input.next().await {
+        // A signal for the shell runs its trap while the read goes on (bash outside
+        // POSIX mode); a fatal one ends the shell (D1306).
+        let got = crate::signals::or_signal(vp, crate::signals::Gives::Trapped, input.next()).await;
+        let b = match got.unwrap_or(Got::Signal) {
+            Got::Signal => {
+                super::trap::take_signals(vp).await?;
+                continue;
+            }
             Got::Byte(b) => b,
             Got::Eof => {
                 status = 1;
@@ -458,6 +465,8 @@ fn fd_is_terminal(fd: &Fd) -> bool {
 
 enum Got {
     Byte(u8),
+    /// A signal for the shell came first.
+    Signal,
     Eof,
     Timeout,
     Err(std::io::Error),

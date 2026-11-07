@@ -86,6 +86,13 @@ Close the process-layer follow-ups from 0006 and the coordinator's queue.
   Full run: no leaks, no regressions; ppid-1 check after a full run: nothing from cases.
   TESTING.md updated.
 
+### 2026-11-07 part 3b: blocking reads and signals (D1306)
+- `signals::or_signal` around redirection opens (FIFOs), `$(…)`'s read and join, and
+  `read` (Trapped: the trap runs, the read goes on; a trapped signal no longer cut
+  brush/compat/signals/5 short). Standalone tests: TERM ends psh blocked in a FIFO open,
+  a `read` on a FIFO and `$(sleep 30)`; a trapped USR1 runs its trap during a `read`,
+  which then reads its line.
+
 ## Follow-ups
 
 ## Result

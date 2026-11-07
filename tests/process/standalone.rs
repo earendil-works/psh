@@ -281,3 +281,41 @@ fn a_fatal_signal_ends_a_foreground_wait() {
     assert_signaled(s, SIGTERM);
     assert!(start.elapsed() < Duration::from_secs(5));
 }
+
+#[test]
+fn blocking_reads_give_way_to_a_fatal_signal() {
+    // A FIFO open, a `read` and a command substitution that wait (D1306).
+    for script in [
+        "mkfifo f; echo $$ > a; cat < f",
+        "mkfifo f; exec 3<>f; echo $$ > a; read x <&3",
+        "echo $$ > a; x=$(sleep 30); echo no",
+    ] {
+        let mut c = Case::start(script);
+        c.pid("a");
+        let start = Instant::now();
+        c.signal(SIGTERM);
+        assert_signaled(c.wait(Duration::from_secs(10)), SIGTERM);
+        assert!(start.elapsed() < Duration::from_secs(5), "{script}");
+    }
+}
+
+#[test]
+fn a_trapped_signal_runs_its_trap_while_a_read_waits() {
+    // bash outside POSIX mode: the trap runs, the read goes on (D1306).
+    let mut c = Case::start(
+        "trap 'echo T > t' USR1; mkfifo f; exec 3<>f; echo $$ > a; read x <&3; echo \"$? $x\" > r",
+    );
+    c.pid("a");
+    c.signal(psh_os::unix::signum::to_os(10).unwrap());
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while !c.dir.join("t").exists() {
+        assert!(Instant::now() < deadline, "the trap did not run");
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    std::fs::write(c.dir.join("f"), "line\n").unwrap();
+    assert_eq!(c.wait(Duration::from_secs(10)).code(), Some(0));
+    assert_eq!(
+        std::fs::read_to_string(c.dir.join("r")).unwrap(),
+        "0 line\n"
+    );
+}

@@ -15,6 +15,7 @@ use std::time::Duration;
 
 use crate::fd::{Fd, FdObj, bad_fd};
 use crate::host::{DirEntry, Metadata, OpenOptions};
+use crate::signals::Gives;
 use crate::state::{R, Vp};
 
 pub use crate::host::Access;
@@ -114,11 +115,40 @@ pub(crate) async fn run(
         out: Vec::new(),
         write_error: None,
     };
-    let status = (entry.run)(&mut ctx, &argv).await;
-    // What is still buffered goes out now; a utility that cares about a failing final
-    // write flushes itself before returning.
-    let _ = ctx.flush().await;
-    Ok(status)
+    // A signal that ends the shell ends the utility, as it ends the wait for an
+    // external (D1903). The vproc is the utility's now: watch with what it needs.
+    let watch = (ctx.vp.top && ctx.vp.in_trap.is_none())
+        .then(|| (ctx.vp.core.clone(), ctx.vp.traps.clone()));
+    let status = {
+        let mut fut = std::pin::pin!((entry.run)(&mut ctx, &argv));
+        std::future::poll_fn(|cx| {
+            if let Some((core, traps)) = &watch
+                && let Some(sig) = crate::signals::breaking_in(core, traps, Gives::Fatal)
+            {
+                return Poll::Ready(Err(sig));
+            }
+            match fut.as_mut().poll(cx) {
+                Poll::Ready(st) => Poll::Ready(Ok(st)),
+                Poll::Pending => {
+                    if let Some((core, _)) = &watch {
+                        core.sched.on_signal(cx.waker());
+                    }
+                    Poll::Pending
+                }
+            }
+        })
+        .await
+    };
+    match status {
+        Ok(status) => {
+            // What is still buffered goes out now; a utility that cares about a
+            // failing final write flushes itself before returning.
+            let _ = ctx.flush().await;
+            Ok(status)
+        }
+        // The shell is ending: its buffered output is dropped with it.
+        Err(sig) => Ok(128 + sig),
+    }
 }
 
 /// stdout is flushed when the buffer holds this much (D1081).

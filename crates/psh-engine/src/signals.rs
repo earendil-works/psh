@@ -138,13 +138,23 @@ pub(crate) enum Gives {
 /// The pending signal that ends a wait of `vp` now, if any. Only the shell's own vproc
 /// takes signals (D1284), never inside a trap.
 pub(crate) fn breaking(vp: &crate::state::Vp, gives: Gives) -> Option<Signal> {
-    use crate::builtins::trap::{TrapKey, terminates};
     if !vp.top || vp.in_trap.is_some() {
         return None;
     }
-    let pending = vp.core.sched.peek_signals();
+    breaking_in(&vp.core, &vp.traps, gives)
+}
+
+/// [`breaking`] for a wait that cannot borrow its vproc (an in-process utility holds
+/// it): the caller checked that the vproc takes signals.
+pub(crate) fn breaking_in(
+    core: &crate::state::Core,
+    traps: &crate::builtins::trap::Traps,
+    gives: Gives,
+) -> Option<Signal> {
+    use crate::builtins::trap::{TrapKey, terminates};
+    let pending = core.sched.peek_signals();
     (1..64).filter(|s| pending & (1u64 << s) != 0).find(|&sig| {
-        match vp.traps.action(TrapKey::Signal(sig)) {
+        match traps.action(TrapKey::Signal(sig)) {
             Some(a) if a.is_empty() => false,
             Some(_) => gives == Gives::Trapped,
             None => terminates(sig),

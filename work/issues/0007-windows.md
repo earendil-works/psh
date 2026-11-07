@@ -93,6 +93,16 @@ Part B:
   VM (C waited, then woke it). Not done: disabling XtaCache (the owner's decision) and
   a cargo runner that runs copies (psh.exe would still be held). The old per-worktree
   directories in C:\psh-gate are now unused and can be deleted.
+- 2026-11-07 (x64 cli timeouts). infra's test-x64 failures (cli.rs, 10s deadline per
+  psh spawn, 4 times, 27 min leg) all date from 01:00-02:00, when 3-4 gates built in
+  the VM at once. Measured with the VM to myself (taking run.lock): x64 psh.exe starts
+  in 30-60ms, a freshly linked one in 0.5-0.8s on its first run; the x64 cli tests take
+  0.4s, 4.7s with 12 spinning processes on the 4 vCPUs. Defender (MsMpEng) had used 2.5
+  hours of CPU in the VM so far and about 10s per x64 relink-and-test. **Changed in the
+  VM:** a Defender exclusion for C:\psh-gate (`Add-MpPreference -ExclusionPath
+  C:\psh-gate`, as SYSTEM): relink-and-test 23s -> 12s, first start of a fresh x64 exe
+  -> 80-150ms. test-x64 stays whole (D1073). The windows leg's inputs gained
+  `.gitattributes` (it decides the line endings of the VM's checkout).
 
 ## Follow-ups
 - Delete the old per-worktree checkouts in the VM (C:\psh-gate\<worktree>) once no

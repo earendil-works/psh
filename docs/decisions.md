@@ -993,3 +993,15 @@ for single-command list items, a function call level costs ~3 KiB in release and
 ~15 KiB in debug (was ~13/52 KiB); 1000 levels run in 3 MiB (release) and 16 MiB
 (debug). `STACK_PER_LEVEL` stays 16 KiB, `ENGINE_STACK` ~20 MiB; the limit counts
 function calls and subshells together.
+## D1073: A Defender exclusion for the VM's build directory; test-x64 stays whole
+date: 2026-11-07 · by: windows (asked by the coordinator) · issue: 0007
+The cli tests' 10s deadlines failed under x64 emulation only while 3-4 gates built at
+once on the 4-vCPU VM, before D1072. Measured on the VM without other runs: an x64
+`psh.exe -c exit` starts in 30-60ms, the first run of a freshly linked one in 0.5-0.8s
+(scan and translation); the x64 cli tests take 0.4s, and 4.7s with twelve busy processes
+competing for the cores. So emulation is not inherently too slow and test-x64 keeps all
+the tests, serialized like every leg (D1072). Defender's real-time scan of the build
+output was the remaining cost: `C:\psh-gate` is excluded from it (`Add-MpPreference
+-ExclusionPath C:\psh-gate`, as SYSTEM through `prlctl exec`), which halved an x64
+relink-and-test (23s to 12s) and the first start of a fresh x64 exe (to 80-150ms). Only
+gate checkouts live there; nothing downloaded or foreign runs from it.

@@ -506,6 +506,26 @@ async fn unset(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             status = 1;
             continue;
         }
+        // Unsetting an assignment in front of the running function brings back the
+        // value under it; that variable is then the one later assignments change (bash).
+        if let Some(frame) = vp
+            .frames
+            .iter_mut()
+            .rev()
+            .find(|f| f.saved.iter().any(|(s, _)| *s == n))
+            && let Some(t) = frame.temps.iter().position(|t| *t == n)
+        {
+            frame.temps.remove(t);
+            let i = frame.saved.iter().position(|(s, _)| *s == n).unwrap_or(0);
+            let (_, old) = frame.saved.remove(i);
+            match old {
+                Some(v) => vp.vars.insert(&n, v),
+                None => {
+                    vp.vars.remove(&n);
+                }
+            }
+            continue;
+        }
         vp.vars.remove(&n);
     }
     Ok(status)

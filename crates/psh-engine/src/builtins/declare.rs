@@ -453,6 +453,11 @@ async fn declare_one(
             .frames
             .last()
             .is_some_and(|f| !f.saved.iter().any(|(s, _)| s == name));
+        // A temporary binding (`x=t f`) made local is a local from now on: unset no
+        // longer reveals what it shadowed.
+        if let Some(f) = vp.frames.last_mut() {
+            f.temps.retain(|t| t != name);
+        }
         if fresh {
             vp.make_local(name);
             // A new local starts without a value and gets only the attributes given

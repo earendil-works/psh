@@ -404,6 +404,8 @@ fn run_command_with<'a>(
         if vp.last_args.len() > last_args {
             let last = vp.last_args.swap_remove(last_args);
             vp.last_args.truncate(last_args);
+            // bash also says `_: readonly variable` each time; an await here would
+            // grow every level of a recursion (D1059), so a readonly `_` stays silent.
             set_underscore(vp, last);
         }
         let status = result?;
@@ -414,11 +416,12 @@ fn run_command_with<'a>(
     })
 }
 
-/// `$_` after a command: its last word (unless `_` was made readonly).
+/// `$_` after a command: its last word, not exported (bash), unless `_` is readonly.
 fn set_underscore(vp: &mut Vp, last: Vec<u8>) {
     let var = vp.vars.entry("_");
     if !var.readonly {
         var.set(last);
+        var.exported = false;
     }
 }
 
@@ -777,8 +780,11 @@ async fn run_arith_for(vp: &mut Vp, code: &Rc<Code>, f: &psh_syntax::ArithForCom
         return Ok(1);
     }
     let mut status = 0;
+    // `$LINENO` in the condition and step is the header's line on every round.
+    let line = vp.line;
     loop {
         safepoint(&vp.core.sched).await;
+        vp.line = line;
         match arith_command(vp, code, &f.cond, "((: ", true).await? {
             None => return Ok(1),
             // An empty condition is true.
@@ -794,6 +800,7 @@ async fn run_arith_for(vp: &mut Vp, code: &Rc<Code>, f: &psh_syntax::ArithForCom
                 status = vp.status;
             }
         }
+        vp.line = line;
         if arith_command(vp, code, &f.step, "((: ", true)
             .await?
             .is_none()
@@ -902,6 +909,7 @@ async fn call_function(
     for (n, _) in &assigns {
         if !frame.saved.iter().any(|(s, _)| s == n) {
             frame.saved.push((n.clone(), vp.vars.get(n).cloned()));
+            frame.temps.push(n.clone());
         }
     }
     vp.frames.push(frame);
@@ -964,6 +972,67 @@ fn function_return<'a>(
 
 /// Expands a simple command: `Done` when there is nothing to run (assignments and
 /// redirections only, or an error), else the words and the assignments for the command.
+/// The assignments of a simple command, after its words: assigned at once without a
+/// command, else collected in `assigns`, their temporary values recorded in `temps`.
+#[allow(clippy::too_many_arguments)]
+async fn prefix_assigns(
+    vp: &mut Vp,
+    code: &Rc<Code>,
+    s: &SimpleCommand,
+    argv: &[Vec<u8>],
+    assigns: &mut Vec<(String, Vec<u8>)>,
+    temps: &mut Vec<(String, Option<crate::vars::Var>)>,
+    subst_status: &mut Option<i32>,
+) -> Result<(), Unwind> {
+    for a in &s.assigns {
+        let name = code.ast.text(a.name).to_string();
+        let r = match (&a.index, &a.value) {
+            (None, AssignValue::Scalar(w)) => {
+                let (v, st) = Box::pin(expand::assign_value(vp, code, w)).await?;
+                *subst_status = st.or(*subst_status);
+                if argv.is_empty() {
+                    if vp.opts.get(SetOpt::Xtrace) {
+                        let op: &[u8] = if a.append { b"+=" } else { b"=" };
+                        let line = builtins::set::xtrace_assign(name.as_bytes(), op, &v);
+                        builtins::set::xtrace(vp, &line).await;
+                    }
+                    // Assigned at once: later assignments see earlier ones (`a=1 b=$a`).
+                    vp.assign_with(&name, v, a.append)
+                } else {
+                    // The value with the variable's attributes (`-i` adds on `+=`); it
+                    // is set for the command's duration only.
+                    let target = vp.resolve(&name).into_owned();
+                    vp.prepare_value_unchecked(&target, v, a.append).map(|v| {
+                        temps.push((target.clone(), vp.vars.get(&target).cloned()));
+                        vp.vars.entry(&target).set(v.clone());
+                        assigns.push((name, v));
+                    })
+                }
+            }
+            (Some(idx), AssignValue::Scalar(w)) => {
+                let (sub, st1) = Box::pin(expand::expand_single(vp, code, idx, Ctx::Word)).await?;
+                let (v, st2) = Box::pin(expand::assign_value(vp, code, w)).await?;
+                *subst_status = st2.or(st1).or(*subst_status);
+                vp.assign_elem(&name, &sub, v, a.append)
+            }
+            (None, AssignValue::Array(lit)) => {
+                let (items, st) = Box::pin(expand::expand_array_lit(vp, code, lit)).await?;
+                *subst_status = st.or(*subst_status);
+                vp.assign_array(&name, items, a.append)
+            }
+            (Some(idx), AssignValue::Array(_)) => Err(format!(
+                "{name}[{}]: cannot assign list to array member",
+                code.ast.text(idx.span)
+            )),
+        };
+        if let Err(msg) = r {
+            vp.error(&msg).await;
+            return Err(Unwind::Abort(1));
+        }
+    }
+    Ok(())
+}
+
 async fn prepare_simple(
     vp: &mut Vp,
     code: &Rc<Code>,
@@ -994,49 +1063,28 @@ async fn prepare_simple(
 
     // Assignments, expanded after the words.
     let mut assigns: Vec<(String, Vec<u8>)> = Vec::with_capacity(s.assigns.len());
-    for a in &s.assigns {
-        let name = code.ast.text(a.name).to_string();
-        let r = match (&a.index, &a.value) {
-            (None, AssignValue::Scalar(w)) => {
-                let (v, st) = Box::pin(expand::assign_value(vp, code, w)).await?;
-                subst_status = st.or(subst_status);
-                if argv.is_empty() {
-                    if vp.opts.get(SetOpt::Xtrace) {
-                        let op: &[u8] = if a.append { b"+=" } else { b"=" };
-                        let line = builtins::set::xtrace_assign(name.as_bytes(), op, &v);
-                        builtins::set::xtrace(vp, &line).await;
-                    }
-                    // Assigned at once: later assignments see earlier ones (`a=1 b=$a`).
-                    vp.assign_with(&name, v, a.append)
-                } else {
-                    // The value with the variable's attributes (`-i` adds on `+=`); it
-                    // is set for the command's duration only.
-                    let target = vp.resolve(&name).into_owned();
-                    vp.prepare_value_unchecked(&target, v, a.append)
-                        .map(|v| assigns.push((name, v)))
-                }
+    // In front of a command, each value is visible to the later ones while they expand
+    // (`A=1 B=$A cmd`, bash); the old values come back before the command runs.
+    let mut temps: Vec<(String, Option<crate::vars::Var>)> = Vec::new();
+    let r = Box::pin(prefix_assigns(
+        vp,
+        code,
+        s,
+        &argv,
+        &mut assigns,
+        &mut temps,
+        &mut subst_status,
+    ))
+    .await;
+    for (name, old) in temps.into_iter().rev() {
+        match old {
+            Some(v) => vp.vars.insert(&name, v),
+            None => {
+                vp.vars.remove(&name);
             }
-            (Some(idx), AssignValue::Scalar(w)) => {
-                let (sub, st1) = Box::pin(expand::expand_single(vp, code, idx, Ctx::Word)).await?;
-                let (v, st2) = Box::pin(expand::assign_value(vp, code, w)).await?;
-                subst_status = st2.or(st1).or(subst_status);
-                vp.assign_elem(&name, &sub, v, a.append)
-            }
-            (None, AssignValue::Array(lit)) => {
-                let (items, st) = Box::pin(expand::expand_array_lit(vp, code, lit)).await?;
-                subst_status = st.or(subst_status);
-                vp.assign_array(&name, items, a.append)
-            }
-            (Some(idx), AssignValue::Array(_)) => Err(format!(
-                "{name}[{}]: cannot assign list to array member",
-                code.ast.text(idx.span)
-            )),
-        };
-        if let Err(msg) = r {
-            vp.error(&msg).await;
-            return Err(Unwind::Abort(1));
         }
     }
+    r?;
     // `set -a`: what the command assigned is exported (D1280).
     if argv.is_empty() && vp.opts.get(SetOpt::Allexport) {
         for a in &s.assigns {

@@ -263,6 +263,8 @@ pub(crate) struct Call {
 #[derive(Clone, Default)]
 pub(crate) struct Frame {
     pub saved: Vec<(String, Option<Var>)>,
+    /// The names of `saved` that are assignments in front of the call, not locals.
+    pub temps: Vec<String>,
 }
 
 impl Vp {

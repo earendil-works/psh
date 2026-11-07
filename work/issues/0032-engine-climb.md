@@ -6,7 +6,7 @@ branch: issue/0032-engine-climb
 depends-on: 0026
 touches: crates/psh-engine/ (engine internals per ARCH), tests/**/expected-failures*.txt
 guide: engine.md (follow-up)
-decisions: D1320–D1329
+decisions: D1320–D1329, D1920–D1929 (extension)
 
 ## Goal
 Collect the engine's open items and then climb the hit list for engine-owned areas.
@@ -72,7 +72,16 @@ Collect the engine's open items and then climb the hit list for engine-owned are
 - Pending: `$(…)` follows `Host::strips_crlf()` (builtins' D1292) once it lands; record
   as D1329, superseding D1324's "Windows builds only".
 
+- Part 4: well-known variables (D1329), one BASH_SUBSHELL level for a `( )` stage.
+- Part 5: prefix assignments see the earlier ones while expanding (`A=1 B=$A cmd`);
+  unsetting a temporary binding in the function reveals the shadowed value (unless it
+  was made local); `$_` loses the export attribute when updated; `${x:}` is a bad
+  substitution; `$LINENO` in `for ((…))` is the header's line on every round. A
+  readonly `_` is kept silently (bash also prints `_: readonly variable` after every
+  command; an await there grew each recursion level past the stack budget, D1059).
+
 ## Follow-ups
+- BASH and SHELL (HostInfo has no executable path or login shell): later.
 - parser: extquote (`"${x:-$'\t'}"` decodes `$'…'`), brush params/53 and 63 line 3.
 - procs: `wait` waits for process substitutions and `$!` names the last one (brush
   redirection/15).

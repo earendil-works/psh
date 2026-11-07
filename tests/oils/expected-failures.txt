@@ -26,8 +26,6 @@ oils/array-literal/7
 oils/array-literal/9
 oils/array-literal/10
 oils/array-sparse/31
-oils/assign/2
-oils/assign/25
 oils/assign/45
 oils/assign-dialects/2
 oils/assign-extended/4
@@ -39,7 +37,6 @@ oils/assign-extended/10
 oils/assign-extended/21
 oils/ble-features/0
 oils/ble-features/1
-oils/ble-features/2
 oils/ble-features/3
 oils/ble-features/4
 oils/ble-idioms/10
@@ -129,9 +126,9 @@ oils/builtin-trap-bash/22
 oils/builtin-trap-err/6
 oils/builtin-trap-err/18
 oils/builtin-type/3
-oils/builtin-type-bash/8: S-mode psh utility shadows the PATH file (D1083, D1151); type reports what runs (the -P half passes)
 oils/builtin-type-bash/5: find and xargs are psh utilities (mode S), which type -t reports as builtin (D1083)
 oils/builtin-type-bash/7: find and xargs are psh utilities (mode S), which type -t reports as builtin (D1083)
+oils/builtin-type-bash/8: S-mode psh utility shadows the PATH file (D1083, D1151); type reports what runs (the -P half passes)
 oils/builtin-type-bash/13
 oils/builtin-type-bash/14
 oils/builtin-type-bash/16: S-mode psh utility shadows the PATH file (D1083, D1151); type reports what runs
@@ -194,7 +191,6 @@ oils/var-op-patsub/11
 oils/var-op-patsub/12
 oils/var-op-patsub/23
 oils/var-op-patsub/26
-oils/var-op-slice/20
 oils/var-op-test/35
 oils/var-ref/3
 oils/var-ref/4
@@ -209,5 +205,4 @@ oils/vars-bash/0
 oils/vars-special/3
 oils/vars-special/4
 oils/vars-special/15
-oils/vars-special/28
 oils/xtrace/2

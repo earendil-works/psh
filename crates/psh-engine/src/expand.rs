@@ -936,6 +936,15 @@ async fn param(
         return emit_val(vp, f, Val::List(keys, star), quoted);
     }
     // `${x:o:l}` on arrays and `$@` slices by index, so it reads the source itself.
+    // `${x:}`: no offset and no length (`${x: }` and `${x::1}` are offset 0).
+    if let ParamOp::Substring {
+        offset,
+        length: None,
+    } = &p.op
+        && offset.span.start == offset.span.end
+    {
+        return bad(vp).await;
+    }
     if let ParamOp::Substring { offset, length } = &p.op
         && p.prefix == ParamPrefix::None
         && (is_list || matches!(p.name, ParamName::Special(b'@' | b'*')))

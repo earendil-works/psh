@@ -926,3 +926,27 @@ fn well_known_variables() {
     );
     check("unset BASH_SOURCE 2>/dev/null || echo kept", "kept\n");
 }
+
+#[test]
+fn prefix_assignments_and_temp_unset() {
+    // Each prefix assignment sees the earlier ones while they expand, not the shell.
+    check(
+        "f() { echo \"$A $B\"; }; A=1 B=[$A] f; echo \"[$A]\"",
+        "1 [1]\n[]\n",
+    );
+    // Unsetting a temporary binding in the function reveals the global one, which later
+    // assignments then change.
+    check(
+        "x=g; f() { unset x; echo \"[$x]\"; x=new; }; x=t f; echo $x",
+        "[g]\nnew\n",
+    );
+    // `$_` is not exported once a command updates it.
+    check(
+        "export _=x; echo a b; declare -p _",
+        "a b\ndeclare -- _=\"b\"\n",
+    );
+    check(
+        "s=abc; echo \"[${s::1}] [${s::}]\"; (echo ${s:}) 2>/dev/null || echo bad",
+        "[a] []\nbad\n",
+    );
+}

@@ -1776,6 +1776,22 @@ rules, `error`, and a synchronous fs view (`open` for reading, `stat`, `read_dir
 Incremental searching in wasm (`yes | grep x | head -1`) needs the search crates driven
 over chunks by an async utility; it is 0013 follow-up work, not this mechanism.
 
+## D1115: wasm ABI 3: the D1150 file system in the JS host
+date: 2026-11-07 · by: infra · issue: 0011
+D1150's Host operations reach JS through three host_call kinds. `K_FS` (async, like
+`K_OPEN`) carries every change and `stat_extra`, with the operation in `arg` (`FS_MKDIR`
+… `FS_SET_TIMES`) and length-prefixed paths and u32s in the payload; times travel as
+decimal text so nanoseconds stay exact, and `stat` now answers integer nanoseconds too.
+`K_NAME` (user/group name, answered in the input buffer like `K_NOW`) and
+`K_UTC_OFFSET` (`-getTimezoneOffset()*60` at the instant) are synchronous. MemHost
+implements them over MemFs with POSIX semantics (rename's replace rules and EINVAL into
+itself, EISDIR/ENOTDIR/ENOTEMPTY, hard links share the node and count `nlink`, ctime
+and the parent's mtime move with changes; times set exactly keep their nanoseconds);
+`userName`/`groupName`/`utcOffset` are methods an embedder may override (default: uid
+and gid 0 are root, 1000 is user; the local zone). EBUSY and EXDEV join the errno
+table. psh-spec's wasm driver now writes back directories made in memory (only lazy
+mounts nobody opened are skipped), which the D1150 cases need.
+
 ## D1131: POSIX patterns for the search utilities: psh-regex parses, regex matches
 date: 2026-11-07 · by: infra · issue: 0013
 The BRE/ERE translator the search utilities share (grep, later sed and `find -regex`)

@@ -1,6 +1,6 @@
 # 0006: Unix process layer
 
-status: in-progress
+status: done
 agent: procs
 branch: issue/0006-unix-process-layer
 depends-on: 0005 (`libc` allowed, D024)
@@ -13,24 +13,24 @@ The real Unix host for macOS, Linux and Android (ARCH.md "psh-os", Unix part), b
 the pitfalls in `research/execution-core.md` §5, with the L5 process tests.
 
 ## Acceptance criteria
-- [ ] Spawn via `posix_spawn` (own process group or session per external, SETSIGDEF incl.
+- [x] Spawn via `posix_spawn` (own process group or session per external, SETSIGDEF incl.
       SIGPIPE, empty mask, CLOEXEC_DEFAULT on macOS, addchdir_np where available), with
       the `fork`+`exec` fallback where `posix_spawn` cannot express the spec.
-- [ ] Exit waits on pooled waiter threads (`waitid` with `WNOWAIT`); no SIGCHLD handler;
+- [x] Exit waits on pooled waiter threads (`waitid` with `WNOWAIT`); no SIGCHLD handler;
       no pid reuse while a group may still be signalled.
-- [ ] Engine↔external pumps (v1: bounded helper threads); external↔external pipes passed
+- [x] Engine↔external pumps (v1: bounded helper threads); external↔external pipes passed
       directly. No `O_NONBLOCK` on inherited or shared fds. FIFO opens that may block run
       off the engine thread.
-- [ ] Abandon = TERM to the group, KILL after the grace period, background reap;
+- [x] Abandon = TERM to the group, KILL after the grace period, background reap;
       detached (`nohup`-style) = released. A command completes only on exit *and* EOF;
       output from grandchildren holding the pipe is drained with bounds.
-- [ ] Standalone `psh`: handlers only set atomic bits and wake the driver; children get
+- [x] Standalone `psh`: handlers only set atomic bits and wake the driver; children get
       default dispositions. Embedded mode installs no handlers.
-- [ ] L5 tests in `tests/process/` (all under timeouts, each with a leak check): cancel
+- [x] L5 tests in `tests/process/` (all under timeouts, each with a leak check): cancel
       mid-pipeline leaves no process; a here-doc past 64 KiB into an external; `yes |
       head -1` terminates (SIGPIPE); background `&` + `wait`; `$!`; `kill` of a group;
       output after the shell's own exit is collected; signal exit codes `128+n`.
-- [ ] L1–L3 ratchets do not regress; scores in the Result.
+- [x] L1–L3 ratchets do not regress; scores in the Result.
 
 ## Notes
 - oh-my-pi's OS host (`crates/pi-shell/src/sys`, `src/process`) is MIT and may be read
@@ -275,5 +275,38 @@ can express neither); `pid()`; `kill()`.
   jobs excluded).
 - oils/builtin-cd/10 vs /13 race on a shared /tmp path under `-j` (test infra).
 - Linux: pidfd parking instead of waiter threads (ARCH "later").
+- Blocking reads (`read` builtin, FIFO opens, `$(…)` waits) do not give way to a fatal
+  signal yet (D1903): a `kill -TERM` to a standalone psh blocked there acts when the read
+  ends.
+- The report of a foreground program a signal ended (`Terminated  cmd` on stderr, bash
+  prints it for signals other than INT and PIPE) is not printed.
+- Pumped pipes buffer more than bash's kernel pipe (engine 64 KiB + pump), so a writer
+  racing a reader that exits early can finish where bash gets SIGPIPE
+  (brush/compat/signals/13); materializing a pipe with buffered bytes would close it.
+- `fg`, `bg`, `set -m`, stopped jobs: out of scope (D002).
 
 ## Result
+Landed in parts (main 46375e2, 19a0e84, 75361eb, f08217b, 497cc8c and the merges
+between): the Unix OS host and everything process-related above the engine.
+
+- **`psh-os`** (`crates/psh-os`, deps libc): `unix::UnixHost` (`UnixConfig { placement,
+  grace, pid, leftovers }`), `UnixFile`, the readiness thread, pooled `waitid(WNOWAIT)`
+  waiters, abandon escalation, `leftovers()`/`kill_all()`/`RunKiller`/`settle()`, FIFO
+  opens off-thread, timers, `signals` (standalone only) and `signum` (Linux ↔ OS
+  numbers); `lifecycle` and the timer are platform-neutral (Windows uses them).
+- **Host trait additions** (all with defaults): `Host::pipe`, `kill`, `umask`, `now`;
+  `ExtProc::pid`, `disown`; `SpawnSpec::{sig_ignore, umask, detach}` (`Default`);
+  `OpenOptions::mode`.
+- **Engine**: direct OS pipes between externals (D1068); jobs (`wait`, `kill`, `jobs`,
+  `disown`, real `$!`, D1900); the exec tail of one-command pipeline stages (D1902);
+  signals to the shell from `kill $$` and the OS (D1903).
+- **How to use**: embedders create one `UnixHost` per shell (dropping it ends the run
+  and, with `Leftovers::Kill`, kills what it left, D1067); the `psh` binary keeps its
+  externals in its own group like bash and dies by a fatal signal.
+- **Tests**: L5 `cargo test -p psh-os --test process` (31) and `cargo test -p psh --test
+  standalone` (10), each with a deadline and leak check; psh-os unit tests (38); engine
+  job tests. All also run on Linux in Docker (`--init`).
+- **Scores** (macOS, main 497cc8c): oils 1907/2511, brush 2258/3171, agent 133/144
+  active pass; no regressions over the issue; orphan check after a full psh-spec run: 0.
+- **Known gaps**: see Follow-ups (blocking reads and signals, foreground signal report,
+  pump buffering vs bash's pipe, job control proper).

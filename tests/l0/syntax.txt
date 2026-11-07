@@ -914,3 +914,142 @@ echo $((
 echo $((1
 ## status: 2
 ## message: unexpected EOF while looking for matching `)'
+
+#### 196
+in
+## status: 2
+## message: syntax error near unexpected token `in'
+
+#### 197
+]]
+## status: 2
+## message: syntax error near unexpected token `]]'
+
+#### 198
+echo; in
+## status: 2
+## message: syntax error near unexpected token `in'
+
+#### 199
+a[b
+## status: 2
+## message: unexpected EOF while looking for matching `]'
+
+#### 200
+a[
+## status: 2
+## message: unexpected EOF while looking for matching `]'
+
+#### 201
+x=1 a[
+## status: 2
+## message: unexpected EOF while looking for matching `]'
+
+#### 202
+echo a[
+## status: 0
+
+#### 203
+a[]
+## status: 0
+
+#### 204
+a[1]x
+## status: 0
+
+#### 205
+a[1 + 2]
+## status: 0
+
+#### 206
+echo ${ :; }x
+## status: 0
+
+#### 207
+echo ${ }
+## status: 0
+
+#### 208
+echo ${ }x
+## status: 0
+
+#### 209
+echo ${ :;}
+## status: 0
+
+#### 210
+echo ${ :; }}
+## status: 0
+
+#### 211
+echo ${$}
+## status: 0
+
+#### 212
+echo ${${x}}
+## status: 0
+
+#### 213
+echo ${$(echo)}
+## status: 0
+
+#### 214
+echo ${x{}y
+## status: 0
+
+#### 215
+echo ${x:-{a}b}
+## status: 0
+
+#### 216
+{\
+## status: 2
+## message: syntax error: unexpected end of file from `{' command on line 2
+
+#### 217
+if\
+## status: 2
+## message: syntax error: unexpected end of file from `if' command on line 2
+
+#### 218
+then\
+## status: 2
+## message: syntax error near unexpected token `then'
+
+#### 219
+{\
+ echo; }
+## status: 0
+
+#### 220
+<<then case
+then
+## status: 0
+
+#### 221
+${ }#echo
+## status: 0
+
+#### 222
+echo $((1 + ))
+## status: 0
+
+#### 223
+((1 +))
+## status: 0
+
+#### 224
+let x=( 1 )
+## status: 0
+
+#### 225
+echo $(( (1) + (2) ))
+## status: 0
+
+#### 226
+echo $((echo a) )
+## status: 0
+
+#### 227
+x=$(( 1 / 0 ))
+## status: 0

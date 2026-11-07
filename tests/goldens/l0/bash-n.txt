@@ -1,4 +1,4 @@
-# bash -n verdicts for tests/l0/syntax.txt (fnv1a64 ecdcf43a6795be10, 196 inputs),
+# bash -n verdicts for tests/l0/syntax.txt (fnv1a64 4b7d6ae06bc0598f, 228 inputs),
 # recorded by scripts/record-goldens with GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
 # KEY<TAB>STATUS<TAB>STDERR for each input bash rejects; unlisted ones parse.
 41	2	bash: line 1: syntax error near unexpected token `)'\nbash: line 1: `echo )'\n
@@ -70,3 +70,12 @@
 193	2	bash: line 1: unexpected EOF while looking for matching `)'\n
 194	2	bash: line 1: unexpected EOF while looking for matching `)'\n
 195	2	bash: line 1: unexpected EOF while looking for matching `)'\n
+196	2	bash: line 1: syntax error near unexpected token `in'\nbash: line 1: `in'\n
+197	2	bash: line 1: syntax error near unexpected token `]]'\nbash: line 1: `]]'\n
+198	2	bash: line 1: syntax error near unexpected token `in'\nbash: line 1: `echo; in'\n
+199	2	bash: line 1: unexpected EOF while looking for matching `]'\n
+200	2	bash: line 1: unexpected EOF while looking for matching `]'\n
+201	2	bash: line 1: unexpected EOF while looking for matching `]'\n
+216	2	bash: line 3: syntax error: unexpected end of file from `{' command on line 2\n
+217	2	bash: line 3: syntax error: unexpected end of file from `if' command on line 2\n
+218	2	bash: line 2: syntax error near unexpected token `then'\nbash: line 2: `'\n

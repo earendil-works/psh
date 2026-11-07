@@ -1,26 +1,3 @@
 # Ratchet for L0 (the parser against bash -n, TESTING.md): inputs that may fail.
 # One id per line, optionally `id: reason`. psh-spec --l0 --update-ratchet removes
 # inputs that pass; never add a line to hide a regression.
-shapes/11007: round trip changes the tree
-shapes/11313: round trip changes the tree
-shapes/11380: round trip changes the tree
-shapes/13643: round trip changes the tree
-shapes/15452: round trip changes the tree
-shapes/15458: round trip changes the tree
-shapes/15459: round trip changes the tree
-shapes/15460: round trip changes the tree
-shapes/15461: round trip changes the tree
-shapes/15462: round trip changes the tree
-shapes/15508: round trip changes the tree
-shapes/15511: round trip changes the tree
-shapes/15860: round trip changes the tree
-shapes/17535: round trip changes the tree
-shapes/21695: round trip changes the tree
-shapes/21828: round trip changes the tree
-shapes/21840: round trip changes the tree
-shapes/22455: round trip changes the tree
-shapes/22523: round trip changes the tree
-shapes/22524: round trip changes the tree
-shapes/23334: round trip changes the tree
-shapes/25614: round trip changes the tree
-shapes/25625: round trip changes the tree

@@ -144,6 +144,22 @@ Checkouts: `vendor/ripgrep` (91f5d22), `vendor/fd` (193d0df) in the primary chec
   stops an endless writer, the fs view, panics).
 - ARCH "Interface" updated.
 
+### part 2: crates and the shared layer (D1131, D1132)
+- The D020 set in psh-utils (`grep-printer` without default features), allowlist lines.
+- `psh_regex::to_rust_syntax` (new `crates/psh-regex/src/rust.rs`, additive: one module
+  and a re-export in lib.rs, outside my touches but next to the parser it reuses):
+  POSIX BRE/ERE through psh-regex's parser to regex syntax, with `pattern: None` for
+  back-references and `ambiguous` for spans that can differ. Tested on psh-regex's GNU
+  corpus (`search::posix::tests::agrees_with_the_gnu_corpus`).
+- `search::walk` (seam, native `ignore::Walk`), `search::vwalk` (virtual walk + chain
+  from `ignore/src/dir.rs`), `search::gitconfig` (global excludes from the shell env).
+  Findings worth knowing: walkdir reports a read error after the directory itself
+  (and not at all for a skipped or max-depth directory); a dangling root link is an
+  error; `ignore::Walk` with `min_depth` never loads the root's ignore files (the
+  seam applies `min_depth` itself); walkdir's I/O errors embed the path in the
+  message ("IO error for operation on PATH: ...", what rg prints), mapped too.
+- Parity tests in `search::tests`; NOTICE entry for ripgrep/walkdir.
+
 ## Follow-ups
 
 ## Result

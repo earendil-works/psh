@@ -13,7 +13,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | 0015 | Utilities D: files and paths | files | .worktrees/files |
 | 0016 | Utilities E: text filters (then 0019 awk) | text | .worktrees/text |
 | 0027 | [[ ]], test, and a POSIX regex engine | parser | .worktrees/parser |
-| 0026 | Arrays and the rest of word expansion | engine | .worktrees/engine |
+| 0032 | Engine follow-ups and the hit list | engine | .worktrees/engine |
 | 0029 | Core shell builtins | builtins | .worktrees/builtins |
 
 ## Open (ready)
@@ -67,3 +67,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0006 | Unix process layer | 9de10bb (procs) |
 | 0028 | Shell options, errexit and traps | 08e81d0 (shapes) |
 | 0008 | Utility framework and first batch | d4241b1 (infra) |
+| 0026 | Arrays and the rest of word expansion | a9cf1e1 (engine) |

@@ -72,7 +72,7 @@ use common::util_fn;
 pub static REGISTRY: &[UtilEntry] = &[
     UtilEntry {
         names: &["awk", "gawk"],
-        mode: Mode::PathFallback,
+        mode: Mode::Always,
         destructive: false,
         run: util_fn!(awk::run),
     },

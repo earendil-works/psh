@@ -1,6 +1,6 @@
 # 0019: Utilities batch H: awk
 
-status: in-progress
+status: done
 agent: text
 branch: issue/0019-utils-awk
 depends-on: 0008
@@ -111,6 +111,8 @@ implementation. Port goawk (MIT) to Rust (D018); F mode until conformant, then S
   gawk, a NUL in the source, one `%c` subtlety): gawk's sub/gsub backslash rules, octal
   escapes in a regex as written characters (`/a\52b/` is `a*b`), bracket ranges with
   `]`/`[` ends and collating symbols, FILENAME `-` for stdin, ARGV[0] the name called by.
+- Part 4: S mode (D1194, coordinator's decision); release 1M-line sum 0.19 s vs macOS
+  awk 0.35 s; agent/oils cases that use awk unchanged.
 
 ## Follow-ups
 - psh-regex: an option for `.` (and bracket negations) to match bytes outside valid
@@ -119,3 +121,21 @@ implementation. Port goawk (MIT) to Rust (D018); F mode until conformant, then S
   status is 128+N (`ShellChild::wait` would need the signal).
 
 ## Result
+- `awk` and `gawk` (S mode, D1194) in `crates/psh-utils/src/awk/`: a goawk port (lexer,
+  parser, resolver, compiler; a non-recursive async stack machine), POSIX awk plus the
+  gawk extensions agents use; where gawk and BSD awk differ, gawk (D1193). `system()`,
+  `cmd | getline` and `print | cmd` run in psh's shell via `UtilCtx::spawn_shell`
+  (UTIL_API_VERSION 3, D1191). Unsupported options fall through to the real awk (an
+  error in a sandbox).
+- Tests: unit cases (`cargo test -p psh-utils awk::`), the vendored suites against gawk
+  with a ratchet (`tests/vendor-awk/`: onetrueawk t.*/p.* and goawk's cases, 767/772;
+  onetrueawk's T.* via `cargo test -p psh --test onetrueawk`, Unix, 3 checks ratcheted),
+  L4 `tests/utils/awk/` (69 cases, GNU and BSD recorded). `PSH_UTILS_FORCE` (D1192)
+  makes the L4 layer test psh's F/W utilities.
+- Also landed: psh-regex `exec_at`/`find_at`; classifier `-i/--include` for awk/gawk.
+- Speed (release build, 1M lines, `awk '{s+=$2} END{print s}'`): psh 0.19 s, macOS awk
+  0.35 s.
+- Known gaps: `.` does not match invalid UTF-8 bytes (psh-regex); signal deaths of
+  `system()`/`close()` commands are 128+N, not gawk's 256+N; for-in order is insertion
+  order; no BEGINFILE/ENDFILE, `@include`, `PROCINFO["sorted_in"]`, `--csv`, `|&`
+  coprocesses, IGNORECASE; `%Z` in strftime is UTC or an offset, not a zone name.

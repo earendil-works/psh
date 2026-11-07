@@ -2525,3 +2525,11 @@ position as jq does, the lines read so far: jq reads its input by lines, so a va
 line counts that line (`(at <stdin>:1)`), `<unknown>` before any input. Input files are
 read one after the other, each its own JSON text (jq parses the concatenation as one
 text; a value split across two files is an error here).
+## D1194: awk and gawk are S mode
+date: 2026-11-08 · by: text · issue: 0019 (coordinator's decision)
+Supersedes D015 for `awk` and `gawk`: psh's awk (D1193) always runs in-process, also when
+the host has an awk on PATH. One gawk-compatible awk on every platform is the agent-first
+choice: macOS agents otherwise get BSD awk, whose behavior differs (83 of the 772
+vendored cases). Options psh does not implement still fall through to the real program
+(D1082). Basis: the vendored suites pass but for documented, ratcheted cases (767/772,
+onetrueawk's T.* only 3 checks beyond gawk's), and the 69 L4 cases pass on GNU's goldens.

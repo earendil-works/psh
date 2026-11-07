@@ -513,3 +513,13 @@ fn file_system_changes() {
     run(h.remove_dir(&e("b"))).unwrap();
     std::fs::remove_dir_all(&d).unwrap();
 }
+
+#[test]
+fn standard_path_is_windows_own() {
+    let p = host().standard_path();
+    let entries = host().path_entries(&p);
+    assert_eq!(entries.len(), 4, "{:?}", String::from_utf8_lossy(&p));
+    assert!(!p.contains(&b'\\'));
+    assert!(resolve_in(b"cmd", &p, b"C:/").is_some());
+    assert!(resolve_in(b"powershell", &p, b"C:/").is_some());
+}

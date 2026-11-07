@@ -2116,3 +2116,11 @@ exported value wins, as in bash), `PPID` a readonly integer always (left alone w
 host reports no parent), `HOSTNAME`, `OSTYPE`, `MACHTYPE`, `HOSTTYPE` plain variables
 unless inherited. `GROUPS` is a dynamic indexed array refreshed from the host on each
 read, so assignments to it have no effect; unset, it becomes an ordinary variable.
+
+## D1917: Windows standard PATH
+date: 2026-11-07 · by: windows · issue: 0007
+`WindowsHost::standard_path()` (D1332, `command -p`) is Windows' own default search path
+of a fresh account: `%SystemRoot%\system32`, `%SystemRoot%`, `System32\Wbem` and
+`System32\WindowsPowerShell\v1.0`, `/`-separated and joined with `;` (which
+`path_entries` splits). The user's directories (npm, cargo, ...) stay out on purpose:
+`command -p` means the system's programs whatever `PATH` says.

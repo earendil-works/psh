@@ -65,3 +65,16 @@ fn cd_keeps_drive_paths() {
         "{r:?}"
     );
 }
+
+#[test]
+fn command_p_uses_the_standard_path() {
+    let r = run("PATH=; command -p cmd /d /c echo hi; command -pv cmd");
+    let lines: Vec<String> = r.stdout.lines().map(str::to_ascii_lowercase).collect();
+    assert_eq!(lines.first().map(String::as_str), Some("hi"), "{r:?}");
+    assert!(
+        lines
+            .get(1)
+            .is_some_and(|l| l.ends_with("/system32/cmd.exe") && l.contains(":/")),
+        "{r:?}"
+    );
+}

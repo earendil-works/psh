@@ -397,6 +397,11 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
   at `C:/`, `/c/Windows`); guide note updated. `Host::home_dir` was already there (the
   current user, from `USERPROFILE`, D1915).
 
+### 2026-11-07 standard_path
+- `WindowsHost::standard_path()` (D1917): System32, Windows, Wbem, Windows PowerShell
+  in psh's PATH form. Host test; Windows L5 `command -p cmd /d /c echo hi` with an
+  empty PATH and `command -pv cmd`.
+
 ## Follow-ups
 - psh-spec on Windows for the oils, brush and agent layers: triage the differences into
   `expected-failures.windows.txt` (and normalization rules where a difference is not

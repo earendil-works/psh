@@ -556,6 +556,29 @@ impl Host for WindowsHost {
         Some(path::engine_path(std::path::Path::new(&home)))
     }
 
+    /// Windows' own default search path for a fresh account (D1917): System32, the
+    /// Windows directory, WMI and Windows PowerShell's, in psh's form (`/`, `;`).
+    fn standard_path(&self) -> Vec<u8> {
+        let root = std::env::var_os("SystemRoot")
+            .map(std::path::PathBuf::from)
+            .or_else(|| spawn::system_dir().map(|d| d.parent().map(Into::into).unwrap_or(d)))
+            .unwrap_or_else(|| std::path::PathBuf::from(r"C:\Windows"));
+        let dirs = [
+            root.join("system32"),
+            root.clone(),
+            root.join(r"System32\Wbem"),
+            root.join(r"System32\WindowsPowerShell\v1.0"),
+        ];
+        let mut out = Vec::new();
+        for (i, d) in dirs.iter().enumerate() {
+            if i > 0 {
+                out.push(b';');
+            }
+            out.extend(path::engine_path(d));
+        }
+        out
+    }
+
     fn info(&self) -> psh_engine::host::HostInfo {
         info(self.pid.is_some())
     }

@@ -348,6 +348,19 @@ struct Command {
     line: Vec<u16>,
 }
 
+/// The system directory (`C:\Windows\System32`).
+pub(crate) fn system_dir() -> Option<std::path::PathBuf> {
+    let mut buf = vec![0u16; 260];
+    // SAFETY: `buf` is writable for its length.
+    let n = unsafe { GetSystemDirectoryW(buf.as_mut_ptr(), buf.len() as u32) } as usize;
+    if n == 0 || n >= buf.len() {
+        return None;
+    }
+    Some(std::path::PathBuf::from(String::from_utf16_lossy(
+        &buf[..n],
+    )))
+}
+
 /// `%SystemRoot%\System32\cmd.exe`.
 fn system_cmd() -> io::Result<String> {
     let mut buf = vec![0u16; 260];

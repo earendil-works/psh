@@ -108,6 +108,15 @@ impl Fields {
         self.cur.started = true;
     }
 
+    /// An extglob group (D1321): its text and its pattern, never split.
+    pub(crate) fn pattern(&mut self, text: &[u8], pat: &[u8]) {
+        self.begin();
+        self.cur.text.extend_from_slice(text);
+        self.cur.pat.extend_from_slice(pat);
+        self.cur.glob = true;
+        self.cur.started = true;
+    }
+
     /// The unquoted result of an expansion: split on IFS, pattern chars live.
     pub(crate) fn unquoted(&mut self, s: &[u8]) {
         if !self.split {
@@ -614,7 +623,28 @@ async fn expand_part(
             f.literal(&path);
         }
         Part::FunSub { .. } => return unsupported(vp, "${ …; } substitution").await,
-        Part::ExtGlob { .. } => return unsupported(vp, "extended glob").await,
+        Part::ExtGlob { op, alts } => {
+            // The pattern `op(alt|alt)` with each alternative expanded as a pattern;
+            // the text, should nothing match, is the same with quotes removed.
+            let mut pat = vec![*op, b'('];
+            let mut txt = vec![*op, b'('];
+            for (i, alt) in alts.iter().enumerate() {
+                if i > 0 {
+                    pat.push(b'|');
+                    txt.push(b'|');
+                }
+                let mut sub = Fields::new(vp, false);
+                expand_parts(vp, code, &alt.parts, false, &mut sub, Ctx::Word).await?;
+                sub.finish_word();
+                for fl in sub.out {
+                    pat.extend_from_slice(&fl.pat);
+                    txt.extend_from_slice(&fl.text);
+                }
+            }
+            pat.push(b')');
+            txt.push(b')');
+            f.pattern(&txt, &pat);
+        }
         Part::Array(_) => return unsupported(vp, "array assignment").await,
     }
     Ok(())
@@ -965,6 +995,7 @@ async fn param(
     }
 
     let utf8 = vp.utf8();
+    let mopts = vp.match_opts(false);
     match &p.op {
         ParamOp::None => emit_val(vp, f, val, quoted),
         ParamOp::Default { kind, colon, word } => {
@@ -1057,7 +1088,7 @@ async fn param(
             let suffix = matches!(p.op, ParamOp::RemoveSuffix { .. });
             let pat = expand_pattern(vp, code, pattern).await?;
             let val = map_val(val, |s| {
-                pattern::remove_affix(s, &pat, suffix, *longest, utf8)
+                pattern::remove_affix_with(s, &pat, suffix, *longest, mopts)
             });
             emit_val(vp, f, val, quoted)
         }
@@ -1081,7 +1112,7 @@ async fn param(
                 if pat.is_empty() && mode != ReplaceMode::Prefix && mode != ReplaceMode::Suffix {
                     s.to_vec()
                 } else {
-                    pattern::replace(s, &pat, &rep, mode, utf8)
+                    pattern::replace_with(s, &pat, &rep, mode, mopts)
                 }
             });
             emit_val(vp, f, val, quoted)
@@ -1091,7 +1122,7 @@ async fn param(
                 Some(w) => expand_pattern(vp, code, w).await?,
                 None => b"?".to_vec(),
             };
-            let pat = Pattern::new(&pat, utf8);
+            let pat = Pattern::with(&pat, mopts);
             let val = map_val(val, |s| change_case(s, *kind, &pat, utf8));
             emit_val(vp, f, val, quoted)
         }
@@ -1626,12 +1657,28 @@ fn unescape(p: &[u8]) -> Vec<u8> {
 
 /// The paths matching a pattern, sorted; empty if none.
 pub(crate) async fn glob(vp: &Vp, pat: &[u8]) -> Vec<Vec<u8>> {
-    let utf8 = vp.utf8();
+    let opts = vp.match_opts(vp.opts.shopt(Shopt::Nocaseglob));
+    let dotglob = vp.opts.shopt(Shopt::Dotglob);
+    let globstar = vp.opts.shopt(Shopt::Globstar);
     let absolute = pat.first() == Some(&b'/');
     let comps: Vec<&[u8]> = pat
         .split(|&b| b == b'/')
         .filter(|c| !c.is_empty())
         .collect();
+    let join = |a: &[u8], b: &[u8]| {
+        let mut v = a.to_vec();
+        if !v.is_empty() && v.last() != Some(&b'/') {
+            v.push(b'/');
+        }
+        v.extend_from_slice(b);
+        v
+    };
+    let is_dir = |p: Vec<u8>| async move {
+        vp.host()
+            .stat(&p, true)
+            .await
+            .is_ok_and(|m| m.kind == crate::host::FileKind::Dir)
+    };
     // (shown path, absolute path)
     let mut cur: Vec<(Vec<u8>, Vec<u8>)> = vec![if absolute {
         (b"/".to_vec(), b"/".to_vec())
@@ -1641,25 +1688,53 @@ pub(crate) async fn glob(vp: &Vp, pat: &[u8]) -> Vec<Vec<u8>> {
     for (i, comp) in comps.iter().enumerate() {
         let last = i + 1 == comps.len();
         let mut next = Vec::new();
-        let join = |a: &[u8], b: &[u8]| {
-            let mut v = a.to_vec();
-            if !v.is_empty() && v.last() != Some(&b'/') {
-                v.push(b'/');
+        if globstar && *comp == b"**" {
+            // `**`: this directory and every one below it (and, last, every file).
+            let mut stack: Vec<(Vec<u8>, Vec<u8>)> = cur.clone();
+            while let Some((shown, abs)) = stack.pop() {
+                let Ok(mut entries) = vp.host().read_dir(&abs).await else {
+                    continue;
+                };
+                entries.sort_by(|a, b| a.name.cmp(&b.name));
+                for e in entries.into_iter().rev() {
+                    if e.name.first() == Some(&b'.') && !dotglob {
+                        continue;
+                    }
+                    let full = join(&abs, &e.name);
+                    let shown_e = join(&shown, &e.name);
+                    // Symlinks to directories are not followed (bash).
+                    let dir = vp
+                        .host()
+                        .stat(&full, false)
+                        .await
+                        .is_ok_and(|m| m.kind == crate::host::FileKind::Dir);
+                    if dir {
+                        stack.push((shown_e.clone(), full.clone()));
+                    }
+                    // Last, `**` is every file too, unless the pattern ends in `/`.
+                    if dir || (last && !pat.ends_with(b"/")) {
+                        next.push((shown_e, full));
+                    }
+                }
             }
-            v.extend_from_slice(b);
-            v
-        };
-        if !pattern::has_glob_chars(comp) {
+            // Zero levels: the starting directories themselves (`a/**` lists `a/`;
+            // the current directory is never listed).
+            for c in &cur {
+                if !c.0.is_empty() {
+                    let mut shown = c.0.clone();
+                    if last && shown.last() != Some(&b'/') {
+                        shown.push(b'/');
+                    }
+                    next.push((shown, c.1.clone()));
+                } else if !last {
+                    next.push(c.clone());
+                }
+            }
+        } else if !pattern::has_glob_chars_ext(comp, opts.extglob) {
             let name = unescape(comp);
             for (shown, abs) in &cur {
                 let p = join(abs, &name);
-                if last
-                    || vp
-                        .host()
-                        .stat(&p, true)
-                        .await
-                        .is_ok_and(|m| m.kind == crate::host::FileKind::Dir)
-                {
+                if last || is_dir(p.clone()).await {
                     next.push((join(shown, &name), p));
                 }
             }
@@ -1674,8 +1749,8 @@ pub(crate) async fn glob(vp: &Vp, pat: &[u8]) -> Vec<Vec<u8>> {
                 next = kept;
             }
         } else {
-            let p = Pattern::new(comp, utf8);
-            let dot_ok = comp.first() == Some(&b'.');
+            let p = Pattern::with(comp, opts);
+            let dot_ok = comp.first() == Some(&b'.') || dotglob;
             for (shown, abs) in &cur {
                 let Ok(mut entries) = vp.host().read_dir(abs).await else {
                     continue;
@@ -1685,17 +1760,11 @@ pub(crate) async fn glob(vp: &Vp, pat: &[u8]) -> Vec<Vec<u8>> {
                     if e.name.first() == Some(&b'.') && !dot_ok {
                         continue;
                     }
-                    if !p.matches(&e.name, utf8) {
+                    if !p.matches(&e.name, opts.utf8) {
                         continue;
                     }
                     let full = join(abs, &e.name);
-                    if !last
-                        && !vp
-                            .host()
-                            .stat(&full, true)
-                            .await
-                            .is_ok_and(|m| m.kind == crate::host::FileKind::Dir)
-                    {
+                    if !last && !is_dir(full.clone()).await {
                         continue;
                     }
                     next.push((join(shown, &e.name), full));
@@ -1710,10 +1779,13 @@ pub(crate) async fn glob(vp: &Vp, pat: &[u8]) -> Vec<Vec<u8>> {
     let mut out: Vec<Vec<u8>> = cur.into_iter().map(|(s, _)| s).collect();
     if pat.ends_with(b"/") {
         for o in &mut out {
-            o.push(b'/');
+            if o.last() != Some(&b'/') {
+                o.push(b'/');
+            }
         }
     }
     out.sort();
+    out.dedup();
     out
 }
 

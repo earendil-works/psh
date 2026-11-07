@@ -791,7 +791,12 @@ async fn run_case(vp: &mut Vp, code: &Rc<Code>, cmd: &Command, c: &psh_syntax::C
         if !hit {
             for p in &item.patterns {
                 let pat = Box::pin(expand::expand_pattern(vp, code, p)).await?;
-                if crate::pattern::Pattern::new(&pat, utf8).matches(&word, utf8) {
+                if crate::pattern::Pattern::with(
+                    &pat,
+                    vp.match_opts(vp.opts.shopt(Shopt::Nocasematch)),
+                )
+                .matches(&word, utf8)
+                {
                     hit = true;
                     break;
                 }

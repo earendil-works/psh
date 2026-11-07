@@ -291,7 +291,6 @@ brush/compat/builtins/unset/16
 brush/compat/builtins/unset/18
 brush/compat/builtins/unset/19
 brush/compat/compound_cmds/arithmetic_for/2
-brush/compat/compound_cmds/case/4
 brush/compat/compound_cmds/for/11
 brush/compat/compound_cmds/for/24
 brush/compat/compound_cmds/for/25
@@ -400,7 +399,6 @@ brush/compat/ifs/0
 brush/compat/ifs/60
 brush/compat/ifs/96
 brush/compat/line_continuation/3
-brush/compat/line_continuation/5
 brush/compat/line_continuation/6
 brush/compat/nameref/20
 brush/compat/nameref/44
@@ -432,9 +430,6 @@ brush/compat/options/extdebug/6
 brush/compat/options/extdebug/7
 brush/compat/options/extdebug/8
 brush/compat/options/extdebug/9
-brush/compat/options/extdebug/10
-brush/compat/options/extdebug/12
-brush/compat/options/extdebug/13
 brush/compat/options/extdebug/15
 brush/compat/options/extdebug/17
 brush/compat/options/extdebug/18
@@ -459,8 +454,6 @@ brush/compat/options/set-e/125
 brush/compat/options/set-e/126
 brush/compat/options/set-e/137
 brush/compat/options/set-e/138
-brush/compat/options/set-e/139
-brush/compat/options/set-e/140
 brush/compat/options/set-e/143
 brush/compat/options/set-e/145
 brush/compat/options/set-e/146
@@ -488,21 +481,11 @@ brush/compat/path_search/9
 brush/compat/path_search/10
 brush/compat/path_search/12
 brush/compat/path_search/13
-brush/compat/patterns/filename_expansion/3
-brush/compat/patterns/filename_expansion/19
-brush/compat/patterns/filename_expansion/20
-brush/compat/patterns/filename_expansion/21
-brush/compat/patterns/filename_expansion/22
-brush/compat/patterns/filename_expansion/23
-brush/compat/patterns/filename_expansion/24
 brush/compat/patterns/filename_expansion/32
-brush/compat/patterns/filename_expansion/37
 brush/compat/patterns/filename_expansion/38
 brush/compat/patterns/filename_expansion/39
 brush/compat/patterns/filename_expansion/40
 brush/compat/patterns/filename_expansion/41
-brush/compat/patterns/filename_expansion/43
-brush/compat/patterns/filename_expansion/44
 brush/compat/patterns/patterns/1
 brush/compat/patterns/patterns/2
 brush/compat/patterns/patterns/3
@@ -580,12 +563,7 @@ brush/compat/well_known_vars/4
 brush/compat/well_known_vars/5
 brush/compat/well_known_vars/7
 brush/compat/well_known_vars/8
-brush/compat/well_known_vars/9
-brush/compat/well_known_vars/10
-brush/compat/well_known_vars/12
 brush/compat/well_known_vars/14
-brush/compat/well_known_vars/15
-brush/compat/well_known_vars/16
 brush/compat/well_known_vars/17
 brush/compat/well_known_vars/18
 brush/compat/well_known_vars/19
@@ -605,15 +583,7 @@ brush/compat/word_expansion/command_substitution/36
 brush/compat/word_expansion/command_substitution/37
 brush/compat/word_expansion/command_substitution/38
 brush/compat/word_expansion/command_substitution/39
-brush/compat/word_expansion/command_substitution/44
-brush/compat/word_expansion/command_substitution/45
-brush/compat/word_expansion/command_substitution/46
-brush/compat/word_expansion/command_substitution/47
-brush/compat/word_expansion/command_substitution/48
-brush/compat/word_expansion/command_substitution/49
-brush/compat/word_expansion/command_substitution/50
-brush/compat/word_expansion/command_substitution/54
-brush/compat/word_expansion/command_substitution/55
+brush/compat/word_expansion/command_substitution/51: passed only while extglob was unsupported (status 2); bash counts the parens of an unquoted $( inside an extglob instead of parsing a command (parser)
 brush/compat/word_expansion/command_substitution/57
 brush/compat/word_expansion/param_transformation/3
 brush/compat/word_expansion/param_transformation/5
@@ -632,7 +602,6 @@ brush/compat/word_expansion/params/39
 brush/compat/word_expansion/params/40
 brush/compat/word_expansion/params/47
 brush/compat/word_expansion/params/53
-brush/compat/word_expansion/params/61
 brush/compat/word_expansion/params/63
 brush/compat/word_expansion/params/64
 brush/compat/word_expansion/params/65

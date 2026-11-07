@@ -686,6 +686,16 @@ impl Vp {
         Ok(apply_case(case, value))
     }
 
+    /// How patterns match here: the locale, `extglob`, and case folding (`nocaseglob`
+    /// or `nocasematch`, as the caller says) (D1321).
+    pub(crate) fn match_opts(&self, nocase: bool) -> crate::pattern::MatchOpts {
+        crate::pattern::MatchOpts {
+            utf8: self.utf8(),
+            extglob: self.opts.shopt(crate::options::Shopt::Extglob),
+            nocase,
+        }
+    }
+
     /// Whether the locale is UTF-8 (`LC_ALL`, `LC_CTYPE`, `LANG`, first set wins).
     pub(crate) fn utf8(&self) -> bool {
         for name in ["LC_ALL", "LC_CTYPE", "LANG"] {

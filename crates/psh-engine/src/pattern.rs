@@ -61,6 +61,22 @@ enum Tok {
         negated: bool,
         items: Vec<ClassItem>,
     },
+    /// An extglob group: `?(…)`, `*(…)`, `+(…)`, `@(…)`, `!(…)`.
+    Group {
+        op: u8,
+        alts: Vec<Vec<Tok>>,
+    },
+}
+
+/// How a pattern matches (D1321).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) struct MatchOpts {
+    /// Chars rather than bytes (UTF-8 locale).
+    pub utf8: bool,
+    /// `shopt -s extglob`: `?(…)` and friends are groups.
+    pub extglob: bool,
+    /// `nocaseglob` / `nocasematch`.
+    pub nocase: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -79,16 +95,29 @@ const CLASSES: &[&str] = &[
 #[derive(Clone, Debug)]
 pub(crate) struct Pattern {
     toks: Vec<Tok>,
+    nocase: bool,
+    /// Has extglob groups: the backtracking matcher.
+    groups: bool,
 }
 
-impl Pattern {
-    pub(crate) fn new(pat: &[u8], utf8: bool) -> Pattern {
-        let (u, _) = units(pat, utf8);
-        let mut toks = Vec::new();
-        let mut i = 0;
-        while i < u.len() {
-            let c = u[i];
-            match c {
+/// Compiles units up to the end, or (in a group) up to `|` or `)` at this level.
+fn compile(u: &[Unit], mut i: usize, extglob: bool, in_group: bool) -> (Vec<Tok>, usize) {
+    let mut toks = Vec::new();
+    while i < u.len() {
+        let c = u[i];
+        if in_group && (c == '|' as u32 || c == ')' as u32) {
+            break;
+        }
+        if extglob
+            && b"?*+@!".iter().any(|&b| u32::from(b) == c)
+            && u.get(i + 1) == Some(&('(' as u32))
+            && let Some((alts, next)) = compile_group(u, i + 2, extglob)
+        {
+            toks.push(Tok::Group { op: c as u8, alts });
+            i = next;
+            continue;
+        }
+        match c {
                 0x5c /* \ */ => {
                     if i + 1 < u.len() {
                         toks.push(Tok::Lit(u[i + 1]));
@@ -123,12 +152,62 @@ impl Pattern {
                     i += 1;
                 }
             }
+    }
+    (toks, i)
+}
+
+/// The alternatives of a group starting after its `(`; `None` without a closing `)`.
+fn compile_group(u: &[Unit], mut i: usize, extglob: bool) -> Option<(Vec<Vec<Tok>>, usize)> {
+    let mut alts = Vec::new();
+    loop {
+        let (toks, next) = compile(u, i, extglob, true);
+        alts.push(toks);
+        match u.get(next) {
+            Some(&c) if c == '|' as u32 => i = next + 1,
+            Some(&c) if c == ')' as u32 => return Some((alts, next + 1)),
+            _ => return None,
         }
-        Pattern { toks }
+    }
+}
+
+impl Pattern {
+    pub(crate) fn new(pat: &[u8], utf8: bool) -> Pattern {
+        Pattern::with(
+            pat,
+            MatchOpts {
+                utf8,
+                ..MatchOpts::default()
+            },
+        )
+    }
+
+    pub(crate) fn with(pat: &[u8], opts: MatchOpts) -> Pattern {
+        let (u, _) = units(pat, opts.utf8);
+        let (mut toks, _) = compile(&u, 0, opts.extglob, false);
+        let groups = toks.iter().any(|t| matches!(t, Tok::Group { .. }));
+        if opts.nocase {
+            fold_toks(&mut toks);
+        }
+        Pattern {
+            toks,
+            nocase: opts.nocase,
+            groups,
+        }
     }
 
     /// Whether the pattern matches all of `text`.
     pub(crate) fn matches_units(&self, text: &[Unit]) -> bool {
+        if self.nocase {
+            let folded: Vec<Unit> = text.iter().map(|&c| fold(c)).collect();
+            return self.matches_folded(&folded);
+        }
+        self.matches_folded(text)
+    }
+
+    fn matches_folded(&self, text: &[Unit]) -> bool {
+        if self.groups {
+            return match_toks(&self.toks, text);
+        }
         // The classic star backtracking: on a mismatch, retry from the last star with
         // one more unit consumed. Correct for patterns without extglob.
         let (mut p, mut t) = (0, 0);
@@ -163,6 +242,85 @@ impl Pattern {
 
     pub(crate) fn matches(&self, text: &[u8], utf8: bool) -> bool {
         self.matches_units(&units(text, utf8).0)
+    }
+}
+
+/// Lower case for case-insensitive matching (one-char mappings only).
+fn fold(c: Unit) -> Unit {
+    match char::from_u32(c) {
+        Some(ch) => {
+            let mut l = ch.to_lowercase();
+            match (l.next(), l.next()) {
+                (Some(x), None) => x as u32,
+                _ => c,
+            }
+        }
+        None => c,
+    }
+}
+
+fn fold_toks(toks: &mut [Tok]) {
+    for t in toks {
+        match t {
+            Tok::Lit(c) => *c = fold(*c),
+            Tok::Class { items, .. } => {
+                for it in items {
+                    match it {
+                        ClassItem::One(c) => *c = fold(*c),
+                        ClassItem::Range(a, b) => {
+                            *a = fold(*a);
+                            *b = fold(*b);
+                        }
+                        ClassItem::Named(_) => {}
+                    }
+                }
+            }
+            Tok::Group { alts, .. } => {
+                for a in alts {
+                    fold_toks(a);
+                }
+            }
+            Tok::Any | Tok::Star => {}
+        }
+    }
+}
+
+/// Backtracking match for patterns with extglob groups.
+fn match_toks(p: &[Tok], t: &[Unit]) -> bool {
+    let Some((first, rest)) = p.split_first() else {
+        return t.is_empty();
+    };
+    match first {
+        Tok::Star => (0..=t.len()).any(|k| match_toks(rest, &t[k..])),
+        Tok::Group { op, alts } => {
+            let one = |s: &[Unit]| alts.iter().any(|a| match_toks(a, s));
+            match op {
+                b'@' => (0..=t.len()).any(|k| one(&t[..k]) && match_toks(rest, &t[k..])),
+                b'?' => {
+                    match_toks(rest, t)
+                        || (0..=t.len()).any(|k| one(&t[..k]) && match_toks(rest, &t[k..]))
+                }
+                b'!' => (0..=t.len()).any(|k| !one(&t[..k]) && match_toks(rest, &t[k..])),
+                // `*(…)` and `+(…)`: one match, then the same group again (or the rest).
+                _ => {
+                    if *op == b'*' && match_toks(rest, t) {
+                        return true;
+                    }
+                    (1..=t.len()).any(|k| {
+                        one(&t[..k])
+                            && (match_toks(rest, &t[k..]) || {
+                                let mut again = vec![Tok::Group {
+                                    op: b'*',
+                                    alts: alts.clone(),
+                                }];
+                                again.extend_from_slice(rest);
+                                match_toks(&again, &t[k..])
+                            })
+                    })
+                }
+            }
+        }
+        tok => !t.is_empty() && tok_matches(tok, t[0]) && match_toks(rest, &t[1..]),
     }
 }
 
@@ -225,6 +383,7 @@ fn tok_matches(tok: &Tok, c: Unit) -> bool {
         Tok::Lit(l) => *l == c,
         Tok::Any => true,
         Tok::Star => true,
+        Tok::Group { .. } => false,
         Tok::Class { negated, items } => {
             let hit = items.iter().any(|it| match it {
                 ClassItem::One(x) => *x == c,
@@ -269,6 +428,25 @@ pub(crate) fn escape(text: &[u8], out: &mut Vec<u8>) {
     }
 }
 
+/// `has_glob_chars`, also counting extglob groups (`@(…)`) when extglob is on.
+pub(crate) fn has_glob_chars_ext(pat: &[u8], extglob: bool) -> bool {
+    if has_glob_chars(pat) {
+        return true;
+    }
+    if !extglob {
+        return false;
+    }
+    let mut i = 0;
+    while i + 1 < pat.len() {
+        match pat[i] {
+            b'\\' => i += 2,
+            b'+' | b'@' | b'!' if pat[i + 1] == b'(' => return true,
+            _ => i += 1,
+        }
+    }
+    false
+}
+
 /// Whether a pattern (as produced by the expander) has unescaped pattern chars.
 pub(crate) fn has_glob_chars(pat: &[u8]) -> bool {
     let mut i = 0;
@@ -283,6 +461,18 @@ pub(crate) fn has_glob_chars(pat: &[u8]) -> bool {
 }
 
 /// `${x#pat}` (`suffix` false) and `${x%pat}`: removes the shortest or longest match.
+pub(crate) fn remove_affix_with(
+    text: &[u8],
+    pat: &[u8],
+    suffix: bool,
+    longest: bool,
+    opts: MatchOpts,
+) -> Vec<u8> {
+    let p = Pattern::with(pat, opts);
+    affix(text, &p, suffix, longest, opts.utf8)
+}
+
+#[cfg(test)]
 pub(crate) fn remove_affix(
     text: &[u8],
     pat: &[u8],
@@ -290,7 +480,10 @@ pub(crate) fn remove_affix(
     longest: bool,
     utf8: bool,
 ) -> Vec<u8> {
-    let p = Pattern::new(pat, utf8);
+    affix(text, &Pattern::new(pat, utf8), suffix, longest, utf8)
+}
+
+fn affix(text: &[u8], p: &Pattern, suffix: bool, longest: bool, utf8: bool) -> Vec<u8> {
     let (u, offs) = units(text, utf8);
     let n = u.len();
     let candidates: Vec<usize> = if longest == suffix {
@@ -320,6 +513,7 @@ pub(crate) enum ReplaceMode {
 }
 
 /// `${x/pat/rep}` and its variants: longest matches, left to right.
+#[cfg(test)]
 pub(crate) fn replace(
     text: &[u8],
     pat: &[u8],
@@ -327,7 +521,27 @@ pub(crate) fn replace(
     mode: ReplaceMode,
     utf8: bool,
 ) -> Vec<u8> {
-    let p = Pattern::new(pat, utf8);
+    replace_with(
+        text,
+        pat,
+        rep,
+        mode,
+        MatchOpts {
+            utf8,
+            ..MatchOpts::default()
+        },
+    )
+}
+
+pub(crate) fn replace_with(
+    text: &[u8],
+    pat: &[u8],
+    rep: &[u8],
+    mode: ReplaceMode,
+    opts: MatchOpts,
+) -> Vec<u8> {
+    let utf8 = opts.utf8;
+    let p = Pattern::with(pat, opts);
     let (u, offs) = units(text, utf8);
     let n = u.len();
     match mode {
@@ -399,6 +613,39 @@ mod tests {
         assert!(m("[", "["));
         assert!(m("?", "é"));
         assert!(m("*.txt", "a.b.txt"));
+    }
+
+    #[test]
+    fn extglob() {
+        let m = |p: &str, t: &str| {
+            let o = MatchOpts {
+                utf8: true,
+                extglob: true,
+                nocase: false,
+            };
+            Pattern::with(p.as_bytes(), o).matches(t.as_bytes(), true)
+        };
+        assert!(m("@(a|b)c", "bc"));
+        assert!(!m("@(a|b)c", "cc"));
+        assert!(m("*(ab)", ""));
+        assert!(m("*(ab)", "ababab"));
+        assert!(!m("+(ab)", ""));
+        assert!(m("+(ab|c)x", "abcabx"));
+        assert!(m("?(x)y", "y"));
+        assert!(m("?(x)y", "xy"));
+        assert!(!m("!(foo)", "foo"));
+        assert!(m("!(foo)", "fo"));
+        assert!(m("!(*.c)", "a.h"));
+        assert!(!m("!(*.c)", "a.c"));
+        assert!(m("a@(b|*(c))d", "accd"));
+        // Without extglob the parentheses are plain text.
+        assert!(Pattern::new(b"@(a)", true).matches(b"@(a)", true));
+        let ci = MatchOpts {
+            utf8: true,
+            extglob: false,
+            nocase: true,
+        };
+        assert!(Pattern::with(b"A*[B-C]", ci).matches(b"axxb", true));
     }
 
     #[test]

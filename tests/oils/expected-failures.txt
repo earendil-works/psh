@@ -179,7 +179,6 @@ oils/builtin-vars/17
 oils/builtin-vars/24
 oils/builtin-vars/26
 oils/builtin-vars/32
-oils/case_/11
 oils/command-sub/8
 oils/command-sub/9
 oils/command-sub/16
@@ -229,29 +228,9 @@ oils/dparen/10
 oils/errexit/9
 oils/errexit/29
 oils/exit-status/2
-oils/extglob-files/0
-oils/extglob-files/1
-oils/extglob-files/2
-oils/extglob-files/3
-oils/extglob-files/4
-oils/extglob-files/5
-oils/extglob-files/6
-oils/extglob-files/7
-oils/extglob-files/8
 oils/extglob-files/9
-oils/extglob-files/10
-oils/extglob-files/11
 oils/extglob-files/12
 oils/extglob-files/13
-oils/extglob-files/14
-oils/extglob-files/15
-oils/extglob-files/16
-oils/extglob-files/17
-oils/extglob-files/18
-oils/extglob-files/19
-oils/extglob-files/20
-oils/extglob-files/21
-oils/extglob-files/22
 oils/extglob-match/0
 oils/extglob-match/1
 oils/extglob-match/2
@@ -271,7 +250,6 @@ oils/extglob-match/15
 oils/extglob-match/16
 oils/extglob-match/17
 oils/extglob-match/18
-oils/extglob-match/19
 oils/extglob-match/20
 oils/extglob-match/21
 oils/extglob-match/22
@@ -279,8 +257,6 @@ oils/extglob-match/23
 oils/extglob-match/24
 oils/extglob-match/25
 oils/extglob-match/26
-oils/extglob-match/27
-oils/extglob-match/28
 oils/for-expr/4
 oils/for-expr/5
 oils/for-expr/6
@@ -289,7 +265,6 @@ oils/glob/31
 oils/glob/38
 oils/glob-bash/4
 oils/glob-bash/5
-oils/glob-bash/7
 oils/globignore/1
 oils/globignore/2
 oils/globignore/3
@@ -306,9 +281,6 @@ oils/globignore/13
 oils/globignore/15
 oils/globignore/16
 oils/globignore/17
-oils/globstar/1
-oils/globstar/2
-oils/globstar/3
 oils/globstar/4
 oils/here-doc/16
 oils/here-doc/17
@@ -325,7 +297,6 @@ oils/nameref/27
 oils/nameref/29
 oils/nocasematch-match/0
 oils/nocasematch-match/1
-oils/nocasematch-match/3
 oils/nul-bytes/0
 oils/nul-bytes/1
 oils/nul-bytes/2
@@ -358,8 +329,6 @@ oils/redirect/36
 oils/redirect/39
 oils/redirect-command/8
 oils/redirect-command/13
-oils/redirect-multi/8
-oils/redirect-multi/9
 oils/regex/0
 oils/regex/1
 oils/regex/2
@@ -407,7 +376,6 @@ oils/tilde/11
 oils/tilde/13
 oils/toysh/1
 oils/toysh/2
-oils/toysh/3
 oils/toysh/5
 oils/toysh/6
 oils/type-compat/3
@@ -422,7 +390,6 @@ oils/var-op-patsub/23
 oils/var-op-patsub/26
 oils/var-op-slice/20
 oils/var-op-strip/10
-oils/var-op-strip/28
 oils/var-op-test/17
 oils/var-op-test/35
 oils/var-ref/3

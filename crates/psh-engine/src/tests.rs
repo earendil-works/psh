@@ -781,3 +781,42 @@ fn read_file_substitution() {
     });
     assert_eq!(o.stdout, "[hello]\n1\n");
 }
+
+#[test]
+fn extglob_and_glob_options() {
+    let setup = |h: &TestHost| {
+        for f in [
+            "/g/x.c",
+            "/g/y.h",
+            "/g/.hid",
+            "/g/a/z.c",
+            "/g/a/b/w.c",
+            "/g/README",
+        ] {
+            h.fs.write_file(f, b"");
+        }
+    };
+    let o = run_setup(
+        "cd /g; shopt -s extglob\necho !(*.c); echo @(x|y).*; case f.c in *.@(c|h)) echo yes;; esac; x=f.bar; echo ${x%.@(bar|baz)}",
+        setup,
+    );
+    assert_eq!(o.stdout, "README a y.h\nx.c y.h\nyes\nf\n", "{}", o.stderr);
+    let o = run_setup(
+        "cd /g; shopt -s globstar; echo **/*.c; echo a/**; echo **/",
+        setup,
+    );
+    assert_eq!(
+        o.stdout, "a/b/w.c a/z.c x.c\na/ a/b a/b/w.c a/z.c\na/ a/b/\n",
+        "{}",
+        o.stderr
+    );
+    let o = run_setup(
+        "cd /g; shopt -s dotglob; echo *; shopt -s nocaseglob; echo [r]eadme; shopt -s nocasematch; case ABC in abc) echo ci;; esac",
+        setup,
+    );
+    assert_eq!(
+        o.stdout, ".hid README a x.c y.h\nREADME\nci\n",
+        "{}",
+        o.stderr
+    );
+}

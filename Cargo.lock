@@ -565,6 +565,7 @@ dependencies = [
  "ignore",
  "psh-classify",
  "psh-engine",
+ "psh-regex",
  "regex",
  "regex-automata",
  "regex-syntax",

@@ -12,6 +12,9 @@ publish.workspace = true
 psh-engine.workspace = true
 # The per-utility option tables the utilities check their parsers against (D1090).
 psh-classify.workspace = true
+# POSIX patterns: the parser behind the BRE/ERE translator and the leftmost-longest,
+# back-reference matcher where the regex crate cannot answer (D1131).
+psh-regex.workspace = true
 # The search utilities (rg, fd, grep; later find and sed) on the ripgrep crates: exactly
 # the D020/D021 set. grep-printer without serde (D020); no grep-cli, no grep-pcre2.
 grep-matcher = "0.1.9"

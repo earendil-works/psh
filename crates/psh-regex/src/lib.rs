@@ -24,8 +24,11 @@ mod class;
 mod compile;
 mod exec;
 mod parse;
+mod rust;
 
 use alloc::vec::Vec;
+
+pub use rust::{Translation, to_rust_syntax};
 
 /// How a pattern is read and matched (the `regcomp` flags).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

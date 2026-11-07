@@ -9,6 +9,7 @@ mod common;
 mod fsutil;
 mod modes;
 pub mod opts;
+pub mod search;
 mod textio;
 mod timefmt;
 

@@ -449,7 +449,12 @@ impl P<'_> {
         let mut first = true;
         loop {
             let Some(c) = self.peek() else {
-                return err(ErrorKind::Brack);
+                // GNU: `[` or `[^` at the very end is a bad pattern, not an open bracket.
+                return err(if first {
+                    ErrorKind::BadPattern
+                } else {
+                    ErrorKind::Brack
+                });
             };
             if c == b']' && !first {
                 self.i += 1;

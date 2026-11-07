@@ -1822,3 +1822,19 @@ binary: the runner already kills the binary's process group after it exits; a gr
 that does not empty within 2 s fails the case likewise. Out of reach: a process that
 calls setsid itself (a session of its own is invisible to group checks), and, in the
 binary, `nohup`/`setsid` jobs (psh detaches them as designed). Windows: no check yet.
+## D1272: `[[ ]]` evaluates to statuses; quoted right sides are escaped part by part
+date: 2026-11-07 · by: parser · issue: 0027
+`crates/psh-engine/src/cond.rs` runs `[[ ]]`. Each primary yields a status, as in bash:
+0 true, 1 false, 2 an error (invalid regex, `-t x`); an arithmetic error in `-eq` and
+friends is 1. `!` maps any non-zero status to 0, `&&`/`||` test zero only, so
+`[[ a =~ ( || x ]]` is true after its error message. The right side of `==`/`!=`/`=~`
+is expanded part by part: literal text and expansions are live pattern/regex text,
+quoted parts (`'…'`, `"…"`, `\c`, `$'…'`) are escaped (pattern: `*?[]\@!+()|`; regex:
+`$()*+.?[\^{|`, which leaves GNU's `\'`/`\<` escapes untouched), and a leading tilde
+prefix is literal only when it expands. `==` matches as if extglob were on. `=~` is
+psh-regex in extended mode (icase under nocasematch, UTF-8 by locale); `BASH_REMATCH`
+becomes an indexed array of the match and its groups (unset groups empty), empty on no
+match, untouched with an error on an invalid regex or when readonly/associative. `set
+-x` prints each primary as evaluated (`+ [[ -n a ]]`, `! ` under negation), with the
+right side escaped as bash shows it. The unary and file/string binary tests are shared
+with `test` (`builtins::test::{unary, binary}`).

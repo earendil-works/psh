@@ -1,6 +1,6 @@
 # 0027: `[[ ]]`, `test`, and a POSIX regex engine
 
-status: in-progress
+status: done
 agent: parser
 branch: issue/0027-conditionals-regex
 depends-on: 0005
@@ -16,7 +16,7 @@ leftmost-longest matching and back-references in BREs; the `regex` crate has nei
 `sed`/`grep` for the cases the ripgrep crates cannot do (D020's fall-through list).
 
 ## Acceptance criteria
-- [ ] `psh-regex`: zero dependencies, `#![no_std]` + `alloc`, wasm32. POSIX ERE and BRE
+- [x] `psh-regex`: zero dependencies, `#![no_std]` + `alloc`, wasm32. POSIX ERE and BRE
       (bracket expressions with classes, equivalence/collating as far as a UTF-8/C
       locale needs, intervals, anchors, alternation, groups, back-references in BRE and
       as GNU extension in ERE), leftmost-longest match with submatch positions as
@@ -24,11 +24,11 @@ leftmost-longest matching and back-references in BREs; the `regex` crate has nei
       back-references (no exponential backtracking: e.g. a Pike VM / NFA simulation with
       longest-match tracking); bounded backtracking only for back-references.
       Differential tests against GNU (container) and macOS regex on generated patterns.
-- [ ] `[[ ]]`: all unary/binary operators, `==`/`!=` with patterns (extglob), `=~` with
+- [x] `[[x]]`: all unary/binary operators, `==`/`!=` with patterns (extglob), `=~` with
       `BASH_REMATCH`, quoting rules for the right-hand side, `&&`/`||`/`!`/`( )`,
       arithmetic comparisons, `-v`, `-R`, file tests through the Host.
-- [ ] `test`/`[` complete (the POSIX argument-count rules, `-a`/`-o`, all file tests).
-- [ ] Ratchets updated; Result records scores.
+- [x] `test`/`[` complete (the POSIX argument-count rules, `-a`/`-o`, all file tests).
+- [x] Ratchets updated; Result records scores.
 
 ## Notes
 - Clean room: POSIX and the bash manual describe the semantics; never read GNU or BSD
@@ -57,6 +57,39 @@ leftmost-longest matching and back-references in BREs; the `regex` crate has nei
   differences. Deliberate deviation: non-ASCII ranges (D1271).
 - Linear: `(a*)*b`, `(a|aa)*$`, `(x+x+)+y` over 20k chars in milliseconds (test).
 
+### 2026-11-07: part 2, `[[ ]]` and `test`
+- `crates/psh-engine/src/cond.rs` (D1272), dispatched from `run_compound` (so
+  redirections on `[[ ]]` work); `mod cond` in lib.rs; `builtins::test` is
+  `pub(crate)` for its `unary`/`binary`. psh-engine depends on psh-regex (allowlist
+  lines cite D1270). ARCH.md's crate table lists psh-regex.
+- Probed in the container: statuses (`!`/`||` after an error), the escaped chars of
+  quoted right sides (trace lines show them), `BASH_REMATCH` (local, readonly,
+  associative, after a failed match), `-R` (a nameref with a value), `-v` through a
+  nameref to an element (false), `-t x` (status 2, "integer expected"), tilde prefixes
+  (`~*` stays literal).
+- `test`: `-o` (set options), `-R`, `-O`/`-G` (against the host's euid/groups), `-t`
+  errors. `-N` stays false: the Host reports no access times.
+- Parser: the right side of `=~` may start with `|`; an operator there is "syntax
+  error in conditional expression: unexpected token"; two-char operators (`<>`, `>>`,
+  `;;`, `<&` …) are one token in `[[ ]]` messages, with bash's "near" quirk (`;;` →
+  `;`, `<&` → `&`). L0 still 100%.
+- psh-regex: `[`, `[^` at the end is ERR 2 (GNU), not 7.
+- Wasm: `brush/compat/extended_tests/11` now passes natively but needs `/bin/sh` and
+  `/etc/os-release`, which the JS host lacks (the same reason as `builtins/test/2`).
+
 ## Follow-ups
+- `touch -d "2 hours ago"` (utils): blocks brush `builtins/test/3,4`,
+  `extended_tests/12,13`, oils `builtin-bracket/31`.
+- `[[ -v ref[N] ]]` with `ref` a nameref to a whole array (brush marks it a known
+  failure too); `-N` needs access times from the Host.
+- The 4 known psh-regex differences from GNU (D1270): which iteration or alternative
+  owns a group with `(\b)*`-style assertions and bounded group repetitions.
 
 ## Result
+- `crates/psh-regex`: POSIX ERE/BRE with GNU semantics (`Regex::new(pat, Options)`,
+  `exec`/`find`/`is_match`), linear without back-references, 4,057 recorded GNU cases
+  as a test (D1270, D1271). Ready for `sed`/`grep` fall-throughs.
+- `[[ ]]` complete (D1272) and the `test` long tail. Scores (native): oils 2094 → 2220
+  of 2511 active, brush 2560 → 2696 of 3171, agent 140 → 141 of 144; 263 ratchet
+  entries removed. Remaining `[[`/`test` failures: `touch -d` (utils) and the
+  follow-ups above.

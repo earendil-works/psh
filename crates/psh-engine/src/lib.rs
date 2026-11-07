@@ -26,6 +26,7 @@
 mod arith;
 mod arrays;
 mod builtins;
+mod cond;
 mod escape;
 mod exec;
 mod expand;

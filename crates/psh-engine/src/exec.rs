@@ -387,7 +387,7 @@ fn run_command_with<'a>(
         }
         let result = match &cmd.kind {
             CommandKind::Simple(s) => run_simple(vp, code, cmd, s).await,
-            CommandKind::Select(_) | CommandKind::Cond(_) | CommandKind::Coproc(_) => {
+            CommandKind::Select(_) | CommandKind::Coproc(_) => {
                 vp.line = code.line(cmd.span.start);
                 expand::unsupported(vp, compound_name(&cmd.kind)).await
             }
@@ -582,6 +582,7 @@ fn run_compound<'a>(vp: &'a mut Vp, code: &'a Rc<Code>, cmd: &'a Command) -> Loc
             r
         }),
         CommandKind::Case(c) => Box::pin(run_case(vp, code, cmd, c)),
+        CommandKind::Cond(e) => Box::pin(crate::cond::run(vp, code, cmd, e)),
         CommandKind::Arith(w) => Box::pin(async move {
             vp.line = code.line(cmd.span.start);
             match arith_command(vp, code, w, "((: ", false).await? {

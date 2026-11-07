@@ -673,6 +673,22 @@ fn errors() {
             "unexpected argument `]]' to conditional unary operator\nsyntax error near `]]'",
         ),
         ("[[ ]]", "syntax error near `]]'"),
+        (
+            "[[ a =~ ; ]]",
+            "syntax error in conditional expression: unexpected token `;'\nsyntax error near `;'",
+        ),
+        (
+            "[[ a =~ <& ]]",
+            "syntax error in conditional expression: unexpected token `<&'\nsyntax error near `&'",
+        ),
+        (
+            "[[ a == >> ]]",
+            "unexpected argument `>>' to conditional binary operator\nsyntax error near `>>'",
+        ),
+        (
+            "[[ ;; ]]",
+            "unexpected token `;;' in conditional command\nsyntax error near `;'",
+        ),
     ];
     for (src, msg) in cases {
         assert_eq!(err(src), msg, "{src:?}");
@@ -697,6 +713,9 @@ fn bash_accepts() {
         "> out",
         "echo `if`",
         "echo ${x@Z}",
+        "[[ a =~ | ]]",
+        "[[ a =~ || ]]",
+        "[[ a =~ |x ]]",
         "echo $((1 + ))",
         "for 1 in a; do :; done",
         "true | time false",

@@ -1,7 +1,6 @@
 # Ratchet for layer agent: active cases that may fail (TESTING.md "Ratchets").
 # One case id per line, optionally `id: reason`. psh-spec --update-ratchet removes
 # cases that pass; never add a line to hide a regression.
-agent/control/6
 agent/globs-status/2
 agent/pipes/8
 agent/redirects/1

@@ -2278,7 +2278,19 @@ impl<'a> P<'a> {
             None => (s, s, String::from("EOF")),
             Some(b'\n') => (s, s + 1, String::from("newline")),
             Some(_) => {
-                let e = if self.at(b"&&") || self.at(b"||") {
+                let two = [
+                    &b"&&"[..],
+                    b"||",
+                    b"<>",
+                    b">>",
+                    b"<<",
+                    b";;",
+                    b"&>",
+                    b">|",
+                    b"<&",
+                    b">&",
+                ];
+                let e = if two.iter().any(|t| self.at(t)) {
                     s + 2
                 } else {
                     let run = self.run().len();
@@ -2286,6 +2298,17 @@ impl<'a> P<'a> {
                 };
                 (s, e, self.lossy(s, e))
             }
+        }
+    }
+
+    /// The token bash names after "syntax error near" for a `[[ ]]` token: of some
+    /// two-char operators only the last char.
+    fn cond_near(text: &str) -> &str {
+        match text {
+            ";;" => ";",
+            ">|" => "|",
+            "<&" | ">&" => "&",
+            t => t,
         }
     }
 
@@ -2301,7 +2324,10 @@ impl<'a> P<'a> {
         let message = if text == "]]" {
             String::from("syntax error near `]]'")
         } else {
-            format!("unexpected token `{text}' in conditional command\nsyntax error near `{text}'")
+            format!(
+                "unexpected token `{text}' in conditional command\nsyntax error near `{}'",
+                Self::cond_near(&text)
+            )
         };
         self.error_at(s, e, message)
     }
@@ -2312,7 +2338,7 @@ impl<'a> P<'a> {
         let near = if text == "newline" || text == "EOF" {
             op
         } else {
-            &text
+            Self::cond_near(&text)
         };
         self.error_at(
             s,
@@ -2484,10 +2510,22 @@ impl<'a> P<'a> {
             | BinaryTest::StringDoesNotExactlyMatchPattern => Ctx::Pattern { ext: true },
             _ => plain,
         };
-        // The right side of `=~` may start with `(`; other operands may not.
-        let rhs_ok = self.at_cond_word()
-            || (op == BinaryTest::StringMatchesRegex && self.peek() == Some(b'('));
+        // The right side of `=~` may start with `(` or `|`; other operands may not. For
+        // `=~`, an operator there is a syntax error in the expression (bash).
+        let regex = op == BinaryTest::StringMatchesRegex;
+        let rhs_ok = self.at_cond_word() || (regex && matches!(self.peek(), Some(b'(' | b'|')));
         if !rhs_ok {
+            let (s, e, text) = self.cond_token();
+            if regex && !matches!(&*text, "]]" | "newline" | "EOF") {
+                return Err(self.error_at(
+                    s,
+                    e,
+                    format!(
+                        "syntax error in conditional expression: unexpected token `{text}'\nsyntax error near `{}'",
+                        Self::cond_near(&text)
+                    ),
+                ));
+            }
             return Err(self.cond_arg_error("binary", op_text));
         }
         let Some(rhs) = self.read_word(rhs_ctx, false)? else {

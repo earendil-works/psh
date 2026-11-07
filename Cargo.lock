@@ -353,6 +353,7 @@ version = "0.0.0"
 name = "psh-engine"
 version = "0.0.0"
 dependencies = [
+ "psh-regex",
  "psh-syntax",
 ]
 

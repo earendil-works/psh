@@ -185,17 +185,37 @@ fn int(v: &[u8]) -> Result<i64, String> {
         .map_err(|_| format!("{}: integer expected", s(v)))
 }
 
-async fn unary(vp: &Vp, op: &[u8], arg: &[u8]) -> T {
+/// A unary test (`op` is `-f` and so on), for `test` and `[[ ]]`.
+pub(crate) async fn unary(vp: &Vp, op: &[u8], arg: &[u8]) -> T {
     let c = op[1];
     match c {
         b'z' => return Ok(arg.is_empty()),
         b'n' => return Ok(!arg.is_empty()),
         b'v' => {
-            return Ok(std::str::from_utf8(arg).ok().is_some_and(|n| vp.is_set(n)));
+            let Ok(name) = std::str::from_utf8(arg) else {
+                return Ok(false);
+            };
+            // A nameref to an element (`declare -n r='a[1]'`): bash looks for a
+            // variable of that literal name, which cannot exist.
+            if let Some(v) = vp.vars.get(name)
+                && v.nameref
+                && v.get().is_some_and(|t| t.contains(&b'['))
+            {
+                return Ok(false);
+            }
+            return Ok(vp.is_set(name));
         }
-        b'o' | b'R' => return Ok(false),
+        b'o' => {
+            return Ok(crate::options::by_name(arg).is_some_and(|o| vp.opts.get(o)));
+        }
+        b'R' => {
+            return Ok(std::str::from_utf8(arg)
+                .ok()
+                .and_then(|n| vp.vars.get(n))
+                .is_some_and(|v| v.nameref && v.get().is_some()));
+        }
         b't' => {
-            let n = int(arg).unwrap_or(-1);
+            let n = int(arg)?;
             return Ok(n >= 0
                 && vp
                     .fd(n as u32)
@@ -228,14 +248,18 @@ async fn unary(vp: &Vp, op: &[u8], arg: &[u8]) -> T {
         b'r' => host.access(&path, Access::Read).await.unwrap_or(false),
         b'w' => host.access(&path, Access::Write).await.unwrap_or(false),
         b'x' => host.access(&path, Access::Execute).await.unwrap_or(false),
-        // Owned by the effective user or group: the host knows; assume ours.
-        b'O' | b'G' => true,
+        b'O' => m.uid == host.info().euid,
+        // The effective group: the host reports the real one first.
+        b'G' => host.info().groups.first() == Some(&m.gid),
+        // Modified since last read: the host reports no access times.
         b'N' => false,
         _ => false,
     })
 }
 
-async fn binary(vp: &Vp, l: &[u8], op: &[u8], r: &[u8]) -> T {
+/// A binary test, for `test` and (but for the arithmetic and pattern operators,
+/// which differ) `[[ ]]`.
+pub(crate) async fn binary(vp: &Vp, l: &[u8], op: &[u8], r: &[u8]) -> T {
     Ok(match op {
         b"=" | b"==" => l == r,
         b"!=" => l != r,

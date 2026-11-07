@@ -43,7 +43,8 @@ then the rest, unranked among themselves. Under all of them: permissive licensin
 crates/
   psh-syntax/    lexer, parser, AST with byte spans, printer      no_std + alloc, zero deps
   psh-classify/  AST -> effects and summaries                     no_std + alloc, psh-syntax only
-  psh-engine/    the stepped interpreter; Host trait; vprocs      std, psh-syntax only, wasm32
+  psh-regex/     POSIX ERE/BRE with GNU semantics (D1270)         no_std + alloc, zero deps
+  psh-engine/    the stepped interpreter; Host trait; vprocs      std, psh-syntax + psh-regex, wasm32
   psh-os/        OS hosts: unix and windows                       libc, windows-sys
   psh-utils/     in-process utilities (grep, sed, head, jq, ...)  ripgrep crates (D020)
   psh/           the `psh` binary: -c, scripts, --parse, --classify
@@ -51,8 +52,8 @@ crates/
   psh-wasm/      later: the WASM build and its JS host
 ```
 
-Dependency direction: `psh-syntax` ← `psh-classify`, `psh-engine` ← `psh-os`,
-`psh-utils` ← `psh`, `psh-spec`, `psh-wasm`. pi-env depends on `psh-engine`, `psh-os`
+Dependency direction: `psh-syntax` ← `psh-classify`, `psh-syntax` + `psh-regex` ←
+`psh-engine` ← `psh-os`, `psh-utils` ← `psh`, `psh-spec`, `psh-wasm`. pi-env depends on `psh-engine`, `psh-os`
 and `psh-utils` (and `psh-classify` for a parse op); it lives in pi-mono, not here.
 
 **std or not (D023).** `psh-syntax` (and `psh-classify`) are `#![no_std]` + `alloc`, so

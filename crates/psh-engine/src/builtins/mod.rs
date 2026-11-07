@@ -18,7 +18,7 @@ mod read;
 pub(crate) mod set;
 mod shopt;
 mod strftime;
-mod test;
+pub(crate) mod test;
 pub(crate) mod trap;
 mod umask;
 

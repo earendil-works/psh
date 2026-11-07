@@ -7,6 +7,12 @@ IDs: the coordinator uses D001–D999. An issue NNNN uses the ten IDs from
 D(1000 + 10·NNNN) to D(1009 + 10·NNNN), so 0004 uses D1040–D1049 and 0012 uses
 D1120–D1129; its header names the range. Parallel branches never collide.
 
+When an issue runs out of its ten IDs, the coordinator hands out an extension block of
+ten from D1900 upward (D1900–D1909, D1910–D1919, ...; e.g. 0006 has D1900–D1909) and
+names it in the issue header next to the default range. Ask the coordinator before you
+need one. The default ranges of issues 0090 and later would overlap the extension
+blocks, so those issues get their range from the coordinator explicitly.
+
 Format:
 
 ```markdown

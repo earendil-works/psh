@@ -474,6 +474,10 @@ impl Host for WindowsHost {
         spawn::kill_pid(pid as u32, sig)
     }
 
+    fn info(&self) -> psh_engine::host::HostInfo {
+        info(self.pid.is_some())
+    }
+
     /// Windows has no umask: bash's usual default, so `umask` shows what scripts expect
     /// (D1911). A spawn's `umask` has nothing to apply to.
     fn umask(&self) -> u32 {
@@ -493,6 +497,74 @@ impl Host for WindowsHost {
     fn pid(&self) -> u32 {
         self.pid.unwrap_or_else(std::process::id)
     }
+}
+
+/// The process and machine facts (D1913), as Git Bash reports them where bash has a
+/// Windows form: `OSTYPE` `msys`, `MACHTYPE` `x86_64-pc-msys` (`aarch64-pc-msys`), so
+/// scripts take their Windows branch. Windows users have no numeric ids: 1000. The
+/// parent from a process snapshot; embedded (a fake `$$`), the embedding process.
+fn info(fake_pid: bool) -> psh_engine::host::HostInfo {
+    use windows_sys::Win32::System::SystemInformation::{
+        ComputerNamePhysicalDnsHostname, GetComputerNameExW,
+    };
+    let arch = std::env::consts::ARCH.to_string();
+    let mut name = vec![0u16; 256];
+    let mut len = name.len() as u32;
+    // SAFETY: `name` is writable for `len` units.
+    let hostname = if unsafe {
+        GetComputerNameExW(
+            ComputerNamePhysicalDnsHostname,
+            name.as_mut_ptr(),
+            &raw mut len,
+        )
+    } != 0
+    {
+        String::from_utf16_lossy(&name[..len as usize]).into_bytes()
+    } else {
+        std::env::var("COMPUTERNAME")
+            .unwrap_or_else(|_| "localhost".into())
+            .into_bytes()
+    };
+    let ppid = if fake_pid {
+        Some(std::process::id())
+    } else {
+        parent_pid()
+    };
+    psh_engine::host::HostInfo {
+        uid: 1000,
+        euid: 1000,
+        groups: vec![1000],
+        ppid,
+        hostname,
+        ostype: "msys".into(),
+        machtype: format!("{arch}-pc-msys"),
+        hosttype: arch,
+    }
+}
+
+/// The parent's pid from a process snapshot.
+fn parent_pid() -> Option<u32> {
+    use windows_sys::Win32::System::Diagnostics::ToolHelp::{
+        CreateToolhelp32Snapshot, PROCESSENTRY32W, Process32FirstW, Process32NextW,
+        TH32CS_SNAPPROCESS,
+    };
+    // SAFETY: a snapshot of all processes; the handle is owned below.
+    let snap = owned(unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) }).ok()?;
+    let me = std::process::id();
+    // SAFETY: plain data; dwSize set as the API requires.
+    let mut e: PROCESSENTRY32W = unsafe { std::mem::zeroed() };
+    e.dwSize = std::mem::size_of::<PROCESSENTRY32W>() as u32;
+    let h = snap.as_raw_handle() as HANDLE;
+    // SAFETY: an open snapshot handle and an initialized entry.
+    let mut ok = unsafe { Process32FirstW(h, &raw mut e) } != 0;
+    while ok {
+        if e.th32ProcessID == me {
+            return Some(e.th32ParentProcessID);
+        }
+        // SAFETY: as above.
+        ok = unsafe { Process32NextW(h, &raw mut e) } != 0;
+    }
+    None
 }
 
 /// The shell's environment from the process's (D1075): Windows names are

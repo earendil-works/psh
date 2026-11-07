@@ -1,11 +1,12 @@
 //! Platform ratchets (D1113): `tests/<layer>/expected-failures.<platform>.txt` next to the
 //! shared ratchet. On a platform, an active case may fail if either file lists it; the
 //! platform file lists only cases the shared ratchet does not (they pass natively), with
-//! the reason. The first platform is `wasm` (`psh-spec --wasm`). There, a case that
-//! needed external programs (the run's notes name the commands it looked for) may fail
-//! without being listed: no external program exists in wasm, and listing them would make
-//! every native improvement touch the wasm file. What is listed are the other
-//! differences, which should be few.
+//! the reason. The platforms are `wasm` (`psh-spec --wasm`) and `windows` (psh-spec run
+//! on Windows, D1914). There, a case that needed external programs it could not find
+//! (the run's notes name the commands it looked for) may fail without being listed:
+//! wasm has none, Windows lacks most Unix ones, and listing them would make every native
+//! improvement touch the platform file. What is listed are the other differences, which
+//! should be few.
 
 use std::path::Path;
 
@@ -25,7 +26,7 @@ pub fn path(layer: Layer, platform: &str) -> String {
 }
 
 /// The reason a case fails on this platform only.
-fn reason(r: &CaseResult) -> String {
+fn reason(r: &CaseResult, platform: &str) -> String {
     let mut missing: Vec<String> = r
         .actual
         .as_ref()
@@ -40,7 +41,7 @@ fn reason(r: &CaseResult) -> String {
         }
     }
     if seen.is_empty() {
-        "wasm only".to_string()
+        format!("{platform} only")
     } else {
         format!("needs external: {}", seen.join(", "))
     }
@@ -71,7 +72,7 @@ pub fn check<'a>(
         for r in &active {
             let in_shared = shared.entries.contains_key(&r.case.id);
             let in_plat = plat.entries.contains_key(&r.case.id);
-            let why = reason(r);
+            let why = reason(r, platform);
             let needs_external = why.starts_with("needs external");
             if in_plat && (r.pass || in_shared || needs_external) {
                 stale.push(r.case.id.clone());

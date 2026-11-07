@@ -458,7 +458,16 @@ fn run(opts: Options) -> Result<ExitCode, String> {
     // shell (the bash self-check) is only compared and summarized.
     let mut regressions = Vec::new();
     let filtered = !opts.filters.is_empty();
-    let ratchet_layers: &[Layer] = if engine.name() == "psh" && !opts.wasm {
+    // Platforms whose results differ from the native Unix ones in known ways check their
+    // own ratchet on top of the shared one, which they never change (D1113, D1914).
+    let platform = if opts.wasm {
+        Some("wasm")
+    } else if cfg!(windows) && engine.name() == "psh" {
+        Some("windows")
+    } else {
+        None
+    };
+    let ratchet_layers: &[Layer] = if engine.name() == "psh" && platform.is_none() {
         &opts.layers
     } else {
         &[]
@@ -539,10 +548,10 @@ fn run(opts: Options) -> Result<ExitCode, String> {
         }
     }
 
-    if opts.wasm {
+    if let Some(platform) = platform {
         regressions.extend(platform::check(
             &root,
-            "wasm",
+            platform,
             &opts.layers,
             &results,
             &platform::Options {

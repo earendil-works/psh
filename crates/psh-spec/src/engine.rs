@@ -494,7 +494,8 @@ impl Engine for InProcess {
         let _engine = engine_thread(move || {
             // `$$` must not be the runner: cases `kill $$`. No pid is this large.
             let (host, file, leak_check) = os_host(99_999_999);
-            let mut cfg = ShellConfig::new(host);
+            let noting = std::rc::Rc::new(Noting::new(host));
+            let mut cfg = ShellConfig::new(noting.clone());
             cfg.utilities = psh_utils::policy(false);
             cfg.env = env;
             cfg.cwd = cwd;
@@ -508,14 +509,14 @@ impl Engine for InProcess {
             shell.start(script);
             let r = drive_until(&mut shell, Some(deadline));
             drop(shell);
-            let _ = done_tx.send((r, leak_check()));
+            let _ = done_tx.send((r, leak_check(), noting.missing()));
         })?;
         // A shell stuck in the kernel (a v1 host limit) cannot be cancelled: give up
         // on it a little after the deadline and leave its thread behind.
         let wait = deadline.saturating_duration_since(Instant::now()) + Duration::from_secs(2);
-        let (result, leaked) = match done_rx.recv_timeout(wait) {
+        let (result, leaked, notes) = match done_rx.recv_timeout(wait) {
             Ok(r) => r,
-            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => (None, Vec::new()),
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => (None, Vec::new(), Vec::new()),
             Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => {
                 return Err(std::io::Error::other("the engine thread panicked"));
             }
@@ -547,8 +548,126 @@ impl Engine for InProcess {
             stdout,
             stderr,
             status,
-            notes: Vec::new(),
+            notes,
             leaked,
         })
+    }
+}
+
+/// The OS host with a record of the commands the shell looked for and never found: the
+/// run's notes, which tell a platform ratchet that a case needed a program this system
+/// lacks (D1914). A name counts once no lookup of it succeeded.
+struct Noting {
+    inner: std::rc::Rc<dyn psh_engine::Host>,
+    looked: std::rc::Rc<std::cell::RefCell<Looked>>,
+}
+
+/// Names looked up, and those of them found.
+type Looked = (Vec<Vec<u8>>, Vec<Vec<u8>>);
+
+impl Noting {
+    fn new(inner: std::rc::Rc<dyn psh_engine::Host>) -> Noting {
+        Noting {
+            inner,
+            looked: Default::default(),
+        }
+    }
+
+    /// The names looked up and never found, in the order first asked.
+    fn missing(&self) -> Vec<String> {
+        let l = self.looked.borrow();
+        l.0.iter()
+            .filter(|n| !l.1.contains(n))
+            .map(|n| String::from_utf8_lossy(n).into_owned())
+            .collect()
+    }
+}
+
+impl psh_engine::Host for Noting {
+    fn open(
+        &self,
+        path: &[u8],
+        opts: psh_engine::host::OpenOptions,
+    ) -> psh_engine::host::HostFuture<std::io::Result<std::rc::Rc<dyn psh_engine::HostFile>>> {
+        self.inner.open(path, opts)
+    }
+    fn stat(
+        &self,
+        path: &[u8],
+        follow: bool,
+    ) -> psh_engine::host::HostFuture<std::io::Result<psh_engine::host::Metadata>> {
+        self.inner.stat(path, follow)
+    }
+    fn access(
+        &self,
+        path: &[u8],
+        mode: psh_engine::host::Access,
+    ) -> psh_engine::host::HostFuture<std::io::Result<bool>> {
+        self.inner.access(path, mode)
+    }
+    fn read_dir(
+        &self,
+        path: &[u8],
+    ) -> psh_engine::host::HostFuture<std::io::Result<Vec<psh_engine::host::DirEntry>>> {
+        self.inner.read_dir(path)
+    }
+    fn canonicalize(&self, path: &[u8]) -> psh_engine::host::HostFuture<std::io::Result<Vec<u8>>> {
+        self.inner.canonicalize(path)
+    }
+    fn resolve(
+        &self,
+        name: &[u8],
+        path: &[u8],
+        cwd: &[u8],
+    ) -> psh_engine::host::HostFuture<Option<Vec<u8>>> {
+        let fut = self.inner.resolve(name, path, cwd);
+        let looked = self.looked.clone();
+        let name = name.to_vec();
+        Box::pin(async move {
+            let r = fut.await;
+            let mut l = looked.borrow_mut();
+            if !l.0.contains(&name) {
+                l.0.push(name.clone());
+            }
+            if r.is_some() && !l.1.contains(&name) {
+                l.1.push(name);
+            }
+            r
+        })
+    }
+    fn path_entries(&self, path: &[u8]) -> Vec<Vec<u8>> {
+        self.inner.path_entries(path)
+    }
+    fn spawn(
+        &self,
+        spec: psh_engine::host::SpawnSpec,
+    ) -> std::io::Result<psh_engine::host::Spawned> {
+        self.inner.spawn(spec)
+    }
+    fn pipe(
+        &self,
+    ) -> std::io::Result<(
+        std::rc::Rc<dyn psh_engine::HostFile>,
+        std::rc::Rc<dyn psh_engine::HostFile>,
+    )> {
+        self.inner.pipe()
+    }
+    fn kill(&self, pid: i32, sig: psh_engine::host::Signal) -> std::io::Result<()> {
+        self.inner.kill(pid, sig)
+    }
+    fn info(&self) -> psh_engine::host::HostInfo {
+        self.inner.info()
+    }
+    fn umask(&self) -> u32 {
+        self.inner.umask()
+    }
+    fn now(&self) -> Duration {
+        self.inner.now()
+    }
+    fn sleep(&self, duration: Duration) -> psh_engine::host::HostFuture<()> {
+        self.inner.sleep(duration)
+    }
+    fn pid(&self) -> u32 {
+        self.inner.pid()
     }
 }

@@ -51,6 +51,10 @@ psh-utils     psh-regex     D1270 (via psh-engine)
 psh           psh-utils     D1080 (the in-process utilities)
 psh-spec      psh-utils     D1080 (runs psh as the binary does)
 psh-wasm      psh-utils     D1080 (the toolset in wasm)
+psh-utils     psh-regex     D1131 (the POSIX pattern parser and matcher)
+psh           psh-regex     D1131 (via psh-utils)
+psh-spec      psh-regex     D1131 (via psh-utils)
+psh-wasm      psh-regex     D1131 (via psh-utils)
 psh-spec      psh-classify  D1090 (via psh-utils)
 
 # The search utilities (0013): the ripgrep crate set and its transitive crates (D020,

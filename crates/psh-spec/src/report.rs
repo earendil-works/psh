@@ -109,7 +109,7 @@ pub fn compare<'a>(
     r.stdout_ok = item.case.ignore_stdout
         || norm(&golden.stdout, GOLDEN_SHELL) == norm(&observed.output.stdout, shell);
     r.stderr_ok = norm(&golden.stderr, GOLDEN_SHELL) == norm(&observed.output.stderr, shell);
-    r.status_ok = golden.status == observed.output.status;
+    r.status_ok = crate::normalize::same_status(&golden.status, &observed.output.status);
     r.files_ok = golden.files == observed.files;
     r.leak_ok = observed.output.leaked.is_empty();
     r.pass = r.stdout_ok && r.status_ok && r.files_ok && r.leak_ok;

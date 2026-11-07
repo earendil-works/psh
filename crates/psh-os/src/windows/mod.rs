@@ -390,6 +390,11 @@ impl Host for WindowsHost {
             return ready(Ok(Rc::new(WinFile::dev(d)) as Rc<dyn HostFile>));
         }
         let r = path::native(p).and_then(|np| {
+            // A directory opened for reading: Unix opens it and fails the reads with
+            // "Is a directory"; Windows refuses the open with "Access denied".
+            if opts.read && !opts.write && std::fs::metadata(&np).is_ok_and(|m| m.is_dir()) {
+                return Ok(Rc::new(WinFile::dev(file::Dev::Dir)) as Rc<dyn HostFile>);
+            }
             open_file(&np, opts)
                 .map(|f| Rc::new(WinFile::new(OwnedHandle::from(f))) as Rc<dyn HostFile>)
         });
@@ -397,6 +402,22 @@ impl Host for WindowsHost {
     }
 
     fn stat(&self, p: &[u8], follow: bool) -> HostFuture<io::Result<Metadata>> {
+        // The devices the host provides are character devices, as on Unix.
+        if matches!(
+            p,
+            b"/dev/null" | b"/dev/zero" | b"/dev/urandom" | b"/dev/random"
+        ) {
+            return ready(Ok(Metadata {
+                kind: FileKind::CharDevice,
+                size: 0,
+                mode: 0o666,
+                mtime_ns: 0,
+                dev: 0,
+                ino: 0,
+                uid: 0,
+                gid: 0,
+            }));
+        }
         let r = path::native(p).and_then(|np| {
             let m = if follow {
                 std::fs::metadata(&np)

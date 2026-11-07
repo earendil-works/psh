@@ -448,6 +448,12 @@ fn command(
 ) -> io::Result<Command> {
     let app_str = program.to_string_lossy().into_owned();
     let ext = extension(program);
+    // A missing program is "not found" (127), before any guess about what it is.
+    if depth == 0
+        && let Err(e) = std::fs::metadata(program)
+    {
+        return Err(e);
+    }
     if cmdline::is_batch(&app_str) {
         let line = cmdline::batch_command_line(&app_str, argv.get(1..).unwrap_or_default())?;
         let app = path::wide(OsStr::new(&system_cmd()?))?;

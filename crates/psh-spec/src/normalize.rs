@@ -127,3 +127,29 @@ mod tests {
         );
     }
 }
+
+/// Whether a run's status matches the golden's. On Windows no process dies by a signal:
+/// the psh binary ends with `128 + n` where bash on Linux died by signal `n`, and a
+/// child killed by psh reports 137 (D1914). Elsewhere the statuses must be equal.
+pub fn same_status(golden: &crate::engine::Status, got: &crate::engine::Status) -> bool {
+    use crate::engine::Status;
+    if golden == got {
+        return true;
+    }
+    cfg!(windows) && matches!((golden, got), (Status::Signal(n), Status::Exit(c)) if *c == 128 + *n)
+}
+
+#[cfg(test)]
+mod status_tests {
+    use crate::engine::Status;
+
+    #[test]
+    fn statuses() {
+        assert!(super::same_status(&Status::Exit(3), &Status::Exit(3)));
+        assert!(!super::same_status(&Status::Exit(3), &Status::Exit(4)));
+        assert_eq!(
+            super::same_status(&Status::Signal(15), &Status::Exit(143)),
+            cfg!(windows)
+        );
+    }
+}

@@ -86,6 +86,8 @@ enum Kind {
 pub(crate) enum Dev {
     Zero,
     Random,
+    /// A directory opened for reading: reads fail with "Is a directory".
+    Dir,
 }
 
 impl WinFile {
@@ -191,6 +193,7 @@ impl HostFile for WinFile {
                 Poll::Ready(Ok(buf.len()))
             }
             Kind::Dev(Dev::Random) => Poll::Ready(random_bytes(buf).map(|()| buf.len())),
+            Kind::Dev(Dev::Dir) => Poll::Ready(Err(io::ErrorKind::IsADirectory.into())),
         }
     }
 
@@ -206,6 +209,7 @@ impl HostFile for WinFile {
                 }
             },
             Kind::Pump(p) => p.poll_write(cx, buf),
+            Kind::Dev(Dev::Dir) => Poll::Ready(Err(io::ErrorKind::IsADirectory.into())),
             Kind::Dev(_) => Poll::Ready(Ok(buf.len())),
         }
     }

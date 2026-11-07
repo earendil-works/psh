@@ -11,7 +11,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | 0007 | Windows: part A merged (bad4d63, rework 6ca3d08); part B in progress | windows | .worktrees/windows |
 | 0008-wasm | JS host: Host::now/mode (D1069), then 0013 | infra | .worktrees/infra |
 | 0015 | Utilities D: files and paths | files | .worktrees/files |
-| 0016 | Utilities E: text filters (then 0019 awk) | text | .worktrees/text |
+| 0019 | Utilities H: awk (goawk port) | text | .worktrees/text |
 | 0014 | Utilities C: sed (on psh-regex) | parser | .worktrees/parser |
 | 0032 | Engine follow-ups and the hit list | engine | .worktrees/engine |
 | 0029 | Core shell builtins | builtins | .worktrees/builtins |
@@ -30,7 +30,6 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | 0013 | Utilities B: rg, fd, grep + shared search layer | 0008 |
 | 0017 | Utilities F: find, xargs | 0008, 0006, 0013 |
 | 0018 | Utilities G: jq | 0008 |
-| 0019 | Utilities H: awk (goawk port) | 0008 |
 | 0020 | Utilities I: diff, checksums, base64, date, env, nice, nohup, which | 0008, 0006 |
 | 0021 | Utilities Tier 2 (umbrella, to be split) | Tier 1 |
 
@@ -69,3 +68,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0026 | Arrays and the rest of word expansion | a9cf1e1 (engine) |
 | 0031 | Grow the L3 agent layer (144 → 701 cases) | 2cb78fe (shapes) |
 | 0027 | [[ ]], test, and a POSIX regex engine | 57b282d (parser) |
+| 0016 | Utilities E: text filters | 278d1dd (text) |

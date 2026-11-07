@@ -7,7 +7,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
 | 0033 | Per-platform ratchets and the platform tag | shapes | .worktrees/shapes |
-| 0030 | Process follow-ups: run-in-shell, host info, signal robustness | procs | .worktrees/procs |
+| 0017 | Utilities F: find, xargs | procs | .worktrees/procs |
 | 0007 | Windows: part A merged (bad4d63, rework 6ca3d08); part B in progress | windows | .worktrees/windows |
 | 0008-wasm | JS host: Host::now/mode (D1069), then 0013 | infra | .worktrees/infra |
 | 0015 | Utilities D: files and paths | files | .worktrees/files |
@@ -28,7 +28,6 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | 0007B | Windows process layer (part B of 0007) | 0006 |
 | 0010 | pi-env integration behind a flag | 0006, 0007, L3 high |
 | 0013 | Utilities B: rg, fd, grep + shared search layer | 0008 |
-| 0017 | Utilities F: find, xargs | 0008, 0006, 0013 |
 | 0018 | Utilities G: jq | 0008 |
 | 0020 | Utilities I: diff, checksums, base64, date, env, nice, nohup, which | 0008, 0006 |
 | 0021 | Utilities Tier 2 (umbrella, to be split) | Tier 1 |
@@ -69,3 +68,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0031 | Grow the L3 agent layer (144 → 701 cases) | 2cb78fe (shapes) |
 | 0027 | [[ ]], test, and a POSIX regex engine | 57b282d (parser) |
 | 0016 | Utilities E: text filters | 278d1dd (text) |
+| 0030 | Process follow-ups | 4617d8f (procs) |

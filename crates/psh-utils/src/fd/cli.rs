@@ -307,7 +307,15 @@ pub fn parse(args: &[Vec<u8>]) -> Result<Parsed, CliError> {
             }
             "changed-within" => o.changed_within = Some(v()),
             "changed-before" => o.changed_before = Some(v()),
-            "owner" => o.owner = Some(v()),
+            "owner" => {
+                let s = v();
+                if let Err(super::filter::OwnerError::Invalid(msg)) =
+                    super::filter::OwnerFilter::from_string(&s)
+                {
+                    return Err(invalid_value(&s, "owner", Some(&msg)));
+                }
+                o.owner = Some(s);
+            }
             "format" => o.format = Some(v()),
             "batch-size" => o.batch_size = num("batch-size")?,
             "ignore-file" => o.ignore_file.push(g.value.clone().unwrap_or_default()),
@@ -565,10 +573,20 @@ fn check_conflicts(seen: &[&'static str], o: &Opts) -> Result<(), CliError> {
         )));
     }
     if o.batch_size != 0 && !o.exec_batch {
+        let pattern = if seen.contains(&"pattern") {
+            "<pattern>"
+        } else {
+            "[pattern]"
+        };
+        let path = if seen.contains(&"path") {
+            "<path>..."
+        } else {
+            "[path]..."
+        };
         return Err(CliError::Usage(format!(
             "error: the following required arguments were not provided:\n  --exec-batch \
-             <cmd>...\n\nUsage: fd --batch-size <size> --exec-batch <cmd>... [pattern] \
-             [path]...\n{TRY_HELP}"
+             <cmd>...\n\nUsage: fd --exec-batch <cmd>... --batch-size <size> {pattern} \
+             {path}\n{TRY_HELP}"
         )));
     }
     Ok(())

@@ -33,7 +33,7 @@ mod tests;
 
 use std::sync::{Arc, Mutex};
 
-use psh_engine::host::FileKind;
+use psh_engine::host::{FileKind, OpenOptions};
 use psh_engine::util::{BlockingOptions, UtilCtx};
 use regex::bytes::RegexSetBuilder;
 
@@ -290,6 +290,20 @@ fn colored_output(ctx: &UtilCtx<'_>, o: &Opts) -> bool {
     }
 }
 
+/// An I/O error as Rust displays it: `No such file or directory (os error 2)`.
+fn io_error_text(e: &std::io::Error) -> String {
+    let code = match e.kind() {
+        std::io::ErrorKind::NotFound => Some(2),
+        std::io::ErrorKind::PermissionDenied => Some(13),
+        _ => e.raw_os_error(),
+    };
+    let text = psh_engine::host::error_text(e);
+    match code {
+        Some(c) if !cfg!(windows) => format!("{text} (os error {c})"),
+        _ => text,
+    }
+}
+
 /// A path for fd's messages: Rust's `{:?}` of the lossy text.
 fn debug(p: &[u8]) -> String {
     format!("{:?}", String::from_utf8_lossy(p))
@@ -404,18 +418,12 @@ async fn prepare(
             time_constraints.extend(f);
         }
     }
-    let owner_constraint = match &opts.owner {
-        Some(o) => match OwnerFilter::from_string(o) {
-            Ok(f) => f.filter_ignore(),
-            Err(OwnerError::Invalid(msg)) => {
-                return Err(format!(
-                    "error: invalid value '{o}' for '--owner <user:group>': {msg}"
-                ));
-            }
-            Err(OwnerError::NeedsNames) => None,
-        },
-        None => None,
-    };
+    // Checked by `cli::parse`; names ran the real fd.
+    let owner_constraint = opts
+        .owner
+        .as_deref()
+        .and_then(|o| OwnerFilter::from_string(o).ok())
+        .and_then(OwnerFilter::filter_ignore);
     let interactive_terminal = ctx.is_terminal(1);
     let colored = colored_output(ctx, &opts);
     let ls_colors = colored.then(|| {
@@ -475,7 +483,20 @@ async fn prepare(
     {
         ignore_files.push(f);
     }
-    ignore_files.extend(opts.ignore_file.iter().cloned());
+    // `WalkBuilder::add_ignore` reads them now; malformed lines are skipped quietly.
+    for f in &opts.ignore_file {
+        match ctx.open(&against(f), OpenOptions::read()).await {
+            Ok(_) => ignore_files.push(f.clone()),
+            Err(e) => {
+                let msg = format!(
+                    "Malformed pattern in custom ignore file. {}: {}.",
+                    String::from_utf8_lossy(f),
+                    io_error_text(&e)
+                );
+                fail(ctx, &sanitize_error(&msg)).await;
+            }
+        }
+    }
     let walk = WalkOptions {
         hidden: ignore_hidden,
         ignore: read_fdignore,

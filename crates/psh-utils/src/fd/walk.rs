@@ -274,10 +274,17 @@ pub fn run_sync(ctx: &mut SyncCtx, config: Box<Config>) -> i32 {
         }
     };
     let follow = config.walk.follow_links;
+    // The errors of explicit ignore files come first: fd reported them before the walk
+    // (the front end did).
+    let mut started = false;
     walker.run(&config.roots, &mut |r| {
         if rx.done.is_some() {
             return WalkState::Quit;
         }
+        if r.is_err() && !started {
+            return WalkState::Continue;
+        }
+        started = true;
         let entry = match r {
             Ok(e) => {
                 if let Some(err) = &e.err {

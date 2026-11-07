@@ -1,0 +1,820 @@
+# Goldens for tests/utils/fd/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: the implicit search path: ./ stripped, directories with a trailing /
+status: 127
+bash-n: 0
+--- stdout
+|---
+|---
+|---
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- file a.txt
+|x
+--- file b.rs
+|x
+--- dir docs
+--- file docs/README.md
+|x
+--- dir src
+--- file src/main.rs
+|x
+--- dir src/sub
+--- file src/sub/deep.rs
+|x
+
+=== 1: a leading dash keeps its ./
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- file -rf
+|x
+--- file b
+|x
+
+=== 2: the pattern: a regex on the file name, smart case
+status: 127
+bash-n: 0
+--- stdout
+|---
+|---
+|---
+|---
+|---
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- file Main.rs
+|x
+--- file README.md
+|x
+--- file lib.rs
+|x
+--- file main.c
+|x
+--- dir src
+--- file src/util.RS
+|x
+
+=== 3: -g globs, -F, --exact, --and
+status: 127
+bash-n: 0
+--- stdout
+|---
+|---
+|---
+|---
+|---
+|---
+|---
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 3: fd: command not found
+|bash: line 3: fd: command not found
+|bash: line 3: fd: command not found
+|bash: line 3: fd: command not found
+--- dir a
+--- file a.b
+|x
+--- dir a/b
+--- file a/b/w.rs
+|x
+--- file a/z.rs
+|x
+--- file x.rs
+|x
+--- file y.py
+|x
+
+=== 4: -p matches the full path
+status: 127
+bash-n: 0
+--- stdout
+|---
+|---
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- file m.rs
+|x
+--- dir src
+--- dir src/sub
+--- file src/sub/m.rs
+|x
+
+=== 5: a pattern with a slash, or a leading dot without -H
+status: 127
+bash-n: 0
+--- stdout
+|127
+|127
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- file .env
+|x
+--- dir src
+--- file src/main
+|x
+
+=== 6: the gitignore, hidden files, -H, -I, -u
+status: 127
+bash-n: 0
+--- stdout
+|---
+|---
+|---
+|---
+|---
+--- stderr
+|bash: line 3: fd: command not found
+|bash: line 3: fd: command not found
+|bash: line 3: fd: command not found
+|bash: line 3: fd: command not found
+|bash: line 3: fd: command not found
+|bash: line 3: fd: command not found
+--- file .env
+|x
+--- file .gitignore
+|*.log
+|build/
+--- dir .hid
+--- file .hid/h.txt
+|x
+--- file a.txt
+|x
+--- file b.log
+|x
+--- dir build
+--- file build/out.txt
+|x
+
+=== 7: .ignore, .fdignore, .git/info/exclude, parent directories, --no-ignore-vcs
+status: 127
+bash-n: 0
+--- stdout
+|---
+|---
+|---
+--- stderr
+|bash: line 4: fd: command not found
+|bash: line 4: fd: command not found
+|bash: line 4: fd: command not found
+|bash: line 4: fd: command not found
+--- file .gitignore
+|*.tmp
+|!keep.tmp
+--- dir p
+--- dir p/a
+--- file p/a/.fdignore
+|b/
+--- dir p/a/b
+--- file p/a/b/two.rs
+|x
+--- file p/a/one.rs
+|x
+--- dir p/c
+--- file p/c/.ignore
+|*.md
+--- file p/c/R.md
+|x
+--- file p/c/main.c
+|x
+--- file p/keep.tmp
+|x
+--- file p/x.tmp
+|x
+--- file secret.txt
+|x
+
+=== 8: gitignore rules apply only in a repository
+status: 127
+bash-n: 0
+--- stdout
+|---
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- file .gitignore
+|*.txt
+--- file a.txt
+|x
+--- file b.rs
+|x
+
+=== 9: --ignore-file, and a missing one
+status: 0
+bash-n: 0
+--- stdout
+|---
+|127
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- file a.c
+|x
+--- file b.rs
+|x
+--- file myignore
+|*.c
+
+=== 10: -t types
+status: 127
+bash-n: 0
+--- stdout
+|---
+|---
+|---
+|---
+|---
+|---
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- dir d
+--- file d/f
+|x
+--- link dangling -> nowhere
+--- file empty
+--- dir emptydir
+--- link link -> d/f
+--- file run
+|#!/bin/sh
+
+=== 11: -L follows links; broken links are kept
+status: 127
+bash-n: 0
+--- stdout
+|---
+|---
+|---
+|---
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- link dangling -> nowhere
+--- link linkdir -> real
+--- dir real
+--- file real/f
+|x
+
+=== 12: -e extensions
+status: 127
+bash-n: 0
+--- stdout
+|---
+|---
+|---
+|---
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- file a.rs
+|x
+--- file b.RS
+|x
+--- file c.txt
+|x
+--- dir d.rs
+--- file d.tar.gz
+|x
+--- file noext
+|x
+
+=== 13: depth: -d, --min-depth, --exact-depth
+status: 0
+bash-n: 0
+--- stdout
+|---
+|---
+|---
+|---
+|127
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- dir a
+--- dir a/b
+--- dir a/b/c
+--- file a/b/c/three
+--- file a/b/two
+--- file a/one
+--- file top
+
+=== 14: -E excludes, --prune, --ignore-contain
+status: 127
+bash-n: 0
+--- stdout
+|---
+|---
+|---
+|---
+|---
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 3: fd: command not found
+|bash: line 3: fd: command not found
+--- dir node_modules
+--- dir node_modules/p
+--- file node_modules/p/i.js
+|x
+--- dir src
+--- file src/a.rs
+|x
+--- dir src/gen
+--- file src/gen/.skip
+|x
+--- file src/gen/b.rs
+|x
+
+=== 15: -S sizes
+status: 127
+bash-n: 0
+--- stdout
+|---
+|---
+|---
+|---
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- file big
+\\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
+~ no newline at end
+--- dir d
+--- file three
+|abc
+~ no newline at end
+--- file zero
+
+=== 16: --changed-within/--changed-before with a timestamp
+status: 0
+bash-n: 0
+--- stdout
+|---
+|127
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- file a
+|x
+
+=== 17: -0, --print0
+status: 0
+bash-n: 0
+--- stdout
+|
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- file b
+|x
+--- dir d
+--- file d/a
+|x
+
+=== 18: --format placeholders
+status: 127
+bash-n: 0
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- file .hid
+|x
+--- dir src
+--- dir src/sub
+--- file src/sub/m.tar.gz
+|x
+--- file top.rs
+|x
+
+=== 19: -x runs a command per result, placeholders, several commands
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 3: fd: command not found
+--- file b.rs
+|x
+--- dir src
+--- file src/a.rs
+|x
+
+=== 20: -X runs one command with all results
+status: 0
+bash-n: 0
+--- stdout
+|127
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- dir src
+--- file src/a.rs
+|x
+
+=== 21: command statuses and missing commands
+status: 0
+bash-n: 0
+--- stdout
+|127
+|127
+|127
+|127
+|127
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- file a
+|x
+--- file b
+|x
+
+=== 22: -C, --base-directory: results and commands relative to it
+status: 0
+bash-n: 0
+--- stdout
+|---
+|---
+|---
+|127
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- dir proj
+--- dir proj/src
+--- file proj/src/m.rs
+|x
+--- file proj/t.rs
+|x
+
+=== 23: --search-path, several paths
+status: 0
+bash-n: 0
+--- stdout
+|---
+|---
+|127
+|127
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- dir a
+--- file a/1
+|x
+--- dir b
+--- file b/2
+|x
+
+=== 24: --path-separator, --strip-cwd-prefix, -a
+status: 0
+bash-n: 0
+--- stdout
+|---
+|---
+|---
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 3: fd: command not found
+--- dir a
+--- dir a/b
+--- file a/b/c
+|x
+
+=== 25: -q, exit statuses
+status: 0
+bash-n: 0
+--- stdout
+|127
+|127
+|127
+|127
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- file a
+|x
+
+=== 26: colors when asked
+status: 127
+bash-n: 0
+--- stdout
+|---
+|---
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+--- file b.txt
+|x
+--- link dangling -> nowhere
+--- dir emptydir
+--- link link -> b.txt
+--- file run
+|#!/bin/sh
+--- dir src
+--- file src/a.rs
+|x
+
+=== 27: errors: patterns, values, conflicts
+status: 0
+bash-n: 0
+--- stdout
+|127
+|127
+|127
+|127
+|127
+|127
+|127
+|127
+|127
+|127
+|127
+|127
+--- stderr
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 2: fd: command not found
+|bash: line 3: fd: command not found
+|bash: line 3: fd: command not found
+|bash: line 3: fd: command not found
+|bash: line 3: fd: command not found
+|bash: line 3: fd: command not found
+|bash: line 3: fd: command not found
+--- file a
+|x
+
+=== 28: a closed pipe ends the walk
+status: 0
+bash-n: 0
+--- stderr
+|bash: line 2: fd: command not found
+--- dir big
+--- file big/f1
+--- file big/f10
+--- file big/f100
+--- file big/f101
+--- file big/f102
+--- file big/f103
+--- file big/f104
+--- file big/f105
+--- file big/f106
+--- file big/f107
+--- file big/f108
+--- file big/f109
+--- file big/f11
+--- file big/f110
+--- file big/f111
+--- file big/f112
+--- file big/f113
+--- file big/f114
+--- file big/f115
+--- file big/f116
+--- file big/f117
+--- file big/f118
+--- file big/f119
+--- file big/f12
+--- file big/f120
+--- file big/f121
+--- file big/f122
+--- file big/f123
+--- file big/f124
+--- file big/f125
+--- file big/f126
+--- file big/f127
+--- file big/f128
+--- file big/f129
+--- file big/f13
+--- file big/f130
+--- file big/f131
+--- file big/f132
+--- file big/f133
+--- file big/f134
+--- file big/f135
+--- file big/f136
+--- file big/f137
+--- file big/f138
+--- file big/f139
+--- file big/f14
+--- file big/f140
+--- file big/f141
+--- file big/f142
+--- file big/f143
+--- file big/f144
+--- file big/f145
+--- file big/f146
+--- file big/f147
+--- file big/f148
+--- file big/f149
+--- file big/f15
+--- file big/f150
+--- file big/f151
+--- file big/f152
+--- file big/f153
+--- file big/f154
+--- file big/f155
+--- file big/f156
+--- file big/f157
+--- file big/f158
+--- file big/f159
+--- file big/f16
+--- file big/f160
+--- file big/f161
+--- file big/f162
+--- file big/f163
+--- file big/f164
+--- file big/f165
+--- file big/f166
+--- file big/f167
+--- file big/f168
+--- file big/f169
+--- file big/f17
+--- file big/f170
+--- file big/f171
+--- file big/f172
+--- file big/f173
+--- file big/f174
+--- file big/f175
+--- file big/f176
+--- file big/f177
+--- file big/f178
+--- file big/f179
+--- file big/f18
+--- file big/f180
+--- file big/f181
+--- file big/f182
+--- file big/f183
+--- file big/f184
+--- file big/f185
+--- file big/f186
+--- file big/f187
+--- file big/f188
+--- file big/f189
+--- file big/f19
+--- file big/f190
+--- file big/f191
+--- file big/f192
+--- file big/f193
+--- file big/f194
+--- file big/f195
+--- file big/f196
+--- file big/f197
+--- file big/f198
+--- file big/f199
+--- file big/f2
+--- file big/f20
+--- file big/f200
+--- file big/f201
+--- file big/f202
+--- file big/f203
+--- file big/f204
+--- file big/f205
+--- file big/f206
+--- file big/f207
+--- file big/f208
+--- file big/f209
+--- file big/f21
+--- file big/f210
+--- file big/f211
+--- file big/f212
+--- file big/f213
+--- file big/f214
+--- file big/f215
+--- file big/f216
+--- file big/f217
+--- file big/f218
+--- file big/f219
+--- file big/f22
+--- file big/f220
+--- file big/f221
+--- file big/f222
+--- file big/f223
+--- file big/f224
+--- file big/f225
+--- file big/f226
+--- file big/f227
+--- file big/f228
+--- file big/f229
+--- file big/f23
+--- file big/f230
+--- file big/f231
+--- file big/f232
+--- file big/f233
+--- file big/f234
+--- file big/f235
+--- file big/f236
+--- file big/f237
+--- file big/f238
+--- file big/f239
+--- file big/f24
+--- file big/f240
+--- file big/f241
+--- file big/f242
+--- file big/f243
+--- file big/f244
+--- file big/f245
+--- file big/f246
+--- file big/f247
+--- file big/f248
+--- file big/f249
+--- file big/f25
+--- file big/f250
+--- file big/f251
+--- file big/f252
+--- file big/f253
+--- file big/f254
+--- file big/f255
+--- file big/f256
+--- file big/f257
+--- file big/f258
+--- file big/f259
+--- file big/f26
+--- file big/f260
+--- file big/f261
+--- file big/f262
+--- file big/f263
+--- file big/f264
+--- file big/f265
+--- file big/f266
+--- file big/f267
+--- file big/f268
+--- file big/f269
+--- file big/f27
+--- file big/f270
+--- file big/f271
+--- file big/f272
+--- file big/f273
+--- file big/f274
+--- file big/f275
+--- file big/f276
+--- file big/f277
+--- file big/f278
+
+=== 29: --version, -h, --help
+status: 0
+bash-n: 0
+--- stdout
+|4294967295 0
+|4294967295 0
+--- stderr
+|bash: line 1: fd: command not found
+|bash: line 1: fd: command not found
+|bash: line 1: fd: command not found
+|bash: line 1: fd: command not found
+|bash: line 1: fd: command not found

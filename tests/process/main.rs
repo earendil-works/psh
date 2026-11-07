@@ -129,3 +129,56 @@ fn the_leak_check_sees_a_leftover() {
         .go();
     assert_eq!(r.status, 0, "{r:?}");
 }
+
+#[test]
+fn a_vproc_that_never_reads_ends_the_writer_by_sigpipe() {
+    let r = run("yes | true; echo done");
+    assert_eq!(r.stdout, "done\n", "{r:?}");
+}
+
+#[test]
+fn a_big_here_doc_into_an_external_that_does_not_read() {
+    let body = "y\n".repeat(100_000);
+    let r = run(&format!("true <<EOF\n{body}EOF\necho done"));
+    assert_eq!(r.stdout, "done\n", "{r:?}");
+}
+
+#[test]
+fn pumps_on_both_sides_of_a_brace_group() {
+    let r = run("seq 1 100000 | { cat; } | { cat; cat; } | wc -l | tr -d ' '");
+    assert_eq!(r.stdout, "100000\n", "{r:?}");
+}
+
+#[test]
+fn exec_an_external() {
+    let r = run("exec sh -c 'echo replaced; exit 5'; echo never");
+    assert_eq!((r.status, r.stdout.as_str()), (5, "replaced\n"), "{r:?}");
+}
+
+#[test]
+fn cancel_while_a_fifo_open_waits() {
+    let start = Instant::now();
+    let r = Run::new("cd \"$TMPDIR_CASE\" && mkfifo f && cat < f")
+        .cancel_after(Duration::from_millis(200))
+        .go();
+    assert_eq!(r.status, 143, "{r:?}");
+    assert!(start.elapsed() < Duration::from_secs(5));
+}
+
+#[test]
+fn concurrent_shells_do_not_interfere() {
+    let handles: Vec<_> = (0..8)
+        .map(|i| {
+            std::thread::spawn(move || {
+                let r = run(&format!(
+                    "seq 1 {} | cat | wc -l | tr -d ' '",
+                    1000 * (i + 1)
+                ));
+                assert_eq!(r.stdout, format!("{}\n", 1000 * (i + 1)), "{r:?}");
+            })
+        })
+        .collect();
+    for h in handles {
+        h.join().unwrap();
+    }
+}

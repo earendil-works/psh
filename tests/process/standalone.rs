@@ -154,7 +154,8 @@ fn an_external_ignoring_term_is_killed_before_psh_exits() {
     assert_signaled(c.wait(Duration::from_secs(15)), SIGTERM);
     // KILL came after the grace period (2 s), before psh ended.
     assert!(start.elapsed() >= Duration::from_millis(1500));
-    assert!(!group_alive(a), "the external survived psh");
+    // Killed members are reaped by init (they were reparented), which takes a moment.
+    assert!(gone(a, Duration::from_secs(2)), "the external survived psh");
 }
 
 #[test]

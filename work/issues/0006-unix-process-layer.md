@@ -156,6 +156,11 @@ can express neither); `pid()`; `kill()`.
   ignored in psh and its children, exit codes unchanged. psh-os unit tests for
   `sig_ignore`, `umask`, `pipe()` between two externals, `kill`, `pid`. All pass on macOS
   and Linux (Docker).
+- More L5 (21 in-process now): a vproc that never reads ends `yes` by SIGPIPE, a 200 KB
+  here-doc into `true`, pumps on both sides of brace groups, `exec` of an external,
+  cancel while a FIFO open waits, 8 shells at once. 10× on macOS and 6× on Linux clean.
+  In Docker, run with `--init`: without a reaping PID 1, killed grandchildren stay
+  zombies in their group and the leak check sees them.
 
 ## Follow-ups
 - guide: `processes.md` (placement, cancel and abandonment, leak checks).

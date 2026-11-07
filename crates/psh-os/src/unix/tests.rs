@@ -398,4 +398,3 @@ fn kill_reaches_a_pid() {
     assert_eq!(block(|cx| p.poll_wait(cx)), ExitStatus::Signaled(15));
     assert!(h.kill(-1_000_000, 0).is_err());
 }
-

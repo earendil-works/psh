@@ -31,6 +31,7 @@ param(
   [string]$Legs,
   [string]$Root = 'C:\psh-gate',
   [string]$ResultFile,
+  [string]$LegLogPrefix,
   [switch]$Kill
 )
 $ErrorActionPreference = 'Stop'
@@ -379,6 +380,11 @@ foreach ($entry in $Legs.Split(',')) {
     $result = Invoke-Leg $leg $cmd ([int]$secs - [int]$watch.Elapsed.TotalSeconds) $log
   }
   $took = [int]$watch.Elapsed.TotalSeconds
+  # A failing leg's log goes to the host's share as well: the stream back through
+  # prlctl is not always complete.
+  if ($result -ne 'ok' -and $LegLogPrefix) {
+    try { Copy-Item $log "$LegLogPrefix-$leg.log" -Force } catch { }
+  }
   switch ($result) {
     'ok' { Say "== windows-gate: $leg ok (${took}s)" }
     'timeout' {

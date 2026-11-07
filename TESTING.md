@@ -290,7 +290,9 @@ exec` until the repository has a remote, then on GitHub Actions (D027):
   for a while; the runner waits until they are released before a test leg, and runs a
   leg that failed to replace a held file (LNK1104) once more (D1072).
 - The gate runs it as its last leg, always. It wakes the VM if it sleeps and lets it
-  sleep again when no run is waiting; a VM that was already running stays running. An unreachable VM fails the leg in bounded time. `PSH_GATE_WINDOWS=0` skips
+  sleep again once no run used it for ten minutes (`PSH_WINDOWS_IDLE`); a VM that was
+  already running stays running. Each run's output is kept in
+  `work/scratch/windows-gate/logs/` (D1916). An unreachable VM fails the leg in bounded time. `PSH_GATE_WINDOWS=0` skips
   the leg when the VM is broken, for the coordinator and the owner only; the skip is
   logged (D1071).
 - `spec`: psh-spec's L4 (utilities) in the VM against the shared goldens, with the

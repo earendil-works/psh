@@ -14,13 +14,15 @@
 #
 # Runs take turns (D1072): a run waits for the one before it ("waiting for the Windows
 # VM"), at most PSH_WINDOWS_QUEUE_WAIT seconds (default 3600); the wait does not count
-# against the legs' timeouts. The VM is resumed or started if needed; a run that ends
-# with no other run waiting puts it back to sleep, and only if a run woke it: a VM that
-# was already running (the owner's) stays running.
+# against the legs' timeouts. The VM is resumed or started if needed. Once no run has
+# used it for PSH_WINDOWS_IDLE seconds and none is waiting, it goes back to sleep, and
+# only if a run woke it: a VM that was already running (the owner's) stays running.
+# Each run's whole output is kept in work/scratch/windows-gate/logs/.
 #
 #   PSH_WINDOWS_VM          the VM's name (default "Windows 11")
 #   PSH_WINDOWS_KEEP_VM     1: leave the VM running afterwards
 #   PSH_WINDOWS_QUEUE_WAIT  seconds to wait for the VM's turn (default 3600)
+#   PSH_WINDOWS_IDLE        seconds without a run before the VM sleeps again (600)
 #
 # Exit status: 0 passed, 1 a leg failed, 124 a leg (or the whole run) timed out, 2 setup
 # failed, 3 the VM is not usable (or the turn did not come).
@@ -39,6 +41,36 @@ test-x64:1200
 msrv:900
 spec:900
 "
+
+# Internal: the idle watcher (start_idle_watch). Waits until no run used the VM for
+# PSH_WINDOWS_IDLE seconds, then, holding run.lock so no run starts meanwhile, puts it
+# back to sleep if a run woke it and nobody is queued. A run that starts first takes the
+# VM as it is; its end starts a new watcher.
+if [ "${1:-}" = --idle-watch ]; then
+  locks="$(primary_checkout)/work/scratch/windows-gate"
+  idle=${PSH_WINDOWS_IDLE:-600}
+  while :; do
+    last=$(cat "$locks/last-used" 2>/dev/null || echo 0)
+    left=$((last + idle - $(date +%s)))
+    [ "$left" -le 0 ] && break
+    sleep "$left"
+  done
+  [ "$(cat "$locks/idle.pid" 2>/dev/null)" = "$$" ] || exit 0
+  mkdir "$locks/run.lock" 2>/dev/null || exit 0
+  echo "idle-watch since $(date '+%F %T') pid=$$" >"$locks/run.lock/owner"
+  queued=$(find "$locks/waiting" -type f 2>/dev/null | head -1)
+  last=$(cat "$locks/last-used" 2>/dev/null || echo 0)
+  if [ -z "$queued" ] && [ -f "$locks/resumed" ] && [ $((last + idle)) -le "$(date +%s)" ]; then
+    case $(cat "$locks/resumed") in
+      stopped) scripts/timeout.sh 300 prlctl stop "$vm" >/dev/null 2>&1 || true ;;
+      *) scripts/timeout.sh 300 prlctl suspend "$vm" >/dev/null 2>&1 || true ;;
+    esac
+    rm -f "$locks/resumed"
+  fi
+  rm -f "$locks/idle.pid"
+  rm -rf "$locks/run.lock"
+  exit 0
+fi
 
 legs=
 for entry in $LEGS; do legs="$legs ${entry%%:*}"; done
@@ -127,6 +159,16 @@ waiting="$locks/waiting"
 resumed="$locks/resumed"
 queue_wait=${PSH_WINDOWS_QUEUE_WAIT:-3600}
 mkdir -p "$waiting"
+
+# Every run's whole output is kept (the newest 40), so a failure can always be read
+# afterwards: work/scratch/windows-gate/logs/NAME-TIME-PID.log. A failing leg's log from
+# the VM is copied next to it (NAME-TIME-PID-LEG.log), for when prlctl lost the stream.
+logdir="$locks/logs"
+mkdir -p "$logdir"
+log="$logdir/$name-$(date +%Y%m%d-%H%M%S)-$$.log"
+# shellcheck disable=SC2012
+ls -t "$logdir" 2>/dev/null | tail -n +41 | while read -r old; do rm -f "$logdir/$old"; done
+exec > >(tee -a "$log") 2>&1
 
 lock_pid() { sed -n 's/.*pid=\([0-9][0-9]*\).*/\1/p' "$1" 2>/dev/null || true; }
 
@@ -248,6 +290,40 @@ ensure_vm() {
   done
 }
 
+idle=${PSH_WINDOWS_IDLE:-600}
+
+# Suspends (or shuts down) the VM as it was before a run woke it. Under run.lock.
+put_vm_back() {
+  local prior
+  prior=$(cat "$resumed" 2>/dev/null || echo suspended)
+  rm -f "$resumed"
+  case $prior in
+    stopped)
+      echo "windows-gate: shutting the VM down again"
+      prl 300 stop "$vm" >/dev/null || true
+      ;;
+    *)
+      echo "windows-gate: suspending the VM again"
+      prl 300 suspend "$vm" >/dev/null || true
+      ;;
+  esac
+  settled_state >/dev/null
+}
+
+# One watcher at a time; it rereads last-used, so later runs extend its wait.
+start_idle_watch() {
+  local pid
+  pid=$(cat "$locks/idle.pid" 2>/dev/null || true)
+  if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    return
+  fi
+  # Its own process group: a gate's timeout killing ours must not take it along.
+  perl -e 'setpgrp(0, 0); exec @ARGV' bash scripts/windows-gate.sh --idle-watch \
+    </dev/null >/dev/null 2>&1 &
+  echo $! >"$locks/idle.pid"
+  echo "windows-gate: the VM sleeps again after ${idle}s without a run"
+}
+
 cleanup() {
   local st=$? prior
   trap - EXIT INT TERM HUP
@@ -263,27 +339,25 @@ cleanup() {
       -ExecutionPolicy Bypass -File "$runner" -Name "$name" -Kill || true
   fi
   if [ -n "${have_lock:-}" ]; then
+    date +%s >"$locks/last-used"
     if [ -f "$resumed" ] && ! others_queued; then
-      prior=$(cat "$resumed")
-      rm -f "$resumed"
       if [ "${PSH_WINDOWS_KEEP_VM:-}" = 1 ]; then
+        rm -f "$resumed"
         echo "windows-gate: leaving the VM running (PSH_WINDOWS_KEEP_VM=1)"
+      elif [ "$idle" = 0 ]; then
+        put_vm_back
       else
-        case $prior in
-          stopped)
-            echo "windows-gate: shutting the VM down again"
-            prl 300 stop "$vm" >/dev/null || true
-            ;;
-          *)
-            echo "windows-gate: suspending the VM again"
-            prl 300 suspend "$vm" >/dev/null || true
-            ;;
-        esac
-        settled_state >/dev/null
+        # Not at once: gates come in bursts, and a VM that keeps running is faster and
+        # one transition fewer to go wrong. A detached watcher puts it back to sleep
+        # once no run used it for PSH_WINDOWS_IDLE seconds (D1916).
+        start_idle_watch
       fi
     fi
     [ -z "${have_legacy:-}" ] || rm -rf "$legacy_lock"
     rm -rf "$run_lock"
+  fi
+  if [ "$st" != 0 ]; then
+    echo "windows-gate: the whole output is in $log"
   fi
   exit "$st"
 }
@@ -303,13 +377,14 @@ have_lock=1
 # went through, and the file still says how it ended.
 result="$locks/result-$name-$$.txt"
 result_share=$(to_share "$result" | tr / '\\')
+log_share=$(to_share "${log%.log}" | tr / '\\')
 run() {
   running=1
   rm -f "$result"
   scripts/timeout.sh "$backstop" prlctl exec "$vm" --current-user powershell -NoProfile \
     -NonInteractive -ExecutionPolicy Bypass -File "$runner" -Repo "$repo_share" \
     -Ref "refs/windows-gate/$name" -Name "$name" -Toolchain "$toolchain" -Msrv "$msrv" \
-    -Legs "$selected" -ResultFile "$result_share" &
+    -Legs "$selected" -ResultFile "$result_share" -LegLogPrefix "$log_share" &
   run_pid=$!
   st=0
   wait "$run_pid" || st=$?

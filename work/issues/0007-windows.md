@@ -373,6 +373,16 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
   `timeout.exe`: cli test (`timeout 5 cmd /c echo hi`, `timeout 0.2 ping` → 124). The
   other W names (`find`, `sort`, `tree`, ...) are not built yet.
 
+### 2026-11-07 Windows leg robustness: logs, idle suspend
+- shapes' two failures (08e81d0, 07:04) predate the result file (379c392); the 255 one
+  is what it remedies. Measured earlier: `PrlJob_GetRetCode` also hits trivial execs
+  with the VM up for hours (1 in 3 while another exec streams), so resume is not the
+  only cause. Now (D1916): every run's output is kept in
+  `work/scratch/windows-gate/logs/` (newest 40; a failing run prints the path), a failing
+  leg's VM log is copied next to it, and the VM sleeps only after `PSH_WINDOWS_IDLE`
+  (600 s) without a run, through one detached watcher, instead of after every burst.
+  The 255 retry (once, from a settled VM) and the result file stay.
+
 ## Follow-ups
 - psh-spec on Windows for the oils, brush and agent layers: triage the differences into
   `expected-failures.windows.txt` (and normalization rules where a difference is not

@@ -2022,3 +2022,19 @@ Bash 5.3's function substitution runs its list on the current vproc with stdout 
 an engine pipe; a scheduler task reads the pipe meanwhile, so output beyond the pipe's
 capacity cannot deadlock. `${| list; }` captures nothing and yields `$REPLY`, which is
 local to it (unset at the start, the old value restored after).
+
+## D1916: The Windows VM stays up between gates for a while; every run keeps its output
+date: 2026-11-07 · by: windows · issue: 0007
+Instead of suspending the VM as soon as the last queued run ends (D1072), `windows-gate.sh`
+records when a run last used it and starts one detached watcher (in a process group of
+its own, so a gate's timeout does not take it along) that, once no run used the VM for
+`PSH_WINDOWS_IDLE` seconds (default 600; 0 restores the immediate suspend), takes
+`run.lock`, checks that nobody is queued and that a run woke the VM, and suspends it.
+Gates come in bursts, so this saves the resume, the readiness wait and the cold caches
+after a resume for most runs, and leaves fewer VM transitions to go wrong; the
+`PrlJob_GetRetCode` failures themselves also happen with the VM running for hours, so
+they keep their own remedy (the result file and one retry, from a settled VM). Every
+run's whole output goes to `work/scratch/windows-gate/logs/NAME-TIME-PID.log` in the
+primary checkout (the newest 40 kept), and the runner copies a failing leg's log from the
+VM next to it (`...-LEG.log`), so a failure can be read afterwards even when prlctl lost
+the stream; a failing run prints the path.

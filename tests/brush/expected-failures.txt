@@ -211,11 +211,6 @@ brush/compat/builtins/set/26
 brush/compat/builtins/set/27
 brush/compat/builtins/shift/3
 brush/compat/builtins/shift/4
-brush/compat/builtins/shopt/10
-brush/compat/builtins/test/33
-brush/compat/builtins/test/34
-brush/compat/builtins/test/3
-brush/compat/builtins/test/4
 brush/compat/builtins/times/3
 brush/compat/builtins/trap/19
 brush/compat/builtins/trap/34
@@ -296,8 +291,6 @@ brush/compat/errors/64
 brush/compat/errors/65
 brush/compat/errors/67
 brush/compat/errors/77
-brush/compat/extended_tests/12
-brush/compat/extended_tests/13
 brush/compat/fd_management/0: passed via macOS /usr/bin wrapper
 brush/compat/fd_management/1: passed via macOS /usr/bin wrapper
 brush/compat/fd_management/2: passed via macOS /usr/bin wrapper

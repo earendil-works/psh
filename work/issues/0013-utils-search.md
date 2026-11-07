@@ -1,7 +1,7 @@
 # 0013: Utilities batch B: rg, fd, grep on the ripgrep crates
 
-status: open
-agent: -
+status: in-progress
+agent: infra
 branch: issue/0013-utils-search
 depends-on: 0008 (crate set confirmed: D020, D021)
 touches: Cargo.toml (the D020 crates), crates/psh-utils/src/search/ (shared walker seam, matcher, BRE/ERE translator), crates/psh-utils/src/{rg,fd,grep}/, tests/utils/{rg,fd,grep}/, tests/utils/walker/, NOTICE
@@ -110,6 +110,26 @@ Common
   grep-searcher over chunks), so `yes | grep x | head -1` finishes there too.
 
 ## Log
+
+### 2026-11-07 plan
+Parts, each merged on its own:
+1. **Blocking utilities** (the D1080 exception, built now; D1130): `UtilCtx::run_blocking`
+   (additive, no change to `UtilFn`/`UtilEntry`, so 0015/0016 are unaffected) and
+   `SyncCtx` with std `Read`/`Write` stdio, cwd/env/TTY, a cancel flag and a synchronous
+   fs view. Backends: a worker thread when the Host is the process's own file system
+   (new additive `Host::os_fs()`, true for psh-os/StdHost), whose stdio are queues the
+   engine pumps (bounded, so `rg | head -1` stops on EPIPE); inline otherwise (wasm,
+   TestHost, sandbox hosts): stdin read first only if the utility asks for it (capped,
+   D1080), output collected in order and written after, fs calls are Host futures
+   polled once (a host that cannot answer at once gets an error, never a hang).
+2. **Crates + shared layer:** the D020 set in psh-utils, `search/` with the BRE/ERE
+   translator, the matcher builder and the walker seam (native `ignore` walker; virtual
+   walker with the ignore chain from `ignore/src/dir.rs`) and the parity test.
+3. **rg:** ripgrep's `flags/` and `search.rs`/`main.rs` glue at `91f5d22` with the seams
+   patched; lexopt copied; JSON via deser-json.
+4. **grep/egrep/fgrep** on the shared layer with a GNU sink.
+5. **fd.**
+Checkouts: `vendor/ripgrep` (91f5d22), `vendor/fd` (193d0df) in the primary checkout.
 
 ## Follow-ups
 

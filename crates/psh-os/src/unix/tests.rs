@@ -95,6 +95,7 @@ fn sh(script: &str, fds: Vec<(u32, ChildFd)>) -> SpawnSpec {
         env: vec![(b"PATH".to_vec(), b"/usr/bin:/bin".to_vec())],
         cwd: b"/".to_vec(),
         fds,
+        ..SpawnSpec::default()
     }
 }
 
@@ -322,4 +323,78 @@ fn fifo_open_waits_off_thread_and_cancels() {
     drop(wr);
     assert_eq!(read_all(&rd), b"x");
     std::fs::remove_dir_all(&dir).unwrap();
+}
+
+fn piped_out() -> Vec<(u32, ChildFd)> {
+    vec![
+        (0, ChildFd::Null),
+        (1, ChildFd::Pipe { input: false }),
+        (2, ChildFd::Null),
+    ]
+}
+
+#[test]
+fn ignored_signals_and_umask_take_effect() {
+    let h = host();
+    let mut spec = sh("kill -INT $$; echo alive; umask", piped_out());
+    spec.sig_ignore = vec![libc::SIGINT];
+    spec.umask = Some(0o077);
+    let s = h.spawn(spec).unwrap();
+    let mut p = s.proc;
+    assert_eq!(read_all(&s.pipes[0].1), b"alive\n0077\n");
+    assert_eq!(block(|cx| p.poll_wait(cx)), ExitStatus::Exited(0));
+    // Without them: INT kills, the umask is the process's.
+    let s = h
+        .spawn(sh("kill -INT $$; echo alive", piped_out()))
+        .unwrap();
+    let mut p = s.proc;
+    assert_eq!(read_all(&s.pipes[0].1), b"");
+    assert_eq!(block(|cx| p.poll_wait(cx)), ExitStatus::Signaled(2));
+    let mut spec = sh("umask", piped_out());
+    spec.umask = Some(super::spawn::process_umask());
+    let s = h.spawn(spec).unwrap();
+    let want = format!("{:04o}\n", super::spawn::process_umask());
+    assert_eq!(read_all(&s.pipes[0].1), want.as_bytes());
+}
+
+#[test]
+fn os_pipe_between_two_externals() {
+    let h = host();
+    let (r, w) = h.pipe().unwrap();
+    let a = h
+        .spawn(sh(
+            "seq 1 50000",
+            vec![
+                (0, ChildFd::Null),
+                (1, ChildFd::File(w)),
+                (2, ChildFd::Null),
+            ],
+        ))
+        .unwrap();
+    let b = h
+        .spawn(sh(
+            "wc -l",
+            vec![
+                (0, ChildFd::File(r)),
+                (1, ChildFd::Pipe { input: false }),
+                (2, ChildFd::Null),
+            ],
+        ))
+        .unwrap();
+    let out = String::from_utf8(read_all(&b.pipes[0].1)).unwrap();
+    assert_eq!(out.trim(), "50000");
+    let (mut pa, mut pb) = (a.proc, b.proc);
+    assert!(pa.pid().is_some());
+    assert_eq!(block(|cx| pa.poll_wait(cx)), ExitStatus::Exited(0));
+    assert_eq!(block(|cx| pb.poll_wait(cx)), ExitStatus::Exited(0));
+}
+
+#[test]
+fn kill_reaches_a_pid() {
+    let h = host();
+    let mut p = h.spawn(sh("exec sleep 30", nulls())).unwrap().proc;
+    let pid = p.pid().unwrap() as i32;
+    h.kill(pid, libc::SIGTERM).unwrap();
+    assert_eq!(block(|cx| p.poll_wait(cx)), ExitStatus::Signaled(15));
+    assert!(h.kill(-1_000_000, 0).is_err());
 }

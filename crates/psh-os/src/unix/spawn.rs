@@ -55,6 +55,57 @@ const NSIG: i32 = 65;
 #[cfg(not(target_os = "linux"))]
 const NSIG: i32 = 32;
 
+/// How the child starts besides its descriptors.
+pub(crate) struct Setup {
+    /// Lead a session of its own.
+    session: bool,
+    /// Signals that start ignored (by number); every other one starts at its default.
+    ignore: [bool; NSIG as usize],
+    /// The child's umask, when it differs from the process's.
+    umask: Option<libc::mode_t>,
+}
+
+/// The signals the process ignores now, except SIGPIPE (Rust programs ignore it before
+/// `main`, so it says nothing about how the shell was started) and SIGCHLD (it concerns
+/// our waiting, not the child). Read when a host is made: as with bash, a signal ignored
+/// when the shell starts stays ignored in what it runs.
+pub(crate) fn ignored_now() -> [bool; NSIG as usize] {
+    let mut out = [false; NSIG as usize];
+    for (n, slot) in out.iter_mut().enumerate().skip(1) {
+        let n = n as i32;
+        if n == libc::SIGPIPE || n == libc::SIGCHLD || n == libc::SIGKILL || n == libc::SIGSTOP {
+            continue;
+        }
+        // SAFETY: sigaction is plain data, valid zeroed.
+        let mut old: libc::sigaction = unsafe { std::mem::zeroed() };
+        // SAFETY: a null new action only queries; `old` is writable.
+        let rc = unsafe { libc::sigaction(n, std::ptr::null(), &raw mut old) };
+        *slot = rc == 0 && old.sa_sigaction == libc::SIG_IGN;
+    }
+    out
+}
+
+/// The process's umask: Linux reads it from `/proc/self/status`; elsewhere it is set
+/// and restored once (there is no read-only call).
+pub(crate) fn process_umask() -> u32 {
+    static UMASK: std::sync::LazyLock<u32> = std::sync::LazyLock::new(|| {
+        #[cfg(any(target_os = "linux", target_os = "android"))]
+        if let Ok(status) = std::fs::read_to_string("/proc/self/status")
+            && let Some(line) = status.lines().find(|l| l.starts_with("Umask:"))
+            && let Ok(m) = u32::from_str_radix(line[6..].trim(), 8)
+        {
+            return m;
+        }
+        // SAFETY: umask only swaps the process's mask; the old value is restored at once.
+        unsafe {
+            let old = libc::umask(0o022);
+            libc::umask(old);
+            old as u32
+        }
+    });
+    *UMASK
+}
+
 /// Waiter and escalation threads only wait and signal.
 const SMALL_STACK: usize = 64 << 10;
 
@@ -113,6 +164,8 @@ pub(crate) struct Shared {
     pub(crate) placement: Placement,
     /// Scopes of externals not released, for leak checks.
     pub(crate) scopes: Mutex<Vec<Scope>>,
+    /// Signals ignored when the host was made ([`ignored_now`]).
+    pub(crate) ignored_at_start: [bool; NSIG as usize],
     /// Tests: take the fork path everywhere.
     pub(crate) fork_only: std::sync::atomic::AtomicBool,
 }
@@ -294,12 +347,37 @@ pub(crate) fn spawn(shared: &Arc<Shared>, mut spec: SpawnSpec) -> io::Result<Spa
         .map(|(t, i)| (*t, sources[*i].raw()))
         .collect();
     let session = shared.placement == Placement::Session;
+    let mut setup = Setup {
+        session,
+        ignore: shared.ignored_at_start,
+        umask: spec
+            .umask
+            .filter(|&m| m != process_umask())
+            .map(|m| m as libc::mode_t),
+    };
+    let mut extra_ignored = false;
+    for &sig in &spec.sig_ignore {
+        if let Some(slot) = usize::try_from(sig)
+            .ok()
+            .and_then(|n| setup.ignore.get_mut(n))
+            && sig != libc::SIGKILL
+            && sig != libc::SIGSTOP
+        {
+            extra_ignored |= !*slot;
+            *slot = true;
+        }
+    }
+    // posix_spawn can neither set a umask nor ignore a signal the process does not
+    // ignore itself.
+    let fork = setup.umask.is_some()
+        || extra_ignored
+        || shared.fork_only.load(std::sync::atomic::Ordering::Relaxed);
     let mut tries = 0;
     let pid = loop {
-        let r = if shared.fork_only.load(std::sync::atomic::Ordering::Relaxed) {
-            fork_exec(&exec, &fds, session, floor)
+        let r = if fork {
+            fork_exec(&exec, &fds, &setup, floor)
         } else {
-            launch(&exec, &fds, session, floor)
+            launch(&exec, &fds, &setup, floor)
         };
         match r {
             Ok(pid) => break pid,
@@ -351,22 +429,22 @@ pub(crate) fn spawn(shared: &Arc<Shared>, mut spec: SpawnSpec) -> io::Result<Spa
 }
 
 #[cfg(any(target_os = "macos", all(target_os = "linux", target_env = "gnu")))]
-fn launch(exec: &Exec, fds: &[(i32, RawFd)], session: bool, floor: RawFd) -> io::Result<i32> {
+fn launch(exec: &Exec, fds: &[(i32, RawFd)], setup: &Setup, floor: RawFd) -> io::Result<i32> {
     match posix::add_chdir() {
-        Some(add_chdir) => posix::spawn(exec, fds, session, add_chdir),
-        None => fork_exec(exec, fds, session, floor),
+        Some(add_chdir) => posix::spawn(exec, fds, setup, add_chdir),
+        None => fork_exec(exec, fds, setup, floor),
     }
 }
 
 #[cfg(not(any(target_os = "macos", all(target_os = "linux", target_env = "gnu"))))]
-fn launch(exec: &Exec, fds: &[(i32, RawFd)], session: bool, floor: RawFd) -> io::Result<i32> {
-    fork_exec(exec, fds, session, floor)
+fn launch(exec: &Exec, fds: &[(i32, RawFd)], setup: &Setup, floor: RawFd) -> io::Result<i32> {
+    fork_exec(exec, fds, setup, floor)
 }
 
 /// The fork path: the child sets itself up with async-signal-safe calls only, on data
 /// prepared before the fork, and reports a failed `chdir` or `execve` by writing its
 /// errno into a close-on-exec pipe (nothing arrives when the exec succeeded).
-fn fork_exec(exec: &Exec, fds: &[(i32, RawFd)], session: bool, floor: RawFd) -> io::Result<i32> {
+fn fork_exec(exec: &Exec, fds: &[(i32, RawFd)], setup: &Setup, floor: RawFd) -> io::Result<i32> {
     let (err_r, err_w) = io::pipe()?;
     // Above every target, so no dup2 in the child closes it.
     let err_w = dup_above(OwnedFd::from(err_w).as_raw_fd(), floor)?;
@@ -394,7 +472,7 @@ fn fork_exec(exec: &Exec, fds: &[(i32, RawFd)], session: bool, floor: RawFd) -> 
                 libc::write(err_fd, b.as_ptr().cast(), b.len());
                 libc::_exit(127)
             };
-            if session && libc::setsid() < 0 {
+            if setup.session && libc::setsid() < 0 {
                 fail(errno());
             }
             if libc::chdir(exec.cwd.as_ptr()) != 0 {
@@ -405,11 +483,21 @@ fn fork_exec(exec: &Exec, fds: &[(i32, RawFd)], session: bool, floor: RawFd) -> 
                     fail(errno());
                 }
             }
+            if let Some(m) = setup.umask {
+                libc::umask(m);
+            }
             let mut dfl = std::mem::zeroed::<libc::sigaction>();
             dfl.sa_sigaction = libc::SIG_DFL;
+            let mut ign = std::mem::zeroed::<libc::sigaction>();
+            ign.sa_sigaction = libc::SIG_IGN;
             for sig in 1..NSIG {
                 if sig != libc::SIGKILL && sig != libc::SIGSTOP {
-                    libc::sigaction(sig, &raw const dfl, std::ptr::null_mut());
+                    let act = if setup.ignore[sig as usize] {
+                        &ign
+                    } else {
+                        &dfl
+                    };
+                    libc::sigaction(sig, act, std::ptr::null_mut());
                 }
             }
             let empty = std::mem::zeroed::<libc::sigset_t>();
@@ -453,7 +541,7 @@ mod posix {
     use std::mem::MaybeUninit;
     use std::os::fd::RawFd;
 
-    use super::Exec;
+    use super::{Exec, NSIG, Setup};
 
     pub(super) type AddChdir = unsafe extern "C" fn(
         *mut libc::posix_spawn_file_actions_t,
@@ -549,7 +637,7 @@ mod posix {
     pub(super) fn spawn(
         exec: &Exec,
         fds: &[(i32, RawFd)],
-        session: bool,
+        setup: &Setup,
         add_chdir: AddChdir,
     ) -> io::Result<i32> {
         let mut actions = Actions::new()?;
@@ -561,7 +649,7 @@ mod posix {
         check(unsafe { add_chdir(actions.ptr(), exec.cwd.as_ptr()) })?;
         let mut attr = Attr::new()?;
         let mut flags = libc::POSIX_SPAWN_SETSIGMASK | libc::POSIX_SPAWN_SETSIGDEF;
-        if session {
+        if setup.session {
             flags |= SETSID;
         }
         #[cfg(target_os = "macos")]
@@ -574,9 +662,14 @@ mod posix {
             let mut empty = std::mem::zeroed::<libc::sigset_t>();
             let mut defaults = std::mem::zeroed::<libc::sigset_t>();
             libc::sigemptyset(&raw mut empty);
-            libc::sigfillset(&raw mut defaults);
-            libc::sigdelset(&raw mut defaults, libc::SIGKILL);
-            libc::sigdelset(&raw mut defaults, libc::SIGSTOP);
+            libc::sigemptyset(&raw mut defaults);
+            // Ignored signals stay as the process has them (the caller made sure
+            // that is what the child wants); every other one goes to its default.
+            for sig in 1..NSIG {
+                if sig != libc::SIGKILL && sig != libc::SIGSTOP && !setup.ignore[sig as usize] {
+                    libc::sigaddset(&raw mut defaults, sig);
+                }
+            }
             check(libc::posix_spawnattr_setflags(
                 attr.ptr(),
                 flags as libc::c_short,
@@ -752,6 +845,10 @@ struct UnixProc {
 }
 
 impl ExtProc for UnixProc {
+    fn pid(&self) -> Option<u32> {
+        u32::try_from(self.pid).ok()
+    }
+
     fn poll_wait(&mut self, cx: &mut Context<'_>) -> Poll<ExitStatus> {
         self.tracker.poll(cx)
     }

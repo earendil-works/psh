@@ -77,6 +77,7 @@ impl UnixHost {
                 grace: cfg.grace,
                 placement: cfg.placement,
                 scopes: Mutex::new(Vec::new()),
+                ignored_at_start: spawn::ignored_now(),
                 fork_only: Default::default(),
             }),
             pid: cfg.pid,
@@ -313,6 +314,15 @@ impl Host for UnixHost {
 
     fn spawn(&self, spec: SpawnSpec) -> io::Result<Spawned> {
         spawn::spawn(&self.shared, spec)
+    }
+
+    fn pipe(&self) -> io::Result<(Rc<dyn HostFile>, Rc<dyn HostFile>)> {
+        let (r, w) = io::pipe()?;
+        Ok((Rc::new(UnixFile::new(r)), Rc::new(UnixFile::new(w))))
+    }
+
+    fn kill(&self, pid: i32, sig: Signal) -> io::Result<()> {
+        kill(pid, sig)
     }
 
     fn sleep(&self, duration: Duration) -> HostFuture<()> {

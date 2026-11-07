@@ -755,6 +755,7 @@ async fn run_external(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec
         env: vp.env(&assigns),
         cwd: vp.cwd.clone(),
         fds,
+        ..SpawnSpec::default()
     };
     let spawned = match vp.host().spawn(spec) {
         Ok(s) => s,

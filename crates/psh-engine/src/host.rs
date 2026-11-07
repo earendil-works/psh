@@ -170,6 +170,7 @@ pub enum ChildFd {
     Null,
 }
 
+#[derive(Default)]
 pub struct SpawnSpec {
     /// The program to execute, as resolved (`resolve`, or a name with a slash).
     pub program: Vec<u8>,
@@ -180,6 +181,11 @@ pub struct SpawnSpec {
     pub cwd: Vec<u8>,
     /// The child's descriptors: at least 0, 1 and 2, in any order.
     pub fds: Vec<(u32, ChildFd)>,
+    /// Signals the child starts with ignored (bash: SIGINT and SIGQUIT in `&` jobs,
+    /// `trap '' SIG`). Every other signal starts at its default disposition.
+    pub sig_ignore: Vec<Signal>,
+    /// The child's umask; `None` keeps the process's.
+    pub umask: Option<u32>,
 }
 
 /// A running external process. Dropping it while it runs abandons it: the host sends
@@ -190,6 +196,10 @@ pub trait ExtProc {
     /// Lets the process run on: no signal, reaped in the background (`nohup`, and
     /// background jobs still running when the shell exits, as bash leaves them).
     fn release(self: Box<Self>);
+    /// The OS process id (`$!`, `jobs -p`), where there is one.
+    fn pid(&self) -> Option<u32> {
+        None
+    }
 }
 
 pub struct Spawned {
@@ -217,6 +227,18 @@ pub trait Host {
     /// Starts an external process. Errors are the reasons it could not start
     /// (`NotFound`, `PermissionDenied`, ...).
     fn spawn(&self, spec: SpawnSpec) -> io::Result<Spawned>;
+    /// A new OS pipe: (read end, write end). Both are files of this host: the engine
+    /// may read and write them like any file and pass them to externals as
+    /// [`ChildFd::File`]. Hosts without OS pipes keep the default.
+    fn pipe(&self) -> io::Result<(Rc<dyn HostFile>, Rc<dyn HostFile>)> {
+        Err(io::ErrorKind::Unsupported.into())
+    }
+    /// Sends `sig` to process `pid` (negative: a process group), as `kill(2)`: the
+    /// `kill` builtin's numeric pids.
+    fn kill(&self, pid: i32, sig: Signal) -> io::Result<()> {
+        let _ = (pid, sig);
+        Err(io::ErrorKind::Unsupported.into())
+    }
     /// Completes after `duration`.
     fn sleep(&self, duration: Duration) -> HostFuture<()>;
     /// The shell's process id (`$$`).

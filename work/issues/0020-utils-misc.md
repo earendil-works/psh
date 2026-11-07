@@ -34,6 +34,11 @@ date env printenv nice nohup which`.
 - [ ] Attribution headers and `NOTICE` entries for ported code.
 
 ## Notes
+- Coordinator update: the date parser already exists (files agent, psh-utils timefmt.rs, used by
+  `touch -d`): extend and share it rather than adding `parse_datetime`. `env` already landed with
+  0008 (infra); `printenv` and the rest of `env`'s flags are still here. Hash functions
+  (md5, sha1, sha224/256/384/512, b2sum if cheap) are implemented in-house with no dependency
+  (small, well-specified algorithms; test against the NIST/RFC vectors).
 - uutils, uutils diffutils (MIT/Apache), oh-my-pi's `diff.rs` and `tools/nohup.rs` (MIT).
 
 ## Log

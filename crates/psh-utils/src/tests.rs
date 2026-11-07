@@ -289,3 +289,69 @@ fn xargs() {
     );
     check_all("xargs -t echo", "a\n", 0, "a\n", "echo a\n");
 }
+
+#[test]
+fn find() {
+    check_all(
+        "cd /tmp && find . -maxdepth 1 -type f",
+        "",
+        0,
+        "./f\n./g\n./nonl\n",
+        "",
+    );
+    check_all("find /tmp -name dir", "", 0, "/tmp/dir\n", "");
+    check_all(
+        "find /tmp -name f -exec cat {} \\;",
+        "",
+        0,
+        "one\ntwo\nthree\nfour\n",
+        "",
+    );
+    check_all(
+        "find /tmp -type f -exec wc -l {} + | sort",
+        "",
+        0,
+        " 1 /tmp/g\n 1 /tmp/nonl\n 4 /tmp/f\n 6 total\n",
+        "",
+    );
+    check_all(
+        "find /tmp/dir -printf '%f %d %y\\n'",
+        "",
+        0,
+        "dir 0 d\n",
+        "",
+    );
+    check_all(
+        "find /tmp/nosuch; echo $?",
+        "",
+        0,
+        "1\n",
+        "find: '/tmp/nosuch': No such file or directory\n",
+    );
+    // No real find on the test host: an unknown primary fails clearly.
+    check_all(
+        "find /tmp -fancy",
+        "",
+        2,
+        "",
+        "find: unsupported option '-fancy' (psh built-in find)\n",
+    );
+    check_all(
+        "cd /tmp && find . -name 'f' -o -name g | xargs echo",
+        "",
+        0,
+        "./f ./g\n",
+        "",
+    );
+}
+
+#[test]
+fn xargs_unsupported() {
+    check_all(
+        "xargs -p echo",
+        "a\n",
+        2,
+        "",
+        "xargs: unsupported option '-p' (psh built-in xargs)\n",
+    );
+}

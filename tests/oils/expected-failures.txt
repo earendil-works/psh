@@ -131,6 +131,8 @@ oils/builtin-trap-err/6
 oils/builtin-trap-err/18
 oils/builtin-type/3
 oils/builtin-type-bash/8: S-mode psh utility shadows the PATH file (D1083, D1151); type reports what runs (the -P half passes)
+oils/builtin-type-bash/5: find and xargs are psh utilities (mode S), which type -t reports as builtin (D1083)
+oils/builtin-type-bash/7: find and xargs are psh utilities (mode S), which type -t reports as builtin (D1083)
 oils/builtin-type-bash/13
 oils/builtin-type-bash/14
 oils/builtin-type-bash/16: S-mode psh utility shadows the PATH file (D1083, D1151); type reports what runs

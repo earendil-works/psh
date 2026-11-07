@@ -190,3 +190,11 @@ bash-n: 0
 |bbb
 |ccc
 |ddd
+
+=== 24: timeout stops xargs and the command it runs
+status: 0
+bash-n: 0
+--- stdout
+|status=127
+--- stderr
+|bash: line 1: timeout: command not found

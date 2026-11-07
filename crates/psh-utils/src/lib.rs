@@ -44,6 +44,7 @@ mod tee;
 mod tr;
 mod uniq;
 
+mod find;
 mod xargs;
 
 use psh_engine::util::{Mode, UtilEntry, UtilPolicy};
@@ -53,6 +54,12 @@ use common::util_fn;
 /// Every utility, with its names, mode (D015) and group.
 pub static REGISTRY: &[UtilEntry] = &[
     UtilEntry {
+        names: &["find"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(find::run),
+    },
+    UtilEntry {
         names: &["xargs"],
         mode: Mode::Always,
         destructive: false,
@@ -60,7 +67,7 @@ pub static REGISTRY: &[UtilEntry] = &[
     },
     UtilEntry {
         names: &["timeout", "gtimeout"],
-        mode: Mode::WindowsShadow,
+        mode: Mode::Always,
         destructive: false,
         run: util_fn!(timeout::run),
     },
@@ -232,6 +239,7 @@ pub static REGISTRY: &[UtilEntry] = &[
 pub static SPECS: &[opts::Spec] = &[
     timeout::SPEC,
     xargs::SPEC,
+    find::SPEC,
     head::SPEC,
     tail::SPEC,
     cat::SPEC,

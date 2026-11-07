@@ -414,7 +414,7 @@ Each utility has one mode:
 | --- | --- | --- |
 | **S, always** | Always the builtin | Where psh can be at least as good as GNU and BSD for agent use |
 | **F, PATH fallback** | The builtin only if no program of that name is on PATH, or in WASM/sandbox mode | Tools whose real versions are better, or whose exact output is the point (`gzip -9c \| wc -c`, `tar`, `file`) |
-| **W, Windows-only shadow** | S on Windows, F elsewhere | Names that collide with incompatible System32 programs: `find`, `sort`, `timeout`, `tree`, `expand`, `more`, `fc`, `hostname`, `whoami`. On Windows the builtin must win, or `find . -name x` runs the wrong program |
+| **W, Windows-only shadow** | S on Windows, F elsewhere | Names that collide with incompatible System32 programs: `tree`, `expand`, `more`, `fc`, `hostname`, `whoami`. On Windows the builtin must win, or the wrong program runs. `find`, `sort` and `timeout` collide too but are S everywhere (D1172): agents write GNU `find`/`timeout` on macOS as well |
 
 Around the modes:
 
@@ -468,7 +468,7 @@ Around the modes:
   seq comm printf echo test true false sleep find xargs diff cmp jq base64 md5sum
   sha1sum sha256sum sha512sum shasum md5 date env printenv timeout nice nohup which`.
   `timeout` comes first: it is the most common "command not found" (389) in the corpus.
-  `find` is W; `awk` is F until conformant; the rest are S.
+  `awk` is F until conformant; the rest are S (`find` and `timeout` too, D1172).
 - **Tier 2**, soon after (~45 names): process tools (`ps pgrep pkill`, per OS), host
   info (`uptime nproc id uname whoami hostname df`), `tree column tac rev strings od
   xxd hexdump expr yes truncate fold expand unexpand join split`, the rest of the
@@ -568,8 +568,11 @@ GNU recursion (`-r` without a path means `.`, hidden files searched, `.gitignore
 ignored, `-R` follows symlinks, `--include/--exclude/--exclude-dir` as basename fnmatch
 via `globset` with `literal_separator(false)`).
 
-**find** uses the same walker with all ignore filtering off; `-name`/`-path` go through
-`globset` in fnmatch mode, `-regex` through the translator.
+**find** walks on its own, over the utility's asynchronous file system (D1171): its
+actions (`-exec`, `-delete`, `-prune`, `-quit`) interleave with the walk, which the
+synchronous walker seam cannot do on the inline backend. Depth first, each directory's
+entries sorted by name. `-name`/`-path` go through `globset` in fnmatch mode, `-regex`
+through psh-regex (GNU's default Emacs syntax as a GNU BRE; `-E`/`-regextype` ERE).
 
 **Regex gaps** (shared by grep and sed):
 - *Backreferences* (`\(a\)\1`): the regex crate lacks them. Plan: a small backtracking

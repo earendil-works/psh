@@ -84,3 +84,7 @@ printf 'b\na\n' | xargs printf '%s;'; echo; printf '3\n' | xargs seq
 #### -s limits the command line
 ## expect: gnu (BSD counts the command line differently)
 printf 'aaa bbb ccc ddd\n' | xargs -s 12 echo
+
+#### timeout stops xargs and the command it runs
+## expect: gnu (macOS has no timeout)
+echo 10 | timeout 0.5 xargs sleep; echo status=$?

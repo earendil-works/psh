@@ -1,0 +1,543 @@
+# Goldens for tests/utils/find/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: no path means .
+status: 0
+bash-n: 0
+--- stdout
+|.
+|./a
+|./a/b
+|./a/b/y.txt
+|./a/x.txt
+|./z.txt
+--- dir a
+--- dir a/b
+--- file a/b/y.txt
+--- file a/x.txt
+--- file z.txt
+
+=== 1: -name, -iname and -type
+status: 0
+bash-n: 0
+--- stdout
+|./a/x.txt
+|./z.txt
+|--
+|./a/b/y.TXT
+|./a/x.txt
+|./z.txt
+|--
+|.
+|./a
+|./a/b
+--- dir a
+--- dir a/b
+--- file a/b/y.TXT
+--- file a/x.txt
+--- file z.txt
+
+=== 2: -name matches leading dots and the start path's own name
+status: 0
+bash-n: 0
+--- stdout
+|d
+|d/.hidden
+|d/vis
+|d/
+--- dir d
+--- file d/.hidden
+--- file d/vis
+
+=== 3: -path and -ipath
+status: 0
+bash-n: 0
+--- stdout
+|./src/b.rs
+|./src/lib
+|./src/lib/a.rs
+|--
+|./src/lib
+|./src/lib/a.rs
+--- dir src
+--- file src/b.rs
+--- dir src/lib
+--- file src/lib/a.rs
+--- dir test
+--- file test/c.rs
+
+=== 4: -maxdepth and -mindepth
+status: 0
+bash-n: 0
+--- stdout
+|.
+|./a
+|./a/b
+|./a/f
+|--
+|./a/b
+|./a/b/c
+|./a/b/g
+|./a/f
+--- dir a
+--- dir a/b
+--- dir a/b/c
+--- file a/b/c/h
+--- file a/b/g
+--- file a/f
+
+=== 5: -maxdepth 0 is only the start paths
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|status=1
+--- stderr
+|find: ‘nosuch’: No such file or directory
+--- dir a
+--- dir b
+
+=== 6: a missing start path is an error, the others are walked
+status: 0
+bash-n: 0
+--- stdout
+|a
+|a/f
+|status=0
+--- stderr
+|find: ‘nosuch’: No such file or directory
+--- dir a
+--- file a/f
+
+=== 7: -o, -a, ! and parentheses
+status: 0
+bash-n: 0
+--- stdout
+|./a.c
+|./b.h
+|--
+|./d.c
+--- file a.c
+--- file b.h
+--- file c.txt
+--- file d.c
+
+=== 8: -prune
+status: 0
+bash-n: 0
+--- stdout
+|./keep/k
+--- dir keep
+--- file keep/k
+--- dir skip
+--- dir skip/deep
+--- file skip/deep/d
+--- file skip/s
+
+=== 9: -prune with the default action prints the pruned directory
+status: 0
+bash-n: 0
+--- stdout
+|./node_modules
+--- dir node_modules
+--- dir node_modules/x
+--- file node_modules/x/m
+--- dir src
+--- file src/s
+
+=== 10: -print0
+status: 0
+bash-n: 0
+--- stdout
+|d/a b|d/c|
+--- dir d
+--- file d/a b
+--- file d/c
+
+=== 11: -exec with ;
+status: 0
+bash-n: 0
+--- stdout
+|got d/one
+|got d/two
+--- dir d
+--- file d/one
+--- file d/two
+
+=== 12: -exec replaces {} inside words
+status: 0
+bash-n: 0
+--- stdout
+|<./f> ./f.bak
+--- file f
+
+=== 13: -exec status is the test's value
+status: 0
+bash-n: 0
+--- stdout
+|./yes
+--- file no
+--- file yes
+
+=== 14: -exec with + collects the files
+status: 0
+bash-n: 0
+--- stdout
+|batch d/a d/b d/c 
+--- dir d
+--- file d/a
+--- file d/b
+--- file d/c
+
+=== 15: -exec runs utilities and standalone builtins of the shell
+status: 0
+bash-n: 0
+--- stdout
+|2 d/f
+|[d/f]
+--- dir d
+--- file d/f
+|x
+|y
+
+=== 16: -execdir runs in the file's directory
+status: 0
+bash-n: 0
+--- stdout
+|./f in b
+--- dir a
+--- dir a/b
+--- file a/b/f
+
+=== 17: -execdir with +
+status: 0
+bash-n: 0
+--- stdout
+|./f ./g
+--- dir a
+--- dir a/b
+--- file a/b/f
+--- file a/b/g
+
+=== 18: -delete removes files and directories, depth first
+status: 0
+bash-n: 0
+--- stdout
+|keep
+--- file keep
+
+=== 19: -delete with a test
+status: 0
+bash-n: 0
+--- stdout
+|c.c
+--- dir d
+--- file d/c.c
+
+=== 20: -quit stops after the first match
+status: 0
+bash-n: 0
+--- stdout
+|d/f
+--- dir d
+--- file d/f
+
+=== 21: -empty
+status: 0
+bash-n: 0
+--- stdout
+|./e
+|./empty.txt
+|./full/x
+--- file data.txt
+|hi
+--- dir e
+--- file empty.txt
+--- dir full
+--- file full/x
+
+=== 22: -size
+status: 0
+bash-n: 0
+--- stdout
+|./k3
+|--
+|./k1
+|./zero
+|--
+|./k1
+|--
+|./zero
+--- file k1
+|0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+~ no newline at end
+--- file k3
+|000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+~ no newline at end
+--- file zero
+
+=== 23: -mtime and -mmin
+status: 0
+bash-n: 0
+--- stdout
+|./old
+|--
+|./new
+|--
+|./new
+|--
+|./old
+--- file new
+--- file old
+
+=== 24: -newer
+status: 0
+bash-n: 0
+--- stdout
+|./after
+--- file after
+--- file before
+--- file ref
+
+=== 25: -newermt
+status: 0
+bash-n: 0
+--- stdout
+|./new
+|./old
+--- file new
+--- file old
+
+=== 26: -perm
+status: 0
+bash-n: 0
+--- stdout
+|./a
+|--
+|./b
+|--
+|./a
+|./b
+--- file a
+--- file b
+--- file c
+
+=== 27: -perm /mode is any of the bits
+status: 0
+bash-n: 0
+--- stdout
+|./b
+|./c
+--- file a
+--- file b
+--- file c
+
+=== 28: -type with a list
+status: 0
+bash-n: 0
+--- stdout
+|./f
+|./l
+--- dir d
+--- file f
+--- link l -> f
+
+=== 29: symbolic links: -P by default, -L follows
+status: 0
+bash-n: 0
+--- stdout
+|link
+|--
+|link
+|link/inside
+|link/inside/f
+|--
+|--
+|./link
+--- link link -> real
+--- dir real
+--- dir real/inside
+--- file real/inside/f
+
+=== 30: -H follows only the start paths
+status: 0
+bash-n: 0
+--- stdout
+|link
+|link/f
+|link/lf
+--- link link -> real
+--- dir real
+--- file real/f
+--- link real/lf -> real/f
+
+=== 31: a dangling link with -L stays a link
+status: 0
+bash-n: 0
+--- stdout
+|./broken
+--- link broken -> nowhere
+
+=== 32: -L detects loops
+status: 0
+bash-n: 0
+--- stdout
+|loop
+|loop/d
+|status=0
+--- stderr
+|find: File system loop detected; ‘loop/d/up’ is part of the same file system loop as ‘loop’.
+--- dir loop
+--- dir loop/d
+--- link loop/d/up -> ..
+
+=== 33: -regex matches the whole path
+status: 0
+bash-n: 0
+--- stdout
+|d/a.js
+|d/b.ts
+|--
+--- dir d
+--- file d/a.js
+--- file d/b.ts
+--- file d/c.rs
+
+=== 34: -regextype selects ERE
+status: 0
+bash-n: 0
+--- stdout
+|d/a1
+|d/a22
+--- dir d
+--- file d/a1
+--- file d/a22
+--- file d/b
+
+=== 35: BSD's -E selects ERE
+status: 1
+bash-n: 0
+--- stderr
+|find: unknown predicate `-E'
+--- dir d
+--- file d/a1
+--- file d/a22
+--- file d/b
+
+=== 36: -printf
+status: 0
+bash-n: 0
+--- stdout
+|a/b|b|a|b|a|1|d
+|a/f|f|a|f|a|1|f
+|a|a|.||a|0|d
+|3 644 -rw-r--r-- 2024-03-02 10:00:05.0000000000
+--- dir a
+--- dir a/b
+--- file a/f
+|abc
+~ no newline at end
+
+=== 37: -printf widths and escapes
+status: 0
+bash-n: 0
+--- stdout
+|[      file][file  ][fi]	000A
+--- file file
+
+=== 38: -printf %l and %Y
+status: 0
+bash-n: 0
+--- stdout
+|./broken -> nowhere N
+|./link -> f f
+--- link broken -> nowhere
+--- file f
+--- link link -> f
+
+=== 39: -depth lists directories after their contents
+status: 0
+bash-n: 0
+--- stdout
+|a/b/f
+|a/b
+|a
+--- dir a
+--- dir a/b
+--- file a/b/f
+
+=== 40: ! -name with -type
+status: 0
+bash-n: 0
+--- stdout
+|d/a
+|d/b
+--- dir d
+--- file d/a
+--- file d/b
+--- dir d/sub
+
+=== 41: options after tests apply everywhere
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+--- dir a
+--- dir a/b
+--- file a/b/f
+
+=== 42: bad arguments
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+|status=1
+--- stderr
+|find: missing argument to `-name'
+|find: Unknown argument to -type: q
+|find: Expected a positive decimal integer argument to -maxdepth, but got ‘x’
+
+=== 43: operators with missing operands
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+|status=1
+|status=1
+--- stderr
+|find: invalid expression; you have used a binary operator '-o' with nothing before it.
+|find: invalid expression; I was expecting to find a ')' somewhere but did not see one.
+|find: invalid expression; empty parentheses are not allowed.
+|find: you have too many ')'
+
+=== 44: a word after the expression
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|find: paths must precede expression: `b'
+|find: possible unquoted pattern after predicate `-name'?
+--- file a
+--- file b
+
+=== 45: find with xargs
+status: 0
+bash-n: 0
+--- stdout
+|rm d/a
+|rm d/b
+--- dir d
+--- file d/a
+--- file d/b
+
+=== 46: timeout stops find and the command it runs
+status: 0
+bash-n: 0
+--- stdout
+|status=124
+--- file f

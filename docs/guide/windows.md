@@ -166,8 +166,8 @@ UTF-8 and a guess can garble them.
 > run inside psh, so they exist on Windows without any extra install. The names that
 > Windows already uses for different programs (`find`, `sort`, `timeout`, `tree`, `more`,
 > `hostname`, `whoami`) will always be psh's own on Windows, so `find . -name x` does
-> what the script means. Until then such a command runs whatever `PATH` finds, or is not
-> found (127).
+> what the script means; `find`, `sort` and `timeout` already are, on every platform.
+> Until then the others run whatever `PATH` finds, or are not found (127).
 
 ## Where to look
 

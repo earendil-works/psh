@@ -2151,3 +2151,40 @@ Mode fail with "Permission denied" and nothing is created; directory links are j
 with absolute targets that work as links; the two behavior differences are `chmod -v/-c`
 reporting x-bit changes that do not stick (utility follow-up) and `rm` succeeding in a
 read-only directory (this decision).
+## D1170: xargs runs no command for empty input; GNU's statuses and stdin
+date: 2026-11-07 · by: procs · issue: 0017
+`xargs` follows BSD on empty input (the D016 question left open): when the input holds no
+items, the command does not run at all, and `-r` (`--no-run-if-empty`) is accepted and
+changes nothing. GNU runs the command once without arguments, which turns `find … |
+xargs rm` with no matches into a usage error from `rm`, a trap for agents. The rest is
+GNU's: blanks, newlines, quotes and backslashes split items (`-0`/`-d` a single byte,
+literally); `-I` takes whole lines with leading blanks dropped; `-L` lines where a
+trailing blank continues the line; `-s` 128 KiB by default; statuses 123 (a command
+exited 1–125), 124 (255, which also stops xargs), 125 (a signal death), 126/127; the
+commands' stdin is `/dev/null` (`/dev/tty` with `-o`, xargs's own with `-a`). For this
+`SpawnEnv` gained `stdin` (a file opened as the child's stdin) and `cwd` (the child's
+working directory, for `find -execdir`). Prompting (`-p`), `--show-limits`,
+`--process-slot-var` and BSD's `-J -R -S` fall through to the real program.
+
+## D1171: find walks on its own over the async file system, sorted by name
+date: 2026-11-07 · by: procs · issue: 0017
+`find` does not use the walker seam (D1132). Its actions interleave with the walk:
+`-exec` and `-execdir` run commands through `UtilCtx::spawn` between two steps of the
+walk, `-prune` and `-quit` steer it, `-delete` needs the contents before the directory.
+The seam is synchronous and runs on the blocking backend, which on the inline backend
+(wasm, sandbox hosts) is the engine thread: it cannot wait there for an async command.
+With all ignore filtering off, a walk is `read_dir` plus `lstat`/`stat`, so find has its
+own (~150 lines) over `UtilCtx`, the same on every host. Order: depth first, each
+directory's entries sorted by name (GNU walks in directory order, which is not stable
+across file systems, so goldens sort). `-L` detects loops by device and inode of the
+directories above (GNU's message, status 1); `-H` follows the start paths only.
+
+## D1172: find and timeout are mode S everywhere (supersedes D015 for them)
+date: 2026-11-07 · by: procs (coordinator decision) · issue: 0017
+`find` and `timeout` were W (the builtin on Windows, the real program first elsewhere).
+They are now S: the builtin runs on every platform, and an option it does not implement
+still falls through to the real program (D010). Agents on macOS write GNU `find`
+(`-printf`, `-regextype`, `-type f,l`) which BSD find rejects, and psh's `timeout` stops
+the whole process tree and behaves the same everywhere; a find and a timeout that act
+the same on every platform is the agent-first choice. `sort` was already S. A
+consequence: `type -t find` says `builtin` (D1083), two Oils cases expect `file`.

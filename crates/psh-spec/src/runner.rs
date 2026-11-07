@@ -269,9 +269,12 @@ impl Runner<'_> {
 /// directory, released when the returned file is dropped.
 fn serial_lock() -> Result<std::fs::File, String> {
     let path = std::env::temp_dir().join("psh-spec-serial.lock");
+    // Read and write access: Windows refuses to lock a handle opened for appending.
     let file = std::fs::OpenOptions::new()
         .create(true)
-        .append(true)
+        .truncate(false)
+        .read(true)
+        .write(true)
         .open(&path)
         .map_err(|e| format!("{}: {e}", path.display()))?;
     file.lock()

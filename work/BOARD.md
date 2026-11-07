@@ -39,9 +39,8 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 
 | question | where |
 | --- | --- |
-| Where Windows output decoding lives | ARCH.md "Open questions" 1; 0007 |
-| Where the per-utility effect tables live | ARCH.md "Open questions" 2; 0009 |
-| Whether the WASM host is needed before pi-env integration | ARCH.md "Open questions" 3; 0011 |
+| Where the exec-time approval hook sits (pi-env integration) | ARCH.md "Open questions"; 0010 |
+| Windows PATH separator policy (busybox-style built, D1076) | owner |
 
 ## Done
 

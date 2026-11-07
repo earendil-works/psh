@@ -444,7 +444,8 @@ async fn prepare(
     let read_vcsignore = !(opts.no_ignore || opts.no_ignore_vcs);
     let read_global_ignore = !(opts.no_ignore || opts.no_global_ignore_file);
 
-    if cfg!(unix)
+    // psh: everywhere but Windows (fd: Unix; wasm hosts are Unix-like).
+    if !cfg!(windows)
         && ignore_hidden
         && patterns::patterns_match_strings_with_leading_dots(&patterns, pattern_type)
     {

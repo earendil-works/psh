@@ -2640,3 +2640,57 @@ date: 2026-11-08 · by: parser · issue: 0014
 output captured: `e command` prints it at once; bare `e` and the `e` flag replace the
 pattern space with it, less one trailing newline; the command's status is ignored,
 as in GNU. They no longer fall through to a real sed (D1140); `--sandbox` rejects them.
+## D1138: fd: fd 10.5.1 on the walker seam, commands from the front end
+date: 2026-11-08 · by: infra · issue: 0013
+`fd` is an always-on utility (mode S), fd 10.5.1 (the recording container's release
+binary is the oracle). A blocking utility (D1130) with an async front end:
+- **Command line** on psh's option parser (D1082), not clap: every documented flag and
+  the hidden ones (`--no-hidden`, `--ignore`, `--relative-path`, ...), clap's aliases
+  (`--newer`, `--maxdepth`, `--mount`, ...), overrides (the last of `-H`/`--no-hidden`,
+  `-s`/`-i`, `-g`/`--regex` wins; `-u` is the default for both), conflicts and value
+  errors in clap's words with status 2. `-x`/`-X` take every word to `;`, so they are
+  taken out before the parser runs. `-h`/`--help` print fd's help text (recorded from
+  the release binary; Windows' lacks `--owner`), `-V` `fd 10.5.1`. Unknown options run
+  the real fd.
+- **Copied** from fd at 193d0df with attribution (NOTICE): `filter/size.rs`,
+  `filter/owner.rs` (numeric ids only), `filter/time.rs` (only `@timestamp`), `fmt/`
+  (on byte paths; a plain search replaces aho-corasick), `exec/` (templates and
+  batching), `output.rs`, `patterns.rs`/`regex_helper.rs`, `sanitize.rs`, and the
+  walker setup, filters and receiver rules of `walk.rs`. What fd uses of lscolors
+  0.21.0 (`LS_COLORS` parsing, indicators, the suffix map's precedence) and of
+  nu-ansi-term 0.50.3 (rendering: attributes, background, foreground; bright colors as
+  256-color codes) is adapted into `colors.rs`; fd's default colors are its own string,
+  newlines included. None of clap, jiff, lscolors, nu-ansi-term, ctrlc, nix, etcetera,
+  normpath, faccess, argmax, crossbeam-channel, aho-corasick or memchr is a dependency.
+- **Walk** on the walker seam (D1132) with fd's `WalkBuilder` settings (`.fdignore`,
+  parents only with an ignore source, the global `fd/ignore` from `XDG_CONFIG_HOME`/
+  `HOME` or `APPDATA` and `--ignore-file` as explicit ignore files), `-E` as override
+  globs relative to the first root, the parallel walker's error wording. The base
+  directory is the walk's cwd and the commands' cwd; the process's never changes.
+  Broken links met with `-L` are results, as in fd. Executability is the permission
+  bits (fd asks access(2)); no `mh` (link counts are not in the Host's metadata).
+- **Order and output.** The walk is sequential and sorted, so results come in path
+  order; fd's receiver buffers up to 1000 results or 100 ms and sorts them (by `Path`
+  components), so its small outputs are in this order too and psh keeps the rule (a
+  buffer of 1000 sorted, for several roots). `--max-results`/`-1` take the first in
+  that order (fd's are whichever thread was first). Raw bytes when piped, sanitized on
+  a terminal, `./` stripped only for the implicit search path and not before a `-`.
+  A failed write ends fd with status 1 (fd's flush failure), silently for a closed
+  pipe.
+- **Commands.** A blocking body cannot spawn, so with `-x`, `-X` or `-l` the body
+  collects the (stripped) results and the front end runs the commands through `spawn`
+  (utilities, standalone builtins, programs), one after another in result order; `-x`
+  commands get `/dev/null` as stdin unless `--threads=1` (fd captures their output
+  with several threads). A missing command is fd's `Command not found: "NAME"` without
+  spawning. `-X` batches are cut at `--batch-size` or 128 KiB of arguments (no
+  argmax). `-l` runs `ls -l -h -d --color=…` (BSD `ls -l -h -d [-G]` on macOS without
+  `gls`), as fd does.
+- **Fall-through** (D1082): `--changed-within`/`--changed-before` with a duration or a
+  date (until 0020's date parser), `--owner` with a user or group name (the utility
+  context cannot look names up), `--owner` on Windows (fd has none there),
+  `--hyperlink` (needs the host name).
+- **Windows**: `/` separators by default (`--path-separator` overrides; fd does this
+  only under MSYS); the leading-dot pattern error applies everywhere but Windows (wasm
+  included).
+- The classifier's fd table lists every value option now (`-C`, `--and`, `--size`,
+  `--format`, `--search-path`, ... were missing) and `--ignore-file` as a file read.

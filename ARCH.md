@@ -620,9 +620,17 @@ parent-directory rules, hidden files, symlinks and loops, globs, types, limits, 
   thread and searches files on scoped search threads, printing in walk order (at most
   4×threads ahead): the output equals the single-threaded output.
 
-**fd** (**Planned**, 0013): fd's command line re-implemented on psh's option parser,
-its filters, `exec/` (`-x`/`-X` through `spawn`) and `fmt/` copied with attribution;
-none of fd's other dependencies. `--base-directory` never changes the process cwd.
+**fd** (D1138) is fd 10.5.1: its command line re-implemented on psh's option parser
+(flags, aliases, overrides and conflicts of its clap definition, clap's wording for
+errors), its filters, `fmt/`, `exec/`, output, patterns and receiver rules copied with
+attribution, and what it uses of lscolors and nu-ansi-term adapted; none of fd's other
+dependencies. The walk is the walker seam in a blocking utility, with the base
+directory as the walk's cwd (`--base-directory` never changes the process cwd).
+Results print in path order (fd's own order when its search ends within its 100 ms
+buffering). `-x`/`-X`/`-l` collect the results; the async front end then runs the
+commands through `spawn`, one after another (fd runs `-x` in parallel, in no order).
+The real fd runs for `--changed-*` with a duration or date (until the shared date
+parser; `@timestamp` is psh's), `--owner` with names and `--hyperlink`.
 
 **grep** (`grep`, `egrep`, `fgrep`; D1137) is GNU grep 3.11's command line and output,
 written for psh, on the same matcher, `grep-searcher` and walker as rg, with its own

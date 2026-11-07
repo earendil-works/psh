@@ -278,7 +278,49 @@ Checkouts: `vendor/ripgrep` (91f5d22), `vendor/fd` (193d0df) in the primary chec
   processes.md's `seq 1 1000000 | grep 7 | wc -l` "real kernel pipes" example names three
   psh utilities now (follow-up for the docs agent).
 
+### part 5: fd (D1138)
+- `crates/psh-utils/src/fd/`: `cli.rs` (fd 10.5.1's clap definition on psh's option
+  parser: flags, hidden flags, aliases, overrides, conflicts and value errors in clap's
+  words; `-x`/`-X` taken out up to `;` first), `mod.rs` (front end: help/version, the
+  checks of fd's `run` (base directory, search paths, path-like patterns, leading-dot
+  patterns), the configuration, fall-through, then the commands), `walk.rs` (the
+  blocking body on the walker seam: fd's filters and receiver rules), copied from fd
+  193d0df: `filter/` (size; owner numeric only; time `@timestamp` only), `fmt/` (byte
+  paths, no aho-corasick), `exec.rs` (templates and batching; execution through
+  `UtilCtx::spawn`), `output.rs`, `patterns.rs` (+ regex_helper), `sanitize.rs`;
+  `colors.rs` (what fd uses of lscolors 0.21.0 and nu-ansi-term 0.50.3, fd's default
+  `LS_COLORS` string verbatim, newlines included). `help-long.txt`/`help-short.txt`:
+  the release binary's `--help`/`-h`. NOTICE entries for fd, lscolors, nu-ansi-term.
+- Design for `-x`/`-X`/`-l`: the blocking body collects the stripped results into an
+  `Arc<Mutex<Vec>>` passed in its argument; the async front end runs the commands after
+  the walk, one after another in path order (`/dev/null` stdin unless `--threads=1`,
+  as fd's captured `Command::output`). A missing command gets fd's message without a
+  spawn (the shell's "command not found" would otherwise appear).
+- Found (fd 10.5.1): directories print with a trailing `/` (also colored); a leading
+  `-` keeps `./`; `-0`/commands keep `./`; output is sorted by `Path` components only
+  because the receiver buffers 100 ms/1000 results (the container sometimes streamed
+  unsorted under load: tests sort `-x` output); `-1`/`--max-results` pick arbitrary
+  results; `NO_COLOR` does not affect `--color=always`; with `-L` broken links are
+  results, not errors; `--ignore-file` missing prints "Malformed pattern in custom
+  ignore file" and goes on; clap's conflict usage line names the first option and
+  `<pattern>` when one was given. fd's `DEFAULT_LS_COLORS` has two newlines in it, so
+  `*.xml` is unstyled.
+- Oracle loop: `work/scratch/0013/fd/{setup,setup2}.sh` and `cmds{1,2,3}.txt` through
+  `gc.sh`: ~190 commands, all equal except fd's nondeterministic orders (`-X`, `-x`,
+  `-1`) and `pwd` with arguments (psh's standalone builtin is quiet where GNU's warns).
+- L4: tests/utils/fd/basic.test.sh, 30 cases (`## expect: gnu (fd is not a BSD tool)`),
+  recorded GNU and BSD, `--check` deterministic; pass natively and in wasm (but the
+  `cksum` one, which needs the program). Not in L4: `-l` (ls output differs by OS and
+  has dates), `--owner` (ids differ).
+- psh-classify: fd's table lists all value options (`-C`, `--and`, `--size`,
+  `--format`, `--search-path`, `--base-directory`, ... were missing) and `--ignore-file`
+  as a read (data only).
+- Docs: ARCH "Search" fd paragraph. No guide page describes fd yet.
+
 ## Follow-ups
+- fd: `--changed-within`/`--changed-before` durations and dates once 0020's date parser
+  exists; `--owner` names (needs a name lookup in the utility context); `--hyperlink`
+  (needs the host name); `-x` in parallel (fd's default) if it ever matters.
 - grep: `-T/--initial-tab` falls through; GNU's "input file is also the output" check
   (`grep -r x . > out`) is not done (same need as rg's skip_stdout).
 - docs: guide/processes.md's pipe example (`seq | grep | wc`) now names psh utilities, not

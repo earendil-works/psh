@@ -8,6 +8,7 @@ mod core_tests;
 pub(crate) mod declare;
 mod eval;
 pub(crate) mod hash;
+mod help;
 mod jobs;
 #[cfg(test)]
 mod jobs_tests;
@@ -16,8 +17,10 @@ mod printf;
 mod read;
 pub(crate) mod set;
 mod shopt;
+mod strftime;
 mod test;
 pub(crate) mod trap;
+mod umask;
 
 pub(crate) use set::apply_invocation_options;
 
@@ -89,10 +92,13 @@ pub(crate) fn find(name: &[u8]) -> Option<Builtin> {
         b"kill" => (builtin!(jobs::kill), false),
         b"jobs" => (builtin!(jobs::jobs), false),
         b"disown" => (builtin!(jobs::disown), false),
+        b"caller" => (builtin!(command::caller), false),
+        b"help" => (builtin!(help::help), false),
+        b"umask" => (builtin!(umask::umask), false),
+        b"logout" => (builtin!(help::logout), false),
+        b"history" => (builtin!(help::history), false),
         // Every other bash builtin: an error, never a program of the same name.
-        _ if false && BASH_BUILTINS.contains(&name) => {
-            (builtin!(unsupported), SPECIAL.contains(&name))
-        }
+        _ if BASH_BUILTINS.contains(&name) => (builtin!(unsupported), SPECIAL.contains(&name)),
         _ => return None,
     };
     Some(Builtin { run, special })
@@ -503,14 +509,15 @@ async fn exit(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             }
         },
         _ => {
+            // The rest of the line is abandoned.
             vp.error("exit: too many arguments").await;
-            Ok(1)
+            Err(Unwind::Abort(2))
         }
     }
 }
 
 async fn return_(vp: &mut Vp, args: &[Vec<u8>]) -> R {
-    if vp.frames.is_empty() && vp.sourced.is_empty() {
+    if vp.frames.is_empty() && !vp.calls.iter().any(|c| c.sourced) {
         vp.error("return: can only `return' from a function or sourced script")
             .await;
         return Ok(2);

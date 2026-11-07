@@ -141,3 +141,77 @@ fn exec_runs_and_ends() {
     check("exec; echo still", "still\n");
     check("export q=1; (exec -c env); (exec -a zz argv x)", "[x]\n");
 }
+
+#[test]
+fn caller_frames() {
+    let o = run_setup(". /tmp/s.sh; outer", |h| {
+        h.fs.write_file(
+            "/tmp/s.sh",
+            b"outer() {\n  inner\n}\ninner() {\n  caller 0; caller 1; echo $?; caller\n}\n",
+        );
+    });
+    assert_eq!(o.stdout, "2 outer /tmp/s.sh\n1\n2 /tmp/s.sh\n");
+    check("caller; echo $?", "1\n");
+    check("f() { caller; }; f", "1 NULL\n");
+    check_status("f() { caller x; }; f", 2);
+}
+
+#[test]
+fn umask_modes() {
+    check(
+        "umask; umask -S; umask -p",
+        "0022\nu=rwx,g=rx,o=rx\numask 0022\n",
+    );
+    check("umask 027; umask; umask g-w,o-w; umask", "0027\n0027\n");
+    check("umask 0124; umask a=,a=u; umask", "0111\n");
+    check("(umask 077); umask", "0022\n");
+    check("umask 8; echo $?; umask b=r; echo $?", "1\n1\n");
+}
+
+#[test]
+fn printf_formats() {
+    check("printf '[%q]\\n' 'a b' ''", "[a\\ b]\n['']\n");
+    check("printf -vx '%s' hi; echo $x", "hi\n");
+    check("printf '%b|' '\\141' '\\0141'; echo", "a|a|\n");
+    check(
+        "printf '%d\\n' 9223372036854775808; echo $?",
+        "9223372036854775807\n1\n",
+    );
+    check("printf '%u\\n' -1", "18446744073709551615\n");
+    check("printf '%#.0f\\n' 3", "3.\n");
+    check(
+        "TZ=UTC0; export TZ; printf '%(%F %T)T\\n' 1234567890",
+        "2009-02-13 23:31:30\n",
+    );
+    check(
+        "export TZ=JST-9; printf '[%10.4(%Y)T]\\n' 0",
+        "[      1970]\n",
+    );
+    let o = run("printf '%z'; printf '%]'");
+    assert!(
+        o.stderr.contains("`%z': missing format character"),
+        "{}",
+        o.stderr
+    );
+    assert!(
+        o.stderr.contains("`]': invalid format character"),
+        "{}",
+        o.stderr
+    );
+}
+
+#[test]
+fn help_and_stubs() {
+    check("help -s cd", "cd: cd [-L|[-P [-e]]] [-@] [dir]\n");
+    check("help nope 2>/dev/null; echo $?", "1\n");
+    check("logout 2>/dev/null; echo $?; history; echo $?", "1\n0\n");
+    // A bash builtin psh does not have stops the script instead of running a program.
+    let o = run("ulimit -n; echo after");
+    assert_eq!((o.status, o.stdout.as_str()), (2, ""));
+    assert!(
+        o.stderr.contains("ulimit: not supported yet"),
+        "{}",
+        o.stderr
+    );
+    check("exit 1 2; echo same\necho next $?", "next 2\n");
+}

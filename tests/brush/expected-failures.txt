@@ -55,16 +55,9 @@ brush/compat/builtins/alias/35
 brush/compat/builtins/builtin/7
 brush/compat/builtins/builtin/8
 brush/compat/builtins/builtin/16
-brush/compat/builtins/builtin/17
 brush/compat/builtins/builtin/18
 brush/compat/builtins/builtin/19
 brush/compat/builtins/builtin/20
-brush/compat/builtins/caller/0
-brush/compat/builtins/caller/1
-brush/compat/builtins/caller/2
-brush/compat/builtins/caller/3: passed only while functions were unsupported (status 2 by accident); needs caller
-brush/compat/builtins/caller/4
-brush/compat/builtins/caller/5
 brush/compat/builtins/cd/6
 brush/compat/builtins/cd/7
 brush/compat/builtins/cd/8
@@ -93,6 +86,10 @@ brush/compat/builtins/common/0
 brush/compat/builtins/common/2
 brush/compat/builtins/declare/1
 brush/compat/builtins/declare/24: passed only while declare was missing (both failed alike); needs `enable`
+brush/compat/builtins/declare/2
+brush/compat/builtins/declare/3
+brush/compat/builtins/declare/13
+brush/compat/builtins/declare/24: passed via macOS /usr/bin wrapper
 brush/compat/builtins/declare/25
 brush/compat/builtins/declare/26
 brush/compat/builtins/declare/76
@@ -138,9 +135,7 @@ brush/compat/builtins/exec/13
 brush/compat/builtins/exec/14
 brush/compat/builtins/exec/15
 brush/compat/builtins/exec/16
-brush/compat/builtins/exit/14
-brush/compat/builtins/exit/15
-brush/compat/builtins/export/16
+brush/compat/builtins/export/16: passed via macOS /usr/bin wrapper
 brush/compat/builtins/export/22
 brush/compat/builtins/export/27
 brush/compat/builtins/export/35
@@ -172,7 +167,10 @@ brush/compat/builtins/hash/16
 brush/compat/builtins/jobs/1
 brush/compat/builtins/jobs/2
 brush/compat/builtins/jobs/3
+brush/compat/builtins/jobs/4: passed via macOS /usr/bin wrapper
 brush/compat/builtins/jobs/5
+brush/compat/builtins/jobs/6: passed via macOS /usr/bin wrapper
+brush/compat/builtins/jobs/9
 brush/compat/builtins/jobs/10
 brush/compat/builtins/jobs/11
 brush/compat/builtins/jobs/12
@@ -188,27 +186,45 @@ brush/compat/builtins/kill/16
 brush/compat/builtins/kill/17
 brush/compat/builtins/kill/18
 brush/compat/builtins/let/5
+brush/compat/builtins/mapfile/0
+brush/compat/builtins/mapfile/1
+brush/compat/builtins/mapfile/2
+brush/compat/builtins/mapfile/3
+brush/compat/builtins/mapfile/4
+brush/compat/builtins/mapfile/5
+brush/compat/builtins/mapfile/6
+brush/compat/builtins/mapfile/7
+brush/compat/builtins/mapfile/8
+brush/compat/builtins/mapfile/9
+brush/compat/builtins/mapfile/10
+brush/compat/builtins/mapfile/11
+brush/compat/builtins/mapfile/12
+brush/compat/builtins/mapfile/13
+brush/compat/builtins/mapfile/14
+brush/compat/builtins/mapfile/15
+brush/compat/builtins/mapfile/16
+brush/compat/builtins/mapfile/17
+brush/compat/builtins/mapfile/18
+brush/compat/builtins/mapfile/19
+brush/compat/builtins/mapfile/20
+brush/compat/builtins/mapfile/21
+brush/compat/builtins/mapfile/22
+brush/compat/builtins/mapfile/23
+brush/compat/builtins/mapfile/24
+brush/compat/builtins/mapfile/25
+brush/compat/builtins/mapfile/26
+brush/compat/builtins/mapfile/27: passed via macOS /usr/bin wrapper
+brush/compat/builtins/mapfile/28
+brush/compat/builtins/mapfile/29
 brush/compat/builtins/mapfile/30
 brush/compat/builtins/mapfile/36
 brush/compat/builtins/printf/3
-brush/compat/builtins/printf/5
-brush/compat/builtins/printf/6
-brush/compat/builtins/printf/13
-brush/compat/builtins/printf/14
-brush/compat/builtins/printf/34
-brush/compat/builtins/printf/35
-brush/compat/builtins/printf/61
-brush/compat/builtins/printf/63
 brush/compat/builtins/printf/64
 brush/compat/builtins/printf/65
-brush/compat/builtins/printf/66
 brush/compat/builtins/printf/67
 brush/compat/builtins/printf/68
 brush/compat/builtins/printf/69
 brush/compat/builtins/printf/70
-brush/compat/builtins/printf/71
-brush/compat/builtins/printf/72
-brush/compat/builtins/printf/73
 brush/compat/builtins/printf/77
 brush/compat/builtins/printf/79
 brush/compat/builtins/printf/80
@@ -300,24 +316,38 @@ brush/compat/builtins/type/20
 brush/compat/builtins/type/21
 brush/compat/builtins/type/25
 brush/compat/builtins/type/26
+brush/compat/builtins/ulimit/0: passed via macOS /usr/bin wrapper
+brush/compat/builtins/ulimit/1: passed via macOS /usr/bin wrapper
+brush/compat/builtins/ulimit/2: passed via macOS /usr/bin wrapper
+brush/compat/builtins/ulimit/3: passed via macOS /usr/bin wrapper
+brush/compat/builtins/ulimit/4: passed via macOS /usr/bin wrapper
 brush/compat/builtins/ulimit/5
 brush/compat/builtins/ulimit/6
+brush/compat/builtins/ulimit/7: passed via macOS /usr/bin wrapper
 brush/compat/builtins/ulimit/8
+brush/compat/builtins/ulimit/9: passed via macOS /usr/bin wrapper
 brush/compat/builtins/ulimit/10
+brush/compat/builtins/ulimit/11: passed via macOS /usr/bin wrapper
+brush/compat/builtins/ulimit/12: passed via macOS /usr/bin wrapper
+brush/compat/builtins/ulimit/13: passed via macOS /usr/bin wrapper
+brush/compat/builtins/ulimit/14: passed via macOS /usr/bin wrapper
 brush/compat/builtins/ulimit/15
+brush/compat/builtins/ulimit/16: passed via macOS /usr/bin wrapper
 brush/compat/builtins/ulimit/17
 brush/compat/builtins/ulimit/18
 brush/compat/builtins/ulimit/19
 brush/compat/builtins/ulimit/20
 brush/compat/builtins/ulimit/21
 brush/compat/builtins/ulimit/22
+brush/compat/builtins/ulimit/23: passed via macOS /usr/bin wrapper
 brush/compat/builtins/ulimit/24
 brush/compat/builtins/ulimit/25
 brush/compat/builtins/ulimit/26
+brush/compat/builtins/ulimit/27: passed via macOS /usr/bin wrapper
+brush/compat/builtins/ulimit/28: passed via macOS /usr/bin wrapper
+brush/compat/builtins/ulimit/29: passed via macOS /usr/bin wrapper
 brush/compat/builtins/ulimit/30
 brush/compat/builtins/ulimit/31
-brush/compat/builtins/umask/2
-brush/compat/builtins/umask/4
 brush/compat/builtins/unset/10
 brush/compat/builtins/unset/11
 brush/compat/builtins/unset/15
@@ -384,7 +414,6 @@ brush/compat/errors/62
 brush/compat/errors/64
 brush/compat/errors/65
 brush/compat/errors/67
-brush/compat/errors/68
 brush/compat/errors/77
 brush/compat/extended_tests/0
 brush/compat/extended_tests/1
@@ -454,6 +483,9 @@ brush/compat/extended_tests/64
 brush/compat/extended_tests/69
 brush/compat/extended_tests/70
 brush/compat/extended_tests/71
+brush/compat/fd_management/0: passed via macOS /usr/bin wrapper
+brush/compat/fd_management/1: passed via macOS /usr/bin wrapper
+brush/compat/fd_management/2: passed via macOS /usr/bin wrapper
 brush/compat/functions/6
 brush/compat/functions/7
 brush/compat/functions/9
@@ -690,6 +722,7 @@ brush/compat/special_parameters/36
 brush/compat/special_parameters/38
 brush/compat/status/4
 brush/compat/variables/11
+brush/compat/variables/12: passed via macOS /usr/bin wrapper
 brush/compat/variables/13
 brush/compat/variables/14
 brush/compat/variables/15

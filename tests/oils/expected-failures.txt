@@ -54,6 +54,7 @@ oils/assign-extended/8
 oils/assign-extended/9
 oils/assign-extended/10
 oils/assign-extended/21
+oils/assign-extended/32
 oils/background/21
 oils/ble-features/0
 oils/ble-features/1
@@ -107,6 +108,8 @@ oils/builtin-dirs/12
 oils/builtin-dirs/13
 oils/builtin-dirs/14
 oils/builtin-dirs/15
+oils/builtin-dirs/16: passed via macOS /usr/bin wrapper
+oils/builtin-dirs/17: passed via macOS /usr/bin wrapper
 oils/builtin-echo/17
 oils/builtin-echo/18
 oils/builtin-echo/19
@@ -126,29 +129,26 @@ oils/builtin-meta/4
 oils/builtin-meta/6
 oils/builtin-misc/0
 oils/builtin-misc/1
-oils/builtin-misc/2
 oils/builtin-misc/3
-oils/builtin-printf/2
 oils/builtin-printf/3
-oils/builtin-printf/7
 oils/builtin-printf/38
-oils/builtin-printf/40
-oils/builtin-printf/41
-oils/builtin-printf/44
 oils/builtin-printf/46
-oils/builtin-printf/49
+oils/builtin-printf/48: macOS has the legacy zone Portugal, the recording container does not
 oils/builtin-printf/51
-oils/builtin-printf/52
-oils/builtin-printf/53
-oils/builtin-printf/57
 oils/builtin-printf/58
 oils/builtin-process/4
-oils/builtin-process/8
+oils/builtin-process/10: passed via macOS /usr/bin wrapper
+oils/builtin-process/11: passed via macOS /usr/bin wrapper
+oils/builtin-process/12: passed via macOS /usr/bin wrapper
 oils/builtin-process/13
 oils/builtin-process/14
+oils/builtin-process/15: passed via macOS /usr/bin wrapper
+oils/builtin-process/17: passed via macOS /usr/bin wrapper
 oils/builtin-process/18
 oils/builtin-process/19
+oils/builtin-process/20: passed via macOS /usr/bin wrapper
 oils/builtin-process/21
+oils/builtin-process/22: passed via macOS /usr/bin wrapper
 oils/builtin-process/23
 oils/builtin-process/24
 oils/builtin-process/25
@@ -188,23 +188,8 @@ oils/builtin-type-bash/21
 oils/builtin-type-bash/22
 oils/builtin-type-bash/27
 oils/builtin-type-bash/30
-oils/builtin-umask/2
-oils/builtin-umask/3
-oils/builtin-umask/4
 oils/builtin-umask/10
 oils/builtin-umask/11
-oils/builtin-umask/12
-oils/builtin-umask/13
-oils/builtin-umask/14
-oils/builtin-umask/15
-oils/builtin-umask/16
-oils/builtin-umask/17
-oils/builtin-umask/18
-oils/builtin-umask/19
-oils/builtin-umask/20
-oils/builtin-umask/21
-oils/builtin-umask/22
-oils/builtin-umask/23
 oils/builtin-vars/16
 oils/builtin-vars/17
 oils/builtin-vars/24
@@ -449,11 +434,7 @@ oils/regex/32
 oils/regex/33
 oils/regex/35
 oils/regex/36
-oils/serialize/0
-oils/serialize/1
-oils/serialize/2
 oils/serialize/3
-oils/serialize/4
 oils/serialize/5
 oils/serialize/8
 oils/sh-options-bash/4

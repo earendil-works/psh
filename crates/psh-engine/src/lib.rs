@@ -282,7 +282,7 @@ impl Shell {
             subst_fds: Vec::new(),
             aliases: psh_syntax::Aliases::new(),
             expand_aliases: false,
-            sourced: Vec::new(),
+            calls: Vec::new(),
             hash: Default::default(),
             disabled: Default::default(),
             opts: options::Options::default(),
@@ -291,6 +291,7 @@ impl Shell {
             in_trap: None,
             top: true,
             xtrace_level: 1,
+            umask: None,
         };
         let mut vp = vp;
         options::sync_vars(&mut vp.vars, &vp.opts);

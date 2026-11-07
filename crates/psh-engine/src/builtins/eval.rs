@@ -7,7 +7,7 @@ use psh_syntax::{LineIndex, Options, Parser};
 
 use crate::exec;
 use crate::host::{FileKind, OpenOptions, error_text};
-use crate::state::{Code, R, Unwind, Vp};
+use crate::state::{Call, Code, R, Unwind, Vp};
 
 use super::s;
 
@@ -161,9 +161,16 @@ pub(super) async fn source(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         Some(a) => Some(std::mem::replace(&mut vp.args, a)),
         None => None,
     };
-    vp.sourced.push(s(file).into_owned());
+    let line = vp.line;
+    vp.calls.push(Call {
+        func: "source".into(),
+        source: s(file).into_owned(),
+        line,
+        sourced: true,
+    });
     let r = Box::pin(run_text(vp, &text, 0, Origin::File)).await;
-    vp.sourced.pop();
+    vp.calls.pop();
+    vp.line = line;
     if let Some(a) = saved_args {
         vp.args = a;
     }

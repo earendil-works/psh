@@ -183,11 +183,13 @@ pub(crate) struct Vp {
     pub aliases: psh_syntax::Aliases,
     /// `shopt expand_aliases`: off, as in non-interactive bash.
     pub expand_aliases: bool,
-    /// The files being `source`d, innermost last: `return` ends one, and messages
-    /// name it instead of `$0`.
-    pub sourced: Vec<String>,
+    /// Running function calls and `source`d files, innermost last (`caller`, and
+    /// later `FUNCNAME`, `BASH_SOURCE`, `BASH_LINENO`).
+    pub calls: Vec<Call>,
     /// Remembered command paths (`hash`); shared with subshells until one changes it.
     pub hash: Rc<crate::builtins::hash::HashTable>,
+    /// The file creation mask set with `umask`; `None`: the process's.
+    pub umask: Option<u32>,
     /// Builtins turned off with `enable -n`.
     pub disabled: Rc<Vec<Vec<u8>>>,
     /// `set` and `shopt` options (D1280).
@@ -213,6 +215,22 @@ pub(crate) struct Func {
     pub body: psh_syntax::CmdId,
     /// The definition itself (`f() …`), for `declare -f`.
     pub def: psh_syntax::CmdId,
+    /// The file it was defined in (the sourced file, else `$0`).
+    pub source: String,
+}
+
+/// A function call or a `source`d file, as `caller` reports it.
+#[derive(Clone)]
+pub(crate) struct Call {
+    /// The function's name, or `source`.
+    pub func: String,
+    /// The file of the code running in it: where the function was defined, or the
+    /// sourced file.
+    pub source: String,
+    /// The line it was called from.
+    pub line: u32,
+    /// A sourced file (`return` ends it; messages carry its name).
+    pub sourced: bool,
 }
 
 /// A function call's locals: each shadowed variable with its value before the call
@@ -535,8 +553,8 @@ impl Vp {
 
     /// The name in front of messages: the file being sourced, else `$0`.
     pub(crate) fn msg_name(&self) -> String {
-        match self.sourced.last() {
-            Some(f) => f.clone(),
+        match self.calls.iter().rev().find(|c| c.sourced) {
+            Some(c) => c.source.clone(),
             None => self.core.msg_name.borrow().clone(),
         }
     }

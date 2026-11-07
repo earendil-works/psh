@@ -71,6 +71,48 @@ cases must pass for real).
 - Scores (macOS, before → after): oils 1111 → 1251/2511, brush 1066 → 1240/3171,
   agent 115 → 120/144.
 
+### 2026-11-07 part 2
+- Landed part 1 as ad6235d..ebd9b1a (gate: oils 1251, brush 1238, agent 120).
+- Every bash builtin name psh lacks now fails with "NAME: not supported yet" (status 2,
+  the script stops) instead of running `/usr/bin/NAME`. Coordinator's call: all 181
+  wrapper passes lost to it are in the ratchets as "passed via macOS /usr/bin wrapper"
+  (shopt 48, trap 29, wait 28, ulimit 24+, declare/typeset 26, kill 16, fg, pushd,
+  dirs); owners delete those lines as they implement their builtins.
+- printf: `%q` worked nowhere (`q` was eaten as a length modifier); `-vNAME`; `%b` takes
+  `\nnn` without the 0 (new `Dialect::PercentB` in escape.rs); integer range errors
+  ("Numerical result out of range", clamped like strtoimax/strtoumax, `%u -1`);
+  `%#.0f`/`%#.0e`; bash's wording of format errors; `%(fmt)T` with a new
+  `strftime.rs`: TZif files (RFC 8536, v1-v4) from `/usr/share/zoneinfo` etc. through
+  the Host, POSIX `TZ` rules (`EST5EDT,M3.2.0,M11.1.0`, `<+0330>-3:30`), an exported
+  `TZ` only, else `/etc/localtime`, else UTC; C-locale strftime with glibc's flags and
+  widths; bash's 128-byte limit. "Now" (-1, -2, no argument) is `SystemTime::now()`
+  outside wasm until the Host has a clock (proposed).
+- `caller`: shared-file change announced to the coordinator: `Vp::calls: Vec<Call>`
+  (function name or `source`, the file of the code, the calling line; replaces part 1's
+  `Vp::sourced`), pushed by `call_function` (exec.rs) and by `source`; `Func::source`
+  records the defining file (`define_function`). Output follows bash's
+  FUNCNAME/BASH_SOURCE/BASH_LINENO; no `main` frame yet (a script file's top level
+  says status 1 where bash prints `0 NULL`).
+- `umask` (octal, symbolic incl. `a=u` copies of the original value, `X`, `-S`, `-p`):
+  `Vp::umask: Option<u32>` passed to children through `SpawnSpec::umask`. Files the
+  engine itself creates do not see it yet: Host proposal sent to the coordinator
+  (`Host::umask()` for the initial value, `OpenOptions::mode` with fchmod on create;
+  plus `Host::now()`).
+- `help [-dms]` (bash's synopses, psh's own one-line descriptions, no bash help text),
+  `logout` (not a login shell), `history` (empty, arguments checked), `builtin -x`
+  is an invalid option, `exit 1 2` abandons the rest of the line (status 2).
+- Scores (macOS, ratchet run): oils 1215/2511, brush 1150/3171, agent 119/144 — lower
+  than part 1 only because of the stubs; without them oils 1279, brush 1263, agent 120.
+
 ## Follow-ups
+- `read -a` (needs 0026's arrays); `read` reads a byte at a time: a regular file could
+  be read in blocks and the rest given back with a Host seek.
+- Host: `umask()`, `OpenOptions::mode`, `now()` (proposal in part 2's log).
+- `xpg_echo` for `echo` once 0028's `shopt` exists.
+- `BASH_SOURCE`/`FUNCNAME`/`BASH_LINENO` arrays from `Vp::calls` once arrays exist; a
+  `main` frame for script files.
+- `run_text` (builtins/eval.rs) and lib.rs `run_script` are two chunk loops; factor one
+  out with the shapes agent (per-chunk options).
+- `NAME --help` for builtins (bash prints its long help, status 2).
 
 ## Result

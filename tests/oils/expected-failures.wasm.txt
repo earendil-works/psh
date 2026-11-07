@@ -1,0 +1,5 @@
+# Ratchet for layer oils on wasm (D1113): active cases that pass natively
+# (not in expected-failures.txt) but may fail here, each with its reason. Cases
+# that need external programs are not listed. psh-spec --update-ratchet removes
+# cases that pass; never add a regression.
+oils/bugs/13: ulimit is not supported yet; natively it passes only where /dev/full is missing (macOS)

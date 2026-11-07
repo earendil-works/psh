@@ -9,6 +9,8 @@ pub(crate) enum Dialect {
     Echo,
     /// `printf`'s format: `\nnn` octal, `\"`; `\c` is literal.
     Printf,
+    /// `printf %b`: as `echo -e`, and `\nnn` without the leading 0 is octal too.
+    PercentB,
 }
 
 /// The result of decoding: the bytes, and whether `\c` asked to stop the output.
@@ -50,17 +52,19 @@ pub(crate) fn decode(s: &[u8], dialect: Dialect) -> Decoded {
             b't' => out.push(b'\t'),
             b'v' => out.push(0x0b),
             b'\\' => out.push(b'\\'),
-            b'"' if dialect != Dialect::Echo => out.push(b'"'),
-            b'c' if dialect == Dialect::Echo => {
+            b'"' if dialect == Dialect::Printf => out.push(b'"'),
+            b'c' if dialect != Dialect::Printf => {
                 return Decoded {
                     bytes: out,
                     stop: true,
                 };
             }
             b'0'..=b'7' => {
-                let (mut v, max) = if dialect == Dialect::Echo {
+                let (mut v, max) = if dialect != Dialect::Printf {
                     if c == b'0' {
                         (0u32, 3)
+                    } else if dialect == Dialect::PercentB {
+                        (u32::from(c - b'0'), 2)
                     } else {
                         // `\1` in echo is not an escape.
                         out.push(b'\\');
@@ -129,5 +133,10 @@ mod tests {
         let d = decode(br"a\0101b\cdrop", Dialect::Echo);
         assert_eq!(d.bytes, b"aAb");
         assert!(d.stop);
+        assert_eq!(
+            decode(br"\141|\0141|\1419|\558", Dialect::PercentB).bytes,
+            b"a|a|a9|-8"
+        );
+        assert_eq!(decode(br"\141", Dialect::Echo).bytes, br"\141");
     }
 }

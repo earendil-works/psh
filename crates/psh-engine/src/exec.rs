@@ -577,6 +577,7 @@ async fn define_function(
         .await;
         return Ok(1);
     };
+    let source = vp.msg_name();
     Rc::make_mut(&mut vp.funcs).insert(
         name,
         Rc::new(Func {
@@ -588,6 +589,7 @@ async fn define_function(
                 .cmd_ids()
                 .find(|&id| std::ptr::eq(code.ast.cmd(id), cmd))
                 .unwrap_or(f.body),
+            source,
         }),
     );
     Ok(0)
@@ -814,6 +816,7 @@ async fn call_function(
         .await;
         return Err(Unwind::Abort(1));
     }
+    let argv0 = argv[0].clone();
     let mut args: Vec<Vec<u8>> = argv.into_iter().skip(1).collect();
     std::mem::swap(&mut vp.args, &mut args);
     let loops = std::mem::take(&mut vp.loops);
@@ -826,6 +829,12 @@ async fn call_function(
         }
     }
     vp.frames.push(frame);
+    vp.calls.push(crate::state::Call {
+        func: String::from_utf8_lossy(&argv0).into_owned(),
+        source: f.source.clone(),
+        line: vp.line,
+        sourced: false,
+    });
     for (n, v) in assigns {
         let var = vp.vars.entry(&n);
         var.set(v);
@@ -838,6 +847,7 @@ async fn call_function(
     {
         r = Err(u);
     }
+    vp.calls.pop();
     if let Some(frame) = vp.frames.pop() {
         for (n, old) in frame.saved.into_iter().rev() {
             match old {
@@ -1254,7 +1264,7 @@ pub(crate) async fn run_external_with(
             name.rsplit(|&b| b == b'/').next(),
             Some(b"nohup" | b"setsid")
         ) || vp.job.as_ref().is_some_and(|j| j.disowned.get()),
-        ..SpawnSpec::default()
+        umask: vp.umask,
     };
     let program = spec.program.clone();
     let spawned = match vp.host().spawn(spec) {

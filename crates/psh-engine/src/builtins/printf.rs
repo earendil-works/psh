@@ -19,8 +19,14 @@ pub(super) async fn printf(vp: &mut Vp, args: &[Vec<u8>]) -> R {
                 i += 1;
                 break;
             }
-            b"-v" => {
-                let Some(n) = args.get(i + 1) else {
+            a if a.starts_with(b"-v") => {
+                // `-v NAME` or `-vNAME`.
+                let attached = a.len() > 2;
+                let Some(n) = (if attached {
+                    Some(&a[2..])
+                } else {
+                    args.get(i + 1).map(Vec::as_slice)
+                }) else {
                     vp.error("printf: -v: option requires an argument").await;
                     return Ok(2);
                 };
@@ -30,7 +36,7 @@ pub(super) async fn printf(vp: &mut Vp, args: &[Vec<u8>]) -> R {
                     return Ok(2);
                 }
                 var = Some(s(n).into_owned());
-                i += 2;
+                i += if attached { 1 } else { 2 };
             }
             a if a.len() > 1 && a[0] == b'-' => {
                 vp.error(&format!("printf: {}: invalid option", s(&a[..2])))
@@ -47,7 +53,15 @@ pub(super) async fn printf(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             .await;
         return Ok(2);
     };
+    // `%(…)T` needs the time zone, read before formatting.
+    let zone = if format.windows(2).any(|w| w == b"%(") {
+        Some(super::strftime::zone(vp).await)
+    } else {
+        None
+    };
     let mut f = Formatter {
+        zone,
+        now: now_secs(),
         args: &args[i + 1..],
         next: 0,
         out: Vec::new(),
@@ -78,6 +92,9 @@ pub(super) async fn printf(vp: &mut Vp, args: &[Vec<u8>]) -> R {
 }
 
 struct Formatter<'a> {
+    zone: Option<super::strftime::Zone>,
+    /// The time for `%(…)T` with `-1`, `-2` or no argument.
+    now: i64,
     args: &'a [Vec<u8>],
     next: usize,
     out: Vec<u8>,
@@ -105,18 +122,50 @@ impl Formatter<'_> {
         a.map(Vec::as_slice)
     }
 
+    /// An integer argument for a signed conversion (also `*` widths): clamped to
+    /// the range of `i64` with an error, as `strtoimax` does.
     fn num_arg(&mut self) -> i64 {
-        match self.arg() {
-            None => 0,
-            Some(a) => {
-                let a = a.to_vec();
-                let (v, ok) = parse_num(&a);
-                if !ok {
-                    self.errors.push(format!("{}: invalid number", s(&a)));
-                }
-                v
-            }
+        let Some(a) = self.arg().map(<[u8]>::to_vec) else {
+            return 0;
+        };
+        let n = parse_num(&a);
+        if !n.ok {
+            self.errors.push(format!("{}: invalid number", s(&a)));
         }
+        let limit = if n.neg {
+            1u128 << 63
+        } else {
+            (1u128 << 63) - 1
+        };
+        if n.overflow || n.mag > limit {
+            self.errors
+                .push(format!("{}: Numerical result out of range", s(&a)));
+            return if n.neg { i64::MIN } else { i64::MAX };
+        }
+        if n.neg {
+            (n.mag as i128).wrapping_neg() as i64
+        } else {
+            n.mag as i64
+        }
+    }
+
+    /// An integer argument for an unsigned conversion: negative values wrap around,
+    /// as `strtoumax` does.
+    fn unsigned_arg(&mut self) -> u64 {
+        let Some(a) = self.arg().map(<[u8]>::to_vec) else {
+            return 0;
+        };
+        let n = parse_num(&a);
+        if !n.ok {
+            self.errors.push(format!("{}: invalid number", s(&a)));
+        }
+        if n.overflow {
+            self.errors
+                .push(format!("{}: Numerical result out of range", s(&a)));
+            return u64::MAX;
+        }
+        let v = n.mag as u64;
+        if n.neg { v.wrapping_neg() } else { v }
     }
 
     fn float_arg(&mut self) -> f64 {
@@ -132,11 +181,11 @@ impl Formatter<'_> {
                 match t.parse::<f64>() {
                     Ok(v) => v,
                     Err(_) => {
-                        let (v, ok) = parse_num(&a);
-                        if !ok {
+                        let n = parse_num(&a);
+                        if !n.ok {
                             self.errors.push(format!("{}: invalid number", s(&a)));
                         }
-                        v as f64
+                        if n.neg { -(n.mag as f64) } else { n.mag as f64 }
                     }
                 }
             }
@@ -189,6 +238,7 @@ impl Formatter<'_> {
                 i += 1;
                 continue;
             }
+            let start = i - 1;
             let mut spec = Spec::default();
             while i < fmt.len() {
                 match fmt[i] {
@@ -230,18 +280,70 @@ impl Formatter<'_> {
                     spec.prec = Some(s(&fmt[st..i]).parse().unwrap_or(0));
                 }
             }
+            if fmt.get(i) == Some(&b'(') {
+                // `%(strftime format)T`
+                let Some(close) = fmt[i..].iter().position(|&b| b == b')') else {
+                    self.errors
+                        .push(format!("`{}': missing format character", s(&fmt[start..])));
+                    self.stop = true;
+                    break;
+                };
+                let tfmt = fmt[i + 1..i + close].to_vec();
+                i += close + 1;
+                if fmt.get(i) != Some(&b'T') {
+                    let shown = fmt
+                        .get(i)
+                        .map_or(String::new(), |&c| (c as char).to_string());
+                    self.errors
+                        .push(format!("`{shown}': invalid format character"));
+                    self.stop = true;
+                    break;
+                }
+                i += 1;
+                self.time(&tfmt, &spec);
+                continue;
+            }
             // Length modifiers are accepted and ignored.
-            while i < fmt.len() && b"hlLqjzt".contains(&fmt[i]) {
+            while i < fmt.len() && b"hlLjzt".contains(&fmt[i]) {
                 i += 1;
             }
             let Some(&conv) = fmt.get(i) else {
-                self.errors.push("`%': missing format character".into());
+                self.errors
+                    .push(format!("`{}': missing format character", s(&fmt[start..])));
                 self.stop = true;
                 break;
             };
             i += 1;
             self.convert(conv, &spec);
         }
+    }
+
+    /// `%(fmt)T`: an argument of seconds since the epoch (`-1` or none: now, `-2`:
+    /// when the shell started) formatted with `strftime`.
+    fn time(&mut self, tfmt: &[u8], spec: &Spec) {
+        let t = match self.arg().map(<[u8]>::to_vec) {
+            None => self.now,
+            Some(a) if a.is_empty() => self.now,
+            Some(a) => {
+                let n = parse_num(&a);
+                if !n.ok {
+                    self.errors.push(format!("{}: invalid number", s(&a)));
+                }
+                let v = if n.neg { -(n.mag as i64) } else { n.mag as i64 };
+                if v == -1 || v == -2 { self.now } else { v }
+            }
+        };
+        let utc = super::strftime::Zone::utc();
+        let zone = self.zone.as_ref().unwrap_or(&utc);
+        let mut body = super::strftime::strftime(tfmt, zone, t);
+        // bash formats into a buffer of 128 bytes; what does not fit is dropped.
+        if body.len() >= 128 {
+            body.clear();
+        }
+        if let Some(p) = spec.prec {
+            body.truncate(p);
+        }
+        self.pad(&body, spec, false);
     }
 
     fn pad(&mut self, body: &[u8], spec: &Spec, numeric: bool) {
@@ -278,7 +380,7 @@ impl Formatter<'_> {
                     b's' => a,
                     b'q' => shell_quote(&a),
                     _ => {
-                        let d = decode(&a, Dialect::Echo);
+                        let d = decode(&a, Dialect::PercentB);
                         if d.stop {
                             self.stop = true;
                         }
@@ -320,7 +422,7 @@ impl Formatter<'_> {
                 self.pad(body.as_bytes(), spec, numeric);
             }
             b'u' | b'o' | b'x' | b'X' => {
-                let v = self.num_arg() as u64;
+                let v = self.unsigned_arg();
                 let mut digits = match conv {
                     b'u' => v.to_string(),
                     b'o' => format!("{v:o}"),
@@ -347,7 +449,12 @@ impl Formatter<'_> {
                 let v = self.float_arg();
                 let prec = spec.prec.unwrap_or(6);
                 let mut body = match conv {
+                    // `#` keeps the point even without decimals.
+                    b'f' | b'F' if spec.alt && prec == 0 && v.is_finite() => format!("{v:.0}."),
                     b'f' | b'F' => format!("{v:.prec$}"),
+                    b'e' | b'E' if spec.alt && prec == 0 && v.is_finite() => {
+                        fmt_e(v, 0).replacen('e', ".e", 1)
+                    }
                     b'e' | b'E' => fmt_e(v, prec),
                     _ => fmt_g(v, prec, spec.alt),
                 };
@@ -365,7 +472,7 @@ impl Formatter<'_> {
             }
             other => {
                 self.errors
-                    .push(format!("%{}: invalid format character", other as char));
+                    .push(format!("`{}': invalid format character", other as char));
                 self.stop = true;
             }
         }
@@ -426,13 +533,43 @@ fn fmt_g(v: f64, prec: usize, alt: bool) -> String {
     out
 }
 
-/// Parses an integer argument like `strtol` with base 0, plus `'c` for a char code.
-/// Returns the value and whether the whole argument was a number.
-fn parse_num(a: &[u8]) -> (i64, bool) {
+/// Seconds since the epoch, for `%(…)T`. The Host has no clock yet; wasm has no
+/// system clock, so there it is the epoch.
+fn now_secs() -> i64 {
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| d.as_secs() as i64)
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        0
+    }
+}
+
+struct Num {
+    neg: bool,
+    /// The magnitude, if it fits in 64 bits.
+    mag: u128,
+    /// More than 64 bits.
+    overflow: bool,
+    /// The whole argument was a number.
+    ok: bool,
+}
+
+/// Parses an integer argument like `strtoimax` with base 0, plus `'c` for a char code.
+fn parse_num(a: &[u8]) -> Num {
     let t = s(a);
     let t = t.trim_start();
     if let Some(c) = t.strip_prefix(['\'', '"']) {
-        return (c.chars().next().map_or(0, |c| i64::from(c as u32)), true);
+        let v = c.chars().next().map_or(0, |c| u128::from(u32::from(c)));
+        return Num {
+            neg: false,
+            mag: v,
+            overflow: false,
+            ok: true,
+        };
     }
     let (neg, body) = match t.strip_prefix('-') {
         Some(r) => (true, r),
@@ -449,9 +586,22 @@ fn parse_num(a: &[u8]) -> (i64, bool) {
     let end = digits
         .find(|c: char| !c.is_digit(radix))
         .unwrap_or(digits.len());
-    let v = i64::from_str_radix(&digits[..end], radix).unwrap_or(0);
-    let ok = end == digits.len() && (end > 0 || radix == 8);
-    (if neg { -v } else { v }, ok && !t.is_empty())
+    let mut mag = 0u128;
+    let mut overflow = false;
+    for c in digits[..end].chars() {
+        mag = mag * u128::from(radix) + u128::from(c.to_digit(radix).unwrap_or(0));
+        if mag > u128::from(u64::MAX) {
+            overflow = true;
+            mag = u128::from(u64::MAX);
+        }
+    }
+    let ok = end == digits.len() && (end > 0 || radix == 8) && !t.is_empty();
+    Num {
+        neg,
+        mag,
+        overflow,
+        ok,
+    }
 }
 
 #[cfg(test)]
@@ -468,9 +618,15 @@ mod tests {
 
     #[test]
     fn numbers() {
-        assert_eq!(parse_num(b"0x1f"), (31, true));
-        assert_eq!(parse_num(b"010"), (8, true));
-        assert_eq!(parse_num(b"'A"), (65, true));
-        assert_eq!(parse_num(b"12abc"), (12, false));
+        let p = |a: &[u8]| {
+            let n = parse_num(a);
+            (n.mag, n.ok)
+        };
+        assert_eq!(p(b"0x1f"), (31, true));
+        assert_eq!(p(b"010"), (8, true));
+        assert_eq!(p(b"'A"), (65, true));
+        assert_eq!(p(b"12abc"), (12, false));
+        assert!(parse_num(b"18446744073709551616").overflow);
+        assert!(!parse_num(b"18446744073709551615").overflow);
     }
 }

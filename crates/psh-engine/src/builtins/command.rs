@@ -187,7 +187,9 @@ pub(super) async fn command(vp: &mut Vp, args: &[Vec<u8>]) -> R {
                 buf.push(b'\n');
             }
         }
-        flush(vp, "command", &mut buf).await?;
+        if !flush(vp, "command", &mut buf).await? {
+            return Ok(1);
+        }
         return Ok(i32::from(!any));
     }
     let name = &rest[0];
@@ -201,11 +203,12 @@ pub(super) async fn command(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     exec::run_external_with(vp, rest.to_vec(), Vec::new(), opts).await
 }
 
-async fn flush(vp: &Vp, name: &str, buf: &mut Vec<u8>) -> Result<(), Unwind> {
-    if !buf.is_empty() {
-        super::write_fd(vp, 1, name, &std::mem::take(buf)).await?;
+/// Writes what `buf` holds to stdout; `false` after a write error (reported).
+async fn flush(vp: &Vp, name: &str, buf: &mut Vec<u8>) -> Result<bool, Unwind> {
+    if buf.is_empty() {
+        return Ok(true);
     }
-    Ok(())
+    super::write_fd(vp, 1, name, &std::mem::take(buf)).await
 }
 
 /// `NAME is …` lines of `type` and `command -V`.
@@ -300,7 +303,9 @@ pub(super) async fn type_(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             }
         }
     }
-    flush(vp, "type", &mut buf).await?;
+    if !flush(vp, "type", &mut buf).await? {
+        return Ok(1);
+    }
     Ok(status)
 }
 
@@ -308,6 +313,13 @@ pub(super) async fn type_(vp: &mut Vp, args: &[Vec<u8>]) -> R {
 pub(super) async fn builtin(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     let rest = match args.get(1) {
         Some(a) if a == b"--" => &args[2..],
+        Some(a) if a.len() > 1 && a[0] == b'-' => {
+            vp.error(&format!("builtin: {}: invalid option", s(&a[..2])))
+                .await;
+            vp.error_raw(b"builtin: usage: builtin [shell-builtin [arg ...]]\n")
+                .await;
+            return Ok(2);
+        }
         _ => &args[1..],
     };
     let Some(name) = rest.first() else {
@@ -471,4 +483,38 @@ pub(super) async fn times(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         return Ok(2);
     }
     out(vp, "times", b"0m0.000s 0m0.000s\n0m0.000s 0m0.000s\n").await
+}
+
+/// `caller [expr]`: where the current function (or frame `expr`) was called from.
+pub(super) async fn caller(vp: &mut Vp, args: &[Vec<u8>]) -> R {
+    let rest = match args.get(1) {
+        Some(a) if a == b"--" => &args[2..],
+        _ => &args[1..],
+    };
+    // Innermost first, as bash's FUNCNAME/BASH_SOURCE/BASH_LINENO arrays.
+    let calls: Vec<_> = vp.calls.iter().rev().cloned().collect();
+    let line = match rest.first() {
+        None => {
+            let Some(c) = calls.first() else {
+                return Ok(1);
+            };
+            let src = calls.get(1).map_or("NULL", |c| c.source.as_str());
+            format!("{} {src}\n", c.line)
+        }
+        Some(a) => {
+            let n = std::str::from_utf8(a)
+                .ok()
+                .and_then(|t| t.trim().parse::<usize>().ok());
+            let Some(n) = n else {
+                vp.error(&format!("caller: {}: invalid number", s(a))).await;
+                vp.error_raw(b"caller: usage: caller [expr]\n").await;
+                return Ok(2);
+            };
+            match (calls.get(n), calls.get(n + 1)) {
+                (Some(c), Some(up)) => format!("{} {} {}\n", c.line, up.func, up.source),
+                _ => return Ok(1),
+            }
+        }
+    };
+    out(vp, "caller", line.as_bytes()).await
 }

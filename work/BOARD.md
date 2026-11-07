@@ -6,6 +6,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
+| 0034 | psh binary command line on argument (D035) | cli | .worktrees/cli |
 | 0020 | Utilities I: diff, checksums, base64, date, env, nice, nohup, which | shapes | .worktrees/shapes |
 | 0018 | Utilities G: jq (jaq) | procs | .worktrees/procs |
 | 0007 | Windows: part A merged (bad4d63, rework 6ca3d08); part B in progress | windows | .worktrees/windows |

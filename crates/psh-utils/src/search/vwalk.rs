@@ -535,8 +535,17 @@ fn is_hidden(path: &[u8]) -> bool {
     name.starts_with(b".") && name != b"." && name != b".."
 }
 
-/// An absolute path with `.` and `..` resolved lexically and no trailing `/`.
+/// An absolute path with `.` and `..` resolved lexically and no trailing `/` (on
+/// Windows `\` separates too, and becomes `/`).
 fn normalize(p: &[u8]) -> Vec<u8> {
+    let p: Vec<u8> = if cfg!(windows) {
+        p.iter()
+            .map(|&b| if b == b'\\' { b'/' } else { b })
+            .collect()
+    } else {
+        p.to_vec()
+    };
+    let p = p.as_slice();
     let (prefix, rest) = if p.len() >= 2 && p[1] == b':' {
         (&p[..2], &p[2..])
     } else {

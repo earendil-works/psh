@@ -47,6 +47,7 @@ brush/compat/arithmetic/42
 brush/compat/arrays/52
 brush/compat/assignments/6
 brush/compat/background_jobs/16
+brush/compat/background_jobs/19: an in-process utility (sleep) has no OS pid, so another program cannot signal its $! (D1085)
 brush/compat/basic/2
 brush/compat/basic/6
 brush/compat/basic/13
@@ -481,15 +482,6 @@ brush/compat/nameref/140
 brush/compat/nameref/141
 brush/compat/nameref/142
 brush/compat/nameref/143
-brush/compat/nameref/166
-brush/compat/nameref/167
-brush/compat/nameref/168
-brush/compat/nameref/169
-brush/compat/nameref/154
-brush/compat/nameref/155
-brush/compat/nameref/156
-brush/compat/nameref/157
-brush/compat/nameref/158
 brush/compat/nameref/174
 brush/compat/nameref/185
 brush/compat/nameref/199
@@ -605,7 +597,6 @@ brush/compat/pipeline/4
 brush/compat/pipeline/8
 brush/compat/pipeline/17
 brush/compat/process/0
-brush/compat/redirection/14
 brush/compat/redirection/15
 brush/compat/redirection/18
 brush/compat/redirection/22: platform-dependent: GNU ls exits 2 for a missing file, macOS BSD ls 1 (passes on Linux; per-platform ratchet or psh ls later)
@@ -678,11 +669,6 @@ brush/compat/special_parameters/34
 brush/compat/special_parameters/35
 brush/compat/special_parameters/36
 brush/compat/special_parameters/38
-brush/compat/status/4
-brush/compat/variables/5
-brush/compat/variables/6
-brush/compat/variables/7
-brush/compat/variables/9
 brush/compat/variables/11
 brush/compat/variables/12: passed via macOS /usr/bin wrapper
 brush/compat/variables/13
@@ -769,4 +755,3 @@ brush/compat/word_expansion/tilde/3
 brush/compat/word_expansion/tilde/6
 brush/compat/word_expansion/tilde/7
 brush/compat/word_expansion/tilde/11
-brush/compat/background_jobs/19: an in-process utility (sleep) has no OS pid, so another program cannot signal its $! (D1085)

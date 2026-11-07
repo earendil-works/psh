@@ -14,7 +14,7 @@ use std::task::{Context, Poll};
 use std::time::Duration;
 
 use crate::fd::{Fd, FdObj, bad_fd};
-use crate::host::{DirEntry, HostFile, Metadata, OpenOptions};
+use crate::host::{DirEntry, Metadata, OpenOptions};
 use crate::state::{R, Vp};
 
 pub use crate::host::Access;
@@ -180,14 +180,15 @@ impl UtilChild {
     }
 }
 
-/// An open file of the Host.
+/// An open file: one of the Host, or one of the shell's descriptors (`/dev/fd/N`,
+/// `/dev/stdin`, as the engine emulates them, D1055).
 pub struct UtilFile {
-    file: Rc<dyn HostFile>,
+    file: Fd,
 }
 
 impl UtilFile {
     pub async fn read(&self, buf: &mut [u8]) -> io::Result<usize> {
-        std::future::poll_fn(|cx| self.file.poll_read(cx, buf)).await
+        self.file.read(buf).await
     }
 
     pub async fn read_to_end(&self, out: &mut Vec<u8>) -> io::Result<()> {
@@ -201,15 +202,8 @@ impl UtilFile {
         }
     }
 
-    pub async fn write_all(&self, mut data: &[u8]) -> io::Result<()> {
-        while !data.is_empty() {
-            let n = std::future::poll_fn(|cx| self.file.poll_write(cx, data)).await?;
-            if n == 0 {
-                return Err(io::ErrorKind::WriteZero.into());
-            }
-            data = &data[n..];
-        }
-        Ok(())
+    pub async fn write_all(&self, data: &[u8]) -> io::Result<()> {
+        self.file.write_all(data).await
     }
 }
 
@@ -326,8 +320,15 @@ impl UtilCtx<'_> {
 
     /// Opens a file (relative paths against the cwd).
     pub async fn open(&self, path: &[u8], opts: OpenOptions) -> io::Result<UtilFile> {
+        // The shell's own descriptors, as for redirections (D1055): process
+        // substitutions are engine pipes no host knows.
+        if let Some(n) = crate::exec::dev_fd(path) {
+            return self.fd(n).map(|file| UtilFile { file }).ok_or_else(bad_fd);
+        }
         let file = self.vp.host().open(&self.path(path), opts).await?;
-        Ok(UtilFile { file })
+        Ok(UtilFile {
+            file: Rc::new(FdObj::File(file)),
+        })
     }
 
     /// `stat` (`follow`) or `lstat`.

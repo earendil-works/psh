@@ -100,6 +100,9 @@ fn cat() {
     check_all("cat", "in\n", 0, "in\n", "");
     check("cat g - nonl", "a b c\nx\ny");
     check("echo mid | cat g - g", "a b c\nmid\na b c\n");
+    // /dev/fd/N names the shell's descriptor: a process substitution, a redirection.
+    check("cat <(echo sub)", "sub\n");
+    check("cat /dev/fd/3 3<g", "a b c\n");
     check("cat -n g nonl", "     1\ta b c\n     2\tx\n     3\ty");
     check("printf 'a\\n\\n\\n\\nb\\n' | cat -s", "a\n\nb\n");
     check("printf 'a\\n\\nb\\n' | cat -b", "     1\ta\n\n     2\tb\n");

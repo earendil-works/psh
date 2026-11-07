@@ -1,6 +1,6 @@
 # 0022: L0 leg, gate caching, hit list on the parser
 
-status: in-progress
+status: done
 agent: infra
 branch: issue/0022-infra-followups
 depends-on: 0002, 0004 part 1
@@ -71,3 +71,15 @@ measure the parser in the gate.
 ## Follow-ups
 
 ## Result
+- **L0** (main 59b798e): `cargo run -p psh-spec -- --l0 [FILTER] [--diff]
+  [--update-ratchet]`; verdicts in the case goldens and `tests/goldens/{shapes,l0}/
+  bash-n.txt` (`scripts/record-goldens --l0` re-records the latter); ratchet
+  `tests/l0/expected-failures.txt` (23 shape round trips); gate leg `l0`; shown by
+  `scripts/status`.
+- **Gate cache** (main 2f968f7): `# inputs:` per leg, `scripts/gate.sh --full`, cache
+  in the primary's `work/scratch/gate-cache/`.
+- **Hit list on the parser**: `ast_features.rs`; lexical fallback for rejected scripts.
+- **Deps allowlist**: `scripts/deps-allowlist.txt`, checked by the `deps` leg.
+
+Known gaps: a leg's `# inputs:` are trusted (a leg reading an undeclared path can be
+skipped wrongly); the Windows VM's state is not part of any key.

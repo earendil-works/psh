@@ -1,0 +1,954 @@
+# Goldens for tests/agent/search.test.sh (layer agent), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: rg -n in one file
+status: 0
+bash-n: 0
+--- stdout
+|2:    let cfg = load_config();
+--- dir src
+--- file src/main.rs
+|fn main() {
+|    let cfg = load_config();
+|    run(cfg);
+|}
+
+=== 1: rg -n in a directory with one matching file
+status: 0
+bash-n: 0
+--- stdout
+|src/cli.rs:1:pub fn parse_args() {}
+--- dir lib
+--- file lib/util.rs
+|pub fn other() {}
+--- dir src
+--- file src/cli.rs
+|pub fn parse_args() {}
+|pub fn helper() {}
+
+=== 2: rg -n over two paths, sorted
+status: 0
+bash-n: 0
+--- stdout
+|src/view.rs:1:fn render() {}
+|src/view.rs:2:fn render_all() {}
+|tests/view_test.rs:1:fn test_render() { render(); }
+--- dir src
+--- file src/view.rs
+|fn render() {}
+|fn render_all() {}
+--- dir tests
+--- file tests/view_test.rs
+|fn test_render() { render(); }
+
+=== 3: rg pattern before -n
+status: 0
+bash-n: 0
+--- stdout
+|src/net.js:1:const MAX_RETRIES = 3;
+--- dir src
+--- file src/net.js
+|const MAX_RETRIES = 3;
+|function retry() {}
+
+=== 4: rg -n after the path
+status: 0
+bash-n: 0
+--- stdout
+|src/api.ts:2:export function fetchTeam() {}
+--- dir src
+--- file src/api.ts
+|export function fetchUser() {}
+|export function fetchTeam() {}
+
+=== 5: rg -n with single quotes
+status: 0
+bash-n: 0
+--- stdout
+|docs/install.md:2:Then run the server.
+--- dir docs
+--- file docs/install.md
+|Install with the setup script.
+|Then run the server.
+
+=== 6: rg -n with three paths, sorted
+status: 0
+bash-n: 0
+--- stdout
+|src/a.py:1:TODO: split this
+|tests/c.py:1:TODO: add cases
+--- dir lib
+--- file lib/b.py
+|ok
+--- dir src
+--- file src/a.py
+|TODO: split this
+--- dir tests
+--- file tests/c.py
+|TODO: add cases
+
+=== 7: rg -n -S smart case lowercase matches all cases
+status: 0
+bash-n: 0
+--- stdout
+|src/names.txt:1:Config
+|src/names.txt:2:config
+|src/names.txt:3:CONFIG
+--- dir src
+--- file src/names.txt
+|Config
+|config
+|CONFIG
+
+=== 8: rg -n -S smart case uppercase is case sensitive
+status: 0
+bash-n: 0
+--- stdout
+|src/names.txt:1:Config
+--- dir src
+--- file src/names.txt
+|Config
+|config
+|CONFIG
+
+=== 9: rg -i ignores case
+status: 0
+bash-n: 0
+--- stdout
+|Error: disk
+|error: net
+--- file app.log
+|Error: disk
+|error: net
+|ok
+
+=== 10: rg -n with an escaped paren
+status: 0
+bash-n: 0
+--- stdout
+|src/lib.rs:1:fn build(x: u32) {}
+|src/lib.rs:2:let b = build(3);
+--- dir src
+--- file src/lib.rs
+|fn build(x: u32) {}
+|let b = build(3);
+|let build_dir = 1;
+
+=== 11: rg -n alternation with an escaped paren
+status: 0
+bash-n: 0
+--- stdout
+|src/main.c:1:init();
+|src/main.c:4:shutdown_hook = 0;
+--- dir src
+--- file src/main.c
+|init();
+|init_done = true;
+|shutdown();
+|shutdown_hook = 0;
+
+=== 12: rg -n with an escaped dot
+status: 0
+bash-n: 0
+--- stdout
+|src/obj.py:1:self.config
+--- dir src
+--- file src/obj.py
+|self.config
+|selfXconfig
+
+=== 13: rg -n into head -n
+status: 0
+bash-n: 0
+--- stdout
+|src/out.txt:1:log_line 1
+|src/out.txt:2:log_line 2
+|src/out.txt:3:log_line 3
+--- dir src
+--- file src/out.txt
+|log_line 1
+|log_line 2
+|log_line 3
+|log_line 4
+|log_line 5
+|log_line 6
+|log_line 7
+|log_line 8
+
+=== 14: rg -n into head -N
+status: 0
+bash-n: 0
+--- stdout
+|1:item 1
+|2:item 2
+|3:item 3
+|4:item 4
+|5:item 5
+--- dir src
+--- file src/items.txt
+|item 1
+|item 2
+|item 3
+|item 4
+|item 5
+|item 6
+|item 7
+|item 8
+|item 9
+|item 10
+|item 11
+|item 12
+|item 13
+|item 14
+|item 15
+|item 16
+|item 17
+|item 18
+|item 19
+|item 20
+|item 21
+|item 22
+|item 23
+|item 24
+|item 25
+|item 26
+|item 27
+|item 28
+|item 29
+|item 30
+|item 31
+|item 32
+|item 33
+|item 34
+|item 35
+|item 36
+|item 37
+|item 38
+|item 39
+|item 40
+|item 41
+|item 42
+|item 43
+|item 44
+|item 45
+|item 46
+|item 47
+|item 48
+|item 49
+|item 50
+
+=== 15: rg -n -g with a glob
+status: 0
+bash-n: 0
+--- stdout
+|src/a.py:1:import os
+--- dir src
+--- file src/a.py
+|import os
+--- file src/b.js
+|import os from "x";
+
+=== 16: rg -n -g glued to the glob
+status: 0
+bash-n: 0
+--- stdout
+|src/server.toml:1:port = 8080
+--- dir src
+--- file src/server.toml
+|port = 8080
+--- file src/server.ts
+|const port = 8080;
+--- dir tests
+--- file tests/server.test.ts
+|const port = 1;
+
+=== 17: rg -n --glob
+status: 0
+bash-n: 0
+--- stdout
+|lib/user.ts:1:class User {}
+|src/user.ts:1:type User = {}
+--- dir lib
+--- file lib/user.ts
+|class User {}
+--- dir src
+--- file src/user.md
+|User docs
+--- file src/user.ts
+|type User = {}
+
+=== 18: rg --glob negated
+status: 0
+bash-n: 0
+--- stdout
+|src/a.js:1:describe = 1
+--- dir src
+--- file src/a.js
+|describe = 1
+--- file src/a.test.js
+|describe("x")
+
+=== 19: rg -n on dot
+status: 0
+bash-n: 0
+--- stdout
+|./pkg/meta.toml:1:version = "1.2.0"
+--- file notes.txt
+|nothing here
+--- dir pkg
+--- file pkg/meta.toml
+|version = "1.2.0"
+
+=== 20: rg -n -S on dot
+status: 0
+bash-n: 0
+--- stdout
+|./src/t.rs:1:let Timeout = 5;
+--- dir src
+--- file src/t.rs
+|let Timeout = 5;
+
+=== 21: rg -l lists files
+status: 0
+bash-n: 0
+--- stdout
+|src/a.rs
+|src/c.rs
+--- dir src
+--- file src/a.rs
+|use serde;
+--- file src/b.rs
+|use std;
+--- file src/c.rs
+|use serde_json;
+
+=== 22: rg -c counts per file
+status: 0
+bash-n: 0
+--- stdout
+|src/one.txt:2
+|src/two.txt:1
+--- dir src
+--- file src/one.txt
+|x
+|x
+|y
+--- file src/two.txt
+|x
+
+=== 23: rg -o prints only the match
+status: 0
+bash-n: 0
+--- stdout
+|id=17
+|id=42
+--- file rows.txt
+|id=17 name=a
+|id=42 name=b
+
+=== 24: rg -C context
+status: 0
+bash-n: 0
+--- stdout
+|3-line 3
+|4:line 4
+|5-line 5
+|--
+|8-line 8
+|9:line 9
+|10-line 10
+--- file f.txt
+|line 1
+|line 2
+|line 3
+|line 4
+|line 5
+|line 6
+|line 7
+|line 8
+|line 9
+|line 10
+|line 11
+|line 12
+
+=== 25: rg -A after context
+status: 0
+bash-n: 0
+--- stdout
+|1:fn a() {
+|2-    one
+|3-    two
+--- file m.rs
+|fn a() {
+|    one
+|    two
+|}
+|fn b() {
+|}
+
+=== 26: rg -F fixed string
+status: 0
+bash-n: 0
+--- stdout
+|1:a.b(c)
+--- file s.txt
+|a.b(c)
+|axb(c)
+
+=== 27: rg -w word match
+status: 0
+bash-n: 0
+--- stdout
+|1:id
+|4:the id here
+--- file w.txt
+|id
+|user_id
+|id_map
+|the id here
+
+=== 28: rg -v inverts
+status: 0
+bash-n: 0
+--- stdout
+|keep
+|keep too
+--- file v.txt
+|keep
+|drop me
+|keep too
+
+=== 29: rg --files sorted
+status: 0
+bash-n: 0
+--- stdout
+|docs/guide.md
+|src/a.rs
+|src/sub/b.rs
+--- dir docs
+--- file docs/guide.md
+--- dir src
+--- file src/a.rs
+--- dir src/sub
+--- file src/sub/b.rs
+
+=== 30: rg --files with a glob
+status: 0
+bash-n: 0
+--- stdout
+|docs/guide.md
+--- dir docs
+--- file docs/guide.md
+--- dir src
+--- file src/a.rs
+--- file src/b.rs
+
+=== 31: rg --type
+status: 0
+bash-n: 0
+--- stdout
+|src/a.py:1:def go(): pass
+--- dir src
+--- file src/a.py
+|def go(): pass
+--- file src/a.rs
+|fn go() {}
+
+=== 32: rg respects gitignore in a repo
+status: 0
+bash-n: 0
+--- stdout
+|./src/a.txt:1:needle
+--- file .gitignore
+|target/
+--- dir src
+--- file src/a.txt
+|needle
+--- dir target
+--- file target/b.txt
+|needle
+
+=== 33: rg skips hidden files unless --hidden
+status: 0
+bash-n: 0
+--- stdout
+|default:
+|./visible.ini
+|hidden:
+|./.config/app.ini
+|./visible.ini
+--- dir .config
+--- file .config/app.ini
+|token_name
+--- file visible.ini
+|token_name
+
+=== 34: rg no match status
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- file a.txt
+|alpha
+
+=== 35: rg missing path status
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+
+=== 36: rg from stdin
+status: 0
+bash-n: 0
+--- stdout
+|2:two
+|3:three
+
+=== 37: cd then rg into head
+status: 0
+bash-n: 0
+--- stdout
+|src/log.rs:1:warn!("a");
+|src/log.rs:3:warn!("c");
+--- dir proj
+--- dir proj/src
+--- file proj/src/log.rs
+|warn!("a");
+|info!("b");
+|warn!("c");
+
+=== 38: python edit then grep -n
+status: 0
+bash-n: 0
+--- stdout
+|patched
+|2:PORT = 8000
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|cat > /dev/null
+|echo "patched"
+--- dir proj
+--- file proj/settings.py
+|DEBUG = False
+|PORT = 8000
+
+=== 39: python edit then grep -n alternation
+status: 0
+bash-n: 0
+--- stdout
+|1:host = a
+|2:port = 2
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|exec sh -s
+--- dir proj
+--- file proj/app.conf
+|host = a
+|port = 2
+|user = x
+
+=== 40: grep -n three-way alternation into head
+status: 0
+bash-n: 0
+--- stdout
+|1:import a
+|2:from b import c
+|4:export D
+--- dir proj
+--- file proj/mod.py
+|import a
+|from b import c
+|x = 1
+|export D
+
+=== 41: grep -n anchored
+status: 0
+bash-n: 0
+--- stdout
+|1:def a():
+|4:def b():
+--- file m.py
+|def a():
+|    def inner():
+|
+|def b():
+
+=== 42: node test into grep -E into head
+status: 0
+bash-n: 0
+--- stdout
+|ok 1 - adds
+|not ok 2 - subtracts
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|echo "TAP version 13"
+|echo "ok 1 - adds"
+|echo "not ok 2 - subtracts"
+|echo "# pass 1"
+|echo "# fail 1"
+|exit 1
+
+=== 43: grep -rn with --include, sorted
+status: 0
+bash-n: 0
+--- stdout
+|src/a/x.js:1:TODO one
+|src/b/y.ts:1:TODO two
+--- dir src
+--- dir src/a
+--- file src/a/x.js
+|TODO one
+--- dir src/b
+--- file src/b/y.ts
+|TODO two
+--- file src/b/z.md
+|TODO three
+
+=== 44: grep -rn on dot, sorted
+status: 0
+bash-n: 0
+--- stdout
+|./b.rs:2:panic!("y")
+|./lib/a.rs:1:panic!("x")
+--- file b.rs
+|ok
+|panic!("y")
+--- dir lib
+--- file lib/a.rs
+|panic!("x")
+
+=== 45: grep -nE extended regex
+status: 0
+bash-n: 0
+--- stdout
+|1:v1.2.3
+|2:v10.0
+--- file tags.txt
+|v1.2.3
+|v10.0
+|version
+
+=== 46: grep -v filters out lines
+status: 0
+bash-n: 0
+--- stdout
+|keep
+|  
+|keep 2
+--- file in.txt
+|keep
+|  
+|skip this
+|keep 2
+
+=== 47: grep -c counts
+status: 0
+bash-n: 0
+--- stdout
+|2
+--- file app.log
+|ERROR a
+|INFO b
+|ERROR c
+
+=== 48: grep -c with no match prints 0 and fails
+status: 0
+bash-n: 0
+--- stdout
+|0
+|status=1
+--- file app.log
+|INFO
+
+=== 49: grep -l lists files
+status: 0
+bash-n: 0
+--- stdout
+|a.txt
+|c.txt
+--- file a.txt
+|needle
+--- file b.txt
+|hay
+--- file c.txt
+|needle
+
+=== 50: grep -o only matching
+status: 0
+bash-n: 0
+--- stdout
+|http://a.example/x
+|http://b.example/y
+--- file links.txt
+|see http://a.example/x and http://b.example/y
+
+=== 51: grep -A after context
+status: 0
+bash-n: 0
+--- stdout
+|1:fn one() {
+|2-  a
+|3-  b
+--- file code.rs
+|fn one() {
+|  a
+|  b
+|}
+|fn two() {
+|  c
+|}
+
+=== 52: grep -B and -C context
+status: 0
+bash-n: 0
+--- stdout
+|row 2
+|row 3
+|--- C
+|row 7
+|row 8
+|row 9
+--- file rows.txt
+|row 1
+|row 2
+|row 3
+|row 4
+|row 5
+|row 6
+|row 7
+|row 8
+|row 9
+|row 10
+
+=== 53: grep -e twice
+status: 0
+bash-n: 0
+--- stdout
+|1:apple
+|3:cherry
+--- file fruit.txt
+|apple
+|banana
+|cherry
+
+=== 54: grep -i -w
+status: 0
+bash-n: 0
+--- stdout
+|Error
+|ERROR here
+--- file e.txt
+|Error
+|errors
+|ERROR here
+
+=== 55: grep -q in a condition
+status: 0
+bash-n: 0
+--- stdout
+|enabled
+--- file cfg.toml
+|feature = true
+
+=== 56: grep missing file status
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+
+=== 57: find -maxdepth -type f sorted
+status: 0
+bash-n: 0
+--- stdout
+|./README.md
+|./docs/x.md
+|./src/a/mod.rs
+|./src/main.rs
+--- file README.md
+--- dir docs
+--- file docs/x.md
+--- dir src
+--- dir src/a
+--- dir src/a/b
+--- dir src/a/b/c
+--- file src/a/b/c/deeper.rs
+--- file src/a/b/deep.rs
+--- file src/a/mod.rs
+--- file src/main.rs
+
+=== 58: find -maxdepth -type d sorted
+status: 0
+bash-n: 0
+--- stdout
+|.
+|./docs
+|./src
+|./src/a
+|./tests
+|./tests/unit
+--- dir docs
+--- dir src
+--- dir src/a
+--- dir src/a/b
+--- dir tests
+--- dir tests/unit
+
+=== 59: find -name
+status: 0
+bash-n: 0
+--- stdout
+|./src/x/a.test.js
+|./tests/c.test.js
+--- dir src
+--- file src/b.js
+--- dir src/x
+--- file src/x/a.test.js
+--- dir tests
+--- file tests/c.test.js
+
+=== 60: find -name or -name
+status: 0
+bash-n: 0
+--- stdout
+|cfg/a.json
+|cfg/b.yaml
+--- dir cfg
+--- file cfg/a.json
+--- file cfg/b.yaml
+--- file cfg/c.toml
+
+=== 61: find -path with -not
+status: 0
+bash-n: 0
+--- stdout
+|./src/a.js
+--- dir node_modules
+--- dir node_modules/dep
+--- dir node_modules/dep/lib
+--- file node_modules/dep/lib/b.js
+--- dir src
+--- file src/a.js
+
+=== 62: find -prune
+status: 0
+bash-n: 0
+--- stdout
+|./README
+|./build/a.o
+|./src/a.c
+--- file README
+--- dir build
+--- file build/a.o
+--- dir src
+--- file src/a.c
+
+=== 63: find -print0 into xargs -0
+status: 0
+bash-n: 0
+--- stdout
+|alpha
+|beta
+--- dir my docs
+--- file my docs/one file.txt
+|alpha
+--- file my docs/two.txt
+|beta
+
+=== 64: find -exec with \;
+status: 0
+bash-n: 0
+--- stdout
+|logs/1.log:a
+|logs/1.log:b
+|logs/2.log:c
+--- dir logs
+--- file logs/1.log
+|a
+|b
+--- file logs/2.log
+|c
+
+=== 65: find -exec with +
+status: 0
+bash-n: 0
+--- stdout
+|src/a.py
+--- dir src
+--- file src/a.py
+|TODO x
+--- file src/b.py
+|done
+
+=== 66: find -type f into wc -l
+status: 0
+bash-n: 0
+--- stdout
+|3
+--- dir a
+--- file a/1
+--- file a/2
+--- dir a/b
+--- file a/b/3
+
+=== 67: find a missing directory
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 68: xargs -n1
+status: 0
+bash-n: 0
+--- stdout
+|item a
+|item b
+|item c
+
+=== 69: xargs -I{}
+status: 0
+bash-n: 0
+--- stdout
+|file-one.txt
+|file-two.txt
+
+=== 70: xargs -0 with spaces
+status: 0
+bash-n: 0
+--- stdout
+|arg: a b
+|arg: c
+
+=== 71: grep -l into xargs sed
+status: 0
+bash-n: 0
+--- stdout
+|new_name()
+--- dir src
+--- file src/a.js
+|old_name()
+--- file src/b.js
+|other()
+
+=== 72: find into xargs grep -n, sorted
+status: 0
+bash-n: 0
+--- stdout
+|src/a.rs:1:unwrap()
+|src/sub/b.rs:2:unwrap()
+--- dir src
+--- file src/a.rs
+|unwrap()
+--- dir src/sub
+--- file src/sub/b.rs
+|x
+|unwrap()
+
+=== 73: xargs -r with empty input
+status: 0
+bash-n: 0
+--- stdout
+|status=0

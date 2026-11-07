@@ -1,0 +1,518 @@
+# Goldens for tests/agent/text.test.sh (layer agent), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: sort -u of collected names
+status: 0
+bash-n: 0
+--- stdout
+|import json
+|import os
+|import re
+|import sys
+--- dir lib
+--- file lib/b.py
+|import sys
+|import re
+|import os
+--- dir src
+--- file src/a.py
+|import os
+|import sys
+|import json
+
+=== 1: sort -rn of counts
+status: 0
+bash-n: 0
+--- stdout
+|120 vendor
+|12 src
+|7 lib
+|3 tests
+
+=== 2: sort -nr | head
+status: 0
+bash-n: 0
+--- stdout
+|40 b.rs
+|33 e.rs
+|17 c.rs
+
+=== 3: sort -k2 by the second field
+status: 0
+bash-n: 0
+--- stdout
+|a 1
+|c 2
+|b 3
+
+=== 4: sort -t: -k3 -n on a passwd-like file
+status: 0
+bash-n: 0
+--- stdout
+|root:x:0:0
+|daemon:x:1:1
+|bob:x:1000:1000
+|alice:x:1001:1001
+--- file users.txt
+|root:x:0:0
+|alice:x:1001:1001
+|bob:x:1000:1000
+|daemon:x:1:1
+
+=== 5: sort -k2,2 -k1,1 with ties
+status: 0
+bash-n: 0
+--- stdout
+|alpha 1
+|delta 1
+|beta 2
+|gamma 2
+
+=== 6: sort -o in place
+status: 0
+bash-n: 0
+--- stdout
+|apple
+|fig
+|pear
+--- file fruit.txt
+|apple
+|fig
+|pear
+
+=== 7: sort | uniq -c | sort -rn | head of log levels
+status: 0
+bash-n: 0
+--- stdout
+|      4 INFO
+|      2 WARN
+|      1 ERROR
+--- file app.log
+|INFO starting server
+|WARN slow query
+|INFO request /api/users
+|ERROR db timeout
+|INFO request /api/items
+|WARN slow query
+|INFO shutting down
+
+=== 8: uniq -d lists duplicates
+status: 0
+bash-n: 0
+--- stdout
+|b
+|c
+
+=== 9: cut -d: -f1
+status: 0
+bash-n: 0
+--- stdout
+|src/main.rs
+|src/lib.rs
+
+=== 10: cut -d, -f2,3 of a csv
+status: 0
+bash-n: 0
+--- stdout
+|name,score
+|ada,93
+|bob,71
+|cy,88
+--- file data.csv
+|id,name,score,team
+|1,ada,93,red
+|2,bob,71,blue
+|3,cy,88,red
+
+=== 11: cut -c1-20 truncates long lines
+status: 0
+bash-n: 0
+--- stdout
+|a short line
+|this line is definit
+
+=== 12: cut -d' ' -f2- keeps the rest
+status: 0
+bash-n: 0
+--- stdout
+|src/main.rs
+|tests/new test.rs
+
+=== 13: tr -d removes characters
+status: 0
+bash-n: 0
+--- stdout
+|42
+|0000000   a  \n   b  \n
+|0000004
+
+=== 14: tr -s squeezes spaces
+status: 0
+bash-n: 0
+--- stdout
+|a b c d
+
+=== 15: tr -cd keeps only digits and dots
+status: 0
+bash-n: 0
+--- stdout
+|1.24.31
+
+=== 16: awk -F, print columns
+status: 0
+bash-n: 0
+--- stdout
+|name score
+|ada 93
+|bob 71
+--- file data.csv
+|id,name,score
+|1,ada,93
+|2,bob,71
+
+=== 17: awk NR>1 skips the header
+status: 0
+bash-n: 0
+--- stdout
+|ada
+|bob
+|cy
+--- file data.csv
+|id,name,score
+|1,ada,93
+|2,bob,71
+|3,cy,88
+
+=== 18: awk sums a column
+status: 0
+bash-n: 0
+--- stdout
+|total 465
+
+=== 19: awk printf formats a table
+status: 0
+bash-n: 0
+--- stdout
+|build      1.50
+|test      12.25
+|lint       0.40
+
+=== 20: awk -v passes a variable
+status: 0
+bash-n: 0
+--- stdout
+|2
+
+=== 21: awk last field and NF
+status: 0
+bash-n: 0
+--- stdout
+|4 c.rs
+|2 x.rs
+
+=== 22: awk counts with an array
+status: 0
+bash-n: 0
+--- stdout
+|blue 2
+|green 1
+|red 3
+
+=== 23: printf with widths and padding
+status: 0
+bash-n: 0
+--- stdout
+|name      |   42|003.1
+|a=1
+|b=2
+|c=3
+
+=== 24: printf %q and %x
+status: 0
+bash-n: 0
+--- stdout
+|it\'s\ a\ test
+|ff 10 BEE
+
+=== 25: printf separator between two files
+status: 0
+bash-n: 0
+--- stdout
+|first
+|
+|---
+|second
+--- file a.txt
+|first
+--- file b.txt
+|second
+
+=== 26: printf section headers between three files
+status: 0
+bash-n: 0
+--- stdout
+|one
+|
+|=== y ===
+|two
+|
+|=== z ===
+|three
+--- file x.txt
+|one
+--- file y.txt
+|two
+--- file z.txt
+|three
+
+=== 27: paste -sd, joins lines
+status: 0
+bash-n: 0
+--- stdout
+|alpha,beta,gamma
+
+=== 28: paste -sd+ | bc-free sum via arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|3+4+5 = 12
+
+=== 29: comm of two sorted lists
+status: 0
+bash-n: 0
+--- stdout
+|a.rs
+|	d.rs
+|---
+|b.rs
+|c.rs
+--- file after.txt
+|b.rs
+|c.rs
+|d.rs
+--- file before.txt
+|a.rs
+|b.rs
+|c.rs
+
+=== 30: diff -u with labels
+status: 0
+bash-n: 0
+--- stdout
+|--- a/app.conf
+|+++ b/app.conf
+|@@ -1,3 +1,4 @@
+| line1
+|-line2
+|+line2 changed
+| line3
+|+line4
+|status=1
+--- file new.conf
+|line1
+|line2 changed
+|line3
+|line4
+--- file old.conf
+|line1
+|line2
+|line3
+
+=== 31: diff -u skipping the timestamp header
+status: 0
+bash-n: 0
+--- stdout
+|@@ -1,3 +1,3 @@
+| a
+|-b
+|+B
+| c
+--- file v1.txt
+|a
+|b
+|c
+--- file v2.txt
+|a
+|B
+|c
+
+=== 32: diff against stdin
+status: 0
+bash-n: 0
+--- stdout
+|2c2
+|< two
+|---
+|> three
+|status=1
+--- file expected.txt
+|one
+|two
+
+=== 33: diff -rq of two trees
+status: 0
+bash-n: 0
+--- stdout
+|Files old/src/b.txt and new/src/b.txt differ
+|Only in new/src: c.txt
+|status=1
+--- dir new
+--- dir new/src
+--- file new/src/a.txt
+|a
+--- file new/src/b.txt
+|B
+--- file new/src/c.txt
+|c
+--- dir old
+--- dir old/src
+--- file old/src/a.txt
+|a
+--- file old/src/b.txt
+|b
+
+=== 34: jq -r of a key
+status: 0
+bash-n: 0
+--- stdout
+|1.4.2
+|"demo-app"
+--- file package.json
+|{"name": "demo-app", "version": "1.4.2", "scripts": {"test": "node --test", "build": "tsc"}}
+
+=== 35: jq -r keys of scripts
+status: 0
+bash-n: 0
+--- stdout
+|build
+|lint
+|test
+--- file package.json
+|{"name": "demo-app", "scripts": {"test": "node --test", "build": "tsc", "lint": "eslint ."}}
+
+=== 36: jq -r .[] select
+status: 0
+bash-n: 0
+--- stdout
+|a
+|c
+--- file items.json
+|[{"name": "a", "state": "open", "n": 3}, {"name": "b", "state": "closed", "n": 5}, {"name": "c", "state": "open", "n": 8}]
+
+=== 37: jq -c compact objects
+status: 0
+bash-n: 0
+--- stdout
+|{"name":"a","double":6}
+|{"name":"b","double":10}
+--- file items.json
+|[{"name": "a", "n": 3}, {"name": "b", "n": 5}]
+
+=== 38: jq length and map
+status: 0
+bash-n: 0
+--- stdout
+|3
+|[2,0,1]
+--- file items.json
+|[{"tags": ["x", "y"]}, {"tags": []}, {"tags": ["z"]}]
+
+=== 39: jq -r string interpolation into tsv
+status: 0
+bash-n: 0
+--- stdout
+|1	Fix parser
+|2	Add tests
+--- file items.json
+|[{"id": 1, "title": "Fix parser"}, {"id": 2, "title": "Add tests"}]
+
+=== 40: jq -s slurps lines
+status: 0
+bash-n: 0
+--- stdout
+|50
+
+=== 41: jq --arg filter
+status: 0
+bash-n: 0
+--- stdout
+|4.17.21
+--- file deps.json
+|{"dependencies": {"left-pad": "1.3.0", "lodash": "4.17.21"}}
+
+=== 42: jq -e exit status on null
+status: 0
+bash-n: 0
+--- stdout
+|null
+|status=1
+
+=== 43: gh api --jq through a stub
+status: 0
+bash-n: 0
+--- stdout
+|{"number":7,"title":"Speed up lexer","author":"ada"}
+|{"number":9,"title":"Docs","author":"bob"}
+--- dir bin
+--- file bin/gh
+|filter=.
+|while [ $# -gt 0 ]; do
+|  case $1 in
+|    --jq) filter=$2; shift ;;
+|  esac
+|  shift
+|done
+|exec jq -c "$filter" pulls.json
+--- file pulls.json
+|[{"number": 7, "title": "Speed up lexer", "user": {"login": "ada"}}, {"number": 9, "title": "Docs", "user": {"login": "bob"}}]
+
+=== 44: basename and dirname
+status: 0
+bash-n: 0
+--- stdout
+|Button.tsx
+|Button
+|src/components
+|.
+|bin
+
+=== 45: seq forms
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|2
+|3
+|4
+|0
+|5
+|10
+|15
+|20
+|1,2,3,4,5
+|08
+|09
+|10
+|11
+
+=== 46: rev reverses lines
+status: 0
+bash-n: 0
+--- stdout
+|cba
+|dlrow olleh
+|b.rs
+
+=== 47: wc -c and -w
+status: 0
+bash-n: 0
+--- stdout
+|12
+|2
+|12 greet.txt
+|3
+--- file greet.txt
+|hello world

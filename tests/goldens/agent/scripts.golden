@@ -1,0 +1,558 @@
+# Goldens for tests/agent/scripts.test.sh (layer agent), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: strict header then a loop over sources
+status: 0
+bash-n: 0
+--- stdout
+|src/a.c: 1 lines
+|src/b.c: 2 lines
+|done
+--- dir src
+--- file src/a.c
+|int a;
+--- file src/b.c
+|int b;
+|int c;
+
+=== 1: node --check loop with exit 1 on failure
+status: 0
+bash-n: 0
+--- stdout
+|all ok status=0
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|case "$2" in *bad*) echo "SyntaxError in $2" >&2; exit 1;; esac
+--- file main.js
+|ok
+--- dir scripts
+--- file scripts/a.js
+|ok
+--- file scripts/b.js
+|ok
+
+=== 2: node --check loop stops at the first bad file
+status: 0
+bash-n: 0
+--- stdout
+|check scripts/a.js
+|check scripts/bad.js
+|status=1
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|echo "check $2"
+|case "$2" in *bad*) exit 1;; esac
+--- dir scripts
+--- file scripts/a.js
+--- file scripts/bad.js
+--- file scripts/c.js
+
+=== 3: retry loop exits on success
+status: 0
+bash-n: 0
+--- stdout
+|v1.2.3
+|status=0 tries=3
+--- dir bin
+--- file bin/server
+|#!/bin/sh
+|n=$(cat count 2>/dev/null || echo 0)
+|n=$((n+1))
+|echo $n > count
+|[ $n -ge 3 ] && { echo "v1.2.3"; exit 0; }
+|exit 1
+--- file count
+|3
+
+=== 4: retry loop gives up with exit 2
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- dir bin
+--- file bin/server
+|#!/bin/sh
+|exit 1
+
+=== 5: function with arguments and return status
+status: 0
+bash-n: 0
+--- stdout
+|ok: README.md
+|missing: LICENSE
+|status=1
+--- file README.md
+
+=== 6: function counts matches across files
+status: 0
+bash-n: 0
+--- stdout
+|todos=2
+--- dir src
+--- file src/a.rs
+|TODO one
+|fine
+|TODO two
+--- file src/b.rs
+|fine
+
+=== 7: while IFS= read -r keeps whitespace and backslashes
+status: 0
+bash-n: 0
+--- stdout
+|[  indented line]
+|[back\slash]
+|[trailing  ]
+--- file in.txt
+|  indented line
+|back\slash
+|trailing  
+
+=== 8: while read -r from a pipe with a counter
+status: 0
+bash-n: 0
+--- stdout
+|1 src/a.ts
+|2 src/b.ts
+|after pipe n=0
+--- file files.txt
+|src/a.ts
+|src/b.ts
+|README.md
+
+=== 9: while read from process substitution keeps the counter
+status: 0
+bash-n: 0
+--- stdout
+|n=2
+--- file files.txt
+|src/a.ts
+|src/b.ts
+|README.md
+
+=== 10: while read splits fields with IFS
+status: 0
+bash-n: 0
+--- stdout
+|1 alice (admin)
+|2 bob (dev)
+--- file users.txt
+|alice:admin:1
+|bob:dev:2
+
+=== 11: while read handles a last line without newline
+status: 0
+bash-n: 0
+--- stdout
+|got one
+|got two
+--- file nonl.txt
+|one
+|two
+~ no newline at end
+
+=== 12: if elif else chain on file kinds
+status: 0
+bash-n: 0
+--- stdout
+|rust
+|unknown
+--- dir proj
+--- file proj/Cargo.toml
+
+=== 13: if elif on exit status of grep
+status: 0
+bash-n: 0
+--- stdout
+|build failed
+--- file build.log
+|error: boom
+|warning: meh
+
+=== 14: case on file extension in a loop
+status: 0
+bash-n: 0
+--- stdout
+|typescript app.ts
+|rust main.rs
+|skip notes.txt
+|python util.py
+--- dir src
+--- file src/app.ts
+--- file src/main.rs
+--- file src/notes.txt
+--- file src/util.py
+
+=== 15: case on a subcommand argument
+status: 0
+bash-n: 0
+--- stdout
+|building
+|testing
+|usage: run build|test
+|unknown: deploy
+|status=2
+
+=== 16: indexed array of files
+status: 0
+bash-n: 0
+--- stdout
+|count=3
+|- src/a.c
+|- src/b.c
+|- docs/my notes.md
+|first=src/a.c last=docs/my notes.md
+
+=== 17: array built in a loop then joined
+status: 0
+bash-n: 0
+--- stdout
+|failed: a_test b_test
+|csv: a_test,b_test
+--- dir tests
+--- file tests/a_test.sh
+--- file tests/b_test.sh
+--- file tests/helper.sh
+
+=== 18: empty array is fine under set -u
+status: 0
+bash-n: 0
+--- stdout
+|n=0
+|args: 
+
+=== 19: mapfile reads lines into an array
+status: 0
+bash-n: 0
+--- stdout
+|3 lib/y.js
+--- file list.txt
+|lib/x.js
+|lib/y.js
+|lib/z.js
+
+=== 20: associative array counts extensions
+status: 0
+bash-n: 0
+--- stdout
+|js=1
+|md=1
+|ts=2
+--- dir src
+--- file src/a.ts
+--- file src/b.ts
+--- file src/c.js
+--- file src/d.md
+
+=== 21: trap cleanup on EXIT removes a temp dir
+status: 0
+bash-n: 0
+--- stdout
+|working
+|cleaned
+|gone
+
+=== 22: trap EXIT runs after a set -e failure
+status: 0
+bash-n: 0
+--- stdout
+|step 1
+|cleanup ran
+|status=1
+
+=== 23: trap EXIT sees the exit status
+status: 0
+bash-n: 0
+--- stdout
+|exiting with 3
+|status=3
+
+=== 24: counters with arithmetic
+status: 0
+bash-n: 0
+--- stdout
+|pass=3 fail=2 total=5
+
+=== 25: arithmetic increment under set -e
+status: 0
+bash-n: 0
+--- stdout
+|i=2
+
+=== 26: ((i++)) from zero trips set -e
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+
+=== 27: here-doc config written then checked
+status: 0
+bash-n: 0
+--- stdout
+|2:port = 8080
+|debug enabled
+|5
+--- file config.toml
+|[server]
+|port = 8080
+|host = "127.0.0.1"
+|[log]
+|level = "debug"
+
+=== 28: here-doc env file sourced by a script
+status: 0
+bash-n: 0
+--- stdout
+|demo on 3000
+--- file .env
+|APP_NAME=demo
+|APP_PORT=3000
+
+=== 29: unquoted here-doc expands variables into a config
+status: 0
+bash-n: 0
+--- stdout
+|name=svc
+|port=9000
+|url=http://localhost:9000/
+--- file app.conf
+|name=svc
+|port=9000
+|url=http://localhost:9000/
+
+=== 30: guard with or-brace exits
+status: 0
+bash-n: 0
+--- stdout
+|error: src/main.c missing
+|status=1
+--- dir src
+
+=== 31: cd guard before work
+status: 0
+bash-n: 0
+--- stdout
+|cannot cd
+|status=1
+
+=== 32: command -v checks for tools
+status: 0
+bash-n: 0
+--- stdout
+|no-such-tool missing
+|sh found
+--- dir bin
+--- file bin/rg-stub
+|#!/bin/sh
+|echo stub
+
+=== 33: command -v picks a fallback tool
+status: 0
+bash-n: 0
+--- stdout
+|2:beta
+--- file f.txt
+|alpha
+|beta
+
+=== 34: early exit 1 when a check fails
+status: 0
+bash-n: 0
+--- stdout
+|version mismatch: have 1.0 want 2.0
+|status=1
+--- file Cargo.toml
+|version = "1.0"
+
+=== 35: set -e stops a script mid-way
+status: 0
+bash-n: 0
+--- stdout
+|build
+|status=2
+
+=== 36: set -u fails on an unset variable
+status: 0
+bash-n: 0
+--- stdout
+|start
+|status=1
+
+=== 37: set -u with a default is fine
+status: 0
+bash-n: 0
+--- stdout
+|out=dist
+|mode=release
+
+=== 38: pipefail reports a failing producer
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=0
+
+=== 39: set -euo pipefail aborts on a failing pipeline
+status: 0
+bash-n: 0
+--- stdout
+|0
+|status=1
+--- file in.txt
+|a
+|b
+
+=== 40: set -e ignores failures in conditions and || chains
+status: 0
+bash-n: 0
+--- stdout
+|not found
+|fallback
+|still running
+
+=== 41: set -e does not apply inside a function called from if
+status: 0
+bash-n: 0
+--- stdout
+|after false in f
+|f ok
+
+=== 42: status captured with || rc=$?
+status: 0
+bash-n: 0
+--- stdout
+|rc=1
+
+=== 43: functions as pipeline steps in a script
+status: 0
+bash-n: 0
+--- stdout
+|!! b
+|!! d
+|n=2
+--- dir logs
+--- file logs/app.log
+|INFO a
+|ERROR b
+|INFO c
+|ERROR d
+
+=== 44: test runner script with summary
+status: 1
+bash-n: 0
+--- stdout
+|pass=2 fail=1
+|failed: tests/t2.sh
+--- dir tests
+--- file tests/t1.sh
+|exit 0
+--- file tests/t2.sh
+|exit 1
+--- file tests/t3.sh
+|exit 0
+
+=== 45: script written to a file then run
+status: 0
+bash-n: 0
+--- stdout
+|docs has 2 markdown files
+|no such dir: nope
+|status=1
+|check.sh: line 2: 1: usage: check.sh DIR
+|status=1
+--- file check.sh
+|set -euo pipefail
+|dir="${1:?usage: check.sh DIR}"
+|[ -d "$dir" ] || { echo "no such dir: $dir"; exit 1; }
+|count=$(find "$dir" -type f -name '*.md' | wc -l | tr -d ' ')
+|echo "$dir has $count markdown files"
+--- dir docs
+--- file docs/a.md
+--- file docs/b.md
+--- file docs/c.txt
+
+=== 46: python stub with heredoc then grep result
+status: 0
+bash-n: 0
+--- stdout
+|2:const debug = false;
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|exec sh "$@"
+--- dir src
+--- file src/app.js
+|const a = 1;
+|const debug = false;
+
+=== 47: loop with break on first match
+status: 0
+bash-n: 0
+--- stdout
+|found in b
+--- dir a
+--- dir b
+--- file b/target.cfg
+--- dir c
+--- file c/target.cfg
+
+=== 48: loop with continue skipping files
+status: 0
+bash-n: 0
+--- stdout
+|process src/a.c
+|process src/b.c
+|skip empty src/empty.c
+--- dir src
+--- file src/a.c
+|x
+--- file src/b.c
+|y
+--- file src/empty.c
+
+=== 49: nested loops with a status flag
+status: 0
+bash-n: 0
+--- stdout
+|pkg2: missing name
+|problems found
+--- dir pkg1
+--- file pkg1/meta
+|name=one
+--- dir pkg2
+--- file pkg2/meta
+|nam=two
+
+=== 50: until loop waits for a file
+status: 0
+bash-n: 0
+--- stdout
+|ready after 3
+--- file ready.flag
+
+=== 51: local variables do not leak
+status: 0
+bash-n: 0
+--- stdout
+|in f: local
+|after f: global
+
+=== 52: function output captured and status checked
+status: 0
+bash-n: 0
+--- stdout
+|version=0.4.1
+|no version
+--- file meta.yml
+|name: app
+|version: 0.4.1
+
+=== 53: exit status of the last command ends the script
+status: 0
+bash-n: 0
+--- stdout
+|checking
+|status=1

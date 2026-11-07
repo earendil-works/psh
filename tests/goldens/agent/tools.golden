@@ -1,0 +1,2060 @@
+# Goldens for tests/agent/tools.test.sh (layer agent), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: npm run check passes
+status: 0
+bash-n: 0
+--- stdout
+|
+|> demo-app@1.2.0 check
+|> npm run lint && npm run typecheck
+|
+|
+|> demo-app@1.2.0 lint
+|> echo 'eslint: 0 problems'
+|
+|eslint: 0 problems
+|
+|> demo-app@1.2.0 typecheck
+|> echo 'tsc: no errors'
+|
+|tsc: no errors
+|status=0
+--- dir bin
+--- file bin/npm
+|#!/bin/sh
+|cmd=$1; shift
+|if [ "$1" = -w ]; then
+|  for p in packages/*/package.json; do [ "$(jq -r .name "$p")" = "$2" ] && cd "$(dirname "$p")"; done
+|  shift 2
+|fi
+|case $cmd in test) s=test ;; run) s=$1; shift ;; *) echo "npm stub: $cmd" >&2; exit 1 ;; esac
+|[ "$1" = -- ] && shift
+|body=$(jq -r --arg s "$s" '.scripts[$s] // empty' package.json)
+|if [ -z "$body" ]; then echo "npm error Missing script: \"$s\"" >&2; exit 1; fi
+|printf '\n> %s %s\n> %s\n\n' "$(jq -r '.name + "@" + .version' package.json)" "$s" "$body${*:+ $*}"
+|sh -c "$body${*:+ $*}"
+--- file package.json
+|{
+|  "name": "demo-app",
+|  "version": "1.2.0",
+|  "scripts": {
+|    "lint": "echo 'eslint: 0 problems'",
+|    "typecheck": "echo 'tsc: no errors'",
+|    "check": "npm run lint && npm run typecheck"
+|  }
+|}
+
+=== 1: npm run check fails on a lint error
+status: 0
+bash-n: 0
+--- stdout
+|
+|> demo-app@1.2.0 check
+|> grep -n 'console.debug' src/*.ts && exit 1 || echo clean
+|
+|2:console.debug("left over");
+|status=1
+--- dir bin
+--- file bin/npm
+|#!/bin/sh
+|cmd=$1; shift
+|if [ "$1" = -w ]; then
+|  for p in packages/*/package.json; do [ "$(jq -r .name "$p")" = "$2" ] && cd "$(dirname "$p")"; done
+|  shift 2
+|fi
+|case $cmd in test) s=test ;; run) s=$1; shift ;; *) echo "npm stub: $cmd" >&2; exit 1 ;; esac
+|[ "$1" = -- ] && shift
+|body=$(jq -r --arg s "$s" '.scripts[$s] // empty' package.json)
+|if [ -z "$body" ]; then echo "npm error Missing script: \"$s\"" >&2; exit 1; fi
+|printf '\n> %s %s\n> %s\n\n' "$(jq -r '.name + "@" + .version' package.json)" "$s" "$body${*:+ $*}"
+|sh -c "$body${*:+ $*}"
+--- file package.json
+|{
+|  "name": "demo-app",
+|  "version": "1.2.0",
+|  "scripts": {
+|    "check": "grep -n 'console.debug' src/*.ts && exit 1 || echo clean"
+|  }
+|}
+--- dir src
+--- file src/index.ts
+|export const a = 1;
+|console.debug("left over");
+
+=== 2: npm run check piped to tail
+status: 0
+bash-n: 0
+--- stdout
+|
+|src/main.ts:1:let x: any = 1;  error  no-explicit-any
+|src/main.ts:2:let y: any = 2;  error  no-explicit-any
+|2 problems
+--- dir bin
+--- file bin/npm
+|#!/bin/sh
+|cmd=$1; shift
+|if [ "$1" = -w ]; then
+|  for p in packages/*/package.json; do [ "$(jq -r .name "$p")" = "$2" ] && cd "$(dirname "$p")"; done
+|  shift 2
+|fi
+|case $cmd in test) s=test ;; run) s=$1; shift ;; *) echo "npm stub: $cmd" >&2; exit 1 ;; esac
+|[ "$1" = -- ] && shift
+|body=$(jq -r --arg s "$s" '.scripts[$s] // empty' package.json)
+|if [ -z "$body" ]; then echo "npm error Missing script: \"$s\"" >&2; exit 1; fi
+|printf '\n> %s %s\n> %s\n\n' "$(jq -r '.name + "@" + .version' package.json)" "$s" "$body${*:+ $*}"
+|sh -c "$body${*:+ $*}"
+--- file package.json
+|{
+|  "name": "web",
+|  "version": "0.0.1",
+|  "scripts": {
+|    "check": "grep -n 'any' src/main.ts | sed 's/^/src\\/main.ts:/; s/$/  error  no-explicit-any/'; echo '2 problems' >&2; exit 1"
+|  }
+|}
+--- dir src
+--- file src/main.ts
+|let x: any = 1;
+|let y: any = 2;
+|let z = 3;
+
+=== 3: npm run with a missing script
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|npm error Missing script: "lint"
+--- dir bin
+--- file bin/npm
+|#!/bin/sh
+|cmd=$1; shift
+|if [ "$1" = -w ]; then
+|  for p in packages/*/package.json; do [ "$(jq -r .name "$p")" = "$2" ] && cd "$(dirname "$p")"; done
+|  shift 2
+|fi
+|case $cmd in test) s=test ;; run) s=$1; shift ;; *) echo "npm stub: $cmd" >&2; exit 1 ;; esac
+|[ "$1" = -- ] && shift
+|body=$(jq -r --arg s "$s" '.scripts[$s] // empty' package.json)
+|if [ -z "$body" ]; then echo "npm error Missing script: \"$s\"" >&2; exit 1; fi
+|printf '\n> %s %s\n> %s\n\n' "$(jq -r '.name + "@" + .version' package.json)" "$s" "$body${*:+ $*}"
+|sh -c "$body${*:+ $*}"
+--- file package.json
+|{"name": "demo", "version": "1.0.0", "scripts": {"build": "echo build"}}
+
+=== 4: npm run lint and npm run build chained
+status: 0
+bash-n: 0
+--- stdout
+|
+|> app@0.3.0 lint
+|> echo lint ok
+|
+|lint ok
+|
+|> app@0.3.0 build
+|> echo build ok
+|
+|build ok
+|status=0
+--- dir bin
+--- file bin/npm
+|#!/bin/sh
+|cmd=$1; shift
+|if [ "$1" = -w ]; then
+|  for p in packages/*/package.json; do [ "$(jq -r .name "$p")" = "$2" ] && cd "$(dirname "$p")"; done
+|  shift 2
+|fi
+|case $cmd in test) s=test ;; run) s=$1; shift ;; *) echo "npm stub: $cmd" >&2; exit 1 ;; esac
+|[ "$1" = -- ] && shift
+|body=$(jq -r --arg s "$s" '.scripts[$s] // empty' package.json)
+|if [ -z "$body" ]; then echo "npm error Missing script: \"$s\"" >&2; exit 1; fi
+|printf '\n> %s %s\n> %s\n\n' "$(jq -r '.name + "@" + .version' package.json)" "$s" "$body${*:+ $*}"
+|sh -c "$body${*:+ $*}"
+--- file package.json
+|{"name": "app", "version": "0.3.0", "scripts": {"lint": "echo lint ok", "build": "echo build ok"}}
+
+=== 5: failing npm run stops the chain
+status: 0
+bash-n: 0
+--- stdout
+|
+|> app@0.3.0 lint
+|> echo lint failed >&2; exit 2
+|
+|status=2
+--- stderr
+|lint failed
+--- dir bin
+--- file bin/npm
+|#!/bin/sh
+|cmd=$1; shift
+|if [ "$1" = -w ]; then
+|  for p in packages/*/package.json; do [ "$(jq -r .name "$p")" = "$2" ] && cd "$(dirname "$p")"; done
+|  shift 2
+|fi
+|case $cmd in test) s=test ;; run) s=$1; shift ;; *) echo "npm stub: $cmd" >&2; exit 1 ;; esac
+|[ "$1" = -- ] && shift
+|body=$(jq -r --arg s "$s" '.scripts[$s] // empty' package.json)
+|if [ -z "$body" ]; then echo "npm error Missing script: \"$s\"" >&2; exit 1; fi
+|printf '\n> %s %s\n> %s\n\n' "$(jq -r '.name + "@" + .version' package.json)" "$s" "$body${*:+ $*}"
+|sh -c "$body${*:+ $*}"
+--- file package.json
+|{"name": "app", "version": "0.3.0", "scripts": {"lint": "echo lint failed >&2; exit 2", "build": "echo build ok"}}
+
+=== 6: npm test
+status: 0
+bash-n: 0
+--- stdout
+|
+|> calc@1.0.0 test
+|> node --test tests/math.test.js
+|
+|ok 1 - adds
+|ok 2 - subtracts
+|# tests 2
+|# pass 2
+|# fail 0
+|status=0
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|[ "$1" = --test ] && shift
+|awk '
+|function flush() { if (name != "") { n++; if (bad) { fail++; print "not ok " n " - " name } else { pass++; print "ok " n " - " name } } }
+|/^test\("/ { flush(); name = $0; sub(/^test\("/, "", name); sub(/".*$/, "", name); bad = 0; next }
+|/assert\.ok\(false/ { bad = 1 }
+|END { flush(); print "# tests " n; print "# pass " pass + 0; print "# fail " fail + 0; exit (fail > 0) }
+|' "$@"
+--- file bin/npm
+|#!/bin/sh
+|cmd=$1; shift
+|if [ "$1" = -w ]; then
+|  for p in packages/*/package.json; do [ "$(jq -r .name "$p")" = "$2" ] && cd "$(dirname "$p")"; done
+|  shift 2
+|fi
+|case $cmd in test) s=test ;; run) s=$1; shift ;; *) echo "npm stub: $cmd" >&2; exit 1 ;; esac
+|[ "$1" = -- ] && shift
+|body=$(jq -r --arg s "$s" '.scripts[$s] // empty' package.json)
+|if [ -z "$body" ]; then echo "npm error Missing script: \"$s\"" >&2; exit 1; fi
+|printf '\n> %s %s\n> %s\n\n' "$(jq -r '.name + "@" + .version' package.json)" "$s" "$body${*:+ $*}"
+|sh -c "$body${*:+ $*}"
+--- file package.json
+|{"name": "calc", "version": "1.0.0", "scripts": {"test": "node --test tests/math.test.js"}}
+--- dir tests
+--- file tests/math.test.js
+|const test = require("node:test");
+|const assert = require("node:assert");
+|test("adds", () => {
+|  assert.equal(1 + 1, 2);
+|});
+|test("subtracts", () => {
+|  assert.equal(3 - 1, 2);
+|});
+
+=== 7: npm test with extra arguments after --
+status: 0
+bash-n: 0
+--- stdout
+|
+|> calc@1.0.0 test
+|> echo running tests with --grep parser --reporter dot
+|
+|running tests with --grep parser --reporter dot
+--- dir bin
+--- file bin/npm
+|#!/bin/sh
+|cmd=$1; shift
+|if [ "$1" = -w ]; then
+|  for p in packages/*/package.json; do [ "$(jq -r .name "$p")" = "$2" ] && cd "$(dirname "$p")"; done
+|  shift 2
+|fi
+|case $cmd in test) s=test ;; run) s=$1; shift ;; *) echo "npm stub: $cmd" >&2; exit 1 ;; esac
+|[ "$1" = -- ] && shift
+|body=$(jq -r --arg s "$s" '.scripts[$s] // empty' package.json)
+|if [ -z "$body" ]; then echo "npm error Missing script: \"$s\"" >&2; exit 1; fi
+|printf '\n> %s %s\n> %s\n\n' "$(jq -r '.name + "@" + .version' package.json)" "$s" "$body${*:+ $*}"
+|sh -c "$body${*:+ $*}"
+--- file package.json
+|{"name": "calc", "version": "1.0.0", "scripts": {"test": "echo running tests with"}}
+
+=== 8: npm test failing
+status: 0
+bash-n: 0
+--- stdout
+|not ok 2 - parses strings
+|# fail 1
+|status=1
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|[ "$1" = --test ] && shift
+|awk '
+|function flush() { if (name != "") { n++; if (bad) { fail++; print "not ok " n " - " name } else { pass++; print "ok " n " - " name } } }
+|/^test\("/ { flush(); name = $0; sub(/^test\("/, "", name); sub(/".*$/, "", name); bad = 0; next }
+|/assert\.ok\(false/ { bad = 1 }
+|END { flush(); print "# tests " n; print "# pass " pass + 0; print "# fail " fail + 0; exit (fail > 0) }
+|' "$@"
+--- file bin/npm
+|#!/bin/sh
+|cmd=$1; shift
+|if [ "$1" = -w ]; then
+|  for p in packages/*/package.json; do [ "$(jq -r .name "$p")" = "$2" ] && cd "$(dirname "$p")"; done
+|  shift 2
+|fi
+|case $cmd in test) s=test ;; run) s=$1; shift ;; *) echo "npm stub: $cmd" >&2; exit 1 ;; esac
+|[ "$1" = -- ] && shift
+|body=$(jq -r --arg s "$s" '.scripts[$s] // empty' package.json)
+|if [ -z "$body" ]; then echo "npm error Missing script: \"$s\"" >&2; exit 1; fi
+|printf '\n> %s %s\n> %s\n\n' "$(jq -r '.name + "@" + .version' package.json)" "$s" "$body${*:+ $*}"
+|sh -c "$body${*:+ $*}"
+--- file package.json
+|{"name": "parse", "version": "1.0.0", "scripts": {"test": "node --test tests/parse.test.js"}}
+--- dir tests
+--- file tests/parse.test.js
+|const test = require("node:test");
+|const assert = require("node:assert");
+|test("parses numbers", () => {
+|  assert.ok(true);
+|});
+|test("parses strings", () => {
+|  assert.ok(false, "not implemented");
+|});
+
+=== 9: cd into a package and npm run build
+status: 0
+bash-n: 0
+--- stdout
+|
+|> @demo/web@0.1.0 build
+|> echo bundling $(basename $(pwd))
+|
+|bundling web
+--- dir bin
+--- file bin/npm
+|#!/bin/sh
+|cmd=$1; shift
+|if [ "$1" = -w ]; then
+|  for p in packages/*/package.json; do [ "$(jq -r .name "$p")" = "$2" ] && cd "$(dirname "$p")"; done
+|  shift 2
+|fi
+|case $cmd in test) s=test ;; run) s=$1; shift ;; *) echo "npm stub: $cmd" >&2; exit 1 ;; esac
+|[ "$1" = -- ] && shift
+|body=$(jq -r --arg s "$s" '.scripts[$s] // empty' package.json)
+|if [ -z "$body" ]; then echo "npm error Missing script: \"$s\"" >&2; exit 1; fi
+|printf '\n> %s %s\n> %s\n\n' "$(jq -r '.name + "@" + .version' package.json)" "$s" "$body${*:+ $*}"
+|sh -c "$body${*:+ $*}"
+--- dir packages
+--- dir packages/web
+--- file packages/web/package.json
+|{"name": "@demo/web", "version": "0.1.0", "scripts": {"build": "echo bundling $(basename $(pwd))"}}
+
+=== 10: cd to a sibling and npm run
+status: 0
+bash-n: 0
+--- stdout
+|
+|> web@0.1.0 dev:check
+|> ls
+|
+|package.json
+|vite.config.ts
+--- dir bin
+--- file bin/npm
+|#!/bin/sh
+|cmd=$1; shift
+|if [ "$1" = -w ]; then
+|  for p in packages/*/package.json; do [ "$(jq -r .name "$p")" = "$2" ] && cd "$(dirname "$p")"; done
+|  shift 2
+|fi
+|case $cmd in test) s=test ;; run) s=$1; shift ;; *) echo "npm stub: $cmd" >&2; exit 1 ;; esac
+|[ "$1" = -- ] && shift
+|body=$(jq -r --arg s "$s" '.scripts[$s] // empty' package.json)
+|if [ -z "$body" ]; then echo "npm error Missing script: \"$s\"" >&2; exit 1; fi
+|printf '\n> %s %s\n> %s\n\n' "$(jq -r '.name + "@" + .version' package.json)" "$s" "$body${*:+ $*}"
+|sh -c "$body${*:+ $*}"
+--- dir repo
+--- dir repo/api
+--- dir repo/web
+--- file repo/web/package.json
+|{"name": "web", "version": "0.1.0", "scripts": {"dev:check": "ls"}}
+--- file repo/web/vite.config.ts
+
+=== 11: npm run in a workspace
+status: 0
+bash-n: 0
+--- stdout
+|
+|> @demo/core@1.0.0 test
+|> echo core tests in $(basename $PWD)
+|
+|core tests in core
+--- dir bin
+--- file bin/npm
+|#!/bin/sh
+|cmd=$1; shift
+|if [ "$1" = -w ]; then
+|  for p in packages/*/package.json; do [ "$(jq -r .name "$p")" = "$2" ] && cd "$(dirname "$p")"; done
+|  shift 2
+|fi
+|case $cmd in test) s=test ;; run) s=$1; shift ;; *) echo "npm stub: $cmd" >&2; exit 1 ;; esac
+|[ "$1" = -- ] && shift
+|body=$(jq -r --arg s "$s" '.scripts[$s] // empty' package.json)
+|if [ -z "$body" ]; then echo "npm error Missing script: \"$s\"" >&2; exit 1; fi
+|printf '\n> %s %s\n> %s\n\n' "$(jq -r '.name + "@" + .version' package.json)" "$s" "$body${*:+ $*}"
+|sh -c "$body${*:+ $*}"
+--- file package.json
+|{"name": "monorepo", "version": "0.0.0", "private": true}
+--- dir packages
+--- dir packages/cli
+--- file packages/cli/package.json
+|{"name": "@demo/cli", "version": "1.0.0", "scripts": {"test": "echo cli tests"}}
+--- dir packages/core
+--- file packages/core/package.json
+|{"name": "@demo/core", "version": "1.0.0", "scripts": {"test": "echo core tests in $(basename $PWD)"}}
+
+=== 12: npm run check with output silenced
+status: 0
+bash-n: 0
+--- stdout
+|check failed
+--- dir bin
+--- file bin/npm
+|#!/bin/sh
+|cmd=$1; shift
+|if [ "$1" = -w ]; then
+|  for p in packages/*/package.json; do [ "$(jq -r .name "$p")" = "$2" ] && cd "$(dirname "$p")"; done
+|  shift 2
+|fi
+|case $cmd in test) s=test ;; run) s=$1; shift ;; *) echo "npm stub: $cmd" >&2; exit 1 ;; esac
+|[ "$1" = -- ] && shift
+|body=$(jq -r --arg s "$s" '.scripts[$s] // empty' package.json)
+|if [ -z "$body" ]; then echo "npm error Missing script: \"$s\"" >&2; exit 1; fi
+|printf '\n> %s %s\n> %s\n\n' "$(jq -r '.name + "@" + .version' package.json)" "$s" "$body${*:+ $*}"
+|sh -c "$body${*:+ $*}"
+--- file package.json
+|{"name": "app", "version": "1.0.0", "scripts": {"check": "echo checking; exit 1"}}
+
+=== 13: npm run typecheck grep for errors
+status: 0
+bash-n: 0
+--- stdout
+|5:src/a.ts(3,1): error TS2304: Cannot find name foo.
+|6:src/b.ts(9,4): error TS2322: Type string is not assignable.
+--- dir bin
+--- file bin/npm
+|#!/bin/sh
+|cmd=$1; shift
+|if [ "$1" = -w ]; then
+|  for p in packages/*/package.json; do [ "$(jq -r .name "$p")" = "$2" ] && cd "$(dirname "$p")"; done
+|  shift 2
+|fi
+|case $cmd in test) s=test ;; run) s=$1; shift ;; *) echo "npm stub: $cmd" >&2; exit 1 ;; esac
+|[ "$1" = -- ] && shift
+|body=$(jq -r --arg s "$s" '.scripts[$s] // empty' package.json)
+|if [ -z "$body" ]; then echo "npm error Missing script: \"$s\"" >&2; exit 1; fi
+|printf '\n> %s %s\n> %s\n\n' "$(jq -r '.name + "@" + .version' package.json)" "$s" "$body${*:+ $*}"
+|sh -c "$body${*:+ $*}"
+--- file package.json
+|{
+|  "name": "app",
+|  "version": "1.0.0",
+|  "scripts": {
+|    "typecheck": "printf 'src/a.ts(3,1): error TS2304: Cannot find name foo.\\nsrc/b.ts(9,4): error TS2322: Type string is not assignable.\\nFound 2 errors.\\n'; exit 2"
+|  }
+|}
+
+=== 14: make check runs prerequisites
+status: 0
+bash-n: 0
+--- stdout
+|echo lint ok
+|lint ok
+|echo test ok
+|test ok
+|echo all checks passed
+|all checks passed
+|status=0
+--- file Makefile
+|.PHONY: check lint test
+|check: lint test
+|	echo all checks passed
+|lint:
+|	echo lint ok
+|test:
+|	echo test ok
+--- dir bin
+--- file bin/make
+|#!/bin/sh
+|t=${1:-$(sed -n 's/^\([a-z][a-z-]*\):.*/\1/p' Makefile | head -n 1)}
+|if ! grep -q "^$t:" Makefile; then echo "make: *** No rule to make target '$t'.  Stop." >&2; exit 2; fi
+|for d in $(sed -n "s/^$t:\(.*\)/\1/p" Makefile); do "$0" "$d" || exit 2; done
+|awk -v t="$t" '$0 ~ "^" t ":" { f = 1; next } f && /^\t/ { sub(/^\t/, ""); print; next } { f = 0 }' Makefile |
+|while IFS= read -r line; do
+|  echo "$line"
+|  sh -c "$line" </dev/null || { echo "make: *** [Makefile: $t] Error $?" >&2; exit 2; }
+|done
+
+=== 15: make check fails in a prerequisite
+status: 0
+bash-n: 0
+--- stdout
+|echo lint ok
+|lint ok
+|echo running tests
+|running tests
+|exit 1
+|status=2
+--- stderr
+|make: *** [Makefile: test] Error 1
+--- file Makefile
+|check: lint test
+|lint:
+|	echo lint ok
+|test:
+|	echo running tests
+|	exit 1
+--- dir bin
+--- file bin/make
+|#!/bin/sh
+|t=${1:-$(sed -n 's/^\([a-z][a-z-]*\):.*/\1/p' Makefile | head -n 1)}
+|if ! grep -q "^$t:" Makefile; then echo "make: *** No rule to make target '$t'.  Stop." >&2; exit 2; fi
+|for d in $(sed -n "s/^$t:\(.*\)/\1/p" Makefile); do "$0" "$d" || exit 2; done
+|awk -v t="$t" '$0 ~ "^" t ":" { f = 1; next } f && /^\t/ { sub(/^\t/, ""); print; next } { f = 0 }' Makefile |
+|while IFS= read -r line; do
+|  echo "$line"
+|  sh -c "$line" </dev/null || { echo "make: *** [Makefile: $t] Error $?" >&2; exit 2; }
+|done
+
+=== 16: make test piped to tail
+status: 0
+bash-n: 0
+--- stdout
+|echo done
+|done
+--- file Makefile
+|test:
+|	wc -l < tests/cases.txt
+|	sed -n 2p tests/cases.txt
+|	echo done
+--- dir bin
+--- file bin/make
+|#!/bin/sh
+|t=${1:-$(sed -n 's/^\([a-z][a-z-]*\):.*/\1/p' Makefile | head -n 1)}
+|if ! grep -q "^$t:" Makefile; then echo "make: *** No rule to make target '$t'.  Stop." >&2; exit 2; fi
+|for d in $(sed -n "s/^$t:\(.*\)/\1/p" Makefile); do "$0" "$d" || exit 2; done
+|awk -v t="$t" '$0 ~ "^" t ":" { f = 1; next } f && /^\t/ { sub(/^\t/, ""); print; next } { f = 0 }' Makefile |
+|while IFS= read -r line; do
+|  echo "$line"
+|  sh -c "$line" </dev/null || { echo "make: *** [Makefile: $t] Error $?" >&2; exit 2; }
+|done
+--- dir tests
+--- file tests/cases.txt
+|case one
+|case two
+|case three
+
+=== 17: make with an unknown target
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|make: *** No rule to make target 'deploy'.  Stop.
+--- file Makefile
+|build:
+|	echo build
+--- dir bin
+--- file bin/make
+|#!/bin/sh
+|t=${1:-$(sed -n 's/^\([a-z][a-z-]*\):.*/\1/p' Makefile | head -n 1)}
+|if ! grep -q "^$t:" Makefile; then echo "make: *** No rule to make target '$t'.  Stop." >&2; exit 2; fi
+|for d in $(sed -n "s/^$t:\(.*\)/\1/p" Makefile); do "$0" "$d" || exit 2; done
+|awk -v t="$t" '$0 ~ "^" t ":" { f = 1; next } f && /^\t/ { sub(/^\t/, ""); print; next } { f = 0 }' Makefile |
+|while IFS= read -r line; do
+|  echo "$line"
+|  sh -c "$line" </dev/null || { echo "make: *** [Makefile: $t] Error $?" >&2; exit 2; }
+|done
+
+=== 18: npx tsc --noEmit passes
+status: 0
+bash-n: 0
+--- stdout
+|typecheck ok
+--- stderr
+|tsc --noEmit
+--- dir bin
+--- file bin/npx
+|#!/bin/sh
+|d=$PWD
+|while :; do
+|  if [ -x "$d/node_modules/.bin/$1" ]; then t=$1; shift; exec "$d/node_modules/.bin/$t" "$@"; fi
+|  [ "$d" = / ] && break
+|  d=$(dirname "$d")
+|done
+|echo "npm error could not determine executable to run" >&2
+|exit 1
+--- dir node_modules
+--- dir node_modules/.bin
+--- file node_modules/.bin/tsc
+|#!/bin/sh
+|echo "tsc $*" >&2
+
+=== 19: npx tsc --noEmit reports errors
+status: 0
+bash-n: 0
+--- stdout
+|1: error TS2322
+|status=2
+--- dir bin
+--- file bin/npx
+|#!/bin/sh
+|d=$PWD
+|while :; do
+|  if [ -x "$d/node_modules/.bin/$1" ]; then t=$1; shift; exec "$d/node_modules/.bin/$t" "$@"; fi
+|  [ "$d" = / ] && break
+|  d=$(dirname "$d")
+|done
+|echo "npm error could not determine executable to run" >&2
+|exit 1
+--- dir node_modules
+--- dir node_modules/.bin
+--- file node_modules/.bin/tsc
+|#!/bin/sh
+|grep -n "number = \"" src/*.ts | sed "s/:.*/: error TS2322/"
+|exit 2
+--- dir src
+--- file src/a.ts
+|let n: number = "x";
+
+=== 20: cd into a package and npx a root script
+status: 0
+bash-n: 0
+--- stdout
+|tsx ../../scripts/seed.ts
+|args: --run users fixtures
+--- dir bin
+--- file bin/npx
+|#!/bin/sh
+|d=$PWD
+|while :; do
+|  if [ -x "$d/node_modules/.bin/$1" ]; then t=$1; shift; exec "$d/node_modules/.bin/$t" "$@"; fi
+|  [ "$d" = / ] && break
+|  d=$(dirname "$d")
+|done
+|echo "npm error could not determine executable to run" >&2
+|exit 1
+--- dir node_modules
+--- dir node_modules/.bin
+--- file node_modules/.bin/tsx
+|#!/bin/sh
+|echo "tsx $1"; shift; echo "args: $*"
+--- dir packages
+--- dir packages/app
+--- dir scripts
+--- file scripts/seed.ts
+|console.log("seed")
+
+=== 21: node script at the git toplevel with --run
+status: 0
+bash-n: 0
+--- stdout
+|[dev.mjs] --run lint
+|dev runner
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+--- dir scripts
+--- file scripts/dev.mjs
+|import { argv } from "node:process";
+|console.log("dev runner");
+
+=== 22: cd into a package and node the toplevel script
+status: 0
+bash-n: 0
+--- stdout
+|[dev.mjs] --run test
+|dev runner
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+--- dir packages
+--- dir packages/core
+--- dir packages/core/src
+--- file packages/core/src/index.ts
+|export {};
+--- dir scripts
+--- file scripts/dev.mjs
+|const task = process.argv[3];
+|console.log("dev runner");
+
+=== 23: toplevel script with several arguments
+status: 0
+bash-n: 0
+--- stdout
+|[dev.mjs] --run test unit --reporter=spec --bail
+|ok
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+--- dir packages
+--- dir packages/core
+--- dir scripts
+--- file scripts/dev.mjs
+|console.log("ok");
+
+=== 24: toplevel script with --run and nothing else
+status: 0
+bash-n: 0
+--- stdout
+|[dev.mjs] --run
+|usage: dev.mjs --run <task>
+|status=1
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+--- dir packages
+--- dir packages/ui
+--- dir scripts
+--- file scripts/dev.mjs
+|console.log("usage: dev.mjs --run <task>");
+|process.exit(1);
+
+=== 25: cd into a package and node a relative script
+status: 0
+bash-n: 0
+--- stdout
+|[run.mjs] --run build
+|building core
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+--- dir packages
+--- dir packages/core
+--- dir tools
+--- file tools/run.mjs
+|import { spawnSync } from "node:child_process";
+|console.log("building core");
+
+=== 26: relative script from the wrong directory
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|Error: Cannot find module 'run.mjs'
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+--- dir packages
+--- dir packages/core
+--- dir tools
+--- file tools/run.mjs
+|console.log("never");
+
+=== 27: cd into a package and node a local script
+status: 0
+bash-n: 0
+--- stdout
+|[gen.mjs] --run all
+|generated 3 files
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+--- dir pkg
+--- dir pkg/scripts
+--- file pkg/scripts/gen.mjs
+|console.log("generated 3 files");
+
+=== 28: node script that exits with an error
+status: 0
+bash-n: 0
+--- stdout
+|[verify.mjs] --run fixtures
+|verifying fixtures
+|fixture users.json: missing field id
+|status=3
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+--- dir scripts
+--- file scripts/verify.mjs
+|console.log("verifying fixtures");
+|console.log("fixture users.json: missing field id");
+|process.exit(3);
+
+=== 29: node an absolute script then remove it
+status: 0
+bash-n: 0
+--- stdout
+|[probe.mjs]
+|probe ok
+|bin
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+
+=== 30: node a tool with quoted options
+status: 0
+bash-n: 0
+--- stdout
+|[ask.mjs] Is the parser change safe? --purpose code review --timeout 120
+|asking reviewer
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+--- dir tools
+--- file tools/ask.mjs
+|console.log("asking reviewer");
+
+=== 31: node a tool that runs a shell command
+status: 0
+bash-n: 0
+--- stdout
+|[agent.mjs] exec --sandbox read-only --cwd . -- /bin/sh -lc ls src | head -n 3
+|sandbox ready
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+--- dir tools
+--- file tools/agent.mjs
+|console.log("sandbox ready");
+
+=== 32: node --test a single file
+status: 0
+bash-n: 0
+--- stdout
+|ok 1 - parses empty input
+|ok 2 - parses a word
+|# tests 2
+|# pass 2
+|# fail 0
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|[ "$1" = --test ] && shift
+|awk '
+|function flush() { if (name != "") { n++; if (bad) { fail++; print "not ok " n " - " name } else { pass++; print "ok " n " - " name } } }
+|/^test\("/ { flush(); name = $0; sub(/^test\("/, "", name); sub(/".*$/, "", name); bad = 0; next }
+|/assert\.ok\(false/ { bad = 1 }
+|END { flush(); print "# tests " n; print "# pass " pass + 0; print "# fail " fail + 0; exit (fail > 0) }
+|' "$@"
+--- dir tests
+--- file tests/parser.test.js
+|import test from "node:test";
+|import assert from "node:assert/strict";
+|test("parses empty input", () => {
+|  assert.deepEqual(parse(""), []);
+|});
+|test("parses a word", () => {
+|  assert.deepEqual(parse("a"), ["a"]);
+|});
+
+=== 33: cd into a package and node --test two files
+status: 0
+bash-n: 0
+--- stdout
+|ok 1 - a works
+|ok 2 - b works
+|not ok 3 - b fails
+|# tests 3
+|# pass 2
+|# fail 1
+|status=1
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|[ "$1" = --test ] && shift
+|awk '
+|function flush() { if (name != "") { n++; if (bad) { fail++; print "not ok " n " - " name } else { pass++; print "ok " n " - " name } } }
+|/^test\("/ { flush(); name = $0; sub(/^test\("/, "", name); sub(/".*$/, "", name); bad = 0; next }
+|/assert\.ok\(false/ { bad = 1 }
+|END { flush(); print "# tests " n; print "# pass " pass + 0; print "# fail " fail + 0; exit (fail > 0) }
+|' "$@"
+--- dir pkg
+--- dir pkg/tests
+--- file pkg/tests/a.test.js
+|test("a works", () => {
+|  assert.ok(true);
+|});
+--- file pkg/tests/b.test.js
+|test("b works", () => {
+|  assert.ok(true);
+|});
+|test("b fails", () => {
+|  assert.ok(false);
+|});
+
+=== 34: node -e with a one-liner
+status: 0
+bash-n: 0
+--- stdout
+|hello from node
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+
+=== 35: node - with a NODE here-doc
+status: 0
+bash-n: 0
+--- stdout
+|package scanned
+|2 dependencies
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+
+=== 36: node --input-type=module with an EOF here-doc
+status: 0
+bash-n: 0
+--- stdout
+|module mode
+|status=0
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+
+=== 37: node --input-type=module - with a NODE here-doc
+status: 0
+bash-n: 0
+--- stdout
+|joined
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+
+=== 38: node --input-type=commonjs with a JS here-doc
+status: 0
+bash-n: 0
+--- stdout
+|commonjs mode
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+
+=== 39: node here-doc that exits non-zero
+status: 0
+bash-n: 0
+--- stdout
+|missing files: 1
+|status=4
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+
+=== 40: node here-doc that appends to a file
+status: 0
+bash-n: 0
+--- stdout
+|appended
+|alpha
+|beta
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+--- file notes.txt
+|alpha
+|beta
+
+=== 41: node here-doc body arrives verbatim
+status: 0
+bash-n: 0
+--- stdout
+|const name = process.env.USER ?? "nobody";
+|console.log(`hello ${name}`);
+|const re = /\d+$/;
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|cat
+
+=== 42: cat a module to a file then run it
+status: 0
+bash-n: 0
+--- stdout
+|[gen.mjs]
+|wrote config.json
+|gen.mjs
+--- dir app
+--- file app/gen.mjs
+|import { writeFileSync } from "node:fs";
+|console.log("wrote config.json");
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+
+=== 43: python3 - with a PY here-doc
+status: 0
+bash-n: 0
+--- stdout
+|scanning
+|3 files
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+
+=== 44: python - with a PY here-doc
+status: 0
+bash-n: 0
+--- stdout
+|python ok
+|status=0
+--- dir bin
+--- file bin/python
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+
+=== 45: python3 here-doc that exits with a status
+status: 0
+bash-n: 0
+--- stdout
+|validation failed: 2 errors
+|status=2
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+
+=== 46: python3 here-doc body arrives verbatim
+status: 0
+bash-n: 0
+--- stdout
+|import os
+|name = os.environ.get("HOME", "$HOME")
+|print(f"{name!r} `not a command` \n")
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|cat
+
+=== 47: python3 with an unquoted here-doc expands variables
+status: 0
+bash-n: 0
+--- stdout
+|package core
+|files 3
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+
+=== 48: python3 here-doc output to a file
+status: 0
+bash-n: 0
+--- stdout
+|2
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+--- file report.txt
+|ok: parser
+|ok: lexer
+|fail: runtime
+
+=== 49: cd and python3 edit then sed -n
+status: 0
+bash-n: 0
+--- stdout
+|patched src/app.py
+|def main():
+|    return 0
+|def helper():
+|    return 1
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+--- dir proj
+--- dir proj/src
+--- file proj/src/app.py
+|def main():
+|    return 0
+|def helper():
+|    return 1
+
+=== 50: cd and python3 edit then sed -n a range
+status: 0
+bash-n: 0
+--- stdout
+|line 4
+|line 5
+|line 6
+|line 7
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+--- dir proj
+--- file proj/data.txt
+|line 1
+|line 2
+|line 3
+|line 4
+|line 5
+|line 6
+|line 7
+
+=== 51: cd and python3 then grep -n
+status: 0
+bash-n: 0
+--- stdout
+|3:def run():
+|5:def stop():
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+--- dir proj
+--- file proj/main.py
+|import os
+|
+|def run():
+|    pass
+|def stop():
+|    pass
+
+=== 52: cd and python3 then grep -n alternatives
+status: 0
+bash-n: 0
+--- stdout
+|1:TODO: docs
+|3:FIXME: tests
+|4:TODO: release
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+--- dir proj
+--- file proj/NOTES.md
+|TODO: docs
+|ok
+|FIXME: tests
+|TODO: release
+
+=== 53: cd and python3 then grep -n alternatives into head
+status: 0
+bash-n: 0
+--- stdout
+|log rotated
+|1:error: one
+|2:warn: two
+|3:error: three
+|4:warn: four
+|5:error: five
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+--- dir proj
+--- file proj/build.log
+|error: one
+|warn: two
+|error: three
+|warn: four
+|error: five
+
+=== 54: cd and python3 then echo
+status: 0
+bash-n: 0
+--- stdout
+|done
+|v1
+|v2
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+--- dir proj
+--- file proj/VERSION
+|v1
+|v2
+
+=== 55: cd and python3 edit then git diff --stat
+status: 0
+bash-n: 0
+--- stdout
+|added b
+| src/mod.py | 2 ++
+| 1 file changed, 2 insertions(+)
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+--- dir proj
+--- dir proj/src
+--- file proj/src/mod.py
+|def a():
+|    return 1
+|def b():
+|    return 2
+
+=== 56: cd and python3 then node --test grep
+status: 0
+bash-n: 0
+--- stdout
+|ok 1 - keeps order
+|not ok 2 - handles ties
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|[ "$1" = --test ] && shift
+|awk '
+|function flush() { if (name != "") { n++; if (bad) { fail++; print "not ok " n " - " name } else { pass++; print "ok " n " - " name } } }
+|/^test\("/ { flush(); name = $0; sub(/^test\("/, "", name); sub(/".*$/, "", name); bad = 0; next }
+|/assert\.ok\(false/ { bad = 1 }
+|END { flush(); print "# tests " n; print "# pass " pass + 0; print "# fail " fail + 0; exit (fail > 0) }
+|' "$@"
+--- file bin/python3
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+--- dir proj
+--- dir proj/test
+--- file proj/test/sort.test.js
+|test("keeps order", () => {
+|  assert.ok(true);
+|});
+|test("handles ties", () => {
+|  assert.ok(false);
+|});
+
+=== 57: cat a python script to a file then run it
+status: 0
+bash-n: 0
+--- stdout
+|env check passed
+|bin
+--- dir bin
+--- file bin/python3
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+
+=== 58: python3 and node here-docs in one chain
+status: 0
+bash-n: 0
+--- stdout
+|python side
+|node side
+--- dir bin
+--- file bin/node
+|#!/bin/sh
+|run() { awk '
+|/^ *console\.log\(".*"\);?$/ { s = $0; sub(/^ *console\.log\("/, "", s); sub(/"\);?$/, "", s); print s; next }
+|/^ *fs\.appendFileSync\(".*", ".*\\n"\);?$/ { f = $0; sub(/^ *fs\.appendFileSync\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^[^"]*", "/, "", t); sub(/\\n"\);?$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *process\.exit\([0-9]+\);?$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"; }
+|case $1 in --input-type=*) shift ;; esac
+|case $1 in
+|  -e) printf '%s\n' "$2" | run ;;
+|  - | "") run ;;
+|  *) if [ ! -f "$1" ]; then echo "Error: Cannot find module '$(basename "$1")'" >&2; exit 1; fi
+|     s=$1; shift; echo "[$(basename "$s")]${*:+ $*}"; run "$s" ;;
+|esac
+--- file bin/python3
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+
+=== 59: uv run python - with a PY here-doc
+status: 0
+bash-n: 0
+--- stdout
+|uv python ok
+--- dir bin
+--- file bin/python
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+--- file bin/uv
+|#!/bin/sh
+|[ "$1" = run ] && shift
+|while [ "$1" = --with ]; do shift 2; done
+|exec "$@"
+
+=== 60: uv run --with a package and python -
+status: 0
+bash-n: 0
+--- stdout
+|with extras
+|status=0
+--- dir bin
+--- file bin/python
+|#!/bin/sh
+|exec awk '
+|/^ *print\(".*"\)$/ { s = $0; sub(/^ *print\("/, "", s); sub(/"\)$/, "", s); print s; next }
+|/^ *open\(".*", "a"\)\.write\(".*\\n"\)$/ { f = $0; sub(/^ *open\("/, "", f); t = f; sub(/".*$/, "", f); sub(/^.*\.write\("/, "", t); sub(/\\n"\)$/, "", t); gsub(/\\"/, "\"", t); print t >> f; next }
+|/^ *sys\.exit\([0-9]+\)$/ { s = $0; gsub(/[^0-9]/, "", s); exit s }
+|' "$@"
+--- file bin/uv
+|#!/bin/sh
+|[ "$1" = run ] && shift
+|while [ "$1" = --with ]; do shift 2; done
+|exec "$@"
+
+=== 61: uv run pytest
+status: 0
+bash-n: 0
+--- stdout
+|2 passed
+|status=0
+--- dir bin
+--- file bin/pytest
+|#!/bin/sh
+|n=$(cat tests/test_*.py | grep -c '^def test_')
+|f=$(cat tests/test_*.py | grep -c 'assert False')
+|if [ "$f" -gt 0 ]; then echo "$((n - f)) passed, $f failed"; exit 1; fi
+|echo "$n passed"
+--- file bin/uv
+|#!/bin/sh
+|[ "$1" = run ] && shift
+|while [ "$1" = --with ]; do shift 2; done
+|exec "$@"
+--- dir tests
+--- file tests/test_math.py
+|def test_add():
+|    assert 1 + 1 == 2
+|
+|def test_sub():
+|    assert 2 - 1 == 1
+
+=== 62: cargo test -q piped to tail
+status: 0
+bash-n: 0
+--- stdout
+|test parses_word ... ok
+|
+|test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
+--- dir bin
+--- file bin/cargo
+|#!/bin/sh
+|echo "   Compiling demo v0.1.0" >&2
+|echo "    Finished test profile [unoptimized + debuginfo] target(s)" >&2
+|awk '
+|/^fn [a-z_0-9]+\(\)/ { name = $2; sub(/\(.*/, "", name); names[++n] = name; next }
+|/panic!\(/ { bad[n] = 1 }
+|END {
+|  printf "\nrunning %d tests\n", n
+|  for (i = 1; i <= n; i++) { if (bad[i]) { fail++; print "test " names[i] " ... FAILED" } else { pass++; print "test " names[i] " ... ok" } }
+|  printf "\ntest result: %s. %d passed; %d failed; 0 ignored; 0 measured; 0 filtered out\n", (fail ? "FAILED" : "ok"), pass, fail
+|  exit (fail ? 101 : 0)
+|}' tests/*.rs
+--- dir tests
+--- file tests/parse.rs
+|fn parses_empty() {
+|    assert!(true);
+|}
+|fn parses_word() {
+|    assert!(true);
+|}
+
+=== 63: cargo test failing
+status: 0
+bash-n: 0
+--- stdout
+|
+|running 2 tests
+|test ok_case ... ok
+|test broken_case ... FAILED
+|
+|test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out
+|status=101
+--- stderr
+|   Compiling demo v0.1.0
+|    Finished test profile [unoptimized + debuginfo] target(s)
+--- dir bin
+--- file bin/cargo
+|#!/bin/sh
+|echo "   Compiling demo v0.1.0" >&2
+|echo "    Finished test profile [unoptimized + debuginfo] target(s)" >&2
+|awk '
+|/^fn [a-z_0-9]+\(\)/ { name = $2; sub(/\(.*/, "", name); names[++n] = name; next }
+|/panic!\(/ { bad[n] = 1 }
+|END {
+|  printf "\nrunning %d tests\n", n
+|  for (i = 1; i <= n; i++) { if (bad[i]) { fail++; print "test " names[i] " ... FAILED" } else { pass++; print "test " names[i] " ... ok" } }
+|  printf "\ntest result: %s. %d passed; %d failed; 0 ignored; 0 measured; 0 filtered out\n", (fail ? "FAILED" : "ok"), pass, fail
+|  exit (fail ? 101 : 0)
+|}' tests/*.rs
+--- dir tests
+--- file tests/it.rs
+|fn ok_case() {
+|}
+|fn broken_case() {
+|    panic!("boom");
+|}
+
+=== 64: cd and go test ./...
+status: 0
+bash-n: 0
+--- stdout
+|ok  	example.com/svc/api	0.01s
+|?   	example.com/svc/cmd	[no test files]
+|ok  	example.com/svc/store	0.01s
+|status=0
+--- dir bin
+--- file bin/go
+|#!/bin/sh
+|mod=$(sed -n 's/^module //p' go.mod)
+|rc=0
+|for dir in $(find . -name '*.go' | sed 's|/[^/]*$||' | sort -u); do
+|  pkg=$mod${dir#.}
+|  if ! ls "$dir"/*_test.go >/dev/null 2>&1; then printf '?   \t%s\t[no test files]\n' "$pkg"; continue; fi
+|  if grep -q 't.Fatal' "$dir"/*_test.go; then
+|    grep -h '^func Test' "$dir"/*_test.go | sed 's/^func \(Test[A-Za-z0-9]*\).*/--- FAIL: \1 (0.00s)/'
+|    printf 'FAIL\nFAIL\t%s\t0.01s\n' "$pkg"; rc=1
+|  else
+|    printf 'ok  \t%s\t0.01s\n' "$pkg"
+|  fi
+|done
+|[ $rc = 1 ] && echo FAIL
+|exit $rc
+--- dir svc
+--- dir svc/api
+--- file svc/api/api.go
+|package api
+--- file svc/api/api_test.go
+|package api
+|
+|func TestRoutes(t *testing.T) {}
+--- dir svc/cmd
+--- file svc/cmd/main.go
+|package main
+--- file svc/go.mod
+|module example.com/svc
+|
+|go 1.22
+--- dir svc/store
+--- file svc/store/store.go
+|package store
+--- file svc/store/store_test.go
+|package store
+|
+|func TestGet(t *testing.T) {}
+
+=== 65: go test ./... with a failing package
+status: 0
+bash-n: 0
+--- stdout
+|--- FAIL: TestLogin (0.00s)
+|FAIL
+|FAIL	example.com/svc/api	0.01s
+|FAIL
+|status=1
+--- dir bin
+--- file bin/go
+|#!/bin/sh
+|mod=$(sed -n 's/^module //p' go.mod)
+|rc=0
+|for dir in $(find . -name '*.go' | sed 's|/[^/]*$||' | sort -u); do
+|  pkg=$mod${dir#.}
+|  if ! ls "$dir"/*_test.go >/dev/null 2>&1; then printf '?   \t%s\t[no test files]\n' "$pkg"; continue; fi
+|  if grep -q 't.Fatal' "$dir"/*_test.go; then
+|    grep -h '^func Test' "$dir"/*_test.go | sed 's/^func \(Test[A-Za-z0-9]*\).*/--- FAIL: \1 (0.00s)/'
+|    printf 'FAIL\nFAIL\t%s\t0.01s\n' "$pkg"; rc=1
+|  else
+|    printf 'ok  \t%s\t0.01s\n' "$pkg"
+|  fi
+|done
+|[ $rc = 1 ] && echo FAIL
+|exit $rc
+--- dir svc
+--- dir svc/api
+--- file svc/api/api.go
+|package api
+--- file svc/api/api_test.go
+|package api
+|
+|func TestLogin(t *testing.T) {
+|	t.Fatal("bad token")
+|}
+--- file svc/go.mod
+|module example.com/svc
+
+=== 66: gh issue view with --json fields
+status: 0
+bash-n: 0
+--- stdout
+|{"title":"Crash on empty input","state":"OPEN","labels":[{"name":"bug"}]}
+--- dir .gh
+--- file .gh/issue-42.json
+|{"number": 42, "title": "Crash on empty input", "state": "OPEN", "labels": [{"name": "bug"}], "author": {"login": "octo"}, "body": "Steps to reproduce", "comments": []}
+--- dir bin
+--- file bin/gh
+|#!/bin/sh
+|kind=$1; shift
+|if [ "$kind" = api ]; then path=$1; shift; else verb=$1 id=$2; shift 2; fi
+|fields= jqx= body= comments=
+|while [ $# -gt 0 ]; do
+|  case $1 in --json) fields=$2; shift ;; --jq) jqx=$2; shift ;; --body-file) body=$2; shift ;; --comments) comments=1 ;; esac
+|  shift
+|done
+|case "$kind $verb" in
+|  "issue view")
+|    f=.gh/issue-$id.json
+|    if [ ! -f "$f" ]; then echo "GraphQL: Could not resolve to an issue or pull request with the number of $id. (repository.issue)" >&2; exit 1; fi
+|    if [ -n "$fields" ]; then jq -c --arg f "$fields" '. as $i | [$f | split(",")[] | {(.): $i[.]}] | add' "$f"
+|    else jq -r --arg c "$comments" '"title:\t" + .title, "state:\t" + .state, "--", .body, (if $c == "1" then .comments[] | "--", "author: " + .author, .body else empty end)' "$f"; fi ;;
+|  "issue comment") echo "commented on issue $id with $(wc -l < "$body" | tr -d ' ') lines" ;;
+|  "run view") cat ".gh/run-$id.log" ;;
+|  "run watch") s=$(cat ".gh/run-$id.status"); echo "Run $id completed with '$s'"; [ "$s" = success ] ;;
+|  "api ") jq -c "${jqx:-.}" ".gh/api/$(printf '%s' "$path" | tr / _).json" ;;
+|  *) echo "gh stub: $kind $verb" >&2; exit 1 ;;
+|esac
+
+=== 67: gh issue view with many --json fields
+status: 0
+bash-n: 0
+--- stdout
+|Docs typo by dev
+--- dir .gh
+--- file .gh/issue-7.json
+|{"number": 7, "title": "Docs typo", "state": "CLOSED", "labels": [], "author": {"login": "dev"}, "body": "fix it", "url": "https://github.com/acme/widgets/issues/7", "comments": []}
+--- dir bin
+--- file bin/gh
+|#!/bin/sh
+|kind=$1; shift
+|if [ "$kind" = api ]; then path=$1; shift; else verb=$1 id=$2; shift 2; fi
+|fields= jqx= body= comments=
+|while [ $# -gt 0 ]; do
+|  case $1 in --json) fields=$2; shift ;; --jq) jqx=$2; shift ;; --body-file) body=$2; shift ;; --comments) comments=1 ;; esac
+|  shift
+|done
+|case "$kind $verb" in
+|  "issue view")
+|    f=.gh/issue-$id.json
+|    if [ ! -f "$f" ]; then echo "GraphQL: Could not resolve to an issue or pull request with the number of $id. (repository.issue)" >&2; exit 1; fi
+|    if [ -n "$fields" ]; then jq -c --arg f "$fields" '. as $i | [$f | split(",")[] | {(.): $i[.]}] | add' "$f"
+|    else jq -r --arg c "$comments" '"title:\t" + .title, "state:\t" + .state, "--", .body, (if $c == "1" then .comments[] | "--", "author: " + .author, .body else empty end)' "$f"; fi ;;
+|  "issue comment") echo "commented on issue $id with $(wc -l < "$body" | tr -d ' ') lines" ;;
+|  "run view") cat ".gh/run-$id.log" ;;
+|  "run watch") s=$(cat ".gh/run-$id.status"); echo "Run $id completed with '$s'"; [ "$s" = success ] ;;
+|  "api ") jq -c "${jqx:-.}" ".gh/api/$(printf '%s' "$path" | tr / _).json" ;;
+|  *) echo "gh stub: $kind $verb" >&2; exit 1 ;;
+|esac
+
+=== 68: gh issue view with comments
+status: 0
+bash-n: 0
+--- stdout
+|title:	Crash on empty input
+|state:	OPEN
+|--
+|It panics.
+|--
+|author: octo
+|Repro attached.
+|--
+|author: dev
+|Fixed on main.
+--- dir .gh
+--- file .gh/issue-42.json
+|{"number": 42, "title": "Crash on empty input", "state": "OPEN", "body": "It panics.", "comments": [{"author": "octo", "body": "Repro attached."}, {"author": "dev", "body": "Fixed on main."}]}
+--- dir bin
+--- file bin/gh
+|#!/bin/sh
+|kind=$1; shift
+|if [ "$kind" = api ]; then path=$1; shift; else verb=$1 id=$2; shift 2; fi
+|fields= jqx= body= comments=
+|while [ $# -gt 0 ]; do
+|  case $1 in --json) fields=$2; shift ;; --jq) jqx=$2; shift ;; --body-file) body=$2; shift ;; --comments) comments=1 ;; esac
+|  shift
+|done
+|case "$kind $verb" in
+|  "issue view")
+|    f=.gh/issue-$id.json
+|    if [ ! -f "$f" ]; then echo "GraphQL: Could not resolve to an issue or pull request with the number of $id. (repository.issue)" >&2; exit 1; fi
+|    if [ -n "$fields" ]; then jq -c --arg f "$fields" '. as $i | [$f | split(",")[] | {(.): $i[.]}] | add' "$f"
+|    else jq -r --arg c "$comments" '"title:\t" + .title, "state:\t" + .state, "--", .body, (if $c == "1" then .comments[] | "--", "author: " + .author, .body else empty end)' "$f"; fi ;;
+|  "issue comment") echo "commented on issue $id with $(wc -l < "$body" | tr -d ' ') lines" ;;
+|  "run view") cat ".gh/run-$id.log" ;;
+|  "run watch") s=$(cat ".gh/run-$id.status"); echo "Run $id completed with '$s'"; [ "$s" = success ] ;;
+|  "api ") jq -c "${jqx:-.}" ".gh/api/$(printf '%s' "$path" | tr / _).json" ;;
+|  *) echo "gh stub: $kind $verb" >&2; exit 1 ;;
+|esac
+
+=== 69: gh issue view for a missing issue
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|GraphQL: Could not resolve to an issue or pull request with the number of 999. (repository.issue)
+--- dir .gh
+--- dir bin
+--- file bin/gh
+|#!/bin/sh
+|kind=$1; shift
+|if [ "$kind" = api ]; then path=$1; shift; else verb=$1 id=$2; shift 2; fi
+|fields= jqx= body= comments=
+|while [ $# -gt 0 ]; do
+|  case $1 in --json) fields=$2; shift ;; --jq) jqx=$2; shift ;; --body-file) body=$2; shift ;; --comments) comments=1 ;; esac
+|  shift
+|done
+|case "$kind $verb" in
+|  "issue view")
+|    f=.gh/issue-$id.json
+|    if [ ! -f "$f" ]; then echo "GraphQL: Could not resolve to an issue or pull request with the number of $id. (repository.issue)" >&2; exit 1; fi
+|    if [ -n "$fields" ]; then jq -c --arg f "$fields" '. as $i | [$f | split(",")[] | {(.): $i[.]}] | add' "$f"
+|    else jq -r --arg c "$comments" '"title:\t" + .title, "state:\t" + .state, "--", .body, (if $c == "1" then .comments[] | "--", "author: " + .author, .body else empty end)' "$f"; fi ;;
+|  "issue comment") echo "commented on issue $id with $(wc -l < "$body" | tr -d ' ') lines" ;;
+|  "run view") cat ".gh/run-$id.log" ;;
+|  "run watch") s=$(cat ".gh/run-$id.status"); echo "Run $id completed with '$s'"; [ "$s" = success ] ;;
+|  "api ") jq -c "${jqx:-.}" ".gh/api/$(printf '%s' "$path" | tr / _).json" ;;
+|  *) echo "gh stub: $kind $verb" >&2; exit 1 ;;
+|esac
+
+=== 70: gh run view --log-failed piped to tail
+status: 0
+bash-n: 0
+--- stdout
+|test	Run tests	not ok 2 lexer
+|test	Run tests	Process completed with exit code 1.
+--- dir .gh
+--- file .gh/run-7001.log
+|test	Run tests	ok 1 parser
+|test	Run tests	not ok 2 lexer
+|test	Run tests	Process completed with exit code 1.
+--- dir bin
+--- file bin/gh
+|#!/bin/sh
+|kind=$1; shift
+|if [ "$kind" = api ]; then path=$1; shift; else verb=$1 id=$2; shift 2; fi
+|fields= jqx= body= comments=
+|while [ $# -gt 0 ]; do
+|  case $1 in --json) fields=$2; shift ;; --jq) jqx=$2; shift ;; --body-file) body=$2; shift ;; --comments) comments=1 ;; esac
+|  shift
+|done
+|case "$kind $verb" in
+|  "issue view")
+|    f=.gh/issue-$id.json
+|    if [ ! -f "$f" ]; then echo "GraphQL: Could not resolve to an issue or pull request with the number of $id. (repository.issue)" >&2; exit 1; fi
+|    if [ -n "$fields" ]; then jq -c --arg f "$fields" '. as $i | [$f | split(",")[] | {(.): $i[.]}] | add' "$f"
+|    else jq -r --arg c "$comments" '"title:\t" + .title, "state:\t" + .state, "--", .body, (if $c == "1" then .comments[] | "--", "author: " + .author, .body else empty end)' "$f"; fi ;;
+|  "issue comment") echo "commented on issue $id with $(wc -l < "$body" | tr -d ' ') lines" ;;
+|  "run view") cat ".gh/run-$id.log" ;;
+|  "run watch") s=$(cat ".gh/run-$id.status"); echo "Run $id completed with '$s'"; [ "$s" = success ] ;;
+|  "api ") jq -c "${jqx:-.}" ".gh/api/$(printf '%s' "$path" | tr / _).json" ;;
+|  *) echo "gh stub: $kind $verb" >&2; exit 1 ;;
+|esac
+
+=== 71: gh run watch with --exit-status
+status: 0
+bash-n: 0
+--- stdout
+|Run 7002 completed with 'failure'
+|status=1
+--- dir .gh
+--- file .gh/run-7002.status
+|failure
+--- dir bin
+--- file bin/gh
+|#!/bin/sh
+|kind=$1; shift
+|if [ "$kind" = api ]; then path=$1; shift; else verb=$1 id=$2; shift 2; fi
+|fields= jqx= body= comments=
+|while [ $# -gt 0 ]; do
+|  case $1 in --json) fields=$2; shift ;; --jq) jqx=$2; shift ;; --body-file) body=$2; shift ;; --comments) comments=1 ;; esac
+|  shift
+|done
+|case "$kind $verb" in
+|  "issue view")
+|    f=.gh/issue-$id.json
+|    if [ ! -f "$f" ]; then echo "GraphQL: Could not resolve to an issue or pull request with the number of $id. (repository.issue)" >&2; exit 1; fi
+|    if [ -n "$fields" ]; then jq -c --arg f "$fields" '. as $i | [$f | split(",")[] | {(.): $i[.]}] | add' "$f"
+|    else jq -r --arg c "$comments" '"title:\t" + .title, "state:\t" + .state, "--", .body, (if $c == "1" then .comments[] | "--", "author: " + .author, .body else empty end)' "$f"; fi ;;
+|  "issue comment") echo "commented on issue $id with $(wc -l < "$body" | tr -d ' ') lines" ;;
+|  "run view") cat ".gh/run-$id.log" ;;
+|  "run watch") s=$(cat ".gh/run-$id.status"); echo "Run $id completed with '$s'"; [ "$s" = success ] ;;
+|  "api ") jq -c "${jqx:-.}" ".gh/api/$(printf '%s' "$path" | tr / _).json" ;;
+|  *) echo "gh stub: $kind $verb" >&2; exit 1 ;;
+|esac
+
+=== 72: gh api with --jq
+status: 0
+bash-n: 0
+--- stdout
+|{"default_branch":"main","open_issues_count":3}
+--- dir .gh
+--- dir .gh/api
+--- file .gh/api/repos_acme_widgets.json
+|{"name": "widgets", "default_branch": "main", "open_issues_count": 3}
+--- dir bin
+--- file bin/gh
+|#!/bin/sh
+|kind=$1; shift
+|if [ "$kind" = api ]; then path=$1; shift; else verb=$1 id=$2; shift 2; fi
+|fields= jqx= body= comments=
+|while [ $# -gt 0 ]; do
+|  case $1 in --json) fields=$2; shift ;; --jq) jqx=$2; shift ;; --body-file) body=$2; shift ;; --comments) comments=1 ;; esac
+|  shift
+|done
+|case "$kind $verb" in
+|  "issue view")
+|    f=.gh/issue-$id.json
+|    if [ ! -f "$f" ]; then echo "GraphQL: Could not resolve to an issue or pull request with the number of $id. (repository.issue)" >&2; exit 1; fi
+|    if [ -n "$fields" ]; then jq -c --arg f "$fields" '. as $i | [$f | split(",")[] | {(.): $i[.]}] | add' "$f"
+|    else jq -r --arg c "$comments" '"title:\t" + .title, "state:\t" + .state, "--", .body, (if $c == "1" then .comments[] | "--", "author: " + .author, .body else empty end)' "$f"; fi ;;
+|  "issue comment") echo "commented on issue $id with $(wc -l < "$body" | tr -d ' ') lines" ;;
+|  "run view") cat ".gh/run-$id.log" ;;
+|  "run watch") s=$(cat ".gh/run-$id.status"); echo "Run $id completed with '$s'"; [ "$s" = success ] ;;
+|  "api ") jq -c "${jqx:-.}" ".gh/api/$(printf '%s' "$path" | tr / _).json" ;;
+|  *) echo "gh stub: $kind $verb" >&2; exit 1 ;;
+|esac
+
+=== 73: gh api --paginate with --jq
+status: 0
+bash-n: 0
+--- stdout
+|{"number":12,"title":"Add parser"}
+|{"number":15,"title":"WIP lexer"}
+--- dir .gh
+--- dir .gh/api
+--- file .gh/api/repos_acme_widgets_pulls.json
+|[{"number": 12, "title": "Add parser", "draft": false}, {"number": 15, "title": "WIP lexer", "draft": true}]
+--- dir bin
+--- file bin/gh
+|#!/bin/sh
+|kind=$1; shift
+|if [ "$kind" = api ]; then path=$1; shift; else verb=$1 id=$2; shift 2; fi
+|fields= jqx= body= comments=
+|while [ $# -gt 0 ]; do
+|  case $1 in --json) fields=$2; shift ;; --jq) jqx=$2; shift ;; --body-file) body=$2; shift ;; --comments) comments=1 ;; esac
+|  shift
+|done
+|case "$kind $verb" in
+|  "issue view")
+|    f=.gh/issue-$id.json
+|    if [ ! -f "$f" ]; then echo "GraphQL: Could not resolve to an issue or pull request with the number of $id. (repository.issue)" >&2; exit 1; fi
+|    if [ -n "$fields" ]; then jq -c --arg f "$fields" '. as $i | [$f | split(",")[] | {(.): $i[.]}] | add' "$f"
+|    else jq -r --arg c "$comments" '"title:\t" + .title, "state:\t" + .state, "--", .body, (if $c == "1" then .comments[] | "--", "author: " + .author, .body else empty end)' "$f"; fi ;;
+|  "issue comment") echo "commented on issue $id with $(wc -l < "$body" | tr -d ' ') lines" ;;
+|  "run view") cat ".gh/run-$id.log" ;;
+|  "run watch") s=$(cat ".gh/run-$id.status"); echo "Run $id completed with '$s'"; [ "$s" = success ] ;;
+|  "api ") jq -c "${jqx:-.}" ".gh/api/$(printf '%s' "$path" | tr / _).json" ;;
+|  *) echo "gh stub: $kind $verb" >&2; exit 1 ;;
+|esac
+
+=== 74: gh issue comment with --body-file
+status: 0
+bash-n: 0
+--- stdout
+|commented on issue 42 with 3 lines
+|status=0
+--- dir bin
+--- file bin/gh
+|#!/bin/sh
+|kind=$1; shift
+|if [ "$kind" = api ]; then path=$1; shift; else verb=$1 id=$2; shift 2; fi
+|fields= jqx= body= comments=
+|while [ $# -gt 0 ]; do
+|  case $1 in --json) fields=$2; shift ;; --jq) jqx=$2; shift ;; --body-file) body=$2; shift ;; --comments) comments=1 ;; esac
+|  shift
+|done
+|case "$kind $verb" in
+|  "issue view")
+|    f=.gh/issue-$id.json
+|    if [ ! -f "$f" ]; then echo "GraphQL: Could not resolve to an issue or pull request with the number of $id. (repository.issue)" >&2; exit 1; fi
+|    if [ -n "$fields" ]; then jq -c --arg f "$fields" '. as $i | [$f | split(",")[] | {(.): $i[.]}] | add' "$f"
+|    else jq -r --arg c "$comments" '"title:\t" + .title, "state:\t" + .state, "--", .body, (if $c == "1" then .comments[] | "--", "author: " + .author, .body else empty end)' "$f"; fi ;;
+|  "issue comment") echo "commented on issue $id with $(wc -l < "$body" | tr -d ' ') lines" ;;
+|  "run view") cat ".gh/run-$id.log" ;;
+|  "run watch") s=$(cat ".gh/run-$id.status"); echo "Run $id completed with '$s'"; [ "$s" = success ] ;;
+|  "api ") jq -c "${jqx:-.}" ".gh/api/$(printf '%s' "$path" | tr / _).json" ;;
+|  *) echo "gh stub: $kind $verb" >&2; exit 1 ;;
+|esac
+--- file comment.md
+|Fixed in the latest commit.
+|
+|The parser now handles empty input.

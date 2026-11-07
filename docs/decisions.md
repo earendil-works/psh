@@ -1005,3 +1005,20 @@ output was the remaining cost: `C:\psh-gate` is excluded from it (`Add-MpPrefere
 -ExclusionPath C:\psh-gate`, as SYSTEM through `prlctl exec`), which halved an x64
 relink-and-test (23s to 12s) and the first start of a fresh x64 exe (to 80-150ms). Only
 gate checkouts live there; nothing downloaded or foreign runs from it.
+## D1250: Aliases expand in the chunked parser, over a copy of the alias text
+date: 2026-11-07 · by: parser · issue: 0025
+Bash expands aliases while it reads, so `Parser::set_aliases(Option<&Aliases>)` gives
+the chunked parser the shell's table before each chunk (`None` when `expand_aliases` is
+off); `parse`/`parse_with` never expand, like `bash -n`. Where a command word may stand
+(also after `!`, `time`, assignments, redirections, and before reserved words are
+recognized), an unquoted word naming an alias that is not already being expanded is
+replaced by reading the alias text; a text ending in a blank makes the next word a
+candidate. A chunk that expands aliases is parsed twice: once to learn which aliases it
+uses, then over a buffer of the script followed by one copy of the text per use, so
+every node from an alias has its own span (`span.start >= Ast::script_len()`), spans
+that run from alias text into the script are widened to the alias word, and
+`Ast::original_span` maps any span back onto the script (line numbers). Chunks without
+aliases are untouched. Alternatives: textual pre-expansion of the line (wrong: bash
+decides command positions while parsing) and a token stream with pushed-back text (no
+token stream here). Known gap: a quote opened in alias text does not continue into the
+script, as it does in bash.

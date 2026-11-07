@@ -11,6 +11,9 @@ use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
+use alloc::collections::BTreeMap;
+
+use crate::alias::{AliasUse, Aliases};
 use crate::ast::*;
 use crate::brace::brace_pass;
 use crate::error::ParseError;
@@ -43,11 +46,26 @@ pub fn parse_bytes(source: &[u8], opts: Options) -> Result<Ast, ParseError> {
 }
 
 fn parse_source(source: Source, opts: Options) -> Result<Ast, ParseError> {
-    let mut p = P::new(source.bytes(), 0, opts)?;
+    let mut p = P::new(source.bytes(), 0, source.bytes().len(), opts, None)?;
     let mut items = Vec::new();
     while p.parse_line(&mut items)? {}
     p.finish_pending();
     Ok(p.into_ast(items, source.clone()))
+}
+
+/// A table's alias texts after the script: (table, buffer, name to text range).
+type AliasBuf = (Aliases, Arc<[u8]>, BTreeMap<Vec<u8>, (usize, usize)>);
+
+/// Finds an alias text in the chunk's buffer: by name and the number of the use.
+type AliasLookup<'a> = &'a dyn Fn(&[u8], usize) -> Option<(usize, usize)>;
+
+/// An alias expansion being read: where to return to in the enclosing text.
+struct Seg {
+    ret: usize,
+    end: usize,
+    name: Vec<u8>,
+    /// The text ends in a blank: the word after it is checked for an alias too.
+    trailing_blank: bool,
 }
 
 /// Parses a script one complete top-level command line at a time, as bash runs scripts:
@@ -60,6 +78,9 @@ pub struct Parser {
     pos: usize,
     opts: Options,
     done: bool,
+    aliases: Option<Aliases>,
+    /// The script followed by every alias text once, for the table in `aliases`.
+    alias_buf: Option<AliasBuf>,
 }
 
 impl Parser {
@@ -78,11 +99,20 @@ impl Parser {
             pos: 0,
             opts,
             done: false,
+            aliases: None,
+            alias_buf: None,
         }
     }
 
     pub fn set_options(&mut self, opts: Options) {
         self.opts = opts;
+    }
+
+    /// The aliases to expand in the following chunks, as bash does while it reads them
+    /// (`None`: `expand_aliases` is off). Set it before each chunk; the table is only
+    /// copied into the parser's buffer when it changes.
+    pub fn set_aliases(&mut self, aliases: Option<&Aliases>) {
+        self.aliases = aliases.filter(|a| !a.is_empty()).cloned();
     }
 
     /// Byte offset where the next chunk starts.
@@ -97,20 +127,16 @@ impl Parser {
             return None;
         }
         let source = self.source.clone();
-        let result = (|| {
-            let mut p = P::new(source.bytes(), self.pos, self.opts)?;
-            let mut items = Vec::new();
-            let more = p.parse_line(&mut items)?;
-            if !more {
-                return Ok(None);
-            }
-            p.skip_blanks();
-            if p.pos >= p.end {
-                p.finish_pending();
-            }
-            let pos = p.pos;
-            Ok(Some((p.into_ast(items, source.clone()), pos)))
-        })();
+        let result = match self.aliases.clone() {
+            None => chunk(source.bytes(), self.pos, self.opts, None).map(|r| {
+                r.map(|(p, items)| {
+                    let ast = p.into_ast(items, source.clone());
+                    let pos = ast.chunk_end;
+                    (ast, pos)
+                })
+            }),
+            Some(aliases) => self.chunk_with_aliases(&aliases),
+        };
         match result {
             Ok(Some((ast, pos))) => {
                 self.pos = pos;
@@ -126,6 +152,170 @@ impl Parser {
             }
         }
     }
+}
+
+impl Parser {
+    /// A chunk parsed with aliases: a first pass finds which aliases it expands, in
+    /// which order; a second pass parses it over the script followed by one copy of the
+    /// alias text per use, so that every node from an alias has its own span.
+    fn chunk_with_aliases(&mut self, aliases: &Aliases) -> R<Option<(Ast, usize)>> {
+        let fresh = !matches!(&self.alias_buf, Some((a, _, _)) if a.same(aliases));
+        if fresh {
+            let mut buf = self.source.bytes().to_vec();
+            let mut regions = BTreeMap::new();
+            for (name, text) in aliases.iter() {
+                let start = buf.len();
+                buf.extend_from_slice(text);
+                regions.insert(name.to_vec(), (start, buf.len()));
+            }
+            self.alias_buf = Some((aliases.clone(), Arc::from(buf), regions));
+        }
+        let (_, buf, regions) = self.alias_buf.as_ref().unwrap();
+        let script_len = self.source.bytes().len();
+        let by_name = |name: &[u8], _: usize| regions.get(name).copied();
+        let first = chunk(buf, self.pos, self.opts, Some((script_len, &by_name)))?;
+        let Some((p, items)) = first else {
+            return Ok(None);
+        };
+        if p.uses.is_empty() {
+            let ast = p.into_ast(items, self.source.clone());
+            let pos = ast.chunk_end;
+            return Ok(Some((ast, pos)));
+        }
+        // The second pass: one copy of the text per use.
+        let mut buf2 = self.source.bytes().to_vec();
+        let mut plan = Vec::new();
+        for u in &p.uses {
+            let (s, e) = regions[&u.name];
+            let start = buf2.len();
+            buf2.extend_from_slice(&buf[s..e]);
+            plan.push((u.name.clone(), start, buf2.len()));
+        }
+        let by_use = |name: &[u8], k: usize| {
+            plan.get(k)
+                .filter(|(n, _, _)| n.as_slice() == name)
+                .map(|&(_, s, e)| (s, e))
+        };
+        let (p, items) = chunk(&buf2, self.pos, self.opts, Some((script_len, &by_use)))?
+            .expect("the second pass reads what the first did");
+        let uses: Vec<AliasUse> = p
+            .uses
+            .iter()
+            .map(|u| AliasUse {
+                name: u.name.clone(),
+                word: u.word,
+                text: u.text,
+            })
+            .collect();
+        let source = Source::from_bytes(&buf2);
+        let mut ast = p.into_ast(items, source);
+        ast.script_len = script_len as u32;
+        ast.alias_uses = uses;
+        let uses = ast.alias_uses.clone();
+        crate::remap::map_spans(&mut ast, &mut |s| join_span(&uses, s));
+        let pos = ast.chunk_end;
+        Ok(Some((ast, pos)))
+    }
+}
+
+/// Parses one top-level line (and, when it ends inside alias text, the rest of that
+/// text) from `pos`.
+fn chunk<'a>(
+    buf: &'a [u8],
+    pos: usize,
+    opts: Options,
+    alias: Option<(usize, AliasLookup<'a>)>,
+) -> R<Option<(P<'a>, Vec<AndOr>)>> {
+    let script_len = alias.map_or(buf.len(), |(n, _)| n);
+    let mut p = P::new(buf, pos, script_len, opts, alias.map(|(_, l)| l))?;
+    let mut items = Vec::new();
+    let r = (|| -> R<bool> {
+        if !p.parse_line(&mut items)? {
+            return Ok(false);
+        }
+        while !p.segs.is_empty() {
+            p.skip_blanks();
+            if p.segs.is_empty() || !p.parse_line(&mut items)? {
+                break;
+            }
+        }
+        Ok(true)
+    })();
+    match r {
+        Ok(true) => {}
+        Ok(false) => return Ok(None),
+        Err(mut e) => {
+            // Point errors in alias text at the alias word.
+            e.span = original_span(&p.uses, e.span);
+            return Err(e);
+        }
+    }
+    p.skip_blanks();
+    if p.pos >= p.end {
+        p.finish_pending();
+    }
+    p.chunk_end = p.pos;
+    Ok(Some((p, items)))
+}
+
+/// The offset of `x` lifted out of alias text: the use whose text holds it (for the end
+/// of a span, `x` may be the text's end).
+fn region(uses: &[AliasUse], x: u32, is_end: bool) -> Option<usize> {
+    uses.iter().position(|u| {
+        if is_end {
+            u.text.start < x && x <= u.text.end
+        } else {
+            u.text.start <= x && x < u.text.end
+        }
+    })
+}
+
+fn depth(uses: &[AliasUse], mut r: Option<usize>) -> usize {
+    let mut d = 0;
+    while let Some(k) = r {
+        d += 1;
+        r = region(uses, uses[k].word.start, false);
+    }
+    d
+}
+
+/// A span that covers alias text and the text around it is widened to the words the
+/// aliases replaced; spans inside one alias text stay there.
+fn join_span(uses: &[AliasUse], s: Span) -> Span {
+    let (mut a, mut b) = (s.start, s.end);
+    if a == b {
+        return s;
+    }
+    loop {
+        let ra = region(uses, a, false);
+        let rb = region(uses, b, true);
+        if ra == rb {
+            return Span::new(a, b);
+        }
+        let (da, db) = (depth(uses, ra), depth(uses, rb));
+        if da >= db
+            && let Some(k) = ra
+        {
+            a = uses[k].word.start;
+        }
+        if db >= da
+            && let Some(k) = rb
+        {
+            b = uses[k].word.end;
+        }
+    }
+}
+
+/// A span lifted all the way out of alias text, onto the script.
+pub(crate) fn original_span(uses: &[AliasUse], s: Span) -> Span {
+    let (mut a, mut b) = (s.start, s.end);
+    while let Some(k) = region(uses, a, false).or_else(|| region(uses, a, true)) {
+        a = uses[k].word.start;
+    }
+    while let Some(k) = region(uses, b, true) {
+        b = uses[k].word.end;
+    }
+    Span::new(a, b.max(a))
 }
 
 /// Nesting limit (compound lists plus word nesting), so that hostile input fails with
@@ -243,6 +433,14 @@ struct P<'a> {
     b: &'a [u8],
     pos: usize,
     end: usize,
+    /// Where the next chunk starts, once this one is parsed.
+    chunk_end: usize,
+    alias: Option<AliasLookup<'a>>,
+    /// Alias texts being read, innermost last.
+    segs: Vec<Seg>,
+    uses: Vec<AliasUse>,
+    /// The alias text just left ended in a blank: the next word is an alias candidate.
+    alias_next: bool,
     opts: Options,
     lists: Vec<List>,
     cmds: Vec<Command>,
@@ -295,6 +493,12 @@ pub(crate) fn char_len(b: &[u8], i: usize, end: usize) -> usize {
     }
 }
 
+/// The span from the start of `first` to the end of `last`, which follows it in the
+/// input. Not `Span::to`: with aliases, text read later may lie earlier in the buffer.
+fn join(first: Span, last: Span) -> Span {
+    Span::new(first.start, last.end)
+}
+
 fn sp(start: usize, end: usize) -> Span {
     Span::from_usize(start, end)
 }
@@ -317,7 +521,13 @@ fn push_lit(out: &mut Vec<WordPart>, start: usize, end: usize) {
 }
 
 impl<'a> P<'a> {
-    fn new(src: &'a [u8], pos: usize, opts: Options) -> R<P<'a>> {
+    fn new(
+        src: &'a [u8],
+        pos: usize,
+        script_len: usize,
+        opts: Options,
+        alias: Option<AliasLookup<'a>>,
+    ) -> R<P<'a>> {
         if src.len() >= u32::MAX as usize {
             return Err(ParseError {
                 span: Span::default(),
@@ -328,7 +538,12 @@ impl<'a> P<'a> {
         Ok(P {
             b: src,
             pos,
-            end: src.len(),
+            end: script_len,
+            chunk_end: pos,
+            alias,
+            segs: Vec::new(),
+            uses: Vec::new(),
+            alias_next: false,
             opts,
             lists: Vec::new(),
             cmds: Vec::new(),
@@ -342,17 +557,21 @@ impl<'a> P<'a> {
 
     fn into_ast(mut self, items: Vec<AndOr>, source: Source) -> Ast {
         let span = match (items.first(), items.last()) {
-            (Some(f), Some(l)) => f.span.to(l.span),
+            (Some(f), Some(l)) => join(f.span, l.span),
             _ => sp(self.pos, self.pos),
         };
         let root = ListId(self.lists.len() as u32);
         self.lists.push(List { span, items });
+        let script_len = source.bytes().len() as u32;
         Ast {
             source,
             lists: self.lists,
             cmds: self.cmds,
             heredocs: self.heredocs,
             root,
+            script_len,
+            alias_uses: Vec::new(),
+            chunk_end: self.chunk_end,
         }
     }
 
@@ -518,22 +737,83 @@ impl<'a> P<'a> {
         self.unexpected()
     }
 
+    // ---- aliases ----
+
+    /// At a place where a command word may stand: if the word there is an unquoted
+    /// alias name (and that alias is not being expanded already), read its text
+    /// instead. Repeats for the first word of the text.
+    fn maybe_alias(&mut self) {
+        let Some(lookup) = self.alias else {
+            self.skip_blanks();
+            return;
+        };
+        loop {
+            self.skip_blanks();
+            self.alias_next = false;
+            let run = self.run();
+            if run.is_empty()
+                || run
+                    .iter()
+                    .any(|c| matches!(c, b'\'' | b'"' | b'\\' | b'$' | b'`'))
+                || self.segs.iter().any(|s| s.name == run)
+            {
+                return;
+            }
+            let Some((s, e)) = lookup(run, self.uses.len()) else {
+                return;
+            };
+            let word = sp(self.pos, self.pos + run.len());
+            self.uses.push(AliasUse {
+                name: run.to_vec(),
+                word,
+                text: sp(s, e),
+            });
+            self.segs.push(Seg {
+                ret: word.end as usize,
+                end: self.end,
+                name: run.to_vec(),
+                trailing_blank: e > s && is_blank(self.b[e - 1]),
+            });
+            self.pos = s;
+            self.end = e;
+        }
+    }
+
     // ---- blanks, comments, newlines, here-docs ----
 
     /// Skips blanks, line continuations and a comment, not newlines.
     fn skip_blanks(&mut self) {
         loop {
+            // The end of an alias text is a token boundary: back to the text after
+            // the alias word.
+            if self.pos >= self.end
+                && let Some(seg) = self.segs.pop()
+            {
+                self.pos = seg.ret;
+                self.end = seg.end;
+                if seg.trailing_blank {
+                    self.alias_next = true;
+                }
+                continue;
+            }
             match self.peek() {
                 Some(c) if is_blank(c) => self.pos += 1,
                 Some(b'\\') if self.peek_at(1) == Some(b'\n') => self.pos += 2,
-                Some(b'#') => {
-                    while let Some(c) = self.peek() {
-                        if c == b'\n' {
-                            break;
-                        }
-                        self.pos += 1;
+                Some(b'#') => loop {
+                    match self.peek() {
+                        Some(b'\n') => break,
+                        Some(_) => self.pos += 1,
+                        // A comment in alias text runs on into the line after the
+                        // alias word, as bash reads the text as input.
+                        None => match self.segs.pop() {
+                            Some(seg) => {
+                                self.pos = seg.ret;
+                                self.end = seg.end;
+                            }
+                            None => break,
+                        },
                     }
-                }
+                },
                 _ => return,
             }
         }
@@ -849,6 +1129,8 @@ impl<'a> P<'a> {
     /// Parses one top-level line into `items`. Returns false at the end of input.
     fn parse_line(&mut self, items: &mut Vec<AndOr>) -> R<bool> {
         self.skip_linebreaks()?;
+        self.maybe_alias();
+        self.skip_linebreaks()?;
         if self.at_eof() {
             return Ok(false);
         }
@@ -907,6 +1189,9 @@ impl<'a> P<'a> {
         let mut items: Vec<AndOr> = Vec::new();
         loop {
             self.skip_linebreaks()?;
+            // Aliases expand before reserved words are seen (`alias e=fi`).
+            self.maybe_alias();
+            self.skip_linebreaks()?;
             if self.at_eof() {
                 return Err(self.eof_from(opener));
             }
@@ -935,7 +1220,7 @@ impl<'a> P<'a> {
         }
         self.leave();
         let span = match (items.first(), items.last()) {
-            (Some(f), Some(l)) => f.span.to(l.span),
+            (Some(f), Some(l)) => join(f.span, l.span),
             _ => sp(self.pos, self.pos),
         };
         Ok(self.push_list(List { span, items }))
@@ -968,7 +1253,7 @@ impl<'a> P<'a> {
             rest.push((op, self.parse_pipeline()?));
         }
         let span = match rest.last() {
-            Some((_, p)) => first.span.to(p.span),
+            Some((_, p)) => join(first.span, p.span),
             None => first.span,
         };
         Ok(AndOr {
@@ -988,7 +1273,7 @@ impl<'a> P<'a> {
         let mut prefix_end = start;
         let mut prefixed = false;
         loop {
-            self.skip_blanks();
+            self.maybe_alias();
             match self.peek_reserved() {
                 Some("time") if time.is_none() => {
                     let s = self.pos;
@@ -1064,6 +1349,7 @@ impl<'a> P<'a> {
     // ---- commands ----
 
     fn parse_command(&mut self) -> R<CmdId> {
+        self.maybe_alias();
         self.skip_blanks();
         let start = self.pos;
         let kind = if self.at(b"((") {
@@ -1605,6 +1891,17 @@ impl<'a> P<'a> {
                 }
                 break;
             }
+            // The command word, and the word after an alias text that ends in a
+            // blank, may be aliases.
+            if words.is_empty() || core::mem::take(&mut self.alias_next) {
+                self.maybe_alias();
+                self.skip_blanks();
+                if self.peek().is_none_or(|c| {
+                    c == b'\n' || (is_meta(c) && !self.at(b"<(") && !self.at(b">("))
+                }) {
+                    continue;
+                }
+            }
             if words.is_empty()
                 && let Some(a) = self.try_assign()?
             {
@@ -1630,6 +1927,20 @@ impl<'a> P<'a> {
             words.push(word);
         }
         if assigns.is_empty() && words.is_empty() && redirects.is_empty() {
+            // An alias whose text is empty (`alias e=''`) leaves an empty command.
+            if let Some(u) = self
+                .uses
+                .iter()
+                .rev()
+                .find(|u| u.word.start as usize >= start)
+            {
+                let word = u.word;
+                return Ok(self.push_cmd(Command {
+                    span: word,
+                    kind: CommandKind::Simple(SimpleCommand { assigns, words }),
+                    redirects,
+                }));
+            }
             return Err(self.unexpected());
         }
         Ok(self.push_cmd(Command {
@@ -1990,7 +2301,7 @@ impl<'a> P<'a> {
             self.skip_linebreaks()?;
             let rhs = self.parse_cond_and(open)?;
             lhs = CondExpr {
-                span: lhs.span.to(rhs.span),
+                span: join(lhs.span, rhs.span),
                 kind: CondKind::Or(Box::new(lhs), Box::new(rhs)),
             };
         }
@@ -2007,7 +2318,7 @@ impl<'a> P<'a> {
             self.skip_linebreaks()?;
             let rhs = self.parse_cond_not(open)?;
             lhs = CondExpr {
-                span: lhs.span.to(rhs.span),
+                span: join(lhs.span, rhs.span),
                 kind: CondKind::And(Box::new(lhs), Box::new(rhs)),
             };
         }
@@ -2149,7 +2460,7 @@ impl<'a> P<'a> {
         };
         self.leave();
         Ok(CondExpr {
-            span: first.span.to(rhs.span),
+            span: join(first.span, rhs.span),
             kind: CondKind::Binary {
                 op,
                 op_span,

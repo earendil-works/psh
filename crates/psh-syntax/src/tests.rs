@@ -43,13 +43,21 @@ struct Walk<'a> {
 impl Walk<'_> {
     fn node(&mut self, kind: &str, span: Span, parent: Span) {
         let src = self.ast.source_bytes();
-        assert!(span.start <= span.end && span.end as usize <= src.len());
+        assert!(
+            span.start <= span.end && span.end as usize <= src.len(),
+            "{kind} {span:?} in {} bytes",
+            src.len()
+        );
         // Spans never split a char of the text view.
         let info = self.ast.source_info();
         assert!(info.view().is_char_boundary(info.view_offset(span.start)));
         assert!(info.view().is_char_boundary(info.view_offset(span.end)));
         assert!(
-            parent.contains(span),
+            parent.contains(span)
+                || self
+                    .ast
+                    .original_span(parent)
+                    .contains(self.ast.original_span(span)),
             "{kind} {span:?} {:?} outside {parent:?} {:?}",
             self.ast.text(span),
             self.ast.text(parent)
@@ -1009,4 +1017,157 @@ fn reserved_words_and_subscripts_found_by_fuzzing() {
         "syntax error: unexpected end of file from `{' command on line 1"
     );
     d("<<then case\nthen");
+}
+
+/// Parses `src` chunk by chunk with `aliases`; the dumps of the chunks, and the asts.
+fn chunks_with(src: &str, aliases: &[(&str, &str)]) -> (Vec<String>, Vec<Ast>) {
+    let mut table = Aliases::new();
+    for (n, v) in aliases {
+        table.set(n.as_bytes(), v.as_bytes());
+    }
+    let mut p = Parser::new(src, Options::default());
+    p.set_aliases(Some(&table));
+    let mut dumps = Vec::new();
+    let mut asts = Vec::new();
+    while let Some(chunk) = p.next_chunk() {
+        let ast = chunk.unwrap_or_else(|e| panic!("{src:?}: {e}"));
+        check_spans_alias(&ast);
+        dumps.push(dump(&ast));
+        asts.push(ast);
+    }
+    (dumps, asts)
+}
+
+/// Like `check_spans`, for chunks with alias text: every span lies in the script or in
+/// one alias text, and children lie in their parents.
+fn check_spans_alias(ast: &Ast) {
+    let all = Span::new(0, ast.source_bytes().len() as u32);
+    let mut w = Walk {
+        ast,
+        lines: Vec::new(),
+    };
+    w.list(ast.root(), all);
+    for line in &w.lines {
+        let _ = line;
+    }
+}
+
+#[test]
+fn aliases_expand_while_reading() {
+    let (d, _) = chunks_with(
+        "ll x\necho ll\n'll' x\n\\ll x\nll\"\" x",
+        &[("ll", "ls -l")],
+    );
+    assert_eq!(
+        d,
+        [
+            "(list (cmd <\"ls\"> <\"-l\"> <\"x\">))",
+            "(list (cmd <\"echo\"> <\"ll\">))",
+            "(list (cmd <'ll'> <\"x\">))",
+            "(list (cmd <\\l \"l\"> <\"x\">))",
+            "(list (cmd <\"ll\" dq()> <\"x\">))",
+        ]
+    );
+    // Before reserved words, after `!`, `time`, assignments, redirections, operators,
+    // and inside `$(…)`.
+    let (d, _) = chunks_with(
+        "myif e; then e a; fi\n! e b | e c && A=1 e d; >o e f; time e g; x=$(e h)",
+        &[("myif", "if"), ("e", "echo")],
+    );
+    assert_eq!(
+        d[0],
+        "(list (if (list (cmd <\"echo\">)) (list (cmd <\"echo\"> <\"a\">))))"
+    );
+    assert_eq!(
+        d[1],
+        "(list (andor (pipe ! (cmd <\"echo\"> <\"b\">) | (cmd <\"echo\"> <\"c\">)) && (cmd (assign A= <\"1\">) <\"echo\"> <\"d\">)) (cmd <\"echo\"> <\"f\"> ><\"o\">) (pipe time (cmd <\"echo\"> <\"g\">)) (cmd (assign x= <$(list (cmd <\"echo\"> <\"h\">))>)))"
+    );
+    // A trailing blank makes the next word a candidate; no re-expansion of an alias
+    // inside itself; an alias text may hold several commands and a newline.
+    let (d, _) = chunks_with(
+        "a b c\nls x\nx\nt foo\nm; echo 3",
+        &[
+            ("a", "echo "),
+            ("b", "B "),
+            ("c", "C"),
+            ("ls", "ls -l"),
+            ("x", "y"),
+            ("y", "x"),
+            ("e", "echo"),
+            ("t", "e e"),
+            ("m", "echo 1\necho 2"),
+        ],
+    );
+    assert_eq!(
+        d,
+        [
+            "(list (cmd <\"echo\"> <\"B\"> <\"C\">))",
+            "(list (cmd <\"ls\"> <\"-l\"> <\"x\">))",
+            "(list (cmd <\"x\">))",
+            "(list (cmd <\"echo\"> <\"e\"> <\"foo\">))",
+            "(list (cmd <\"echo\"> <\"1\">) (cmd <\"echo\"> <\"2\">) (cmd <\"echo\"> <\"3\">))",
+        ]
+    );
+    // Keywords and operators from alias text.
+    let (d, _) = chunks_with(
+        "c x in x) e m;; esac\nb e x; }",
+        &[("c", "case"), ("e", "echo"), ("b", "{")],
+    );
+    assert_eq!(
+        d[0],
+        "(list (case <\"x\"> (<\"x\">) (list (cmd <\"echo\"> <\"m\">)) ;;))"
+    );
+    assert_eq!(d[1], "(list (brace (list (cmd <\"echo\"> <\"x\">))))");
+    // An alias defined on a line is not in effect on that line: the table is what the
+    // shell passes per chunk, so this is the engine's part. Without a table nothing
+    // expands.
+    let mut p = Parser::new("ll x", Options::default());
+    p.set_aliases(None);
+    assert_eq!(
+        dump(&p.next_chunk().unwrap().unwrap()),
+        "(list (cmd <\"ll\"> <\"x\">))"
+    );
+}
+
+#[test]
+fn alias_spans() {
+    let src = "echo a; ll x y\n";
+    let (_, asts) = chunks_with(src, &[("ll", "ls -l")]);
+    let ast = &asts[0];
+    assert_eq!(ast.script_len(), src.len() as u32);
+    let uses = ast.alias_uses();
+    assert_eq!(uses.len(), 1);
+    assert_eq!(uses[0].name, b"ll");
+    assert_eq!(uses[0].word, Span::new(8, 10));
+    assert_eq!(ast.text(uses[0].text), "ls -l");
+    let item = &ast.list(ast.root()).items[1];
+    let cmd = ast.cmd(item.first.stages[0].cmd);
+    // The command covers the alias word and the script text after it.
+    assert_eq!(cmd.span, Span::new(8, 14));
+    let CommandKind::Simple(s) = &cmd.kind else {
+        panic!()
+    };
+    // Words from the alias point into its text, after the script.
+    assert!(s.words[0].span.start >= ast.script_len());
+    assert_eq!(ast.text(s.words[1].span), "-l");
+    assert_eq!(ast.original_span(s.words[1].span), Span::new(8, 10));
+    assert_eq!(ast.text(s.words[2].span), "x");
+    assert_eq!(ast.original_span(s.words[2].span), s.words[2].span);
+    // The second chunk starts after the line.
+    assert_eq!(asts.len(), 1);
+    // Nested: an alias text that starts with another alias.
+    let (_, asts) = chunks_with("t foo\n", &[("e", "echo"), ("t", "e e")]);
+    let ast = &asts[0];
+    assert_eq!(ast.alias_uses().len(), 2);
+    let cmd = ast.cmd(ast.list(ast.root()).items[0].first.stages[0].cmd);
+    assert_eq!(cmd.span, Span::new(0, 5));
+    // An error in alias text points at the alias word.
+    let mut table = Aliases::new();
+    table.set(b"bad", b"echo )");
+    let mut p = Parser::new("echo ok\nbad x\n", Options::default());
+    p.set_aliases(Some(&table));
+    assert!(p.next_chunk().unwrap().is_ok());
+    let e = p.next_chunk().unwrap().unwrap_err();
+    assert_eq!(e.message, "syntax error near unexpected token `)'");
+    assert_eq!(e.span, Span::new(8, 11));
 }

@@ -1,6 +1,9 @@
 //! Shell builtins (Tier 0, ARCH.md): part of the engine, run on the vproc that calls
 //! them.
 
+// Not registered yet: the engine wires `alias`/`unalias` and the table (see the module).
+#[allow(dead_code)]
+mod alias;
 mod printf;
 mod test;
 

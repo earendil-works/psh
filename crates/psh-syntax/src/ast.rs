@@ -58,6 +58,11 @@ pub struct Ast {
     pub(crate) cmds: Vec<Command>,
     pub(crate) heredocs: Vec<HereDoc>,
     pub(crate) root: ListId,
+    /// Length of the script; the source continues with alias texts after it.
+    pub(crate) script_len: u32,
+    pub(crate) alias_uses: Vec<crate::alias::AliasUse>,
+    /// Where the next chunk starts.
+    pub(crate) chunk_end: usize,
 }
 
 impl Ast {
@@ -76,6 +81,26 @@ impl Ast {
     /// The source with its UTF-8 view, shared by all chunks of one script.
     pub fn source_info(&self) -> &Source {
         &self.source
+    }
+
+    /// The length of the script text. A chunk that expanded aliases holds their texts
+    /// after it: spans at or past this offset are text that came from an alias.
+    pub fn script_len(&self) -> u32 {
+        self.script_len
+    }
+
+    /// The alias expansions of this chunk, in the order they were read.
+    pub fn alias_uses(&self) -> &[crate::alias::AliasUse] {
+        &self.alias_uses
+    }
+
+    /// `span` lifted out of alias text onto the words the aliases replaced: for line
+    /// numbers and messages. Spans in the script are returned as they are.
+    pub fn original_span(&self, span: Span) -> Span {
+        if self.alias_uses.is_empty() {
+            return span;
+        }
+        crate::parser::original_span(&self.alias_uses, span)
     }
 
     /// Whether the source is valid UTF-8 (then text and bytes agree everywhere).

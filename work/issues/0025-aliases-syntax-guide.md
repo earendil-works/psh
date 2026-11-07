@@ -85,6 +85,23 @@ Engine side (proposal; the engine agent owns exec.rs/lib.rs):
    re-entry.
 3. LINENO and error locations from `ast.original_span(span)`.
 
+### 2026-11-07: part 1, the parser hook (as built; D1250)
+- psh-syntax: `Aliases` (`new get set remove clear is_empty len iter`), `AliasUse { name,
+  word, text }`, `Parser::set_aliases(Option<&Aliases>)`, `Ast::{script_len,
+  alias_uses, original_span}`. Two passes per chunk that uses aliases; composite spans
+  are now built first-start..last-end in reading order (`join`), which alias text needs.
+- Bash details reproduced (probed in the container): an empty alias text leaves an
+  empty simple command (no words, no assignments, no redirections: the engine runs it
+  as a no-op) or exposes the next word as the command word (`alias e=''; e x` expands
+  `x`); a comment in alias text runs on into the rest of the line (`alias c='echo hi #
+  x'; c there` prints `hi`); a newline or `;` in alias text ends the command, the rest
+  of the line is the next command (same chunk).
+- Engine module `builtins/alias.rs` (declared, not registered: `#[allow(dead_code)]`):
+  pure `alias(&mut Aliases, args) -> Outcome` and `unalias`, with bash's output,
+  messages (`Output::Error` gets the `NAME: line N:` prefix, `Output::Usage` is printed
+  raw), statuses and option handling; unit tests against the container's output. The
+  module comment shows the wrapper the engine registers.
+
 ## Follow-ups
 
 ## Result

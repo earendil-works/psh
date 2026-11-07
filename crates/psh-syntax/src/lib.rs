@@ -13,6 +13,7 @@
 
 extern crate alloc;
 
+mod alias;
 mod arith;
 mod arith_eval;
 mod ast;
@@ -22,6 +23,7 @@ mod dump;
 mod error;
 mod parser;
 mod printer;
+mod remap;
 mod source;
 mod span;
 mod words;
@@ -29,6 +31,7 @@ mod words;
 #[cfg(test)]
 mod tests;
 
+pub use alias::{AliasUse, Aliases};
 pub use arith::{
     ArithError, ArithErrorKind, ArithExpr, ArithKind, BinOp, LValue, UnaryOp, arith_dump,
     parse_arith,

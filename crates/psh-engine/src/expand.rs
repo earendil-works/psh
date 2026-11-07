@@ -451,6 +451,14 @@ fn tilde(vp: &Vp, name: &[u8]) -> Option<Vec<u8>> {
         b"" => vp.var("HOME").map(<[u8]>::to_vec),
         b"+" => vp.var("PWD").map(<[u8]>::to_vec),
         b"-" => vp.var("OLDPWD").map(<[u8]>::to_vec),
+        // `~user`, from the host (D1322).
+        user if is_name(user)
+            || user
+                .iter()
+                .all(|b| b.is_ascii_alphanumeric() || b"._-".contains(b)) =>
+        {
+            vp.host().home_dir(user)
+        }
         _ => None,
     }
 }

@@ -16,10 +16,6 @@ use crate::sched::Sched;
 pub(crate) struct Core {
     pub host: Rc<dyn Host>,
     pub sched: Rc<Sched>,
-    /// The name in front of messages: `$0` of the script.
-    pub msg_name: RefCell<String>,
-    /// The script runs as `-c` (bash words a few things differently then).
-    pub dash_c: Cell<bool>,
     /// The nesting limit (D1050).
     pub max_depth: u32,
     /// Ids handed out for `$!` until real jobs exist.

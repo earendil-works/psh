@@ -792,6 +792,10 @@ impl Host for TestHost {
     fn pid(&self) -> u32 {
         4242
     }
+
+    fn home_dir(&self, user: &[u8]) -> Option<Vec<u8>> {
+        (user == b"root").then(|| b"/root".to_vec())
+    }
 }
 
 fn arg_num(p: &FakeProc, flag: &[u8], default: usize) -> usize {

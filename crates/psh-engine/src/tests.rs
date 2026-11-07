@@ -820,3 +820,14 @@ fn extglob_and_glob_options() {
         o.stderr
     );
 }
+
+#[test]
+fn tilde_user_and_drive_paths() {
+    check(
+        "echo ~root ~nosuchuser_x ~root/a",
+        "/root ~nosuchuser_x /root/a\n",
+    );
+    assert_eq!(crate::builtins::normalize(b"C:/x/../y/./z"), b"C:/y/z");
+    assert_eq!(crate::builtins::normalize(b"C:/.."), b"C:/");
+    assert_eq!(crate::builtins::normalize(b"/a/../b"), b"/b");
+}

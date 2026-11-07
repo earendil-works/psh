@@ -352,6 +352,11 @@ pub trait Host {
     fn sleep(&self, duration: Duration) -> HostFuture<()>;
     /// The shell's process id (`$$`).
     fn pid(&self) -> u32;
+    /// The home directory of a user (`~user`), if the host knows it.
+    fn home_dir(&self, user: &[u8]) -> Option<Vec<u8>> {
+        let _ = user;
+        None
+    }
 }
 
 /// The text bash prints for an error (`strerror`), without Rust's `(os error N)`.

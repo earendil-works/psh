@@ -1753,6 +1753,17 @@ pub(crate) async fn command_subst(
     subst(vp, code.clone(), list).await
 }
 
+/// The trailing newlines a command substitution drops. On Windows, native programs end
+/// lines with `\r\n`: a `\r` before each removed newline goes too (D1324).
+fn strip_newlines(out: &mut Vec<u8>) {
+    while out.last() == Some(&b'\n') {
+        out.pop();
+        if cfg!(windows) && out.last() == Some(&b'\r') {
+            out.pop();
+        }
+    }
+}
+
 /// `$(< file)`: the list is one command with only an input redirection.
 fn read_only_redirect(code: &Code, list: ListId) -> Option<&Redirect> {
     let l = code.ast.list(list);
@@ -1813,9 +1824,7 @@ async fn subst(vp: &mut Vp, code: Rc<Code>, list: ListId) -> Result<(Vec<u8>, i3
         };
         vp.status = status;
         out.retain(|&b| b != 0);
-        while out.last() == Some(&b'\n') {
-            out.pop();
-        }
+        strip_newlines(&mut out);
         return Ok((out, status));
     }
     let mut sub = enter(vp).await?;
@@ -1840,9 +1849,7 @@ async fn subst(vp: &mut Vp, code: Rc<Code>, list: ListId) -> Result<(Vec<u8>, i3
             .await;
         out.retain(|&b| b != 0);
     }
-    while out.last() == Some(&b'\n') {
-        out.pop();
-    }
+    strip_newlines(&mut out);
     Ok((out, status))
 }
 

@@ -47,7 +47,7 @@ mod tests;
 pub mod util;
 mod vars;
 
-use std::cell::{Cell, RefCell};
+use std::cell::Cell;
 use std::marker::PhantomData;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -230,8 +230,6 @@ impl Shell {
         let core = Rc::new(Core {
             host: cfg.host.clone(),
             sched: Rc::new(Sched::new(shared.clone())),
-            msg_name: RefCell::new("psh".into()),
-            dash_c: Cell::new(false),
             max_depth: cfg.max_depth,
             jobs: Cell::new(0),
             release_on_drop: Cell::new(false),
@@ -404,8 +402,6 @@ impl Shell {
         self.core.died_of.set(None);
         let mut vp = self.vp.take().expect("shell state");
         self.before = Some(vp.clone());
-        *self.core.msg_name.borrow_mut() = String::from_utf8_lossy(&script.arg0).into_owned();
-        self.core.dash_c.set(script.dash_c);
         // `$_` starts as `$0` unless the environment had one.
         if vp.vars.get("_").is_none() {
             vp.vars.insert("_", Var::scalar(script.arg0.clone()));

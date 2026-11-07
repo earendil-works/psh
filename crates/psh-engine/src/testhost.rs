@@ -748,6 +748,10 @@ impl Drop for MemFile {
 }
 
 impl HostFile for MemFile {
+    fn kind(&self) -> Option<crate::host::FileKind> {
+        Some(crate::host::FileKind::File)
+    }
+
     fn poll_read(&self, cx: &mut Context<'_>, buf: &mut [u8]) -> Poll<io::Result<usize>> {
         if !self.toggle.gate(cx) {
             return Poll::Pending;
@@ -822,6 +826,10 @@ impl Drop for TPipe {
 }
 
 impl HostFile for TPipe {
+    fn kind(&self) -> Option<crate::host::FileKind> {
+        Some(crate::host::FileKind::Fifo)
+    }
+
     fn poll_read(&self, cx: &mut Context<'_>, buf: &mut [u8]) -> Poll<io::Result<usize>> {
         if !self.read_end {
             return Poll::Ready(Err(crate::fd::bad_fd()));
@@ -876,6 +884,10 @@ impl HostFile for TPipe {
 struct NullFile;
 
 impl HostFile for NullFile {
+    fn kind(&self) -> Option<crate::host::FileKind> {
+        Some(crate::host::FileKind::CharDevice)
+    }
+
     fn poll_read(&self, _cx: &mut Context<'_>, _buf: &mut [u8]) -> Poll<io::Result<usize>> {
         Poll::Ready(Ok(0))
     }

@@ -58,6 +58,7 @@ pub struct SyncCtx {
     cwd: Vec<u8>,
     env: Vec<(Vec<u8>, Vec<u8>)>,
     terminal: [bool; 3],
+    stdin_readable: bool,
     io: Io,
     out: Vec<u8>,
     write_error: Option<io::ErrorKind>,
@@ -71,10 +72,69 @@ enum Io {
     Inline {
         host: Rc<dyn Host>,
         stdin: io::Cursor<Vec<u8>>,
-        /// What goes to fds 1 and 2, in order, and its size.
-        output: Vec<(u32, Vec<u8>)>,
-        collected: usize,
+        out: Arc<Mutex<InlineOut>>,
     },
+}
+
+/// The inline backend's output: what goes to fds 1 and 2, in order, and its size.
+#[derive(Default)]
+struct InlineOut {
+    output: Vec<(u32, Vec<u8>)>,
+    collected: usize,
+}
+
+impl InlineOut {
+    fn push(&mut self, fd: u32, data: Vec<u8>) -> io::Result<()> {
+        if self.collected + data.len() > INLINE_OUTPUT_LIMIT {
+            return Err(io::Error::new(
+                io::ErrorKind::OutOfMemory,
+                "output too large for an in-process utility in this environment",
+            ));
+        }
+        self.collected += data.len();
+        match self.output.last_mut() {
+            Some((f, d)) if *f == fd => d.extend_from_slice(&data),
+            _ => self.output.push((fd, data)),
+        }
+        Ok(())
+    }
+}
+
+/// An unbuffered writer to the utility's fd 1 or 2 that may be cloned and moved to
+/// other threads (rg's search threads print through it): writes go, in order with the
+/// [`SyncCtx`]'s own, to the same queue. A failed write fails every later one, as for
+/// [`SyncCtx::write`].
+#[derive(Clone)]
+pub struct SyncWriter {
+    fd: u32,
+    to: WriterTo,
+}
+
+#[derive(Clone)]
+enum WriterTo {
+    Pipe(Arc<Pipe>),
+    Inline(Arc<Mutex<InlineOut>>),
+}
+
+impl Write for SyncWriter {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        if buf.is_empty() {
+            return Ok(0);
+        }
+        match &self.to {
+            WriterTo::Pipe(p) => p.write(self.fd, buf.to_vec())?,
+            WriterTo::Inline(o) => lock_out(o).push(self.fd, buf.to_vec())?,
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+fn lock_out(m: &Mutex<InlineOut>) -> std::sync::MutexGuard<'_, InlineOut> {
+    m.lock().unwrap_or_else(|e| e.into_inner())
 }
 
 /// A file opened through [`SyncCtx::open`].
@@ -147,6 +207,22 @@ impl SyncCtx {
     /// Whether descriptor `n` (0, 1 or 2) was a terminal when the utility started.
     pub fn is_terminal(&self, n: u32) -> bool {
         self.terminal.get(n as usize).copied().unwrap_or(false)
+    }
+
+    /// stdin is something to read: a pipe, a regular file or a socket, not a terminal,
+    /// `/dev/null` or closed (rg's heuristic for searching stdin rather than `./`).
+    pub fn stdin_readable(&self) -> bool {
+        self.stdin_readable
+    }
+
+    /// A writer to fd 1 or 2 for other threads (stdout is flushed first).
+    pub fn writer(&mut self, fd: u32) -> SyncWriter {
+        let _ = self.flush();
+        let to = match &self.io {
+            Io::Thread { pipe, .. } => WriterTo::Pipe(pipe.clone()),
+            Io::Inline { out, .. } => WriterTo::Inline(out.clone()),
+        };
+        SyncWriter { fd, to }
     }
 
     /// A path made absolute against the cwd (`.` and `..` kept, as the shell's cwd
@@ -285,22 +361,7 @@ impl SyncCtx {
     fn send(&mut self, fd: u32, data: Vec<u8>) -> io::Result<()> {
         match &mut self.io {
             Io::Thread { pipe, .. } => pipe.write(fd, data),
-            Io::Inline {
-                output, collected, ..
-            } => {
-                if *collected + data.len() > INLINE_OUTPUT_LIMIT {
-                    return Err(io::Error::new(
-                        io::ErrorKind::OutOfMemory,
-                        "output too large for an in-process utility in this environment",
-                    ));
-                }
-                *collected += data.len();
-                match output.last_mut() {
-                    Some((f, d)) if *f == fd => d.extend_from_slice(&data),
-                    _ => output.push((fd, data)),
-                }
-                Ok(())
-            }
+            Io::Inline { out, .. } => lock_out(out).push(fd, data),
         }
     }
 }
@@ -508,16 +569,17 @@ impl UtilCtx<'_> {
         ];
         let host = self.vp.core.host.clone();
         let native = host.native_paths();
+        let stdin_readable = self.stdin_readable();
         let mut sync = SyncCtx {
             name: self.name.clone(),
             cwd: self.vp.cwd.clone(),
             env: self.env.clone(),
             terminal,
+            stdin_readable,
             io: Io::Inline {
                 host,
                 stdin: io::Cursor::new(Vec::new()),
-                output: Vec::new(),
-                collected: 0,
+                out: Arc::default(),
             },
             out: Vec::new(),
             write_error: None,
@@ -540,9 +602,11 @@ impl UtilCtx<'_> {
                 }
                 let status = run_guarded(&mut sync, arg, f);
                 let _ = sync.flush();
-                let Io::Inline { output, .. } = sync.io else {
+                let Io::Inline { out, .. } = sync.io else {
                     unreachable!()
                 };
+                // Writers the body cloned are gone with its threads; take what they wrote.
+                let output = std::mem::take(&mut lock_out(&out).output);
                 for (fd, data) in output {
                     let r = match self.fd(fd) {
                         Some(file) => file.write_all(&data).await,
@@ -598,6 +662,7 @@ impl UtilCtx<'_> {
             cwd,
             env,
             terminal,
+            stdin_readable,
             ..
         } = sync;
         let thread_pipe = pipe.clone();
@@ -609,6 +674,7 @@ impl UtilCtx<'_> {
                     cwd,
                     env,
                     terminal,
+                    stdin_readable,
                     io: Io::Thread {
                         pipe: thread_pipe.clone(),
                         native,

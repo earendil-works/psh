@@ -24,7 +24,7 @@ pub use crate::host::Access;
 mod blocking;
 pub use blocking::{
     BlockingOptions, IN_FLIGHT, INLINE_INPUT_LIMIT, INLINE_OUTPUT_LIMIT, Stderr, Stdin, Stdout,
-    SyncCtx, SyncFile, SyncFn,
+    SyncCtx, SyncFile, SyncFn, SyncWriter,
 };
 
 /// 2: file system changes, `stat_extra`, names, time and umask (D1150).
@@ -360,6 +360,24 @@ impl UtilCtx<'_> {
     /// Whether descriptor `n` is a terminal.
     pub fn is_terminal(&self, n: u32) -> bool {
         matches!(self.fd(n).as_deref(), Some(FdObj::File(f)) if f.is_terminal())
+    }
+
+    /// stdin is something to read: one of the shell's pipes, or a host file that is a
+    /// regular file, a pipe or a socket; not a terminal, a device such as `/dev/null`,
+    /// closed, or of a kind the host cannot tell.
+    pub fn stdin_readable(&self) -> bool {
+        use crate::host::FileKind;
+        match self.fd(0).as_deref() {
+            Some(FdObj::PipeRead(_)) => true,
+            Some(FdObj::File(f)) => {
+                !f.is_terminal()
+                    && matches!(
+                        f.kind(),
+                        Some(FileKind::File | FileKind::Fifo | FileKind::Socket)
+                    )
+            }
+            _ => false,
+        }
     }
 
     /// Reads stdin (stdout is flushed first). `Ok(0)` is end of file.

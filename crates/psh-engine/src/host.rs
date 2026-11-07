@@ -49,6 +49,11 @@ pub trait HostFile: Any {
     fn is_terminal(&self) -> bool {
         false
     }
+    /// What it is (`fstat`), where the host can tell: a regular file, a pipe, a device...
+    /// (rg's "is stdin readable" heuristic, D1133). `None`: unknown.
+    fn kind(&self) -> Option<FileKind> {
+        None
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

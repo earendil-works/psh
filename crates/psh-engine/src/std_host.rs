@@ -112,6 +112,10 @@ impl HostFile for StdFile {
         use std::io::IsTerminal;
         self.file.is_terminal()
     }
+
+    fn kind(&self) -> Option<FileKind> {
+        self.file.metadata().ok().map(|m| metadata(&m).kind)
+    }
 }
 
 /// The bound of a pump's buffer.
@@ -236,6 +240,10 @@ impl Drop for PumpFile {
 }
 
 impl HostFile for PumpFile {
+    fn kind(&self) -> Option<FileKind> {
+        Some(FileKind::Fifo)
+    }
+
     fn poll_read(&self, cx: &mut Context<'_>, buf: &mut [u8]) -> Poll<io::Result<usize>> {
         if !self.reading {
             return Poll::Ready(Err(crate::fd::bad_fd()));

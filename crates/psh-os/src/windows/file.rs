@@ -130,6 +130,18 @@ fn is_broken(e: &io::Error) -> bool {
 }
 
 impl HostFile for WinFile {
+    fn kind(&self) -> Option<psh_engine::host::FileKind> {
+        use psh_engine::host::FileKind;
+        Some(match &self.kind {
+            Kind::Sync(f) => match f.metadata() {
+                Ok(m) if m.is_file() => FileKind::File,
+                Ok(m) if m.is_dir() => FileKind::Dir,
+                _ => FileKind::CharDevice,
+            },
+            Kind::Shared(_) | Kind::Pump(_) => FileKind::Fifo,
+        })
+    }
+
     fn poll_read(&self, cx: &mut Context<'_>, buf: &mut [u8]) -> Poll<io::Result<usize>> {
         match &self.kind {
             Kind::Sync(f) => loop {

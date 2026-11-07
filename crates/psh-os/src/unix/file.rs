@@ -86,6 +86,27 @@ impl Drop for UnixFile {
 }
 
 impl HostFile for UnixFile {
+    fn kind(&self) -> Option<psh_engine::host::FileKind> {
+        use psh_engine::host::FileKind;
+        use std::os::unix::fs::FileTypeExt;
+        let t = self.file.metadata().ok()?.file_type();
+        Some(if t.is_file() {
+            FileKind::File
+        } else if t.is_dir() {
+            FileKind::Dir
+        } else if t.is_fifo() {
+            FileKind::Fifo
+        } else if t.is_socket() {
+            FileKind::Socket
+        } else if t.is_char_device() {
+            FileKind::CharDevice
+        } else if t.is_block_device() {
+            FileKind::BlockDevice
+        } else {
+            FileKind::Other
+        })
+    }
+
     fn poll_read(&self, cx: &mut Context<'_>, buf: &mut [u8]) -> Poll<io::Result<usize>> {
         loop {
             if self.stream && !self.nonblocking {

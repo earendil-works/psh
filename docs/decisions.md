@@ -2608,3 +2608,12 @@ the hard one is "Invalid argument"; `-p` is fixed at 8 (PIPE_BUF in 512-byte blo
 Known gap: the shell process is never limited (an embedded engine must not lower its
 embedder's limits), so in-process work — redirections, builtins, utilities — ignores
 `ulimit -f`/`-n` that a bash process would hit.
+
+## D1940: Command substitution's CRLF rule follows `Host::strips_crlf()`
+date: 2026-11-08 · by: engine · issue: 0032
+Supersedes D1324's "Windows builds only" and the CRLF note in D1329. The `\r` before
+each trailing newline that `$(…)`, backticks, `$(< file)` and `${ …; }` remove goes too
+when `Host::strips_crlf()` (D1292) is true: the Windows host, or the test host switched
+on. A `\r\n` inside the output stays. A property of the host, not of the build: an
+embedder with its own host decides, and tests cover both rules on every platform;
+`read` follows the same method (builtins).

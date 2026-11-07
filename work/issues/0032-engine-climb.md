@@ -69,8 +69,8 @@ Collect the engine's open items and then climb the hit list for engine-owned are
 
 - Host info variables (D1328): UID, EUID, PPID, GROUPS, HOSTNAME, OSTYPE, MACHTYPE,
   HOSTTYPE from `Host::info()`.
-- Pending: `$(…)` follows `Host::strips_crlf()` (builtins' D1292) once it lands; record
-  as D1329, superseding D1324's "Windows builds only".
+- `$(…)` follows `Host::strips_crlf()` (builtins' D1292) instead of `cfg!(windows)`
+  (D1940, superseding D1324's "Windows builds only").
 
 - Part 4: well-known variables (D1329), one BASH_SUBSHELL level for a `( )` stage.
 - Part 5: prefix assignments see the earlier ones while expanding (`A=1 B=$A cmd`);

@@ -888,12 +888,12 @@ fn command_subst_crlf() {
     assert_eq!(strip(b"a\r\n\r\n\n", true), b"a");
     assert_eq!(strip(b"a\r\nb\r", true), b"a\r\nb\r");
     assert_eq!(strip(b"sub\r\n", false), b"sub\r");
-    // End to end: the platform's rule, for `$(…)`, backticks and `${ …; }`.
-    let n = if cfg!(windows) { "1" } else { "4" };
-    let want = format!("{n} {n} {n}\n");
-    check(
-        "x=$(printf 'a\\r\\n\\r\\n'); y=`printf 'a\\r\\n\\r\\n'`; z=${ printf 'a\\r\\n\\r\\n'; }; echo ${#x} ${#y} ${#z}",
-        &want,
+    // End to end, by the host's rule: `$(…)`, backticks and `${ …; }`.
+    let src = "x=$(printf 'a\\r\\n\\r\\n'); y=`printf 'a\\r\\n\\r\\n'`; z=${ printf 'a\\r\\n\\r\\n'; }; echo ${#x} ${#y} ${#z}";
+    assert_eq!(run_setup(src, |_| {}).stdout, "4 4 4\n");
+    assert_eq!(
+        run_setup(src, |h: &TestHost| h.set_strips_crlf(true)).stdout,
+        "1 1 1\n"
     );
 }
 

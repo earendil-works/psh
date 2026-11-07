@@ -1968,10 +1968,11 @@ pub(crate) async fn command_subst(
     subst(vp, code.clone(), list).await
 }
 
-/// The trailing newlines a command substitution drops. On Windows, native programs end
-/// lines with `\r\n`: a `\r` before each removed newline goes too (D1324).
-fn strip_newlines(out: &mut Vec<u8>) {
-    strip_newlines_with(out, cfg!(windows));
+/// The trailing newlines a command substitution drops. On a host whose programs end
+/// lines with `\r\n` (`Host::strips_crlf`, Windows), a `\r` before each removed newline
+/// goes too (D1940).
+fn strip_newlines(vp: &Vp, out: &mut Vec<u8>) {
+    strip_newlines_with(out, vp.host().strips_crlf());
 }
 
 pub(crate) fn strip_newlines_with(out: &mut Vec<u8>, crlf: bool) {
@@ -2043,7 +2044,7 @@ async fn subst(vp: &mut Vp, code: Rc<Code>, list: ListId) -> Result<(Vec<u8>, i3
         };
         vp.status = status;
         out.retain(|&b| b != 0);
-        strip_newlines(&mut out);
+        strip_newlines(vp, &mut out);
         return Ok((out, status));
     }
     let mut sub = enter(vp).await?;
@@ -2079,7 +2080,7 @@ async fn subst(vp: &mut Vp, code: Rc<Code>, list: ListId) -> Result<(Vec<u8>, i3
             .await;
         out.retain(|&b| b != 0);
     }
-    strip_newlines(&mut out);
+    strip_newlines(vp, &mut out);
     Ok((out, status))
 }
 
@@ -2130,7 +2131,7 @@ pub(crate) async fn fun_subst(
         Some(v) => Ok((v, status)),
         None => {
             out.retain(|&b| b != 0);
-            strip_newlines(&mut out);
+            strip_newlines(vp, &mut out);
             Ok((out, status))
         }
     }

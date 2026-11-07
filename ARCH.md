@@ -218,7 +218,7 @@ runtime in D005's sense: no runtime crate, no threads, the embedder steps and pa
   code over the AST; globbing reads directories through the host. One pattern matcher
   with options serves globs, `case`, `${x#…}` and `[[ == ]]`, with backtracking extglob
   groups (D1321). `[[ =~ ]]` and every other regex is psh-regex (D1272). `$(…)` drops
-  a `\r` before each trailing newline it removes on Windows (D1324, D1329).
+  a `\r` before each trailing newline it removes when `Host::strips_crlf()` (D1940).
 - **Variables (D1260–D1264, D1320, D1328, D1329).** `Var { value, exported, readonly,
   integer, case, nameref }` with `Value::{Unset, Str, Indexed, Assoc}`; associative
   arrays iterate in bash's order (D1261). Dynamic variables (`RANDOM`, `SECONDS`,
@@ -394,7 +394,8 @@ From `research/execution-core.md` §5; the pitfalls listed there are requirement
 - Environment names are case-insensitive for the OS environment, case-sensitive for
   shell variables.
 - CRLF: scripts with `\r\n` parse; `$(…)` (also backticks, `$(< f)`, `${ …; }`) drops
-  the `\r` before each trailing newline it removes (D1324); `grep` and `rg` treat CRLF
+  the `\r` before each trailing newline it removes, as `read` does, because the
+  Windows host's `strips_crlf()` is true (D1292, D1940); `grep` and `rg` treat CRLF
   as a line end (D030).
 - Utilities whose names collide with System32 programs are always the builtin on
   Windows: `find`, `sort` and `timeout` are mode S everywhere (D1172), the others

@@ -90,7 +90,7 @@ const OWN_PARSER: &[&str] = &["rg"];
 #[test]
 fn force_names_from_the_variable() {
     let all = crate::force_names(b"all");
-    assert!(all.contains(&b"awk".to_vec()) && all.contains(&b"timeout".to_vec()));
+    assert!(all.contains(&b"awk".to_vec()) && all.contains(&b"gawk".to_vec()));
     assert!(!all.contains(&b"cat".to_vec()));
     assert_eq!(
         crate::force_names(b"awk,,sed"),

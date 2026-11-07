@@ -1102,3 +1102,37 @@ path fails with "No such file or directory"). Instead of hooking every assignmen
 value differs. Lookups go one `PATH` entry at a time through `Host::resolve`, so a
 relative entry yields a relative path (`dir/name`, as bash prints it) and, when no
 entry has an executable, the first plain file is used (it then fails with 126).
+## D1110: psh-wasm: a plain extern "C" ABI and hand-written JS glue
+date: 2026-11-07 · by: infra · issue: 0011
+`crates/psh-wasm` builds psh for `wasm32-unknown-unknown` without wasm-bindgen, Asyncify or
+JSPI. The module has one import, `psh.host_call(kind, op, arg, ptr, len)`: every host
+operation (open, stat, read, write, spawn, sleep, ...) is a request with an operation id;
+the JS side answers with the export `psh_complete(op, errno, value, len)`, during the call
+or later from its event loop, and the waiting future wakes the engine, which asks the JS
+side to step the shell again (`K_WAKE`). Files, pipes and commands live on the JS side;
+the module holds handles. Data crosses through an input buffer (`psh_in`) and an output
+buffer (`psh_out_ptr/len`), as djs does. `js/psh.mjs` is the glue plus a default host
+(`MemHost`). psh-wasm is the second crate allowed `unsafe` (`deny`, allowed per site): the
+`extern` import block, its call, and the `#[unsafe(no_mangle)]` exports, each with its
+reason. It depends on psh-syntax, psh-classify, psh-engine (feature `shell`) and, for the
+JSON of parse and classify, deser-json (D029). Until that JSON lives in a crate of its own,
+psh-wasm includes `crates/psh/src/{json,parse_json,classify_json}.rs` by `#[path]`.
+
+## D1111: The wasm module's stack and nesting limit
+date: 2026-11-07 · by: infra · issue: 0011
+The shell module links with a 16 MiB stack (`-zstack-size`, psh-wasm's build.rs), the
+budget of the native default, and caps the nesting limit at three quarters of it over
+`ShellConfig::STACK_PER_LEVEL` (16 KiB): 768 levels (`psh_max_depth`). A deeper recursion
+ends with "maximum function nesting level exceeded" instead of a trap. Linear memory starts
+above the stack, so a module instance takes about 17 MiB before any allocation.
+
+## D1112: The JS host: MemHost and host commands
+date: 2026-11-07 · by: infra · issue: 0011
+`MemHost` (js/psh.mjs) is the default host: an in-memory file system (directories, files,
+symlinks; `/dev/null`), unbounded pipes between the shell and commands, timers, and
+commands written in JS (`host.command(name, async ctx => status)`, with `ctx.argv`,
+`ctx.env`, `ctx.cwd`, `ctx.stdin`/`stdout`/`stderr` streams and `ctx.fs`). A command is
+found under `/usr/bin/NAME` by every PATH lookup; anything else is "command not found",
+recorded in `host.missing`. Signals cannot stop a JS function: a signalled command counts
+as killed at once and its later output goes nowhere. Hosts with other storage (OPFS, a
+remote pi-env) implement the same methods.

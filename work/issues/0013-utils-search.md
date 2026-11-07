@@ -190,6 +190,38 @@ Checkouts: `vendor/ripgrep` (91f5d22), `vendor/fd` (193d0df) in the primary chec
   JSON sink over deser-json. `--pre`, `-z` fall through first. `--help` identical but
   the version line. Windows: default path separator `/`, CRLF default (D030).
 
+- Landed (part 3a, D1133, D1134): `crates/psh-utils/src/rg/` built and registered (S
+  mode). Front end in `rg/mod.rs` (parse, help/version, fall-through for `--pre`, `-z`,
+  `-P`, `--engine auto`, `--json`, `--debug/--trace`), body `main::run_sync` on the
+  blocking layer. Thread-local per-run message state (`messages::scoped`). The module is
+  `#[rustfmt::skip]` and formatted with `rustfmt --edition 2024 --config-path
+  crates/psh-utils/src/rg/rustfmt.toml crates/psh-utils/src/rg/mod.rs` (ripgrep's style;
+  lexopt.rs is skipped too) so the copy stays a small diff from upstream.
+- Found: real rg's parallel walker words I/O errors without walkdir's "IO error for
+  operation on PATH:" prefix, so the wording depends on rg's thread count;
+  `WalkOptions::parallel_errors` (both walkers) reproduces that.
+- Found: grep-printer calls `Instant::now()` for every sink; on wasm32-unknown-unknown
+  that panics (trap). rg reports itself unavailable there for now (wasm ratchet lines in
+  tests/{agent,utils}/expected-failures.wasm.txt); next part: an in-tree patched
+  grep-printer (coordinator: option A).
+- The classifier's rg table lacked value flags (`--pre`, `--engine`, `--type-clear`,
+  `--dfa-size-limit`, `--regex-size-limit`, `--hostname-bin`, `--hyperlink-format`,
+  `--generate`, `--maxdepth`, `--field-context-separator`): added in psh-classify (outside
+  my touches, data only); `tests::rg_flags_match_the_classifier` checks it against
+  ripgrep's flag table.
+- Oracle: docker/Dockerfile has the rg 15.2.0 / fd 10.5.1 release binaries; `record-goldens
+  --check agent` with it: no agent golden changed. tests/utils/rg/basic.test.sh: 34 cases,
+  all pass natively incl. stderr; 58 agent ratchet entries pass now (removed).
+- Engine tests added for `SyncWriter` and `stdin_readable` (inline and thread).
+- Measurement (machine at load ~100, so rough): on ~112k files (the cargo registry
+  sources) single-threaded psh ≈ rg (3.8 s vs 3.4–4.8 s); with 8 threads psh 4.2–5.9 s vs
+  rg 1.9 s, and twice rg's system time; the walk alone (`--files`) 1.1 s vs 0.45 s. To
+  redo on a quiet machine and tune the pool (shared `Mutex<Receiver>`) next part.
+- Docs: ARCH "Search" (walk sequential, search threads, in-order merge). No guide page
+  affected (utilities.md not written yet).
+
 ## Follow-ups
+- rg: `skip_stdout` (real rg skips the file stdout is redirected to, `rg x . > out`) is not
+  done; needs the identity of fd 1 from the utility context.
 
 ## Result

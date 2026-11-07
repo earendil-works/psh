@@ -542,8 +542,8 @@ changes the process cwd. fd's tests and documented flags are the conformance tar
   ignore discovery canonicalizes against the *process* cwd), `current_dir(cwd)`, display
   paths mapped back to the user's spelling, global gitignore located from the shell's
   `HOME`/`XDG_CONFIG_HOME`/`GIT_CONFIG_*`, not the process's, and a cancel check in each
-  visitor. The parallel walker uses scoped, always-joined threads, which fits the
-  utility thread rule.
+  visitor. The walk itself is sequential and sorted by name; rg searches the files it
+  finds on scoped, always-joined search threads and prints in walk order (D1133).
 - *Virtual fs (WASM, sandboxes):* psh's own single-threaded walker over the `UtilCtx`
   fs. It reuses `ignore`'s in-memory matchers (`gitignore`, `overrides`, `types`) and
   re-implements only the ignore chain (`.ignore` > `.gitignore` > `.git/info/exclude` >
@@ -555,7 +555,8 @@ changes the process cwd. fd's tests and documented flags are the conformance tar
 **Sorted output.** When rg or fd search with more than one thread, output is
 path-sorted by default (real rg's order is arbitrary, so sorted output is a valid rg
 output). This keeps goldens and replay stable. ripgrep's `--sort path` forces a single
-thread, so psh merges results in order instead; the cost is measured in 0013.
+thread, so psh merges results in order instead: the search threads' buffers are written
+in walk order, at most 4×threads files ahead; the cost is measured in 0013.
 
 **grep shares the engine, not the rg front end.** Shared: the `grep-regex` matcher,
 `grep-searcher` (context, binary detection, `-z`, encodings), the walker, and the

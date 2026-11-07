@@ -2051,3 +2051,24 @@ says `kill: SIGSTKFLT: no such signal on this system` (status 1); to a job witho
 OS process (a virtual pid) it is still delivered. `kill $$`, `kill 0` and `kill -- -$$`
 reach the shell's pending mask (D1284), the latter two also the rest of its group where
 the host may signal it.
+
+## D1191: UtilCtx v3: spawn_shell runs a command string in a fresh psh shell
+date: 2026-11-08 · by: text · issue: 0019 (coordinator-approved)
+`UtilCtx::spawn_shell(script, ShellStdio { stdin, stdout }) -> ShellChild`
+(`UTIL_API_VERSION` 3, additive) is what a utility uses where the real one runs
+`/bin/sh -c SCRIPT`: `awk`'s `system()`, `"cmd" | getline` and `print | "cmd"`, `sed`'s
+`e`, `find`/`xargs` helpers that take a shell string. The shell is psh, on the same
+scheduler, never `/bin/sh`, so the command behaves the same on every platform and in WASM.
+Semantics are `sh -c`'s, through the code path of D1300 (`exec::start_afresh`, shared with
+running a file the host cannot start): only exported variables (the utility's environment,
+its command's prefix assignments included), no functions, aliases, traps or options; `$0`
+is `sh` and errors use `-c` wording; cwd, stderr and every other descriptor are the
+utility's. `ShellIo::Inherit` gives it the utility's own stdin or stdout, `ShellIo::Pipe`
+an engine pipe whose other end is `ShellChild::stdin` / `stdout` (`UtilFile`s: async
+`write_all`, `read`; dropping one closes it; externals in the shell get OS ends as for any
+pipe, D1068). The utility's stdout is flushed first. The shell runs as its own task from
+the call on (not when awaited, unlike `spawn`'s `UtilChild`), so a utility can feed its
+stdin and read its stdout meanwhile. `ShellChild::wait()` closes stdin and returns the
+status; dropping an unfinished child drops its task (cancel: its externals get TERM, then
+KILL). Reason: a second fresh-shell mechanism would drift from D1300's; `spawn` runs an
+argv, not a command string, and only when awaited.

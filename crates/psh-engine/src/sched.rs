@@ -175,12 +175,21 @@ impl Sched {
     /// Starts a task and returns a handle to await its result. Dropping the handle
     /// detaches the task.
     pub(crate) fn spawn<T: 'static>(&self, fut: impl Future<Output = T> + 'static) -> Join<T> {
+        self.spawn_with_id(fut).1
+    }
+
+    /// [`Self::spawn`], also returning the task's id for [`Self::drop_task`]: the id is
+    /// the task's while its handle is not done.
+    pub(crate) fn spawn_with_id<T: 'static>(
+        &self,
+        fut: impl Future<Output = T> + 'static,
+    ) -> (usize, Join<T>) {
         let state = Rc::new(RefCell::new(JoinState {
             result: None,
             waker: None,
         }));
         let st = state.clone();
-        let _ = self.spawn_task(Box::pin(async move {
+        let id = self.spawn_task(Box::pin(async move {
             let r = fut.await;
             let waker = {
                 let mut s = st.borrow_mut();
@@ -191,7 +200,7 @@ impl Sched {
                 w.wake();
             }
         }));
-        Join { state }
+        (id, Join { state })
     }
 
     /// Whether a task other than the one being polled is ready to run, or was woken.

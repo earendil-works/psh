@@ -388,7 +388,9 @@ the vproc that runs the command, where shell builtins run, natively and in WASM 
 awaited, stdout buffered and flushed before reads, before stderr writes and when full),
 cwd, environment, the Host's file operations, `sleep`, a safepoint (`check`) for long
 loops, `spawn` for the wrappers (`xargs`, `find -exec`, `env`, `timeout`, `nice`,
-`nohup`) and `run_program` for falling through to the real program. Cancel is dropping
+`nohup`), `spawn_shell` for a command string run as `sh -c` would (a fresh psh shell
+with piped or inherited stdin/stdout: `awk`'s `system()` and pipes, `sed`'s `e`, D1191)
+and `run_program` for falling through to the real program. Cancel is dropping
 the future. Code built on synchronous crates (ripgrep's, jaq) is the exception: an
 async front end parses its arguments (and falls through if it must), then
 `UtilCtx::run_blocking` runs a `fn(&mut SyncCtx, T) -> i32` body with std `Read`/`Write`

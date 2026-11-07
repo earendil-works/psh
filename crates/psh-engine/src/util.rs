@@ -28,7 +28,8 @@ pub use blocking::{
 };
 
 /// 2: file system changes, `stat_extra`, names, time and umask (D1150).
-pub const UTIL_API_VERSION: u32 = 2;
+/// 3: `spawn_shell` (D1191).
+pub const UTIL_API_VERSION: u32 = 3;
 
 /// A boxed future that stays on the engine's thread.
 pub type LocalBoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + 'a>>;
@@ -215,6 +216,66 @@ impl UtilChild {
 
     pub async fn wait(&mut self) -> i32 {
         std::future::poll_fn(|cx| self.poll_wait(cx)).await
+    }
+}
+
+/// Where a stream of [`UtilCtx::spawn_shell`]'s shell goes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ShellIo {
+    /// The utility's own descriptor.
+    Inherit,
+    /// A pipe whose other end is the utility's ([`ShellChild::stdin`], `stdout`).
+    Pipe,
+}
+
+/// The stdin and stdout of a [`UtilCtx::spawn_shell`] shell; stderr and every other
+/// descriptor are the utility's.
+#[derive(Clone, Copy, Debug)]
+pub struct ShellStdio {
+    pub stdin: ShellIo,
+    pub stdout: ShellIo,
+}
+
+/// A shell started by [`UtilCtx::spawn_shell`]. It runs as a task of its own, so the
+/// utility can write its stdin and read its stdout meanwhile. Dropping it before it
+/// ended stops it (its externals are abandoned: TERM, then KILL).
+pub struct ShellChild {
+    /// The write end of its stdin pipe (`ShellIo::Pipe`); drop it to close it.
+    pub stdin: Option<UtilFile>,
+    /// The read end of its stdout pipe (`ShellIo::Pipe`); drop it to close it.
+    pub stdout: Option<UtilFile>,
+    task: Option<(Rc<crate::sched::Sched>, usize)>,
+    join: Option<crate::sched::Join<i32>>,
+    status: Option<i32>,
+}
+
+impl ShellChild {
+    /// Its exit status, once it ended. Closes its stdin first, as it would otherwise
+    /// wait for more input; read its stdout to the end (or drop it) before waiting, or a
+    /// shell that fills the pipe never ends.
+    pub async fn wait(&mut self) -> i32 {
+        self.stdin = None;
+        if let Some(s) = self.status {
+            return s;
+        }
+        let s = match &mut self.join {
+            Some(j) => j.await,
+            None => 2,
+        };
+        self.status = Some(s);
+        self.join = None;
+        s
+    }
+}
+
+impl Drop for ShellChild {
+    fn drop(&mut self) {
+        if let (Some((sched, id)), Some(join)) = (&self.task, &self.join)
+            && self.status.is_none()
+            && !join.is_done()
+        {
+            sched.drop_task(*id);
+        }
     }
 }
 
@@ -568,6 +629,66 @@ impl UtilCtx<'_> {
             status: None,
         }
     }
+
+    /// Starts `sh -c SCRIPT` in psh (D1191): for `awk`'s `system()` and pipes, `sed`'s
+    /// `e`, ... A fresh shell, as for a script the host cannot start (D1300): only the
+    /// utility's environment as exported variables, no functions, aliases, traps or
+    /// options; `$0` is `sh`. Its cwd, stderr and other descriptors are the utility's;
+    /// stdin and stdout as `stdio` says. stdout is flushed first. It runs concurrently
+    /// from now on, as its own task.
+    pub async fn spawn_shell(&mut self, script: &[u8], stdio: ShellStdio) -> ShellChild {
+        let _ = self.flush().await;
+        let mut child = ShellChild {
+            stdin: None,
+            stdout: None,
+            task: None,
+            join: None,
+            status: None,
+        };
+        let mut sub = match crate::exec::enter(self.vp).await {
+            Ok(sub) => sub,
+            Err(u) => {
+                child.status = Some(u.status(2));
+                return child;
+            }
+        };
+        for (k, v) in &self.env {
+            if let Ok(name) = std::str::from_utf8(k)
+                && crate::state::is_name(k)
+            {
+                let var = sub.vars.entry(name);
+                var.set(v.clone());
+                var.exported = true;
+            }
+        }
+        crate::exec::start_afresh(&mut sub);
+        sub.opts.dash_c = true;
+        sub.arg0 = b"sh".to_vec();
+        sub.args = Vec::new();
+        if stdio.stdin == ShellIo::Pipe {
+            let (r, w) = crate::pipe::pipe();
+            sub.fds.set(0, Rc::new(FdObj::PipeRead(r)));
+            child.stdin = Some(UtilFile {
+                file: Rc::new(FdObj::PipeWrite(w)),
+            });
+        }
+        if stdio.stdout == ShellIo::Pipe {
+            let (r, w) = crate::pipe::pipe();
+            sub.fds.set(1, Rc::new(FdObj::PipeWrite(w)));
+            child.stdout = Some(UtilFile {
+                file: Rc::new(FdObj::PipeRead(r)),
+            });
+        }
+        let script = script.to_vec();
+        let sched = self.vp.core.sched.clone();
+        let (id, join) = sched.spawn_with_id(async move {
+            let (status, _) = crate::run_script(sub, script).await;
+            status
+        });
+        child.task = Some((sched, id));
+        child.join = Some(join);
+        child
+    }
 }
 
 /// What a wrapper runs: a standalone builtin, a utility, or an external.
@@ -636,7 +757,85 @@ mod tests {
         })
     }
 
+    /// `shell SCRIPT`: `spawn_shell` with inherited stdio, its status. `shpipe SCRIPT
+    /// N`: writes N lines `lineK` to its stdin pipe, then reads its stdout pipe and
+    /// prints `[...]` around it and the status. `shdrop SCRIPT`: starts it and drops it.
+    fn shell<'a>(ctx: &'a mut UtilCtx<'_>, argv: &'a [Vec<u8>]) -> LocalBoxFuture<'a, i32> {
+        Box::pin(async move {
+            let _ = ctx.write(b"before\n").await;
+            let stdio = ShellStdio {
+                stdin: ShellIo::Inherit,
+                stdout: ShellIo::Inherit,
+            };
+            let mut child = ctx.spawn_shell(&argv[1], stdio).await;
+            child.wait().await
+        })
+    }
+
+    fn shpipe<'a>(ctx: &'a mut UtilCtx<'_>, argv: &'a [Vec<u8>]) -> LocalBoxFuture<'a, i32> {
+        Box::pin(async move {
+            let stdio = ShellStdio {
+                stdin: ShellIo::Pipe,
+                stdout: ShellIo::Pipe,
+            };
+            let mut child = ctx.spawn_shell(&argv[1], stdio).await;
+            let n: usize = String::from_utf8_lossy(&argv[2]).parse().unwrap();
+            let stdin = child.stdin.take().unwrap();
+            for k in 0..n {
+                stdin
+                    .write_all(format!("line{k}\n").as_bytes())
+                    .await
+                    .unwrap();
+            }
+            drop(stdin);
+            let mut out = Vec::new();
+            child
+                .stdout
+                .take()
+                .unwrap()
+                .read_to_end(&mut out)
+                .await
+                .unwrap();
+            let st = child.wait().await;
+            let _ = ctx.write(b"[").await;
+            let _ = ctx.write(&out).await;
+            let _ = ctx.write(format!("] {st}\n").as_bytes()).await;
+            0
+        })
+    }
+
+    fn shdrop<'a>(ctx: &'a mut UtilCtx<'_>, argv: &'a [Vec<u8>]) -> LocalBoxFuture<'a, i32> {
+        Box::pin(async move {
+            let stdio = ShellStdio {
+                stdin: ShellIo::Pipe,
+                stdout: ShellIo::Inherit,
+            };
+            let child = ctx.spawn_shell(&argv[1], stdio).await;
+            ctx.sleep(Duration::from_millis(5)).await;
+            drop(child);
+            0
+        })
+    }
+
     static ENTRIES: &[UtilEntry] = &[
+        UtilEntry {
+            names: &["shell"],
+            mode: Mode::Always,
+            destructive: false,
+            run: shell,
+        },
+        UtilEntry {
+            names: &["shpipe"],
+            mode: Mode::Always,
+            destructive: false,
+            run: shpipe,
+        },
+        UtilEntry {
+            names: &["shdrop"],
+            mode: Mode::Always,
+            destructive: false,
+            run: shdrop,
+        },
         UtilEntry {
             names: &["upper"],
             mode: Mode::Always,
@@ -713,6 +912,54 @@ mod tests {
         assert_eq!(run_with("upper() { echo fn; }; upper", on()).1, "fn\n");
         // Prefix assignments reach the utility's environment.
         assert_eq!(run_with("W=7 says", on()).1, "says 1 W=7\n");
+    }
+
+    #[test]
+    fn spawn_shell_starts_afresh() {
+        // Only exported variables (and the utility's prefix assignments); no
+        // functions, aliases, traps or options; `$0` is `sh`; stdout flushed first.
+        let (st, out, err) = run_with(
+            "f() { echo fn; }; X=1; export Y=2; set -eu; trap 'echo T' EXIT; \
+             Z=3 shell 'echo \"$0 $X-$Y-$Z\"; false; echo after; f' || echo $?",
+            on(),
+        );
+        assert_eq!((st, out.as_str()), (0, "before\nsh -2-3\nafter\n127\nT\n"));
+        assert_eq!(err, "sh: line 1: f: command not found\n");
+        assert_eq!(run_with("shell 'exit 3'; echo $?", on()).1, "before\n3\n");
+        assert_eq!(
+            run_with("shell 'read a; echo got $a'", on()).1,
+            "before\ngot abc\n"
+        );
+        assert_eq!(run_with("shell 'echo x | upper'", on()).1, "before\nX\n");
+    }
+
+    #[test]
+    fn spawn_shell_pipes() {
+        assert_eq!(
+            run_with(
+                "shpipe 'while read l; do echo \"<$l>\"; done; exit 4' 2",
+                on()
+            )
+            .1,
+            "[<line0>\n<line1>\n] 4\n"
+        );
+        // An external on the pipes.
+        assert_eq!(
+            run_with("shpipe 'cat; echo end' 2", on()).1,
+            "[line0\nline1\nend\n] 0\n"
+        );
+        // More than a pipe holds goes through while the utility writes: the shell runs
+        // concurrently.
+        let (_, out, _) = run_with(
+            "shpipe 'n=0; while read l; do n=$((n+1)); done; echo $n' 20000",
+            on(),
+        );
+        assert_eq!(out, "[20000\n] 0\n");
+        // Dropped before it ended: it is stopped (`run_with` checks no task is left).
+        assert_eq!(
+            run_with("shdrop 'while :; do :; done'; echo $?", on()).1,
+            "0\n"
+        );
     }
 
     #[test]

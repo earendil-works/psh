@@ -1502,6 +1502,18 @@ async fn run_in_shell(vp: &mut Vp, program: &[u8], argv: Vec<Vec<u8>>, shown: &s
         return Ok(126);
     }
     let mut sub = enter(vp).await?;
+    start_afresh(&mut sub);
+    let mut argv = argv.into_iter();
+    sub.arg0 = argv.next().unwrap_or_default();
+    sub.args = argv.collect();
+    let (status, _) = Box::pin(crate::run_script(sub, source)).await;
+    Ok(status)
+}
+
+/// Turns a subshell into a shell that starts afresh, as a new `sh` would (D1300; also
+/// `UtilCtx::spawn_shell`, D1191): only exported variables, no functions, aliases,
+/// traps or options of ours. Descriptors and cwd stay.
+pub(crate) fn start_afresh(sub: &mut Vp) {
     let unexported: Vec<String> = sub
         .vars
         .iter()
@@ -1521,11 +1533,6 @@ async fn run_in_shell(vp: &mut Vp, program: &[u8], argv: Vec<Vec<u8>>, shown: &s
     sub.loops = 0;
     sub.status = 0;
     sub.last_bg = None;
-    let mut argv = argv.into_iter();
-    sub.arg0 = argv.next().unwrap_or_default();
-    sub.args = argv.collect();
-    let (status, _) = Box::pin(crate::run_script(sub, source)).await;
-    Ok(status)
 }
 
 /// Owns a running external: dropping it abandons the process (cancel), releases it

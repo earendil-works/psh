@@ -6,7 +6,7 @@ branch: issue/0032-engine-climb
 depends-on: 0026
 touches: crates/psh-engine/ (engine internals per ARCH), tests/**/expected-failures*.txt
 guide: engine.md (follow-up)
-decisions: D1320–D1329, D1920–D1929 (extension)
+decisions: D1320–D1329, D1940–D1949 (extension)
 
 ## Goal
 Collect the engine's open items and then climb the hit list for engine-owned areas.
@@ -82,6 +82,9 @@ Collect the engine's open items and then climb the hit list for engine-owned are
 
 ## Follow-ups
 - BASH and SHELL (HostInfo has no executable path or login shell): later.
+- procs (0030, via the coordinator): oils/builtin-trap/31 is quarantined in
+  tests/spec.toml [[flaky]]: its 100 ms window for the child to install the USR1 trap
+  races under gate load (failed 3 of 5 gate runs, never locally).
 - parser: extquote (`"${x:-$'\t'}"` decodes `$'…'`), brush params/53 and 63 line 3.
 - procs: `wait` waits for process substitutions and `$!` names the last one (brush
   redirection/15).

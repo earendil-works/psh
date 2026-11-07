@@ -159,6 +159,10 @@ match = "brush/compat/signals/13"
 reason = "race: when the loop writes before head starts, psh's pumped pipe buffers 64 KiB more than bash's kernel pipe, so the writer can finish instead of getting SIGPIPE (0006 log; owner: procs, 0030)"
 
 [[flaky]]
+match = "oils/builtin-trap/31"
+reason = "100 ms trap-install window races under gate load (Windows VM leg running concurrently); owner: procs, 0030"
+
+[[flaky]]
 match = "brush/compat/background_jobs/18"
 reason = "timing under load: background job inside command substitution (flaked in several gates; owner: procs, 0030)"
 

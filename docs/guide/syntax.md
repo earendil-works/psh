@@ -152,10 +152,6 @@ once.
 
 ### Aliases
 
-> **Not built yet.** psh keeps an alias table and has the `alias` and `unalias`
-> builtins, but not yet `shopt`, so a script cannot turn on `expand_aliases` and the
-> parser is never given the table.
-
 Bash expands aliases while it reads, so in psh alias expansion is part of the parser. A
 script turns it on with `shopt -s expand_aliases` (bash leaves it off in scripts and
 `bash -c`), and the engine gives the parser the current alias table before each chunk.

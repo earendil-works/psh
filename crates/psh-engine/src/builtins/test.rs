@@ -17,7 +17,7 @@ pub(super) async fn bracket(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     run(vp, "[", &args[1..args.len() - 1]).await
 }
 
-async fn run(vp: &Vp, name: &str, args: &[Vec<u8>]) -> R {
+async fn run(vp: &mut Vp, name: &str, args: &[Vec<u8>]) -> R {
     match eval(vp, args).await {
         Ok(b) => Ok(i32::from(!b)),
         Err(msg) => {
@@ -56,7 +56,7 @@ fn is_binary(op: &[u8]) -> bool {
     )
 }
 
-fn eval<'a>(vp: &'a Vp, a: &'a [Vec<u8>]) -> LocalBoxFuture<'a, T> {
+fn eval<'a>(vp: &'a mut Vp, a: &'a [Vec<u8>]) -> LocalBoxFuture<'a, T> {
     Box::pin(async move {
         match a.len() {
             0 => Ok(false),
@@ -100,7 +100,7 @@ fn eval<'a>(vp: &'a Vp, a: &'a [Vec<u8>]) -> LocalBoxFuture<'a, T> {
 }
 
 struct Parser<'a> {
-    vp: &'a Vp,
+    vp: &'a mut Vp,
     a: &'a [Vec<u8>],
     i: usize,
 }
@@ -155,22 +155,39 @@ impl<'a> Parser<'a> {
             self.i += 1;
             return Ok(v);
         }
-        if let Some(op) = self.a.get(self.i + 1)
+        let a = self.a;
+        if let Some(op) = a.get(self.i + 1)
             && is_binary(op)
-            && self.i + 2 < self.a.len()
+            && self.i + 2 < a.len()
         {
-            let (l, r) = (&self.a[self.i], &self.a[self.i + 2]);
+            let (l, r) = (&a[self.i], &a[self.i + 2]);
             self.i += 3;
             return binary(self.vp, l, op, r).await;
         }
-        if is_unary(t) && self.i + 1 < self.a.len() {
-            let arg = &self.a[self.i + 1];
+        if is_unary(t) && self.i + 1 < a.len() {
+            let arg = &a[self.i + 1];
             self.i += 2;
             return unary(self.vp, t, arg).await;
         }
         self.i += 1;
         Ok(!t.is_empty())
     }
+}
+
+/// `-v name[sub]`: but for an associative array the subscript is arithmetic
+/// (`a[i+1]`, through a nameref too); then the element is looked up by its number.
+fn is_set(vp: &mut Vp, name: &str) -> T {
+    if let Some(open) = name.find('[')
+        && name.ends_with(']')
+    {
+        let (base, sub) = (&name[..open], &name[open + 1..name.len() - 1]);
+        let numeric = vp.var_ref(base).is_some_and(|v| !v.is_assoc());
+        if numeric && !matches!(sub, "@" | "*") && sub.trim().parse::<i64>().is_err() {
+            let n = crate::arith::eval(vp, sub.as_bytes())?;
+            return Ok(vp.is_set(&format!("{base}[{n}]")));
+        }
+    }
+    Ok(vp.is_set(name))
 }
 
 fn int(v: &[u8]) -> Result<i64, String> {
@@ -186,7 +203,7 @@ fn int(v: &[u8]) -> Result<i64, String> {
 }
 
 /// A unary test (`op` is `-f` and so on), for `test` and `[[ ]]`.
-pub(crate) async fn unary(vp: &Vp, op: &[u8], arg: &[u8]) -> T {
+pub(crate) async fn unary(vp: &mut Vp, op: &[u8], arg: &[u8]) -> T {
     let c = op[1];
     match c {
         b'z' => return Ok(arg.is_empty()),
@@ -203,7 +220,7 @@ pub(crate) async fn unary(vp: &Vp, op: &[u8], arg: &[u8]) -> T {
             {
                 return Ok(false);
             }
-            return Ok(vp.is_set(name));
+            return is_set(vp, name);
         }
         b'o' => {
             return Ok(crate::options::by_name(arg).is_some_and(|o| vp.opts.get(o)));

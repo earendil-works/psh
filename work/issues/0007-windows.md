@@ -338,9 +338,10 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
   (arm64 and x64). TESTING.md's L5 row updated.
 - The gate then failed in wasm-host: psh-spec's freshness check called `target/debug/psh`
   older than `crates/psh-os/Cargo.toml`, though cargo had nothing to rebuild for that
-  edit (a test target), so its own advice could not fix it. psh-spec (infra's) now uses
-  cargo's dep-info (`psh.d`) when it exists: exactly the sources the binary was built
-  from; the crate walk stays the fallback (`psh.wasm`). Unit test extended.
+  edit (a test target), so its own advice could not fix it. With dep-info (infra's
+  change, which landed meanwhile), psh-spec now counts only the files it lists, not the
+  manifests or the lock file (an edit that matters rebuilds the binary). Unit test
+  extended. psh-spec is infra's: minimal change, reported.
 
 ## Follow-ups
 - Engine: strip the `\r` of CRLF in `$(…)` and `read` on Windows (ARCH "Windows rules").

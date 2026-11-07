@@ -77,6 +77,14 @@ leftmost-longest matching and back-references in BREs; the `regex` crate has nei
 - Wasm: `brush/compat/extended_tests/11` now passes natively but needs `/bin/sh` and
   `/etc/os-release`, which the JS host lacks (the same reason as `builtins/test/2`).
 
+### 2026-11-08: `-v` with arithmetic subscripts
+- Asked for via the coordinator (engine agent): `[[ -v a[i+1] ]]` and `test -v
+  'a[i+1]'` evaluate the subscript arithmetically unless the array is associative
+  (probed: also through namerefs and for scalars, `s[i-1]`). `builtins::test` now takes
+  `&mut Vp` (arithmetic can assign), `is_set` evaluates with `arith::eval` first.
+  An arithmetic error is reported as `test`/`[[`'s error (status 2), where bash
+  abandons the command line.
+
 ## Follow-ups
 - `[[ -v ref[N] ]]` with `ref` a nameref to a whole array (brush marks it a known
   failure too); `-N` needs access times from the Host.

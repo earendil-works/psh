@@ -361,6 +361,15 @@ mod tests {
                 "a=(1 2); [[ -v a[1] ]]; echo $?; [[ -v a[5] ]]; echo $?",
                 "0\n1\n",
             ),
+            // An indexed subscript is arithmetic; an associative one is a key.
+            (
+                "a=(x y z); i=1; [[ -v a[i+1] ]]; echo $?; test -v 'a[i+5]'; echo $?",
+                "0\n1\n",
+            ),
+            (
+                "declare -A h=([i+1]=v); [[ -v h[i+1] ]]; echo $?; i=1 s=x; [[ -v s[i-1] ]]; echo $?",
+                "0\n0\n",
+            ),
             (
                 "[[ -o errexit ]]; echo $?; set -e; [[ -o errexit ]]; echo $?",
                 "1\n0\n",

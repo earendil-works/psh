@@ -86,6 +86,62 @@ control handle, waker, Host trait, virtual processes) that everything later buil
 - Docs: ARCH.md psh-engine and Host sections, TESTING.md (psh-spec in-process). Guide:
   none affected (engine.md is a follow-up).
 
+### 2026-11-07 Host v1 contract (for 0006, psh-os)
+The trait is `psh_engine::host::Host` (`crates/psh-engine/src/host.rs`, D1052). What the
+engine relies on, which any host must keep:
+- **Never block the engine thread on something the engine must do first.** Every
+  method returns at once; waiting goes through `Poll::Pending` + the task's waker.
+  `HostFuture`s may complete immediately (`std::future::ready`); the test host's latency
+  mode proves the engine copes with `Pending` everywhere.
+- **Wakers may be woken from any thread** (they push onto a `Mutex` queue and wake the
+  embedder's waker). A host thread must wake the waker it got from the *last* poll.
+- **`Drop` releases.** Dropping an `ExtProc` that still runs = abandon (TERM to its
+  group, KILL after the grace, background reap); `release()` = keep running, reap in the
+  background (used for `&` jobs when a script ends); dropping a `HostFile` closes it
+  (a pump's writer end flushes what it buffered, then closes, so the child sees EOF).
+  Cancel drops all tasks, so this is the whole cancel path: nothing else is called.
+- **Paths are bytes**, absolute (the engine joins its logical cwd), `/`-separated;
+  `C:/x` on Windows. `/dev/null` must open the null device (Windows: `NUL`).
+  `/dev/stdin|stdout|stderr|fd/N` never reach the host (the engine emulates them).
+- **`spawn(SpawnSpec)`** is synchronous. `program` is what `resolve` returned or a
+  path containing `/` (made absolute against the cwd); `argv[0]` is the name as
+  written; `env` is complete (do not inherit); `cwd` is the shell's. `fds` lists the
+  child's descriptors 0–2 at least (the engine adds `Null` for closed ones; >2 appear
+  for `exec 3>…` and are currently ignored by the std host): `File(f)` is a `HostFile`
+  this host created (downcast via `Any`) to pass as is; `Pipe { input }` asks for a new
+  pipe whose engine end comes back in `Spawned::pipes` as a `HostFile`; `Dup(n)` = the
+  same object as fd n of the list (one pipe for `|&`). Errors: `NotFound` → 127,
+  anything else → 126, message from `host::error_text` (strerror wording).
+- **`ExtProc::poll_wait`** returns `Exited(code)` or `Signaled(sig)`; the engine maps
+  to `$?` (`128+sig`). It may be polled after it returned Ready (must return the same).
+  `signal(sig)` delivers a signal (std host: always KILL).
+- **`HostFile`**: `poll_read` (0 = EOF), `poll_write` (`BrokenPipe` when no reader;
+  the engine turns that into status 141 for vprocs), `is_terminal`. Shared via `Rc`
+  between dup'ed descriptors: `&self` + interior mutability. Engine-side ends of pumps
+  must not block the engine thread; regular files may be read/written synchronously.
+- `stat(path, follow)`, `access(path, Read|Write|Execute)` (true/false; `Err` = cannot
+  check), `read_dir` (no `.`/`..`), `canonicalize`, `resolve(name, PATH, cwd)` (PATH
+  search incl. empty entries = cwd; PATHEXT on Windows; `None` = command not found),
+  `sleep(duration)`, `pid()` (`$$`; embedders running in-process give a fake one).
+
+What I expect 0006 to change (announce, then change it in place; the engine adapts):
+- process groups / sessions per external and `signal` to the group (TERM really TERM),
+  abandon = TERM → grace → KILL to the group; `kill` builtin needs a host op to signal
+  arbitrary pids/groups (refusing the embedder's own pid);
+- children get every open fd (`exec 3>f; cmd` passes 3): honour `fds` > 2;
+- pipes between two externals passed directly (no pumps): needs a way for the engine
+  to ask "can this pipe be an OS pipe" — e.g. a `Host::pipe() -> (HostFile, HostFile)`
+  whose ends are passable as `ChildFd::File`, used when both neighbours are externals;
+- exit + EOF with bounded drain for grandchildren holding output pipes;
+- non-blocking reads of inherited stdio / FIFOs (readiness thread), FIFO opens off
+  the engine thread (open may return `Pending`), real `access` (euid), umask,
+  `ENOEXEC` reported distinctly (engine then runs the file as a psh script);
+- temp files for large here-docs (optional).
+Nothing needs freezing before 0006 starts; the engine-side users are few (`exec.rs`
+`run_external`, `apply_redirect`/`open_to`, builtins `cd`/`pwd`/`test`, `expand.rs`
+glob). Please keep `HostFuture`, `HostFile` (`&self`, `Any`), drop semantics and the
+"never block" rule; the rest may move.
+
 ## Follow-ups
 - guide: `engine.md` (stepping, vprocs, the Host trait for embedders).
 - Scripts on stdin are read whole before running; bash reads as it goes (a `read` in

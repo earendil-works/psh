@@ -1,7 +1,7 @@
 # 0006: Unix process layer
 
-status: open
-agent: -
+status: in-progress
+agent: procs
 branch: issue/0006-unix-process-layer
 depends-on: 0005 (`libc` allowed, D024)
 touches: crates/psh-os/ (unix), crates/psh/ (driver, signals), crates/psh-engine/ (Host trait changes, announced), tests/process/

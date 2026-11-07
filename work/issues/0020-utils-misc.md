@@ -42,6 +42,26 @@ date env printenv nice nohup which`.
 - uutils, uutils diffutils (MIT/Apache), oh-my-pi's `diff.rs` and `tools/nohup.rs` (MIT).
 
 ## Log
+- Part 1 (shapes): `base64`, `md5sum sha1sum sha224sum sha256sum sha384sum sha512sum`,
+  `md5`, `shasum`, `cmp`, `which`, `printenv`, `env -S -C` (D1200–D1203). Digests are
+  ours (`sum_hash.rs`, RFC 1321 / FIPS 180-4 vectors in its tests). Probed GNU in the
+  recording image and BSD on macOS 26 (scratch scripts in work/scratch/0020/). Findings:
+  macOS 26 `md5 -s` prints the bare hash (not FreeBSD's `MD5 ("s") = h`); macOS
+  md5sum's `-c` does not read stdin and warns about blank/comment lines (GNU skips them);
+  GNU quotes names with spaces in sum messages (`'standard input'`); GNU `cmp -l` pads
+  offsets to the largest printable offset (19 digits when no size is known).
+- `which` first printed `NAME: shell builtin` for every utility (ARCH's example); that
+  broke `$(which env)` (brush special_parameters/8), so the program's path wins when
+  there is one (D1200). Coordinator: ARCH's "which reports utilities truthfully" line may
+  want this nuance.
+- Outside touches (minimal): psh-engine util.rs (`SpawnEnv::cwd`,
+  `UtilCtx::is_utility`, `UtilCtx::search_path`); psh-classify utils.rs (base64's long
+  value options and `--output` effect, md5 `-c`, sha224sum/sha384sum).
+- Ratchets from `scripts/spec-linux --update` plus the macOS run: agent passes 701/701 on
+  Linux (its 71 shared entries were stale), oils/brush shared entries removed; two cases
+  the shared file had covered for wasm got wasm lines (case-insensitive APFS, `~root`).
+- L4: tests/utils/{base64,cmp,sum,which,printenv}/ and env/flags (the case dirs are
+  recorded, so a file name with a newline must be removed before a case ends).
 
 ## Follow-ups
 

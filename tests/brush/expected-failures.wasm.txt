@@ -40,3 +40,4 @@ brush/compat/signals/8: a shell a signal's default action ends reports 128+n: no
 brush/compat/signals/9: a shell a signal's default action ends reports 128+n: no process to die by it (D1903)
 brush/compat/signals/19: a shell a signal's default action ends reports 128+n: no process to die by it (D1903)
 brush/compat/signals/26: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
+brush/compat/signals/32: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals

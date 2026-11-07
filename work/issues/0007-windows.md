@@ -420,12 +420,33 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
   afterwards; `ln -s` could print the host's reason (Developer Mode) instead of the bare
   "Permission denied".
 
+### 2026-11-07 The whole psh-spec on Windows
+- Linux truth from `scripts/spec-linux` (4 min in Docker). First Windows run (release,
+  49 s): oils 1685/2511, brush 2552/3171, agent 281/701, utils 357/433, with 414+64+9
+  Windows-only failures not explained by missing programs.
+- Fixed on the way (psh-spec, psh-os): case env paths in `C:/x` form (canonical
+  `\\?\C:\...` broke every `$TMP/x`, ~300 cases); `#!` interpreters that are missing
+  are noted (Oils' argv.py, printenv.py), `python3` falls back to `python`; a shell
+  binary's "command not found" is noted; exit 128+n = signal n on Windows; missing
+  program 127 (not RunInShell); `/dev/zero`, `/dev/urandom`, `/dev/random`; `test -c`
+  on `/dev/*`; reading a directory fails "Is a directory"; directory size 4096; dep-info
+  paths vs a canonical root in the freshness check.
+- Now: oils 2132/2511 (84.9%), brush 2579/3171 (81.3%), agent 283/701 (40.4%), utils
+  357/433 (82.4%); the rest of the failures not in the shared ratchet: 161 + 233 + 411 +
+  49 need external programs (sh, grep, sed, awk, seq, ps, python2, ...), 70 are listed in
+  the new windows files by kind (D1920): file names 17, symlinks 14, x/permission bits 8,
+  Unix layout 8, psh bug mkdir -p 9, fds>2 4, setuid/sticky 3, drive-rooted HOME 2,
+  python2 2, trailing dot 1, SIGUSR1 1. The files agent's 27 utils lines unchanged.
+- Gate: the `spec` leg runs every layer, 85 s with the build.
+- prlctl health: execs fail with `PrlJob_GetRetCode` up to half the time now, even idle,
+  for root and the user alike; a failed exec never ran its command. The runner exec is
+  retried up to 5 times when it never started; reported to the coordinator.
+
 ## Follow-ups
+- For files (0015): `mkdir -p C:/x/y` tries to create `C:` (9 Oils cases on Windows).
+- The VM's Parallels Tools are outdated and execs fail often: update or restart (owner).
 - For files (0015): `chmod -v/-c` reports the mode after the change as `stat` sees it
   (D1919); `ln -s` shows why a file symlink failed on Windows.
-- psh-spec on Windows for the oils, brush and agent layers: triage the differences into
-  `expected-failures.windows.txt` (and normalization rules where a difference is not
-  psh's), then add them to the `spec` leg.
 - Engine: strip the `\r` of CRLF in `$(…)` and `read` on Windows (ARCH "Windows rules").
 - Engine (routed to builtins): `PATH=/x cmd` ignores the prefix PATH for the lookup.
 - Delete the old per-worktree checkouts in the VM (C:\psh-gate\<worktree>) once no

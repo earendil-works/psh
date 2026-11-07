@@ -2361,3 +2361,24 @@ top-level help lists bash's options for display only; hidden `-h` and `-V` entri
 `argument` from showing them as help/version. Values stay `OsString` (bytes on Unix).
 `--help` exits 0 on stdout now (as bash), not the old usage on stderr with 2. Size: the
 release binary grows by about 110 KB (8.87 MB → 8.99 MB on macOS arm64).
+## D1920: The whole psh-spec runs on Windows in the gate
+date: 2026-11-07 · by: windows · issue: 0007
+The Windows leg's `spec` runs every layer (L1 Oils, L2 brush, L3 agent, L4 utils) in the
+VM against the shared goldens and `tests/<layer>/expected-failures.windows.txt` (D1331,
+D1914): about 85 s with the build, so it stays in the gate. A case that needs a program
+Windows lacks may fail without a line (the in-process engine notes lookups that find
+nothing and `#!` interpreters that are missing; a shell binary's stderr "command not
+found"). Every other Windows-only failure is listed with its reason, by kind: Windows
+file names (no `* ? | < > " \ :`, no trailing dot), no file symlinks without Developer
+Mode and junctions for directories, no execute or permission bits beyond read-only
+(D1919), no sticky/setuid/setgid, descriptors above 2 not passed (D1074), no Unix file
+system layout (`/bin/sh`, `/etc`, `/usr`), drive-rooted paths (`HOME` is `C:/...`), no
+SIGUSR1 to deliver, Oils' python2 helper; psh bugs are listed with their owner until
+fixed. For a fair comparison psh-spec on Windows gives cases their paths in psh's
+spelling (`C:/x`, no `\\?\`), treats exit `128+n` of a shell binary as death by signal `n`
+(nothing dies by a signal on Windows), and the host emulates what scripts rely on:
+`/dev/zero`, `/dev/urandom` (system random bytes), character-device `stat` for the
+`/dev` names, "Is a directory" for reading a directory, a directory size of 4096, a
+missing program as 127 before any interpreter guess, `python3` falling back to `python`
+(what Windows installs). prlctl's exec failures that never started the runner (seen in
+runs of up to half of all execs) are retried up to five times.

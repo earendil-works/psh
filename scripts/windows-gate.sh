@@ -381,6 +381,7 @@ log_share=$(to_share "${log%.log}" | tr / '\\')
 run() {
   running=1
   rm -f "$result"
+  log_start=$(wc -c <"$log" | tr -d ' ')
   scripts/timeout.sh "$backstop" prlctl exec "$vm" --current-user powershell -NoProfile \
     -NonInteractive -ExecutionPolicy Bypass -File "$runner" -Repo "$repo_share" \
     -Ref "refs/windows-gate/$name" -Name "$name" -Toolchain "$toolchain" -Msrv "$msrv" \
@@ -396,13 +397,27 @@ run() {
   rm -f "$result"
 }
 
+# Whether the runner of the last attempt got as far as printing that it started.
+runner_started() {
+  tail -c +"$((log_start + 1))" "$log" 2>/dev/null | grep -q "^windows-gate: $name at "
+}
+
 st=0
 ensure_vm || st=$?
 [ "$st" = 0 ] || exit "$st"
 run
-# 255 is prlctl's own failure (PrlJob_...), never the runner's: the VM went away under
-# the run (the owner suspended it, say). Once more, from a settled VM; a runner that
-# survived is killed by the next one (windows-gate.ps1).
+# 255 is prlctl's own failure (PrlJob_...), never the runner's. Measured: an exec that
+# fails at once never ran its command, and the guest tools fail some execs in a row, so
+# those are retried a few times (D1916). A runner that started and lost its stream (no
+# result file) runs once more from a settled VM; one that survived is killed by the next
+# (windows-gate.ps1).
+tries=0
+while [ "$st" = 255 ] && ! runner_started && [ "$tries" -lt 5 ]; do
+  tries=$((tries + 1))
+  echo "windows-gate: prlctl exec did not start the runner; retrying ($tries of 5)" >&2
+  sleep 3
+  run
+done
 if [ "$st" = 255 ]; then
   echo "windows-gate: prlctl exec failed (the VM is $(vm_state || true)); retrying once" >&2
   st=0

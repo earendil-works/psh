@@ -1,0 +1,10 @@
+# Ratchet for layer agent on windows (D1113, D1331): active cases that may fail here
+# but pass on Linux (they are not in expected-failures.txt), each with its reason.
+# psh-spec --update-ratchet removes cases that pass; never add a regression.
+agent/files/32: Windows keeps no execute bit: it comes from the extension or a #! line
+agent/files/34: no file symlinks without Developer Mode (ln -s fails)
+agent/files/35: no file symlinks without Developer Mode (ln -s fails)
+agent/files/36: no file symlinks without Developer Mode (ln -s fails)
+agent/procs/37: Windows keeps no execute bit: it comes from the extension or a #! line
+agent/view/15: psh bug (files): mkdir -p splits off the drive of C:/...
+agent/view/17: psh bug (files): mkdir -p splits off the drive of C:/...

@@ -324,8 +324,9 @@ exec` until the repository has a remote, then on GitHub Actions (D027):
   `work/scratch/windows-gate/logs/` (D1916). An unreachable VM fails the leg in bounded time. `PSH_GATE_WINDOWS=0` skips
   the leg when the VM is broken, for the coordinator and the owner only; the skip is
   logged (D1071).
-- `spec`: psh-spec's L4 (utilities) in the VM against the shared goldens, with the
-  `windows` platform ratchet (`tests/<layer>/expected-failures.windows.txt`): a case
-  may fail only if it needs a program Windows lacks or the file lists it (D1914).
+- `spec`: the whole psh-spec (L1–L4) in the VM against the shared goldens, with the
+  `windows` platform ratchets (`tests/<layer>/expected-failures.windows.txt`): a case
+  may fail only if it needs a program Windows lacks or the file lists it with its
+  reason (D1914, D1920). About 85 s.
 - Not on Windows: the bash/perl script legs and the `deps` and `wasm` legs, which are
   the same on every host.

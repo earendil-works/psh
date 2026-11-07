@@ -273,6 +273,7 @@ impl Shell {
             last_bg: None,
             jobs: Default::default(),
             job: None,
+            exec_tail: false,
             funcs: Rc::new(Default::default()),
             frames: Vec::new(),
             loops: 0,

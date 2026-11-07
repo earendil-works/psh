@@ -241,6 +241,15 @@ can express neither); `pid()`; `kill()`.
   sets the cancel bit. signals/32 now fails deterministically (a subshell vproc stops
   with the shell) and is back in the ratchet with that reason; oils/background/7 (jobs
   10 ms apart) is back in the ratchet as a timing race.
+- D1902: a pipeline stage that is one external command drops its descriptors once the
+  external has them (bash execs it), so `loop | head -1` gets EPIPE when head exits.
+  Test host `hang` now keeps its descriptors (the cancel test relied on the stage
+  holding them). brush/compat/signals/13 stays in the ratchet as a race (when the loop
+  writes before head starts, the pump path buffers 64 KiB more than bash's pipe).
+- Timing cases (oils/background/7, /17, builtin-kill/16, /17) fail under
+  `scripts/timeout.sh` because it runs commands with `nice -n 10`: on a loaded machine
+  10–60 ms sleeps race. Un-niced (as the gate runs) they pass; background/7 stays in the
+  ratchet as a race.
 
 ## Follow-ups
 - guide: `processes.md` (placement, cancel and abandonment, leak checks).

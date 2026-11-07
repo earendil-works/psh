@@ -1400,3 +1400,12 @@ inside `$(…)`) is then delivered before `kill` returns and the run stops befor
 command, as bash dies at once; before, the watcher thread's cancel raced the following
 commands. A `( … )` subshell, being a vproc, stops with the shell (bash's subshell
 process would go on).
+
+## D1902: A pipeline stage that is one external command lets go of its descriptors
+date: 2026-11-07 · by: procs · issue: 0006
+bash execs the last command of a stage's subshell, so a stage `… | head -1` holds no
+pipe end of its own. The engine marks a stage that is one simple command (`exec_tail`);
+when it runs an external, the vproc drops its descriptor table once the external has its
+descriptors (and, with redirections, the saved table), so the pipe closes when the
+external closes it and a writer gets EPIPE at once, not when the stage's task ends.
+Functions, builtins and nested commands never see the mark.

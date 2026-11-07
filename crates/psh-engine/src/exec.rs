@@ -303,7 +303,10 @@ pub(crate) fn spawn_sub(sub: Vp, code: Rc<Code>, body: Body) -> Join<i32> {
         let mut sub = sub;
         let r = match body {
             Body::List(l) => run_list(&mut sub, &code, l).await,
-            Body::Stage(c) => run_command_unchecked(&mut sub, &code, c).await,
+            Body::Stage(c) => {
+                sub.exec_tail = matches!(code.ast.cmd(c).kind, CommandKind::Simple(_));
+                run_command_unchecked(&mut sub, &code, c).await
+            }
         };
         let last = sub.status;
         let status = r.unwrap_or_else(|u| u.status(last));
@@ -965,6 +968,8 @@ fn run_simple<'a>(
     s: &'a SimpleCommand,
 ) -> LocalBoxFuture<'a, R> {
     Box::pin(async move {
+        // Only this command is the vproc's last act, not what it runs (D1902).
+        let tail = std::mem::take(&mut vp.exec_tail);
         vp.line = code.line(cmd.span.start);
         let (argv, assigns) = match Box::pin(prepare_simple(vp, code, cmd, s)).await? {
             Prepared::Done(status) => return Ok(status),
@@ -1028,6 +1033,7 @@ fn run_simple<'a>(
             }
         };
         if cmd.redirects.is_empty() {
+            vp.exec_tail = tail;
             return run_argv(vp, argv, assigns).await;
         }
 
@@ -1055,6 +1061,13 @@ fn run_simple<'a>(
                 return Err(u);
             }
         }
+        if tail {
+            // The vproc ends with this command: nothing to restore, and the saved
+            // table must not keep the external's pipe ends open.
+            drop(saved);
+            vp.exec_tail = true;
+            return run_argv(vp, argv, assigns).await;
+        }
         let r = run_argv(vp, argv, assigns).await;
         vp.fds = saved;
         r
@@ -1074,11 +1087,13 @@ fn run_argv(
         .and_then(|n| vp.funcs.get(n))
         .cloned()
     {
+        vp.exec_tail = false;
         return Box::pin(call_function(vp, f, argv, assigns));
     }
     if builtins::get(vp, name).is_none() {
         return Box::pin(run_external(vp, argv, assigns));
     }
+    vp.exec_tail = false;
     Box::pin(run_builtin(vp, argv, assigns))
 }
 
@@ -1246,6 +1261,11 @@ pub(crate) async fn run_external_with(
             FdObj::PipeRead(_) => inputs.push(Pump::new(ours.clone(), theirs)),
             _ => outputs.push(Pump::new(theirs, ours.clone())),
         }
+    }
+    // The vproc's last act: the external has its descriptors now (bash execs it), so
+    // the vproc lets go of them; a pipe the external closes is closed (D1902).
+    if std::mem::take(&mut vp.exec_tail) {
+        vp.fds = Default::default();
     }
     let mut status = None;
     let st = poll_fn(|cx| {

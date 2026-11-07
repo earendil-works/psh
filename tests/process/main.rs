@@ -308,3 +308,11 @@ fn nohup_and_disown_survive_the_runs_end() {
     survived(&a);
     survived(&b);
 }
+
+#[test]
+fn a_builtin_loop_into_head_ends_by_sigpipe() {
+    // The head stage holds no pipe end of its own (D1902): once head exits, the loop's
+    // next write fails and ends the stage with 141.
+    let r = run("while :; do echo y; done | head -n 1; echo ${PIPESTATUS[0]} ${PIPESTATUS[1]}");
+    assert_eq!(r.stdout, "y\n141 0\n", "{r:?}");
+}

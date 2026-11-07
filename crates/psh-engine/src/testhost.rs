@@ -879,7 +879,13 @@ fn add_standard_commands(host: &TestHost) {
     });
     host.add_command("true", |_| Box::pin(async { 0 }));
     host.add_command("false", |_| Box::pin(async { 1 }));
-    host.add_command("hang", |_| Box::pin(std::future::pending()));
+    // Keeps its descriptors open, as a real process that hangs does.
+    host.add_command("hang", |p| {
+        Box::pin(async move {
+            let _fds = p;
+            std::future::pending::<i32>().await
+        })
+    });
     host.add_command("exit", |p| {
         Box::pin(async move {
             p.argv

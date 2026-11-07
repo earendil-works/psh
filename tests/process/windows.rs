@@ -53,3 +53,15 @@ fn sh_scripts_and_plain_files_run_in_psh() {
          printf 'echo plain \"$@\"\\n' > plain && ./plain x 'y z'");
     assert_eq!(r.stdout, "sh a 2\nenv-bash ./e\nplain x y z\n", "{r:?}");
 }
+
+#[test]
+fn cd_keeps_drive_paths() {
+    let r = run("cd C:/Windows && pwd; cd 'C:\\Windows\\System32' && pwd; \
+         cd C:/ && cd .. && pwd; cd /c/Windows && pwd");
+    let lines: Vec<String> = r.stdout.lines().map(str::to_ascii_lowercase).collect();
+    assert_eq!(
+        lines,
+        ["c:/windows", "c:/windows/system32", "c:/", "/c/windows"],
+        "{r:?}"
+    );
+}

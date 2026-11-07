@@ -391,12 +391,17 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
   `"$@"`). Guide (windows.md) and ARCH updated. Gap: options on the line
   (`#!/usr/bin/env -S bash -e`) are not applied to the subshell.
 
+### 2026-11-07 Drive paths after D1323
+- The engine's `normalize` keeps `C:/x` (D1323): the host's `/C:/x` workaround is gone.
+  Windows L5 case `cd_keeps_drive_paths` (`C:/Windows`, `C:\\Windows\\System32`, `..` stops
+  at `C:/`, `/c/Windows`); guide note updated. `Host::home_dir` was already there (the
+  current user, from `USERPROFILE`, D1915).
+
 ## Follow-ups
 - psh-spec on Windows for the oils, brush and agent layers: triage the differences into
   `expected-failures.windows.txt` (and normalization rules where a difference is not
   psh's), then add them to the `spec` leg.
 - Engine: strip the `\r` of CRLF in `$(…)` and `read` on Windows (ARCH "Windows rules").
-- Engine: `normalize` turns `C:/x` into `/C:/x` (`cd`, `pwd` show it); keep the drive.
 - Engine (routed to builtins): `PATH=/x cmd` ignores the prefix PATH for the lookup.
 - Delete the old per-worktree checkouts in the VM (C:\psh-gate\<worktree>) once no
   old-style run is left.

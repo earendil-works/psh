@@ -44,9 +44,10 @@ $ cd /tmp && pwd && pwd -P
 C:/Users/me/AppData/Local/Temp
 ```
 
-> **Not built yet.** After `cd C:/Windows`, `pwd` prints `/C:/Windows`; it will print
-> `C:/Windows`. Both work as paths. Network paths (`//server/share`) are not accepted
-> by `cd` yet.
+`cd C:/Windows` and `cd 'C:\Windows'` both leave `pwd` at `C:/Windows`, and `..` stops
+at the drive.
+
+> **Not built yet.** Network paths (`//server/share`) are not accepted by `cd`.
 
 The standalone `psh` also sets the variables scripts expect, when they are not set:
 `HOME` is `%USERPROFILE%` and `TMPDIR` is the temp directory, both with forward

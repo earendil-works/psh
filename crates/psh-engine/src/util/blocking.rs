@@ -705,7 +705,7 @@ fn run_guarded<T>(ctx: &mut SyncCtx, arg: T, f: SyncFn<T>) -> i32 {
 mod tests {
     use super::*;
     use crate::util::{LocalBoxFuture, Mode, UtilEntry, UtilPolicy};
-    use crate::{Script, Shell, ShellConfig, Step};
+    use crate::{Script, Shell, Step};
 
     /// `bupper`: stdin to stdout upper-cased, through `SyncCtx`'s `Read`/`Write`.
     fn bupper_body(ctx: &mut SyncCtx, _: ()) -> i32 {
@@ -850,7 +850,7 @@ mod tests {
     /// Thread backend: the real file system, output to a file of a temp directory.
     #[cfg(unix)]
     fn threaded(dir: &std::path::Path, src: &str) -> i32 {
-        let mut cfg = ShellConfig::new(Rc::new(crate::std_host::StdHost::new()));
+        let mut cfg = crate::ShellConfig::new(Rc::new(crate::std_host::StdHost::new()));
         cfg.utilities = policy();
         cfg.cwd = dir.to_string_lossy().into_owned().into_bytes();
         cfg.stdin = None;

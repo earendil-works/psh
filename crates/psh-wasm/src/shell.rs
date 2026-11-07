@@ -159,6 +159,7 @@ export! {
                 arg0,
                 args,
                 dash_c: dash_c != 0,
+                options: Vec::new(),
             })
         })();
         let Some(script) = parsed else {

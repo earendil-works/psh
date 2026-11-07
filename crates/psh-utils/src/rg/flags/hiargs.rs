@@ -452,8 +452,12 @@ impl HiArgs {
             }
         } else {
             builder.line_terminator(Some(b'\n')).dot_matches_new_line(false);
-            if self.crlf_match {
+            if self.crlf {
                 builder.crlf(true);
+            } else if self.crlf_match {
+                // psh: CRLF anchors with `\n` as the line terminator, the
+                // searcher's (D030).
+                builder.crlf(true).line_terminator(Some(b'\n'));
             }
             // We don't need to set this in multiline mode since multiline
             // matchers don't use optimizations related to line terminators.

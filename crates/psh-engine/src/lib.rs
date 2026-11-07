@@ -289,6 +289,34 @@ impl Shell {
                 v.declared_only = true;
             }
         }
+        // Who and where the shell runs, from the host (D1328). As in bash: UID and
+        // EUID (readonly integers) and the names below give way to the environment's;
+        // PPID never does; GROUPS is computed, so assignments to it do nothing.
+        let info = cfg.host.info();
+        let ro_int = |n: u32| Var {
+            integer: true,
+            readonly: true,
+            ..Var::scalar(n.to_string().into_bytes())
+        };
+        for (name, n) in [("UID", info.uid), ("EUID", info.euid)] {
+            if vars.get(name).is_none() {
+                vars.insert(name, ro_int(n));
+            }
+        }
+        if let Some(p) = info.ppid {
+            vars.insert("PPID", ro_int(p));
+        }
+        for (name, v) in [
+            ("HOSTNAME", info.hostname.clone()),
+            ("OSTYPE", info.ostype.clone().into_bytes()),
+            ("MACHTYPE", info.machtype.clone().into_bytes()),
+            ("HOSTTYPE", info.hosttype.clone().into_bytes()),
+        ] {
+            if vars.get(name).is_none() {
+                vars.insert(name, Var::scalar(v));
+            }
+        }
+        vars.entry("GROUPS").dynamic = Some(vars::Dynamic::Groups);
         // psh's compatibility target; scripts gate bash-isms on these (D1264).
         vars.insert("BASH_VERSION", Var::scalar(b"5.3.9(1)-release".to_vec()));
         let mut info = std::collections::BTreeMap::new();

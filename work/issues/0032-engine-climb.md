@@ -67,6 +67,11 @@ Collect the engine's open items and then climb the hit list for engine-owned are
   many remaining hit-list failures are macOS vs Linux (hexdump, tac, od, /var/root,
   BSD messages) and pass in the container.
 
+- Host info variables (D1328): UID, EUID, PPID, GROUPS, HOSTNAME, OSTYPE, MACHTYPE,
+  HOSTTYPE from `Host::info()`.
+- Pending: `$(…)` follows `Host::strips_crlf()` (builtins' D1292) once it lands; record
+  as D1329, superseding D1324's "Windows builds only".
+
 ## Follow-ups
 - parser: extquote (`"${x:-$'\t'}"` decodes `$'…'`), brush params/53 and 63 line 3.
 - procs: `wait` waits for process substitutions and `$!` names the last one (brush

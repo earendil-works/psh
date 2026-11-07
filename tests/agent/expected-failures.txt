@@ -7,7 +7,6 @@ agent/files/42: macOS BSD utility output differs from GNU (wc/uniq padding, ls, 
 agent/files/43: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/files/47: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/globs-status/2: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
-agent/pipes/8: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/procs/40: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/procs/42: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/redirects/1: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
@@ -50,9 +49,6 @@ agent/search/34: needs psh's rg (utilities, search batch); rg is not on the runn
 agent/search/35: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
 agent/search/36: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
 agent/search/37: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
-agent/text/7: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
-agent/text/13: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
-agent/text/45: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/text/13: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/top-shapes/9: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS
 agent/top-shapes/10: needs psh's rg (utilities, search batch); rg is not on the runner's PATH on macOS

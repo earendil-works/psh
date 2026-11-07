@@ -2108,3 +2108,11 @@ it: a default of `/usr/bin:/bin:/usr/sbin:/sbin`, `confstr(_CS_PATH)` in psh-os 
 Windows keeps the default until its host overrides it. `command -p NAME` runs, and
 `command -pv`/`-pV` report, the program found there (not a psh utility, and a hashed
 program still wins, as in bash).
+## D1328: UID, EUID, PPID, GROUPS and the host names come from `Host::info()`
+date: 2026-11-08 · by: engine · issue: 0032
+Read once when the shell starts (`Host::info()`, D1301), as bash sets them:
+`UID`/`EUID` readonly integers unless the environment has them (then the inherited
+exported value wins, as in bash), `PPID` a readonly integer always (left alone when the
+host reports no parent), `HOSTNAME`, `OSTYPE`, `MACHTYPE`, `HOSTTYPE` plain variables
+unless inherited. `GROUPS` is a dynamic indexed array refreshed from the host on each
+read, so assignments to it have no effect; unset, it becomes an ordinary variable.

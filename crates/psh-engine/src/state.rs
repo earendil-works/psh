@@ -318,6 +318,19 @@ impl Vp {
                 }
                 return;
             }
+            Dynamic::Groups => {
+                let groups = self.core.host.info().groups;
+                if let Some(var) = self.vars.get_mut(name) {
+                    var.value = Value::Indexed(
+                        groups
+                            .iter()
+                            .enumerate()
+                            .map(|(i, g)| (i as i64, g.to_string().into_bytes()))
+                            .collect(),
+                    );
+                }
+                return;
+            }
             Dynamic::BashPid => self.bashpid.to_string(),
             Dynamic::BashSubshell => self.subshell_level.to_string(),
         };

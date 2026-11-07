@@ -251,9 +251,6 @@ oils/vars-special/3
 oils/vars-special/4
 oils/vars-special/5
 oils/vars-special/15
-oils/vars-special/18
-oils/vars-special/19
-oils/vars-special/20
 oils/vars-special/25
 oils/vars-special/28
 oils/xtrace/2

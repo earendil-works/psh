@@ -896,3 +896,20 @@ fn command_subst_crlf() {
         &want,
     );
 }
+
+#[test]
+fn host_info_variables() {
+    // The test host reports `HostInfo::default()`.
+    let i = crate::host::HostInfo::default();
+    check(
+        "echo $UID $EUID ${GROUPS[0]} $HOSTTYPE; GROUPS=(7); echo ${GROUPS[0]}; (UID=1) 2>/dev/null || echo ro",
+        &format!(
+            "{} {} {} {}\n{}\nro\n",
+            i.uid, i.euid, i.groups[0], i.hosttype, i.groups[0]
+        ),
+    );
+    check(
+        "declare -p UID",
+        &format!("declare -ir UID=\"{}\"\n", i.uid),
+    );
+}

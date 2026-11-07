@@ -36,6 +36,8 @@ pub(crate) enum Dynamic {
     BashLineno,
     BashArgv,
     BashArgc,
+    /// The host's groups (D1328).
+    Groups,
 }
 
 /// `declare -l` / `-u` (and `-c` is not bash 5.3's).

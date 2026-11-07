@@ -15,6 +15,7 @@
 
 mod cmdline;
 mod file;
+mod fs;
 mod path;
 mod poller;
 pub mod signals;
@@ -250,7 +251,7 @@ pub(crate) fn resolve_in(name: &[u8], path_var: &[u8], cwd: &[u8]) -> Option<Vec
 }
 
 /// File identity (volume serial and file index), for `-ef` and loop checks.
-fn file_id(p: &std::path::Path, follow: bool) -> Option<(u64, u64)> {
+fn file_id(p: &std::path::Path, follow: bool) -> Option<(u64, u64, u64)> {
     use std::os::windows::fs::OpenOptionsExt;
     let mut flags = FILE_FLAG_BACKUP_SEMANTICS;
     if !follow {
@@ -268,7 +269,11 @@ fn file_id(p: &std::path::Path, follow: bool) -> Option<(u64, u64)> {
         return None;
     }
     let ino = (u64::from(info.nFileIndexHigh) << 32) | u64::from(info.nFileIndexLow);
-    Some((u64::from(info.dwVolumeSerialNumber), ino))
+    Some((
+        u64::from(info.dwVolumeSerialNumber),
+        ino,
+        u64::from(info.nNumberOfLinks),
+    ))
 }
 
 fn is_executable(p: &std::path::Path, m: &std::fs::Metadata) -> bool {
@@ -302,7 +307,8 @@ fn metadata(p: &std::path::Path, m: &std::fs::Metadata, follow: bool) -> Metadat
     if m.file_attributes() & FILE_ATTRIBUTE_READONLY != 0 {
         mode &= !0o222;
     }
-    let (dev, ino) = file_id(p, follow).unwrap_or((0, 0));
+    let (dev, ino, _) = file_id(p, follow).unwrap_or((0, 0, 1));
+    // Owned by the shell's user (HostInfo's 1000): `test -O` and `ls -l` agree.
     Metadata {
         kind,
         size: m.len(),
@@ -310,8 +316,8 @@ fn metadata(p: &std::path::Path, m: &std::fs::Metadata, follow: bool) -> Metadat
         mtime_ns,
         dev,
         ino,
-        uid: 0,
-        gid: 0,
+        uid: 1000,
+        gid: 1000,
     }
 }
 
@@ -472,6 +478,82 @@ impl Host for WindowsHost {
             return Err(io::Error::from_raw_os_error(87));
         }
         spawn::kill_pid(pid as u32, sig)
+    }
+
+    fn stat_extra(
+        &self,
+        p: &[u8],
+        follow: bool,
+    ) -> HostFuture<io::Result<(Metadata, psh_engine::host::ExtraMetadata)>> {
+        let r = path::native(p).and_then(|np| {
+            let m = if follow {
+                std::fs::metadata(&np)
+            } else {
+                std::fs::symlink_metadata(&np)
+            }?;
+            let links = file_id(&np, follow).map_or(1, |(_, _, n)| n);
+            Ok((metadata(&np, &m, follow), fs::extra(&m, links)))
+        });
+        ready(r)
+    }
+
+    fn mkdir(&self, p: &[u8], mode: u32) -> HostFuture<io::Result<()>> {
+        ready(path::native(p).and_then(|np| fs::mkdir(&np, mode)))
+    }
+
+    fn remove_file(&self, p: &[u8]) -> HostFuture<io::Result<()>> {
+        ready(path::native(p).and_then(|np| fs::remove_file(&np)))
+    }
+
+    fn remove_dir(&self, p: &[u8]) -> HostFuture<io::Result<()>> {
+        ready(path::native(p).and_then(std::fs::remove_dir))
+    }
+
+    fn rename(&self, from: &[u8], to: &[u8]) -> HostFuture<io::Result<()>> {
+        ready(path::native(from).and_then(|f| fs::rename(&f, &path::native(to)?)))
+    }
+
+    fn symlink(&self, target: &[u8], link: &[u8]) -> HostFuture<io::Result<()>> {
+        ready(path::native(link).and_then(|l| fs::symlink(target, &l)))
+    }
+
+    fn hard_link(&self, existing: &[u8], link: &[u8]) -> HostFuture<io::Result<()>> {
+        ready(path::native(existing).and_then(|e| std::fs::hard_link(e, path::native(link)?)))
+    }
+
+    fn read_link(&self, p: &[u8]) -> HostFuture<io::Result<Vec<u8>>> {
+        ready(path::native(p).and_then(|np| fs::read_link(&np)))
+    }
+
+    fn set_mode(&self, p: &[u8], mode: u32) -> HostFuture<io::Result<()>> {
+        ready(path::native(p).and_then(|np| fs::set_mode(&np, mode)))
+    }
+
+    fn set_times(
+        &self,
+        p: &[u8],
+        atime_ns: Option<i64>,
+        mtime_ns: Option<i64>,
+        follow: bool,
+    ) -> HostFuture<io::Result<()>> {
+        ready(path::native(p).and_then(|np| fs::set_times(&np, atime_ns, mtime_ns, follow)))
+    }
+
+    fn user_name(&self, uid: u32) -> Option<Vec<u8>> {
+        (uid == 1000).then(fs::user).flatten()
+    }
+
+    fn utc_offset(&self, epoch_secs: i64) -> i32 {
+        fs::utc_offset(epoch_secs)
+    }
+
+    fn home_dir(&self, user: &[u8]) -> Option<Vec<u8>> {
+        let me = fs::user()?;
+        if !me.eq_ignore_ascii_case(user) {
+            return None;
+        }
+        let home = std::env::var_os("USERPROFILE")?;
+        Some(path::engine_path(std::path::Path::new(&home)))
     }
 
     fn info(&self) -> psh_engine::host::HostInfo {

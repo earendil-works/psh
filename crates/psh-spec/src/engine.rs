@@ -661,6 +661,72 @@ impl psh_engine::Host for Noting {
     fn umask(&self) -> u32 {
         self.inner.umask()
     }
+    fn stat_extra(
+        &self,
+        path: &[u8],
+        follow: bool,
+    ) -> psh_engine::host::HostFuture<
+        std::io::Result<(psh_engine::host::Metadata, psh_engine::host::ExtraMetadata)>,
+    > {
+        self.inner.stat_extra(path, follow)
+    }
+    fn mkdir(&self, path: &[u8], mode: u32) -> psh_engine::host::HostFuture<std::io::Result<()>> {
+        self.inner.mkdir(path, mode)
+    }
+    fn remove_file(&self, path: &[u8]) -> psh_engine::host::HostFuture<std::io::Result<()>> {
+        self.inner.remove_file(path)
+    }
+    fn remove_dir(&self, path: &[u8]) -> psh_engine::host::HostFuture<std::io::Result<()>> {
+        self.inner.remove_dir(path)
+    }
+    fn rename(&self, from: &[u8], to: &[u8]) -> psh_engine::host::HostFuture<std::io::Result<()>> {
+        self.inner.rename(from, to)
+    }
+    fn symlink(
+        &self,
+        target: &[u8],
+        link: &[u8],
+    ) -> psh_engine::host::HostFuture<std::io::Result<()>> {
+        self.inner.symlink(target, link)
+    }
+    fn hard_link(
+        &self,
+        existing: &[u8],
+        link: &[u8],
+    ) -> psh_engine::host::HostFuture<std::io::Result<()>> {
+        self.inner.hard_link(existing, link)
+    }
+    fn read_link(&self, path: &[u8]) -> psh_engine::host::HostFuture<std::io::Result<Vec<u8>>> {
+        self.inner.read_link(path)
+    }
+    fn set_mode(
+        &self,
+        path: &[u8],
+        mode: u32,
+    ) -> psh_engine::host::HostFuture<std::io::Result<()>> {
+        self.inner.set_mode(path, mode)
+    }
+    fn set_times(
+        &self,
+        path: &[u8],
+        atime_ns: Option<i64>,
+        mtime_ns: Option<i64>,
+        follow: bool,
+    ) -> psh_engine::host::HostFuture<std::io::Result<()>> {
+        self.inner.set_times(path, atime_ns, mtime_ns, follow)
+    }
+    fn user_name(&self, uid: u32) -> Option<Vec<u8>> {
+        self.inner.user_name(uid)
+    }
+    fn group_name(&self, gid: u32) -> Option<Vec<u8>> {
+        self.inner.group_name(gid)
+    }
+    fn utc_offset(&self, epoch_secs: i64) -> i32 {
+        self.inner.utc_offset(epoch_secs)
+    }
+    fn home_dir(&self, user: &[u8]) -> Option<Vec<u8>> {
+        self.inner.home_dir(user)
+    }
     fn now(&self) -> Duration {
         self.inner.now()
     }
@@ -669,5 +735,30 @@ impl psh_engine::Host for Noting {
     }
     fn pid(&self) -> u32 {
         self.inner.pid()
+    }
+}
+
+#[cfg(test)]
+mod noting_tests {
+    /// `Noting` must forward every `Host` method: one left to its default would quietly
+    /// change what the cases see (a file system change "not supported").
+    #[test]
+    fn noting_forwards_every_host_method() {
+        let host = include_str!("../../psh-engine/src/host.rs");
+        let trait_start = host.find("pub trait Host {").expect("trait Host");
+        let body = &host[trait_start..];
+        let body = &body[..body.find("\n}\n").expect("end of trait")];
+        let ours = include_str!("engine.rs");
+        let imp = &ours[ours.find("impl psh_engine::Host for Noting").expect("impl")..];
+        for line in body.lines() {
+            let t = line.trim_start();
+            if let Some(rest) = t.strip_prefix("fn ") {
+                let name = &rest[..rest.find(['(', '<']).unwrap_or(rest.len())];
+                assert!(
+                    imp.contains(&format!("fn {name}(")),
+                    "Noting does not forward Host::{name}"
+                );
+            }
+        }
     }
 }

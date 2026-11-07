@@ -448,3 +448,69 @@ fn host_info_in_bash_s_windows_forms() {
     });
     assert_eq!(embedded.info().ppid, Some(std::process::id()));
 }
+
+#[test]
+fn file_system_changes() {
+    let h = host();
+    let d = scratch("fsops");
+    let e = |p: &str| path::engine_path(&d.join(p));
+    let run = |f: HostFuture<io::Result<()>>| {
+        let mut f = f;
+        block(|cx| f.as_mut().poll(cx))
+    };
+    run(h.mkdir(&e("a"), 0o755)).unwrap();
+    assert_eq!(
+        run(h.mkdir(&e("a"), 0o755)).unwrap_err().kind(),
+        io::ErrorKind::AlreadyExists
+    );
+    // A read-only file is removed like any other.
+    std::fs::write(d.join("a/ro"), b"x").unwrap();
+    run(h.set_mode(&e("a/ro"), 0o444)).unwrap();
+    assert!(
+        std::fs::metadata(d.join("a/ro"))
+            .unwrap()
+            .permissions()
+            .readonly()
+    );
+    run(h.remove_file(&e("a/ro"))).unwrap();
+    // A directory replaces an empty one, not a full one.
+    run(h.mkdir(&e("b"), 0o755)).unwrap();
+    run(h.mkdir(&e("c"), 0o755)).unwrap();
+    std::fs::write(d.join("b/f"), b"1").unwrap();
+    run(h.rename(&e("b"), &e("c"))).unwrap();
+    assert!(d.join("c/f").exists() && !d.join("b").exists());
+    run(h.mkdir(&e("b"), 0o755)).unwrap();
+    assert!(run(h.rename(&e("b"), &e("c"))).is_err());
+    // Hard links count.
+    run(h.hard_link(&e("c/f"), &e("c/g"))).unwrap();
+    let mut st = h.stat_extra(&e("c/f"), true);
+    let (_, x) = block(|cx| st.as_mut().poll(cx)).unwrap();
+    assert_eq!(x.nlink, 2);
+    // A link to a directory: a symlink, or a junction without the privilege; removed as
+    // the link, the target stays.
+    run(h.symlink(&e("c"), &e("l"))).unwrap();
+    assert!(d.join("l/f").exists());
+    let mut rl = h.read_link(&e("l"));
+    let target = block(|cx| rl.as_mut().poll(cx)).unwrap();
+    assert!(target.ends_with(b"/c"), "{target:?}");
+    run(h.remove_file(&e("l"))).unwrap();
+    assert!(!d.join("l").exists() && d.join("c/f").exists());
+    let mut rl = h.read_link(&e("c/f"));
+    assert_eq!(
+        block(|cx| rl.as_mut().poll(cx)).unwrap_err().kind(),
+        io::ErrorKind::InvalidInput
+    );
+    // Times.
+    let t = 1_600_000_000_000_000_000i64;
+    run(h.set_times(&e("c/f"), Some(t), Some(t), true)).unwrap();
+    let mut st = h.stat_extra(&e("c/f"), true);
+    let (m, x) = block(|cx| st.as_mut().poll(cx)).unwrap();
+    assert_eq!((m.mtime_ns, x.atime_ns), (t, t));
+    // Names and the time zone.
+    assert!(h.user_name(1000).is_some());
+    let me = h.user_name(1000).unwrap();
+    assert!(h.home_dir(&me).is_some_and(|p| !p.contains(&b'\\')));
+    assert!(h.utc_offset(1_700_000_000).abs() <= 14 * 3600);
+    run(h.remove_dir(&e("b"))).unwrap();
+    std::fs::remove_dir_all(&d).unwrap();
+}

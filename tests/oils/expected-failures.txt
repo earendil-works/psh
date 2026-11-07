@@ -167,9 +167,6 @@ oils/builtin-set/23
 oils/builtin-special/10
 oils/builtin-times/0
 oils/builtin-trap/0
-oils/builtin-trap/29
-oils/builtin-trap/30
-oils/builtin-trap/31
 oils/builtin-trap/37
 oils/builtin-trap-bash/7
 oils/builtin-trap-bash/10

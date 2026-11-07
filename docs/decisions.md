@@ -1409,3 +1409,22 @@ when it runs an external, the vproc drops its descriptor table once the external
 descriptors (and, with redirections, the saved table), so the pipe closes when the
 external closes it and a writer gets EPIPE at once, not when the stage's task ends.
 Functions, builtins and nested commands never see the mark.
+
+## D1903: Signals to the shell: the process half of D1284
+date: 2026-11-07 · by: procs · issue: 0006
+Supersedes D1066 and the cancel part of D1901. `kill` aimed at the shell itself (`$$`,
+and `0`, which also asks the host to signal the rest of the group) sets the engine's
+pending mask instead of signalling the host, so traps run in-process as in the binary.
+The standalone `psh` catches the signals a script may trap whose default action ends a
+process (HUP INT ALRM TERM USR1 USR2 XCPU XFSZ VTALRM PROF IO PWR; not QUIT, which bash
+ignores, PIPE or the faults), only on the engine thread; the handler sets the signal's
+bit (OS numbers mapped to Linux's) in `ControlHandle::signal_word` and the watcher thread
+calls `ControlHandle::signal` to wake the shell. Waits of the shell's own vproc give way
+to pending signals (`signals::or_signal`, woken by `Shell::step`): a foreground external,
+a pipeline's or a subshell's wait ends for a signal whose default action ends the shell
+(the external is abandoned, the subshell's task runs on as bash's subshell process
+would); `wait` also ends for a trapped one, with `128+n`, and the trap runs next. A signal
+that came with the last command still acts. When a default action ended the run,
+`Shell::killed_by` says which signal and `psh` dies by it (after its abandoned externals
+were killed); a trapped or ignored signal leaves psh running. Blocking reads (`read`, a
+FIFO open) do not give way yet.

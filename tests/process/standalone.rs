@@ -206,3 +206,69 @@ fn what_an_external_left_dies_with_psh_even_if_only_psh_is_signalled() {
     assert_signaled(c.wait(Duration::from_secs(10)), SIGTERM);
     assert!(gone(a, Duration::from_secs(2)), "the grandchild survived");
 }
+
+/// Runs `psh -c script` to its end with stdout captured.
+fn output(script: &str) -> (ExitStatus, String) {
+    let mut child = Command::new(env!("CARGO_BIN_EXE_psh"))
+        .args(["-c", script])
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .process_group(0)
+        .spawn()
+        .expect("spawn psh");
+    let deadline = Instant::now() + Duration::from_secs(10);
+    let status = loop {
+        if let Some(s) = child.try_wait().unwrap() {
+            break s;
+        }
+        if Instant::now() > deadline {
+            let _ = kill(-(child.id() as i32), SIGKILL);
+            panic!("psh did not exit: {script}");
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    };
+    let mut out = String::new();
+    use std::io::Read;
+    child
+        .stdout
+        .take()
+        .unwrap()
+        .read_to_string(&mut out)
+        .unwrap();
+    (status, out)
+}
+
+#[test]
+fn traps_run_for_signals_from_outside() {
+    // Signals reach the shell's traps (D1903), with the OS's numbers mapped.
+    let (s, out) = output("trap 'echo t' USR1; /bin/kill -USR1 $$; sleep 0.1; echo after");
+    assert_eq!((s.code(), out.as_str()), (Some(0), "t\nafter\n"));
+    // A trapped signal ends `wait` with 128+n, then the trap runs.
+    let (s, out) = output(
+        "trap 'echo t' USR1; sh -c 'sleep 0.2; kill -USR1 '$$ & wait; echo w=$?; wait; echo end",
+    );
+    assert_eq!((s.code(), out.as_str()), (Some(0), "t\nw=138\nend\n"));
+    // An ignored one does nothing.
+    let (s, out) = output("trap '' USR1; /bin/kill -USR1 $$; echo after");
+    assert_eq!((s.code(), out.as_str()), (Some(0), "after\n"));
+}
+
+#[test]
+fn kill_dollar_dollar_ends_the_shell_by_the_signal() {
+    let (s, out) = output("kill -HUP $$; echo no");
+    assert_signaled(s, SIGHUP);
+    assert_eq!(out, "");
+    let (s, out) = output("trap 'echo bye' EXIT; kill $$; echo no");
+    assert_signaled(s, SIGTERM);
+    assert_eq!(out, "bye\n");
+}
+
+#[test]
+fn a_fatal_signal_ends_a_foreground_wait() {
+    // No trap: the foreground program is abandoned, psh ends at once by the signal.
+    let start = Instant::now();
+    let (s, _) = output("sh -c 'sleep 0.2; kill -TERM '$$ & sleep 30; echo no");
+    assert_signaled(s, SIGTERM);
+    assert!(start.elapsed() < Duration::from_secs(5));
+}

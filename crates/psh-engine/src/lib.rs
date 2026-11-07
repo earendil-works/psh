@@ -177,12 +177,11 @@ impl ControlHandle {
         }
     }
 
-    /// The control word and the bit that requests a cancel: setting it with an atomic
-    /// or is what [`ControlHandle::cancel`] does without waking the embedder, and is
-    /// async-signal-safe (a standalone shell's signal handler sets it; its driver wakes
-    /// the shell afterwards).
-    pub fn cancel_word(&self) -> (&std::sync::atomic::AtomicU32, u32) {
-        (&self.shared.control, CANCEL)
+    /// The pending-signal mask [`ControlHandle::signal`] sets (bit n = Linux signal n):
+    /// an atomic or into it is that call without the wakeup, and async-signal-safe (a
+    /// standalone shell's signal handler sets it; its driver then calls `signal`, D1903).
+    pub fn signal_word(&self) -> &std::sync::atomic::AtomicU64 {
+        &self.shared.signals
     }
 
     /// Stops at the next safepoint; `step` returns `Blocked` until `resume`.
@@ -224,6 +223,7 @@ impl Shell {
             max_depth: cfg.max_depth,
             jobs: Cell::new(0),
             release_on_drop: Cell::new(false),
+            died_of: Cell::new(None),
         });
         let mut vars = Vars::default();
         let mut foreign = Vec::new();
@@ -324,6 +324,7 @@ impl Shell {
         assert!(self.main.is_none(), "a script is already running");
         self.shared.control.store(0, Ordering::SeqCst);
         self.shared.signals.store(0, Ordering::SeqCst);
+        self.core.died_of.set(None);
         let mut vp = self.vp.take().expect("shell state");
         self.before = Some(vp.clone());
         *self.core.msg_name.borrow_mut() = String::from_utf8_lossy(&script.arg0).into_owned();
@@ -338,6 +339,10 @@ impl Shell {
 
     /// Runs ready work for at most `budget` safepoints (about one command each).
     pub fn step(&mut self, budget: u32) -> Step {
+        // Signals sent to the shell end the waits that give way to them (D1903).
+        if self.core.sched.has_signals() {
+            self.core.sched.wake_signal_waiters();
+        }
         loop {
             if let Some((status, timer)) = &self.draining {
                 let status = *status;
@@ -413,6 +418,12 @@ impl Shell {
         Step::Done(128 + host::SIGTERM)
     }
 
+    /// The signal (Linux numbering) whose default action ended the last run, if one did
+    /// (D1903): a standalone shell dies by it, so its parent sees what bash shows.
+    pub fn killed_by(&self) -> Option<i32> {
+        self.core.died_of.get()
+    }
+
     /// The number of live tasks (vprocs and helpers), for leak tests.
     pub fn task_count(&self) -> usize {
         self.core.sched.task_count()
@@ -421,7 +432,11 @@ impl Shell {
 
 /// The main vproc: runs the script, then the EXIT trap (D1283).
 async fn run_script(vp: Vp, source: Vec<u8>) -> (i32, Vp) {
-    let (status, mut vp) = run_script_lines(vp, source).await;
+    let (mut status, mut vp) = run_script_lines(vp, source).await;
+    // A signal that came with the last command still acts (D1903).
+    if let Err(u) = builtins::trap::take_signals(&mut vp).await {
+        status = u.status(status);
+    }
     let status = builtins::trap::exit_trap(&mut vp, status).await;
     vp.status = status;
     (status, vp)

@@ -187,33 +187,35 @@ fn main() -> ExitCode {
         let mut shell = Shell::new(cfg);
         Signals::attach(&control, shell.control());
         shell.start(script);
-        drive(&mut shell)
+        let status = drive(&mut shell);
+        (status, shell.killed_by())
     });
-    let result = thread.map(|t| t.join());
-    signals.finish();
-    match result {
-        Ok(Ok(status)) => ExitCode::from((status & 0xff) as u8),
+    match thread.map(|t| t.join()) {
+        Ok(Ok((status, killed_by))) => {
+            signals.finish(killed_by);
+            ExitCode::from((status & 0xff) as u8)
+        }
         _ => ExitCode::from(2),
     }
 }
 
-/// The standalone shell's signals (ARCH.md "psh-os"): INT, TERM and HUP cancel the run
-/// (its externals get TERM, KILL after the grace period), then psh ends by that signal,
-/// so its parent sees what bash would show. Embedded shells install nothing.
+/// The standalone shell's signals (ARCH.md "psh-os", D1903): the ones a script may trap
+/// are caught and sent to the shell (`ControlHandle::signal`), which runs a trap,
+/// ignores them, or ends with `128+n`; a foreground command is abandoned then (TERM,
+/// KILL after the grace period). Ended by a signal's default action, psh dies by it,
+/// so its parent sees what bash shows. Embedded shells install nothing.
 struct Signals {
     /// The running shell's control, once it exists, and the first signal caught.
     control: Control,
 }
 
-/// The signals the standalone shell catches.
+/// The signals the standalone shell catches (Linux numbers): those a script may trap
+/// whose default action ends a process, but not QUIT (bash ignores it), PIPE (writes
+/// see EPIPE) or the synchronous faults.
 #[cfg(unix)]
-const CAUGHT: [psh_engine::host::Signal; 3] = [
-    psh_engine::host::SIGINT,
-    psh_engine::host::SIGTERM,
-    psh_engine::host::SIGHUP,
-];
+const CAUGHT: [psh_engine::host::Signal; 12] = [1, 2, 10, 12, 14, 15, 24, 25, 26, 27, 29, 30];
 
-type Control = std::sync::Arc<std::sync::Mutex<(Option<psh_engine::ControlHandle>, i32)>>;
+type Control = std::sync::Arc<std::sync::Mutex<Option<psh_engine::ControlHandle>>>;
 
 impl Signals {
     #[cfg(unix)]
@@ -221,12 +223,9 @@ impl Signals {
         let control: Control = Default::default();
         let c = control.clone();
         let _ = psh_os::unix::signals::catch(&CAUGHT, move |sig| {
-            let mut g = c.lock().unwrap_or_else(|e| e.into_inner());
-            if g.1 == 0 {
-                g.1 = sig;
-            }
-            if let Some(ctl) = &g.0 {
-                ctl.cancel();
+            // The handler set the signal's bit already; this wakes the shell.
+            if let Some(ctl) = &*c.lock().unwrap_or_else(|e| e.into_inner()) {
+                ctl.signal(sig);
             }
         });
         // Only the engine thread takes these signals (it unblocks them): a `kill $$`
@@ -245,40 +244,29 @@ impl Signals {
     /// The shell exists, on the engine thread: it takes the signals from now on (the
     /// handler cancels it directly), and a signal caught before cancels it now.
     fn attach(
-        control: &std::sync::Mutex<(Option<psh_engine::ControlHandle>, i32)>,
+        control: &std::sync::Mutex<Option<psh_engine::ControlHandle>>,
         ctl: psh_engine::ControlHandle,
     ) {
         #[cfg(unix)]
         {
             // One shell per process: the handle lives as long as the process.
-            let word = Box::leak(Box::new(ctl.clone())).cancel_word();
-            psh_os::unix::signals::cancel_on_signal(word.0, word.1);
+            let word = Box::leak(Box::new(ctl.clone())).signal_word();
+            psh_os::unix::signals::forward_to(word);
             psh_os::unix::signals::unblock_in_thread(&CAUGHT);
         }
-        let mut g = control.lock().unwrap_or_else(|e| e.into_inner());
-        if g.1 != 0 {
-            ctl.cancel();
-        }
-        g.0 = Some(ctl);
+        *control.lock().unwrap_or_else(|e| e.into_inner()) = Some(ctl);
     }
 
-    /// The run is over: if a signal ended it, wait until the abandoned externals were
-    /// killed and reaped, and die by the signal.
-    fn finish(self) {
-        let sig = self.control.lock().unwrap_or_else(|e| e.into_inner()).1;
-        // A signal the watcher thread has not passed on yet (it came as the run ended).
+    /// The run is over: if a signal's default action ended it, wait until the
+    /// abandoned externals were killed and reaped, and die by the signal.
+    fn finish(self, killed_by: Option<i32>) {
         #[cfg(unix)]
-        let sig = match sig {
-            0 => psh_os::unix::signals::first_caught().unwrap_or(0),
-            s => s,
-        };
-        #[cfg(unix)]
-        if sig != 0 {
+        if let Some(sig) = killed_by {
             let grace = psh_os::unix::UnixConfig::DEFAULT_GRACE;
             psh_os::unix::settle(grace + std::time::Duration::from_secs(1));
             psh_os::unix::signals::die_by(sig);
         }
-        let _ = sig;
+        let _ = (self, killed_by);
     }
 }
 

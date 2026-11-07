@@ -259,9 +259,14 @@ can express neither); `pid()`; `kill()`.
   `kill -l` cases recorded on Linux.
 - D1902 refined: the tail mark is the stage command's address (a DEBUG trap's own
   command before it must not take it), and no exec while a trap could run.
-- Open, D1284's procs half: `kill` on the shell itself sets the engine's signal mask;
-  the standalone psh forwards its OS signals to `ControlHandle::signal`; `wait` and
-  foreground waits wake on pending signals. Next part.
+- D1284's procs half done (D1903): `kill $$`/`kill 0` raise in the engine; the
+  standalone psh forwards trappable OS signals (handler sets the mask bit, watcher wakes
+  via `ControlHandle::signal`); foreground externals, pipeline and subshell joins give
+  way to fatal signals, `wait` also to trapped ones; `Shell::killed_by` lets psh die by
+  the signal. Found while testing: the watcher passed OS numbers to the callback (USR1 =
+  30 on macOS became PWR); fixed, with standalone tests for traps from outside, `wait`
+  138, `kill -HUP $$`, EXIT trap on `kill $$`, a fatal signal ending a foreground wait.
+  +27 cases (trap, signals, wait/17).
 
 ## Follow-ups
 - guide: `processes.md` (placement, cancel and abandonment, leak checks).

@@ -123,3 +123,55 @@ mod tests {
         assert_eq!(describe(9), "Killed");
     }
 }
+
+/// Which pending signals end a wait of the shell's own vproc (D1903).
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Gives {
+    /// A signal whose default action ends the shell (no trap, not ignored): a
+    /// foreground command is abandoned, the shell ends at its next safepoint. A trapped
+    /// signal waits for the command, as in bash.
+    Fatal,
+    /// Also a trapped signal: `wait` returns `128+n` and the trap runs.
+    Trapped,
+}
+
+/// The pending signal that ends a wait of `vp` now, if any. Only the shell's own vproc
+/// takes signals (D1284), never inside a trap.
+pub(crate) fn breaking(vp: &crate::state::Vp, gives: Gives) -> Option<Signal> {
+    use crate::builtins::trap::{TrapKey, terminates};
+    if !vp.top || vp.in_trap.is_some() {
+        return None;
+    }
+    let pending = vp.core.sched.peek_signals();
+    (1..64).filter(|s| pending & (1u64 << s) != 0).find(|&sig| {
+        match vp.traps.action(TrapKey::Signal(sig)) {
+            Some(a) if a.is_empty() => false,
+            Some(_) => gives == Gives::Trapped,
+            None => terminates(sig),
+        }
+    })
+}
+
+/// Awaits `fut` unless a pending signal ends the wait first (`Err(signal)`).
+pub(crate) async fn or_signal<F: std::future::Future>(
+    vp: &crate::state::Vp,
+    gives: Gives,
+    fut: F,
+) -> Result<F::Output, Signal> {
+    let mut fut = std::pin::pin!(fut);
+    std::future::poll_fn(|cx| {
+        if let Some(sig) = breaking(vp, gives) {
+            return std::task::Poll::Ready(Err(sig));
+        }
+        match fut.as_mut().poll(cx) {
+            std::task::Poll::Ready(v) => std::task::Poll::Ready(Ok(v)),
+            std::task::Poll::Pending => {
+                if vp.top {
+                    vp.core.sched.on_signal(cx.waker());
+                }
+                std::task::Poll::Pending
+            }
+        }
+    })
+    .await
+}

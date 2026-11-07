@@ -277,17 +277,12 @@ brush/compat/builtins/test/34
 brush/compat/builtins/times/3
 brush/compat/builtins/trap/19
 brush/compat/builtins/trap/34
-brush/compat/builtins/trap/45: passed in-process only because `kill $$` could not reach the shell; now runs in the binary (D1056); needs trap
 brush/compat/builtins/trap/54
 brush/compat/builtins/trap/55
 brush/compat/builtins/trap/58: passed in-process only because `kill $$` could not reach the shell; now runs in the binary (D1056); needs trap
+brush/compat/builtins/trap/56
 brush/compat/builtins/trap/63
 brush/compat/builtins/trap/68
-brush/compat/builtins/trap/72
-brush/compat/builtins/trap/73
-brush/compat/builtins/trap/74
-brush/compat/builtins/trap/75
-brush/compat/builtins/trap/77
 brush/compat/builtins/trap/89
 brush/compat/builtins/trap/90
 brush/compat/builtins/trap/109
@@ -329,7 +324,6 @@ brush/compat/builtins/unset/15
 brush/compat/builtins/unset/16
 brush/compat/builtins/unset/18
 brush/compat/builtins/unset/19
-brush/compat/builtins/wait/17
 brush/compat/callstack/0
 brush/compat/callstack/1
 brush/compat/callstack/2
@@ -630,42 +624,26 @@ brush/compat/redirection/35
 brush/compat/redirection/44
 brush/compat/redirection/45
 brush/compat/redirection/47
-brush/compat/signals/0
-brush/compat/signals/1
 brush/compat/signals/2
 brush/compat/signals/3
-brush/compat/signals/4
 brush/compat/signals/5
 brush/compat/signals/6
-brush/compat/signals/7
-brush/compat/signals/8
-brush/compat/signals/9
 brush/compat/signals/10
 brush/compat/signals/11
 brush/compat/signals/12
 brush/compat/signals/15
 brush/compat/signals/16
-brush/compat/signals/17: passed in-process only because `kill $$` could not reach the shell; now runs in the binary (D1056); needs trap
 brush/compat/signals/18
-brush/compat/signals/19
 brush/compat/signals/20
 brush/compat/signals/21: SIGINT to psh from a child; passed via the macOS /usr/bin/command wrapper (it was $PPID)
-brush/compat/signals/22
-brush/compat/signals/23
-brush/compat/signals/24
 brush/compat/signals/25
-brush/compat/signals/27
 brush/compat/signals/28
 brush/compat/signals/29
-brush/compat/signals/30
-brush/compat/signals/31
-brush/compat/signals/32: a subshell is a vproc, not a process: the cancel for the shell's own TERM ends it too (passed only when the signal lost a race)
 brush/compat/signals/33
 brush/compat/signals/34
 brush/compat/signals/35
 brush/compat/signals/38
 brush/compat/signals/40
-brush/compat/signals/41
 brush/compat/signals/44
 brush/compat/signals/45
 brush/compat/signals/46

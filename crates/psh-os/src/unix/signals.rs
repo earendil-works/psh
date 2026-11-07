@@ -16,27 +16,24 @@ use psh_engine::host::Signal;
 
 /// Signals caught and not yet handed to the callback, one bit each.
 static PENDING: AtomicU64 = AtomicU64::new(0);
-/// Where the handler also requests a cancel itself, so it takes effect at the engine's
-/// next safepoint even before the watcher thread runs (`cancel_on_signal`).
-static CANCEL_WORD: std::sync::atomic::AtomicPtr<std::sync::atomic::AtomicU32> =
+/// The engine's pending-signal mask the handler sets itself (`forward_to`), so a
+/// signal acts at the engine's next safepoint even before the watcher thread runs.
+static FORWARD: std::sync::atomic::AtomicPtr<std::sync::atomic::AtomicU64> =
     std::sync::atomic::AtomicPtr::new(std::ptr::null_mut());
-static CANCEL_BIT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 
-/// The first signal caught (0: none).
-static FIRST: AtomicI32 = AtomicI32::new(0);
 /// The write end of the self-pipe; -1 until `catch` ran.
 static WAKE_FD: AtomicI32 = AtomicI32::new(-1);
 
 extern "C" fn on_signal(sig: libc::c_int) {
     let saved = io::Error::last_os_error().raw_os_error().unwrap_or(0);
     if (0..64).contains(&sig) {
-        let _ = FIRST.compare_exchange(0, sig, Ordering::SeqCst, Ordering::SeqCst);
         PENDING.fetch_or(1 << sig, Ordering::SeqCst);
-        let word = CANCEL_WORD.load(Ordering::SeqCst);
-        if !word.is_null() {
-            // SAFETY: `cancel_on_signal` stored a pointer to a `'static` atomic; an
-            // atomic or is async-signal-safe.
-            unsafe { (*word).fetch_or(CANCEL_BIT.load(Ordering::SeqCst), Ordering::SeqCst) };
+        let word = FORWARD.load(Ordering::SeqCst);
+        let linux = super::signum::from_os(sig);
+        if !word.is_null() && (1..64).contains(&linux) {
+            // SAFETY: `forward_to` stored a pointer to a `'static` atomic; the table
+            // lookup and an atomic or are async-signal-safe.
+            unsafe { (*word).fetch_or(1u64 << linux, Ordering::SeqCst) };
         }
     }
     let fd = WAKE_FD.load(Ordering::SeqCst);
@@ -70,21 +67,11 @@ fn set_errno(e: i32) {
     let _ = e;
 }
 
-/// The first signal caught, set by the handler itself: the driver checks it before it
-/// exits, since the watcher thread may not have passed the signal on yet.
-pub fn first_caught() -> Option<Signal> {
-    match FIRST.load(Ordering::SeqCst) {
-        0 => None,
-        s => Some(super::signum::from_os(s)),
-    }
-}
-
-/// Makes the handler set `bit` in `word` (the engine's control word, see
-/// `psh_engine::ControlHandle::cancel_word`) as it catches a signal: a `kill $$` from the
-/// engine thread then cancels before the next command, as bash dies at once.
-pub fn cancel_on_signal(word: &'static std::sync::atomic::AtomicU32, bit: u32) {
-    CANCEL_BIT.store(bit, Ordering::SeqCst);
-    CANCEL_WORD.store(std::ptr::from_ref(word).cast_mut(), Ordering::SeqCst);
+/// Makes the handler set the caught signal's bit (Linux numbering) in `word`, the
+/// engine's pending-signal mask (`psh_engine::ControlHandle::signal_word`): the signal
+/// then acts at the engine's next safepoint without waiting for the watcher thread.
+pub fn forward_to(word: &'static std::sync::atomic::AtomicU64) {
+    FORWARD.store(std::ptr::from_ref(word).cast_mut(), Ordering::SeqCst);
 }
 
 /// Blocks or unblocks `sigs` in the calling thread.
@@ -178,7 +165,7 @@ pub fn catch(sigs: &[Signal], callback: impl Fn(Signal) + Send + 'static) -> io:
             let bits = PENDING.swap(0, Ordering::SeqCst);
             for sig in 1..64 {
                 if bits & (1 << sig) != 0 {
-                    callback(sig);
+                    callback(super::signum::from_os(sig));
                 }
             }
         }

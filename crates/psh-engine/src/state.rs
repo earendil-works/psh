@@ -27,6 +27,9 @@ pub(crate) struct Core {
     /// The script ended normally: externals of tasks dropped now are released, not
     /// abandoned (background jobs outlive the shell, as in bash).
     pub release_on_drop: Cell<bool>,
+    /// The signal whose default action ended the run (D1903): a standalone shell then
+    /// dies by it.
+    pub died_of: Cell<Option<i32>>,
 }
 
 impl Core {

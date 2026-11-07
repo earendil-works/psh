@@ -99,6 +99,8 @@ pub(crate) struct Sched {
     pub(crate) shared: Arc<Shared>,
     budget: Cell<u32>,
     out_of_budget: Cell<bool>,
+    /// Waits of the shell's own vproc that a signal ends (D1903).
+    signal_waiters: RefCell<Vec<Waker>>,
 }
 
 /// What [`Sched::run`] stopped on.
@@ -122,6 +124,7 @@ impl Sched {
             shared,
             budget: Cell::new(0),
             out_of_budget: Cell::new(false),
+            signal_waiters: RefCell::new(Vec::new()),
         }
     }
 
@@ -206,6 +209,33 @@ impl Sched {
     /// Whether signals are pending (D1284).
     pub(crate) fn has_signals(&self) -> bool {
         self.shared.signals.load(Ordering::Relaxed) != 0
+    }
+
+    /// Sends signal `sig` to the shell from inside (`kill $$`, D1284).
+    pub(crate) fn raise(&self, sig: i32) {
+        if (1..64).contains(&sig) {
+            self.shared.signals.fetch_or(1u64 << sig, Ordering::SeqCst);
+        }
+    }
+
+    /// The pending signals, left pending (D1903).
+    pub(crate) fn peek_signals(&self) -> u64 {
+        self.shared.signals.load(Ordering::SeqCst)
+    }
+
+    /// Wakes `w` when a signal is sent to the shell (D1903).
+    pub(crate) fn on_signal(&self, w: &Waker) {
+        let mut ws = self.signal_waiters.borrow_mut();
+        if !ws.iter().any(|x| x.will_wake(w)) {
+            ws.push(w.clone());
+        }
+    }
+
+    pub(crate) fn wake_signal_waiters(&self) {
+        let ws: Vec<Waker> = self.signal_waiters.borrow_mut().drain(..).collect();
+        for w in ws {
+            w.wake();
+        }
     }
 
     /// Takes the pending signals (D1284).

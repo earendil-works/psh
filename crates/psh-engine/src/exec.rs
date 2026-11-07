@@ -253,7 +253,11 @@ async fn run_pipeline_stages(vp: &mut Vp, code: &Rc<Code>, p: &Pipeline) -> R {
     }
     let mut statuses = Vec::with_capacity(n);
     for j in joins {
-        statuses.push(j.await);
+        match crate::signals::or_signal(vp, crate::signals::Gives::Fatal, j).await {
+            Ok(s) => statuses.push(s),
+            // The shell ends at its next safepoint; the stages run on as tasks (D1903).
+            Err(sig) => return Ok(128 + sig),
+        }
     }
     if let Some(r) = last_here {
         statuses.push(r?);
@@ -527,7 +531,14 @@ fn run_compound<'a>(vp: &'a mut Vp, code: &'a Rc<Code>, cmd: &'a Command) -> Loc
 
 async fn run_subshell(vp: &mut Vp, code: &Rc<Code>, list: ListId) -> R {
     let sub = enter(vp).await?;
-    Ok(spawn_sub(sub, code.clone(), Body::List(list)).await)
+    let join = spawn_sub(sub, code.clone(), Body::List(list));
+    // A bash subshell is a process: it runs on when the shell dies of a signal (D1903).
+    Ok(
+        match crate::signals::or_signal(vp, crate::signals::Gives::Fatal, join).await {
+            Ok(s) => s,
+            Err(sig) => 128 + sig,
+        },
+    )
 }
 
 async fn run_if(vp: &mut Vp, code: &Rc<Code>, c: &psh_syntax::IfCommand) -> R {
@@ -1288,7 +1299,7 @@ pub(crate) async fn run_external_with(
         vp.fds = Default::default();
     }
     let mut status = None;
-    let st = poll_fn(|cx| {
+    let waited = poll_fn(|cx| {
         if status.is_none() {
             for p in &mut inputs {
                 let _ = p.poll(cx);
@@ -1312,8 +1323,12 @@ pub(crate) async fn run_external_with(
             Some(s) if outputs.is_empty() => Poll::Ready(s),
             _ => Poll::Pending,
         }
-    })
-    .await;
+    });
+    // A signal that ends the shell ends the wait; the external is abandoned (D1903).
+    let st = match crate::signals::or_signal(vp, crate::signals::Gives::Fatal, waited).await {
+        Ok(st) => st,
+        Err(sig) => return Ok(128 + sig),
+    };
     if let Some(job) = &vp.job {
         job.ended(match st {
             crate::host::ExitStatus::Signaled(sig) => Some(sig),

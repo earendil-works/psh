@@ -295,10 +295,11 @@ From `research/execution-core.md` §5; the pitfalls listed there are requirement
   was detached (`nohup`, `setsid`) or disowned; `Leftovers::Keep` leaves it, as bash.
   Standalone, everything stays in psh's group, which a harness's group kill reaches. `UnixHost::leftovers()` lists
   groups with live members (leak checks).
-- Signals: embedded, install no handlers at all. Standalone `psh` (D1066): handlers
-  for INT, TERM and HUP only set an atomic bit and write a self-pipe byte; a watcher
-  thread cancels the run, the driver waits for the abandoned externals to be killed and
-  dies by the signal. Children start with every signal at its default (SIGPIPE
+- Signals: embedded, install no handlers at all. Standalone `psh` (D1903): the
+  trappable signals are caught on the engine thread only; the handler sets the signal's
+  bit in the shell's pending mask (traps run, D1284) and a watcher thread wakes the
+  shell; ended by a default action, psh dies by the signal after its abandoned
+  externals are killed. `kill $$` sets the mask directly. Children start with every signal at its default (SIGPIPE
   included) except those ignored when psh started and those the engine asks to ignore.
 
 **Windows.**

@@ -161,7 +161,11 @@ pub(super) async fn wait(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         // Every job; the status is 0.
         let all = vp.jobs.borrow().all();
         for j in all.iter().filter(|j| !j.disowned.get()) {
-            j.wait().await;
+            if let Err(sig) =
+                crate::signals::or_signal(vp, crate::signals::Gives::Trapped, j.wait()).await
+            {
+                return Ok(128 + sig);
+            }
             report(vp, j).await;
         }
         for j in &all {
@@ -170,7 +174,12 @@ pub(super) async fn wait(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         return Ok(0);
     }
     for j in targets.into_iter().flatten() {
-        status = j.wait().await;
+        // A trapped or fatal signal ends the wait with 128+n; the trap runs next.
+        status = match crate::signals::or_signal(vp, crate::signals::Gives::Trapped, j.wait()).await
+        {
+            Ok(s) => s,
+            Err(sig) => return Ok(128 + sig),
+        };
         report(vp, &j).await;
         if let Some(v) = &var {
             vp.set_var(v, j.pid().to_string().into_bytes());
@@ -258,6 +267,16 @@ pub(super) async fn kill(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             status = 1;
             continue;
         };
+        // The shell itself (`$$`, and its group with `0`): the signal goes to the
+        // shell's pending mask, so traps run (D1284); with 0 the host signals the
+        // rest of the group too, where it may.
+        if pid == 0 || u32::try_from(pid).is_ok_and(|p| p == vp.host().pid()) {
+            vp.core.sched.raise(sig);
+            if pid == 0 {
+                let _ = vp.host().kill(0, sig);
+            }
+            continue;
+        }
         // One of our jobs: the job (its externals' groups, its vprocs).
         let job = u32::try_from(pid)
             .ok()

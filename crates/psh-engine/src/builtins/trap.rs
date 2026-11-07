@@ -227,7 +227,7 @@ pub(crate) async fn leave_function(vp: &mut Vp, hidden: Option<Hidden>) -> Resul
 }
 
 /// Signals the shell takes by default: they end it (with the EXIT trap) as `128+n`.
-fn terminates(sig: i32) -> bool {
+pub(crate) fn terminates(sig: i32) -> bool {
     !matches!(sig, 17 | 18 | 19 | 20 | 21 | 22 | 23 | 28)
 }
 
@@ -252,7 +252,10 @@ pub(crate) async fn take_signals(vp: &mut Vp) -> Result<(), Unwind> {
                 let st = vp.status;
                 run_action(vp, &action, st).await?;
             }
-            None if terminates(sig) => return Err(Unwind::Exit(128 + sig)),
+            None if terminates(sig) => {
+                vp.core.died_of.set(Some(sig));
+                return Err(Unwind::Exit(128 + sig));
+            }
             None => {}
         }
     }

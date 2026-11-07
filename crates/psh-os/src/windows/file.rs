@@ -284,18 +284,18 @@ impl Pump {
     }
 
     /// The engine's end is dropped. A reader stops at once (the child then gets a
-    /// broken pipe); a writer first hands over what is buffered, then closes, so the
-    /// child sees end of file, unless the child stops reading: then dropping it is a
-    /// cancel like the reader's once the buffer cannot move.
+    /// broken pipe). A writer hands over everything it buffered, then closes, so the
+    /// child sees end of file after the last byte: it is never cancelled, since a chunk
+    /// may be in flight when the buffer is empty (cancelling it lost data). A child that
+    /// stops reading ends it when the child ends (broken pipe).
     fn close(&self) {
         let mut st = lock(&self.state);
         st.closed = true;
         st.eof = true;
         st.waker = None;
-        let cancel_now = self.reading || st.buf.is_empty();
         drop(st);
         self.changed.notify_all();
-        if cancel_now {
+        if self.reading {
             // SAFETY: our event handle.
             unsafe { SetEvent(self.cancel.as_raw_handle() as HANDLE) };
         }
@@ -771,6 +771,78 @@ mod tests {
         }
         writer.join().unwrap();
         assert_eq!(total, 100_000);
+    }
+
+    /// Sizes around every buffer boundary (the 16 KiB chunks, the 64 KiB pump and pipe
+    /// buffers), each 100 times, through an input pump closed right after the last
+    /// write: every byte must arrive, in order. The reading "child" starts late, so
+    /// writes are in flight when the engine's end is dropped.
+    #[test]
+    fn input_pumps_deliver_every_byte_when_closed_mid_write() {
+        let sizes = [
+            1, 4095, 4096, 4097, 16383, 16384, 16385, 65535, 65536, 65537, 131072, 208890,
+        ];
+        for round in 0..100 {
+            for &size in &sizes {
+                let (ours, theirs) = pump_pipe(true, Decode::Off).unwrap();
+                let data: Vec<u8> = (0..size).map(|i| (i * 7 + round) as u8).collect();
+                let want = data.clone();
+                let reader = std::thread::spawn(move || {
+                    if round % 3 == 0 {
+                        std::thread::sleep(std::time::Duration::from_millis(2));
+                    }
+                    let mut f = File::from(theirs);
+                    let mut got = Vec::new();
+                    f.read_to_end(&mut got).unwrap();
+                    got
+                });
+                let mut off = 0;
+                while off < data.len() {
+                    off += block_on(|cx| ours.poll_write(cx, &data[off..])).unwrap();
+                }
+                drop(ours);
+                let got = reader.join().unwrap();
+                assert!(
+                    got == want,
+                    "round {round}, size {size}: {} of {} bytes",
+                    got.len(),
+                    want.len()
+                );
+            }
+        }
+    }
+
+    /// The same for output pumps: the "child" writes and closes, the engine reads to the
+    /// end.
+    #[test]
+    fn output_pumps_deliver_every_byte() {
+        let sizes = [1, 4096, 16385, 65536, 65537, 208890];
+        for round in 0..100 {
+            for &size in &sizes {
+                let (ours, theirs) = pump_pipe(false, Decode::Off).unwrap();
+                let data: Vec<u8> = (0..size).map(|i| (i * 13 + round) as u8).collect();
+                let want = data.clone();
+                let writer = std::thread::spawn(move || {
+                    let mut f = File::from(theirs);
+                    f.write_all(&data).unwrap();
+                });
+                let mut got = Vec::new();
+                let mut buf = [0u8; 7000];
+                loop {
+                    let n = block_on(|cx| ours.poll_read(cx, &mut buf)).unwrap();
+                    if n == 0 {
+                        break;
+                    }
+                    got.extend_from_slice(&buf[..n]);
+                }
+                writer.join().unwrap();
+                assert!(
+                    got == want,
+                    "round {round}, size {size}: {} bytes",
+                    got.len()
+                );
+            }
+        }
     }
 
     #[test]

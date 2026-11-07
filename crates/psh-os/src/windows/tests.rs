@@ -135,6 +135,13 @@ fn exit_codes_and_output() {
 
 #[test]
 fn input_pipe_feeds_the_child_and_ends() {
+    // Repeated: a lost tail of the input showed up only now and then.
+    for _ in 0..10 {
+        input_pipe_round();
+    }
+}
+
+fn input_pipe_round() {
     let h = host();
     let mut spec = cmd("", vec![]);
     spec.program = system32("findstr.exe");
@@ -426,4 +433,18 @@ fn umask_now_and_creation_modes() {
     perm.set_readonly(false);
     std::fs::set_permissions(d.join("ro"), perm).unwrap();
     std::fs::remove_dir_all(&d).unwrap();
+}
+
+#[test]
+fn host_info_in_bash_s_windows_forms() {
+    let i = host().info();
+    assert_eq!(i.ostype, "msys");
+    assert!(i.machtype.ends_with("-pc-msys"), "{}", i.machtype);
+    assert!(!i.hostname.is_empty());
+    assert!(i.ppid.is_some_and(|p| p != std::process::id()));
+    let embedded = WindowsHost::new(WindowsConfig {
+        pid: Some(4242),
+        ..WindowsConfig::default()
+    });
+    assert_eq!(embedded.info().ppid, Some(std::process::id()));
 }

@@ -1,6 +1,6 @@
 # 0033: Per-platform ratchets and the `platform` tag
 
-status: in-progress
+status: done
 agent: shapes
 branch: issue/0033-platform-ratchets
 depends-on: 0002, 0031
@@ -14,20 +14,20 @@ because the *host's* external programs or OS differ get platform-specific handli
 the shared ratchet only holds real psh gaps.
 
 ## Acceptance criteria
-- [ ] `tests/<layer>/expected-failures.<os>.txt` (macos, windows; wasm exists) next to
+- [x] `tests/<layer>/expected-failures.<os>.txt` (macos, windows; wasm exists) next to
       the shared one: a case may be listed there only if it passes on Linux; the gate on
       that OS consults shared + its own file. `--update-ratchet` writes the right file
       (a case failing only on this OS goes to the OS file).
-- [ ] A `platform` tag in spec.toml for inherently host-specific cases (/bin layout,
+- [x] A `platform` tag in spec.toml for inherently host-specific cases (/bin layout,
       case-insensitive FS, /proc, signals that don't exist) with a reason; such cases run
       but count separately in scripts/status.
-- [ ] Move the macOS-only failures out of the shared ratchets (e.g. the 29 BSD-utility
+- [x] Move the macOS-only failures out of the shared ratchets (e.g. the 29 BSD-utility
       L3 cases from 0031 that pass on Linux, `ls` exit codes, GNU-only programs). Many
       will start passing anyway as psh's own utilities land; the per-OS file shrinks then.
-- [ ] A Linux spec run is possible locally (Docker) so the shared ratchet can be checked
+- [x] A Linux spec run is possible locally (Docker) so the shared ratchet can be checked
       against Linux: `scripts/spec-linux` (build psh for linux-musl or in the container,
       run psh-spec there). Optional gate leg if fast enough; else a documented manual step.
-- [ ] scripts/status shows shared vs per-OS failures.
+- [x] scripts/status shows shared vs per-OS failures.
 
 ## Log
 - 2026-11-07: Linux build was broken on main (`[bool; 65]: Default`, NSIG on Linux):
@@ -56,5 +56,27 @@ the shared ratchet only holds real psh gaps.
 - brush/compat/background_jobs/18 quarantined ([[flaky]], timing under load; procs).
 
 ## Follow-ups
+- Windows: the mechanism is there (`expected-failures.windows.txt`), but the gate does not
+  run psh-spec on Windows yet; whoever adds that seeds the file with
+  `--add-failures --linux-results` (results from scripts/spec-linux).
+- engine (glob): a pattern ending in `/` matches non-directories (`pkg-*/` gives
+  `pkg-file/`): agent/files/7, on every platform.
+- utilities: psh's `touch -d` rejects `2017/12/31` (GNU takes it): oils/builtin-bracket/31
+  on wasm.
+- record-goldens runs bash in the container without `--init` too; harmless for goldens
+  (no leak check), but orphans of a recording are never reaped until the container ends.
+- A Linux spec leg in the gate (Docker, ~2 min with a warm cargo cache) if Linux-only
+  failures turn out to come back between manual runs.
 
 ## Result
+- The shared ratchets now mean "fails on Linux"; `expected-failures.macos.txt` (oils 43,
+  brush 18, agent 66 lines, each with its cause) and the wasm files hold platform-only
+  failures; 35 host-specific cases are `[[platform]]` rules, gated on Linux only.
+- `scripts/spec-linux [--update]`: the cases on Linux in Docker (~1.5 min), the results
+  file, and the moves between the files (`psh-spec --results`, `--linux-results`).
+- `scripts/status` has "Failures by ratchet": failing per layer by file, plus the
+  host-specific ones. Runs list host-specific cases apart, like flaky ones.
+- Gate leg `linux` (cargo check for Linux, D1330; landed separately), `command -p` on the
+  host's standard path (D1332).
+- On Linux: oils 2276, brush 2738, agent 699/701, utils 339 pass; on macOS oils 2219,
+  brush 2701, agent 634, utils 339.

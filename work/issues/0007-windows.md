@@ -356,6 +356,14 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
 - psh-spec on Windows (D1914): the windows platform ratchet, notes of commands never
   found (a `Noting` host wrapper), the Windows gate's `spec` leg for L4: 56/73 pass,
   the 17 others need `seq`, `yes`, `sh`, `grep`, `mkdir`; no other difference.
+- D1150's file system operations on Windows (D1915: mkdir, remove, rename, symlink or
+  junction, hard links, read_link, set_mode, set_times, stat_extra, user/home names,
+  utc_offset), host test. psh-spec on Windows gave the case its cwd as `\\?\C:\...`
+  (`cd d: File name too long`) and did not recognize `C:/x` spellings of the case paths:
+  fixed. `Noting` must forward every Host method (the new D1150 ones defaulted to
+  Unsupported and broke the macOS spec leg); a unit test compares it with the trait.
+  L4 on Windows now: 148 cases, 33 need external programs (`ln`, `tr`, `seq`, ...), 0
+  other differences.
 - Mode W: `timeout` (W) runs psh's utility on Windows though System32 has
   `timeout.exe`: cli test (`timeout 5 cmd /c echo hi`, `timeout 0.2 ping` → 124). The
   other W names (`find`, `sort`, `tree`, ...) are not built yet.

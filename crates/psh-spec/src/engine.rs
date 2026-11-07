@@ -357,6 +357,18 @@ fn file_from_reader(r: std::io::PipeReader) -> std::fs::File {
     }
 }
 
+/// The case's directory as the engine writes paths: on Windows `/`-separated and
+/// without the `\\?\` prefix that canonical paths carry (`C:/Users/...`).
+fn engine_cwd(p: &Path) -> Vec<u8> {
+    let s = p.to_string_lossy();
+    if cfg!(windows) {
+        let s = s.strip_prefix(r"\\?\").unwrap_or(&s);
+        s.replace('\\', "/").into_bytes()
+    } else {
+        s.into_owned().into_bytes()
+    }
+}
+
 fn os_bytes(s: &str) -> Vec<u8> {
     s.as_bytes().to_vec()
 }
@@ -486,7 +498,7 @@ impl Engine for InProcess {
             .iter()
             .map(|(k, v)| (os_bytes(k), os_bytes(v)))
             .collect();
-        let cwd = os_bytes(&req.cwd.to_string_lossy());
+        let cwd = engine_cwd(req.cwd);
         let deadline = Instant::now() + req.timeout;
         let out_file = file_from_writer(out_w);
         let err_file = file_from_writer(err_w);

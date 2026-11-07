@@ -1906,3 +1906,20 @@ listed with its reason. The Windows gate runs L4 (`--layer utils`) this way as i
 `spec` leg: today 56 of 73 cases pass and the other 17 need external programs, with no
 other difference, so there is no windows ratchet file yet. The other layers follow when
 their Windows differences are triaged.
+
+## D1915: Windows file system changes
+date: 2026-11-07 · by: windows · issue: 0007
+D1150's operations on `WindowsHost`, making up for what scripts would notice: a read-only
+file is removed like any other (on Unix the directory decides, not the file); a
+directory replaces an empty directory in `rename`; `remove_file` removes a symlink or
+junction to a directory as the link, never following it; `symlink` stores the target
+with `\`, makes a directory symlink when the target is a directory, and, when Windows
+refuses for lack of the privilege (neither Developer Mode nor administrator rights),
+makes a junction to a directory and gives a clear error for a file, never a copy;
+`read_link` returns the stored target with `/` (a junction's without `\??\`). `mkdir`
+ignores the mode (the read-only attribute does not protect a directory's contents);
+`set_mode` maps the write bits to the read-only attribute (D1911). `stat_extra` gives
+access and creation times, `ctime` = mtime, links from the file information, 512-byte
+blocks. Files are owned by uid/gid 1000, the user `HostInfo` reports; `user_name(1000)`
+and `home_dir` know the current user. `utc_offset` follows the system's time zone rules.
+psh-spec writes the case's cwd and recognizes its paths in the `C:/x` spelling psh uses.

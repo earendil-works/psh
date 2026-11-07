@@ -38,9 +38,20 @@ impl Paths {
                 spellings.push(canon);
             }
             for p in spellings {
-                let bytes = p.to_string_lossy().into_owned().into_bytes();
-                if !bytes.is_empty() && !rules.iter().any(|(l, _)| *l == bytes) {
-                    rules.push((bytes, *placeholder));
+                let text = p.to_string_lossy().into_owned();
+                // On Windows psh writes paths as `C:/x`: the canonical `\\?\C:\x` and the
+                // created `C:\x` both have that spelling too (D1914).
+                let mut forms = vec![text.clone()];
+                if cfg!(windows) {
+                    let plain = text.strip_prefix(r"\\?\").unwrap_or(&text).to_string();
+                    forms.push(plain.replace('\\', "/"));
+                    forms.push(plain);
+                }
+                for f in forms {
+                    let bytes = f.into_bytes();
+                    if !bytes.is_empty() && !rules.iter().any(|(l, _)| *l == bytes) {
+                        rules.push((bytes, *placeholder));
+                    }
                 }
             }
         }

@@ -60,7 +60,14 @@ fn dep_info_sources(root: &Path, dep_info: &Path) -> Option<Vec<PathBuf>> {
     if !cur.is_empty() {
         out.push(PathBuf::from(cur));
     }
-    out.retain(|p| p.starts_with(root));
+    // On Windows the root may be canonical (`\\?\C:\...`) while cargo writes plain
+    // paths (`C:\...`): compare without the prefix.
+    let plain = |p: &Path| -> PathBuf {
+        let s = p.to_string_lossy();
+        PathBuf::from(s.strip_prefix(r"\\?\").unwrap_or(&s).to_string())
+    };
+    let root = plain(root);
+    out.retain(|p| plain(p).starts_with(&root));
     (!out.is_empty()).then_some(out)
 }
 

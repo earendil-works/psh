@@ -64,8 +64,9 @@ fn dep_info_sources(root: &Path, dep_info: &Path) -> Option<Vec<PathBuf>> {
     (!out.is_empty()).then_some(out)
 }
 
-/// The newest file among the crates' manifests and sources, and the workspace manifest
-/// and lock file.
+/// The newest source of the artifact: the workspace files its dep-info lists, or
+/// without one the crates' manifests and sources and the workspace manifest and lock
+/// file.
 fn newest_source(root: &Path, dep_info: &Path, crates: &[&str]) -> Option<(SystemTime, PathBuf)> {
     let mut newest: Option<(SystemTime, PathBuf)> = None;
     let mut consider = |p: &Path| {
@@ -75,17 +76,18 @@ fn newest_source(root: &Path, dep_info: &Path, crates: &[&str]) -> Option<(Syste
             newest = Some((t, p.to_path_buf()));
         }
     };
-    consider(&root.join("Cargo.toml"));
-    consider(&root.join("Cargo.lock"));
+    // With dep-info, exactly the files the build read: no manifests or lock file. An
+    // edit cargo does not rebuild for (a test target in a crate's Cargo.toml, another
+    // crate's dependency in Cargo.lock) must not make the binary look stale when the
+    // advice, `cargo build`, cannot change it; an edit that matters rebuilds it.
     if let Some(files) = dep_info_sources(root, dep_info) {
-        for c in crates {
-            consider(&root.join("crates").join(c).join("Cargo.toml"));
-        }
         for f in files {
             consider(&f);
         }
         return newest;
     }
+    consider(&root.join("Cargo.toml"));
+    consider(&root.join("Cargo.lock"));
     for c in crates {
         let dir = root.join("crates").join(c);
         consider(&dir.join("Cargo.toml"));
@@ -190,6 +192,11 @@ mod tests {
             ),
         )
         .unwrap();
+        assert!(check(&dir, &artifact, &no_deps, &["a"], "make it").is_ok());
+        // Nor a manifest edit cargo rebuilds nothing for.
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        std::fs::write(dir.join("crates/a/Cargo.toml"), b"[package]").unwrap();
+        std::fs::write(dir.join("Cargo.lock"), b"").unwrap();
         assert!(check(&dir, &artifact, &no_deps, &["a"], "make it").is_ok());
         std::fs::write(
             &no_deps,

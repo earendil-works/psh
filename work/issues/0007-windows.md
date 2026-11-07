@@ -336,6 +336,11 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
   `windows` (shims, paths, CRLF, System32 through PATH). The `process-windows` target is
   gone: `cargo test -p psh-os --test process` everywhere. 46 pass on macOS, 17 on Windows
   (arm64 and x64). TESTING.md's L5 row updated.
+- The gate then failed in wasm-host: psh-spec's freshness check called `target/debug/psh`
+  older than `crates/psh-os/Cargo.toml`, though cargo had nothing to rebuild for that
+  edit (a test target), so its own advice could not fix it. psh-spec (infra's) now uses
+  cargo's dep-info (`psh.d`) when it exists: exactly the sources the binary was built
+  from; the crate walk stays the fallback (`psh.wasm`). Unit test extended.
 
 ## Follow-ups
 - Engine: strip the `\r` of CRLF in `$(…)` and `read` on Windows (ARCH "Windows rules").

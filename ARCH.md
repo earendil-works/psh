@@ -665,7 +665,9 @@ the daemon build, on by default (D031).
 `psh -c CMD [ARGS]`, `psh SCRIPT [ARGS]`, a script on stdin, with bash's options (`-e`,
 `-o pipefail`, `-O extglob`, ...), parsed by `psh_engine::invocation`. Its own modes:
 `psh --parse [--compact] [-O extglob] [-c CMD | FILE]` prints the AST as JSON with spans
-(D1047); `psh --classify` prints the classification. Modes, flags and help are parsed
+(D1047); `psh --classify` prints the classification; `psh --utils [--json]` lists the
+utilities and what each name runs here, asked from a shell configured as `psh -c` is
+(D1341). Modes, flags and help are parsed
 with the `argument` crate, while bash's invocation rules (`+o`, combined `-euc`) stay
 with the invocation parser, which the conformance runner shares (D035): `argument` reads
 the leading `--name` arguments that are not bash's, and the first other argument starts

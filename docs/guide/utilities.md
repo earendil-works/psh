@@ -115,6 +115,9 @@ cat: shell builtin
 `which` prints `NAME: shell builtin` alone only when no program exists, as in a
 browser. `type -P` searches `PATH`, as bash's does for its own builtins.
 
+`psh --utils` lists every utility with its mode and what a command of its name runs on
+this machine, with this `PATH` ([the command line](cli.md#pshs-own-modes)).
+
 ## Turning utilities off
 
 An embedder chooses the utilities of a shell when it creates one. It can give it none,

@@ -2384,3 +2384,17 @@ spelling (`C:/x`, no `\\?\`), treats exit `128+n` of a shell binary as death by 
 missing program as 127 before any interpreter guess, `python3` falling back to `python`
 (what Windows installs). prlctl's exec failures that never started the runner (seen in
 runs of up to half of all execs) are retried up to five times.
+
+## D1341: `psh --utils` asks a shell what runs; an unreadable script is 126
+date: 2026-11-07 · by: cli · issue: 0034
+`psh --utils [--json]` lists every name of `psh_utils::REGISTRY` with its entry's first
+name, mode (S/F/W), destructive flag, what a command of that name runs here (`psh`,
+`program`, `builtin`) and the program `PATH` has for it. It does not re-implement the
+lookup: it starts a shell configured exactly as the standalone shell (one
+`shell_config()` for both: environment, `PSH_UTILS_FORCE`, Windows env and cwd) with
+stdout captured in memory, runs `type -a -- NAME` for each name and reads the lines
+(`is a psh utility`, `is a shell builtin`, `is PATH`; the first is what runs). So the
+answer is the engine's own lookup and cannot drift from it. The JSON is
+`{"utilities": [{name, utility, mode, destructive, runs, path|null}]}`.
+A script operand that cannot be read is 126 unless it does not exist (127), as bash
+(`psh /tmp` was 127).

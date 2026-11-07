@@ -2,7 +2,7 @@
 
 - [What psh is](introduction.md)
 - [What psh optimizes for](goals.md)
-- [Running psh: the command line]()
+- [Running psh: the command line](cli.md)
 - [The language: bash as agents write it]()
 - [Utilities that run in-process](utilities.md)
 - [psh on Windows](windows.md)

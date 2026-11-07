@@ -1,12 +1,7 @@
 # Ratchet for layer brush: active cases that may fail (TESTING.md "Ratchets").
 # One case id per line, optionally `id: reason`. psh-spec --update-ratchet removes
 # cases that pass; never add a line to hide a regression.
-brush/brush/command_substitution/7
 brush/brush/command_substitution/12
-brush/brush/command_substitution/14
-brush/brush/command_substitution/6
-brush/brush/command_substitution/12
-brush/brush/command_substitution/13
 brush/brush/external_commands/0
 brush/brush/external_commands/1
 brush/brush/external_commands/2
@@ -34,8 +29,6 @@ brush/brush/redirection/6
 brush/brush/redirection/7
 brush/brush/redirection/11
 brush/brush/scripting/2
-brush/brush/scripting/3
-brush/brush/scripting/5
 brush/brush/scripting/6
 brush/brush/scripting/7
 brush/brush/scripting/8
@@ -93,14 +86,6 @@ brush/compat/arguments/99
 brush/compat/arithmetic/22
 brush/compat/arithmetic/36
 brush/compat/arithmetic/42
-brush/compat/arrays/6
-brush/compat/arrays/16
-brush/compat/arrays/22
-brush/compat/arrays/23
-brush/compat/arrays/24
-brush/compat/arrays/25
-brush/compat/arrays/26
-brush/compat/arrays/27
 brush/compat/arrays/30
 brush/compat/arrays/52
 brush/compat/assignments/6
@@ -146,10 +131,6 @@ brush/compat/builtins/alias/38
 brush/compat/builtins/alias/39
 brush/compat/builtins/builtin/7
 brush/compat/builtins/builtin/8
-brush/compat/builtins/builtin/9
-brush/compat/builtins/builtin/10
-brush/compat/builtins/builtin/13
-brush/compat/builtins/builtin/14
 brush/compat/builtins/builtin/16
 brush/compat/builtins/builtin/17
 brush/compat/builtins/builtin/18
@@ -175,11 +156,7 @@ brush/compat/builtins/command/3
 brush/compat/builtins/command/4
 brush/compat/builtins/command/7
 brush/compat/builtins/command/9
-brush/compat/builtins/command/10
-brush/compat/builtins/command/11
 brush/compat/builtins/command/14
-brush/compat/builtins/command/16
-brush/compat/builtins/command/17
 brush/compat/builtins/command/19
 brush/compat/builtins/command/20
 brush/compat/builtins/command/21
@@ -204,7 +181,6 @@ brush/compat/builtins/declare/1
 brush/compat/builtins/declare/2
 brush/compat/builtins/declare/3
 brush/compat/builtins/declare/13
-brush/compat/builtins/declare/21
 brush/compat/builtins/declare/22
 brush/compat/builtins/declare/23
 brush/compat/builtins/declare/24: passed only while declare was missing (both failed alike); needs `enable`
@@ -213,7 +189,6 @@ brush/compat/builtins/declare/26
 brush/compat/builtins/declare/28
 brush/compat/builtins/declare/36
 brush/compat/builtins/declare/37
-brush/compat/builtins/declare/41
 brush/compat/builtins/declare/44
 brush/compat/builtins/declare/59
 brush/compat/builtins/declare/60
@@ -295,14 +270,10 @@ brush/compat/builtins/exec/15
 brush/compat/builtins/exec/16
 brush/compat/builtins/exit/14
 brush/compat/builtins/exit/15
-brush/compat/builtins/export/14
 brush/compat/builtins/export/15
-brush/compat/builtins/export/17
-brush/compat/builtins/export/18
 brush/compat/builtins/export/16
 brush/compat/builtins/export/19
 brush/compat/builtins/export/22
-brush/compat/builtins/export/23
 brush/compat/builtins/export/27
 brush/compat/builtins/export/29
 brush/compat/builtins/export/35
@@ -461,35 +432,20 @@ brush/compat/builtins/read/2
 brush/compat/builtins/read/3
 brush/compat/builtins/read/6
 brush/compat/builtins/read/8
-brush/compat/builtins/read/9
 brush/compat/builtins/read/10
 brush/compat/builtins/read/11
 brush/compat/builtins/read/12
 brush/compat/builtins/read/13
 brush/compat/builtins/read/14
 brush/compat/builtins/read/15
-brush/compat/builtins/read/16
 brush/compat/builtins/read/37
 brush/compat/builtins/read/47
 brush/compat/builtins/read/49
 brush/compat/builtins/read/60
-brush/compat/builtins/read/63
 brush/compat/builtins/read/64
 brush/compat/builtins/read/65
 brush/compat/builtins/read/74
 brush/compat/builtins/read/75
-brush/compat/builtins/readonly/0
-brush/compat/builtins/readonly/1
-brush/compat/builtins/readonly/2
-brush/compat/builtins/readonly/3
-brush/compat/builtins/readonly/4
-brush/compat/builtins/readonly/5
-brush/compat/builtins/read/76
-brush/compat/builtins/read/78
-brush/compat/builtins/read/79
-brush/compat/builtins/read/81
-brush/compat/builtins/read/82
-brush/compat/builtins/read/83
 brush/compat/builtins/readonly/6
 brush/compat/builtins/readonly/8
 brush/compat/builtins/return/1
@@ -865,14 +821,6 @@ brush/compat/here/71
 brush/compat/here/84
 brush/compat/ifs/0
 brush/compat/ifs/34
-brush/compat/ifs/48
-brush/compat/ifs/49
-brush/compat/ifs/50
-brush/compat/ifs/51
-brush/compat/ifs/53
-brush/compat/ifs/54
-brush/compat/ifs/55
-brush/compat/ifs/45
 brush/compat/ifs/60
 brush/compat/ifs/95
 brush/compat/ifs/96
@@ -898,7 +846,6 @@ brush/compat/nameref/38
 brush/compat/nameref/39
 brush/compat/nameref/41
 brush/compat/nameref/44
-brush/compat/nameref/52
 brush/compat/nameref/54
 brush/compat/nameref/57
 brush/compat/nameref/58
@@ -912,14 +859,12 @@ brush/compat/nameref/92
 brush/compat/nameref/93
 brush/compat/nameref/105
 brush/compat/nameref/111
-brush/compat/nameref/113
 brush/compat/nameref/114
 brush/compat/nameref/119
 brush/compat/nameref/133
 brush/compat/nameref/134
 brush/compat/nameref/136
 brush/compat/nameref/137
-brush/compat/nameref/138
 brush/compat/nameref/140
 brush/compat/nameref/141
 brush/compat/nameref/142
@@ -934,8 +879,6 @@ brush/compat/nameref/167
 brush/compat/nameref/168
 brush/compat/nameref/169
 brush/compat/nameref/174
-brush/compat/nameref/180
-brush/compat/nameref/183
 brush/compat/nameref/184
 brush/compat/nameref/185
 brush/compat/nameref/196
@@ -1523,8 +1466,6 @@ brush/compat/word_expansion/arrays/7
 brush/compat/word_expansion/braces/0
 brush/compat/word_expansion/braces/7
 brush/compat/word_expansion/braces/18
-brush/compat/word_expansion/braces/25
-brush/compat/word_expansion/braces/23
 brush/compat/word_expansion/braces/28
 brush/compat/word_expansion/command_substitution/1
 brush/compat/word_expansion/command_substitution/10
@@ -1558,11 +1499,8 @@ brush/compat/word_expansion/param_transformation/9
 brush/compat/word_expansion/param_transformation/10
 brush/compat/word_expansion/param_transformation/11
 brush/compat/word_expansion/params/7
-brush/compat/word_expansion/params/8
 brush/compat/word_expansion/params/9
 brush/compat/word_expansion/params/10
-brush/compat/word_expansion/params/13
-brush/compat/word_expansion/params/14
 brush/compat/word_expansion/params/30
 brush/compat/word_expansion/params/35
 brush/compat/word_expansion/params/36

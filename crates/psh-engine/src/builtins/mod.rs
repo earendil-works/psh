@@ -5,9 +5,9 @@ pub(crate) mod alias;
 mod command;
 #[cfg(test)]
 mod core_tests;
+pub(crate) mod declare;
 mod eval;
 pub(crate) mod hash;
-pub(crate) mod declare;
 mod printf;
 mod read;
 mod test;
@@ -185,15 +185,6 @@ pub(crate) const SPECIAL: &[&[u8]] = &[
 /// same name (macOS has `/usr/bin/read`, `/usr/bin/type`, ... as sh wrappers).
 async fn unsupported(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     crate::expand::unsupported(vp, &s(&args[0])).await
-}
-
-/// Whether `name` is a declaration builtin, whose `name=value` arguments are expanded
-/// like assignments (no word splitting).
-pub(crate) fn is_declaration(name: &[u8]) -> bool {
-    matches!(
-        name,
-        b"export" | b"readonly" | b"declare" | b"typeset" | b"local"
-    )
 }
 
 /// Writes to a descriptor of the vproc. A closed pipe ends the vproc as SIGPIPE would

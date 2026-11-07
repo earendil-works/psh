@@ -1855,3 +1855,19 @@ that are not valid UTF-8 stay single units), as BSD's `tr` in a UTF-8 locale: `t
 means the character, where GNU would map its two bytes separately and corrupt other
 characters. Classes (`[:alpha:]`) are the C locale's in both modes. Reason: GNU's
 behavior wherever it is sane; the character meaning where GNU's output is garbage.
+
+## D1160: sort collates by bytes in every locale
+date: 2026-11-07 · by: text · issue: 0016
+Settles D034's open point. psh's `sort` (and `comm`, `uniq`, which compare as it
+orders) compare bytes, as `LC_ALL=C sort` does, whatever `LANG`/`LC_ALL` say; for UTF-8
+text that is code point order. `-f`, `-d`, `-i` and `-M` use the C locale's (ASCII)
+classes. Evidence: for `b A a B _x -y ä z` in en_US.UTF-8, GNU (glibc) gives `a A ä b B _x
+-y z`-like dictionary order, macOS's sort gives `_x -y a A ä b B z`, and both give `-y A B
+_x a b z ä` in the C locale; the recording container and most CI run in C or C.UTF-8
+(byte order) already. Locale collation is the only setting that is neither portable nor
+deterministic, and the common agent uses (`sort | uniq -c | sort -rn`, `sort -u` of
+paths, `sort -n -k`, `comm` of two sorted lists) depend on consistency between tools, not
+on dictionary order. Rejected: falling through in non-C locales (the output would differ
+by OS, which is what the utilities exist to avoid). Known cost: `sort` in en_US.UTF-8
+orders `B` before `a`, unlike GNU and BSD there; a real `join` or `comm` (not psh's) in
+such a locale may call psh's output unsorted.

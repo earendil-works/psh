@@ -272,6 +272,11 @@ pub static UTILITIES: &[Utility] = &[
             "--buffer-size",
             "--temporary-directory",
             "--parallel",
+            "--batch-size",
+            "--compress-program",
+            "--files0-from",
+            "--random-source",
+            "--sort",
         ],
         Reads,
         &[

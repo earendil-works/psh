@@ -33,6 +33,7 @@ mod cut;
 mod nl;
 mod paste;
 mod seq;
+mod sort;
 mod tee;
 mod tr;
 mod uniq;
@@ -175,6 +176,12 @@ pub static REGISTRY: &[UtilEntry] = &[
         destructive: false,
         run: util_fn!(nl::run),
     },
+    UtilEntry {
+        names: &["sort"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(sort::run),
+    },
 ];
 
 /// The option specs, for the classifier check (D1082).
@@ -201,6 +208,7 @@ pub static SPECS: &[opts::Spec] = &[
     uniq::SPEC,
     comm::SPEC,
     nl::SPEC,
+    sort::SPEC,
 ];
 
 /// The policy for a shell: every utility on. `sandbox`: no real programs exist (wasm),

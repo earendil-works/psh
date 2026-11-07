@@ -51,6 +51,13 @@ The text filters of Tier 1, all S: `sort uniq cut tr paste nl tee seq comm`.
   Classifier: `nl`'s long value options added. GNU over BSD (D016): `uniq -c` widths,
   `nl` indents unnumbered lines with spaces and prints section delimiters as empty
   lines; `comm` checks the order as GNU does; BSD's `comm -i` and `cut -w` accepted.
+- Part 3: `sort`, written from GNU's manual (keys, last resort, `-V` as documented for
+  filevercmp: Debian version order plus the suffix rule). D1160: byte collation in every
+  locale (evidence in the decision). Inputs are read whole, sorted with a stable sort
+  (`-u` keeps the first of equal keys, `-o` may name an input), on the vproc; 1M lines
+  sort in well under a second natively. `-S -T --parallel --batch-size` are accepted and
+  ignored; `--compress-program --files0-from --random-source --debug` fall through.
+  Classifier: `sort`'s long value options completed.
 
 ## Follow-ups
 

@@ -138,3 +138,47 @@ fn nl() {
         "nl: unsupported numbering style 'pREGEX' (psh built-in nl)\n",
     );
 }
+
+#[test]
+fn sort() {
+    check("sort f", "four\none\nthree\ntwo\n");
+    check("sort -r f", "two\nthree\none\nfour\n");
+    check("printf 'b\\na' | sort", "a\nb\n");
+    check("printf '2\\n10\\n1\\n' | sort -n", "1\n2\n10\n");
+    check("sort -o f f; cat f", "four\none\nthree\ntwo\n");
+    // Byte order whatever the locale (D1160).
+    check(
+        "printf 'b\\nB\\na\\n' | LC_ALL=en_US.UTF-8 sort",
+        "B\na\nb\n",
+    );
+    check_all(
+        "printf 'a\\nc\\nb\\n' | sort -c",
+        "",
+        1,
+        "",
+        "sort: -:3: disorder: b\n",
+    );
+    check_all(
+        "sort --debug f",
+        "",
+        2,
+        "",
+        "sort: unsupported option '--debug' (psh built-in sort)\n",
+    );
+}
+
+#[test]
+fn unknown_options_fail_clearly() {
+    // The test host has none of these programs, so there is nothing to fall through to.
+    for name in [
+        "sort", "uniq", "cut", "tr", "paste", "nl", "tee", "seq", "comm",
+    ] {
+        check_all(
+            &format!("{name} --frobnicate < /dev/null"),
+            "",
+            2,
+            "",
+            &format!("{name}: unsupported option '--frobnicate' (psh built-in {name})\n"),
+        );
+    }
+}

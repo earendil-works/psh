@@ -1,0 +1,380 @@
+# Goldens for tests/utils/sort/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: default byte order
+status: 0
+bash-n: 0
+--- stdout
+|-y
+|10
+|9
+|A
+|B
+|_x
+|a
+|b
+
+=== 1: -r
+status: 0
+bash-n: 0
+--- stdout
+|c
+|b
+|a
+
+=== 2: -n
+status: 0
+bash-n: 0
+--- stdout
+|-1
+|0
+|1.5
+|9
+|10
+|100
+
+=== 3: -n with non-numbers and ties
+status: 0
+bash-n: 0
+--- stdout
+|-1
+|
+|-0
+|0
+|x
+|1,000
+|1a
+|1.5
+| 3
+
+=== 4: -rn, the frequency idiom
+status: 0
+bash-n: 0
+--- stdout
+|   3 x
+|   2 y
+|   1 z
+
+=== 5: -u
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+
+=== 6: -u with -n keeps the first of equal numbers
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+
+=== 7: -k field
+status: 0
+bash-n: 0
+--- stdout
+|b 1
+|c 2
+|a 3
+
+=== 8: -k with -n
+status: 0
+bash-n: 0
+--- stdout
+|y 9
+|x 10
+|z 100
+
+=== 9: -k with its own options
+status: 0
+bash-n: 0
+--- stdout
+|z 100
+|x 10
+|y 9
+
+=== 10: -t and -k
+status: 0
+bash-n: 0
+--- stdout
+|a:1
+|b:2
+|c:3
+
+=== 11: -t with a numeric key
+status: 0
+bash-n: 0
+--- stdout
+|r:x:0
+|d:x:1
+|u:x:1000
+
+=== 12: several keys
+status: 0
+bash-n: 0
+--- stdout
+|a 2
+|a 1
+|b 2
+|b 1
+
+=== 13: a key with a character offset
+status: 0
+bash-n: 0
+--- stdout
+|y1a
+|x1b
+|z0c
+
+=== 14: a key ending in the middle of a field
+status: 0
+bash-n: 0
+--- stdout
+|aa 1
+|ab 1
+|ab 2
+
+=== 15: keys without -t include leading blanks
+status: 0
+bash-n: 0
+--- stdout
+|a  a
+|a b
+
+=== 16: -b ignores them
+status: 0
+bash-n: 0
+--- stdout
+|y 1
+|x  2
+|z   3
+
+=== 17: a key's own options replace the global ones
+status: 0
+bash-n: 0
+--- stdout
+|1 b
+|10 a
+|2 c
+
+=== 18: -r reverses the last resort too
+status: 0
+bash-n: 0
+--- stdout
+|c 1
+|b 2
+|a 2
+
+=== 19: -s keeps input order of equal keys
+status: 0
+bash-n: 0
+--- stdout
+|c 0
+|b 1
+|a 1
+
+=== 20: -f folds case
+status: 0
+bash-n: 0
+--- stdout
+|A
+|a
+|B
+|b
+
+=== 21: -d dictionary order
+status: 0
+bash-n: 0
+--- stdout
+|a_2
+|b-1
+|#c
+
+=== 22: -h human sizes
+status: 0
+bash-n: 0
+--- stdout
+|500
+|1K
+|1.5K
+|2M
+|1G
+
+=== 23: du-style -h with a key
+status: 0
+bash-n: 0
+--- stdout
+|1.2M	target
+|4.0K	src
+|512	README
+
+=== 24: -g general numbers
+status: 0
+bash-n: 0
+--- stdout
+|-inf
+|0.5
+|5
+|1e3
+
+=== 25: -M months
+status: 0
+bash-n: 0
+--- stdout
+|jan
+|Feb
+|Mar
+|Dec
+
+=== 26: -V versions
+status: 0
+bash-n: 0
+--- stdout
+|v1.2
+|v1.2.1
+|v1.9
+|v1.10
+
+=== 27: -V with file names
+status: 0
+bash-n: 0
+--- stdout
+|a-1.2~rc
+|a-1.2
+|file.tar.gz
+|file.txt
+|file1.txt
+
+=== 28: -R shuffles but keeps all lines
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|4
+|5
+
+=== 29: -z
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+
+=== 30: -o writes a file, which may be an input
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+--- file f
+|a
+|b
+
+=== 31: several files
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+|d
+--- file f
+|b
+|d
+--- file g
+|a
+|c
+~ no newline at end
+
+=== 32: -m merges sorted files
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+|d
+--- file f
+|a
+|c
+--- file g
+|b
+|d
+
+=== 33: -c finds disorder
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|sort: -:3: disorder: b
+
+=== 34: -C is silent
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=0
+
+=== 35: --sort=version
+status: 2
+bash-n: 0
+--- stderr
+|sort: Unknown feature: version
+
+=== 36: a last line without a newline
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+
+=== 37: empty input
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 38: a missing file
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|sort: No such file or directory
+
+=== 39: a bad key
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|sort: 0 field in key specs: Undefined error: 0
+|sort: -k 0: Invalid argument
+
+=== 40: a multi-character separator
+status: 0
+bash-n: 0
+--- stdout
+|status=2
+--- stderr
+|sort: ab: Invalid argument
+
+=== 41: sort | uniq -c | sort -rn | head, as agents count
+status: 0
+bash-n: 0
+--- stdout
+|   4 /a
+|   1 /b
+
+=== 42: -S and --parallel are accepted
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b

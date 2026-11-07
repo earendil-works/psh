@@ -334,6 +334,10 @@ fn open_fifo(p: Vec<u8>, opts: OpenOptions) -> HostFuture<io::Result<Rc<dyn Host
 }
 
 impl Host for UnixHost {
+    fn native_paths(&self) -> Option<psh_engine::host::NativePathFn> {
+        Some(|p| Ok(path(p)))
+    }
+
     fn open(&self, p: &[u8], opts: OpenOptions) -> HostFuture<io::Result<Rc<dyn HostFile>>> {
         // Read-write opens of a FIFO never wait.
         if opts.read != opts.write

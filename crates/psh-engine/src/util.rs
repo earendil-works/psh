@@ -21,6 +21,13 @@ use crate::state::{R, Vp};
 
 pub use crate::host::Access;
 
+mod blocking;
+pub use blocking::{
+    BlockingOptions, IN_FLIGHT, INLINE_INPUT_LIMIT, INLINE_OUTPUT_LIMIT, Stderr, Stdin, Stdout,
+    SyncCtx, SyncFile, SyncFn,
+};
+
+
 /// 2: file system changes, `stat_extra`, names, time and umask (D1150).
 pub const UTIL_API_VERSION: u32 = 2;
 

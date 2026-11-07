@@ -387,9 +387,15 @@ awaited, stdout buffered and flushed before reads, before stderr writes and when
 cwd, environment, the Host's file operations, `sleep`, a safepoint (`check`) for long
 loops, `spawn` for the wrappers (`xargs`, `find -exec`, `env`, `timeout`, `nice`,
 `nohup`) and `run_program` for falling through to the real program. Cancel is dropping
-the future. Code built on synchronous crates (ripgrep's, jaq) is the exception: a
-blocking utility on a worker thread natively, inline with its input read first (within
-a bound) in WASM. The registry (psh-utils) is passed in `ShellConfig::utilities`; the
+the future. Code built on synchronous crates (ripgrep's, jaq) is the exception: an
+async front end parses its arguments (and falls through if it must), then
+`UtilCtx::run_blocking` runs a `fn(&mut SyncCtx, T) -> i32` body with std `Read`/`Write`
+stdio and a synchronous file system (D1130). When the Host names the process's own file
+system (`Host::native_paths`) the body runs on a worker thread whose stdio are bounded
+queues the engine pumps, and it may use `std::fs` (the `ignore` walker) on the OS paths;
+otherwise (WASM, sandbox and test hosts) it runs inline, with stdin read first when it
+asks for it (within a bound), output collected and written after, and Host calls that
+must answer at once. The registry (psh-utils) is passed in `ShellConfig::utilities`; the
 engine looks a name up after functions and builtins, before PATH (D1083). Ported code
 (uutils calls `std::io::stdout()` and `std::fs` directly) is refactored onto this
 context, as oh-my-pi did; re-executing the psh binary per utility, as brush does, is not

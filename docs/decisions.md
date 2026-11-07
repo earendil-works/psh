@@ -1747,3 +1747,31 @@ USR1 USR2 ALRM TERM XCPU XFSZ VTALRM PROF; never PIPE), so the psh binary they s
 the cases' goldens see default dispositions however the gate was started. Checked: all
 psh-os, L5, standalone and psh-spec runs pass under a parent ignoring INT TERM HUP QUIT
 USR1 USR2 ALRM.
+## D1130: Blocking utilities: `UtilCtx::run_blocking` and `SyncCtx`
+date: 2026-11-07 · by: infra · issue: 0013
+Builds D1080's exception, additively (UtilCtx v1 is unchanged: `UtilFn` and `UtilEntry`
+stay; `UTIL_API_VERSION` stays 1, the new items are extra). A utility on synchronous
+crates is an ordinary async utility whose front end parses arguments on the engine
+thread (so `run_program` fall-through stays async), then awaits
+`ctx.run_blocking(BlockingOptions { stdin }, arg, body)` with `body: fn(&mut SyncCtx,
+T) -> i32`, `T: Send`. `SyncCtx` offers name, cwd, env, TTY state of fds 0–2, `path`,
+`native_path`, `cancelled()`, std `Read`/`Write` stdin/stdout/stderr with D1081's buffering
+rules, `error`, and a synchronous fs view (`open` for reading, `stat`, `read_dir`).
+- **Backend choice is the Host's**: new additive `Host::native_paths() ->
+  Option<fn(&[u8]) -> io::Result<PathBuf>>` (default `None`; psh-os and StdHost answer
+  their own path mapping). With it, the body runs on a worker thread and its fs view
+  is `std::fs` on the OS paths, which is also what lets the `ignore` walker run
+  natively. Stdio are queues the utility's vproc pumps: output in flight is bounded (1
+  MiB), a write after a failed one (EPIPE) fails, stdin reads go through the engine
+  one at a time. Dropping the future (cancel, `timeout`, a fatal signal) sets the
+  cancel flag and fails every later I/O of the thread, which therefore can no longer
+  write; the thread is not joined.
+- **Inline otherwise** (wasm, sandbox and test hosts): stdin is read to its end first
+  only when `stdin` is set (64 MiB bound, D1080's message and status 2 past it);
+  output is collected in order (256 MiB bound, writes past it fail) and written after
+  the body returns; fs calls are Host futures polled once, and one that is not ready
+  is a `WouldBlock` error, never a hang.
+- A panic in the body is caught (`internal error: MSG`, status 2) where unwinding
+  exists.
+Incremental searching in wasm (`yes | grep x | head -1`) needs the search crates driven
+over chunks by an async utility; it is 0013 follow-up work, not this mechanism.

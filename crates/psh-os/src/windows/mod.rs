@@ -365,6 +365,10 @@ fn open_file(p: &std::path::Path, opts: OpenOptions) -> io::Result<std::fs::File
 }
 
 impl Host for WindowsHost {
+    fn native_paths(&self) -> Option<psh_engine::host::NativePathFn> {
+        Some(path::native)
+    }
+
     fn open(&self, p: &[u8], opts: OpenOptions) -> HostFuture<io::Result<Rc<dyn HostFile>>> {
         let r = path::native(p).and_then(|np| {
             open_file(&np, opts)

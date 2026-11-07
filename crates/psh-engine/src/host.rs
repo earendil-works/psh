@@ -293,6 +293,9 @@ pub struct Spawned {
     pub pipes: Vec<(u32, Rc<dyn HostFile>)>,
 }
 
+/// Maps an absolute host path to the OS path (see [`Host::native_paths`]).
+pub type NativePathFn = fn(&[u8]) -> io::Result<std::path::PathBuf>;
+
 /// Facts about the process and the machine that bash reports in variables (D1301):
 /// `UID`, `EUID`, `GROUPS`, `PPID`, `HOSTNAME`, `OSTYPE`, `MACHTYPE`, `HOSTTYPE`.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -368,6 +371,14 @@ pub trait Host {
     fn kill(&self, pid: i32, sig: Signal) -> io::Result<()> {
         let _ = (pid, sig);
         Err(io::ErrorKind::Unsupported.into())
+    }
+    /// When this host's paths name the process's own file system: how a path becomes
+    /// the OS path `std::fs` takes (D1130). Blocking utilities then run on a worker
+    /// thread and use `std::fs` there directly; hosts with a file system of their own
+    /// (wasm, sandboxes, tests) keep the default `None`, and those utilities run inline
+    /// over the Host. A plain function, so other threads can call it.
+    fn native_paths(&self) -> Option<NativePathFn> {
+        None
     }
     /// User, group, parent and machine facts for the shell's variables (D1301). Asked
     /// once per shell.

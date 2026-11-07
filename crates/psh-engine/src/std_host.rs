@@ -385,7 +385,7 @@ fn ready<T: 'static>(v: T) -> HostFuture<T> {
     Box::pin(std::future::ready(v))
 }
 
-fn metadata(m: &std::fs::Metadata) -> Metadata {
+pub(crate) fn metadata(m: &std::fs::Metadata) -> Metadata {
     let ft = m.file_type();
     let mut kind = if ft.is_symlink() {
         FileKind::Symlink
@@ -875,6 +875,10 @@ impl Host for StdHost {
             proc: Box::new(StdProc { state }),
             pipes,
         })
+    }
+
+    fn native_paths(&self) -> Option<crate::host::NativePathFn> {
+        Some(|p| Ok(path(p)))
     }
 
     fn umask(&self) -> u32 {

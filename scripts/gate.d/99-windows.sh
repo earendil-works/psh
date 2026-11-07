@@ -1,9 +1,10 @@
-# timeout: 3000
+# timeout: 7500
 # grace: 120
 # inputs: crates/ Cargo.toml Cargo.lock .cargo/ tests/ scripts/windows-gate.sh scripts/windows-gate.ps1 scripts/merge-lock.sh
 # The Rust legs on the Parallels Windows VM (D1070). Always last: it is the slowest, and
-# a failure on macOS is cheaper to find first. The grace above gives it time after a
-# TERM to stop its runner in the VM and suspend it.
+# a failure on macOS is cheaper to find first. The timeout allows for the longest wait
+# for the VM's turn (an hour) plus a whole run (an hour, D1072). The grace gives it time
+# after a TERM to stop its runner in the VM and suspend it.
 #
 # PSH_GATE_WINDOWS=0 skips it when the VM is broken: for the coordinator and the owner
 # only, never to get green.

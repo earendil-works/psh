@@ -5,7 +5,8 @@
 #
 # 1. Rebase the branch onto main (no lock).
 # 2. Run scripts/gate.sh on the result, here in the issue worktree (no lock), under
-#    scripts/timeout.sh (PSH_GATE_TIMEOUT seconds, default 3600).
+#    scripts/timeout.sh (PSH_GATE_TIMEOUT seconds, default 10800: the windows leg may
+#    wait an hour for the VM's turn, D1072).
 # 3. Take the merge lock (work/scratch/merge.lock in the primary checkout). If main is
 #    still where step 1 put the branch, fast-forward main in the primary checkout and
 #    release: the lock is held for seconds. If main moved meanwhile (another merge, the
@@ -131,7 +132,7 @@ run_gate() {
   local t
   t=$(date +%s)
   echo "== gate on $(git rev-parse --short "$sha")"
-  if ! "$here/scripts/timeout.sh" "${PSH_GATE_TIMEOUT:-3600}" "$here/scripts/gate.sh"; then
+  if ! "$here/scripts/timeout.sh" "${PSH_GATE_TIMEOUT:-10800}" "$here/scripts/gate.sh"; then
     outcome=failed-gate
     die "the gate failed; fix it, commit, run this again"
   fi

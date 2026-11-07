@@ -415,6 +415,19 @@ fn run_in_shell(_p: &Path) -> io::Error {
     psh_engine::host::RunInShell::error()
 }
 
+/// The error of a `#!` script whose interpreter is on no `PATH` entry (`NotFound`):
+/// the name, for a test runner that counts missing programs.
+#[derive(Debug)]
+pub struct MissingInterpreter(pub String);
+
+impl std::fmt::Display for MissingInterpreter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: interpreter not found", self.0)
+    }
+}
+
+impl std::error::Error for MissingInterpreter {}
+
 /// The child's `PATH` (`Path` and any other case).
 fn env_path(env: &[(Vec<u8>, Vec<u8>)]) -> Vec<u8> {
     env.iter()
@@ -463,11 +476,19 @@ fn command(
                 let interp_path = if direct.is_absolute() && direct.is_file() && name != "env" {
                     direct.to_path_buf()
                 } else {
-                    let found =
-                        resolve_in(name.as_bytes(), &env_path(env), cwd).ok_or_else(|| {
+                    let path_var = env_path(env);
+                    // Windows' Python installs `python.exe` (and `py.exe`), not
+                    // `python3.exe`, which `#!/usr/bin/env python3` asks for (D1076).
+                    let found = resolve_in(name.as_bytes(), &path_var, cwd)
+                        .or_else(|| {
+                            (name == "python3")
+                                .then(|| resolve_in(b"python", &path_var, cwd))
+                                .flatten()
+                        })
+                        .ok_or_else(|| {
                             io::Error::new(
                                 io::ErrorKind::NotFound,
-                                format!("{}: interpreter not found: {name}", program.display()),
+                                MissingInterpreter(name.to_string()),
                             )
                         })?;
                     path::native(&found)?

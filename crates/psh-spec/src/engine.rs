@@ -681,7 +681,21 @@ impl psh_engine::Host for Noting {
         &self,
         spec: psh_engine::host::SpawnSpec,
     ) -> std::io::Result<psh_engine::host::Spawned> {
-        self.inner.spawn(spec)
+        let r = self.inner.spawn(spec);
+        // A `#!` script whose interpreter this system lacks needed that program too.
+        #[cfg(windows)]
+        if let Err(e) = &r
+            && let Some(m) = e
+                .get_ref()
+                .and_then(|i| i.downcast_ref::<psh_os::windows::MissingInterpreter>())
+        {
+            let mut l = self.looked.borrow_mut();
+            let name = m.0.clone().into_bytes();
+            if !l.0.contains(&name) {
+                l.0.push(name);
+            }
+        }
+        r
     }
     fn pipe(
         &self,

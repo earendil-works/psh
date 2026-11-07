@@ -40,7 +40,7 @@ use windows_sys::Win32::Storage::FileSystem::{
 
 pub use crate::Leftovers;
 pub use file::{Decode, WinFile};
-pub use spawn::{Placement, settle};
+pub use spawn::{MissingInterpreter, Placement, settle};
 
 use spawn::Shared;
 

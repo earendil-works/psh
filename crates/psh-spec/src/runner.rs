@@ -137,7 +137,16 @@ const BSD_PATH: &str = "/usr/bin:/bin:/usr/sbin:/sbin";
 
 impl Runner<'_> {
     fn env(&self, case: &Case, sb: &Sandbox) -> Vec<(String, String)> {
-        let s = |p: &Path| p.to_string_lossy().into_owned();
+        // Paths as the shell writes them: on Windows `C:/x`, without the `\\?\` of
+        // canonical paths, which no path joined to with `/` would survive (D1914).
+        let s = |p: &Path| {
+            let t = p.to_string_lossy().into_owned();
+            if cfg!(windows) {
+                t.strip_prefix(r"\\?\").unwrap_or(&t).replace('\\', "/")
+            } else {
+                t
+            }
+        };
         let home = match &case.home_dir {
             Some(rel) => sb.cwd.join(rel),
             None => sb.home.clone(),

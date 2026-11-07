@@ -1575,3 +1575,16 @@ Supersedes the last sentences of D1263. psh sets `BASH_VERSION=5.3.9(1)-release`
 bash); a script that then uses something psh lacks fails loudly on that feature, the
 honest outcome. Cases that detect bash and switch on `set -o posix` (unsupported, D002)
 are in the ratchet.
+
+## D1114: wasm ABI 2: invocation options, the clock, creation modes
+date: 2026-11-07 · by: infra · issue: 0011
+`psh_shell_start`'s payload ends with the command-line options (a count, then each word,
+as `Script::options` and `invocation::parse_args` have them), so an embedder starts a
+script with `-e`, `-o pipefail`, `-O extglob` or `-s` exactly as the `psh` binary does;
+the JS API takes them as `run(source, { options: [...] })` and psh-spec's wasm runner
+passes the case's. `Host::now()` (D1069) is the host_call `K_NOW`: the JS side answers
+synchronously by writing an f64 of milliseconds into the input buffer, since a call's i32
+cannot hold them (MemHost's clock is `Date.now()`, replaceable as `new MemHost({ now })`).
+`OpenOptions::mode` rides in `K_OPEN`'s flags (`F_MODE`, bits in 16..28); MemHost gives a
+created file those bits. `printf '%(…)T'` now reads the Host's clock instead of
+`SystemTime`, so it has the time in wasm too. `ABI_VERSION` is 2.

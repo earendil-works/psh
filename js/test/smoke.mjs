@@ -80,6 +80,9 @@ await t("command substitution", 'v=$(upper <<< "q"); echo "$v"', { stdout: "Q\n"
 await t("stdin", "cat", { stdout: "input\n" }, { stdin: "input\n" });
 await t("subshell and cd", "mkdir_not_needed=1; (cd /; pwd); pwd", { stdout: "/\n/work\n" });
 await t("syntax error", "if then", { status: 2 });
+await t("command-line options", 'echo "$-"; shopt -q extglob && echo extglob; case :$SHELLOPTS: in *:pipefail:*) echo pipefail;; esac', { stdout: "ehBcs\nextglob\npipefail\n" }, { options: ["-e", "-o", "pipefail", "-O", "extglob", "-s"] });
+await t("errexit from the command line", "false; echo not", { status: 1, stdout: "" }, { options: ["-e"] });
+await t("the clock", "printf '%(%s)T'", { stdout: String(Math.floor(Date.now() / 1000)) });
 {
   const r = await psh.run("f() { f; }; f");
   check("deep recursion is an error, not a crash", r.status === 1 && r.stderr.includes("maximum function nesting level exceeded"), r.stderr);

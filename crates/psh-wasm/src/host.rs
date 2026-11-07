@@ -28,6 +28,8 @@ pub const F_APPEND: u32 = 4;
 pub const F_CREATE: u32 = 8;
 pub const F_TRUNCATE: u32 = 16;
 pub const F_CREATE_NEW: u32 = 32;
+/// `OpenOptions::mode` is given, in bits 16..28 of the flags.
+pub const F_MODE: u32 = 64;
 
 /// Child descriptor kinds in a spawn spec.
 const FD_FILE: u32 = 0;
@@ -76,6 +78,9 @@ impl Host for JsHost {
             if on {
                 flags |= f;
             }
+        }
+        if let Some(mode) = opts.mode {
+            flags |= F_MODE | (mode & 0o7777) << 16;
         }
         let fut = op(sys::K_OPEN, flags, path);
         Box::pin(async move {
@@ -195,6 +200,21 @@ impl Host for JsHost {
 
     fn pid(&self) -> u32 {
         sys::call(sys::K_PID, 0, 0, &[]) as u32
+    }
+
+    fn now(&self) -> Duration {
+        let n = sys::call(sys::K_NOW, 0, 0, &[]);
+        let data = crate::take_input(n.max(0) as usize);
+        let ms = data
+            .get(..8)
+            .and_then(|b| b.try_into().ok())
+            .map(f64::from_le_bytes)
+            .unwrap_or(0.0);
+        if ms.is_finite() && ms > 0.0 {
+            Duration::from_secs_f64(ms / 1000.0)
+        } else {
+            Duration::ZERO
+        }
     }
 }
 

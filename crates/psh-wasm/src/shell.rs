@@ -144,7 +144,9 @@ export! {
 
 export! {
     /// Starts a script from the `len` input bytes: the source, `$0`, the arguments (a
-    /// count, then each). `dash_c`: run as `-c`. Returns 0, or 1 for a malformed payload or
+    /// count, then each), the command-line options (a count, then each word as
+    /// `Script::options` takes them: `-e`, `+x`, `-o`, `pipefail`, `-s`; what
+    /// `psh_engine::invocation::parse_args` returns). `dash_c`: run as `-c`. Returns 0, or 1 for a malformed payload or
     /// an unknown shell, 2 when a script is still running.
     fn psh_shell_start(id: u32, len: usize, dash_c: u32) -> u32 {
         let data = take_input(len);
@@ -156,12 +158,16 @@ export! {
             for _ in 0..r.u32()? {
                 args.push(r.bytes()?.to_vec());
             }
+            let mut options = Vec::new();
+            for _ in 0..r.u32()? {
+                options.push(r.bytes()?.to_vec());
+            }
             Some(Script {
                 source,
                 arg0,
                 args,
                 dash_c: dash_c != 0,
-                options: Vec::new(),
+                options,
             })
         })();
         let Some(script) = parsed else {

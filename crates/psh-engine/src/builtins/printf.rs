@@ -61,7 +61,7 @@ pub(super) async fn printf(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     };
     let mut f = Formatter {
         zone,
-        now: now_secs(),
+        now: vp.host().now().as_secs() as i64,
         args: &args[i + 1..],
         next: 0,
         out: Vec::new(),
@@ -531,21 +531,6 @@ fn fmt_g(v: f64, prec: usize, alt: bool) -> String {
         out = format!("{num}{suffix}");
     }
     out
-}
-
-/// Seconds since the epoch, for `%(…)T`. The Host has no clock yet; wasm has no
-/// system clock, so there it is the epoch.
-fn now_secs() -> i64 {
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map_or(0, |d| d.as_secs() as i64)
-    }
-    #[cfg(target_arch = "wasm32")]
-    {
-        0
-    }
 }
 
 struct Num {

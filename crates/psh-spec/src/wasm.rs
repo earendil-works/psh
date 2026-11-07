@@ -139,22 +139,37 @@ impl Engine for WasmEngine {
                 notes: Vec::new(),
             })
         };
-        let (source, arg0, script_args, dash_c, stdin) = match parse_args(&args) {
+        let (source, arg0, script_args, options, dash_c, stdin) = match parse_args(&args) {
             Err(msg) => return fail(msg),
             Ok(Invocation::Help) => return fail("--help".into()),
             Ok(Invocation::Command {
-                source, arg0, args, ..
+                source,
+                arg0,
+                args,
+                options,
             }) => (
                 source,
                 arg0.unwrap_or_else(|| b"psh".to_vec()),
                 args,
+                options,
                 true,
                 req.stdin.map(<[u8]>::to_vec),
             ),
-            Ok(Invocation::File { path, args, .. }) => {
+            Ok(Invocation::File {
+                path,
+                args,
+                options,
+            }) => {
                 let full = req.cwd.join(String::from_utf8_lossy(&path).as_ref());
                 match std::fs::read(&full) {
-                    Ok(src) => (src, path, args, false, req.stdin.map(<[u8]>::to_vec)),
+                    Ok(src) => (
+                        src,
+                        path,
+                        args,
+                        options,
+                        false,
+                        req.stdin.map(<[u8]>::to_vec),
+                    ),
                     Err(_) => {
                         return Ok(RunOutput {
                             stdout: Vec::new(),
@@ -169,10 +184,11 @@ impl Engine for WasmEngine {
                     }
                 }
             }
-            Ok(Invocation::Stdin { args, .. }) => (
+            Ok(Invocation::Stdin { args, options }) => (
                 req.stdin.unwrap_or_default().to_vec(),
                 b"psh".to_vec(),
                 args,
+                options,
                 false,
                 None,
             ),
@@ -190,6 +206,10 @@ impl Engine for WasmEngine {
         f.u32(script_args.len() as u32);
         for a in &script_args {
             f.bytes(a);
+        }
+        f.u32(options.len() as u32);
+        for o in &options {
+            f.bytes(o);
         }
         f.u32(u32::from(dash_c));
         f.u32(u32::from(stdin.is_some()));

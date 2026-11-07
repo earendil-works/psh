@@ -17,16 +17,17 @@
 //
 // The parser module (built without the shell) offers psh.parse() and psh.classify().
 
-const ABI_VERSION = 1;
+const ABI_VERSION = 2;
 
 // host_call kinds (crates/psh-wasm/src/sys.rs).
 const K = {
   OPEN: 1, STAT: 2, ACCESS: 3, READ_DIR: 4, CANONICALIZE: 5, RESOLVE: 6, SPAWN: 7,
   SLEEP: 8, READ: 9, WRITE: 10, CLOSE: 11, WAIT: 12, SIGNAL: 13, RELEASE: 14,
-  ABANDON: 15, WAKE: 16, PANIC: 17, PID: 18,
+  ABANDON: 15, WAKE: 16, PANIC: 17, PID: 18, NOW: 19,
 };
 // Open flags (crates/psh-wasm/src/host.rs).
-const F = { READ: 1, WRITE: 2, APPEND: 4, CREATE: 8, TRUNCATE: 16, CREATE_NEW: 32 };
+// With F.MODE, bits 16..28 hold the permission bits of a file the open creates.
+const F = { READ: 1, WRITE: 2, APPEND: 4, CREATE: 8, TRUNCATE: 16, CREATE_NEW: 32, MODE: 64 };
 // Child descriptor kinds of a spawn spec.
 const FD = { FILE: 0, PIPE_IN: 1, PIPE_OUT: 2, DUP: 3, NULL: 4 };
 // Errno numbers the module understands (Linux numbering).
@@ -490,10 +491,11 @@ class StreamWriter {
 /**
  * The default host: a MemFs, commands in JS (`command(name, fn)`), timers. Commands are
  * found under /usr/bin/NAME on any PATH lookup; their function gets a CommandContext
- * and returns the exit status (or a promise of it).
+ * and returns the exit status (or a promise of it). `now` is the clock: milliseconds
+ * since the Unix epoch (`$EPOCHSECONDS`, `printf '%(fmt)T'`).
  */
 export class MemHost {
-  constructor({ fs = new MemFs(), pid = 4242 } = {}) {
+  constructor({ fs = new MemFs(), pid = 4242, now = () => Date.now() } = {}) {
     this.fs = fs;
     // The devices and directories every system has: /dev/null, /dev/zero and /dev/full
     // (character devices), /tmp (sticky, world-writable).
@@ -506,6 +508,7 @@ export class MemHost {
     fs.lookup("/tmp").mode = 0o1777;
     for (const d of ["/bin", "/etc", "/home", "/usr/bin", "/usr/lib", "/var"]) fs.mkdir(d);
     this.pid = pid;
+    this.now = now;
     this.commands = new Map();
     this.handles = new Map();
     this.nextHandle = 1;
@@ -538,6 +541,7 @@ export class MemHost {
       // The parent must exist (no implicit mkdir, unlike MemFs.writeFile).
       const { dir, name } = this.fs.parentOf(path);
       node = newNode("file", { data: new Uint8Array(0) });
+      if (flags & F.MODE) node.mode = (flags >>> 16) & 0o7777;
       dir.children.set(name, node);
       dir.mtime = Date.now();
     }
@@ -874,6 +878,12 @@ export class Psh {
         return 0;
       case K.PID:
         return h.pid;
+      case K.NOW: {
+        // Answered in the input buffer: no pointer of the call is used.
+        const b = new Uint8Array(8);
+        new DataView(b.buffer).setFloat64(0, h.now(), true);
+        return this.input(b);
+      }
       default:
         throw new Error(`psh.wasm: unknown host_call kind ${kind}`);
     }
@@ -937,12 +947,16 @@ export class Shell {
 
   /**
    * Runs a script to its end: the exit status. Options: arg0 ("psh"), args ([]),
-   * dashC (true), budget (safepoints per step), signal (an AbortSignal: cancels).
+   * options (command-line options as words, as `psh` takes them: ["-e", "-o",
+   * "pipefail", "-O", "extglob", "+x"]; "-s" puts `s` into `$-`), dashC (true), budget
+   * (safepoints per step), signal (an AbortSignal: cancels).
    */
-  async run(source, { arg0 = "psh", args = [], dashC = true, budget = 10000, signal } = {}) {
+  async run(source, { arg0 = "psh", args = [], options = [], dashC = true, budget = 10000, signal } = {}) {
     const psh = this.psh;
     const w = writer().bytes(source).bytes(arg0).u32(args.length);
     for (const a of args) w.bytes(a);
+    w.u32(options.length);
+    for (const o of options) w.bytes(o);
     const r = psh.x.psh_shell_start(this.id, psh.input(w.done()), dashC ? 1 : 0);
     if (r !== 0) throw new Error(r === 2 ? "a script is still running" : "psh_shell_start failed");
     signal?.addEventListener("abort", () => psh.x.psh_shell_cancel(this.id), { once: true });

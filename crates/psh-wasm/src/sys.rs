@@ -9,7 +9,8 @@
 // The parser module uses only K_PANIC.
 #![cfg_attr(not(feature = "shell"), allow(dead_code))]
 
-/// Opens a file: arg = open flags (`F_*`), payload = path.
+/// Opens a file: arg = open flags (`F_*`; with `F_MODE`, the permission bits of a file
+/// it creates in bits 16..28), payload = path.
 pub const K_OPEN: u32 = 1;
 /// stat/lstat: arg = 1 to follow symlinks, payload = path.
 pub const K_STAT: u32 = 2;
@@ -46,6 +47,9 @@ pub const K_WAKE: u32 = 16;
 pub const K_PANIC: u32 = 17;
 /// The shell's `$$`: returned by the call.
 pub const K_PID: u32 = 18;
+/// The time since the Unix epoch: the JS side puts it into the input buffer (`psh_in`)
+/// as a little-endian f64 of milliseconds and returns its length, 8.
+pub const K_NOW: u32 = 19;
 
 #[cfg(target_arch = "wasm32")]
 mod imp {

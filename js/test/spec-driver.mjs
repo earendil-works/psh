@@ -124,6 +124,8 @@ async function runCase(req) {
   const arg0 = r.str();
   const args = [];
   for (let n = r.u32(); n > 0; n--) args.push(r.bytes());
+  const options = [];
+  for (let n = r.u32(); n > 0; n--) options.push(r.str());
   const dashC = r.u32() === 1;
   const hasStdin = r.u32() === 1;
   const stdin = r.bytes();
@@ -153,7 +155,7 @@ async function runCase(req) {
   }, timeoutMs);
   let status;
   try {
-    status = await shell.run(new Uint8Array(source), { arg0, args: args.map((a) => new Uint8Array(a)), dashC, signal: ac.signal });
+    status = await shell.run(new Uint8Array(source), { arg0, args: args.map((a) => new Uint8Array(a)), options, dashC, signal: ac.signal });
   } catch (e) {
     status = 2;
     shell.err.write(new TextEncoder().encode(`psh-spec wasm driver: ${e.message}\n`));

@@ -233,16 +233,6 @@ brush/compat/builtins/kill/12
 brush/compat/builtins/kill/16
 brush/compat/builtins/kill/17
 brush/compat/builtins/kill/18
-brush/compat/builtins/kill/19
-brush/compat/builtins/kill/21
-brush/compat/builtins/kill/22
-brush/compat/builtins/kill/26
-brush/compat/builtins/kill/28
-brush/compat/builtins/kill/29
-brush/compat/builtins/kill/25
-brush/compat/builtins/kill/26
-brush/compat/builtins/kill/28
-brush/compat/builtins/kill/30
 brush/compat/builtins/kill/31
 brush/compat/builtins/let/5
 brush/compat/builtins/mapfile/0
@@ -428,8 +418,6 @@ brush/compat/builtins/unset/15
 brush/compat/builtins/unset/16
 brush/compat/builtins/unset/18
 brush/compat/builtins/unset/19
-brush/compat/builtins/wait/6
-brush/compat/builtins/wait/8
 brush/compat/builtins/wait/17
 brush/compat/callstack/0
 brush/compat/callstack/1

@@ -64,8 +64,6 @@ oils/assign-extended/9
 oils/assign-extended/10
 oils/assign-extended/21
 oils/assign-extended/32
-oils/background/7
-oils/background/13
 oils/background/21
 oils/ble-features/0
 oils/ble-features/1
@@ -289,6 +287,7 @@ oils/divergence/3
 oils/dparen/10
 oils/errexit/9
 oils/errexit/25
+oils/errexit/28
 oils/errexit/29
 oils/exit-status/2
 oils/extglob-files/0

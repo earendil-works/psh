@@ -3,7 +3,7 @@
 status: open
 agent: -
 branch: issue/0014-utils-sed
-depends-on: 0008, 0013 (BRE/ERE translator)
+depends-on: 0008, 0027 (psh-regex)
 touches: crates/psh-utils/src/sed*, tests/utils/sed/
 guide: utilities.md (not written yet), utilities reference (not written yet)
 decisions: D1140–D1149
@@ -28,11 +28,11 @@ decisions: D1140–D1149
 - [ ] just-bash's recorded GNU fixtures (Apache) reused where they help.
 
 ## Notes
-- Regexes go through 0013's BRE/ERE translator and the regex crate. Backreferences
-  (`\1` in patterns) and leftmost-longest-sensitive `s///` fall through until psh's
-  own backtracking matcher and longest-match mode exist (ARCH.md "Search", D020).
-  Backreferences in the *replacement* (`\1`, `&`) are ordinary capture groups and must
-  work.
+- Coordinator update: regexes go through **psh-regex** (0027, on main): POSIX BRE/ERE with
+  GNU extensions, leftmost-longest, back-references in patterns, GNU error messages —
+  exactly sed's semantics, so nothing needs to fall through for regex reasons and sed no
+  longer depends on 0013's translator. Replacement back-references (`\1`, `&`) via its
+  captures. If performance on huge inputs matters, measure against GNU sed in the container.
 - oh-my-pi has a sed port (MIT) worth comparing with. GNU sed's source is off limits.
 
 ## Log

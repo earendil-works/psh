@@ -5,7 +5,7 @@
 - [Running psh: the command line]()
 - [The language: bash as agents write it]()
 - [Utilities that run in-process]()
-- [psh on Windows]()
+- [psh on Windows](windows.md)
 - [Understanding commands: parsing and classification](classify.md)
 - [Cancellation, timeouts and background jobs]()
 - [Embedding psh in a host]()

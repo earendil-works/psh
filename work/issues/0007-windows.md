@@ -5,7 +5,7 @@ agent: windows
 branch: issue/0007-windows
 depends-on: part A: 0001; part B: 0006 (`windows-sys` allowed, D024)
 touches: .github/ or scripts/windows-*, crates/psh-os/ (windows), crates/psh-spec/ (Windows normalization), tests/process/ (Windows cases)
-guide: windows.md (not written yet; list it as a follow-up)
+guide: windows.md
 decisions: D1070–D1079, D1910–D1919
 
 ## Goal
@@ -318,6 +318,15 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
   stretches the cli tests' and the Windows L5 harness's deadlines; the Windows runner
   sets 3 for test-x64 only (D1912).
 
+### 2026-11-07 Guide page windows.md
+- `docs/guide/windows.md` ("psh on Windows", in SUMMARY): paths and their mappings,
+  HOME/TMPDIR/PATH, PATH and PATHEXT lookup, argument and batch quoting (with the real
+  output of an npm-style shim), `#!` interpreters, exit statuses of crashes, jobs and
+  Ctrl-C/Ctrl-Break, encodings, what has no Windows counterpart. Not-built-yet notes:
+  `pwd` after `cd C:/x` (engine normalize), `//server/share` in `cd`, sh scripts in psh
+  (RunInShell), `\r` in `$(…)`, utilities and System32 shadowing. Examples were run in
+  the VM. The host also accepts `/C:\x` (what normalize makes of `cd 'C:\x'`).
+
 ## Follow-ups
 - Engine: strip the `\r` of CRLF in `$(…)` and `read` on Windows (ARCH "Windows rules").
 - Engine: the "run this file in psh" hook (D1079).
@@ -334,7 +343,6 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
 - GitHub Actions replaces the VM once there is a remote (D027).
 - The windows leg runs on every merge; once legs are cached by their inputs (TESTING.md),
   a docs-only change should skip it too.
-- `docs/guide/windows.md` (not written yet).
 
 ## Result
 Part A (first box): `scripts/windows-gate.sh [LEG...]` runs `fmt`, `clippy`, `test`,

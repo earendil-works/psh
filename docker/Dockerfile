@@ -40,9 +40,13 @@ RUN set -eu; \
 FROM debian:stable@sha256:3f0347f4b50e7a54a91d1beaf6ce6fa5aec392347da6a9184b5bfe4e1b814538
 # The GNU userland the cases may call: coreutils, grep, sed, findutils, diffutils are in
 # the base image; gawk replaces mawk as awk; procps provides ps; locales provides
-# en_US.UTF-8, which a few cases switch to and typical agent machines have.
+# en_US.UTF-8, which a few cases switch to and typical agent machines have. git, ripgrep
+# and jq for the agent layer (0031, D1310): agents run them in a quarter of their
+# commands. Pinned to the versions of this Debian image; a rebuild after Debian drops one
+# of them needs snapshot.debian.org or a new pin and a re-recording.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends gawk procps locales \
+      git=1:2.47.3-0+deb13u1 ripgrep=14.1.1-1+b4 jq=1.7.1-6+deb13u4 \
  && rm -rf /var/lib/apt/lists/* \
  && sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen && locale-gen
 COPY --from=build /usr/local/bin/bash /usr/local/bin/bash

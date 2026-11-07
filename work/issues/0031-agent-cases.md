@@ -1,7 +1,7 @@
 # 0031: Grow the L3 agent layer to the shapes agents actually use
 
-status: open
-agent: -
+status: in-progress
+agent: shapes
 branch: issue/0031-agent-cases
 depends-on: 0002, 0003
 touches: tests/agent/, tests/goldens/agent/, tests/agent/expected-failures*.txt, tests/spec.toml (agent groups only)

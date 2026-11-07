@@ -148,6 +148,10 @@ pub(crate) enum Printer<W> {
     /// Use the summary printer, which supports aggregate displays of search
     /// results.
     Summary(grep_printer::Summary<W>),
+    /// A JSON printer, which emits results in the JSON Lines format.
+    ///
+    /// psh: crate::rg::json's, since grep-printer's needs serde.
+    JSON(crate::rg::json::JSON<W>),
 }
 
 impl<W: WriteColor> Printer<W> {
@@ -156,6 +160,7 @@ impl<W: WriteColor> Printer<W> {
         match *self {
             Printer::Standard(ref mut p) => p.get_mut(),
             Printer::Summary(ref mut p) => p.get_mut(),
+            Printer::JSON(ref mut p) => p.get_mut(),
         }
     }
 }
@@ -285,6 +290,14 @@ fn search_path<M: Matcher, W: WriteColor>(
                 stats: sink.stats().cloned(),
             })
         }
+        Printer::JSON(ref mut p) => {
+            let mut sink = p.sink_with_path(&matcher, path);
+            searcher.search_path(&matcher, file, &mut sink)?;
+            Ok(SearchResult {
+                has_match: sink.has_match(),
+                stats: Some(sink.stats().clone()),
+            })
+        }
     }
 }
 
@@ -312,6 +325,14 @@ fn search_reader<M: Matcher, R: io::Read + ?Sized, W: WriteColor>(
             Ok(SearchResult {
                 has_match: sink.has_match(),
                 stats: sink.stats().cloned(),
+            })
+        }
+        Printer::JSON(ref mut p) => {
+            let mut sink = p.sink_with_path(&matcher, path);
+            searcher.search_reader(&matcher, &mut *rdr, &mut sink)?;
+            Ok(SearchResult {
+                has_match: sink.has_match(),
+                stats: Some(sink.stats().clone()),
             })
         }
     }

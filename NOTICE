@@ -118,6 +118,7 @@ crates/psh-utils/src/search/gitconfig.rs (gitconfig_excludes_path and its helper
 crates/psh-utils/src/rg/flags/ (crates/core/flags/ of ripgrep, the whole directory: the flag definitions, parser, help and man page templates, completions; patched)
 crates/psh-utils/src/rg/main.rs, search.rs, haystack.rs, messages.rs (crates/core/main.rs, search.rs, haystack.rs, messages.rs of ripgrep; patched)
 third_party/grep-printer/ (grep-printer 0.3.1 from crates.io, the whole crate, with its LICENSE-MIT and UNLICENSE; patched as listed in its PATCHES.md)
+crates/psh-utils/src/rg/json.rs (the JSON printer of grep-printer 0.3.1: src/json.rs, src/jsont.rs, CounterWriter from src/counter.rs, Replacer and the context helpers from src/util.rs)
 crates/psh-utils/src/rg/cli.rs (parse_human_readable_size from grep-cli 0.1.12's src/human.rs; patterns_from_reader and InvalidPatternError from its src/pattern.rs)
 
 -------------------------------------------------------------------------------

@@ -6,7 +6,7 @@
 //!
 //! The front end here parses (with `RIPGREP_CONFIG_PATH` read through the utility's file
 //! system), prints `--help`/`--version`, runs the real rg for what psh leaves to it
-//! (D1082: `--pre`, `-z`, PCRE2, `--json`, `--debug`/`--trace`), and runs the search as a
+//! (D1082: `--pre`, `-z`, PCRE2, `--debug`/`--trace`), and runs the search as a
 //! blocking utility (D1130): `main::run_sync`.
 
 // The copied code keeps ripgrep's style.
@@ -19,6 +19,7 @@ mod anyhow;
 mod cli;
 mod flags;
 mod haystack;
+mod json;
 #[rustfmt::skip]
 mod lexopt;
 mod main;
@@ -95,9 +96,6 @@ fn left_to_rg(low: &LowArgs) -> Option<&'static str> {
         EngineChoice::Default => {}
         EngineChoice::PCRE2 => return Some("-P/--pcre2"),
         EngineChoice::Auto => return Some("--engine auto"),
-    }
-    if matches!(low.mode, Mode::Search(flags::SearchMode::JSON)) {
-        return Some("--json");
     }
     if low.logging.is_some() {
         return Some("--debug/--trace");

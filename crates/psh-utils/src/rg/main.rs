@@ -394,11 +394,11 @@ fn search_parallel(
 
 /// psh: when the search started, for `--stats`: wasm32-unknown-unknown has no clock
 /// (`Instant::now` panics there), so the time is zero there.
-#[derive(Clone, Copy)]
-struct Started(Option<std::time::Instant>);
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Started(Option<std::time::Instant>);
 
 impl Started {
-    fn now() -> Started {
+    pub(crate) fn now() -> Started {
         if cfg!(all(target_arch = "wasm32", target_os = "unknown")) {
             Started(None)
         } else {
@@ -406,7 +406,7 @@ impl Started {
         }
     }
 
-    fn elapsed(&self) -> std::time::Duration {
+    pub(crate) fn elapsed(&self) -> std::time::Duration {
         self.0.map_or(std::time::Duration::ZERO, |t| t.elapsed())
     }
 }
@@ -606,9 +606,13 @@ fn print_stats<W: Write>(
     mut wtr: W,
 ) -> std::io::Result<()> {
     let elapsed = started.elapsed();
-    // psh: `--json` runs the real rg for now (D1082), so stats are text.
-    {
-        let _ = mode;
+    if matches!(mode, SearchMode::JSON) {
+        // We specifically match the format laid out by the JSON printer in
+        // the grep-printer crate. We simply "extend" it with the 'summary'
+        // message type.
+        // psh: built by crate::rg::json, written by deser-json (D029).
+        crate::rg::json::summary(stats, elapsed).write_line(&mut wtr)
+    } else {
         write!(
             wtr,
             "

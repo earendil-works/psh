@@ -398867,3 +398867,57 @@ bash-n: 0
 --- stdout
 |ripgrep 15.2.0
 |ripgrep 15.2.0
+
+=== 34: --json: begin, match, context, end and summary messages (times removed)
+status: 0
+bash-n: 0
+--- stdout
+|{"type":"begin","data":{"path":{"text":"d/x"}}}
+|{"type":"context","data":{"path":{"text":"d/x"},"lines":{"text":"a\n"},"line_number":1,"absolute_offset":0,"submatches":[]}}
+|{"type":"match","data":{"path":{"text":"d/x"},"lines":{"text":"foo one\n"},"line_number":2,"absolute_offset":2,"submatches":[{"match":{"text":"foo"},"start":0,"end":3}]}}
+|{"type":"context","data":{"path":{"text":"d/x"},"lines":{"text":"b\n"},"line_number":3,"absolute_offset":10,"submatches":[]}}
+|{"type":"end","data":{"path":{"text":"d/x"},"binary_offset":null,"stats":{E,"searches":1,"searches_with_match":1,"bytes_searched":12,"bytes_printed":470,"matched_lines":1,"matches":1}}}
+|{"type":"begin","data":{"path":{"text":"d/y"}}}
+|{"type":"match","data":{"path":{"text":"d/y"},"lines":{"text":"foo\n"},"line_number":1,"absolute_offset":0,"submatches":[{"match":{"text":"foo"},"start":0,"end":3}]}}
+|{"type":"end","data":{"path":{"text":"d/y"},"binary_offset":null,"stats":{E,"searches":1,"searches_with_match":1,"bytes_searched":4,"bytes_printed":215,"matched_lines":1,"matches":1}}}
+|{"data":{E,"stats":{"bytes_printed":685,"bytes_searched":21,E,"matched_lines":2,"matches":2,"searches":3,"searches_with_match":2}},"type":"summary"}
+--- dir d
+--- file d/x
+|a
+|foo one
+|b
+--- file d/y
+|foo
+--- file d/z
+|none
+
+=== 35: --json: replacements, inverted context, line numbers off, non-UTF-8 data
+status: 0
+bash-n: 0
+--- stdout
+|{"type":"begin","data":{"path":{"text":"f"}}}
+|{"type":"match","data":{"path":{"text":"f"},"lines":{"text":"foo foo\n"},"line_number":1,"absolute_offset":0,"submatches":[{"match":{"text":"foo"},"replacement":{"text":"X"},"start":0,"end":3},{"match":{"text":"foo"},"replacement":{"text":"X"},"start":4,"end":7}]}}
+|{"type":"end","data":{"path":{"text":"f"},"binary_offset":null,"stats":{E,"searches":1,"searches_with_match":1,"bytes_searched":12,"bytes_printed":312,"matched_lines":1,"matches":2}}}
+|{"data":{E,"stats":{"bytes_printed":312,"bytes_searched":12,E,"matched_lines":1,"matches":2,"searches":1,"searches_with_match":1}},"type":"summary"}
+|{"type":"begin","data":{"path":{"text":"f"}}}
+|{"type":"match","data":{"path":{"text":"f"},"lines":{"text":"bar\n"},"line_number":null,"absolute_offset":8,"submatches":[]}}
+|{"type":"end","data":{"path":{"text":"f"},"binary_offset":null,"stats":{E,"searches":1,"searches_with_match":1,"bytes_searched":12,"bytes_printed":172,"matched_lines":1,"matches":0}}}
+|{"data":{E,"stats":{"bytes_printed":172,"bytes_searched":12,E,"matched_lines":1,"matches":0,"searches":1,"searches_with_match":1}},"type":"summary"}
+|{"type":"begin","data":{"path":{"text":"g"}}}
+|{"type":"match","data":{"path":{"text":"g"},"lines":{"bytes":"eP8gZm9vCg=="},"line_number":1,"absolute_offset":0,"submatches":[{"match":{"text":"foo"},"start":3,"end":6}]}}
+|{"type":"end","data":{"path":{"text":"g"},"binary_offset":null,"stats":{E,"searches":1,"searches_with_match":1,"bytes_searched":7,"bytes_printed":219,"matched_lines":1,"matches":1}}}
+|{"data":{E,"stats":{"bytes_printed":219,"bytes_searched":7,E,"matched_lines":1,"matches":1,"searches":1,"searches_with_match":1}},"type":"summary"}
+--- file f
+|foo foo
+|bar
+--- file g
+\x\xff foo
+
+=== 36: --json with no match: only the summary
+status: 0
+bash-n: 0
+--- stdout
+|{"data":{E,"stats":{"bytes_printed":0,"bytes_searched":2,E,"matched_lines":0,"matches":0,"searches":1,"searches_with_match":0}},"type":"summary"}
+|0
+--- file f
+|a

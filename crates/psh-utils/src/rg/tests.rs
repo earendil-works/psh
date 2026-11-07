@@ -127,6 +127,25 @@ fn crlf() {
     );
 }
 
+/// `--json` through deser-json: grep-printer's messages, rg's sorted summary.
+#[test]
+fn json() {
+    let o = out("rg --json -n two a.txt");
+    let lines: Vec<&str> = o.lines().collect();
+    assert_eq!(lines.len(), 4, "{o}");
+    assert_eq!(
+        lines[0],
+        r#"{"type":"begin","data":{"path":{"text":"a.txt"}}}"#
+    );
+    assert_eq!(
+        lines[1],
+        r#"{"type":"match","data":{"path":{"text":"a.txt"},"lines":{"text":"foo two\n"},"line_number":3,"absolute_offset":12,"submatches":[{"match":{"text":"two"},"start":4,"end":7}]}}"#
+    );
+    assert!(lines[2].starts_with(r#"{"type":"end","data":{"path":{"text":"a.txt"},"binary_offset":null,"stats":{"elapsed":{"secs":"#));
+    assert!(lines[3].starts_with(r#"{"data":{"elapsed_total":{"human":"#));
+    assert!(lines[3].ends_with(r#""matched_lines":1,"matches":1,"searches":1,"searches_with_match":1}},"type":"summary"}"#));
+}
+
 #[test]
 fn falls_through_without_a_program() {
     // The test host has no rg program.
@@ -134,7 +153,6 @@ fn falls_through_without_a_program() {
         ("--pre cat foo", "--pre"),
         ("-z foo", "-z/--search-zip"),
         ("-P foo", "-P/--pcre2"),
-        ("--json foo", "--json"),
         ("--debug foo", "--debug/--trace"),
     ] {
         assert_eq!(

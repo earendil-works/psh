@@ -28,6 +28,9 @@ regex-automata = "0.4.18"
 regex-syntax = "0.8.11"
 bstr = "1.12"
 termcolor = "1.4"
+# rg --json (D029, D1136). deser-core is named for its `Serialize` trait.
+deser-json = { version = "0.10.1", default-features = false, features = ["std"] }
+deser-core = { version = "0.10.2", default-features = false, features = ["std"] }
 
 [lints]
 workspace = true

@@ -241,6 +241,12 @@ Checkouts: `vendor/ripgrep` (91f5d22), `vendor/fd` (193d0df) in the primary chec
   > `Option` variant. (Separately, `HyperlinkPath::from_path` and `encode` warn as unused
   > on targets that are neither `unix` nor `windows`.)
 
+- Part 3c (D1136): `rg --json` in-process: `rg/json.rs` is grep-printer's JSON printer with
+  the messages built as a small JSON tree that deser-json writes (same fields, order and
+  escapes as serde_json; the summary's keys sorted as `json!`'s map sorts them). 3 L4
+  cases (times removed with sed). Only `--pre`, `-z`, PCRE2 and `--debug/--trace` still
+  run the real rg.
+
 ## Follow-ups
 - rg: `skip_stdout` (real rg skips the file stdout is redirected to, `rg x . > out`) is not
   done; needs the identity of fd 1 from the utility context.

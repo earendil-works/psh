@@ -179,3 +179,20 @@ rg --help | tail -n +2 | cksum; rg -h | tail -n +2 | cksum; rg --help | wc -l; r
 #### --version
 ## expect: gnu (rg is not a BSD tool)
 rg --version | head -1 | cut -d' ' -f1-2; rg -V | cut -d' ' -f1-2
+
+#### --json: begin, match, context, end and summary messages (times removed)
+## expect: gnu (rg is not a BSD tool)
+mkdir d && printf 'a\nfoo one\nb\n' > d/x && printf 'foo\n' > d/y && printf 'none\n' > d/z
+rg --json --sort path -C1 foo d | sed -E 's/"elapsed(_total)?":\{[^}]*\}/E/g'
+
+#### --json: replacements, inverted context, line numbers off, non-UTF-8 data
+## expect: gnu (rg is not a BSD tool)
+printf 'foo foo\nbar\n' > f && printf 'x\377 foo\n' > g
+rg --json -r X foo f | sed -E 's/"elapsed(_total)?":\{[^}]*\}/E/g'
+rg --json -v -N foo f | sed -E 's/"elapsed(_total)?":\{[^}]*\}/E/g'
+rg --json foo g | sed -E 's/"elapsed(_total)?":\{[^}]*\}/E/g'
+
+#### --json with no match: only the summary
+## expect: gnu (rg is not a BSD tool)
+printf 'a\n' > f
+rg --json zzz f | sed -E 's/"elapsed(_total)?":\{[^}]*\}/E/g'; echo $?

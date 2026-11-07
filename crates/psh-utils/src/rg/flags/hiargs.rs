@@ -553,9 +553,8 @@ impl HiArgs {
                 SearchMode::FilesWithoutMatch => SummaryKind::PathWithoutMatch,
                 SearchMode::Count => SummaryKind::Count,
                 SearchMode::CountMatches => SummaryKind::CountMatches,
-                // psh: `--json` runs the real rg (D1082) for now.
                 SearchMode::JSON => {
-                    unreachable!("--json runs the real rg")
+                    return Printer::JSON(self.printer_json(wtr));
                 }
                 SearchMode::Standard => {
                     return Printer::Standard(self.printer_standard(wtr));
@@ -563,6 +562,19 @@ impl HiArgs {
             }
         };
         Printer::Summary(self.printer_summary(wtr, summary_kind))
+    }
+
+    /// Builds a JSON printer.
+    ///
+    /// psh: crate::rg::json's (grep-printer's needs serde; D1136).
+    fn printer_json<W: std::io::Write>(
+        &self,
+        wtr: W,
+    ) -> crate::rg::json::JSON<W> {
+        crate::rg::json::JSONBuilder::new()
+            .always_begin_end(false)
+            .replacement(self.replace.clone().map(|r| r.into()))
+            .build(wtr)
     }
 
     /// Builds a "standard" grep printer where matches are printed as plain

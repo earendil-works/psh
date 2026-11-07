@@ -2331,3 +2331,12 @@ text. The shell language and bash's invocation rules are not affected; where `ar
 cannot express bash's invocation (`+o`, combined `-euc`), the existing invocation parser
 stays for that part. Allowed in the `psh` binary crate (and the repository's tool
 binaries if useful), not in library crates.
+## D1136: rg --json writes grep-printer's messages through deser-json
+date: 2026-11-07 · by: infra · issue: 0013
+`crates/psh-utils/src/rg/json.rs` is grep-printer 0.3.1's JSON printer (its sink, message
+types, base64 data and the replacement and context helpers it uses) with serde replaced:
+each message is a small ordered JSON tree written by deser-json (D029), which escapes as
+serde_json does, so the output is the real rg's byte for byte (begin/match/context/end in
+grep-printer's field order; rg's summary with its keys sorted, as serde_json's `json!`
+map sorts them). psh-utils depends on deser-json and deser-core for it. Real rg no longer
+runs for `--json`.

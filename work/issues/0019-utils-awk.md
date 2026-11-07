@@ -112,7 +112,8 @@ implementation. Port goawk (MIT) to Rust (D018); F mode until conformant, then S
   escapes in a regex as written characters (`/a\52b/` is `a*b`), bracket ranges with
   `]`/`[` ends and collating symbols, FILENAME `-` for stdin, ARGV[0] the name called by.
 - Part 4: S mode (D1194, coordinator's decision); release 1M-line sum 0.19 s vs macOS
-  awk 0.35 s; agent/oils cases that use awk unchanged.
+  awk 0.35 s; agent/oils cases that use awk unchanged. crates/psh/tests/cli.rs (another
+  issue's) used awk as its F-mode example: updated to S.
 
 ## Follow-ups
 - psh-regex: an option for `.` (and bracket negations) to match bytes outside valid

@@ -393,15 +393,17 @@ fn utils_list() {
             .collect::<Vec<_>>()
     };
     assert_eq!(line("rm"), ["rm", "S", "yes", "psh"]);
-    // F: in-process when PATH has no awk.
-    assert_eq!(line("awk"), ["awk", "F", "no", "psh"]);
+    // S (D1194): in-process.
+    assert_eq!(line("awk"), ["awk", "S", "no", "psh"]);
     let json = utils(&["--json"], &path);
     assert!(json.starts_with("{\n  \"utilities\": [\n"), "{json}");
     assert!(json.contains("\"name\": \"gtimeout\",\n      \"utility\": \"timeout\",\n      \"mode\": \"S\",\n      \"destructive\": false,\n      \"runs\": \"psh\",\n      \"path\": null"), "{json}");
     std::fs::remove_dir_all(&empty).ok();
 }
 
-/// An F utility whose program PATH has runs the program, unless PSH_UTILS_FORCE names it.
+/// An S utility runs in-process even when PATH has the program (awk, D1194), and so
+/// does a forced one. (No utility is in F mode now; F/W with PSH_UTILS_FORCE is covered
+/// by psh-engine's util tests.)
 #[cfg(unix)]
 #[test]
 fn utils_follow_path_and_force() {
@@ -424,14 +426,14 @@ fn utils_follow_path_and_force() {
     let awk_path = awk.to_str().unwrap().to_owned();
     assert_eq!(
         row(&[("PATH", dir.as_os_str())]),
-        ["awk", "F", "no", "program", &awk_path]
+        ["awk", "S", "no", "psh", &awk_path]
     );
     assert_eq!(
         row(&[
             ("PATH", dir.as_os_str()),
             ("PSH_UTILS_FORCE", OsStr::new("awk"))
         ]),
-        ["awk", "F", "no", "psh", &awk_path]
+        ["awk", "S", "no", "psh", &awk_path]
     );
     std::fs::remove_dir_all(&dir).ok();
 }

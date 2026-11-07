@@ -28,12 +28,20 @@ pub(crate) async fn run_text(vp: &mut Vp, text: &[u8], line_base: u32, origin: O
     let mut parser = Parser::from_bytes(text, Options::default());
     let mut status = 0;
     loop {
-        // Aliases expand with the table as it is when each line is read.
+        // Aliases expand with the table as it is when each line is read, and so do
+        // extglob, `set -v` and `set -n`, as for the script itself (D1280).
         parser.set_aliases(vp.expand_aliases.then_some(&vp.aliases));
+        parser.set_options(crate::options::parser_options(&vp.opts));
+        let start = parser.offset();
         let Some(chunk) = parser.next_chunk() else {
             break;
         };
+        if vp.opts.get(crate::options::SetOpt::Verbose) {
+            let end = parser.offset().min(text.len());
+            vp.error_raw(&text[start..end]).await;
+        }
         match chunk {
+            Ok(_) if vp.opts.get(crate::options::SetOpt::Noexec) => {}
             Ok(ast) => {
                 let root = ast.root();
                 let code = Rc::new(Code {

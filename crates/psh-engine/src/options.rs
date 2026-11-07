@@ -285,6 +285,14 @@ pub(crate) fn shopt_index(name: &str) -> Option<usize> {
     SHOPTS.iter().position(|(n, _)| *n == name)
 }
 
+/// How the next chunk of a script, `eval` text or sourced file is parsed: `shopt -s
+/// extglob` takes effect from the next line on (D1043).
+pub(crate) fn parser_options(opts: &Options) -> psh_syntax::Options {
+    psh_syntax::Options {
+        extglob: opts.shopt(Shopt::Extglob),
+    }
+}
+
 /// Applies options kept elsewhere in the vproc: `Vp::expand_aliases`, and `SHELLOPTS`
 /// and `BASHOPTS` (readonly, as in bash).
 pub(crate) fn sync(vp: &mut crate::state::Vp) {

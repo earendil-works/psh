@@ -99,6 +99,12 @@ the host), with bash's exact errexit exemptions. errexit must be right: agents r
 - Scores (macOS, debug): oils 1876/2511, brush 2202/3171, agent 132/144; ratchets: 70
   oils, 133 brush, 1 agent lines removed.
 
+### 2026-11-07 after landing
+- `eval` and `source` text (0029's `run_text`) now parse with extglob and honour
+  `set -v`/`set -n` per chunk like the script (`options::parser_options` shared by
+  both loops). A single shared chunk runner for lib.rs and eval.rs is left to the
+  builtins/engine agents.
+
 ## Follow-ups
 - The wasm protocol (psh-wasm `Script`, psh-spec's wasm runner) has no command-line
   options yet: 22 brush cases listed in `expected-failures.wasm.txt` with that reason.

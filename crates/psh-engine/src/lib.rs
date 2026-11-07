@@ -434,9 +434,7 @@ async fn run_script_lines(mut vp: Vp, source: Vec<u8>) -> (i32, Vp) {
         // Bash expands aliases while it reads each line, with the table it has then.
         parser.set_aliases(vp.expand_aliases.then_some(&vp.aliases));
         // `shopt -s extglob` takes effect from the next line on, as in bash (D1043).
-        parser.set_options(Options {
-            extglob: vp.opts.shopt(options::Shopt::Extglob),
-        });
+        parser.set_options(options::parser_options(&vp.opts));
         let start = parser.offset();
         let Some(chunk) = parser.next_chunk() else {
             break;

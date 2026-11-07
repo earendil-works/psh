@@ -358,15 +358,23 @@ fn run_command_with<'a>(
         if let Some(f) = before_command(vp, code, cmd) {
             f.await?;
         }
-        let status = match &cmd.kind {
-            CommandKind::Simple(s) => run_simple(vp, code, cmd, s).await?,
+        let mark = vp.subst_fds.len();
+        let result = match &cmd.kind {
+            CommandKind::Simple(s) => run_simple(vp, code, cmd, s).await,
             CommandKind::Select(_) | CommandKind::Cond(_) | CommandKind::Coproc(_) => {
                 vp.line = code.line(cmd.span.start);
-                return expand::unsupported(vp, compound_name(&cmd.kind)).await;
+                expand::unsupported(vp, compound_name(&cmd.kind)).await
             }
-            _ if cmd.redirects.is_empty() => run_compound(vp, code, cmd).await?,
-            _ => Box::pin(with_redirects(vp, code, cmd)).await?,
+            _ if cmd.redirects.is_empty() => run_compound(vp, code, cmd).await,
+            _ => Box::pin(with_redirects(vp, code, cmd)).await,
         };
+        // Process substitutions of this command are closed when it completes.
+        if vp.subst_fds.len() > mark {
+            for n in vp.subst_fds.split_off(mark) {
+                vp.fds.close(n);
+            }
+        }
+        let status = result?;
         match after_command(vp, code, cmd, status, check) {
             Some(f) => f.await,
             None => Ok(status),
@@ -900,9 +908,7 @@ async fn prepare_simple(
                         builtins::set::xtrace(vp, &line).await;
                     }
                     // Assigned at once: later assignments see earlier ones (`a=1 b=$a`).
-                    let target = vp.resolve(&name).into_owned();
-                    vp.prepare_value(&target, v, a.append)
-                        .map(|v| vp.vars.entry(&target).set(v))
+                    vp.assign_with(&name, v, a.append)
                 } else {
                     let v = if a.append {
                         let mut old = vp.var(&name).map(<[u8]>::to_vec).unwrap_or_default();
@@ -926,9 +932,10 @@ async fn prepare_simple(
                 subst_status = st.or(subst_status);
                 vp.assign_array(&name, items, a.append)
             }
-            (Some(_), AssignValue::Array(_)) => {
-                Err(format!("{name}: cannot assign list to array member"))
-            }
+            (Some(idx), AssignValue::Array(_)) => Err(format!(
+                "{name}[{}]: cannot assign list to array member",
+                code.ast.text(idx.span)
+            )),
         };
         if let Err(msg) = r {
             vp.error(&msg).await;
@@ -1622,6 +1629,34 @@ async fn subst(vp: &mut Vp, code: Rc<Code>, list: ListId) -> Result<(Vec<u8>, i3
         out.pop();
     }
     Ok((out, status))
+}
+
+/// `<(list)` (`output` false) or `>(list)`: the list runs as a vproc on one end of a
+/// pipe; the word is `/dev/fd/N` for the other end, a descriptor of this vproc (63 and
+/// down, as bash) until the command completes.
+pub(crate) async fn process_subst(
+    vp: &mut Vp,
+    code: &Rc<Code>,
+    list: ListId,
+    output: bool,
+) -> Result<Vec<u8>, Unwind> {
+    let mut sub = enter(vp).await?;
+    let (r, w) = pipe::pipe();
+    let (theirs, ours): (Fd, Fd) = if output {
+        (Rc::new(FdObj::PipeRead(r)), Rc::new(FdObj::PipeWrite(w)))
+    } else {
+        (Rc::new(FdObj::PipeWrite(w)), Rc::new(FdObj::PipeRead(r)))
+    };
+    sub.fds.set(if output { 0 } else { 1 }, theirs);
+    let n = (10..=63)
+        .rev()
+        .find(|n| vp.fds.get(*n).is_none())
+        .unwrap_or(63);
+    vp.fds.set(n, ours);
+    vp.subst_fds.push(n);
+    // Detached: it runs while the command reads or writes the other end.
+    drop(spawn_sub(sub, code.clone(), Body::List(list)));
+    Ok(format!("/dev/fd/{n}").into_bytes())
 }
 
 /// `` `text` ``: parsed when it runs, as bash does.

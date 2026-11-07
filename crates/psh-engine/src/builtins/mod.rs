@@ -11,6 +11,7 @@ pub(crate) mod hash;
 mod jobs;
 #[cfg(test)]
 mod jobs_tests;
+mod mapfile;
 mod printf;
 mod read;
 pub(crate) mod set;
@@ -71,6 +72,7 @@ pub(crate) fn find(name: &[u8]) -> Option<Builtin> {
         b"local" => (builtin!(declare_words), false),
         b"let" => (builtin!(let_), false),
         b"getopts" => (builtin!(getopts), false),
+        b"mapfile" | b"readarray" => (builtin!(mapfile::mapfile), false),
         b"test" => (builtin!(test::test), false),
         b"[" => (builtin!(test::bracket), false),
         b"read" => (builtin!(read::read), false),
@@ -434,7 +436,8 @@ async fn unset(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             && is_name(&a[..open])
         {
             let name = String::from_utf8_lossy(&a[..open]).into_owned();
-            if let Err(msg) = vp.unset_elem(&name, &a[open + 1..a.len() - 1]) {
+            let sub = crate::expand::expand_sub_text(vp, &a[open + 1..a.len() - 1]).await?;
+            if let Err(msg) = vp.unset_elem(&name, &sub) {
                 vp.error(&format!("unset: {msg}")).await;
                 status = 1;
             }
@@ -446,11 +449,25 @@ async fn unset(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             status = 1;
             continue;
         }
-        // A nameref unsets its target, unless `-n`.
+        // A nameref unsets its target, unless `-n` (which unsets only namerefs).
         let n = if nameref {
+            if !vp.vars.get(n).is_some_and(|v| v.nameref) {
+                continue;
+            }
             n.to_string()
         } else {
-            vp.resolve(n).into_owned()
+            match vp.target(n) {
+                Ok((t, Some(sub))) => {
+                    let sub = crate::expand::expand_sub_text(vp, &sub).await?;
+                    if let Err(msg) = vp.unset_elem(&t, &sub) {
+                        vp.error(&format!("unset: {msg}")).await;
+                        status = 1;
+                    }
+                    continue;
+                }
+                Ok((t, None)) => t,
+                Err(_) => n.to_string(),
+            }
         };
         if vp.vars.get(&n).is_some_and(|v| v.readonly) {
             vp.error(&format!("unset: {n}: cannot unset: readonly variable"))

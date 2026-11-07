@@ -92,7 +92,9 @@ impl Vp {
                 _ => None,
             };
             let v = self.convert(&name, value, old, append)?;
-            if let Value::Assoc(a) = &mut self.vars.entry(&name).value {
+            let var = self.vars.entry(&name);
+            var.declared_only = false;
+            if let Value::Assoc(a) = &mut var.value {
                 a.insert(sub.to_vec(), v);
             }
             return Ok(());
@@ -106,6 +108,7 @@ impl Vp {
         let old = self.elem(&name, i);
         let v = self.convert(&name, value, old, append)?;
         let var = self.vars.entry(&name);
+        var.declared_only = false;
         to_indexed(&mut var.value).insert(i, v);
         Ok(())
     }
@@ -152,7 +155,9 @@ impl Vp {
             if let Some(k) = pending_key {
                 a.insert(k, Vec::new());
             }
-            self.vars.entry(&name).value = Value::Assoc(a);
+            let var = self.vars.entry(&name);
+            var.value = Value::Assoc(a);
+            var.declared_only = false;
             return Ok(());
         }
         let mut m: BTreeMap<i64, Vec<u8>> = if append {
@@ -196,7 +201,9 @@ impl Vp {
             m.insert(i, v);
             next = i + 1;
         }
-        self.vars.entry(&name).value = Value::Indexed(m);
+        let var = self.vars.entry(&name);
+        var.value = Value::Indexed(m);
+        var.declared_only = false;
         Ok(())
     }
 

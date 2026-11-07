@@ -3,7 +3,7 @@
 use crate::options::{self, SET_OPTS, SetOpt};
 use crate::state::{R, Vp};
 
-use super::{out, s, shell_quote};
+use super::{out, s};
 
 const USAGE: &str = "set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]";
 
@@ -175,7 +175,8 @@ async fn list_vars(vp: &Vp) -> R {
     for (n, v) in vars {
         buf.extend_from_slice(n.as_bytes());
         buf.push(b'=');
-        buf.extend_from_slice(&shell_quote(v.get().unwrap_or_default()));
+        // bash's `set` quoting ('…' or $'…'), shared with `declare` (0026).
+        buf.extend_from_slice(&super::declare::set_quote(v.get().unwrap_or_default()));
         buf.push(b'\n');
     }
     out(vp, "set", &buf).await

@@ -24,9 +24,16 @@ impl ArithEnv for Env<'_> {
     ) -> Result<Option<Vec<u8>>, String> {
         let name = String::from_utf8_lossy(name).into_owned();
         match index {
-            None => Ok(self.vp.var(&name).map(<[u8]>::to_vec)),
+            None => match self.vp.target(&name)? {
+                (n, Some(sub)) => self.vp.get_elem(&n, &sub),
+                (n, None) => Ok(self.vp.vars.value(&n).map(<[u8]>::to_vec)),
+            },
             Some(ArithIndex::Key(k)) => self.vp.get_elem(&name, k),
-            Some(ArithIndex::Num(i)) => self.vp.get_elem(&name, i.to_string().as_bytes()),
+            // Out of range below the start: 0, without an error (bash).
+            Some(ArithIndex::Num(i)) => Ok(self
+                .vp
+                .get_elem(&name, i.to_string().as_bytes())
+                .unwrap_or(None)),
         }
     }
 

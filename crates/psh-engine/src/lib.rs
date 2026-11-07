@@ -279,6 +279,7 @@ impl Shell {
             frames: Vec::new(),
             loops: 0,
             getopts: (0, 0),
+            subst_fds: Vec::new(),
             aliases: psh_syntax::Aliases::new(),
             expand_aliases: false,
             sourced: Vec::new(),

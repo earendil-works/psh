@@ -722,3 +722,20 @@ fn empty_quoted_word_is_a_field() {
         "2\n1\n0\n1\n",
     );
 }
+
+#[test]
+fn mapfile_and_process_substitution() {
+    check(
+        "mapfile -t a < <(echo x; echo y); declare -p a",
+        "declare -a a=([0]=\"x\" [1]=\"y\")\n",
+    );
+    check(
+        "readarray -O 2 -n 1 a <<< $'p\\nq'; declare -p a",
+        "declare -a a=([2]=$'p\\n')\n",
+    );
+    check(
+        "echo hi > >(cat); while read l; do echo got $l; done < <(echo 1; echo 2)",
+        "hi\ngot 1\ngot 2\n",
+    );
+    check("echo <(true) >(true)", "/dev/fd/63 /dev/fd/62\n");
+}

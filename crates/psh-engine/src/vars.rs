@@ -27,6 +27,8 @@ pub(crate) enum Case {
     None,
     Lower,
     Upper,
+    /// `declare -c`: the first char upper, the rest lower.
+    Capitalize,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -39,6 +41,11 @@ pub(crate) struct Var {
     pub case: Case,
     /// `declare -n`: the value names another variable.
     pub nameref: bool,
+    /// `declare -t`.
+    pub trace: bool,
+    /// An array declared (`declare -a x`) but never assigned: `declare -p` shows no
+    /// `=()`.
+    pub declared_only: bool,
 }
 
 impl Var {
@@ -89,6 +96,7 @@ impl Var {
 
     /// Sets the scalar value: the string, or element 0 of an array.
     pub(crate) fn set(&mut self, v: Vec<u8>) {
+        self.declared_only = false;
         match &mut self.value {
             Value::Indexed(m) => {
                 m.insert(0, v);
@@ -106,6 +114,9 @@ impl Var {
             Value::Assoc(_) => f.push('A'),
             _ => {}
         }
+        if self.case == Case::Capitalize {
+            f.push('c');
+        }
         if self.integer {
             f.push('i');
         }
@@ -117,6 +128,9 @@ impl Var {
         }
         if self.readonly {
             f.push('r');
+        }
+        if self.trace {
+            f.push('t');
         }
         if self.case == Case::Upper {
             f.push('u');

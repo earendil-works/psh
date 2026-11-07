@@ -96,6 +96,19 @@ pub(crate) use crate::vars::{Case, Value, Var, Vars};
 pub(crate) fn apply_case(case: Case, value: Vec<u8>) -> Vec<u8> {
     match case {
         Case::None => value,
+        Case::Capitalize => {
+            let lower = apply_case(Case::Lower, value);
+            match String::from_utf8(lower) {
+                Ok(s) => {
+                    let mut c = s.chars();
+                    match c.next() {
+                        Some(f) => f.to_uppercase().chain(c).collect::<String>().into_bytes(),
+                        None => Vec::new(),
+                    }
+                }
+                Err(e) => e.into_bytes(),
+            }
+        }
         Case::Lower | Case::Upper => match String::from_utf8(value) {
             Ok(s) if case == Case::Lower => s.to_lowercase().into_bytes(),
             Ok(s) => s.to_uppercase().into_bytes(),
@@ -160,6 +173,9 @@ pub(crate) struct Vp {
     /// `getopts`' place inside a cluster of options (`-abc`): the `OPTIND` it was
     /// at, and the char offset in that argument.
     pub getopts: (i64, usize),
+    /// Descriptors of the running command's process substitutions (`<(…)`), closed
+    /// when it completes.
+    pub subst_fds: Vec<u32>,
     /// `alias` definitions; a subshell's own (bash keeps them per process).
     pub aliases: psh_syntax::Aliases,
     /// `shopt expand_aliases`: off, as in non-interactive bash.
@@ -272,6 +288,10 @@ impl Vp {
                 },
                 _ => return Ok(cur),
             };
+            // A reference to an element ends the chain; `target` splits it.
+            if next.contains('[') {
+                return Ok(std::borrow::Cow::Owned(next));
+            }
             seen.push(cur.into_owned());
             if seen.contains(&next) {
                 return Err(format!("{name}: circular name reference"));
@@ -283,10 +303,70 @@ impl Vp {
         }
     }
 
+    /// What a name refers to after namerefs: a variable, or an element of one
+    /// (`declare -n r='a[2]'`): `(name, Some(subscript))`.
+    pub(crate) fn target(&self, name: &str) -> Result<(String, Option<Vec<u8>>), String> {
+        let r = self.resolve_checked(name)?;
+        if let Some(open) = r.find('[')
+            && r.ends_with(']')
+        {
+            return Ok((
+                r[..open].to_string(),
+                Some(self.simple_sub(r[open + 1..r.len() - 1].as_bytes())),
+            ));
+        }
+        Ok((r.into_owned(), None))
+    }
+
+    /// A nameref's subscript where no async expansion is possible: quotes around it
+    /// removed, `$name` and `${name}` substituted (the expander does the full job where
+    /// it can, `expand::expand_sub_text`).
+    fn simple_sub(&self, sub: &[u8]) -> Vec<u8> {
+        let t = sub.trim_ascii();
+        if t.len() >= 2 && (t[0] == b'"' || t[0] == b'\'') && t[t.len() - 1] == t[0] {
+            return t[1..t.len() - 1].to_vec();
+        }
+        let name = t
+            .strip_prefix(b"${")
+            .and_then(|n| n.strip_suffix(b"}"))
+            .or_else(|| t.strip_prefix(b"$"));
+        if let Some(n) = name
+            && is_name(n)
+        {
+            return self
+                .var(&String::from_utf8_lossy(n))
+                .unwrap_or_default()
+                .to_vec();
+        }
+        sub.to_vec()
+    }
+
+    /// An element by a subscript that needs no arithmetic (a number, an associative
+    /// key): for read-only lookups through namerefs.
+    fn elem_literal(&self, name: &str, sub: &[u8]) -> Option<&[u8]> {
+        match &self.vars.get(name)?.value {
+            Value::Assoc(a) => a.get(sub),
+            Value::Indexed(m) => {
+                let i: i64 = std::str::from_utf8(sub).ok()?.trim().parse().ok()?;
+                let i = if i < 0 {
+                    m.keys().next_back()? + 1 + i
+                } else {
+                    i
+                };
+                m.get(&i).map(Vec::as_slice)
+            }
+            Value::Str(s) if sub == b"0" => Some(s),
+            _ => None,
+        }
+    }
+
     /// The scalar value of a variable (element 0 of an array), following namerefs.
     pub(crate) fn var(&self, name: &str) -> Option<&[u8]> {
-        let name = self.resolve(name);
-        self.vars.value(&name)
+        match self.target(name) {
+            Ok((n, Some(sub))) => self.elem_literal(&n, &sub),
+            Ok((n, None)) => self.vars.value(&n),
+            Err(_) => None,
+        }
     }
 
     /// The variable itself, following namerefs.
@@ -324,7 +404,17 @@ impl Vp {
                 _ => false,
             };
         }
-        self.var(name).is_some()
+        match self.target(name) {
+            Ok((n, Some(sub))) => {
+                let mut full = n;
+                full.push('[');
+                full.push_str(&String::from_utf8_lossy(&sub));
+                full.push(']');
+                self.is_set(&full)
+            }
+            Ok((n, None)) => self.vars.value(&n).is_some(),
+            Err(_) => false,
+        }
     }
 
     /// Sets the scalar value (or element 0) without any checks: for the shell's own
@@ -341,8 +431,25 @@ impl Vp {
     /// An assignment `name=value`: readonly check, `-i` arithmetic, `-l`/`-u` case,
     /// namerefs. The error is bash's message without the `line N:` prefix.
     pub(crate) fn assign(&mut self, name: &str, value: Vec<u8>) -> Result<(), String> {
-        let name = self.resolve(name).into_owned();
-        let value = self.prepare_value(&name, value, false)?;
+        self.assign_with(name, value, false)
+    }
+
+    /// `name=value` or `name+=value`.
+    pub(crate) fn assign_with(
+        &mut self,
+        name: &str,
+        value: Vec<u8>,
+        append: bool,
+    ) -> Result<(), String> {
+        let (name, sub) = match self.target(name) {
+            Ok(t) => t,
+            // An assignment through a circular reference fails (bash warns).
+            Err(msg) => return Err(format!("warning: {msg}")),
+        };
+        if let Some(sub) = sub {
+            return self.assign_elem(&name, &sub, value, append);
+        }
+        let value = self.prepare_value(&name, value, append)?;
         let allexport = self.opts.get(crate::options::SetOpt::Allexport);
         let var = self.vars.entry(&name);
         var.set(value);

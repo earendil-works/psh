@@ -52,6 +52,23 @@ arrays extend `Var`'s value; `Fields` stays the expansion model.
   `enable`, special_parameters/29 needs `$_`).
 - Scores: oils 1449/2511 (was 1111), brush 1445/3171 (was 1066), agent 116/144.
 
+### 2026-11-07 part 2
+- `mapfile`/`readarray` (all options incl. -C/-c through eval's `run_text`), process
+  substitution `<(…)`/`>(…)` as `/dev/fd/N` (63 down, closed when the command completes;
+  externals get the fd through psh-os).
+- declare: `+`/`-` attribute rules (+ wins), `-c -t -I`, `-p` filters, declared-only
+  arrays (`declare -a x` shows no `=()`), quoted compound assignments re-parsed
+  (`declare -a a='(1 2)'`), `set`-style quoting for `declare`/`set` listings, bare
+  subscripted names, `-p` errors as written, `local` listing, `+a` "cannot destroy".
+- Namerefs to elements (`declare -n r='a[2]'`, also through `unset`, arithmetic,
+  `+=`), chains in `${!ref}`, self references refused.
+- `${x@A}`, `@a`, `@K`, `@k`, `@P`; one-char case mappings (ß stays); backslashes in
+  double-quoted operands (`"${u-\z}"`); assoc slices number from 1 (bash).
+- Scores: oils 1651/2511, brush 1789/3171, agent 121/144.
+
 ## Follow-ups
+- `read -a` (0029's read.rs) can now use `vp.assign_array(name, items, false)`.
+- `test -v 'a[i+1]'` needs arithmetic in `test.rs` (0027's area): `Vp::is_set` handles
+  literal subscripts only.
 
 ## Result

@@ -18,3 +18,5 @@ brush/compat/signals/19: a shell a signal's default action ends reports 128+n: n
 brush/compat/signals/26: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/signals/32: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/extended_tests/11: needs host files: /bin/sh, /etc/os-release (as builtins/test/2)
+brush/compat/assignments/6: the JS host has no home_dir (~root stays as written)
+brush/compat/well_known_vars/3: the JS host reports no OS (OSTYPE is unknown)

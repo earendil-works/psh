@@ -1,0 +1,28 @@
+# Every dependency of every workspace crate: normal, build and dev, direct and
+# transitive, on every target (`cargo tree --target all`). One line per pair:
+#
+#   CRATE  DEPENDENCY  DECISION...
+#
+# The third column cites the decision that allows the dependency (docs/decisions.md):
+# a new crate needs its decision first (D006). The gate leg `deps` fails when the
+# workspace's dependencies and this list differ in either direction, or a line cites no
+# decision. Workspace crates depending on each other follow ARCH.md "Crates" (D004).
+
+psh           psh-syntax    D004 (ARCH.md "Crates")
+psh           psh-engine    D004 (ARCH.md "Crates")
+psh           psh-classify  D004 (ARCH.md "Crates")
+psh           psh-os        D004 (ARCH.md "Crates")
+psh           libc          D024 (via psh-os)
+psh           deser-json    D029, D1047 (psh --parse JSON)
+psh           deser-core    D029 (via deser-json)
+psh           itoa          D029 (via deser-json)
+psh           zmij          D029 (via deser-json)
+psh-engine    psh-syntax    D023 (the engine runs the parser's tree)
+psh-classify  psh-syntax    D013 (one parser for execution and classification)
+psh-os        psh-engine    D1052 (implements the Host trait)
+psh-os        psh-syntax    D1052 (via psh-engine)
+psh-os        libc          D024 (Unix)
+psh-spec      psh-syntax    D1220 (L0 and the hit list)
+psh-spec      psh-engine    D1056 (psh-spec runs psh in-process)
+psh-spec      psh-os        D1056 (the OS host of in-process shells)
+psh-spec      libc          D024 (via psh-os)

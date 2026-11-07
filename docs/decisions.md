@@ -955,3 +955,14 @@ arguments) and yields the corpus feature names plus literal command names; separ
 comments and line continuations, which the tree does not keep, still come from the text.
 Scripts psh-syntax rejects (about 1% of the failing cases, all also rejected by bash) keep
 the lexical detection. The weighting rule (the rarest construct) is unchanged.
+
+## D1223: A workspace-wide dependency allowlist
+date: 2026-11-07 · by: infra · issue: 0022
+Supersedes the per-crate lists in the `deps` leg (D1013). `scripts/deps-allowlist.txt`
+lists every (crate, dependency) pair of the workspace: normal, build and dev
+dependencies, direct and transitive, for every target (`cargo tree --target all`), each
+with the decision that allows it. The gate fails on a pair missing from the list, a
+listed pair the workspace does not have, or a line without a decision id. Adding a
+dependency is: decision, then the list line(s) for it and everything it pulls in, then
+the code. Workspace crates depending on each other cite ARCH.md's crate layout (D004)
+or their own decision.

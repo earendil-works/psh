@@ -190,8 +190,10 @@ at scale) and syntax ranking. Running anything is never involved.
 reaches `main` (AGENTS.md). Legs, as they come into existence:
 
 1. `cargo fmt --check`, clippy `-D warnings`, `cargo test --workspace` (0001).
-2. `psh-syntax` and `psh-engine` build for `wasm32-unknown-unknown`; their dependency
-   sets are checked (`deps`: none, and `psh-syntax` only) (0001).
+2. `psh-syntax` and `psh-engine` build for `wasm32-unknown-unknown` (0001). `deps`:
+   every dependency of every workspace crate (direct or transitive, any target) is
+   listed in `scripts/deps-allowlist.txt` with the decision that allows it, and nothing
+   else is (0022, D1223).
 3. `cargo check` with Rust 1.96, the MSRV (D025, 0001); the scripts parse and the
    tests of `timeout.sh` and `merge-to-main.sh` pass (0001, D1013).
    `shapes`: the shape corpus passes its privacy check (0003, D1030).

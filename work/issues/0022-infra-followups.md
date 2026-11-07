@@ -26,7 +26,7 @@ measure the parser in the gate.
       slow gate).
 - [x] **Hit list on psh-syntax** (0002 follow-up): detect constructs from the AST
       instead of lexically, where the parser accepts the case.
-- [ ] Workspace-wide dependency allowlist in the `deps` leg (0001 follow-up): every
+- [x] Workspace-wide dependency allowlist in the `deps` leg (0001 follow-up): every
       crate's dependencies must be listed in a committed allowlist that cites the
       decision that allows them.
 
@@ -57,6 +57,16 @@ measure the parser in the gate.
   psh-syntax's tree for the corpus features and command names (D1222); the lexical scan
   remains for scripts the parser rejects. Today 5,623 of 5,696 failing cases are weighed
   from the tree, 73 from the text.
+- 2026-11-07, part 3 merge blocked by the Windows leg (VM mid-suspend once; then
+  `test-x64` LNK1104 on locked exes in `C:\psh-gate\infra`, probably processes left
+  from an earlier timed-out x64 run). The coordinator has the windows agent fixing the
+  leg; part 3 waits on the branch.
+- 2026-11-07, part 4 (deps allowlist): `scripts/deps-allowlist.txt` with a decision per
+  pair (10 pairs today: psh's deser-json and its three transitive crates, and the
+  workspace crates on each other) and the `deps` leg comparing it with `cargo tree
+  --target all` for every crate (D1223). Checked by hand: an unlisted, a stale and an
+  uncited line each fail the leg. AGENTS.md's "Allowed dependencies" paragraph could
+  point at the list (coordinator's file).
 
 ## Follow-ups
 

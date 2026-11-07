@@ -142,14 +142,16 @@ impl Engine for WasmEngine {
         let (source, arg0, script_args, dash_c, stdin) = match parse_args(&args) {
             Err(msg) => return fail(msg),
             Ok(Invocation::Help) => return fail("--help".into()),
-            Ok(Invocation::Command { source, arg0, args }) => (
+            Ok(Invocation::Command {
+                source, arg0, args, ..
+            }) => (
                 source,
                 arg0.unwrap_or_else(|| b"psh".to_vec()),
                 args,
                 true,
                 req.stdin.map(<[u8]>::to_vec),
             ),
-            Ok(Invocation::File { path, args }) => {
+            Ok(Invocation::File { path, args, .. }) => {
                 let full = req.cwd.join(String::from_utf8_lossy(&path).as_ref());
                 match std::fs::read(&full) {
                     Ok(src) => (src, path, args, false, req.stdin.map(<[u8]>::to_vec)),
@@ -167,7 +169,7 @@ impl Engine for WasmEngine {
                     }
                 }
             }
-            Ok(Invocation::Stdin { args }) => (
+            Ok(Invocation::Stdin { args, .. }) => (
                 req.stdin.unwrap_or_default().to_vec(),
                 b"psh".to_vec(),
                 args,

@@ -12,6 +12,7 @@ use std::time::Duration;
 use crate::fd::Fd;
 use crate::host::{HostFuture, error_text};
 use crate::state::{R, Vp, is_name};
+use crate::vars::Value;
 
 use super::s;
 
@@ -154,14 +155,30 @@ pub(super) async fn read(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         }
     }
 
-    if let Some(a) = &o.array {
-        if !is_name(a) {
-            vp.error(&format!("read: `{}': not a valid identifier", s(a)))
-                .await;
-            return Ok(1);
+    // `-a NAME`: checked before anything is read.
+    let array = match &o.array {
+        None => None,
+        Some(a) => {
+            if !is_name(a) {
+                vp.error(&format!("read: `{}': not a valid identifier", s(a)))
+                    .await;
+                return Ok(1);
+            }
+            let name = vp.resolve(&s(a)).into_owned();
+            if let Some(v) = vp.vars.get(&name) {
+                if v.readonly {
+                    vp.error(&format!("{name}: readonly variable")).await;
+                    return Ok(1);
+                }
+                if v.is_assoc() {
+                    vp.error(&format!("read: {name}: not an indexed array"))
+                        .await;
+                    return Ok(1);
+                }
+            }
+            Some(name)
         }
-        return crate::expand::unsupported(vp, "read -a").await;
-    }
+    };
 
     let Some(fd) = vp.fd(o.fd) else {
         vp.error(&format!("read: {}: read error: Bad file descriptor", o.fd))
@@ -256,15 +273,28 @@ pub(super) async fn read(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     }
 
     let ifs = vp.var("IFS").map(<[u8]>::to_vec);
+    let ifs = ifs.as_deref().unwrap_or(b" \t\n");
+    let text = |l: &[(u8, bool)]| l.iter().map(|b| b.0).collect::<Vec<u8>>();
+    if let Some(name) = array {
+        // `-N` keeps the input whole; otherwise every field is an element.
+        let fields = if exact {
+            vec![text(&line)]
+        } else {
+            split_all(&line, ifs)
+        };
+        let var = vp.vars.entry(&name);
+        var.value = Value::Indexed(fields.into_iter().enumerate().map(|(k, f)| (k as i64, f)).collect());
+        return Ok(status);
+    }
     let values: Vec<Vec<u8>> = if names.is_empty() {
-        vec![line.iter().map(|l| l.0).collect()]
+        vec![text(&line)]
     } else if exact {
         // `-N` puts everything into the first variable, unsplit.
-        let mut v = vec![line.iter().map(|l| l.0).collect()];
+        let mut v = vec![text(&line)];
         v.resize(names.len(), Vec::new());
         v
     } else {
-        split(&line, ifs.as_deref().unwrap_or(b" \t\n"), names.len())
+        split(&line, ifs, names.len())
     };
     let targets: Vec<String> = if names.is_empty() {
         vec!["REPLY".into()]
@@ -278,11 +308,11 @@ pub(super) async fn read(vp: &mut Vp, args: &[Vec<u8>]) -> R {
                 .await;
             return Ok(1);
         }
-        if vp.vars.get(n).is_some_and(|v| v.readonly) {
-            vp.error(&format!("{n}: readonly variable")).await;
+        // Attributes apply (`-i`, `-l`, `-u`, readonly, namerefs).
+        if let Err(msg) = vp.assign(n, v) {
+            vp.error(&msg).await;
             return Ok(1);
         }
-        vp.set_var(n, v);
     }
     Ok(status)
 }
@@ -352,8 +382,40 @@ fn split(line: &[(u8, bool)], ifs: &[u8], n: usize) -> Vec<Vec<u8>> {
     out
 }
 
+/// Splits a line into all its fields, as `read -a` does: like word splitting, a
+/// separator at the end makes no empty field.
+fn split_all(line: &[(u8, bool)], ifs: &[u8]) -> Vec<Vec<u8>> {
+    let is_ifs = |&(b, esc): &(u8, bool)| !esc && ifs.contains(&b);
+    let is_ws =
+        |&(b, esc): &(u8, bool)| !esc && ifs.contains(&b) && matches!(b, b' ' | b'\t' | b'\n');
+    let mut out = Vec::new();
+    let mut p = 0;
+    while p < line.len() && is_ws(&line[p]) {
+        p += 1;
+    }
+    while p < line.len() {
+        let start = p;
+        while p < line.len() && !is_ifs(&line[p]) {
+            p += 1;
+        }
+        out.push(line[start..p].iter().map(|l| l.0).collect());
+        while p < line.len() && is_ws(&line[p]) {
+            p += 1;
+        }
+        if p < line.len() && is_ifs(&line[p]) && !is_ws(&line[p]) {
+            p += 1;
+            while p < line.len() && is_ws(&line[p]) {
+                p += 1;
+            }
+        }
+    }
+    out
+}
+
+/// A non-negative decimal, with blanks around it and a `+` allowed.
 fn parse_count(v: &[u8]) -> Option<usize> {
-    let t = std::str::from_utf8(v).ok()?;
+    let t = std::str::from_utf8(v).ok()?.trim_matches([' ', '\t', '\n']);
+    let t = t.strip_prefix('+').unwrap_or(t);
     if t.is_empty() || !t.bytes().all(|b| b.is_ascii_digit()) {
         return None;
     }
@@ -363,6 +425,7 @@ fn parse_count(v: &[u8]) -> Option<usize> {
 /// `-t` and `TMOUT`: seconds with an optional fraction.
 fn parse_timeout(v: &[u8]) -> Option<Duration> {
     let t = std::str::from_utf8(v).ok()?;
+    let t = t.strip_prefix('+').unwrap_or(t);
     let (int, frac) = t.split_once('.').unwrap_or((t, ""));
     // An empty timeout (`''`, `.`) is zero.
     if !int.bytes().all(|b| b.is_ascii_digit()) || !frac.bytes().all(|b| b.is_ascii_digit()) {
@@ -449,6 +512,17 @@ mod tests {
         assert_eq!(sp(":x", ":", 3), ["", "x", ""]);
         assert_eq!(sp("  x y  ", "", 2), ["  x y  ", ""]);
         assert_eq!(sp("A\t\tB C D E ", " \t\n", 3), ["A", "B", "C D E"]);
+        let all = |line: &str, ifs: &str| -> Vec<String> {
+            let l: Vec<(u8, bool)> = line.bytes().map(|b| (b, false)).collect();
+            split_all(&l, ifs.as_bytes())
+                .into_iter()
+                .map(|v| String::from_utf8(v).unwrap())
+                .collect()
+        };
+        assert_eq!(all("a b x ", "x "), ["a", "b"]);
+        assert_eq!(all("a b x x", "x "), ["a", "b", ""]);
+        assert_eq!(all(":a::b", ":"), ["", "a", "", "b"]);
+        assert!(all("   ", " ").is_empty());
     }
 
     #[test]

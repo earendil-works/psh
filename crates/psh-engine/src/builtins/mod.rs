@@ -264,7 +264,8 @@ async fn false_(_vp: &mut Vp, _args: &[Vec<u8>]) -> R {
 
 async fn echo(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     let mut newline = true;
-    let mut escapes = false;
+    // `shopt -s xpg_echo`: escapes by default (`-E` still turns them off).
+    let mut escapes = vp.opts.shopt(crate::options::Shopt::XpgEcho);
     let mut i = 1;
     while i < args.len() {
         let a = &args[i];

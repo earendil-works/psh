@@ -146,6 +146,7 @@ pub(crate) enum Shopt {
     InheritErrexit,
     Lastpipe,
     Nullglob,
+    XpgEcho,
 }
 
 impl Shopt {
@@ -157,6 +158,7 @@ impl Shopt {
             Shopt::InheritErrexit => "inherit_errexit",
             Shopt::Lastpipe => "lastpipe",
             Shopt::Nullglob => "nullglob",
+            Shopt::XpgEcho => "xpg_echo",
         }
     }
 }

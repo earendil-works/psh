@@ -166,6 +166,8 @@ pub(crate) struct Vp {
 pub(crate) struct Func {
     pub code: Rc<Code>,
     pub body: psh_syntax::CmdId,
+    /// The definition itself (`f() …`), for `declare -f`.
+    pub def: psh_syntax::CmdId,
 }
 
 /// A function call's locals: each shadowed variable with its value before the call

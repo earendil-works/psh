@@ -34,6 +34,24 @@ arrays extend `Var`'s value; `Fields` stays the expansion model.
 
 ## Log
 
+### 2026-11-07 part 1
+- Variable model (D1260, announced to the coordinator first): `vars.rs` (`Var`, `Value`,
+  `Assoc`), `arrays.rs` (element and compound assignment, negative indices, unset of
+  elements); accessors on `Vp` (`var`, `set_var`, `assign`, `is_set`, `resolve`, …).
+- Associative arrays in bash's exact iteration order (D1261), derived black-box: FNV-1,
+  1024 buckets, head insertion, ×4 growth past 2× entries; verified up to 9000 keys.
+- `a=(…)`, `a+=(…)`, `a[i]=v`, `h=([k]=v)`, `h=(k v k v)`, `${a[i]}`, `${a[@]}`,
+  `${a[*]}`, `${#a[@]}`, `${#a[i]}`, `${!a[@]}`, `${a[@]:o:l}`, `${@:o:l}`, `${x:o:l}`,
+  `${!x}` incl. `x='a[1]'`/`'a[@]'`, arrays in arithmetic, `unset 'a[i]'`, `test -v a[i]`.
+- `declare`/`typeset`/`local`/`export`/`readonly` in `builtins/declare.rs` (D1262):
+  `-a -A -i -l -u -n -r -x -g -t -p -f -F`, `declare -p` in bash's format (`$'…'` for
+  control chars, assoc keys quoted when needed), `declare -f` through
+  `psh_syntax::print_function_bash` (restoring bytes), namerefs with validation, cycle
+  and depth warnings, `for` over a nameref.
+- 2 accidental passes added to the brush ratchet with reasons (declare/24 needs
+  `enable`, special_parameters/29 needs `$_`).
+- Scores: oils 1449/2511 (was 1111), brush 1445/3171 (was 1066), agent 116/144.
+
 ## Follow-ups
 
 ## Result

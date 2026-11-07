@@ -211,10 +211,6 @@ brush/compat/builtins/declare/24: passed only while declare was missing (both fa
 brush/compat/builtins/declare/25
 brush/compat/builtins/declare/26
 brush/compat/builtins/declare/28
-brush/compat/builtins/declare/29
-brush/compat/builtins/declare/30
-brush/compat/builtins/declare/31
-brush/compat/builtins/declare/32
 brush/compat/builtins/declare/36
 brush/compat/builtins/declare/37
 brush/compat/builtins/declare/41
@@ -1020,7 +1016,6 @@ brush/compat/options/functrace/10
 brush/compat/options/functrace/11
 brush/compat/options/functrace/12
 brush/compat/options/functrace/13
-brush/compat/options/functrace/14
 brush/compat/options/functrace/15
 brush/compat/options/functrace/16
 brush/compat/options/functrace/17

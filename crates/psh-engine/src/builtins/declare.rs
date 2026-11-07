@@ -458,7 +458,7 @@ async fn functions(vp: &mut Vp, bname: &str, names: &[DeclArg], names_only: bool
         if names_only {
             buf.extend_from_slice(name.as_bytes());
         } else {
-            let text = psh_syntax::print_function_bash(&f.code.ast, f.body);
+            let text = psh_syntax::print_function_bash(&f.code.ast, f.def);
             buf.extend_from_slice(&f.code.ast.restore_bytes(&text));
         }
         buf.push(b'\n');

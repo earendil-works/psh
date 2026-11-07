@@ -723,9 +723,6 @@ oils/pipeline/22
 oils/pipeline/23
 oils/pipeline/24
 oils/pipeline/25
-oils/print-source-code/0
-oils/print-source-code/1
-oils/print-source-code/3
 oils/process-sub/0
 oils/process-sub/1
 oils/process-sub/2

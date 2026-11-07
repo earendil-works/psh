@@ -636,6 +636,81 @@ fn aliases() {
         "{}",
         o.stderr
     );
+
+#[test]
+fn indexed_arrays() {
+    check(
+        "a=(x 'y z'); a[5]=q; echo ${a[1]} ${a[-1]} ${#a[@]} ${!a[@]}",
+        "y z q 3 0 1 5\n",
+    );
+    check(
+        "a=(x 'y z'); argv \"${a[@]}\"; argv \"${a[*]}\"",
+        "[x]\n[y z]\n[x y z]\n",
+    );
+    check(
+        "a=(1 2); a+=(3 4); echo ${a[@]}; unset 'a[1]'; echo ${a[@]} ${!a[@]}",
+        "1 2 3 4\n1 3 4 0 2 3\n",
+    );
+    check("a=(a b c d); echo ${a[@]:1:2} ${a[@]: -1}", "b c d\n");
+    check(
+        "a=([3]=x y [0]=z); declare -p a",
+        "declare -a a=([0]=\"z\" [3]=\"x\" [4]=\"y\")\n",
+    );
+    check(
+        "a=(1 2 3); echo $((a[1] + a[2])); (( a[0] += 5 )); echo $a",
+        "5\n6\n",
+    );
+    check("i=1; a[i+1]=v; echo ${a[2]}", "v\n");
+    let o = run("a=(1); a[-5]=x; echo same\necho next");
+    assert_eq!(o.stdout, "next\n");
+    assert_eq!(o.stderr, "psh: line 1: a[-5]: bad array subscript\n");
+}
+
+#[test]
+fn associative_arrays() {
+    check(
+        "declare -A h=([k]=v [b]='2 3'); echo ${h[k]} \"${h[b]}\"; declare -p h",
+        "v 2 3\ndeclare -A h=([k]=\"v\" [b]=\"2 3\" )\n",
+    );
+    check(
+        "declare -A h; h[a]=1; h[b]=2; h[c]=3; h[d]=4; echo ${!h[@]}",
+        "d c b a\n",
+    );
+    check(
+        "declare -A h=(k1 v1 k2 v2); echo ${h[k2]}; unset 'h[k2]'; echo ${#h[@]}",
+        "v2\n1\n",
+    );
+    check("declare -A h; k='a b'; h[$k]=x; echo \"${h[a b]}\"", "x\n");
+}
+
+#[test]
+fn declare_attributes() {
+    check(
+        "declare -i n=2+3; n+=1; echo $n; declare -l l=ABC; declare -u u=abc; echo $l $u",
+        "6\nabc ABC\n",
+    );
+    check("declare -r r=1; r=2; echo no\necho $r", "1\n");
+    check("x=1; declare -n ref=x; ref=5; echo $x ${!ref}", "5 x\n");
+    check(
+        "f() { declare a=local; g=global; }; a=outer; f; echo $a $g",
+        "outer global\n",
+    );
+    check("f() { declare -g a=global; }; f; echo $a", "global\n");
+    check("export -n PATH; declare -x e=1; env | wc", "4\n");
+    check(
+        "f() { echo hi; }; declare -f f; declare -F f",
+        "f () \n{ \n    echo hi\n}\nf\n",
+    );
+}
+
+#[test]
+fn substrings_and_transforms() {
+    check(
+        "x=hello; echo ${x:1:3} ${x: -2} ${x:1:-1} ${x::2}",
+        "ell lo ell he\n",
+    );
+    check("set -- a b c; echo ${@:2} ${@:0:1}", "b c psh\n");
+    check("x=\"it's\"; echo ${x@Q}", "'it'\\''s'\n");
 }
 
 #[test]

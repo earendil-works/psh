@@ -212,8 +212,12 @@ and errexit, builtins) extends these; restructuring them needs a decision first:
   pipes and pumps (`pipe.rs`, `fd::Pump`).
 - Builtins are `fn(&mut Vp, &[Vec<u8>]) -> LocalBoxFuture<R>` in `builtins::find`;
   output through `builtins::write_fd`/`out` (SIGPIPE as status 141).
-- Variables are `Vars` (name → `Var { value: Option<Vec<u8>>, exported, readonly }`);
-  arrays will extend `Var`'s value, not add a second table.
+- Variables are `Vars` (name → `Var { value: Value, exported, readonly, integer, case,
+  nameref }`, `Value::{Unset, Str, Indexed, Assoc}`, D1260), used through the `Vp`
+  accessors (`var`, `set_var`, `assign`, `assign_elem`, `assign_array`, `get_elem`,
+  `unset_elem`, `is_set`, `resolve`), never by poking `Var` fields for assignments.
+  Associative arrays keep bash's iteration order (D1261). Declaration builtins take
+  `DeclArg`s (D1262).
 
 ### The Host trait
 

@@ -1150,3 +1150,33 @@ counts the externals' copies, so EOF and EPIPE are the kernel's. Here-documents
 (preloaded) and hosts without pipes keep pumps. Measured: 1 GB through
 `head -c | cat | cat | wc -c` in 1.8 s with 0.12 s of psh CPU (release, macOS). Alternative:
 deciding statically which stages are externals (impossible before expansion).
+## D1260: Variables are a value enum with attributes
+date: 2026-11-07 · by: engine · issue: 0026
+`Var { value: Value, exported, readonly, integer, case, nameref }` with
+`Value::{Unset, Str, Indexed(BTreeMap<i64, Vec<u8>>), Assoc(Assoc)}`; one table per
+vproc, dynamic scope through function frames as before (D1059). Code outside `vars.rs`/
+`arrays.rs` uses the accessors: `vp.var` (scalar or element 0, namerefs followed),
+`vp.set_var` (raw, for the shell's own variables), `vp.assign` (what an assignment does:
+readonly, `-i`, `-l`/`-u`, namerefs), `vp.assign_elem`/`assign_array`/`get_elem`/
+`unset_elem`, `vp.is_set`. Arrays are never exported. Namerefs resolve up to 8 levels;
+cycles and longer chains warn on read (`NAME: circular name reference`) and read as
+unset. Reason: one variable model for all later language work (ARCH "Engine internals").
+
+## D1261: Associative arrays iterate in bash's order
+date: 2026-11-07 · by: engine · issue: 0026
+`${!h[@]}`, `${h[@]}` and `declare -p` list keys the way bash 5.3 does: a hash table of
+1024 buckets on the 32-bit FNV-1 hash of the key (a public algorithm), new keys at the
+head of their chain, four times the buckets once it holds twice as many entries as
+buckets (rehashing in bucket order, each entry to the head of its new chain). Derived
+black-box by running bash on thousands of keys (clean room, D007); matches exactly up to
+9000 keys. Reason: Oils and brush cases print assoc arrays without sorting; insertion
+order would fail them.
+
+## D1262: Declaration builtins get assignments, not words
+date: 2026-11-07 · by: engine · issue: 0026
+`declare`, `typeset`, `local`, `export`, `readonly` (when not shadowed by a function)
+receive `DeclArg`s from the interpreter: `name=(…)` with expanded array items,
+`name[=+]value` and `name[sub]=value` expanded like assignment values (no splitting),
+and other words expanded normally and then classified. The same builtins called with
+plain words (`builtin declare`, `command export`) parse `name=value` from the text.
+Assignments in front of them are temporary. They live in `builtins/declare.rs`.

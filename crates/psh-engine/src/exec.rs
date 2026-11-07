@@ -284,6 +284,12 @@ async fn define_function(
         Rc::new(Func {
             code: code.clone(),
             body: f.body,
+            // Definitions are rare: finding the command's id by address is fine.
+            def: code
+                .ast
+                .cmd_ids()
+                .find(|&id| std::ptr::eq(code.ast.cmd(id), cmd))
+                .unwrap_or(f.body),
         }),
     );
     Ok(0)

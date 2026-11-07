@@ -320,7 +320,7 @@ From `research/execution-core.md` §5; the pitfalls listed there are requirement
   quoting Rust std uses (BatBadBut), refusing line breaks; MSVCRT argv quoting
   otherwise. A file starting with `#!` runs under its interpreter, looked up on the
   child's `PATH` (`/usr/bin/env X`, `/bin/X`, `/usr/bin/X` all mean X); `sh`/`bash`
-  scripts and files without an interpreter need psh itself (an engine hook, D1079).
+  scripts and files without an interpreter run in psh itself (`RunInShell`, D1300).
 - Wait: a waiter thread per external on its process handle; holding the handle keeps
   the pid from being reused.
 - Kill: TERM/INT/HUP/QUIT = `CTRL_BREAK_EVENT` to the external's group, or

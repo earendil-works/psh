@@ -331,10 +331,9 @@ fn lookup_uses_pathext_and_shebangs() {
     let mut tool = dir.clone();
     tool.extend_from_slice(b"/tool");
     spec.program = tool;
-    assert_eq!(
-        h.spawn(spec).err().unwrap().kind(),
-        io::ErrorKind::Unsupported
-    );
+    assert!(psh_engine::host::RunInShell::is(
+        &h.spawn(spec).err().unwrap()
+    ));
     std::fs::remove_dir_all(&d).unwrap();
 }
 

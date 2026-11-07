@@ -43,3 +43,13 @@ fn system_programs_run_through_path_lookup() {
     assert!(lines[4].ends_with("/findstr.exe"), "{r:?}");
     assert_eq!(lines[5], "where-ok", "{r:?}");
 }
+
+#[test]
+fn sh_scripts_and_plain_files_run_in_psh() {
+    // No /bin/sh on Windows: psh runs these itself, with their arguments.
+    let r = run("cd \"$TMPDIR_CASE\" && \
+         printf '#!/bin/sh\\necho sh $1 $#\\n' > s.sh && ./s.sh a b; \
+         printf '#!/usr/bin/env bash\\necho env-bash $0\\n' > e && ./e; \
+         printf 'echo plain \"$@\"\\n' > plain && ./plain x 'y z'");
+    assert_eq!(r.stdout, "sh a 2\nenv-bash ./e\nplain x y z\n", "{r:?}");
+}

@@ -99,9 +99,15 @@ A file that starts with `#!` runs under its interpreter, looked up on `PATH`:
 `#!/usr/bin/env node`, `#!/usr/bin/node` and `#!/bin/node` all run `node` (`node.exe`
 or a `node.cmd` shim), with the script's path and its arguments.
 
-> **Not built yet.** Scripts for `sh` or `bash` (`#!/bin/sh`, `#!/usr/bin/env bash`) and
-> files with neither a `#!` line nor a program extension will run in psh itself. Until
-> then they fail with status 126 ("Operation not supported"); `psh script.sh` runs them.
+Scripts for `sh` or `bash` (`#!/bin/sh`, `#!/usr/bin/env bash`), and files with neither
+a `#!` line nor a program extension, run in psh itself, in a subshell with the script's
+arguments, as bash runs a file the system cannot start. Windows has no `/bin/sh`, and
+psh is the shell anyway:
+
+```text
+$ printf '#!/bin/sh\necho sh $1 $#\n' > s.sh && ./s.sh a b
+sh a 2
+```
 
 ## Exit statuses, Ctrl-C and stopping commands
 

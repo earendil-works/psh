@@ -393,16 +393,11 @@ pub(crate) fn shebang(p: &Path) -> Option<(String, String)> {
     (!interp.is_empty()).then(|| (interp.to_string(), rest.to_string()))
 }
 
-/// The error for a script psh must run itself (`#!/bin/sh`, no interpreter line):
-/// reported until the engine runs such files in-process (D1079).
-fn run_in_shell(p: &Path) -> io::Error {
-    io::Error::new(
-        io::ErrorKind::Unsupported,
-        format!(
-            "{}: cannot run this script on Windows yet (it needs a shell interpreter)",
-            p.display()
-        ),
-    )
+/// The answer for a script psh runs itself (D1079, D1300): `#!/bin/sh`, `#!/bin/bash`
+/// (also through `/usr/bin/env`), and a file with neither an interpreter line nor an
+/// executable extension; the engine runs it as a psh script in a subshell.
+fn run_in_shell(_p: &Path) -> io::Error {
+    psh_engine::host::RunInShell::error()
 }
 
 /// The child's `PATH` (`Path` and any other case).

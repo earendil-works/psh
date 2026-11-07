@@ -383,12 +383,19 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
   (600 s) without a run, through one detached watcher, instead of after every burst.
   The 255 retry (once, from a settled VM) and the result file stay.
 
+### 2026-11-07 RunInShell on Windows
+- `WindowsHost::spawn` answers `RunInShell::error()` (D1300) for `#!/bin/sh`,
+  `#!/bin/bash` (also via `/usr/bin/env`, `-S`) and files with neither an interpreter
+  line nor an executable extension; the engine runs them as psh scripts. Host test and
+  a Windows L5 case (`./s.sh a b`, `#!/usr/bin/env bash` with `$0`, a plain file with
+  `"$@"`). Guide (windows.md) and ARCH updated. Gap: options on the line
+  (`#!/usr/bin/env -S bash -e`) are not applied to the subshell.
+
 ## Follow-ups
 - psh-spec on Windows for the oils, brush and agent layers: triage the differences into
   `expected-failures.windows.txt` (and normalization rules where a difference is not
   psh's), then add them to the `spec` leg.
 - Engine: strip the `\r` of CRLF in `$(…)` and `read` on Windows (ARCH "Windows rules").
-- Engine: the "run this file in psh" hook (D1079).
 - Engine: `normalize` turns `C:/x` into `/C:/x` (`cd`, `pwd` show it); keep the drive.
 - Engine (routed to builtins): `PATH=/x cmd` ignores the prefix PATH for the lookup.
 - Delete the old per-worktree checkouts in the VM (C:\psh-gate\<worktree>) once no

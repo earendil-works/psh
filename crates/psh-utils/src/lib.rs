@@ -6,7 +6,10 @@
 //! argv) -> i32`, plus one entry in [`REGISTRY`] and one in [`SPECS`].
 
 mod common;
+mod fsutil;
+mod modes;
 pub mod opts;
+mod timefmt;
 
 mod cat;
 mod env;
@@ -15,6 +18,14 @@ mod sleep;
 mod tail;
 mod timeout;
 mod wc;
+
+mod basename;
+mod dirname;
+mod mkdir;
+mod readlink;
+mod realpath;
+mod rmdir;
+mod touch;
 
 use psh_engine::util::{Mode, UtilEntry, UtilPolicy};
 
@@ -64,6 +75,48 @@ pub static REGISTRY: &[UtilEntry] = &[
         destructive: false,
         run: util_fn!(sleep::run),
     },
+    UtilEntry {
+        names: &["basename"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(basename::run),
+    },
+    UtilEntry {
+        names: &["dirname"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(dirname::run),
+    },
+    UtilEntry {
+        names: &["realpath"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(realpath::run),
+    },
+    UtilEntry {
+        names: &["readlink"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(readlink::run),
+    },
+    UtilEntry {
+        names: &["mkdir"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(mkdir::run),
+    },
+    UtilEntry {
+        names: &["rmdir"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(rmdir::run),
+    },
+    UtilEntry {
+        names: &["touch"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(touch::run),
+    },
 ];
 
 /// The option specs, for the classifier check (D1082).
@@ -75,6 +128,13 @@ pub static SPECS: &[opts::Spec] = &[
     wc::SPEC,
     sleep::SPEC,
     env::SPEC,
+    basename::SPEC,
+    dirname::SPEC,
+    realpath::SPEC,
+    readlink::SPEC,
+    mkdir::SPEC,
+    rmdir::SPEC,
+    touch::SPEC,
 ];
 
 /// The policy for a shell: every utility on. `sandbox`: no real programs exist (wasm),

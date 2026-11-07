@@ -160,6 +160,36 @@ Checkouts: `vendor/ripgrep` (91f5d22), `vendor/fd` (193d0df) in the primary chec
   message ("IO error for operation on PATH: ...", what rg prints), mapped too.
 - Parity tests in `search::tests`; NOTICE entry for ripgrep/walkdir.
 
+### part 3: rg (in progress)
+- Oracle (coordinator, 2026-11-07): sha256-pinned upstream release binaries ripgrep 15.2.0
+  and fd 10.5.1 (musl) into /usr/local/bin of docker/Dockerfile, so every layer's oracle
+  is the version psh implements; re-record the affected 0031 agent goldens in the same
+  merge (tell shapes via the coordinator); a decision superseding the rg part of D1310.
+- Engine (committed): `SyncWriter` (`SyncCtx::writer(fd)`: Clone + Send writer to fd 1/2,
+  in order with the ctx's own output; inline output now in `Arc<Mutex<InlineOut>>`),
+  `SyncCtx::stdin_readable()` / `UtilCtx::stdin_readable()` (engine pipe, or host file
+  of kind File/Fifo/Socket), additive `HostFile::kind()` (psh-os unix/windows, StdHost,
+  PumpFile, TestHost files).
+- Copied verbatim (own commit): ripgrep crates/core flags/, main.rs, search.rs,
+  haystack.rs, messages.rs, and lexopt 0.3.2 → crates/psh-utils/src/rg/. Shims written:
+  rg/anyhow.rs (chain error, Context, anyhow!/bail!/ensure!; `io_kind()`), rg/textwrap.rs
+  (refill/indent, textwrap 0.16.2 first fit, for `--help`).
+- Plan for the patches: rg/cli.rs (grep-cli's parse_human_readable_size,
+  patterns_from_reader, InvalidPatternError; stdout stream = termcolor Ansi/NoColor over a
+  line/block-buffered SyncWriter; color Auto decided from ctx TTY + TERM/NO_COLOR of the
+  shell env); `grep::x` → `grep_x`; `log::*!` → no-op macros (`--debug/--trace` fall
+  through); pcre2 cfg blocks removed (`-P`/`--engine pcre2|auto` fall through); messages
+  per invocation (thread-local scoped state, written to a stderr SyncWriter);
+  config.rs/parse.rs from ctx (argv, RIPGREP_CONFIG_PATH, file via ctx); HiArgs gets a
+  State from SyncCtx (cwd, TTY, stdin_readable, fs checks via ctx); walk_builder →
+  search::walk::Walker + WalkOptions (globs as strings, .rgignore custom name);
+  haystack on walk::Entry; search_path natively (entry.native), else search_reader over
+  ctx.open; stdin via ctx.stdin(). Parallel: sequential sorted walk on the rg thread,
+  N search threads (native only) with per-haystack termcolor buffers, output in walk
+  order (reorder buffer, bounded in flight). `--json` first falls through, then our own
+  JSON sink over deser-json. `--pre`, `-z` fall through first. `--help` identical but
+  the version line. Windows: default path separator `/`, CRLF default (D030).
+
 ## Follow-ups
 
 ## Result

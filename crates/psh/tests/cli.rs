@@ -301,6 +301,22 @@ fn bash_option_forms() {
     assert_eq!(out.status, Some(2));
 }
 
+/// A script that does not exist is 127, one that cannot be read 126, as with bash.
+#[test]
+fn unreadable_scripts() {
+    let missing = std::env::temp_dir().join(format!("psh-cli-missing-{}.sh", std::process::id()));
+    let out = psh(&[missing.to_str().unwrap()]);
+    assert_eq!(out.status, Some(127), "{}", out.stderr);
+    assert!(
+        out.stderr.ends_with(": No such file or directory\n"),
+        "{}",
+        out.stderr
+    );
+    let dir = std::env::temp_dir();
+    let out = psh(&[dir.to_str().unwrap()]);
+    assert_eq!(out.status, Some(126), "{}", out.stderr);
+}
+
 #[test]
 fn stdin_scripts() {
     let out = psh_with(&["-s", "a", "b"], b"echo \"stdin $1 $2\"\n");

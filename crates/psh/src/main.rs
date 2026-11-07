@@ -181,7 +181,10 @@ fn main() -> ExitCode {
             },
             Err(e) => {
                 eprintln!("psh: {}: {}", text(&path), psh_engine::host::error_text(&e));
-                return ExitCode::from(127);
+                // As bash: 127 for a script that does not exist, 126 for one that
+                // cannot be read (a directory, no permission).
+                let missing = e.kind() == std::io::ErrorKind::NotFound;
+                return ExitCode::from(if missing { 127 } else { 126 });
             }
         },
         Ok(Invocation::Stdin { args, options }) => {

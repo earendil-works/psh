@@ -39,3 +39,4 @@ utils/rg/basic/26: the Windows VM cannot create symlinks to files (no Developer 
 utils/rg/basic/29: ripgrep's default path color is cyan on Windows (grep-printer's default_color_specs), magenta on Unix, where the golden is recorded
 utils/rm/basic/13: Windows: a read-only directory does not keep its entries from being removed
 utils/rm/basic/8: Windows: a directory symlink is a junction, whose target is absolute (D1150)
+utils/sum/basic/5: Windows file names cannot hold a newline

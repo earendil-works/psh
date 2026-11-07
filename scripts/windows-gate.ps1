@@ -222,7 +222,10 @@ function Stop-JobOthers {
 function Wait-Unheld([int]$secs) {
   $target = Join-Path $dir 'target'
   if (-not (Test-Path $target)) { return $true }
-  $exes = @(Get-ChildItem $target -Recurse -Include *.exe -File -ErrorAction SilentlyContinue |
+  # Where the linker writes test and binary executables (not the whole tree: target\
+  # holds many thousands of files).
+  $exes = @(Get-ChildItem "$target\debug\*.exe", "$target\debug\deps\*.exe",
+    "$target\*\debug\*.exe", "$target\*\debug\deps\*.exe" -File -ErrorAction SilentlyContinue |
     ForEach-Object FullName)
   $watch = [Diagnostics.Stopwatch]::StartNew()
   $said = $false

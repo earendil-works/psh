@@ -92,6 +92,11 @@ fn command_and_type() {
         "f\necho\nif\n/bin/cat\n",
     );
     check("command -v nosuch; echo $?", "1\n");
+    // -p looks in the host's standard path.
+    check(
+        "command -pv cat; command -pV cat; command -pv nosuch; echo $?",
+        "/bin/cat\ncat is /bin/cat\n1\n",
+    );
     check("echo() { :; }; command echo hi", "hi\n");
     check(
         "command -V echo; type -t if f cat echo",

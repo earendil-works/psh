@@ -644,3 +644,13 @@ fn a_runner_host_kills_detached_externals_too() {
         "the detached process survived a runner's host"
     );
 }
+
+#[test]
+fn standard_path_is_the_systems() {
+    let p = host().standard_path();
+    if cfg!(target_os = "linux") {
+        assert_eq!(p, b"/bin:/usr/bin");
+    } else if cfg!(target_os = "macos") {
+        assert_eq!(p, b"/usr/bin:/bin:/usr/sbin:/sbin");
+    }
+}

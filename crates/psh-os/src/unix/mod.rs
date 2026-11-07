@@ -526,6 +526,23 @@ impl Host for UnixHost {
         spawn::process_umask()
     }
 
+    fn standard_path(&self) -> Vec<u8> {
+        let mut buf = vec![0u8; 256];
+        loop {
+            // SAFETY: `buf` is writable for `buf.len()` bytes; confstr writes at most that
+            // many (NUL included) and returns the length the whole value needs.
+            let n = unsafe { libc::confstr(libc::_CS_PATH, buf.as_mut_ptr().cast(), buf.len()) };
+            if n == 0 {
+                return b"/usr/bin:/bin:/usr/sbin:/sbin".to_vec();
+            }
+            if n <= buf.len() {
+                buf.truncate(n - 1);
+                return buf;
+            }
+            buf.resize(n, 0);
+        }
+    }
+
     fn now(&self) -> Duration {
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)

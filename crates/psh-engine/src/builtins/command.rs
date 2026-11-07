@@ -169,7 +169,22 @@ pub(super) async fn command(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         let mut any = false;
         let mut buf = Vec::new();
         for name in rest {
-            let kinds = lookup(vp, name, Lookup::default()).await;
+            let mut kinds = lookup(vp, name, Lookup::default()).await;
+            // `-p` runs the program the standard path has, not psh's utility (below), so
+            // that is what it reports too; a hashed program stays (as in bash).
+            if default_path
+                && !name.contains(&b'/')
+                && kinds
+                    .first()
+                    .is_none_or(|k| matches!(k, Kind::File(_, false) | Kind::Utility))
+            {
+                let path = vp.host().standard_path();
+                kinds = hash::search(vp, name, Some(&path))
+                    .await
+                    .map(|p| Kind::File(p, false))
+                    .into_iter()
+                    .collect();
+            }
             let Some(k) = kinds.into_iter().next() else {
                 if verbose {
                     flush(vp, "command", &mut buf).await?;
@@ -206,7 +221,7 @@ pub(super) async fn command(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         return crate::util::run(vp, e, rest.to_vec(), Vec::new()).await;
     }
     let opts = ExtOpts {
-        path: default_path.then(|| exec::DEFAULT_PATH.to_vec()),
+        path: default_path.then(|| vp.host().standard_path()),
         ..ExtOpts::default()
     };
     exec::run_external_with(vp, rest.to_vec(), Vec::new(), opts).await

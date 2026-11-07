@@ -380,6 +380,12 @@ pub trait Host {
     fn native_paths(&self) -> Option<NativePathFn> {
         None
     }
+    /// The system's standard `PATH`, where the standard utilities are (`command -p`):
+    /// POSIX's `confstr(_CS_PATH)` on Unix. It differs per system (`/bin:/usr/bin` on
+    /// Linux), so it comes from the host.
+    fn standard_path(&self) -> Vec<u8> {
+        b"/usr/bin:/bin:/usr/sbin:/sbin".to_vec()
+    }
     /// User, group, parent and machine facts for the shell's variables (D1301). Asked
     /// once per shell.
     fn info(&self) -> HostInfo {

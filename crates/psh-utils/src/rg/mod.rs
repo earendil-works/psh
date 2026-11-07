@@ -147,3 +147,6 @@ fn os_string(a: &[u8]) -> OsString {
         OsString::from(String::from_utf8_lossy(a).into_owned())
     }
 }
+
+#[cfg(test)]
+mod tests;

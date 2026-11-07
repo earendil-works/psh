@@ -1,8 +1,12 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/flags/complete/fish.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 Provides completions for ripgrep's CLI for the fish shell.
 */
 
-use crate::flags::{CompletionType, defs::FLAGS};
+use crate::rg::flags::{CompletionType, defs::FLAGS};
 
 const TEMPLATE: &'static str = "complete -c rg !SHORT! -l !LONG! -d '!DOC!'";
 const TEMPLATE_NEGATED: &'static str = "complete -c rg -l !NEGATED! -n '__rg_contains_opt !LONG! !SHORT!' -d '!DOC!'\n";

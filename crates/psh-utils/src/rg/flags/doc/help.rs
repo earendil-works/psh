@@ -1,3 +1,7 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/flags/doc/help.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 Provides routines for generating ripgrep's "short" and "long" help
 documentation.
@@ -8,7 +12,8 @@ is used when the `--help` flag is given.
 
 use std::{collections::BTreeMap, fmt::Write};
 
-use crate::flags::{Category, Flag, defs::FLAGS, doc::version};
+use crate::rg::flags::{Category, Flag, defs::FLAGS, doc::version};
+use crate::rg::textwrap;
 
 const TEMPLATE_SHORT: &'static str = include_str!("template.short.help");
 const TEMPLATE_LONG: &'static str = include_str!("template.long.help");
@@ -149,7 +154,7 @@ fn generate_long_flag(flag: &dyn Flag, out: &mut String) {
 
     let doc = flag.doc_long().trim();
     let doc = super::render_custom_markup(doc, "flag", |name, out| {
-        let Some(flag) = crate::flags::parse::lookup(name) else {
+        let Some(flag) = crate::rg::flags::parse::lookup(name) else {
             unreachable!(r"found unrecognized \flag{{{name}}} in --help docs")
         };
         if let Some(name) = flag.name_short() {
@@ -158,7 +163,7 @@ fn generate_long_flag(flag: &dyn Flag, out: &mut String) {
         write!(out, r"--{}", flag.name_long());
     });
     let doc = super::render_custom_markup(&doc, "flag-negate", |name, out| {
-        let Some(flag) = crate::flags::parse::lookup(name) else {
+        let Some(flag) = crate::rg::flags::parse::lookup(name) else {
             unreachable!(
                 r"found unrecognized \flag-negate{{{name}}} in --help docs"
             )
@@ -184,11 +189,11 @@ fn generate_long_flag(flag: &dyn Flag, out: &mut String) {
         }
     }
     let indent = " ".repeat(8);
-    let wrapopts = textwrap::Options::new(71)
-        // Normally I'd be fine with breaking at hyphens, but ripgrep's docs
-        // includes a lot of flag names, and they in turn contain hyphens.
-        // Breaking flag names across lines is not great.
-        .word_splitter(textwrap::WordSplitter::NoHyphenation);
+    // Normally I'd be fine with breaking at hyphens, but ripgrep's docs
+    // includes a lot of flag names, and they in turn contain hyphens.
+    // Breaking flag names across lines is not great.
+    // psh: crate::rg::textwrap is textwrap's first fit without hyphenation.
+    let wrapopts = 71;
     for (i, paragraph) in cleaned.split("\n\n").enumerate() {
         if i > 0 {
             write!(out, "\n\n");
@@ -200,7 +205,7 @@ fn generate_long_flag(flag: &dyn Flag, out: &mut String) {
             new = textwrap::indent(&new, &indent);
         } else {
             new = new.replace("\n", " ");
-            new = textwrap::refill(&new, &wrapopts);
+            new = textwrap::refill(&new, wrapopts);
             new = textwrap::indent(&new, &indent);
         }
         write!(out, "{}", new.trim_end());

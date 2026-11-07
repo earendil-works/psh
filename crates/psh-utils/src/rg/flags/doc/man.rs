@@ -1,10 +1,14 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/flags/doc/man.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 Provides routines for generating ripgrep's man page in `roff` format.
 */
 
 use std::{collections::BTreeMap, fmt::Write};
 
-use crate::flags::{Flag, defs::FLAGS, doc::version};
+use crate::rg::flags::{Flag, defs::FLAGS, doc::version};
 
 const TEMPLATE: &'static str = include_str!("template.rg.1");
 
@@ -64,7 +68,7 @@ fn generate_flag(flag: &'static dyn Flag, out: &mut String) {
     let doc = flag.doc_long().trim();
     // Convert \flag{foo} into something nicer.
     let doc = super::render_custom_markup(doc, "flag", |name, out| {
-        let Some(flag) = crate::flags::parse::lookup(name) else {
+        let Some(flag) = crate::rg::flags::parse::lookup(name) else {
             unreachable!(r"found unrecognized \flag{{{name}}} in roff docs")
         };
         out.push_str(r"\fB");
@@ -76,7 +80,7 @@ fn generate_flag(flag: &'static dyn Flag, out: &mut String) {
     });
     // Convert \flag-negate{foo} into something nicer.
     let doc = super::render_custom_markup(&doc, "flag-negate", |name, out| {
-        let Some(flag) = crate::flags::parse::lookup(name) else {
+        let Some(flag) = crate::rg::flags::parse::lookup(name) else {
             unreachable!(
                 r"found unrecognized \flag-negate{{{name}}} in roff docs"
             )

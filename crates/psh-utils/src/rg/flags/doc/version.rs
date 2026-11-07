@@ -1,3 +1,7 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/flags/doc/version.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 Provides routines for generating version strings.
 
@@ -11,11 +15,8 @@ use std::fmt::Write;
 ///
 /// This includes the git revision hash.
 pub(crate) fn generate_digits() -> String {
-    let semver = option_env!("CARGO_PKG_VERSION").unwrap_or("N/A");
-    match option_env!("RIPGREP_BUILD_GIT_HASH") {
-        None => semver.to_string(),
-        Some(hash) => format!("{semver} (rev {hash})"),
-    }
+    // psh: the ripgrep these flags were copied from, and that psh's (D1133).
+    "15.2.0 (psh)".to_string()
 }
 
 /// Generates a short version string of the form `ripgrep x.y.z`.
@@ -53,21 +54,6 @@ pub(crate) fn generate_long() -> String {
 pub(crate) fn generate_pcre2() -> (String, bool) {
     let mut out = String::new();
 
-    #[cfg(feature = "pcre2")]
-    {
-        use grep::pcre2;
-
-        let (major, minor) = pcre2::version();
-        write!(out, "PCRE2 {}.{} is available", major, minor).unwrap();
-        if cfg!(target_pointer_width = "64") && pcre2::is_jit_available() {
-            writeln!(out, " (JIT is available)").unwrap();
-        } else {
-            writeln!(out, " (JIT is unavailable)").unwrap();
-        }
-        (out, true)
-    }
-
-    #[cfg(not(feature = "pcre2"))]
     {
         writeln!(out, "PCRE2 is not available in this build of ripgrep.")
             .unwrap();
@@ -161,7 +147,7 @@ fn compile_cpu_features() -> Vec<String> {
 fn features() -> Vec<String> {
     let mut features = vec![];
 
-    let pcre2 = cfg!(feature = "pcre2");
+    let pcre2 = false;
     features.push(format!("{sign}pcre2", sign = sign(pcre2)));
 
     features

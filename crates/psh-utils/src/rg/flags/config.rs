@@ -1,3 +1,7 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/flags/config.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 This module provides routines for reading ripgrep config "rc" files.
 
@@ -12,24 +16,28 @@ use std::{
 
 use bstr::{ByteSlice, io::BufReadExt};
 
+use crate::rg::anyhow;
+
+/// psh: `RIPGREP_CONFIG_PATH` as the utility's environment names it, and the file's
+/// contents as read through the utility's file system (D1133).
+pub(crate) struct Source {
+    pub(crate) path: PathBuf,
+    pub(crate) contents: std::io::Result<Vec<u8>>,
+}
+
 /// Return a sequence of arguments derived from ripgrep rc configuration files.
-pub fn args() -> Vec<OsString> {
-    let config_path = match std::env::var_os("RIPGREP_CONFIG_PATH") {
-        None => {
-            log::debug!(
-                "RIPGREP_CONFIG_PATH environment variable is not set, \
-                 therefore not reading any config file"
-            );
-            return vec![];
-        }
-        Some(config_path) => {
-            if config_path.is_empty() {
-                return vec![];
-            }
-            PathBuf::from(config_path)
-        }
+///
+/// psh: `None` when `RIPGREP_CONFIG_PATH` is unset or empty.
+pub fn args(source: Option<Source>) -> Vec<OsString> {
+    let Some(source) = source else {
+        debug!(
+            "RIPGREP_CONFIG_PATH environment variable is not set, \
+             therefore not reading any config file"
+        );
+        return vec![];
     };
-    let (args, errs) = match parse(&config_path) {
+    let config_path = source.path;
+    let (args, errs) = match parse(&config_path, source.contents) {
         Ok((args, errs)) => (args, errs),
         Err(err) => {
             message!(
@@ -44,7 +52,7 @@ pub fn args() -> Vec<OsString> {
             message!("{}:{}", config_path.display(), err);
         }
     }
-    log::debug!(
+    debug!(
         "{}: arguments loaded from config file: {:?}",
         config_path.display(),
         args
@@ -60,12 +68,12 @@ pub fn args() -> Vec<OsString> {
 /// If the file could not be read, then an error is returned. If there was
 /// a problem parsing one or more lines in the file, then errors are returned
 /// for each line in addition to successfully parsed arguments.
-fn parse<P: AsRef<Path>>(
-    path: P,
+fn parse(
+    path: &Path,
+    contents: std::io::Result<Vec<u8>>,
 ) -> anyhow::Result<(Vec<OsString>, Vec<anyhow::Error>)> {
-    let path = path.as_ref();
-    match std::fs::File::open(&path) {
-        Ok(file) => parse_reader(file),
+    match contents {
+        Ok(file) => parse_reader(&file[..]),
         Err(err) => anyhow::bail!("{}: {}", path.display(), err),
     }
 }

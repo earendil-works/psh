@@ -1,3 +1,7 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/haystack.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 Defines a builder for haystacks.
 
@@ -9,7 +13,15 @@ Effectively, a haystack wraps a directory entry and adds some light application
 level logic around it.
 */
 
-use std::path::Path;
+// psh: haystacks are entries of psh's walker seam (`search::walk::Entry`, D1132)
+// instead of `ignore::DirEntry`, and stdin is a haystack of its own (the walker has no
+// stdin entry). Whether a root that is a link names a directory is asked of the
+// utility's file system.
+
+use std::path::{Path, PathBuf};
+
+use crate::search::walk::{Entry, WalkHost, to_path};
+use psh_engine::host::FileKind;
 
 /// A builder for constructing things to search over.
 #[derive(Clone, Debug)]
@@ -30,10 +42,11 @@ impl HaystackBuilder {
     /// entry is deemed searchable, then it is returned as a haystack.
     pub(crate) fn build_from_result(
         &self,
-        result: Result<ignore::DirEntry, ignore::Error>,
+        host: &dyn WalkHost,
+        result: Result<Entry, ignore::Error>,
     ) -> Option<Haystack> {
         match result {
-            Ok(dent) => self.build(dent),
+            Ok(dent) => self.build(host, dent),
             Err(err) => {
                 err_message!("{err}");
                 None
@@ -46,9 +59,21 @@ impl HaystackBuilder {
     /// If a directory entry could not be created or should otherwise not be
     /// searched, then this returns `None` after emitting any relevant log
     /// messages.
-    fn build(&self, dent: ignore::DirEntry) -> Option<Haystack> {
-        let hay = Haystack { dent, strip_dot_prefix: self.strip_dot_prefix };
-        if let Some(err) = hay.dent.error() {
+    fn build(&self, host: &dyn WalkHost, dent: Entry) -> Option<Haystack> {
+        let display = to_path(&dent.path);
+        // If this is a symlink, then we want to follow it to determine
+        // whether it's a directory or not.
+        let is_dir = dent.is_dir()
+            || (dent.path_is_symlink
+                && host
+                    .stat(&dent.abs, true)
+                    .is_ok_and(|m| m.kind == FileKind::Dir));
+        let hay = Haystack {
+            display: Self::strip(self.strip_dot_prefix, display),
+            dent: Some(dent),
+            is_dir,
+        };
+        if let Some(err) = hay.dent.as_ref().and_then(|d| d.err.as_ref()) {
             ignore_message!("{err}");
         }
         // If this entry was explicitly provided by an end user, then we always
@@ -67,15 +92,31 @@ impl HaystackBuilder {
         // directory. Otherwise, emitting messages for directories is just
         // noisy.
         if !hay.is_dir() {
-            log::debug!(
+            debug!(
                 "ignoring {}: failed to pass haystack filter: \
-                 file type: {:?}, metadata: {:?}",
-                hay.dent.path().display(),
-                hay.dent.file_type(),
-                hay.dent.metadata()
+                 file type: {:?}",
+                hay.display.display(),
+                hay.dent.as_ref().map(|d| d.kind),
             );
         }
         None
+    }
+
+    /// The haystack for stdin.
+    pub(crate) fn stdin(&self) -> Haystack {
+        Haystack {
+            display: PathBuf::from("<stdin>"),
+            dent: None,
+            is_dir: false,
+        }
+    }
+
+    fn strip(yes: bool, p: PathBuf) -> PathBuf {
+        if yes && p.starts_with("./") {
+            p.strip_prefix("./").unwrap().to_path_buf()
+        } else {
+            p
+        }
     }
 
     /// When enabled, if the haystack's file path starts with `./` then it is
@@ -94,10 +135,13 @@ impl HaystackBuilder {
 /// A haystack is a thing we want to search.
 ///
 /// Generally, a haystack is either a file or stdin.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub(crate) struct Haystack {
-    dent: ignore::DirEntry,
-    strip_dot_prefix: bool,
+    /// The path to show: the entry's, `./` stripped when asked, or `<stdin>`.
+    display: PathBuf,
+    /// `None` for stdin.
+    dent: Option<Entry>,
+    is_dir: bool,
 }
 
 impl Haystack {
@@ -106,16 +150,17 @@ impl Haystack {
     /// If this haystack corresponds to stdin, then a special `<stdin>` path
     /// is returned instead.
     pub(crate) fn path(&self) -> &Path {
-        if self.strip_dot_prefix && self.dent.path().starts_with("./") {
-            self.dent.path().strip_prefix("./").unwrap()
-        } else {
-            self.dent.path()
-        }
+        &self.display
+    }
+
+    /// The walk's entry (`None` for stdin).
+    pub(crate) fn entry(&self) -> Option<&Entry> {
+        self.dent.as_ref()
     }
 
     /// Returns true if and only if this entry corresponds to stdin.
     pub(crate) fn is_stdin(&self) -> bool {
-        self.dent.is_stdin()
+        self.dent.is_none()
     }
 
     /// Returns true if and only if this entry corresponds to a haystack to
@@ -135,26 +180,20 @@ impl Haystack {
         // means that we want to search files even if their symlinks, again,
         // because they were explicitly provided. (And we never want to try
         // to search a directory.)
-        self.is_stdin() || (self.dent.depth() == 0 && !self.is_dir())
+        match &self.dent {
+            None => true,
+            Some(d) => d.depth == 0 && !self.is_dir(),
+        }
     }
 
     /// Returns true if and only if this haystack points to a directory after
     /// following symbolic links.
     fn is_dir(&self) -> bool {
-        let ft = match self.dent.file_type() {
-            None => return false,
-            Some(ft) => ft,
-        };
-        if ft.is_dir() {
-            return true;
-        }
-        // If this is a symlink, then we want to follow it to determine
-        // whether it's a directory or not.
-        self.dent.path_is_symlink() && self.dent.path().is_dir()
+        self.is_dir
     }
 
     /// Returns true if and only if this haystack points to a file.
     fn is_file(&self) -> bool {
-        self.dent.file_type().map_or(false, |ft| ft.is_file())
+        self.dent.as_ref().is_some_and(|d| d.is_file())
     }
 }

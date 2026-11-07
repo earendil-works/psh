@@ -1,8 +1,12 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/flags/complete/powershell.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 Provides completions for ripgrep's CLI for PowerShell.
 */
 
-use crate::flags::defs::FLAGS;
+use crate::rg::flags::defs::FLAGS;
 
 const TEMPLATE: &'static str = "
 using namespace System.Management.Automation

@@ -83,15 +83,32 @@ fn specs_match_the_classifier() {
     assert!(problems.is_empty(), "{}", problems.join("\n"));
 }
 
+/// Utilities with an option parser of their own (copied with the utility), checked
+/// against the classifier from their own flag tables.
+const OWN_PARSER: &[&str] = &["rg"];
+
 #[test]
 fn every_entry_has_a_spec() {
     for e in crate::REGISTRY {
         assert!(
-            crate::SPECS.iter().any(|s| s.name == e.names[0]),
+            crate::SPECS.iter().any(|s| s.name == e.names[0]) || OWN_PARSER.contains(&e.names[0]),
             "{}",
             e.names[0]
         );
     }
+}
+
+/// rg's flags with values (from ripgrep's table) are what the classifier knows (D1090).
+#[test]
+fn rg_flags_match_the_classifier() {
+    let (short, long) = crate::rg::value_flags();
+    let u = psh_classify::utils::utility("rg").expect("rg in psh_classify::utils");
+    let mut want: Vec<char> = u.short_values.chars().collect();
+    want.sort_unstable();
+    let want: String = want.into_iter().collect();
+    let mut want_long: Vec<String> = u.long_values.iter().map(|s| s.to_string()).collect();
+    want_long.sort();
+    assert_eq!((short, long), (want, want_long));
 }
 
 #[test]

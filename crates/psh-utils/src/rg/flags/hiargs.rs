@@ -1,22 +1,41 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/flags/hiargs.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 Provides the definition of high level arguments from CLI flags.
 */
+
+use crate::rg::anyhow;
+// psh (D1133): the state comes from the utility's context (`SyncCtx`: cwd, TTY,
+// stdin, environment, file system) instead of the process; the walk is psh's walker
+// seam (`search::walk`) with the same settings `walk_builder` gave `ignore`; memory
+// maps are off (`MmapChoice::auto` is unsafe); `--pre`, `-z`, PCRE2 and `--json` run
+// the real rg (D1082), so their paths are gone. On Windows, `/` is the default path
+// separator and CRLF a line end (D030).
 
 use std::{
     collections::HashSet,
     path::{Path, PathBuf},
 };
 
-use {
-    bstr::BString,
-    grep::printer::{ColorSpecs, SummaryKind},
+use psh_engine::{
+    host::FileKind,
+    util::{SyncCtx, SyncWriter},
 };
 
-use crate::{
+use crate::search::walk::{WalkHost, WalkOptions, Walker, os_bytes};
+
+use {
+    bstr::BString,
+    grep_printer::{ColorSpecs, SummaryKind},
+};
+
+use crate::rg::{
     flags::lowargs::{
         BinaryMode, BoundaryMode, BufferMode, CaseMode, ColorChoice,
         ContextMode, ContextSeparator, EncodingMode, EngineChoice,
-        FieldContextSeparator, FieldMatchSeparator, LowArgs, MmapMode, Mode,
+        FieldContextSeparator, FieldMatchSeparator, LowArgs, Mode,
         PatternSource, SearchMode, SortMode, SortModeKind, TypeChange,
     },
     haystack::{Haystack, HaystackBuilder},
@@ -40,12 +59,11 @@ pub(crate) struct HiArgs {
     byte_offset: bool,
     case: CaseMode,
     color: ColorChoice,
-    colors: grep::printer::ColorSpecs,
+    colors: grep_printer::ColorSpecs,
     column: bool,
     context: ContextMode,
     context_separator: ContextSeparator,
     crlf: bool,
-    cwd: PathBuf,
     dfa_size_limit: Option<usize>,
     encoding: EncodingMode,
     engine: EngineChoice,
@@ -53,13 +71,8 @@ pub(crate) struct HiArgs {
     field_match_separator: FieldMatchSeparator,
     file_separator: Option<Vec<u8>>,
     fixed_strings: bool,
-    follow: bool,
-    globs: ignore::overrides::Override,
     heading: bool,
-    hidden: bool,
-    hyperlink_config: grep::printer::HyperlinkConfig,
-    ignore_file_case_insensitive: bool,
-    ignore_file: Vec<PathBuf>,
+    hyperlink_config: grep_printer::HyperlinkConfig,
     include_zero: bool,
     invert_match: bool,
     is_terminal_stdout: bool,
@@ -67,41 +80,30 @@ pub(crate) struct HiArgs {
     max_columns: Option<u64>,
     max_columns_preview: bool,
     max_count: Option<u64>,
-    max_depth: Option<usize>,
-    max_filesize: Option<u64>,
-    mmap_choice: grep::searcher::MmapChoice,
+    mmap_choice: grep_searcher::MmapChoice,
     mode: Mode,
     multiline: bool,
     multiline_dotall: bool,
-    no_ignore_dot: bool,
-    no_ignore_exclude: bool,
-    no_ignore_files: bool,
-    no_ignore_global: bool,
-    no_ignore_parent: bool,
-    no_ignore_vcs: bool,
-    no_require_git: bool,
     no_unicode: bool,
     null_data: bool,
-    one_file_system: bool,
     only_matching: bool,
     path_separator: Option<u8>,
     paths: Paths,
     path_terminator: Option<u8>,
     patterns: Patterns,
-    pre: Option<PathBuf>,
-    pre_globs: ignore::overrides::Override,
     quiet: bool,
     quit_after_match: bool,
     regex_size_limit: Option<usize>,
     replace: Option<BString>,
-    search_zip: bool,
     sort: Option<SortMode>,
-    stats: Option<grep::printer::Stats>,
+    stats: Option<grep_printer::Stats>,
     stop_on_nonmatch: bool,
     threads: usize,
     trim: bool,
     types: ignore::types::Types,
     vimgrep: bool,
+    /// psh: the walk's settings (what `walk_builder` gave `ignore`).
+    walk: WalkOptions,
     with_filename: bool,
 }
 
@@ -110,7 +112,10 @@ impl HiArgs {
     ///
     /// This process can fail for a variety of reasons. For example, invalid
     /// globs or some kind of environment issue.
-    pub(crate) fn from_low_args(mut low: LowArgs) -> anyhow::Result<HiArgs> {
+    pub(crate) fn from_low_args(
+        mut low: LowArgs,
+        ctx: &mut SyncCtx,
+    ) -> anyhow::Result<HiArgs> {
         // Callers should not be trying to convert low-level arguments when
         // a short-circuiting special mode is present.
         assert_eq!(None, low.special, "special mode demands short-circuiting");
@@ -139,21 +144,38 @@ impl HiArgs {
             _ => {}
         }
 
-        let mut state = State::new()?;
-        let patterns = Patterns::from_low_args(&mut state, &mut low)?;
-        let paths = Paths::from_low_args(&mut state, &patterns, &mut low)?;
+        let mut state = State::new(ctx)?;
+        let patterns = Patterns::from_low_args(&mut state, ctx, &mut low)?;
+        let paths =
+            Paths::from_low_args(&mut state, ctx, &patterns, &mut low)?;
 
         let binary = BinaryDetection::from_low_args(&state, &low);
         let colors = take_color_specs(&mut state, &mut low);
         let hyperlink_config = take_hyperlink_config(&mut state, &mut low)?;
         let stats = stats(&low);
         let types = types(&low)?;
-        let globs = globs(&state, &low)?;
-        let pre_globs = preprocessor_globs(&state, &low)?;
+        globs(&state, &low)?;
+        let walk = walk_options(&low, types.clone());
+        let native = Walker::new(&*ctx, walk.clone())?.is_native();
 
         let color = match low.color {
             ColorChoice::Auto if !state.is_terminal_stdout => {
                 ColorChoice::Never
+            }
+            // psh: termcolor's `Auto` reads the process's TERM and NO_COLOR; the
+            // utility's environment decides instead (by termcolor's rule).
+            ColorChoice::Auto => {
+                let term_ok = match ctx.var(b"TERM") {
+                    None => cfg!(windows),
+                    Some(t) => t != b"dumb",
+                };
+                let no_color =
+                    ctx.var(b"NO_COLOR").is_some_and(|v| !v.is_empty());
+                if term_ok && !no_color {
+                    ColorChoice::Ansi
+                } else {
+                    ColorChoice::Never
+                }
             }
             _ => low.color,
         };
@@ -165,14 +187,14 @@ impl HiArgs {
         };
         let path_terminator = if low.null { Some(b'\x00') } else { None };
         let quit_after_match = stats.is_none() && low.quiet;
-        let threads = if low.sort.is_some() || paths.is_one_file {
+        let threads = if low.sort.is_some() || paths.is_one_file || !native {
             1
         } else if let Some(threads) = low.threads {
             threads
         } else {
             std::thread::available_parallelism().map_or(1, |n| n.get()).min(12)
         };
-        log::debug!("using {threads} thread(s)");
+        debug!("using {threads} thread(s)");
         let with_filename = low
             .with_filename
             .unwrap_or_else(|| low.vimgrep || !paths.is_one_file);
@@ -199,7 +221,9 @@ impl HiArgs {
             if low.quiet {
                 return false;
             }
-            let Mode::Search(ref search_mode) = low.mode else { return false };
+            let Mode::Search(ref search_mode) = low.mode else {
+                return false;
+            };
             match *search_mode {
                 SearchMode::FilesWithMatches
                 | SearchMode::FilesWithoutMatch
@@ -219,34 +243,16 @@ impl HiArgs {
             }
         });
 
-        let mmap_choice = {
-            // SAFETY: Memory maps are difficult to impossible to encapsulate
-            // safely in a portable way that doesn't simultaneously negate some
-            // of the benefits of using memory maps. For ripgrep's use, we never
-            // mutate a memory map and generally never store the contents of
-            // memory map in a data structure that depends on immutability.
-            // Generally speaking, the worst thing that can happen is a SIGBUS
-            // (if the underlying file is truncated while reading it), which
-            // will cause ripgrep to abort. This reasoning should be treated as
-            // suspect.
-            let maybe = unsafe { grep::searcher::MmapChoice::auto() };
-            let never = grep::searcher::MmapChoice::never();
-            match low.mmap {
-                MmapMode::Auto => {
-                    if paths.paths.len() <= 10
-                        && paths.paths.iter().all(|p| p.is_file())
-                    {
-                        // If we're only searching a few paths and all of them
-                        // are files, then memory maps are probably faster.
-                        maybe
-                    } else {
-                        never
-                    }
-                }
-                MmapMode::AlwaysTryMmap => maybe,
-                MmapMode::Never => never,
-            }
-        };
+        // psh: no memory maps (`MmapChoice::auto` is unsafe; D1133).
+        let mmap_choice = grep_searcher::MmapChoice::never();
+        // psh: CRLF line ends and `/` separators by default on Windows (D030).
+        let crlf = low.crlf
+            || (cfg!(windows) && !low.crlf_explicit && !low.null_data);
+        let path_separator = low.path_separator.or(if cfg!(windows) {
+            Some(b'/')
+        } else {
+            None
+        });
 
         Ok(HiArgs {
             mode: low.mode,
@@ -262,8 +268,7 @@ impl HiArgs {
             column,
             context: low.context,
             context_separator: low.context_separator,
-            crlf: low.crlf,
-            cwd: state.cwd,
+            crlf,
             dfa_size_limit: low.dfa_size_limit,
             encoding: low.encoding,
             engine: low.engine,
@@ -271,12 +276,8 @@ impl HiArgs {
             field_match_separator: low.field_match_separator,
             file_separator,
             fixed_strings: low.fixed_strings,
-            follow: low.follow,
             heading,
-            hidden: low.hidden,
             hyperlink_config,
-            ignore_file: low.ignore_file,
-            ignore_file_case_insensitive: low.ignore_file_case_insensitive,
             include_zero: low.include_zero,
             invert_match: low.invert_match,
             is_terminal_stdout: state.is_terminal_stdout,
@@ -284,32 +285,18 @@ impl HiArgs {
             max_columns: low.max_columns,
             max_columns_preview: low.max_columns_preview,
             max_count: low.max_count,
-            max_depth: low.max_depth,
-            max_filesize: low.max_filesize,
             mmap_choice,
             multiline: low.multiline,
             multiline_dotall: low.multiline_dotall,
-            no_ignore_dot: low.no_ignore_dot,
-            no_ignore_exclude: low.no_ignore_exclude,
-            no_ignore_files: low.no_ignore_files,
-            no_ignore_global: low.no_ignore_global,
-            no_ignore_parent: low.no_ignore_parent,
-            no_ignore_vcs: low.no_ignore_vcs,
-            no_require_git: low.no_require_git,
             no_unicode: low.no_unicode,
             null_data: low.null_data,
-            one_file_system: low.one_file_system,
             only_matching: low.only_matching,
-            globs,
-            path_separator: low.path_separator,
+            path_separator,
             path_terminator,
-            pre: low.pre,
-            pre_globs,
             quiet: low.quiet,
             quit_after_match,
             regex_size_limit: low.regex_size_limit,
             replace: low.replace,
-            search_zip: low.search_zip,
             sort: low.sort,
             stats,
             stop_on_nonmatch: low.stop_on_nonmatch,
@@ -317,22 +304,30 @@ impl HiArgs {
             trim: low.trim,
             types,
             vimgrep: low.vimgrep,
+            walk,
             with_filename,
         })
     }
 
-    /// Returns a writer for printing buffers to stdout.
-    ///
-    /// This is intended to be used from multiple threads. Namely, a buffer
-    /// writer can create new buffers that are sent to threads. Threads can
-    /// then independently write to the buffers. Once a unit of work is
-    /// complete, a buffer can be given to the buffer writer to write to
-    /// stdout.
-    pub(crate) fn buffer_writer(&self) -> termcolor::BufferWriter {
-        let mut wtr =
-            termcolor::BufferWriter::stdout(self.color.to_termcolor());
-        wtr.separator(self.file_separator.clone());
-        wtr
+    /// psh: a buffer for one haystack's output on a search thread (what termcolor's
+    /// `BufferWriter::buffer` gave), colored as stdout is.
+    pub(crate) fn buffer(&self) -> termcolor::Buffer {
+        if self.color_ansi() {
+            termcolor::Buffer::ansi()
+        } else {
+            termcolor::Buffer::no_color()
+        }
+    }
+
+    /// psh: what is printed between two haystacks' non-empty outputs when they are
+    /// searched on search threads (termcolor's `BufferWriter::separator`).
+    pub(crate) fn file_separator(&self) -> Option<&[u8]> {
+        self.file_separator.as_deref()
+    }
+
+    /// psh: whether output gets ANSI colors (`Auto` was decided already).
+    fn color_ansi(&self) -> bool {
+        !matches!(self.color, ColorChoice::Never)
     }
 
     /// Returns true when ripgrep had to guess to search the current working
@@ -379,7 +374,7 @@ impl HiArgs {
                     Ok(m) => return Ok(m),
                     Err(err) => err,
                 };
-                log::debug!(
+                debug!(
                     "error building Rust regex in hybrid mode:\n{rust_err}",
                 );
 
@@ -409,49 +404,7 @@ impl HiArgs {
     /// If the `pcre2` feature is not enabled then this always returns an
     /// error.
     fn matcher_pcre2(&self) -> anyhow::Result<PatternMatcher> {
-        #[cfg(feature = "pcre2")]
-        {
-            let mut builder = grep::pcre2::RegexMatcherBuilder::new();
-            builder.multi_line(true).fixed_strings(self.fixed_strings);
-            match self.case {
-                CaseMode::Sensitive => builder.caseless(false),
-                CaseMode::Insensitive => builder.caseless(true),
-                CaseMode::Smart => builder.case_smart(true),
-            };
-            if let Some(ref boundary) = self.boundary {
-                match *boundary {
-                    BoundaryMode::Line => builder.whole_line(true),
-                    BoundaryMode::Word => builder.word(true),
-                };
-            }
-            // For whatever reason, the JIT craps out during regex compilation with
-            // a "no more memory" error on 32 bit systems. So don't use it there.
-            if cfg!(target_pointer_width = "64") {
-                builder
-                    .jit_if_available(true)
-                    // The PCRE2 docs say that 32KB is the default, and that 1MB
-                    // should be big enough for anything. But let's crank it to
-                    // 10MB.
-                    .max_jit_stack_size(Some(10 * (1 << 20)));
-            }
-            if !self.no_unicode {
-                builder.utf(true).ucp(true);
-            }
-            if self.multiline {
-                builder.dotall(self.multiline_dotall);
-            }
-            if self.crlf {
-                builder.crlf(true);
-            }
-            let m = builder.build_many(&self.patterns.patterns)?;
-            Ok(PatternMatcher::PCRE2(m))
-        }
-        #[cfg(not(feature = "pcre2"))]
-        {
-            Err(anyhow::anyhow!(
-                "PCRE2 is not available in this build of ripgrep"
-            ))
-        }
+        Err(anyhow::anyhow!("PCRE2 is not available in this build of ripgrep"))
     }
 
     /// Build a matcher using Rust's regex engine.
@@ -459,7 +412,7 @@ impl HiArgs {
     /// If there was a problem building the matcher (such as a regex syntax
     /// error), then an error is returned.
     fn matcher_rust(&self) -> anyhow::Result<PatternMatcher> {
-        let mut builder = grep::regex::RegexMatcherBuilder::new();
+        let mut builder = grep_regex::RegexMatcherBuilder::new();
         builder
             .multi_line(true)
             .unicode(!self.no_unicode)
@@ -544,8 +497,8 @@ impl HiArgs {
     /// of searching.
     pub(crate) fn path_printer_builder(
         &self,
-    ) -> grep::printer::PathPrinterBuilder {
-        let mut builder = grep::printer::PathPrinterBuilder::new();
+    ) -> grep_printer::PathPrinterBuilder {
+        let mut builder = grep_printer::PathPrinterBuilder::new();
         builder
             .color_specs(self.colors.clone())
             .hyperlink(self.hyperlink_config.clone())
@@ -580,8 +533,9 @@ impl HiArgs {
                 SearchMode::FilesWithoutMatch => SummaryKind::PathWithoutMatch,
                 SearchMode::Count => SummaryKind::Count,
                 SearchMode::CountMatches => SummaryKind::CountMatches,
+                // psh: `--json` runs the real rg (D1082) for now.
                 SearchMode::JSON => {
-                    return Printer::JSON(self.printer_json(wtr));
+                    unreachable!("--json runs the real rg")
                 }
                 SearchMode::Standard => {
                     return Printer::Standard(self.printer_standard(wtr));
@@ -591,25 +545,13 @@ impl HiArgs {
         Printer::Summary(self.printer_summary(wtr, summary_kind))
     }
 
-    /// Builds a JSON printer.
-    fn printer_json<W: std::io::Write>(
-        &self,
-        wtr: W,
-    ) -> grep::printer::JSON<W> {
-        grep::printer::JSONBuilder::new()
-            .pretty(false)
-            .always_begin_end(false)
-            .replacement(self.replace.clone().map(|r| r.into()))
-            .build(wtr)
-    }
-
     /// Builds a "standard" grep printer where matches are printed as plain
     /// text lines.
     fn printer_standard<W: termcolor::WriteColor>(
         &self,
         wtr: W,
-    ) -> grep::printer::Standard<W> {
-        let mut builder = grep::printer::StandardBuilder::new();
+    ) -> grep_printer::Standard<W> {
+        let mut builder = grep_printer::StandardBuilder::new();
         builder
             .byte_offset(self.byte_offset)
             .color_specs(self.colors.clone())
@@ -651,8 +593,8 @@ impl HiArgs {
         &self,
         wtr: W,
         kind: SummaryKind,
-    ) -> grep::printer::Summary<W> {
-        grep::printer::SummaryBuilder::new()
+    ) -> grep_printer::Summary<W> {
+        grep_printer::SummaryBuilder::new()
             .color_specs(self.colors.clone())
             .exclude_zero(!self.include_zero)
             .hyperlink(self.hyperlink_config.clone())
@@ -694,29 +636,26 @@ impl HiArgs {
     pub(crate) fn search_worker<W: termcolor::WriteColor>(
         &self,
         matcher: PatternMatcher,
-        searcher: grep::searcher::Searcher,
+        searcher: grep_searcher::Searcher,
         printer: Printer<W>,
     ) -> anyhow::Result<SearchWorker<W>> {
         let mut builder = SearchWorkerBuilder::new();
         builder
-            .preprocessor(self.pre.clone())?
-            .preprocessor_globs(self.pre_globs.clone())
-            .search_zip(self.search_zip)
             .binary_detection_explicit(self.binary.explicit.clone())
             .binary_detection_implicit(self.binary.implicit.clone());
         Ok(builder.build(matcher, searcher, printer))
     }
 
     /// Build a searcher from the command line parameters.
-    pub(crate) fn searcher(&self) -> anyhow::Result<grep::searcher::Searcher> {
+    pub(crate) fn searcher(&self) -> anyhow::Result<grep_searcher::Searcher> {
         let line_term = if self.crlf {
-            grep::matcher::LineTerminator::crlf()
+            grep_matcher::LineTerminator::crlf()
         } else if self.null_data {
-            grep::matcher::LineTerminator::byte(b'\x00')
+            grep_matcher::LineTerminator::byte(b'\x00')
         } else {
-            grep::matcher::LineTerminator::byte(b'\n')
+            grep_matcher::LineTerminator::byte(b'\n')
         };
-        let mut builder = grep::searcher::SearcherBuilder::new();
+        let mut builder = grep_searcher::SearcherBuilder::new();
         builder
             .max_matches(self.max_count)
             .line_terminator(line_term)
@@ -759,8 +698,12 @@ impl HiArgs {
     /// any additional sorting. This is done because `walk_builder()` will sort
     /// the iterator it yields during directory traversal, so no additional
     /// sorting is needed.
+    ///
+    /// psh: timestamps come from the haystack's native path, or the utility's file
+    /// system (modification time only) for others.
     pub(crate) fn sort<'a, I>(
         &self,
+        host: &'a dyn WalkHost,
         haystacks: I,
     ) -> Box<dyn Iterator<Item = Haystack> + 'a>
     where
@@ -768,17 +711,36 @@ impl HiArgs {
     {
         use std::{cmp::Ordering, fs::Metadata, io, time::SystemTime};
 
-        fn attach_timestamps(
-            haystacks: impl Iterator<Item = Haystack>,
-            get: impl Fn(&Metadata) -> io::Result<SystemTime>,
-        ) -> impl Iterator<Item = (Haystack, Option<SystemTime>)> {
+        fn attach_timestamps<'h>(
+            host: &'h dyn WalkHost,
+            haystacks: impl Iterator<Item = Haystack> + 'h,
+            get: impl Fn(&Metadata) -> io::Result<SystemTime> + 'h,
+            virtual_mtime: bool,
+        ) -> impl Iterator<Item = (Haystack, Option<SystemTime>)> + 'h
+        {
             haystacks.map(move |s| {
-                let time = s.path().metadata().and_then(|m| get(&m)).ok();
+                let time = match s.entry() {
+                    None => None,
+                    Some(e) => match &e.native {
+                        Some(n) => n.metadata().and_then(|m| get(&m)).ok(),
+                        None if virtual_mtime => {
+                            host.stat(&e.abs, true).ok().and_then(|m| {
+                                let ns = u64::try_from(m.mtime_ns).ok()?;
+                                SystemTime::UNIX_EPOCH.checked_add(
+                                    std::time::Duration::from_nanos(ns),
+                                )
+                            })
+                        }
+                        None => None,
+                    },
+                };
                 (s, time)
             })
         }
 
-        let Some(ref sort) = self.sort else { return Box::new(haystacks) };
+        let Some(ref sort) = self.sort else {
+            return Box::new(haystacks);
+        };
         let mut with_timestamps: Vec<_> = match sort.kind {
             SortModeKind::Path if !sort.reverse => return Box::new(haystacks),
             SortModeKind::Path => {
@@ -789,13 +751,16 @@ impl HiArgs {
                 return Box::new(haystacks.into_iter());
             }
             SortModeKind::LastModified => {
-                attach_timestamps(haystacks, |md| md.modified()).collect()
+                attach_timestamps(host, haystacks, |md| md.modified(), true)
+                    .collect()
             }
             SortModeKind::LastAccessed => {
-                attach_timestamps(haystacks, |md| md.accessed()).collect()
+                attach_timestamps(host, haystacks, |md| md.accessed(), false)
+                    .collect()
             }
             SortModeKind::Created => {
-                attach_timestamps(haystacks, |md| md.created()).collect()
+                attach_timestamps(host, haystacks, |md| md.created(), false)
+                    .collect()
             }
         };
         with_timestamps.sort_by(|(_, t1), (_, t2)| {
@@ -814,12 +779,20 @@ impl HiArgs {
         Box::new(with_timestamps.into_iter().map(|(s, _)| s))
     }
 
+    /// psh: whether [`HiArgs::sort`] changes the walk's order (any sort but ascending
+    /// path, which the walk itself gives).
+    pub(crate) fn sorts_after_walk(&self) -> bool {
+        self.sort.as_ref().is_some_and(|s| {
+            s.reverse || !matches!(s.kind, SortModeKind::Path)
+        })
+    }
+
     /// Returns a stats object if the user requested that ripgrep keep track
     /// of various metrics during a search.
     ///
     /// When this returns `None`, then callers may assume that the user did
     /// not request statistics.
-    pub(crate) fn stats(&self) -> Option<grep::printer::Stats> {
+    pub(crate) fn stats(&self) -> Option<grep_printer::Stats> {
         self.stats.clone()
     }
 
@@ -828,19 +801,18 @@ impl HiArgs {
     /// The writer returned is also configured to do either line or block
     /// buffering, based on either explicit configuration from the user via CLI
     /// flags, or automatically based on whether stdout is connected to a tty.
-    pub(crate) fn stdout(&self) -> grep::cli::StandardStream {
-        let color = self.color.to_termcolor();
-        match self.buffer {
-            BufferMode::Auto => {
-                if self.is_terminal_stdout {
-                    grep::cli::stdout_buffered_line(color)
-                } else {
-                    grep::cli::stdout_buffered_block(color)
-                }
-            }
-            BufferMode::Line => grep::cli::stdout_buffered_line(color),
-            BufferMode::Block => grep::cli::stdout_buffered_block(color),
-        }
+    ///
+    /// psh: over the utility's stdout, `out`.
+    pub(crate) fn stdout(
+        &self,
+        out: SyncWriter,
+    ) -> crate::rg::cli::StandardStream {
+        let line = match self.buffer {
+            BufferMode::Auto => self.is_terminal_stdout,
+            BufferMode::Line => true,
+            BufferMode::Block => false,
+        };
+        crate::rg::cli::stdout(out, line, self.color_ansi())
     }
 
     /// Returns the total number of threads ripgrep should use to execute a
@@ -862,59 +834,54 @@ impl HiArgs {
         &self.types
     }
 
-    /// Create a new builder for recursive directory traversal.
-    ///
-    /// The builder returned can be used to start a single threaded or multi
-    /// threaded directory traversal. For multi threaded traversal, the number
-    /// of threads configured is equivalent to `HiArgs::threads`.
-    ///
-    /// If `HiArgs::threads` is equal to `1`, then callers should generally
-    /// choose to explicitly use single threaded traversal since it won't have
-    /// the unnecessary overhead of synchronization.
-    pub(crate) fn walk_builder(&self) -> anyhow::Result<ignore::WalkBuilder> {
-        let mut builder = ignore::WalkBuilder::new(&self.paths.paths[0]);
-        for path in self.paths.paths.iter().skip(1) {
-            builder.add(path);
-        }
-        if !self.no_ignore_files {
-            for path in self.ignore_file.iter() {
-                if let Some(err) = builder.add_ignore(path) {
-                    ignore_message!("{err}");
-                }
-            }
-        }
-        builder
-            .max_depth(self.max_depth)
-            .follow_links(self.follow)
-            .max_filesize(self.max_filesize)
-            .threads(self.threads)
-            .same_file_system(self.one_file_system)
-            .skip_stdout(matches!(self.mode, Mode::Search(_)))
-            .overrides(self.globs.clone())
-            .types(self.types.clone())
-            .hidden(!self.hidden)
-            .parents(!self.no_ignore_parent)
-            .ignore(!self.no_ignore_dot)
-            .git_global(!self.no_ignore_vcs && !self.no_ignore_global)
-            .git_ignore(!self.no_ignore_vcs)
-            .git_exclude(!self.no_ignore_vcs && !self.no_ignore_exclude)
-            .require_git(!self.no_require_git)
-            .ignore_case_insensitive(self.ignore_file_case_insensitive)
-            .current_dir(&self.cwd);
-        if !self.no_ignore_dot {
-            builder.add_custom_ignore_filename(".rgignore");
-        }
-        // When we want to sort paths lexicographically in ascending order,
-        // then we can actually do this during directory traversal itself.
-        // Otherwise, sorting is done by collecting all paths, sorting them and
-        // then searching them.
-        if let Some(ref sort) = self.sort {
-            assert_eq!(1, self.threads, "sorting implies single threaded");
-            if !sort.reverse && matches!(sort.kind, SortModeKind::Path) {
-                builder.sort_by_file_name(|a, b| a.cmp(b));
-            }
-        }
-        Ok(builder)
+    /// psh: the walk's settings (for `search::walk::Walker`; what `walk_builder`
+    /// gave `ignore`).
+    pub(crate) fn walk_options(&self) -> &WalkOptions {
+        &self.walk
+    }
+
+    /// psh: the paths to search, as shell paths (`-` is stdin).
+    pub(crate) fn paths(&self) -> Vec<Vec<u8>> {
+        self.paths.paths.iter().map(|p| os_bytes(p.as_os_str())).collect()
+    }
+}
+
+/// psh: `walk_builder`'s settings as `WalkOptions`.
+fn walk_options(low: &LowArgs, types: ignore::types::Types) -> WalkOptions {
+    let mut globs: Vec<(String, bool)> = low
+        .globs
+        .iter()
+        .map(|g| (g.clone(), low.glob_case_insensitive))
+        .collect();
+    globs.extend(low.iglobs.iter().map(|g| (g.clone(), true)));
+    WalkOptions {
+        hidden: !low.hidden,
+        ignore: !low.no_ignore_dot,
+        git_ignore: !low.no_ignore_vcs,
+        git_exclude: !low.no_ignore_vcs && !low.no_ignore_exclude,
+        git_global: !low.no_ignore_vcs && !low.no_ignore_global,
+        parents: !low.no_ignore_parent,
+        require_git: !low.no_require_git,
+        ignore_case_insensitive: low.ignore_file_case_insensitive,
+        custom_ignore_filenames: if low.no_ignore_dot {
+            vec![]
+        } else {
+            vec![".rgignore".to_string()]
+        },
+        ignore_files: if low.no_ignore_files {
+            vec![]
+        } else {
+            low.ignore_file.iter().map(|p| os_bytes(p.as_os_str())).collect()
+        },
+        globs,
+        glob_root: None,
+        types: Some(types),
+        max_depth: low.max_depth,
+        min_depth: None,
+        follow_links: low.follow,
+        same_file_system: low.one_file_system,
+        max_filesize: low.max_filesize,
+        force_virtual: false,
     }
 }
 
@@ -940,6 +907,8 @@ struct State {
     stdin_consumed: bool,
     /// The current working directory.
     cwd: PathBuf,
+    /// psh: `WSL_DISTRO_NAME` of the utility's environment.
+    wsl_distro: Option<Vec<u8>>,
 }
 
 impl State {
@@ -947,15 +916,16 @@ impl State {
     ///
     /// Note that the state values may change throughout the lifetime of
     /// argument parsing.
-    fn new() -> anyhow::Result<State> {
-        use std::io::IsTerminal;
-
-        let cwd = current_dir()?;
-        log::debug!("read CWD from environment: {}", cwd.display());
+    ///
+    /// psh: from the utility's context.
+    fn new(ctx: &SyncCtx) -> anyhow::Result<State> {
+        let cwd = crate::search::walk::to_path(ctx.cwd());
+        debug!("read CWD from environment: {}", cwd.display());
         Ok(State {
-            is_terminal_stdout: std::io::stdout().is_terminal(),
+            is_terminal_stdout: ctx.is_terminal(1),
             stdin_consumed: false,
             cwd,
+            wsl_distro: ctx.var(b"WSL_DISTRO_NAME").map(<[u8]>::to_vec),
         })
     }
 }
@@ -979,6 +949,7 @@ impl Patterns {
     /// extracted as well.
     fn from_low_args(
         state: &mut State,
+        ctx: &mut SyncCtx,
         low: &mut LowArgs,
     ) -> anyhow::Result<Patterns> {
         // The first positional is only a pattern when ripgrep is instructed to
@@ -1032,12 +1003,12 @@ impl Patterns {
                             "error reading -f/--file from stdin: stdin \
                              has already been consumed"
                         );
-                        for pat in grep::cli::patterns_from_stdin()? {
+                        for pat in patterns_from_stdin(ctx)? {
                             add(pat);
                         }
                         state.stdin_consumed = true;
                     } else {
-                        for pat in grep::cli::patterns_from_path(&path)? {
+                        for pat in patterns_from_path(ctx, &path)? {
                             add(pat);
                         }
                     }
@@ -1070,6 +1041,7 @@ impl Paths {
     /// Drain the search paths out of the given low arguments.
     fn from_low_args(
         state: &mut State,
+        ctx: &SyncCtx,
         _: &Patterns,
         low: &mut LowArgs,
     ) -> anyhow::Result<Paths> {
@@ -1089,7 +1061,7 @@ impl Paths {
             }
             paths.push(path);
         }
-        log::debug!("number of paths given to search: {}", paths.len());
+        debug!("number of paths given to search: {}", paths.len());
         if !paths.is_empty() {
             let is_one_file = paths.len() == 1
                 // Note that we specifically use `!paths[0].is_dir()` here
@@ -1099,8 +1071,8 @@ impl Paths {
                 // long as we know it isn't a directory.
                 //
                 // See: https://github.com/BurntSushi/ripgrep/issues/2736
-                && (paths[0] == Path::new("-") || !paths[0].is_dir());
-            log::debug!("is_one_file? {is_one_file:?}");
+                && (paths[0] == Path::new("-") || !is_dir(ctx, &paths[0]));
+            debug!("is_one_file? {is_one_file:?}");
             return Ok(Paths { paths, has_implicit_path: false, is_one_file });
         }
         // N.B. is_readable_stdin is a heuristic! Part of the issue is that a
@@ -1110,11 +1082,11 @@ impl Paths {
         // mode, but there really is no good way to mitigate it. It's just a
         // consequence of letting the user type 'rg foo' and "guessing" that
         // they meant to search the CWD.
-        let is_readable_stdin = grep::cli::is_readable_stdin();
+        let is_readable_stdin = ctx.stdin_readable();
         let use_cwd = !is_readable_stdin
             || state.stdin_consumed
             || !matches!(low.mode, Mode::Search(_));
-        log::debug!(
+        debug!(
             "using heuristics to determine whether to read from \
              stdin or search ./ (\
              is_readable_stdin={is_readable_stdin}, \
@@ -1124,10 +1096,10 @@ impl Paths {
             mode = low.mode,
         );
         let (path, is_one_file) = if use_cwd {
-            log::debug!("heuristic chose to search ./");
+            debug!("heuristic chose to search ./");
             (PathBuf::from("./"), false)
         } else {
-            log::debug!("heuristic chose to search stdin");
+            debug!("heuristic chose to search stdin");
             (PathBuf::from("-"), true)
         };
         Ok(Paths { paths: vec![path], has_implicit_path: true, is_one_file })
@@ -1150,8 +1122,8 @@ impl Paths {
 /// file is always searched.)
 #[derive(Debug)]
 struct BinaryDetection {
-    explicit: grep::searcher::BinaryDetection,
-    implicit: grep::searcher::BinaryDetection,
+    explicit: grep_searcher::BinaryDetection,
+    implicit: grep_searcher::BinaryDetection,
 }
 
 impl BinaryDetection {
@@ -1160,16 +1132,16 @@ impl BinaryDetection {
         let none = matches!(low.binary, BinaryMode::AsText) || low.null_data;
         let convert = matches!(low.binary, BinaryMode::SearchAndSuppress);
         let explicit = if none {
-            grep::searcher::BinaryDetection::none()
+            grep_searcher::BinaryDetection::none()
         } else {
-            grep::searcher::BinaryDetection::convert(b'\x00')
+            grep_searcher::BinaryDetection::convert(b'\x00')
         };
         let implicit = if none {
-            grep::searcher::BinaryDetection::none()
+            grep_searcher::BinaryDetection::none()
         } else if convert {
-            grep::searcher::BinaryDetection::convert(b'\x00')
+            grep_searcher::BinaryDetection::convert(b'\x00')
         } else {
-            grep::searcher::BinaryDetection::quit(b'\x00')
+            grep_searcher::BinaryDetection::quit(b'\x00')
         };
         BinaryDetection { explicit, implicit }
     }
@@ -1177,7 +1149,7 @@ impl BinaryDetection {
     /// Returns true when both implicit and explicit binary detection is
     /// disabled.
     pub(crate) fn is_none(&self) -> bool {
-        let none = grep::searcher::BinaryDetection::none();
+        let none = grep_searcher::BinaryDetection::none();
         self.explicit == none && self.implicit == none
     }
 }
@@ -1230,29 +1202,14 @@ fn globs(
     Ok(builder.build()?)
 }
 
-/// Builds a glob matcher for all of the preprocessor globs (via `--pre-glob`).
-fn preprocessor_globs(
-    state: &State,
-    low: &LowArgs,
-) -> anyhow::Result<ignore::overrides::Override> {
-    if low.pre_glob.is_empty() {
-        return Ok(ignore::overrides::Override::empty());
-    }
-    let mut builder = ignore::overrides::OverrideBuilder::new(&state.cwd);
-    for glob in low.pre_glob.iter() {
-        builder.add(glob)?;
-    }
-    Ok(builder.build()?)
-}
-
 /// Determines whether stats should be tracked for this search. If so, a stats
 /// object is returned.
-fn stats(low: &LowArgs) -> Option<grep::printer::Stats> {
+fn stats(low: &LowArgs) -> Option<grep_printer::Stats> {
     if !matches!(low.mode, Mode::Search(_)) {
         return None;
     }
     if low.stats || matches!(low.mode, Mode::Search(SearchMode::JSON)) {
-        return Some(grep::printer::Stats::new());
+        return Some(grep_printer::Stats::new());
     }
     None
 }
@@ -1260,7 +1217,7 @@ fn stats(low: &LowArgs) -> Option<grep::printer::Stats> {
 /// Pulls out any color specs provided by the user and assembles them into one
 /// single configuration.
 fn take_color_specs(_: &mut State, low: &mut LowArgs) -> ColorSpecs {
-    let mut specs = grep::printer::default_color_specs();
+    let mut specs = grep_printer::default_color_specs();
     for spec in low.colors.drain(..) {
         specs.push(spec);
     }
@@ -1270,124 +1227,57 @@ fn take_color_specs(_: &mut State, low: &mut LowArgs) -> ColorSpecs {
 /// Pulls out the necessary info from the low arguments to build a full
 /// hyperlink configuration.
 fn take_hyperlink_config(
-    _: &mut State,
+    state: &mut State,
     low: &mut LowArgs,
-) -> anyhow::Result<grep::printer::HyperlinkConfig> {
-    let mut env = grep::printer::HyperlinkEnvironment::new();
+) -> anyhow::Result<grep_printer::HyperlinkConfig> {
+    let mut env = grep_printer::HyperlinkEnvironment::new();
     if let Some(hostname) = hostname(low.hostname_bin.as_deref()) {
-        log::debug!("found hostname for hyperlink configuration: {hostname}");
+        debug!("found hostname for hyperlink configuration: {hostname}");
         env.host(Some(hostname));
     }
-    if let Some(wsl_prefix) = wsl_prefix() {
-        log::debug!(
-            "found wsl_prefix for hyperlink configuration: {wsl_prefix}"
-        );
+    if let Some(wsl_prefix) = wsl_prefix(state) {
+        debug!("found wsl_prefix for hyperlink configuration: {wsl_prefix}");
         env.wsl_prefix(Some(wsl_prefix));
     }
     let fmt = std::mem::take(&mut low.hyperlink_format);
-    log::debug!("hyperlink format: {:?}", fmt.to_string());
-    Ok(grep::printer::HyperlinkConfig::new(env, fmt))
+    debug!("hyperlink format: {:?}", fmt.to_string());
+    Ok(grep_printer::HyperlinkConfig::new(env, fmt))
 }
 
-/// Attempts to discover the current working directory.
-///
-/// This mostly just defers to the standard library, however, such things will
-/// fail if ripgrep is in a directory that no longer exists. We attempt some
-/// fallback mechanisms, such as querying the PWD environment variable, but
-/// otherwise return an error.
-fn current_dir() -> anyhow::Result<PathBuf> {
-    let err = match std::env::current_dir() {
-        Err(err) => err,
-        Ok(cwd) => return Ok(cwd),
-    };
-    if let Some(cwd) = std::env::var_os("PWD") {
-        if !cwd.is_empty() {
-            return Ok(PathBuf::from(cwd));
-        }
-    }
-    anyhow::bail!(
-        "failed to get current working directory: {err}\n\
-         did your CWD get deleted?",
-    )
+/// psh: patterns from a `-f` file, read through the utility's file system
+/// (grep-cli's `patterns_from_path`, its messages).
+fn patterns_from_path(
+    ctx: &SyncCtx,
+    path: &Path,
+) -> std::io::Result<Vec<String>> {
+    let file = ctx.open(&os_bytes(path.as_os_str())).map_err(|err| {
+        std::io::Error::other(format!("{}: {}", path.display(), err))
+    })?;
+    crate::rg::cli::patterns_from_reader(file).map_err(|err| {
+        std::io::Error::other(format!("{}:{}", path.display(), err))
+    })
+}
+
+/// psh: patterns from the utility's stdin (grep-cli's `patterns_from_stdin`).
+fn patterns_from_stdin(ctx: &mut SyncCtx) -> std::io::Result<Vec<String>> {
+    crate::rg::cli::patterns_from_reader(ctx.stdin())
+        .map_err(|err| std::io::Error::other(format!("<stdin>:{}", err)))
+}
+
+/// psh: `Path::is_dir` on the utility's file system.
+fn is_dir(ctx: &SyncCtx, path: &Path) -> bool {
+    WalkHost::stat(ctx, &ctx.path(&os_bytes(path.as_os_str())), true)
+        .is_ok_and(|m| m.kind == FileKind::Dir)
 }
 
 /// Retrieves the hostname that should be used wherever a hostname is required.
 ///
 /// Currently, this is only used in the hyperlink format.
 ///
-/// This works by first running the given binary program (if present and with
-/// no arguments) to get the hostname after trimming leading and trailing
-/// whitespace. If that fails for any reason, then it falls back to getting
-/// the hostname via platform specific means (e.g., `gethostname` on Unix).
-///
-/// The purpose of `bin` is to make it possible for end users to override how
-/// ripgrep determines the hostname.
-fn hostname(bin: Option<&Path>) -> Option<String> {
-    let Some(bin) = bin else { return platform_hostname() };
-    let bin = match grep::cli::resolve_binary(bin) {
-        Ok(bin) => bin,
-        Err(err) => {
-            log::debug!(
-                "failed to run command '{bin:?}' to get hostname \
-                 (falling back to platform hostname): {err}",
-            );
-            return platform_hostname();
-        }
-    };
-    let mut cmd = std::process::Command::new(&bin);
-    cmd.stdin(std::process::Stdio::null());
-    let rdr = match grep::cli::CommandReader::new(&mut cmd) {
-        Ok(rdr) => rdr,
-        Err(err) => {
-            log::debug!(
-                "failed to spawn command '{bin:?}' to get \
-                 hostname (falling back to platform hostname): {err}",
-            );
-            return platform_hostname();
-        }
-    };
-    let out = match std::io::read_to_string(rdr) {
-        Ok(out) => out,
-        Err(err) => {
-            log::debug!(
-                "failed to read output from command '{bin:?}' to get \
-                 hostname (falling back to platform hostname): {err}",
-            );
-            return platform_hostname();
-        }
-    };
-    let hostname = out.trim();
-    if hostname.is_empty() {
-        log::debug!(
-            "output from command '{bin:?}' is empty after trimming \
-             leading and trailing whitespace (falling back to \
-             platform hostname)",
-        );
-        return platform_hostname();
-    }
-    Some(hostname.to_string())
-}
-
-/// Attempts to get the hostname by using platform specific routines.
-///
-/// For example, this will do `gethostname` on Unix and `GetComputerNameExW` on
-/// Windows.
-fn platform_hostname() -> Option<String> {
-    let hostname_os = match grep::cli::hostname() {
-        Ok(x) => x,
-        Err(err) => {
-            log::debug!("could not get hostname: {}", err);
-            return None;
-        }
-    };
-    let Some(hostname) = hostname_os.to_str() else {
-        log::debug!(
-            "got hostname {:?}, but it's not valid UTF-8",
-            hostname_os
-        );
-        return None;
-    };
-    Some(hostname.to_string())
+/// psh: there is none (`{host}` is empty in hyperlinks); `--hostname-bin` is not
+/// run.
+fn hostname(_bin: Option<&Path>) -> Option<String> {
+    None
 }
 
 /// Returns the value for the `{wslprefix}` variable in a hyperlink format.
@@ -1399,13 +1289,13 @@ fn platform_hostname() -> Option<String> {
 /// in a Unix environment, then this returns None.
 ///
 /// See: <https://learn.microsoft.com/en-us/windows/wsl/filesystems>
-fn wsl_prefix() -> Option<String> {
+fn wsl_prefix(state: &State) -> Option<String> {
     if !cfg!(unix) {
         return None;
     }
-    let distro_os = std::env::var_os("WSL_DISTRO_NAME")?;
-    let Some(distro) = distro_os.to_str() else {
-        log::debug!(
+    let distro_os = state.wsl_distro.as_deref()?;
+    let Ok(distro) = std::str::from_utf8(distro_os) else {
+        debug!(
             "found WSL_DISTRO_NAME={:?}, but value is not UTF-8",
             distro_os
         );
@@ -1431,10 +1321,9 @@ fn suggest_other_engine(msg: String) -> String {
 /// Inspect an error resulting from building a Rust regex matcher, and if it's
 /// believed to correspond to a syntax error that PCRE2 could handle, then
 /// add a message to suggest the use of -P/--pcre2.
+///
+/// psh: `-P` runs the real rg (D1082), so the suggestion stays.
 fn suggest_pcre2(msg: &str) -> Option<String> {
-    if !cfg!(feature = "pcre2") {
-        return None;
-    }
     if !msg.contains("backreferences") && !msg.contains("look-around") {
         None
     } else {

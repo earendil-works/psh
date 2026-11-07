@@ -115,3 +115,66 @@ Files containing code adapted from ripgrep and walkdir:
 
 crates/psh-utils/src/search/vwalk.rs (the ignore chain of ignore/src/dir.rs; the traversal rules of ignore/src/walk.rs and walkdir's lib.rs)
 crates/psh-utils/src/search/gitconfig.rs (gitconfig_excludes_path and its helpers from ignore/src/gitignore.rs)
+crates/psh-utils/src/rg/flags/ (crates/core/flags/ of ripgrep, the whole directory: the flag definitions, parser, help and man page templates, completions; patched)
+crates/psh-utils/src/rg/main.rs, search.rs, haystack.rs, messages.rs (crates/core/main.rs, search.rs, haystack.rs, messages.rs of ripgrep; patched)
+crates/psh-utils/src/rg/cli.rs (parse_human_readable_size from grep-cli 0.1.12's src/human.rs; patterns_from_reader and InvalidPatternError from its src/pattern.rs)
+
+-------------------------------------------------------------------------------
+lexopt (https://github.com/blyxxyz/lexopt, 0.3.2), used under the MIT License
+-------------------------------------------------------------------------------
+
+MIT License
+
+Copyright (c) 2021 Jan Verbeek
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+Files containing code copied from lexopt:
+
+crates/psh-utils/src/rg/lexopt.rs (src/lib.rs, whole)
+
+-------------------------------------------------------------------------------
+textwrap (https://github.com/mgeisler/textwrap, 0.16.2), used under the MIT License
+-------------------------------------------------------------------------------
+
+MIT License
+
+Copyright (c) 2016 Martin Geisler
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Files containing code adapted from textwrap:
+
+crates/psh-utils/src/rg/textwrap.rs (refill, unfill, fill, wrap_single_line, wrap_first_fit, break_words, indent)

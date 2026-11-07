@@ -1,3 +1,7 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/flags/complete/zsh.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 Provides completions for ripgrep's CLI for the zsh shell.
 
@@ -19,7 +23,7 @@ long as it meets criteria 3 and 4 above.
 
 /// Generate completions for zsh.
 pub(crate) fn generate() -> String {
-    let hyperlink_alias_descriptions = grep::printer::hyperlink_aliases()
+    let hyperlink_alias_descriptions = grep_printer::hyperlink_aliases()
         .iter()
         .map(|alias| {
             format!(r#"    {}:"{}""#, alias.name(), alias.description())

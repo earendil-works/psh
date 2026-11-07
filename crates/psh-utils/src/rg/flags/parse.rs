@@ -1,16 +1,20 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/flags/parse.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 Parses command line arguments into a structured and typed representation.
 */
 
 use std::{borrow::Cow, collections::BTreeSet, ffi::OsString};
 
-use anyhow::Context;
+use crate::rg::anyhow::{self, Context};
+use crate::rg::lexopt;
 
-use crate::flags::{
+use crate::rg::flags::{
     Flag, FlagValue,
     defs::FLAGS,
-    hiargs::HiArgs,
-    lowargs::{LoggingMode, LowArgs, SpecialMode},
+    lowargs::{LowArgs, SpecialMode},
 };
 
 /// The result of parsing CLI arguments.
@@ -30,29 +34,6 @@ pub(crate) enum ParseResult<T> {
     Err(anyhow::Error),
 }
 
-impl<T> ParseResult<T> {
-    /// If this result is `Ok`, then apply `then` to it. Otherwise, return this
-    /// result unchanged.
-    fn and_then<U>(
-        self,
-        mut then: impl FnMut(T) -> ParseResult<U>,
-    ) -> ParseResult<U> {
-        match self {
-            ParseResult::Special(mode) => ParseResult::Special(mode),
-            ParseResult::Ok(t) => then(t),
-            ParseResult::Err(err) => ParseResult::Err(err),
-        }
-    }
-}
-
-/// Parse CLI arguments and convert then to their high level representation.
-pub(crate) fn parse() -> ParseResult<HiArgs> {
-    parse_low().and_then(|low| match HiArgs::from_low_args(low) {
-        Ok(hi) => ParseResult::Ok(hi),
-        Err(err) => ParseResult::Err(err),
-    })
-}
-
 /// Parse CLI arguments only into their low level representation.
 ///
 /// This takes configuration into account. That is, it will try to read
@@ -61,15 +42,18 @@ pub(crate) fn parse() -> ParseResult<HiArgs> {
 ///
 /// This will also set one-time global state flags, such as the log level and
 /// whether messages should be printed.
-fn parse_low() -> ParseResult<LowArgs> {
-    if let Err(err) = crate::logger::Logger::init() {
-        let err = anyhow::anyhow!("failed to initialize logger: {err}");
-        return ParseResult::Err(err);
-    }
-
+///
+/// psh: the arguments are the utility's (without its name) and the config file is
+/// what the front end read through the utility's file system (D1133); converting
+/// to [`HiArgs`](crate::rg::flags::HiArgs) needs the utility's context, so it
+/// happens in the blocking body. There is no logger.
+pub(crate) fn parse_low(
+    args: Vec<OsString>,
+    config: Option<crate::rg::flags::config::Source>,
+) -> ParseResult<LowArgs> {
     let parser = Parser::new();
     let mut low = LowArgs::default();
-    if let Err(err) = parser.parse(std::env::args_os().skip(1), &mut low) {
+    if let Err(err) = parser.parse(args.iter().cloned(), &mut low) {
         return ParseResult::Err(err);
     }
     // Even though we haven't parsed the config file yet (assuming it exists),
@@ -86,21 +70,21 @@ fn parse_low() -> ParseResult<LowArgs> {
     }
     // If the end user says no config, then respect it.
     if low.no_config {
-        log::debug!("not reading config files because --no-config is present");
+        debug!("not reading config files because --no-config is present");
         return ParseResult::Ok(low);
     }
     // Look for arguments from a config file. If we got nothing (whether the
     // file is empty or RIPGREP_CONFIG_PATH wasn't set), then we don't need
     // to re-parse.
-    let config_args = crate::flags::config::args();
+    let config_args = crate::rg::flags::config::args(config);
     if config_args.is_empty() {
-        log::debug!("no extra arguments found from configuration file");
+        debug!("no extra arguments found from configuration file");
         return ParseResult::Ok(low);
     }
     // The final arguments are just the arguments from the CLI appending to
     // the end of the config arguments.
     let mut final_args = config_args;
-    final_args.extend(std::env::args_os().skip(1));
+    final_args.extend(args);
 
     // Now do the CLI parsing dance again.
     let mut low = LowArgs::default();
@@ -114,17 +98,8 @@ fn parse_low() -> ParseResult<LowArgs> {
 
 /// Sets global state flags that control logging based on low-level arguments.
 fn set_log_levels(low: &LowArgs) {
-    crate::messages::set_messages(!low.no_messages);
-    crate::messages::set_ignore_messages(!low.no_ignore_messages);
-    match low.logging {
-        Some(LoggingMode::Trace) => {
-            log::set_max_level(log::LevelFilter::Trace)
-        }
-        Some(LoggingMode::Debug) => {
-            log::set_max_level(log::LevelFilter::Debug)
-        }
-        None => log::set_max_level(log::LevelFilter::Warn),
-    }
+    crate::rg::messages::set_messages(!low.no_messages);
+    crate::rg::messages::set_ignore_messages(!low.no_ignore_messages);
 }
 
 /// Parse the sequence of CLI arguments given a low level typed set of

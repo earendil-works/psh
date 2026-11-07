@@ -1,3 +1,7 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/flags/mod.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 Defines ripgrep's command line interface.
 
@@ -9,13 +13,15 @@ between these flags and ripgrep's cast of supporting libraries. For example,
 once [`HiArgs`] has been created, it knows how to create a multi threaded
 recursive directory traverser.
 */
+use crate::rg::anyhow;
 use std::{
     ffi::OsString,
     fmt::Debug,
     panic::{RefUnwindSafe, UnwindSafe},
 };
 
-pub(crate) use crate::flags::{
+pub(crate) use crate::rg::flags::config::Source as ConfigSource;
+pub(crate) use crate::rg::flags::{
     complete::{
         bash::generate as generate_complete_bash,
         fish::generate as generate_complete_fish,
@@ -35,8 +41,11 @@ pub(crate) use crate::flags::{
         },
     },
     hiargs::HiArgs,
-    lowargs::{GenerateMode, Mode, SearchMode, SpecialMode},
-    parse::{ParseResult, parse},
+    lowargs::{
+        EngineChoice, GenerateMode, LowArgs, Mode, PatternSource, SearchMode,
+        SpecialMode,
+    },
+    parse::{ParseResult, parse_low},
 };
 
 mod complete;
@@ -177,7 +186,7 @@ trait Flag: Debug + Send + Sync + UnwindSafe + RefUnwindSafe + 'static {
     fn update(
         &self,
         value: FlagValue,
-        args: &mut crate::flags::lowargs::LowArgs,
+        args: &mut crate::rg::flags::lowargs::LowArgs,
     ) -> anyhow::Result<()>;
 }
 
@@ -299,4 +308,27 @@ impl FlagValue {
             FlagValue::Value(v) => v,
         }
     }
+}
+
+/// psh: the flags that take a value, short (sorted letters) and long (`--name`,
+/// sorted, aliases included), for the classifier check (D1090).
+#[cfg(test)]
+pub(crate) fn value_flags() -> (String, Vec<String>) {
+    let mut short = Vec::new();
+    let mut long = Vec::new();
+    for flag in defs::FLAGS.iter() {
+        if flag.is_switch() {
+            continue;
+        }
+        if let Some(b) = flag.name_short() {
+            short.push(char::from(b));
+        }
+        long.push(format!("--{}", flag.name_long()));
+        for a in flag.aliases() {
+            long.push(format!("--{a}"));
+        }
+    }
+    short.sort_unstable();
+    long.sort();
+    (short.into_iter().collect(), long)
 }

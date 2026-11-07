@@ -1,3 +1,7 @@
+// Copied from lexopt 0.3.2 (https://github.com/blyxxyz/lexopt), src/lib.rs, with the psh
+// patches marked `psh:` (D1133):
+// Copyright (c) 2021 Jan Verbeek. Licensed under the MIT License (see NOTICE).
+
 //! A pathologically simple command line argument parser.
 //!
 //! Most argument parsers are declarative: you tell them what to parse,
@@ -7,7 +11,8 @@
 //! figure out the rest.
 //!
 //! ## Example
-//! ```no_run
+//! (psh: examples are `text` blocks, not doctests.)
+//! ```text
 //! struct Args {
 //!     thing: String,
 //!     number: u32,
@@ -77,6 +82,8 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs, missing_debug_implementations, elided_lifetimes_in_paths)]
 #![allow(clippy::should_implement_trait)]
+// psh: copied whole; ripgrep uses part of it.
+#![allow(dead_code, unused_imports)]
 
 use std::{
     ffi::{OsStr, OsString},
@@ -440,7 +447,7 @@ impl Parser {
     /// If not at least one value is found then [`Error::MissingValue`] is returned.
     ///
     /// # Example
-    /// ```
+    /// ```text
     /// # fn main() -> Result<(), lexopt::Error> {
     /// # use lexopt::prelude::*;
     /// # use std::ffi::OsString;
@@ -537,7 +544,7 @@ impl Parser {
     /// # Example
     /// As soon as a free-standing argument is found, consume the other arguments
     /// as-is, and build them into a command.
-    /// ```
+    /// ```text
     /// # fn main() -> Result<(), lexopt::Error> {
     /// # use lexopt::prelude::*;
     /// # use std::ffi::OsString;
@@ -577,7 +584,7 @@ impl Parser {
     /// Process arguments of the form `-123` as numbers. For a complete runnable version of
     /// this example, see
     /// [`examples/nonstandard.rs`](https://github.com/blyxxyz/lexopt/blob/e3754e6f24506afb42394602fc257b1ad9258d84/examples/nonstandard.rs).
-    /// ```
+    /// ```text
     /// # fn main() -> Result<(), lexopt::Error> {
     /// # use lexopt::prelude::*;
     /// # use std::ffi::OsString;
@@ -643,7 +650,7 @@ impl Parser {
     /// To get the current executable, use [`std::env::current_exe`].
     ///
     /// # Example
-    /// ```
+    /// ```text
     /// let mut parser = lexopt::Parser::from_env();
     /// let bin_name = parser.bin_name().unwrap_or("myapp");
     /// println!("{}: Some message", bin_name);
@@ -746,7 +753,7 @@ impl Parser {
     /// The iterator is consumed immediately.
     ///
     /// # Example
-    /// ```
+    /// ```text
     /// let mut parser = lexopt::Parser::from_iter(&["myapp", "-n", "10", "./foo.bar"]);
     /// ```
     pub fn from_iter<I>(args: I) -> Parser
@@ -805,13 +812,13 @@ impl Parser {
     /// # Example
     ///
     /// You can configure this right after creating the parser:
-    /// ```
+    /// ```text
     /// let mut parser = lexopt::Parser::from_env();
     /// parser.set_short_equals(false);
     /// ```
     ///
     /// You could also do it temporarily, for an individual option:
-    /// ```
+    /// ```text
     /// # fn main() -> Result<(), lexopt::Error> {
     /// # use lexopt::prelude::*;
     /// # let mut parser = lexopt::Parser::from_args(&["-d=", "key=value"]);
@@ -971,7 +978,8 @@ pub enum Error {
 
 impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use crate::Error::*;
+        // psh: the module path (lexopt is a crate of its own upstream).
+        use crate::rg::lexopt::Error::*;
         match self {
             MissingValue { option: None } => write!(f, "missing argument"),
             MissingValue {
@@ -1124,7 +1132,7 @@ impl ValueExt for OsString {
 ///
 /// If this is used it's best to import it inside a function, not in module
 /// scope:
-/// ```
+/// ```text
 /// # struct Args;
 /// fn parse_args() -> Result<Args, lexopt::Error> {
 ///     use lexopt::prelude::*;
@@ -1183,7 +1191,8 @@ mod tests {
 
     /// Specialized backport of matches!()
     macro_rules! assert_matches {
-        ($expression: expr, $( $pattern: pat )|+) => {
+        // psh: `pat_param` for edition 2024.
+        ($expression: expr, $( $pattern: pat_param )|+) => {
             match $expression {
                 $( $pattern )|+ => (),
                 _ => panic!(

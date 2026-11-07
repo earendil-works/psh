@@ -30,6 +30,11 @@ mod rmdir;
 mod touch;
 
 mod chmod;
+// Formatted in ripgrep's style (rg/rustfmt.toml), not the workspace's, so the copied code stays a
+// small diff from upstream.
+#[rustfmt::skip]
+mod rg;
+
 mod comm;
 mod cp;
 mod cut;
@@ -232,6 +237,12 @@ pub static REGISTRY: &[UtilEntry] = &[
         mode: Mode::Always,
         destructive: false,
         run: util_fn!(chmod::run),
+    },
+    UtilEntry {
+        names: &["rg"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(rg::run),
     },
 ];
 

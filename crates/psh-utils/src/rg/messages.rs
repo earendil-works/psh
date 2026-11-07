@@ -1,3 +1,7 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/messages.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 This module defines some macros and some light shared mutable state.
 
@@ -15,62 +19,109 @@ indicating that at least one error occurred. When ripgrep exits, this flag is
 consulted to determine what the exit status ought to be.
 */
 
-use std::sync::atomic::{AtomicBool, Ordering};
+// psh: the state is per invocation (D1133), not process-wide statics: a thread-local
+// that `scoped` installs for the duration of one rg run on its thread (search threads
+// never print messages; their errors come back to it), with messages written to the
+// utility's stderr instead of the process's. A failed write is ignored rather than
+// ending the process.
 
-/// When false, "messages" will not be printed.
-static MESSAGES: AtomicBool = AtomicBool::new(false);
-/// When false, "messages" related to ignore rules will not be printed.
-static IGNORE_MESSAGES: AtomicBool = AtomicBool::new(false);
-/// Flipped to true when an error message is printed.
-static ERRORED: AtomicBool = AtomicBool::new(false);
+use std::cell::RefCell;
+use std::io::Write;
 
-/// Like eprintln, but locks stdout to prevent interleaving lines.
-///
-/// This locks stdout, not stderr, even though this prints to stderr. This
-/// avoids the appearance of interleaving output when stdout and stderr both
-/// correspond to a tty.
-#[macro_export]
-macro_rules! eprintln_locked {
-    ($($tt:tt)*) => {{
-        {
-            use std::io::Write;
+use psh_engine::util::SyncWriter;
 
-            // This is a bit of an abstraction violation because we explicitly
-            // lock stdout before printing to stderr. This avoids interleaving
-            // lines within ripgrep because `search_parallel` uses `termcolor`,
-            // which accesses the same stdout lock when writing lines.
-            let stdout = std::io::stdout().lock();
-            let mut stderr = std::io::stderr().lock();
-            // We specifically ignore any errors here. One plausible error we
-            // can get in some cases is a broken pipe error. And when that
-            // occurs, we should exit gracefully. Otherwise, just abort with
-            // an error code because there isn't much else we can do.
-            //
-            // See: https://github.com/BurntSushi/ripgrep/issues/1966
-            if let Err(err) = write!(stderr, "rg: ") {
-                if err.kind() == std::io::ErrorKind::BrokenPipe {
-                    std::process::exit(0);
-                } else {
-                    std::process::exit(2);
-                }
-            }
-            if let Err(err) = writeln!(stderr, $($tt)*) {
-                if err.kind() == std::io::ErrorKind::BrokenPipe {
-                    std::process::exit(0);
-                } else {
-                    std::process::exit(2);
-                }
-            }
-            drop(stdout);
+/// One invocation's message state.
+pub(crate) struct State {
+    /// When false, "messages" will not be printed.
+    messages: bool,
+    /// When false, "messages" related to ignore rules will not be printed.
+    ignore_messages: bool,
+    /// Flipped to true when an error message is printed.
+    errored: bool,
+    out: Out,
+}
+
+enum Out {
+    /// Before the utility's stderr is at hand (parsing on the engine thread).
+    Buffer(Vec<u8>),
+    Writer(SyncWriter),
+}
+
+impl State {
+    /// The state before parsing: messages off (as ripgrep's statics start), collected.
+    pub(crate) fn buffered() -> State {
+        State {
+            messages: false,
+            ignore_messages: false,
+            errored: false,
+            out: Out::Buffer(Vec::new()),
         }
-    }}
+    }
+
+    /// What was collected so far, and from now on writes go to `w`.
+    pub(crate) fn write_to(&mut self, w: SyncWriter) -> Vec<u8> {
+        match std::mem::replace(&mut self.out, Out::Writer(w)) {
+            Out::Buffer(b) => b,
+            Out::Writer(_) => Vec::new(),
+        }
+    }
+
+    /// Takes the messages collected so far.
+    pub(crate) fn take_buffered(&mut self) -> Vec<u8> {
+        match &mut self.out {
+            Out::Buffer(b) => std::mem::take(b),
+            Out::Writer(_) => Vec::new(),
+        }
+    }
+}
+
+thread_local! {
+    static STATE: RefCell<Option<State>> = const { RefCell::new(None) };
+}
+
+/// Runs `f` with `state` as this thread's message state (taken back afterwards, also
+/// when `f` panics).
+pub(crate) fn scoped<R>(state: State, f: impl FnOnce() -> R) -> (R, State) {
+    struct Reset;
+    impl Drop for Reset {
+        fn drop(&mut self) {
+            STATE.with(|s| s.borrow_mut().take());
+        }
+    }
+    STATE.with(|s| *s.borrow_mut() = Some(state));
+    let reset = Reset;
+    let r = f();
+    let state = STATE.with(|s| s.borrow_mut().take());
+    drop(reset);
+    (r, state.unwrap_or_else(State::buffered))
+}
+
+fn with<R>(f: impl FnOnce(&mut State) -> R) -> Option<R> {
+    STATE.with(|s| s.borrow_mut().as_mut().map(f))
+}
+
+/// Writes `rg: MSG` and a newline to the invocation's stderr.
+pub(crate) fn eprint(msg: std::fmt::Arguments<'_>) {
+    let line = format!("rg: {msg}\n");
+    with(|s| match &mut s.out {
+        Out::Buffer(b) => b.extend_from_slice(line.as_bytes()),
+        Out::Writer(w) => {
+            let _ = w.write_all(line.as_bytes());
+        }
+    });
+}
+
+/// Like eprintln, but to the invocation's stderr, with ripgrep's `rg: ` prefix.
+macro_rules! eprintln_locked {
+    ($($tt:tt)*) => {
+        $crate::rg::messages::eprint(format_args!($($tt)*))
+    }
 }
 
 /// Emit a non-fatal error message, unless messages were disabled.
-#[macro_export]
 macro_rules! message {
     ($($tt:tt)*) => {
-        if crate::messages::messages() {
+        if $crate::rg::messages::messages() {
             eprintln_locked!($($tt)*);
         }
     }
@@ -78,40 +129,54 @@ macro_rules! message {
 
 /// Like message, but sets ripgrep's "errored" flag, which controls the exit
 /// status.
-#[macro_export]
 macro_rules! err_message {
     ($($tt:tt)*) => {
-        crate::messages::set_errored();
+        $crate::rg::messages::set_errored();
         message!($($tt)*);
     }
 }
 
 /// Emit a non-fatal ignore-related error message (like a parse error), unless
 /// ignore-messages were disabled.
-#[macro_export]
 macro_rules! ignore_message {
     ($($tt:tt)*) => {
-        if crate::messages::messages() && crate::messages::ignore_messages() {
+        if $crate::rg::messages::messages() && $crate::rg::messages::ignore_messages() {
             eprintln_locked!($($tt)*);
         }
     }
 }
 
+/// ripgrep's `log::debug!`/`log::trace!`: there is no logger (`--debug` and `--trace`
+/// run the real rg), so they only check their arguments.
+macro_rules! debug {
+    ($($tt:tt)*) => {
+        if false {
+            let _ = format!($($tt)*);
+        }
+    }
+}
+
+macro_rules! trace {
+    ($($tt:tt)*) => {
+        debug!($($tt)*)
+    }
+}
+
 /// Returns true if and only if messages should be shown.
 pub(crate) fn messages() -> bool {
-    MESSAGES.load(Ordering::Relaxed)
+    with(|s| s.messages).unwrap_or(false)
 }
 
 /// Set whether messages should be shown or not.
 ///
 /// By default, they are not shown.
 pub(crate) fn set_messages(yes: bool) {
-    MESSAGES.store(yes, Ordering::Relaxed)
+    with(|s| s.messages = yes);
 }
 
 /// Returns true if and only if "ignore" related messages should be shown.
 pub(crate) fn ignore_messages() -> bool {
-    IGNORE_MESSAGES.load(Ordering::Relaxed)
+    with(|s| s.ignore_messages).unwrap_or(false)
 }
 
 /// Set whether "ignore" related messages should be shown or not.
@@ -122,12 +187,12 @@ pub(crate) fn ignore_messages() -> bool {
 /// `messages` is disabled, then "ignore" messages are never shown, regardless
 /// of this setting.
 pub(crate) fn set_ignore_messages(yes: bool) {
-    IGNORE_MESSAGES.store(yes, Ordering::Relaxed)
+    with(|s| s.ignore_messages = yes);
 }
 
 /// Returns true if and only if ripgrep came across a non-fatal error.
 pub(crate) fn errored() -> bool {
-    ERRORED.load(Ordering::Relaxed)
+    with(|s| s.errored).unwrap_or(false)
 }
 
 /// Indicate that ripgrep has come across a non-fatal error.
@@ -135,5 +200,5 @@ pub(crate) fn errored() -> bool {
 /// Callers should not use this directly. Instead, it is called automatically
 /// via the `err_message` macro.
 pub(crate) fn set_errored() {
-    ERRORED.store(true, Ordering::Relaxed);
+    with(|s| s.errored = true);
 }

@@ -1,3 +1,7 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/flags/defs.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 Defines all of the flags available in ripgrep.
 
@@ -19,9 +23,10 @@ same encoding state in ripgrep.
 
 use std::{path::PathBuf, sync::LazyLock};
 
-use {anyhow::Context as AnyhowContext, bstr::ByteVec};
+use crate::rg::anyhow::{self, Context as AnyhowContext};
+use bstr::ByteVec;
 
-use crate::flags::{
+use crate::rg::flags::{
     Category, Flag, FlagValue,
     lowargs::{
         BinaryMode, BoundaryMode, BufferMode, CaseMode, ColorChoice,
@@ -32,7 +37,7 @@ use crate::flags::{
 };
 
 #[cfg(test)]
-use crate::flags::parse::parse_low_raw;
+use crate::rg::flags::parse::parse_low_raw;
 
 use super::CompletionType;
 
@@ -1170,7 +1175,7 @@ is still inserted. To completely disable context separators, use the
     }
 
     fn update(&self, v: FlagValue, args: &mut LowArgs) -> anyhow::Result<()> {
-        use crate::flags::lowargs::ContextSeparator as Separator;
+        use crate::rg::flags::lowargs::ContextSeparator as Separator;
 
         args.context_separator = match v {
             FlagValue::Switch(true) => {
@@ -1188,7 +1193,7 @@ is still inserted. To completely disable context separators, use the
 fn test_context_separator() {
     use bstr::BString;
 
-    use crate::flags::lowargs::ContextSeparator as Separator;
+    use crate::rg::flags::lowargs::ContextSeparator as Separator;
 
     let getbytes = |ctxsep: Separator| ctxsep.into_bytes().map(BString::from);
 
@@ -1417,6 +1422,7 @@ This flag overrides \flag{null-data}.
 
     fn update(&self, v: FlagValue, args: &mut LowArgs) -> anyhow::Result<()> {
         args.crlf = v.unwrap_switch();
+        args.crlf_explicit = true;
         if args.crlf {
             args.null_data = false;
         }
@@ -1642,7 +1648,7 @@ via the \flag-negate{encoding} flag.
         args.encoding = match label {
             "auto" => EncodingMode::Auto,
             "none" => EncodingMode::Disabled,
-            _ => EncodingMode::Some(grep::searcher::Encoding::new(label)?),
+            _ => EncodingMode::Some(grep_searcher::Encoding::new(label)?),
         };
         Ok(())
     }
@@ -1676,7 +1682,7 @@ fn test_encoding() {
     assert_eq!(EncodingMode::Disabled, args.encoding);
 
     let args = parse_low_raw(["-E", "utf-16"]).unwrap();
-    let enc = grep::searcher::Encoding::new("utf-16").unwrap();
+    let enc = grep_searcher::Encoding::new("utf-16").unwrap();
     assert_eq!(EncodingMode::Some(enc), args.encoding);
 
     let args = parse_low_raw(["-E", "utf-16", "--no-encoding"]).unwrap();
@@ -1810,7 +1816,7 @@ The \fB-\fP character is the default value.
     }
 
     fn update(&self, v: FlagValue, args: &mut LowArgs) -> anyhow::Result<()> {
-        use crate::flags::lowargs::FieldContextSeparator as Separator;
+        use crate::rg::flags::lowargs::FieldContextSeparator as Separator;
 
         args.field_context_separator = Separator::new(&v.unwrap_value())?;
         Ok(())
@@ -1918,7 +1924,7 @@ The \fB:\fP character is the default value.
     }
 
     fn update(&self, v: FlagValue, args: &mut LowArgs) -> anyhow::Result<()> {
-        use crate::flags::lowargs::FieldMatchSeparator as Separator;
+        use crate::rg::flags::lowargs::FieldMatchSeparator as Separator;
 
         args.field_match_separator = Separator::new(&v.unwrap_value())?;
         Ok(())
@@ -2928,7 +2934,7 @@ Alternatively, a format string may correspond to one of the following aliases:
 "#,
             );
 
-            let mut aliases = grep::printer::hyperlink_aliases();
+            let mut aliases = grep_printer::hyperlink_aliases();
             aliases.sort_by_key(|alias| {
                 alias.display_priority().unwrap_or(i16::MAX)
             });
@@ -3027,7 +3033,7 @@ https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda
 
     fn doc_choices(&self) -> &'static [&'static str] {
         static CHOICES: LazyLock<Vec<String>> = LazyLock::new(|| {
-            let mut aliases = grep::printer::hyperlink_aliases();
+            let mut aliases = grep_printer::hyperlink_aliases();
             aliases.sort_by_key(|alias| {
                 alias.display_priority().unwrap_or(i16::MAX)
             });
@@ -3051,7 +3057,7 @@ https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda
 #[test]
 fn test_hyperlink_format() {
     let parseformat = |format: &str| {
-        format.parse::<grep::printer::HyperlinkFormat>().unwrap()
+        format.parse::<grep_printer::HyperlinkFormat>().unwrap()
     };
 
     let args = parse_low_raw(None::<&str>).unwrap();
@@ -7575,7 +7581,7 @@ fn test_word_regexp() {
 mod convert {
     use std::ffi::{OsStr, OsString};
 
-    use anyhow::Context;
+    use crate::rg::anyhow::{self, Context};
 
     pub(super) fn str(v: &OsStr) -> anyhow::Result<&str> {
         let Some(s) = v.to_str() else {
@@ -7600,7 +7606,8 @@ mod convert {
     }
 
     pub(super) fn human_readable_u64(v: &OsStr) -> anyhow::Result<u64> {
-        grep::cli::parse_human_readable_size(str(v)?).context("invalid size")
+        crate::rg::cli::parse_human_readable_size(str(v)?)
+            .context("invalid size")
     }
 
     pub(super) fn human_readable_usize(v: &OsStr) -> anyhow::Result<usize> {
@@ -7630,7 +7637,9 @@ mod tests {
 
         let mut taken = vec![false; 128];
         for flag in FLAGS.iter() {
-            let Some(short) = flag.name_short() else { continue };
+            let Some(short) = flag.name_short() else {
+                continue;
+            };
             taken[usize::from(short)] = true;
         }
 
@@ -7644,7 +7653,9 @@ mod tests {
     #[test]
     fn shorts_all_ascii_alphanumeric() {
         for flag in FLAGS.iter() {
-            let Some(byte) = flag.name_short() else { continue };
+            let Some(byte) = flag.name_short() else {
+                continue;
+            };
             let long = flag.name_long();
             assert!(
                 byte.is_ascii_alphanumeric() || byte == b'.',
@@ -7678,7 +7689,9 @@ mod tests {
                      match ^[-0-9A-Za-z]+$",
                 );
             }
-            let Some(negated) = flag.name_negated() else { continue };
+            let Some(negated) = flag.name_negated() else {
+                continue;
+            };
             let count = negated.chars().count();
             assert!(
                 count >= 2,
@@ -7697,7 +7710,9 @@ mod tests {
     fn shorts_no_duplicates() {
         let mut taken = vec![false; 128];
         for flag in FLAGS.iter() {
-            let Some(short) = flag.name_short() else { continue };
+            let Some(short) = flag.name_short() else {
+                continue;
+            };
             let long = flag.name_long();
             assert!(
                 !taken[usize::from(short)],
@@ -7722,7 +7737,9 @@ mod tests {
                     "flag {long} has an alias {alias} that is duplicative"
                 );
             }
-            let Some(negated) = flag.name_negated() else { continue };
+            let Some(negated) = flag.name_negated() else {
+                continue;
+            };
             assert!(
                 taken.insert(negated),
                 "negated flag {negated} has a duplicate name"

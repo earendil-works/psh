@@ -1,68 +1,62 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/main.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 The main entry point into ripgrep.
 */
 
-use std::{io::Write, process::ExitCode};
+// psh (D1133): `main` is `run_sync`, the body of a blocking utility (D1130): its
+// statuses are returned, never `process::exit`; stdout and stderr are the utility's.
+// The walk is psh's walker seam, sorted by name, on this thread; with more than one
+// thread (native walks only), haystacks are searched on scoped search threads and
+// their output is printed in walk order (ARCH "Sorted output"), so the output is the
+// same as single-threaded.
+
+use std::{collections::BTreeMap, io::Write, sync::mpsc};
 
 use ignore::WalkState;
+use psh_engine::util::SyncCtx;
 
-use crate::flags::{HiArgs, SearchMode};
-
-#[macro_use]
-mod messages;
-
-mod flags;
-mod haystack;
-mod logger;
-mod search;
-
-// Since Rust no longer uses jemalloc by default, ripgrep will, by default,
-// use the system allocator. On Linux, this would normally be glibc's
-// allocator, which is pretty good. In particular, ripgrep does not have a
-// particularly allocation heavy workload, so there really isn't much
-// difference (for ripgrep's purposes) between glibc's allocator and jemalloc.
-//
-// However, when ripgrep is built with musl, this means ripgrep will use musl's
-// allocator, which appears to be substantially worse. (musl's goal is not to
-// have the fastest version of everything. Its goal is to be small and amenable
-// to static compilation.) Even though ripgrep isn't particularly allocation
-// heavy, musl's allocator appears to slow down ripgrep quite a bit. Therefore,
-// when building with musl, we use jemalloc.
-//
-// We don't unconditionally use jemalloc because it can be nice to use the
-// system's default allocator by default. Moreover, jemalloc seems to increase
-// compilation times by a bit.
-//
-// Moreover, we only do this on 64-bit systems since jemalloc doesn't support
-// i686.
-#[cfg(all(target_env = "musl", target_pointer_width = "64"))]
-#[global_allocator]
-static ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
+use crate::rg::anyhow;
+use crate::rg::flags::{self, HiArgs, SearchMode};
+use crate::rg::haystack::Haystack;
+use crate::rg::messages;
+use crate::rg::search::{HaystackIo, SearchResult};
+use crate::search::walk::Walker;
 
 /// Then, as it was, then again it will be.
-fn main() -> ExitCode {
-    match run(flags::parse()) {
-        Ok(code) => code,
-        Err(err) => {
-            // Look for a broken pipe error. In this case, we generally want
-            // to exit "gracefully" with a success exit code. This matches
-            // existing Unix convention. We need to handle this explicitly
-            // since the Rust runtime doesn't ask for PIPE signals, and thus
-            // we get an I/O error instead. Traditional C Unix applications
-            // quit by getting a PIPE signal that they don't handle, and thus
-            // the unhandled signal causes the process to unceremoniously
-            // terminate.
-            for cause in err.chain() {
-                if let Some(ioerr) = cause.downcast_ref::<std::io::Error>() {
-                    if ioerr.kind() == std::io::ErrorKind::BrokenPipe {
-                        return ExitCode::from(0);
-                    }
+///
+/// psh: the blocking body; `low` comes from the front end's parse (with the
+/// messages that parse collected).
+pub(crate) fn run_sync(
+    ctx: &mut SyncCtx,
+    (low, mut msgs): (flags::LowArgs, messages::State),
+) -> i32 {
+    let mut stderr = ctx.writer(2);
+    let early = msgs.write_to(stderr.clone());
+    let _ = stderr.write_all(&early);
+    let (code, _) = messages::scoped(msgs, || {
+        match run(ctx, low) {
+            Ok(code) => code,
+            Err(err) => {
+                // Look for a broken pipe error. In this case, we generally want
+                // to exit "gracefully" with a success exit code. This matches
+                // existing Unix convention. We need to handle this explicitly
+                // since the Rust runtime doesn't ask for PIPE signals, and thus
+                // we get an I/O error instead. Traditional C Unix applications
+                // quit by getting a PIPE signal that they don't handle, and thus
+                // the unhandled signal causes the process to unceremoniously
+                // terminate.
+                if err.io_kind() == Some(std::io::ErrorKind::BrokenPipe) {
+                    return 0;
                 }
+                eprintln_locked!("{:#}", err);
+                2
             }
-            eprintln_locked!("{:#}", err);
-            ExitCode::from(2)
         }
-    }
+    });
+    code
 }
 
 /// The main entry point for ripgrep.
@@ -74,62 +68,129 @@ fn main() -> ExitCode {
 /// abstractions, for example, instead of representing the `-g/--glob` flag
 /// as a `Vec<String>` (as in the low level representation), the globs are
 /// converted into a single matcher.
-fn run(result: crate::flags::ParseResult<HiArgs>) -> anyhow::Result<ExitCode> {
-    use crate::flags::{Mode, ParseResult};
+fn run(ctx: &mut SyncCtx, low: flags::LowArgs) -> anyhow::Result<i32> {
+    use crate::rg::flags::Mode;
 
-    let args = match result {
-        ParseResult::Err(err) => return Err(err),
-        ParseResult::Special(mode) => return special(mode),
-        ParseResult::Ok(args) => args,
-    };
+    let args = HiArgs::from_low_args(low, ctx)?;
     let matched = match args.mode() {
         Mode::Search(_) if !args.matches_possible() => false,
-        Mode::Search(mode) if args.threads() == 1 => search(&args, mode)?,
-        Mode::Search(mode) => search_parallel(&args, mode)?,
-        Mode::Files if args.threads() == 1 => files(&args)?,
-        Mode::Files => files_parallel(&args)?,
-        Mode::Types => return types(&args),
-        Mode::Generate(mode) => return generate(mode),
+        Mode::Search(mode) if args.threads() == 1 => search(ctx, &args, mode)?,
+        Mode::Search(mode) => search_parallel(ctx, &args, mode)?,
+        Mode::Files => files(ctx, &args)?,
+        Mode::Types => return types(ctx, &args),
+        Mode::Generate(mode) => return generate(ctx, mode),
     };
     Ok(if matched && (args.quiet() || !messages::errored()) {
-        ExitCode::from(0)
+        0
     } else if messages::errored() {
-        ExitCode::from(2)
+        2
     } else {
-        ExitCode::from(1)
+        1
     })
+}
+
+/// psh: the haystacks of `args`' paths in order, walked with the walker seam (stdin
+/// for `-`), given to `visit` until it says `Quit`. `visit` gets the context for
+/// reading: shared during a walk, exclusive for stdin.
+fn walk(
+    ctx: &mut SyncCtx,
+    args: &HiArgs,
+    visit: &mut dyn FnMut(Haystack, HaystackIo<'_>) -> WalkState,
+) -> anyhow::Result<()> {
+    let haystack_builder = args.haystack_builder();
+    let paths = args.paths();
+    let mut i = 0;
+    while i < paths.len() {
+        if paths[i] == b"-" {
+            let mut stdin = ctx.stdin();
+            if visit(haystack_builder.stdin(), HaystackIo::Stdin(&mut stdin))
+                == WalkState::Quit
+            {
+                return Ok(());
+            }
+            i += 1;
+            continue;
+        }
+        let end = (i..paths.len())
+            .find(|&j| paths[j] == b"-")
+            .unwrap_or(paths.len());
+        let host: &SyncCtx = ctx;
+        let walker = Walker::new(host, args.walk_options().clone())?;
+        let state =
+            walker.run(&paths[i..end], &mut |result| match haystack_builder
+                .build_from_result(host, result)
+            {
+                Some(haystack) => visit(haystack, HaystackIo::Fs(host)),
+                None => WalkState::Continue,
+            });
+        if state == WalkState::Quit {
+            return Ok(());
+        }
+        i = end;
+    }
+    Ok(())
+}
+
+/// psh: the haystacks to search in order: as walked, or collected and sorted when a
+/// sort other than ascending path is asked for (`HiArgs::sort`).
+fn haystacks(
+    ctx: &mut SyncCtx,
+    args: &HiArgs,
+    visit: &mut dyn FnMut(Haystack, HaystackIo<'_>) -> WalkState,
+) -> anyhow::Result<()> {
+    if !args.sorts_after_walk() {
+        return walk(ctx, args, visit);
+    }
+    let mut all = Vec::new();
+    walk(ctx, args, &mut |h, _| {
+        all.push(h);
+        WalkState::Continue
+    })?;
+    let host: &SyncCtx = ctx;
+    let sorted: Vec<Haystack> = args.sort(host, all.into_iter()).collect();
+    for h in sorted {
+        let state = if h.is_stdin() {
+            let mut stdin = ctx.stdin();
+            visit(h, HaystackIo::Stdin(&mut stdin))
+        } else {
+            visit(h, HaystackIo::Fs(ctx))
+        };
+        if state == WalkState::Quit {
+            break;
+        }
+    }
+    Ok(())
 }
 
 /// The top-level entry point for single-threaded search.
 ///
 /// This recursively steps through the file list (current directory by default)
 /// and searches each file sequentially.
-fn search(args: &HiArgs, mode: SearchMode) -> anyhow::Result<bool> {
+fn search(
+    ctx: &mut SyncCtx,
+    args: &HiArgs,
+    mode: SearchMode,
+) -> anyhow::Result<bool> {
     let started_at = std::time::Instant::now();
-    let haystack_builder = args.haystack_builder();
-    let unsorted = args
-        .walk_builder()?
-        .build()
-        .filter_map(|result| haystack_builder.build_from_result(result));
-    let haystacks = args.sort(unsorted);
-
     let mut matched = false;
     let mut searched = false;
     let mut stats = args.stats();
     let mut searcher = args.search_worker(
         args.matcher()?,
         args.searcher()?,
-        args.printer(mode, args.stdout()),
+        args.printer(mode, args.stdout(ctx.writer(1))),
     )?;
-    for haystack in haystacks {
+    haystacks(ctx, args, &mut |haystack, io| {
         searched = true;
-        let search_result = match searcher.search(&haystack) {
+        let search_result = match searcher.search(&haystack, io) {
             Ok(search_result) => search_result,
             // A broken pipe means graceful termination.
-            Err(err) if err.kind() == std::io::ErrorKind::BrokenPipe => break,
+            Err(err) if err.kind() == std::io::ErrorKind::BrokenPipe => {
+                return WalkState::Quit;
+            }
             Err(err) => {
                 err_message!("{}: {}", haystack.path().display(), err);
-                continue;
+                return WalkState::Continue;
             }
         };
         matched = matched || search_result.has_match();
@@ -137,9 +198,10 @@ fn search(args: &HiArgs, mode: SearchMode) -> anyhow::Result<bool> {
             *stats += search_result.stats().unwrap();
         }
         if matched && args.quit_after_match() {
-            break;
+            return WalkState::Quit;
         }
-    }
+        WalkState::Continue
+    })?;
     if args.has_implicit_path() && !searched {
         eprint_nothing_searched();
     }
@@ -147,188 +209,270 @@ fn search(args: &HiArgs, mode: SearchMode) -> anyhow::Result<bool> {
         let wtr = searcher.printer().get_mut();
         let _ = print_stats(mode, stats, started_at, wtr);
     }
+    let _ = searcher.printer().get_mut().flush();
     Ok(matched)
 }
 
 /// The top-level entry point for multi-threaded search.
 ///
-/// The parallelism is itself achieved by the recursive directory traversal.
-/// All we need to do is feed it a worker for performing a search on each file.
-///
-/// Requesting a sorted output from ripgrep (such as with `--sort path`) will
-/// automatically disable parallelism and hence sorting is not handled here.
-fn search_parallel(args: &HiArgs, mode: SearchMode) -> anyhow::Result<bool> {
-    use std::sync::atomic::{AtomicBool, Ordering};
+/// psh: the walk stays on this thread; each haystack goes to one of the search
+/// threads, which print into a buffer of their own; the buffers are written to
+/// stdout in walk order, at most `4 * threads` haystacks ahead (stdin is searched
+/// here, in its turn). Requesting a sorted output (`--sort`) uses one thread.
+fn search_parallel(
+    ctx: &mut SyncCtx,
+    args: &HiArgs,
+    mode: SearchMode,
+) -> anyhow::Result<bool> {
+    use std::sync::{Arc, Mutex};
 
     let started_at = std::time::Instant::now();
-    let haystack_builder = args.haystack_builder();
-    let bufwtr = args.buffer_writer();
-    let stats = args.stats().map(std::sync::Mutex::new);
-    let matched = AtomicBool::new(false);
-    let searched = AtomicBool::new(false);
-
-    let mut searcher = args.search_worker(
+    let mut stats = args.stats();
+    let mut matched = false;
+    let mut searched = false;
+    let mut out = args.stdout(ctx.writer(1));
+    let worker = args.search_worker(
         args.matcher()?,
         args.searcher()?,
-        args.printer(mode, bufwtr.buffer()),
+        args.printer(mode, args.buffer()),
     )?;
-    args.walk_builder()?.build_parallel().run(|| {
-        let bufwtr = &bufwtr;
-        let stats = &stats;
-        let matched = &matched;
-        let searched = &searched;
-        let haystack_builder = &haystack_builder;
-        let mut searcher = searcher.clone();
+    let threads = args.threads();
+    let (job_tx, job_rx) = mpsc::sync_channel::<(usize, Haystack)>(threads);
+    let job_rx = Arc::new(Mutex::new(job_rx));
+    let (done_tx, done_rx) = mpsc::channel::<Done>();
 
-        Box::new(move |result| {
-            let haystack = match haystack_builder.build_from_result(result) {
-                Some(haystack) => haystack,
-                None => return WalkState::Continue,
-            };
-            searched.store(true, Ordering::SeqCst);
-            searcher.printer().get_mut().clear();
-            let search_result = match searcher.search(&haystack) {
-                Ok(search_result) => search_result,
-                Err(err) => {
-                    err_message!("{}: {}", haystack.path().display(), err);
-                    return WalkState::Continue;
+    std::thread::scope(|scope| -> anyhow::Result<()> {
+        for _ in 0..threads {
+            let job_rx = Arc::clone(&job_rx);
+            let done_tx = done_tx.clone();
+            let mut searcher = worker.clone();
+            scope.spawn(move || {
+                loop {
+                    let job = job_rx
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner())
+                        .recv();
+                    let Ok((seq, haystack)) = job else { break };
+                    searcher.printer().get_mut().clear();
+                    let result = searcher
+                        .search(&haystack, HaystackIo::None)
+                        .map(|r| {
+                            (
+                                searcher
+                                    .printer()
+                                    .get_mut()
+                                    .as_slice()
+                                    .to_vec(),
+                                r,
+                            )
+                        });
+                    if done_tx.send(Done { seq, haystack, result }).is_err() {
+                        break;
+                    }
                 }
-            };
-            if search_result.has_match() {
-                matched.store(true, Ordering::SeqCst);
+            });
+        }
+        drop(done_tx);
+        let mut merge = Merge {
+            separator: args.file_separator().map(<[u8]>::to_vec),
+            printed: false,
+            next: 0,
+            assigned: 0,
+            pending: BTreeMap::new(),
+            quit: false,
+        };
+        let mut local = worker.clone();
+        let mut on_done = |merge: &mut Merge,
+                           out: &mut crate::rg::cli::StandardStream,
+                           d: Done| {
+            searched = true;
+            match d.result {
+                Err(err) => {
+                    err_message!("{}: {}", d.haystack.path().display(), err);
+                }
+                Ok((buf, result)) => {
+                    if result.has_match() {
+                        matched = true;
+                    }
+                    if let Some(ref mut stats) = stats {
+                        *stats += result.stats().unwrap();
+                    }
+                    if let Err(err) = merge.print(out, &buf) {
+                        // A broken pipe means graceful termination.
+                        if err.kind() == std::io::ErrorKind::BrokenPipe {
+                            merge.quit = true;
+                        } else {
+                            // Otherwise, we continue on our merry way.
+                            err_message!(
+                                "{}: {}",
+                                d.haystack.path().display(),
+                                err
+                            );
+                        }
+                    }
+                }
             }
-            if let Some(ref locked_stats) = *stats {
-                let mut stats = locked_stats.lock().unwrap();
-                *stats += search_result.stats().unwrap();
+            if matched && args.quit_after_match() {
+                merge.quit = true;
             }
-            if let Err(err) = bufwtr.print(searcher.printer().get_mut()) {
-                // A broken pipe means graceful termination.
-                if err.kind() == std::io::ErrorKind::BrokenPipe {
+        };
+        let mut job_tx = Some(job_tx);
+        let r = haystacks(ctx, args, &mut |haystack, io| {
+            let seq = merge.assigned;
+            merge.assigned += 1;
+            if let HaystackIo::Stdin(_) = io {
+                // In its turn: everything before it is printed first.
+                while merge.next < seq && !merge.quit {
+                    let Ok(d) = done_rx.recv() else { break };
+                    merge.pending.insert(d.seq, d);
+                    while let Some(d) = merge.pending.remove(&merge.next) {
+                        merge.next += 1;
+                        on_done(&mut merge, &mut out, d);
+                    }
+                }
+                local.printer().get_mut().clear();
+                let result = local.search(&haystack, io).map(|r| {
+                    (local.printer().get_mut().as_slice().to_vec(), r)
+                });
+                merge.next += 1;
+                on_done(&mut merge, &mut out, Done { seq, haystack, result });
+            } else if let Some(tx) = &job_tx {
+                if tx.send((seq, haystack)).is_err() {
                     return WalkState::Quit;
                 }
-                // Otherwise, we continue on our merry way.
-                err_message!("{}: {}", haystack.path().display(), err);
             }
-            if matched.load(Ordering::SeqCst) && args.quit_after_match() {
-                WalkState::Quit
-            } else {
-                WalkState::Continue
+            // Print what is done, in order; wait while too far ahead.
+            loop {
+                while let Ok(d) = done_rx.try_recv() {
+                    merge.pending.insert(d.seq, d);
+                }
+                while let Some(d) = merge.pending.remove(&merge.next) {
+                    merge.next += 1;
+                    on_done(&mut merge, &mut out, d);
+                }
+                if merge.quit {
+                    return WalkState::Quit;
+                }
+                if merge.assigned - merge.next <= 4 * threads {
+                    return WalkState::Continue;
+                }
+                match done_rx.recv() {
+                    Ok(d) => {
+                        merge.pending.insert(d.seq, d);
+                    }
+                    Err(_) => return WalkState::Quit,
+                }
             }
-        })
-    });
-    if args.has_implicit_path() && !searched.load(Ordering::SeqCst) {
+        });
+        // No more jobs: the threads end when the queue is empty.
+        job_tx.take();
+        if !merge.quit {
+            for d in done_rx.iter() {
+                merge.pending.insert(d.seq, d);
+                while let Some(d) = merge.pending.remove(&merge.next) {
+                    merge.next += 1;
+                    on_done(&mut merge, &mut out, d);
+                }
+                if merge.quit {
+                    break;
+                }
+            }
+        }
+        // Dropping the receiver (when the scope ends) stops threads still searching.
+        drop(done_rx);
+        r
+    })?;
+    if args.has_implicit_path() && !searched {
         eprint_nothing_searched();
     }
-    if let Some(ref locked_stats) = stats {
-        let stats = locked_stats.lock().unwrap();
-        let mut wtr = searcher.printer().get_mut();
-        let _ = print_stats(mode, &stats, started_at, &mut wtr);
-        let _ = bufwtr.print(&mut wtr);
+    if let Some(ref stats) = stats {
+        let _ = print_stats(mode, stats, started_at, &mut out);
     }
-    Ok(matched.load(Ordering::SeqCst))
+    let _ = out.flush();
+    Ok(matched)
+}
+
+/// psh: one haystack searched on a search thread: its output and result.
+struct Done {
+    seq: usize,
+    haystack: Haystack,
+    result: std::io::Result<(Vec<u8>, SearchResult)>,
+}
+
+/// psh: the in-order merge of search threads' output.
+struct Merge {
+    /// termcolor's `BufferWriter::separator`.
+    separator: Option<Vec<u8>>,
+    printed: bool,
+    /// The sequence number to print next.
+    next: usize,
+    /// The sequence number the next haystack gets.
+    assigned: usize,
+    pending: BTreeMap<usize, Done>,
+    quit: bool,
+}
+
+impl Merge {
+    /// termcolor's `BufferWriter::print`.
+    fn print(
+        &mut self,
+        out: &mut impl Write,
+        buf: &[u8],
+    ) -> std::io::Result<()> {
+        if buf.is_empty() {
+            return Ok(());
+        }
+        if let Some(ref sep) = self.separator {
+            if self.printed {
+                out.write_all(sep)?;
+                out.write_all(b"\n")?;
+            }
+        }
+        out.write_all(buf)?;
+        self.printed = true;
+        Ok(())
+    }
 }
 
 /// The top-level entry point for file listing without searching.
 ///
 /// This recursively steps through the file list (current directory by default)
 /// and prints each path sequentially using a single thread.
-fn files(args: &HiArgs) -> anyhow::Result<bool> {
-    let haystack_builder = args.haystack_builder();
-    let unsorted = args
-        .walk_builder()?
-        .build()
-        .filter_map(|result| haystack_builder.build_from_result(result));
-    let haystacks = args.sort(unsorted);
-
+///
+/// psh: also with more threads (listing is the walk itself).
+fn files(ctx: &mut SyncCtx, args: &HiArgs) -> anyhow::Result<bool> {
     let mut matched = false;
-    let mut path_printer = args.path_printer_builder().build(args.stdout());
-    for haystack in haystacks {
+    let mut path_printer =
+        args.path_printer_builder().build(args.stdout(ctx.writer(1)));
+    let mut error = None;
+    haystacks(ctx, args, &mut |haystack, _| {
         matched = true;
         if args.quit_after_match() {
-            break;
+            return WalkState::Quit;
         }
         if let Err(err) = path_printer.write(haystack.path()) {
             // A broken pipe means graceful termination.
-            if err.kind() == std::io::ErrorKind::BrokenPipe {
-                break;
+            if err.kind() != std::io::ErrorKind::BrokenPipe {
+                // Otherwise, we have some other error that's preventing us from
+                // writing to stdout, so we should bubble it up.
+                error = Some(err);
             }
-            // Otherwise, we have some other error that's preventing us from
-            // writing to stdout, so we should bubble it up.
-            return Err(err.into());
+            return WalkState::Quit;
         }
+        WalkState::Continue
+    })?;
+    if let Some(err) = error {
+        return Err(err.into());
     }
+    // The stream flushes when it is dropped (as ripgrep's stdout).
+    drop(path_printer);
     Ok(matched)
 }
 
-/// The top-level entry point for multi-threaded file listing without
-/// searching.
-///
-/// This recursively steps through the file list (current directory by default)
-/// and prints each path sequentially using multiple threads.
-///
-/// Requesting a sorted output from ripgrep (such as with `--sort path`) will
-/// automatically disable parallelism and hence sorting is not handled here.
-fn files_parallel(args: &HiArgs) -> anyhow::Result<bool> {
-    use std::{
-        sync::{
-            atomic::{AtomicBool, Ordering},
-            mpsc,
-        },
-        thread,
-    };
-
-    let haystack_builder = args.haystack_builder();
-    let mut path_printer = args.path_printer_builder().build(args.stdout());
-    let matched = AtomicBool::new(false);
-    let (tx, rx) = mpsc::channel::<crate::haystack::Haystack>();
-
-    // We spawn a single printing thread to make sure we don't tear writes.
-    // We use a channel here under the presumption that it's probably faster
-    // than using a mutex in the worker threads below, but this has never been
-    // seriously litigated.
-    let print_thread = thread::spawn(move || -> std::io::Result<()> {
-        for haystack in rx.iter() {
-            path_printer.write(haystack.path())?;
-        }
-        Ok(())
-    });
-    args.walk_builder()?.build_parallel().run(|| {
-        let haystack_builder = &haystack_builder;
-        let matched = &matched;
-        let tx = tx.clone();
-
-        Box::new(move |result| {
-            let haystack = match haystack_builder.build_from_result(result) {
-                Some(haystack) => haystack,
-                None => return WalkState::Continue,
-            };
-            matched.store(true, Ordering::SeqCst);
-            if args.quit_after_match() {
-                WalkState::Quit
-            } else {
-                match tx.send(haystack) {
-                    Ok(_) => WalkState::Continue,
-                    Err(_) => WalkState::Quit,
-                }
-            }
-        })
-    });
-    drop(tx);
-    if let Err(err) = print_thread.join().unwrap() {
-        // A broken pipe means graceful termination, so fall through.
-        // Otherwise, something bad happened while writing to stdout, so bubble
-        // it up.
-        if err.kind() != std::io::ErrorKind::BrokenPipe {
-            return Err(err.into());
-        }
-    }
-    Ok(matched.load(Ordering::SeqCst))
-}
-
 /// The top-level entry point for `--type-list`.
-fn types(args: &HiArgs) -> anyhow::Result<ExitCode> {
+fn types(ctx: &mut SyncCtx, args: &HiArgs) -> anyhow::Result<i32> {
     let mut count = 0;
-    let mut stdout = args.stdout();
+    let mut stdout = args.stdout(ctx.writer(1));
     for def in args.types().definitions() {
         count += 1;
         stdout.write_all(def.name().as_bytes())?;
@@ -344,7 +488,8 @@ fn types(args: &HiArgs) -> anyhow::Result<ExitCode> {
         }
         stdout.write_all(b"\n")?;
     }
-    Ok(ExitCode::from(if count == 0 { 1 } else { 0 }))
+    stdout.flush()?;
+    Ok(if count == 0 { 1 } else { 0 })
 }
 
 /// Implements ripgrep's "generate" modes.
@@ -352,8 +497,11 @@ fn types(args: &HiArgs) -> anyhow::Result<ExitCode> {
 /// These modes correspond to generating some kind of ancillary data related
 /// to ripgrep. At present, this includes ripgrep's man page (in roff format)
 /// and supported shell completions.
-fn generate(mode: crate::flags::GenerateMode) -> anyhow::Result<ExitCode> {
-    use crate::flags::GenerateMode;
+fn generate(
+    ctx: &mut SyncCtx,
+    mode: crate::rg::flags::GenerateMode,
+) -> anyhow::Result<i32> {
+    use crate::rg::flags::GenerateMode;
 
     let output = match mode {
         GenerateMode::Man => flags::generate_man_page(),
@@ -364,8 +512,8 @@ fn generate(mode: crate::flags::GenerateMode) -> anyhow::Result<ExitCode> {
             flags::generate_complete_powershell()
         }
     };
-    writeln!(std::io::stdout(), "{}", output.trim_end())?;
-    Ok(ExitCode::from(0))
+    writeln!(ctx.writer(1), "{}", output.trim_end())?;
+    Ok(0)
 }
 
 /// Implements ripgrep's "special" modes.
@@ -380,10 +528,12 @@ fn generate(mode: crate::flags::GenerateMode) -> anyhow::Result<ExitCode> {
 /// other things) is accessing the current working directory. If that fails,
 /// ripgrep emits an error. We don't want to emit an error if it fails and
 /// the user requested version or help information.
-fn special(mode: crate::flags::SpecialMode) -> anyhow::Result<ExitCode> {
-    use crate::flags::SpecialMode;
+///
+/// psh: the text to print and the status (the front end prints it).
+pub(crate) fn special(mode: crate::rg::flags::SpecialMode) -> (String, i32) {
+    use crate::rg::flags::SpecialMode;
 
-    let mut exit = ExitCode::from(0);
+    let mut exit = 0;
     let output = match mode {
         SpecialMode::HelpShort => flags::generate_help_short(),
         SpecialMode::HelpLong => flags::generate_help_long(),
@@ -394,13 +544,12 @@ fn special(mode: crate::flags::SpecialMode) -> anyhow::Result<ExitCode> {
         SpecialMode::VersionPCRE2 => {
             let (output, available) = flags::generate_version_pcre2();
             if !available {
-                exit = ExitCode::from(1);
+                exit = 1;
             }
             output
         }
     };
-    writeln!(std::io::stdout(), "{}", output.trim_end())?;
-    Ok(exit)
+    (format!("{}\n", output.trim_end()), exit)
 }
 
 /// Prints a heuristic error messages when nothing is searched.
@@ -433,31 +582,14 @@ fn eprint_nothing_searched() {
 /// if writing to stdout itself fails.
 fn print_stats<W: Write>(
     mode: SearchMode,
-    stats: &grep::printer::Stats,
+    stats: &grep_printer::Stats,
     started: std::time::Instant,
     mut wtr: W,
 ) -> std::io::Result<()> {
     let elapsed = std::time::Instant::now().duration_since(started);
-    if matches!(mode, SearchMode::JSON) {
-        // We specifically match the format laid out by the JSON printer in
-        // the grep-printer crate. We simply "extend" it with the 'summary'
-        // message type.
-        serde_json::to_writer(
-            &mut wtr,
-            &serde_json::json!({
-                "type": "summary",
-                "data": {
-                    "stats": stats,
-                    "elapsed_total": {
-                        "secs": elapsed.as_secs(),
-                        "nanos": elapsed.subsec_nanos(),
-                        "human": format!("{:0.6}s", elapsed.as_secs_f64()),
-                    },
-                }
-            }),
-        )?;
-        write!(wtr, "\n")
-    } else {
+    // psh: `--json` runs the real rg for now (D1082), so stats are text.
+    {
+        let _ = mode;
         write!(
             wtr,
             "

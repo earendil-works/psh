@@ -1,3 +1,7 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/search.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 Defines a very high level "search worker" abstraction.
 
@@ -7,9 +11,17 @@ read and matched using the regex engine) and the printer. For example, the
 search worker is where things like preprocessors or decompression happens.
 */
 
+// psh: `--pre` and `-z/--search-zip` run the real rg (D1082), so the preprocessor and
+// decompression paths are gone; PCRE2 likewise. A haystack is searched natively when
+// the walk found it on the process's file system, else through the utility's file
+// system (`SyncCtx::open`), and stdin is the utility's (D1133). Memory maps are off
+// (`MmapChoice::auto` is unsafe).
+
 use std::{io, path::Path};
 
-use {grep::matcher::Matcher, termcolor::WriteColor};
+use psh_engine::util::SyncCtx;
+
+use {grep_matcher::Matcher, termcolor::WriteColor};
 
 /// The configuration for the search worker.
 ///
@@ -17,21 +29,15 @@ use {grep::matcher::Matcher, termcolor::WriteColor};
 /// show search results to users at a very high level.
 #[derive(Clone, Debug)]
 struct Config {
-    preprocessor: Option<std::path::PathBuf>,
-    preprocessor_globs: ignore::overrides::Override,
-    search_zip: bool,
-    binary_implicit: grep::searcher::BinaryDetection,
-    binary_explicit: grep::searcher::BinaryDetection,
+    binary_implicit: grep_searcher::BinaryDetection,
+    binary_explicit: grep_searcher::BinaryDetection,
 }
 
 impl Default for Config {
     fn default() -> Config {
         Config {
-            preprocessor: None,
-            preprocessor_globs: ignore::overrides::Override::empty(),
-            search_zip: false,
-            binary_implicit: grep::searcher::BinaryDetection::none(),
-            binary_explicit: grep::searcher::BinaryDetection::none(),
+            binary_implicit: grep_searcher::BinaryDetection::none(),
+            binary_explicit: grep_searcher::BinaryDetection::none(),
         }
     }
 }
@@ -40,7 +46,6 @@ impl Default for Config {
 #[derive(Clone, Debug)]
 pub(crate) struct SearchWorkerBuilder {
     config: Config,
-    command_builder: grep::cli::CommandReaderBuilder,
 }
 
 impl Default for SearchWorkerBuilder {
@@ -52,10 +57,7 @@ impl Default for SearchWorkerBuilder {
 impl SearchWorkerBuilder {
     /// Create a new builder for configuring and constructing a search worker.
     pub(crate) fn new() -> SearchWorkerBuilder {
-        let mut command_builder = grep::cli::CommandReaderBuilder::new();
-        command_builder.async_stderr(true);
-
-        SearchWorkerBuilder { config: Config::default(), command_builder }
+        SearchWorkerBuilder { config: Config::default() }
     }
 
     /// Create a new search worker using the given searcher, matcher and
@@ -63,82 +65,24 @@ impl SearchWorkerBuilder {
     pub(crate) fn build<W: WriteColor>(
         &self,
         matcher: PatternMatcher,
-        searcher: grep::searcher::Searcher,
+        searcher: grep_searcher::Searcher,
         printer: Printer<W>,
     ) -> SearchWorker<W> {
         let config = self.config.clone();
-        let command_builder = self.command_builder.clone();
-        let decomp_builder = config.search_zip.then(|| {
-            let mut decomp_builder =
-                grep::cli::DecompressionReaderBuilder::new();
-            decomp_builder.async_stderr(true);
-            decomp_builder
-        });
-        SearchWorker {
-            config,
-            command_builder,
-            decomp_builder,
-            matcher,
-            searcher,
-            printer,
-        }
-    }
-
-    /// Set the path to a preprocessor command.
-    ///
-    /// When this is set, instead of searching files directly, the given
-    /// command will be run with the file path as the first argument, and the
-    /// output of that command will be searched instead.
-    pub(crate) fn preprocessor(
-        &mut self,
-        cmd: Option<std::path::PathBuf>,
-    ) -> anyhow::Result<&mut SearchWorkerBuilder> {
-        if let Some(ref prog) = cmd {
-            let bin = grep::cli::resolve_binary(prog)?;
-            self.config.preprocessor = Some(bin);
-        } else {
-            self.config.preprocessor = None;
-        }
-        Ok(self)
-    }
-
-    /// Set the globs for determining which files should be run through the
-    /// preprocessor. By default, with no globs and a preprocessor specified,
-    /// every file is run through the preprocessor.
-    pub(crate) fn preprocessor_globs(
-        &mut self,
-        globs: ignore::overrides::Override,
-    ) -> &mut SearchWorkerBuilder {
-        self.config.preprocessor_globs = globs;
-        self
-    }
-
-    /// Enable the decompression and searching of common compressed files.
-    ///
-    /// When enabled, if a particular file path is recognized as a compressed
-    /// file, then it is decompressed before searching.
-    ///
-    /// Note that if a preprocessor command is set, then it overrides this
-    /// setting.
-    pub(crate) fn search_zip(
-        &mut self,
-        yes: bool,
-    ) -> &mut SearchWorkerBuilder {
-        self.config.search_zip = yes;
-        self
+        SearchWorker { config, matcher, searcher, printer }
     }
 
     /// Set the binary detection that should be used when searching files
     /// found via a recursive directory search.
     ///
     /// Generally, this binary detection may be
-    /// `grep::searcher::BinaryDetection::quit` if we want to skip binary files
+    /// `grep_searcher::BinaryDetection::quit` if we want to skip binary files
     /// completely.
     ///
     /// By default, no binary detection is performed.
     pub(crate) fn binary_detection_implicit(
         &mut self,
-        detection: grep::searcher::BinaryDetection,
+        detection: grep_searcher::BinaryDetection,
     ) -> &mut SearchWorkerBuilder {
         self.config.binary_implicit = detection;
         self
@@ -148,13 +92,13 @@ impl SearchWorkerBuilder {
     /// explicitly supplied by an end user.
     ///
     /// Generally, this binary detection should NOT be
-    /// `grep::searcher::BinaryDetection::quit`, since we never want to
+    /// `grep_searcher::BinaryDetection::quit`, since we never want to
     /// automatically filter files supplied by the end user.
     ///
     /// By default, no binary detection is performed.
     pub(crate) fn binary_detection_explicit(
         &mut self,
-        detection: grep::searcher::BinaryDetection,
+        detection: grep_searcher::BinaryDetection,
     ) -> &mut SearchWorkerBuilder {
         self.config.binary_explicit = detection;
         self
@@ -170,7 +114,7 @@ impl SearchWorkerBuilder {
 #[derive(Clone, Debug, Default)]
 pub(crate) struct SearchResult {
     has_match: bool,
-    stats: Option<grep::printer::Stats>,
+    stats: Option<grep_printer::Stats>,
 }
 
 impl SearchResult {
@@ -183,7 +127,7 @@ impl SearchResult {
     ///
     /// It can be expensive to compute statistics, so these are only present
     /// if explicitly enabled in the printer provided by the caller.
-    pub(crate) fn stats(&self) -> Option<&grep::printer::Stats> {
+    pub(crate) fn stats(&self) -> Option<&grep_printer::Stats> {
         self.stats.as_ref()
     }
 }
@@ -191,9 +135,7 @@ impl SearchResult {
 /// The pattern matcher used by a search worker.
 #[derive(Clone, Debug)]
 pub(crate) enum PatternMatcher {
-    RustRegex(grep::regex::RegexMatcher),
-    #[cfg(feature = "pcre2")]
-    PCRE2(grep::pcre2::RegexMatcher),
+    RustRegex(grep_regex::RegexMatcher),
 }
 
 /// The printer used by a search worker.
@@ -202,12 +144,10 @@ pub(crate) enum PatternMatcher {
 #[derive(Clone, Debug)]
 pub(crate) enum Printer<W> {
     /// Use the standard printer, which supports the classic grep-like format.
-    Standard(grep::printer::Standard<W>),
+    Standard(grep_printer::Standard<W>),
     /// Use the summary printer, which supports aggregate displays of search
     /// results.
-    Summary(grep::printer::Summary<W>),
-    /// A JSON printer, which emits results in the JSON Lines format.
-    JSON(grep::printer::JSON<W>),
+    Summary(grep_printer::Summary<W>),
 }
 
 impl<W: WriteColor> Printer<W> {
@@ -216,7 +156,6 @@ impl<W: WriteColor> Printer<W> {
         match *self {
             Printer::Standard(ref mut p) => p.get_mut(),
             Printer::Summary(ref mut p) => p.get_mut(),
-            Printer::JSON(ref mut p) => p.get_mut(),
         }
     }
 }
@@ -229,22 +168,21 @@ impl<W: WriteColor> Printer<W> {
 #[derive(Clone, Debug)]
 pub(crate) struct SearchWorker<W> {
     config: Config,
-    command_builder: grep::cli::CommandReaderBuilder,
-    /// This is `None` when `search_zip` is not enabled, since in this case it
-    /// can never be used. We do this because building the reader can sometimes
-    /// do non-trivial work (like resolving the paths of decompression binaries
-    /// on Windows).
-    decomp_builder: Option<grep::cli::DecompressionReaderBuilder>,
     matcher: PatternMatcher,
-    searcher: grep::searcher::Searcher,
+    searcher: grep_searcher::Searcher,
     printer: Printer<W>,
 }
 
 impl<W: WriteColor> SearchWorker<W> {
     /// Execute a search over the given haystack.
+    ///
+    /// psh: `io` is how to read it: stdin for the stdin haystack, the utility's file
+    /// system for one the walk did not find natively (`None` on search threads, which
+    /// only get native haystacks).
     pub(crate) fn search(
         &mut self,
-        haystack: &crate::haystack::Haystack,
+        haystack: &crate::rg::haystack::Haystack,
+        io: HaystackIo<'_>,
     ) -> io::Result<SearchResult> {
         let bin = if haystack.is_explicit() {
             self.config.binary_explicit.clone()
@@ -252,17 +190,23 @@ impl<W: WriteColor> SearchWorker<W> {
             self.config.binary_implicit.clone()
         };
         let path = haystack.path();
-        log::trace!("{}: binary detection: {:?}", path.display(), bin);
+        trace!("{}: binary detection: {:?}", path.display(), bin);
 
         self.searcher.set_binary_detection(bin);
-        if haystack.is_stdin() {
-            self.search_reader(path, &mut io::stdin().lock())
-        } else if self.should_preprocess(path) {
-            self.search_preprocessor(path)
-        } else if self.should_decompress(path) {
-            self.search_decompress(path)
-        } else {
-            self.search_path(path)
+        match (haystack.entry(), io) {
+            (None, HaystackIo::Stdin(rdr)) => self.search_reader(path, rdr),
+            (Some(e), _) if e.native.is_some() => {
+                let native = e.native.clone().unwrap();
+                self.search_path(path, &native)
+            }
+            (Some(e), HaystackIo::Fs(ctx)) => {
+                let mut rdr = ctx.open(&e.abs)?;
+                self.search_reader(path, &mut rdr)
+            }
+            _ => Err(io::Error::new(
+                io::ErrorKind::Unsupported,
+                "cannot read this haystack here",
+            )),
         }
     }
 
@@ -271,82 +215,17 @@ impl<W: WriteColor> SearchWorker<W> {
         &mut self.printer
     }
 
-    /// Returns true if and only if the given file path should be
-    /// decompressed before searching.
-    fn should_decompress(&self, path: &Path) -> bool {
-        self.decomp_builder.as_ref().is_some_and(|decomp_builder| {
-            decomp_builder.get_matcher().has_command(path)
-        })
-    }
-
-    /// Returns true if and only if the given file path should be run through
-    /// the preprocessor.
-    fn should_preprocess(&self, path: &Path) -> bool {
-        if !self.config.preprocessor.is_some() {
-            return false;
-        }
-        if self.config.preprocessor_globs.is_empty() {
-            return true;
-        }
-        !self.config.preprocessor_globs.matched(path, false).is_ignore()
-    }
-
-    /// Search the given file path by first asking the preprocessor for the
-    /// data to search instead of opening the path directly.
-    fn search_preprocessor(
+    /// Search the contents of the given file path.
+    fn search_path(
         &mut self,
         path: &Path,
+        file: &Path,
     ) -> io::Result<SearchResult> {
-        use std::{fs::File, process::Stdio};
-
-        let bin = self.config.preprocessor.as_ref().unwrap();
-        let mut cmd = std::process::Command::new(bin);
-        cmd.arg(path).stdin(Stdio::from(File::open(path)?));
-
-        let mut rdr = self.command_builder.build(&mut cmd).map_err(|err| {
-            io::Error::new(
-                io::ErrorKind::Other,
-                format!(
-                    "preprocessor command could not start: '{cmd:?}': {err}",
-                ),
-            )
-        })?;
-        let result = self.search_reader(path, &mut rdr).map_err(|err| {
-            io::Error::new(
-                io::ErrorKind::Other,
-                format!("preprocessor command failed: '{cmd:?}': {err}"),
-            )
-        });
-        let close_result = rdr.close();
-        let search_result = result?;
-        close_result?;
-        Ok(search_result)
-    }
-
-    /// Attempt to decompress the data at the given file path and search the
-    /// result. If the given file path isn't recognized as a compressed file,
-    /// then search it without doing any decompression.
-    fn search_decompress(&mut self, path: &Path) -> io::Result<SearchResult> {
-        let Some(ref decomp_builder) = self.decomp_builder else {
-            return self.search_path(path);
-        };
-        let mut rdr = decomp_builder.build(path)?;
-        let result = self.search_reader(path, &mut rdr);
-        let close_result = rdr.close();
-        let search_result = result?;
-        close_result?;
-        Ok(search_result)
-    }
-
-    /// Search the contents of the given file path.
-    fn search_path(&mut self, path: &Path) -> io::Result<SearchResult> {
         use self::PatternMatcher::*;
 
         let (searcher, printer) = (&mut self.searcher, &mut self.printer);
         match self.matcher {
-            RustRegex(ref m) => search_path(m, searcher, printer, path),
-            #[cfg(feature = "pcre2")]
-            PCRE2(ref m) => search_path(m, searcher, printer, path),
+            RustRegex(ref m) => search_path(m, searcher, printer, path, file),
         }
     }
 
@@ -359,7 +238,7 @@ impl<W: WriteColor> SearchWorker<W> {
     /// Generally speaking, this method should only be used when there is no
     /// other choice. Searching via `search_path` provides more opportunities
     /// for optimizations (such as memory maps).
-    fn search_reader<R: io::Read>(
+    fn search_reader<R: io::Read + ?Sized>(
         &mut self,
         path: &Path,
         rdr: &mut R,
@@ -369,24 +248,30 @@ impl<W: WriteColor> SearchWorker<W> {
         let (searcher, printer) = (&mut self.searcher, &mut self.printer);
         match self.matcher {
             RustRegex(ref m) => search_reader(m, searcher, printer, path, rdr),
-            #[cfg(feature = "pcre2")]
-            PCRE2(ref m) => search_reader(m, searcher, printer, path, rdr),
         }
     }
+}
+
+/// psh: how a haystack is read (see [`SearchWorker::search`]).
+pub(crate) enum HaystackIo<'a> {
+    Stdin(&'a mut dyn io::Read),
+    Fs(&'a SyncCtx),
+    None,
 }
 
 /// Search the contents of the given file path using the given matcher,
 /// searcher and printer.
 fn search_path<M: Matcher, W: WriteColor>(
     matcher: M,
-    searcher: &mut grep::searcher::Searcher,
+    searcher: &mut grep_searcher::Searcher,
     printer: &mut Printer<W>,
     path: &Path,
+    file: &Path,
 ) -> io::Result<SearchResult> {
     match *printer {
         Printer::Standard(ref mut p) => {
             let mut sink = p.sink_with_path(&matcher, path);
-            searcher.search_path(&matcher, path, &mut sink)?;
+            searcher.search_path(&matcher, file, &mut sink)?;
             Ok(SearchResult {
                 has_match: sink.has_match(),
                 stats: sink.stats().cloned(),
@@ -394,18 +279,10 @@ fn search_path<M: Matcher, W: WriteColor>(
         }
         Printer::Summary(ref mut p) => {
             let mut sink = p.sink_with_path(&matcher, path);
-            searcher.search_path(&matcher, path, &mut sink)?;
+            searcher.search_path(&matcher, file, &mut sink)?;
             Ok(SearchResult {
                 has_match: sink.has_match(),
                 stats: sink.stats().cloned(),
-            })
-        }
-        Printer::JSON(ref mut p) => {
-            let mut sink = p.sink_with_path(&matcher, path);
-            searcher.search_path(&matcher, path, &mut sink)?;
-            Ok(SearchResult {
-                has_match: sink.has_match(),
-                stats: Some(sink.stats().clone()),
             })
         }
     }
@@ -413,17 +290,17 @@ fn search_path<M: Matcher, W: WriteColor>(
 
 /// Search the contents of the given reader using the given matcher, searcher
 /// and printer.
-fn search_reader<M: Matcher, R: io::Read, W: WriteColor>(
+fn search_reader<M: Matcher, R: io::Read + ?Sized, W: WriteColor>(
     matcher: M,
-    searcher: &mut grep::searcher::Searcher,
+    searcher: &mut grep_searcher::Searcher,
     printer: &mut Printer<W>,
     path: &Path,
-    mut rdr: R,
+    rdr: &mut R,
 ) -> io::Result<SearchResult> {
     match *printer {
         Printer::Standard(ref mut p) => {
             let mut sink = p.sink_with_path(&matcher, path);
-            searcher.search_reader(&matcher, &mut rdr, &mut sink)?;
+            searcher.search_reader(&matcher, &mut *rdr, &mut sink)?;
             Ok(SearchResult {
                 has_match: sink.has_match(),
                 stats: sink.stats().cloned(),
@@ -431,18 +308,10 @@ fn search_reader<M: Matcher, R: io::Read, W: WriteColor>(
         }
         Printer::Summary(ref mut p) => {
             let mut sink = p.sink_with_path(&matcher, path);
-            searcher.search_reader(&matcher, &mut rdr, &mut sink)?;
+            searcher.search_reader(&matcher, &mut *rdr, &mut sink)?;
             Ok(SearchResult {
                 has_match: sink.has_match(),
                 stats: sink.stats().cloned(),
-            })
-        }
-        Printer::JSON(ref mut p) => {
-            let mut sink = p.sink_with_path(&matcher, path);
-            searcher.search_reader(&matcher, &mut rdr, &mut sink)?;
-            Ok(SearchResult {
-                has_match: sink.has_match(),
-                stats: Some(sink.stats().clone()),
             })
         }
     }

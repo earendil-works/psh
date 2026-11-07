@@ -1,7 +1,12 @@
+// Copied from ripgrep (https://github.com/BurntSushi/ripgrep, commit 91f5d22),
+// crates/core/flags/lowargs.rs, with the psh patches marked `psh:` (D1133):
+// Copyright (c) 2015 Andrew Gallant. Licensed under the MIT License (see NOTICE).
+
 /*!
 Provides the definition of low level arguments from CLI flags.
 */
 
+use crate::rg::anyhow;
 use std::{
     ffi::{OsStr, OsString},
     path::PathBuf,
@@ -9,7 +14,7 @@ use std::{
 
 use {
     bstr::{BString, ByteVec},
-    grep::printer::{HyperlinkFormat, UserColorSpec},
+    grep_printer::{HyperlinkFormat, UserColorSpec},
 };
 
 /// A collection of "low level" arguments.
@@ -48,6 +53,8 @@ pub(crate) struct LowArgs {
     pub(crate) context: ContextMode,
     pub(crate) context_separator: ContextSeparator,
     pub(crate) crlf: bool,
+    /// psh: `--crlf` or `--no-crlf` was given (CRLF is the default on Windows, D030).
+    pub(crate) crlf_explicit: bool,
     pub(crate) dfa_size_limit: Option<usize>,
     pub(crate) encoding: EncodingMode,
     pub(crate) engine: EngineChoice,
@@ -321,17 +328,7 @@ pub(crate) enum ColorChoice {
     Ansi,
 }
 
-impl ColorChoice {
-    /// Convert this color choice to the corresponding termcolor type.
-    pub(crate) fn to_termcolor(&self) -> termcolor::ColorChoice {
-        match *self {
-            ColorChoice::Never => termcolor::ColorChoice::Never,
-            ColorChoice::Auto => termcolor::ColorChoice::Auto,
-            ColorChoice::Always => termcolor::ColorChoice::Always,
-            ColorChoice::Ansi => termcolor::ColorChoice::AlwaysAnsi,
-        }
-    }
-}
+// psh: `ColorChoice::to_termcolor` is gone; hiargs decides ANSI or none (D1133).
 
 /// Indicates the line context options ripgrep should use for output.
 ///
@@ -515,7 +512,7 @@ pub(crate) enum EncodingMode {
     #[default]
     Auto,
     /// Use an explicit encoding forcefully, but let BOM sniffing override it.
-    Some(grep::searcher::Encoding),
+    Some(grep_searcher::Encoding),
     /// Use no explicit encoding and disable all BOM sniffing. This will
     /// always result in searching the raw bytes, regardless of their
     /// true encoding.

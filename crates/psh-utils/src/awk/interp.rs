@@ -30,6 +30,8 @@ pub enum Flow {
     Exit,
     /// A fatal error: the message (status 2).
     Fatal(String),
+    /// One gawk reports without the source line and input position.
+    FatalPlain(String),
 }
 
 type R<T> = Result<T, Flow>;
@@ -123,6 +125,10 @@ pub struct Interp<'c, 'v> {
     outputs: HashMap<Vec<u8>, Output>,
 
     pub exit_status: i32,
+    /// The line of the statement running, and where the program's lines come from
+    /// (first line, `cmd. line` or a file name), for fatal errors.
+    src_line: u32,
+    pub places: Vec<(u32, String)>,
     regex_cache: HashMap<Vec<u8>, Rc<Regex>>,
     fs_cache: Option<(S, Rc<Fs>)>,
     range_active: Vec<bool>,
@@ -183,6 +189,8 @@ impl<'c, 'v> Interp<'c, 'v> {
             cmds_in: HashMap::new(),
             outputs: HashMap::new(),
             exit_status: 0,
+            src_line: 0,
+            places: Vec::new(),
             regex_cache: HashMap::new(),
             fs_cache: None,
             range_active: vec![false; n_actions],
@@ -989,6 +997,7 @@ impl<'c, 'v> Interp<'c, 'v> {
                     self.write_out(*redir, &out).await?;
                 }
                 Op::Getline(src, target) => self.getline(*src, *target).await?,
+                Op::Line(n) => self.src_line = *n,
             }
         }
     }
@@ -1244,11 +1253,11 @@ impl<'c, 'v> Interp<'c, 'v> {
                         self.ctx.error(&msg).await;
                         continue;
                     }
-                    return fatal(format!(
+                    return Err(Flow::FatalPlain(format!(
                         "cannot open file `{}' for reading: {}",
                         String::from_utf8_lossy(&arg),
                         error_text(&e)
-                    ));
+                    )));
                 }
             }
         }
@@ -1272,7 +1281,7 @@ impl<'c, 'v> Interp<'c, 'v> {
                 match self.next_main_record().await {
                     Ok(Some(r)) => Some(r),
                     Ok(None) => None,
-                    Err(Flow::Fatal(m)) => {
+                    Err(Flow::Fatal(m) | Flow::FatalPlain(m)) => {
                         self.ctx.error(&m).await;
                         self.push(Value::Num(-1.0));
                         return Ok(());
@@ -1371,14 +1380,16 @@ impl<'c, 'v> Interp<'c, 'v> {
         match self.exec(CodeId::Begin).await {
             Ok(()) => {}
             Err(Flow::Exit) => exiting = true,
-            Err(Flow::Fatal(m)) => return self.die(&m).await,
+            Err(Flow::Fatal(m)) => return self.die(&m, true).await,
+            Err(Flow::FatalPlain(m)) => return self.die(&m, false).await,
             Err(_) => {}
         }
         if !exiting && (!prog.actions.is_empty() || prog.has_end) {
             match self.records().await {
                 Ok(()) => {}
                 Err(Flow::Exit) => {}
-                Err(Flow::Fatal(m)) => return self.die(&m).await,
+                Err(Flow::Fatal(m)) => return self.die(&m, true).await,
+                Err(Flow::FatalPlain(m)) => return self.die(&m, false).await,
                 Err(_) => {}
             }
         }
@@ -1386,7 +1397,8 @@ impl<'c, 'v> Interp<'c, 'v> {
         if prog.has_end {
             match self.exec(CodeId::End).await {
                 Ok(()) | Err(Flow::Exit) => {}
-                Err(Flow::Fatal(m)) => return self.die(&m).await,
+                Err(Flow::Fatal(m)) => return self.die(&m, true).await,
+                Err(Flow::FatalPlain(m)) => return self.die(&m, false).await,
                 Err(_) => {}
             }
         }
@@ -1397,17 +1409,24 @@ impl<'c, 'v> Interp<'c, 'v> {
         self.exit_status
     }
 
-    async fn die(&mut self, msg: &str) -> i32 {
+    async fn die(&mut self, msg: &str, context: bool) -> i32 {
         self.close_all().await;
         if msg.is_empty() {
             return self.exit_status;
         }
         let _ = self.ctx.flush().await;
         let mut where_ = String::new();
-        if self.nr > 0.0 || !matches!(self.filename, Value::Uninit) {
+        if context && self.src_line > 0 {
+            let line = self.src_line;
+            where_ = match self.places.iter().rev().find(|(first, _)| *first <= line) {
+                Some((first, name)) => format!("{name}:{}: ", line - first + 1),
+                None => format!("cmd. line:{line}: "),
+            };
+        }
+        if context && (self.nr > 0.0 || !matches!(self.filename, Value::Uninit)) {
             let f = self.to_str(&self.filename.clone());
             let f = if f.is_empty() { s(b"-") } else { f };
-            where_ = format!(
+            where_ += &format!(
                 "(FILENAME={} FNR={}) ",
                 String::from_utf8_lossy(&f),
                 self.fnr

@@ -1,0 +1,108 @@
+# Goldens for tests/utils/awk/functions.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: length of a string, of $0 and of an array
+status: 0
+bash-n: 0
+--- stdout
+|5 11 11
+|3
+
+=== 1: length counts characters in a UTF-8 locale
+status: 0
+bash-n: 0
+--- stdout
+|6
+
+=== 2: substr
+status: 0
+bash-n: 0
+--- stdout
+|ell llo he hel []
+
+=== 3: index
+status: 0
+bash-n: 0
+--- stdout
+|3 0
+
+=== 4: split with FS, a string and a regex
+status: 0
+bash-n: 0
+--- stdout
+|3 c
+|3 ac
+|3 b
+
+=== 5: tolower and toupper
+status: 0
+bash-n: 0
+--- stdout
+|mixed 1 MIXED 1
+
+=== 6: sub and gsub with & and an escaped &
+status: 0
+bash-n: 0
+--- stdout
+|2 [foo] bar [foo]
+|baa
+|x&y&z
+
+=== 7: gsub on a field rebuilds the record
+status: 0
+bash-n: 0
+--- stdout
+|a-b c+d
+
+=== 8: match sets RSTART and RLENGTH
+status: 0
+bash-n: 0
+--- stdout
+|2 2 2
+|0 0 -1
+
+=== 9: sprintf and printf conversions
+status: 0
+bash-n: 0
+--- stdout
+|42| 3.14|ab  |ff|10|1.234500e+03|A|%
+|007-x
+
+=== 10: printf with %*d and %.*f
+status: 0
+bash-n: 0
+--- stdout
+|[   42] [7   ] [3.14]
+
+=== 11: int and math functions
+status: 0
+bash-n: 0
+--- stdout
+|3 -3 4 1 0 0 1 0
+
+=== 12: srand with a seed is repeatable
+status: 0
+bash-n: 0
+--- stdout
+|1 1
+
+=== 13: strftime with a time and UTC
+status: 2
+bash-n: 0
+--- stderr
+|awk: calling undefined function strftime
+| source line number 1
+
+=== 14: systime is near the shell's clock
+status: 2
+bash-n: 0
+--- stderr
+|awk: calling undefined function systime
+| source line number 1
+
+=== 15: string to number conversions
+status: 0
+bash-n: 0
+--- stdout
+|4 12 1 100 0

@@ -156,6 +156,8 @@ pub enum Op {
     Printf(u32, Redir),
     /// [file/cmd] [index] -> status
     Getline(super::ast::GetlineSrc, Target),
+    /// The source line of the statements that follow (for messages).
+    Line(u32),
 }
 
 pub struct Func {
@@ -565,6 +567,7 @@ impl Compiler<'_> {
                 }
             }
             Stmt::Block(b) => self.stmts(b)?,
+            Stmt::Line(n) => self.add(Op::Line(*n)),
         }
         Ok(())
     }

@@ -135,10 +135,16 @@ impl Parser<'_> {
         self.expect(Tok::LBrace)?;
         self.optional_newlines()?;
         let mut ss = Vec::new();
+        let mut line = 0;
         while self.tok != Tok::RBrace && self.tok != Tok::Eof {
             if self.matches(&[Tok::Semicolon, Tok::Newline]) {
                 self.next()?;
                 continue;
+            }
+            // Where statements start, for the line of a run-time error.
+            if self.pos.line != line {
+                line = self.pos.line;
+                ss.push(Stmt::Line(line));
             }
             ss.push(self.stmt()?);
         }

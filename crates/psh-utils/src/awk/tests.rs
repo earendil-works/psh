@@ -104,6 +104,24 @@ fn basics() {
     );
 }
 
+#[test]
+fn unsupported_options_and_errors() {
+    // No awk program on the test host to fall through to: a clear error.
+    let o = run("awk --posix 'BEGIN { }'", b"", &[]);
+    assert_eq!(o.status, Some(2));
+    assert_eq!(
+        String::from_utf8_lossy(&o.stderr),
+        "awk: unsupported option '--posix' (psh built-in awk)\n"
+    );
+    let o = run("awk -f missing.awk", b"", &[]);
+    assert_eq!(o.status, Some(2));
+    let o = run("awk 'BEGIN {\n  x = 1 / y\n}'", b"", &[]);
+    assert_eq!(
+        (o.status, String::from_utf8_lossy(&o.stderr).as_ref()),
+        (Some(2), "awk: cmd. line:2: fatal: division by zero attempted\n")
+    );
+}
+
 // ---- The vendored suites.
 
 fn root() -> PathBuf {

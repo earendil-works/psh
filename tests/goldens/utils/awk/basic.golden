@@ -1,0 +1,240 @@
+# Goldens for tests/utils/awk/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: print a field
+status: 0
+bash-n: 0
+--- stdout
+|b
+
+=== 1: NF, NR and $NF
+status: 0
+bash-n: 0
+--- stdout
+|1 3 c
+|2 2 e
+
+=== 2: sum a column in END
+status: 0
+bash-n: 0
+--- stdout
+|6 3
+
+=== 3: a pattern without an action prints the record
+status: 0
+bash-n: 0
+--- stdout
+|banana
+|5
+|10
+
+=== 4: a range pattern
+status: 0
+bash-n: 0
+--- stdout
+|start
+|b
+|end
+
+=== 5: assigning a field rebuilds the record with OFS
+status: 0
+bash-n: 0
+--- stdout
+|a-X-c
+|3
+
+=== 6: NF assignment truncates and extends
+status: 0
+bash-n: 0
+--- stdout
+|a,b
+|a,b,,
+
+=== 7: -F with one character, a tab and a regex
+status: 0
+bash-n: 0
+--- stdout
+|ca
+|b c
+|a b c d
+
+=== 8: -F with several characters is a regex
+status: 0
+bash-n: 0
+--- stdout
+|b 3
+|c
+
+=== 9: -F '[][]' splits on brackets
+status: 0
+bash-n: 0
+--- stdout
+|1 2 5
+
+=== 10: -F t is a tab
+status: 0
+bash-n: 0
+--- stdout
+|
+
+=== 11: FS set in BEGIN
+status: 0
+bash-n: 0
+--- stdout
+|b
+
+=== 12: -v assigns before BEGIN, with escapes
+status: 0
+bash-n: 0
+--- stdout
+|10
+|a	b
+
+=== 13: var=value operands are assigned when reached
+status: 0
+bash-n: 0
+--- stdout
+|1 l1
+|2 l2
+--- file f1
+|l1
+--- file f2
+|l2
+
+=== 14: -f reads the program from a file
+status: 0
+bash-n: 0
+--- stdout
+|ABC
+--- file prog.awk
+|{ print toupper($1) }
+
+=== 15: -- ends the options
+status: 0
+bash-n: 0
+--- stdout
+|got x
+
+=== 16: uninitialized variables are 0 and ""
+status: 0
+bash-n: 0
+--- stdout
+|0 [] 0
+
+=== 17: string and number comparisons
+status: 0
+bash-n: 0
+--- stdout
+|0 1 1 1
+|1
+
+=== 18: increment, compound assignment, exponent, modulo
+status: 0
+bash-n: 0
+--- stdout
+|8 64 1 -4
+
+=== 19: the ternary operator and logical operators
+status: 0
+bash-n: 0
+--- stdout
+|yes 1 0
+
+=== 20: string concatenation and number output format
+status: 0
+bash-n: 0
+--- stdout
+|0.3 0.3 1000000 1000000000000000019884624838656 33.3333
+
+=== 21: OFMT and CONVFMT
+status: 0
+bash-n: 0
+--- stdout
+|3.14
+|3.142
+
+=== 22: exit status and END after exit
+status: 0
+bash-n: 0
+--- stdout
+|end
+|status 3
+|status 0
+
+=== 23: next skips the rest of the actions
+status: 0
+bash-n: 0
+--- stdout
+|1
+|3
+
+=== 24: while, do, for and break/continue
+status: 0
+bash-n: 0
+--- stdout
+|1 0
+|1 2
+
+=== 25: functions with locals and recursion
+status: 0
+bash-n: 0
+--- stdout
+|3628800 8 
+
+=== 26: arrays passed by reference
+status: 0
+bash-n: 0
+--- stdout
+|9 4
+
+=== 27: RS as a paragraph separator
+status: 0
+bash-n: 0
+--- stdout
+|1: a-c (3)
+|2: d-e (2)
+
+=== 28: RS as one character and as a regex
+status: 0
+bash-n: 0
+--- stdout
+|1 a
+|2 b
+|3 c
+|1 a 12
+|2 b 345
+|3 c 
+
+=== 29: ORS and OFS
+status: 0
+bash-n: 0
+--- stdout
+|a:b;c:d;
+
+=== 30: FILENAME and FNR across files
+status: 0
+bash-n: 0
+--- stdout
+|a 1 1
+|a 2 2
+|b 1 3
+--- file a
+|x
+|y
+--- file b
+|z
+
+=== 31: ENVIRON
+status: 0
+bash-n: 0
+--- stdout
+|bar
+
+=== 32: ARGV and ARGC
+status: 0
+bash-n: 0
+--- stdout
+|0 awk
+|1 one
+|2 two

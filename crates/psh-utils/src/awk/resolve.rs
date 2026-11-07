@@ -445,7 +445,7 @@ impl Resolver<'_> {
                 }
             }
             Stmt::Block(b) => self.stmts(b)?,
-            Stmt::Break | Stmt::Continue | Stmt::Next | Stmt::Nextfile => {}
+            Stmt::Break | Stmt::Continue | Stmt::Next | Stmt::Nextfile | Stmt::Line(_) => {}
         }
         Ok(())
     }

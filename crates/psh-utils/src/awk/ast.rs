@@ -93,6 +93,8 @@ pub enum Stmt {
         index: Vec<Expr>,
     },
     Block(Vec<Stmt>),
+    /// The statements that follow start on this source line.
+    Line(u32),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

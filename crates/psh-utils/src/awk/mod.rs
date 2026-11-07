@@ -96,7 +96,7 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         let Some(text) = operands.next() else {
             ctx.error_raw(b"usage: awk [-F fs][-v var=value][prog | -f progfile][file ...]\n")
                 .await;
-            return 2;
+            return 1;
         };
         Some(text)
     } else {
@@ -174,6 +174,7 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
 
     let env: Vec<(Vec<u8>, Vec<u8>)> = ctx.env().to_vec();
     let mut m = Interp::new(ctx, prog);
+    m.places = source.files.clone();
     if let Some(a) = m.global_array(b"ARGV") {
         let mut a = a.borrow_mut();
         a.set(Rc::from(&b"0"[..]), Value::str(b"awk"));
@@ -191,12 +192,8 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         }
     }
     if let Some(fs) = fs {
-        // `-F t` is a tab (POSIX); escapes as in a string.
-        let fs = if fs == b"t" {
-            b"\t".to_vec()
-        } else {
-            lexer::unescape(&fs)
-        };
+        // Escapes as in a string; `-Ft` is the letter t, as in gawk (BSD awk: a tab).
+        let fs = lexer::unescape(&fs);
         if let Err(interp::Flow::Fatal(msg)) = m.set_special(resolve::Special::Fs, Value::str(&fs))
         {
             m.ctx.error(&format!("fatal: {msg}")).await;

@@ -1,0 +1,120 @@
+# Goldens for tests/utils/awk/io.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: getline from a file
+status: 0
+bash-n: 0
+--- stdout
+|2 two
+--- file f
+|one
+|two
+
+=== 1: getline from a missing file is -1
+status: 0
+bash-n: 0
+--- stdout
+|-1
+
+=== 2: plain getline reads the next record
+status: 0
+bash-n: 0
+--- stdout
+|2
+|4
+
+=== 3: getline var from the main input
+status: 0
+bash-n: 0
+--- stdout
+|a b 2
+
+=== 4: "cmd" | getline through the shell
+status: 0
+bash-n: 0
+--- stdout
+|hello world
+|got x
+|got y
+
+=== 5: cmd | getline sets $0 and NF
+status: 0
+bash-n: 0
+--- stdout
+|3 b
+
+=== 6: close lets a command run again
+status: 0
+bash-n: 0
+--- stdout
+|once once
+
+=== 7: system runs a command and returns its status
+status: 0
+bash-n: 0
+--- stdout
+|from-system
+|status 3
+
+=== 8: system output is in order with print
+status: 0
+bash-n: 0
+--- stdout
+|before
+|during
+|after
+
+=== 9: print to a file, append and read back
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+--- file out
+|a
+|b
+|c
+
+=== 10: print to a pipe
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+
+=== 11: print to /dev/stderr
+status: 0
+bash-n: 0
+--- stdout
+|to stdout
+|stdout done
+|to stderr
+--- file err
+|to stderr
+
+=== 12: printf to /dev/stderr
+status: 0
+bash-n: 0
+--- stdout
+|e1
+
+=== 13: close of a pipe returns the command's status
+status: 0
+bash-n: 0
+--- stdout
+|2
+
+=== 14: fflush
+status: 0
+bash-n: 0
+--- stdout
+|ab
+
+=== 15: input files and stdin with -
+status: 0
+bash-n: 0
+--- stdout
+|-: from stdin

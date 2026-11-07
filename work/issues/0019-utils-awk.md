@@ -71,6 +71,32 @@ implementation. Port goawk (MIT) to Rust (D018); F mode until conformant, then S
   ShellStdio { stdin: ShellIo::Pipe|Inherit, stdout: ... })`, then `child.stdin` /
   `child.stdout` (`Option<UtilFile>`, take/drop to close), `child.wait().await`. psh-utils
   tests come with awk's `system()`.
+- Part 2: awk itself, `crates/psh-utils/src/awk/` (F mode, names `awk` and `gawk`):
+  lexer, parser, ast, resolver and compiler ported from goawk; the machine (`interp.rs`)
+  restructured as one async loop with explicit frames and a key-snapshot stack for
+  for-in (nothing recurses); values, printf, regex translation onto psh-regex (awk
+  escapes, `\]` in brackets, `[][]`, gawk's `\y \< \>`, intervals), RS (newline, one
+  char, paragraph, regex with RT), FS (" ", one char, "", regex), getline from the main
+  input, files and commands, `print >`, `>>`, `|`, `/dev/stdout`, `/dev/stderr`,
+  `system()`/pipes through `spawn_shell`, close/fflush, gawk's `gensub`, 3-argument
+  `match`, `strftime`/`systime`/`mktime`, `length(arr)`, `-i/--include`. Errors as gawk
+  words them (syntax errors exit 1 with the excerpt and caret, fatal ones 2 with
+  `cmd. line:N` and `(FILENAME=… FNR=…)`). for-in iterates in insertion order.
+- Part 2, outside touches (announced): D1192 `UtilPolicy::force_names` +
+  `PSH_UTILS_FORCE` (psh-engine util.rs, psh main.rs, psh-spec engine/runner/wasm,
+  TESTING.md), so the utils layer tests psh's F/W utilities (utils layer unchanged:
+  433/433); psh-classify's awk/gawk entries: `-i`/`--include` take a value (the effect
+  table already named them).
+- Vendored suites, `tests/vendor-awk/` (README there): onetrueawk's t.*/p.* (225) and
+  goawk's interpreter cases (547 of 611; `!gawk`/`+posix` ones left out), expected from
+  gawk 5.2.1 in the container and BSD awk on macOS (`record.sh`), run by
+  `cargo test -p psh-utils awk::tests::vendored_suites` on the test host with a ratchet
+  (fails on regressions and stale lines, `PSH_UPDATE_RATCHET=1`). 767/772 pass; the 5
+  left: test-host clock, signal statuses 256+N, one runtime-vs-parse-time error.
+  gawk and BSD disagree on 83 cases; psh follows gawk (D016), listed in the README.
+- L4: `tests/utils/awk/` (69 cases: basic, functions, io, errors), GNU and BSD recorded,
+  8 `## expect: gnu` with reasons; 69/69 pass natively (stdout and stderr), 68/69 on
+  wasm (`date` missing there). psh.wasm grew 1.52 MB -> 1.90 MB with awk.
 
 ## Follow-ups
 

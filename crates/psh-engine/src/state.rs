@@ -206,19 +206,37 @@ impl Vp {
     /// The variable a name refers to, following namerefs (`declare -n`); at most a few
     /// levels, as bash (a loop resolves to the last name seen).
     pub(crate) fn resolve<'n>(&self, name: &'n str) -> std::borrow::Cow<'n, str> {
-        let mut cur = std::borrow::Cow::Borrowed(name);
-        for _ in 0..8 {
-            match self.vars.get(&cur) {
-                Some(v) if v.nameref => match v.get() {
-                    Some(t) if !t.is_empty() => {
-                        cur = std::borrow::Cow::Owned(String::from_utf8_lossy(t).into_owned());
-                    }
-                    _ => break,
-                },
-                _ => break,
-            }
+        match self.resolve_checked(name) {
+            Ok(n) => n,
+            Err(_) => std::borrow::Cow::Borrowed(name),
         }
-        cur
+    }
+
+    /// Like `resolve`, but a cycle or a chain longer than bash's 8 is an error: bash's
+    /// warning text (`NAME: circular name reference`); the reference is then unset.
+    pub(crate) fn resolve_checked<'n>(
+        &self,
+        name: &'n str,
+    ) -> Result<std::borrow::Cow<'n, str>, String> {
+        let mut cur = std::borrow::Cow::Borrowed(name);
+        let mut seen: Vec<String> = Vec::new();
+        loop {
+            let next = match self.vars.get(&cur) {
+                Some(v) if v.nameref => match v.get() {
+                    Some(t) if !t.is_empty() => String::from_utf8_lossy(t).into_owned(),
+                    _ => return Ok(cur),
+                },
+                _ => return Ok(cur),
+            };
+            seen.push(cur.into_owned());
+            if seen.contains(&next) {
+                return Err(format!("{name}: circular name reference"));
+            }
+            if seen.len() >= 8 {
+                return Err(format!("{name}: maximum nameref depth (8) exceeded"));
+            }
+            cur = std::borrow::Cow::Owned(next);
+        }
     }
 
     /// The scalar value of a variable (element 0 of an array), following namerefs.

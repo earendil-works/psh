@@ -79,6 +79,8 @@ impl DeclArg {
                     s.push('[');
                     s.push_str(&String::from_utf8_lossy(i));
                     s.push(']');
+                    // bash names the element only.
+                    return s;
                 }
                 if *append {
                     s.push('+');
@@ -147,6 +149,10 @@ struct Opts {
 /// The entry point for the five builtins with already expanded arguments.
 pub(crate) async fn run(vp: &mut Vp, which: Which, args: Vec<DeclArg>) -> R {
     let bname = which.name();
+    if which == Which::Local && vp.frames.is_empty() {
+        vp.error("local: can only be used in a function").await;
+        return Ok(1);
+    }
     let mut o = Opts::default();
     match which {
         Which::Export => o.export = Some(true),
@@ -242,18 +248,21 @@ pub(crate) async fn run(vp: &mut Vp, which: Which, args: Vec<DeclArg>) -> R {
                 vp.error_raw(usage(which).as_bytes()).await;
                 return Ok(2);
             }
-            if c != b'p' && c != b'f' && c != b'F' && c != b'g' && c != b't' {
+            if c != b'p' && c != b'f' && c != b'F' && c != b'g' {
                 o.any = true;
             }
         }
         i += 1;
     }
     let rest = &args[i..];
-    if which == Which::Local && vp.frames.is_empty() {
-        vp.error("local: can only be used in a function").await;
-        return Ok(1);
-    }
     if o.funcs && which != Which::Export && which != Which::Readonly {
+        // With attributes to set (`declare -fx f`), nothing is printed.
+        if o.any && !o.print {
+            let missing = rest
+                .iter()
+                .any(|a| !vp.funcs.contains_key(&*String::from_utf8_lossy(a.name())));
+            return Ok(i32::from(missing));
+        }
         return functions(vp, bname, rest, o.func_names).await;
     }
     if rest.is_empty() {
@@ -277,6 +286,14 @@ pub(crate) async fn run(vp: &mut Vp, which: Which, args: Vec<DeclArg>) -> R {
             continue;
         }
         let name = String::from_utf8_lossy(raw).into_owned();
+        if matches!(which, Which::Export | Which::Readonly)
+            && matches!(a, DeclArg::Assign { index: Some(_), .. })
+        {
+            vp.error(&format!("{bname}: `{}': not a valid identifier", a.shown()))
+                .await;
+            status = 1;
+            continue;
+        }
         if o.funcs {
             // `export -f` / `readonly -f`: functions are not exported to children here.
             if !vp.funcs.contains_key(&name) {
@@ -286,7 +303,7 @@ pub(crate) async fn run(vp: &mut Vp, which: Which, args: Vec<DeclArg>) -> R {
             continue;
         }
         if let Err(msg) = declare_one(vp, &name, a, &o, local) {
-            vp.error(&msg).await;
+            vp.error(&format!("{bname}: {msg}")).await;
             status = 1;
         }
     }
@@ -306,6 +323,10 @@ fn usage(which: Which) -> String {
 /// Declares one name with the options, and assigns its value if given.
 fn declare_one(vp: &mut Vp, name: &str, a: &DeclArg, o: &Opts, local: bool) -> Result<(), String> {
     if local {
+        // A readonly variable cannot be shadowed either.
+        if vp.vars.get(name).is_some_and(|v| v.readonly) {
+            return Err(format!("{name}: readonly variable"));
+        }
         let fresh = vp
             .frames
             .last()
@@ -364,6 +385,22 @@ fn declare_one(vp: &mut Vp, name: &str, a: &DeclArg, o: &Opts, local: bool) -> R
             var.case = Case::None;
         }
         if let Some(n) = o.nameref {
+            // The value it will refer to must be a name (or `name[sub]`).
+            let target_name = match a {
+                DeclArg::Assign {
+                    index: None, value, ..
+                } => Some(value.clone()),
+                _ => var.get().map(<[u8]>::to_vec),
+            };
+            if n && let Some(t) = target_name
+                && !t.is_empty()
+                && !is_name(t.split(|&b| b == b'[').next().unwrap_or_default())
+            {
+                return Err(format!(
+                    "`{}': invalid variable name for name reference",
+                    String::from_utf8_lossy(&t)
+                ));
+            }
             var.nameref = n;
         }
         if let Some(x) = o.export {

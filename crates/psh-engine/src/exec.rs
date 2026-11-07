@@ -364,11 +364,13 @@ async fn run_for_items(
     let mut status = 0;
     for item in items {
         safepoint(&vp.core.sched).await;
-        if vp.vars.get(name).is_some_and(|v| v.readonly) {
-            vp.error(&format!("{name}: readonly variable")).await;
+        if vp.vars.get(name).is_some_and(|v| v.nameref) {
+            // A nameref loop variable refers to each item in turn.
+            vp.vars.entry(name).set(item);
+        } else if let Err(msg) = vp.assign(name, item) {
+            vp.error(&msg).await;
             return Ok(1);
         }
-        vp.set_var(name, item);
         match run_list(vp, code, body).await {
             Ok(s) => status = s,
             Err(u) => {
@@ -531,6 +533,8 @@ async fn prepare_simple(
         .words
         .first()
         .and_then(|w| psh_syntax::literal_text(&code.ast, w))
+        // A function of that name shadows the builtin.
+        .filter(|t| !vp.funcs.contains_key(t.as_str()))
         .and_then(|t| builtins::declare::Which::from_name(t.as_bytes()));
     let mut decl_args = None;
     let (argv, mut subst_status) = if decl.is_some() {
@@ -602,9 +606,7 @@ async fn prepare_simple(
         vp.fds = saved;
         return Ok(Prepared::Done(if ok? { status } else { 1 }));
     }
-    if let (Some(which), Some(args)) = (decl, decl_args)
-        && !vp.funcs.contains_key(&*String::from_utf8_lossy(&argv[0]))
-    {
+    if let (Some(which), Some(args)) = (decl, decl_args) {
         return Ok(Prepared::Decl(which, args, assigns));
     }
     Ok(Prepared::Run(argv, assigns))
@@ -633,18 +635,31 @@ fn run_simple<'a>(
             Prepared::Done(status) => return Ok(status),
             Prepared::Run(argv, assigns) => (argv, assigns),
             Prepared::Decl(which, args, assigns) => {
+                // Assignments in front of a declaration builtin last for it only.
+                let old: Vec<_> = assigns
+                    .iter()
+                    .map(|(n, _)| (n.clone(), vp.vars.get(n).cloned()))
+                    .collect();
                 for (n, v) in assigns {
                     vp.set_var(&n, v);
                 }
                 let saved = vp.fds.clone();
-                if !cmd.redirects.is_empty()
-                    && !Box::pin(apply_redirects(vp, code, &cmd.redirects)).await?
+                let r = if cmd.redirects.is_empty()
+                    || Box::pin(apply_redirects(vp, code, &cmd.redirects)).await?
                 {
-                    vp.fds = saved;
-                    return Ok(1);
-                }
-                let r = Box::pin(builtins::declare::run(vp, which, args)).await;
+                    Box::pin(builtins::declare::run(vp, which, args)).await
+                } else {
+                    Ok(1)
+                };
                 vp.fds = saved;
+                for (n, v) in old {
+                    match v {
+                        Some(v) => vp.vars.insert(&n, v),
+                        None => {
+                            vp.vars.remove(&n);
+                        }
+                    }
+                }
                 return r;
             }
         };

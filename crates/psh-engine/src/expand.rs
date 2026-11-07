@@ -714,10 +714,16 @@ async fn param(
         return emit_val(vp, f, Val::List(items, star), quoted);
     }
     let mut val = match p.name {
-        ParamName::Var => {
-            let name = vp.resolve(code.ast.text(p.name_span)).into_owned();
-            lookup_var(vp, code, &name, &p.index).await?
-        }
+        ParamName::Var => match vp.resolve_checked(code.ast.text(p.name_span)) {
+            Ok(name) => {
+                let name = name.into_owned();
+                lookup_var(vp, code, &name, &p.index).await?
+            }
+            Err(msg) => {
+                vp.error(&format!("warning: {msg}")).await;
+                Val::Unset
+            }
+        },
         ParamName::Positional | ParamName::Special(_) => {
             by_name(vp, name_text).unwrap_or(Val::Unset)
         }
@@ -1049,8 +1055,13 @@ fn slice_items(
         return Err(l.to_string());
     }
     let start = if off < 0 {
-        let end = items.last().map_or(0, |(k, _)| k + 1);
-        end + off
+        // One past the last index; bash's arithmetic wraps when that is i64::MAX + 1,
+        // and a negative offset then selects nothing.
+        let end = items.last().map_or(0, |(k, _)| k.wrapping_add(1));
+        if end < 0 {
+            return Ok(Vec::new());
+        }
+        end.saturating_add(off)
     } else {
         off
     };
@@ -1071,20 +1082,20 @@ fn slice_items(
 fn substring(s: &[u8], off: i64, len: Option<i64>, utf8: bool) -> Result<Vec<u8>, String> {
     let (u, offs) = pattern::units(s, utf8);
     let n = u.len() as i64;
-    let start = if off < 0 { n + off } else { off };
+    let start = if off < 0 { n.saturating_add(off) } else { off };
     if start < 0 || start > n {
         return Ok(Vec::new());
     }
     let end = match len {
         None => n,
         Some(l) if l < 0 => {
-            let e = n + l;
+            let e = n.saturating_add(l);
             if e < start {
                 return Err(l.to_string());
             }
             e
         }
-        Some(l) => (start + l).min(n),
+        Some(l) => start.saturating_add(l).min(n),
     };
     Ok(s[offs[start as usize]..offs[end as usize]].to_vec())
 }

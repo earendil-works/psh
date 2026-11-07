@@ -87,16 +87,6 @@ impl Var {
         }
     }
 
-    /// The number of elements (`${#a[@]}`).
-    pub(crate) fn len(&self) -> usize {
-        match &self.value {
-            Value::Unset => 0,
-            Value::Str(_) => 1,
-            Value::Indexed(m) => m.len(),
-            Value::Assoc(a) => a.len(),
-        }
-    }
-
     /// Sets the scalar value: the string, or element 0 of an array.
     pub(crate) fn set(&mut self, v: Vec<u8>) {
         match &mut self.value {

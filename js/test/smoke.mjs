@@ -35,6 +35,7 @@ const host = new MemHost();
 const psh = await loadPsh(await readFile(`${root}target/wasm/psh.wasm`), { host });
 host.fs.mkdir("/work");
 host.fs.writeFile("/work/a.txt", "one\ntwo\nthree\n");
+host.fs.symlink("a.txt", "/work/lnk");
 host.command("upper", async (ctx) => {
   for await (const chunk of ctx.stdin) await ctx.stdout.write(new TextDecoder().decode(chunk).toUpperCase());
   return 0;
@@ -82,6 +83,11 @@ await t("subshell and cd", "mkdir_not_needed=1; (cd /; pwd); pwd", { stdout: "/\
 await t("syntax error", "if then", { status: 2 });
 await t("command-line options", 'echo "$-"; shopt -q extglob && echo extglob; case :$SHELLOPTS: in *:pipefail:*) echo pipefail;; esac', { stdout: "ehBcs\nextglob\npipefail\n" }, { options: ["-e", "-o", "pipefail", "-O", "extglob", "-s"] });
 await t("errexit from the command line", "false; echo not", { status: 1, stdout: "" }, { options: ["-e"] });
+await t("mkdir, touch, rmdir", "mkdir -p d/e && mkdir -m 700 m && touch -d @1700000000.123456789 d/f && rmdir d/e && echo ok", { stdout: "ok\n" });
+check("mkdir mode", host.fs.lookup("/work/m").mode === 0o700, host.fs.lookup("/work/m").mode.toString(8));
+check("touch -d exact ns", host.fs.lookup("/work/d/f").mtimeNs === 1700000000123456789n, String(host.fs.lookup("/work/d/f").mtimeNs));
+check("rmdir", !host.fs.lookup("/work/d").children.has("e"));
+await t("readlink of a symlink", "readlink lnk", { stdout: "a.txt\n" }, {});
 await t("the clock", "printf '%(%s)T'", { stdout: String(Math.floor(Date.now() / 1000)) });
 {
   const r = await psh.run("f() { f; }; f");

@@ -48,7 +48,8 @@ function diskDir(path, mode = 0o755) {
 // Writes the memory tree of a mounted directory back to disk: only directories the case
 // looked into can have changed.
 function writeBack(node, path) {
-  if (!node.loaded) return;
+  // A mounted directory nobody looked into is unchanged; one made in memory is not lazy.
+  if (node.loaded === false) return;
   const onDisk = new Set(nodefs.readdirSync(path));
   for (const name of onDisk) {
     if (!node.children.has(name)) nodefs.rmSync(`${path}/${name}`, { recursive: true, force: true });

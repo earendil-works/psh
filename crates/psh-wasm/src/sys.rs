@@ -50,6 +50,29 @@ pub const K_PID: u32 = 18;
 /// The time since the Unix epoch: the JS side puts it into the input buffer (`psh_in`)
 /// as a little-endian f64 of milliseconds and returns its length, 8.
 pub const K_NOW: u32 = 19;
+/// A file system change or `stat_extra` (D1150): arg = the `FS_*` operation, payload = its
+/// fields (length-prefixed paths, u32s; times as decimal text). `FS_STAT_EXTRA` answers
+/// `stat`'s text plus `atime_ns ctime_ns btime_ns|- nlink blocks blksize rdev`;
+/// `FS_READ_LINK` the target.
+pub const K_FS: u32 = 20;
+/// A user (op 0) or group (op 1) name: arg = the id. The JS side puts the name into the
+/// input buffer and returns its length, or -1 when it has none.
+pub const K_NAME: u32 = 21;
+/// The local time's offset east of UTC in seconds, returned by the call: payload = the
+/// instant, epoch seconds as decimal text.
+pub const K_UTC_OFFSET: u32 = 22;
+
+/// `K_FS` operations.
+pub const FS_STAT_EXTRA: u32 = 0;
+pub const FS_MKDIR: u32 = 1;
+pub const FS_REMOVE_FILE: u32 = 2;
+pub const FS_REMOVE_DIR: u32 = 3;
+pub const FS_RENAME: u32 = 4;
+pub const FS_SYMLINK: u32 = 5;
+pub const FS_HARD_LINK: u32 = 6;
+pub const FS_READ_LINK: u32 = 7;
+pub const FS_SET_MODE: u32 = 8;
+pub const FS_SET_TIMES: u32 = 9;
 
 #[cfg(target_arch = "wasm32")]
 mod imp {

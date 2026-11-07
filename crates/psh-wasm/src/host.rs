@@ -13,8 +13,8 @@ use std::task::{Context, Poll};
 use std::time::Duration;
 
 use psh_engine::host::{
-    Access, ChildFd, DirEntry, ExitStatus, ExtProc, FileKind, HostFuture, Metadata, OpenOptions,
-    Signal, SpawnSpec, Spawned,
+    Access, ChildFd, DirEntry, ExitStatus, ExtProc, ExtraMetadata, FileKind, HostFuture, Metadata,
+    OpenOptions, Signal, SpawnSpec, Spawned,
 };
 use psh_engine::{Host, HostFile};
 
@@ -62,6 +62,32 @@ pub struct JsHost;
 
 fn op(kind: u32, arg: u32, data: &[u8]) -> OpFuture {
     OpFuture::new(ops::start(kind, arg, data))
+}
+
+/// A `K_FS` operation that answers nothing but success or an errno.
+fn fs_unit(fs_op: u32, w: &Writer) -> HostFuture<io::Result<()>> {
+    let fut = op(sys::K_FS, fs_op, &w.0);
+    Box::pin(async move {
+        fut.await.result()?;
+        Ok(())
+    })
+}
+
+fn paths(a: &[u8], b: &[u8]) -> Writer {
+    let mut w = Writer::new();
+    w.bytes(a).bytes(b);
+    w
+}
+
+fn path_mode(p: &[u8], mode: u32) -> Writer {
+    let mut w = Writer::new();
+    w.bytes(p).u32(mode);
+    w
+}
+
+fn name_of(op: u32, id: u32) -> Option<Vec<u8>> {
+    let n = sys::call(sys::K_NAME, op, id, &[]);
+    (n >= 0).then(|| crate::take_input(n as usize))
 }
 
 impl Host for JsHost {
@@ -202,6 +228,82 @@ impl Host for JsHost {
         sys::call(sys::K_PID, 0, 0, &[]) as u32
     }
 
+    fn stat_extra(
+        &self,
+        path: &[u8],
+        follow: bool,
+    ) -> HostFuture<io::Result<(Metadata, ExtraMetadata)>> {
+        let fut = op(
+            sys::K_FS,
+            sys::FS_STAT_EXTRA,
+            &path_mode(path, u32::from(follow)).0,
+        );
+        Box::pin(async move { parse_stat_extra(&fut.await.result()?.data) })
+    }
+
+    fn mkdir(&self, path: &[u8], mode: u32) -> HostFuture<io::Result<()>> {
+        fs_unit(sys::FS_MKDIR, &path_mode(path, mode))
+    }
+
+    fn remove_file(&self, path: &[u8]) -> HostFuture<io::Result<()>> {
+        fs_unit(sys::FS_REMOVE_FILE, &paths(path, b""))
+    }
+
+    fn remove_dir(&self, path: &[u8]) -> HostFuture<io::Result<()>> {
+        fs_unit(sys::FS_REMOVE_DIR, &paths(path, b""))
+    }
+
+    fn rename(&self, from: &[u8], to: &[u8]) -> HostFuture<io::Result<()>> {
+        fs_unit(sys::FS_RENAME, &paths(from, to))
+    }
+
+    fn symlink(&self, target: &[u8], link: &[u8]) -> HostFuture<io::Result<()>> {
+        fs_unit(sys::FS_SYMLINK, &paths(target, link))
+    }
+
+    fn hard_link(&self, existing: &[u8], link: &[u8]) -> HostFuture<io::Result<()>> {
+        fs_unit(sys::FS_HARD_LINK, &paths(existing, link))
+    }
+
+    fn read_link(&self, path: &[u8]) -> HostFuture<io::Result<Vec<u8>>> {
+        let fut = op(sys::K_FS, sys::FS_READ_LINK, &paths(path, b"").0);
+        Box::pin(async move { Ok(fut.await.result()?.data) })
+    }
+
+    fn set_mode(&self, path: &[u8], mode: u32) -> HostFuture<io::Result<()>> {
+        fs_unit(sys::FS_SET_MODE, &path_mode(path, mode))
+    }
+
+    fn set_times(
+        &self,
+        path: &[u8],
+        atime_ns: Option<i64>,
+        mtime_ns: Option<i64>,
+        follow: bool,
+    ) -> HostFuture<io::Result<()>> {
+        let flags = u32::from(atime_ns.is_some())
+            | u32::from(mtime_ns.is_some()) << 1
+            | u32::from(follow) << 2;
+        let mut w = Writer::new();
+        w.bytes(path)
+            .u32(flags)
+            .bytes(atime_ns.unwrap_or(0).to_string().as_bytes())
+            .bytes(mtime_ns.unwrap_or(0).to_string().as_bytes());
+        fs_unit(sys::FS_SET_TIMES, &w)
+    }
+
+    fn user_name(&self, uid: u32) -> Option<Vec<u8>> {
+        name_of(0, uid)
+    }
+
+    fn group_name(&self, gid: u32) -> Option<Vec<u8>> {
+        name_of(1, gid)
+    }
+
+    fn utc_offset(&self, epoch_secs: i64) -> i32 {
+        sys::call(sys::K_UTC_OFFSET, 0, 0, epoch_secs.to_string().as_bytes())
+    }
+
     fn now(&self) -> Duration {
         let n = sys::call(sys::K_NOW, 0, 0, &[]);
         let data = crate::take_input(n.max(0) as usize);
@@ -223,11 +325,52 @@ impl Host for JsHost {
 fn parse_stat(data: &[u8]) -> io::Result<Metadata> {
     let text = String::from_utf8_lossy(data);
     let f: Vec<&str> = text.split_whitespace().collect();
-    let bad = || io::Error::other("bad stat answer");
     if f.len() != 8 {
-        return Err(bad());
+        return Err(bad_stat());
     }
-    let n = |i: usize| -> io::Result<f64> { f[i].parse::<f64>().map_err(|_| bad()) };
+    stat_fields(&f)
+}
+
+fn bad_stat() -> io::Error {
+    io::Error::other("bad stat answer")
+}
+
+/// A decimal field: an integer (exact nanoseconds), else a float.
+fn num(s: &str) -> io::Result<f64> {
+    s.parse::<f64>().map_err(|_| bad_stat())
+}
+
+fn int(s: &str) -> io::Result<i64> {
+    s.parse::<i64>().or_else(|_| num(s).map(|v| v as i64))
+}
+
+/// `stat_extra`'s answer: `stat`'s eight fields, then `atime_ns ctime_ns btime_ns|-
+/// nlink blocks blksize rdev`.
+fn parse_stat_extra(data: &[u8]) -> io::Result<(Metadata, ExtraMetadata)> {
+    let text = String::from_utf8_lossy(data);
+    let f: Vec<&str> = text.split_whitespace().collect();
+    if f.len() != 15 {
+        return Err(bad_stat());
+    }
+    let meta = stat_fields(&f[..8])?;
+    let extra = ExtraMetadata {
+        atime_ns: int(f[8])?,
+        ctime_ns: int(f[9])?,
+        btime_ns: if f[10] == "-" {
+            None
+        } else {
+            Some(int(f[10])?)
+        },
+        nlink: int(f[11])? as u64,
+        blocks: int(f[12])? as u64,
+        blksize: int(f[13])? as u64,
+        rdev: int(f[14])? as u64,
+    };
+    Ok((meta, extra))
+}
+
+fn stat_fields(f: &[&str]) -> io::Result<Metadata> {
+    let n = |i: usize| num(f[i]);
     let kind = match f[0] {
         "file" => FileKind::File,
         "dir" => FileKind::Dir,
@@ -242,7 +385,7 @@ fn parse_stat(data: &[u8]) -> io::Result<Metadata> {
         kind,
         mode: n(1)? as u32,
         size: n(2)? as u64,
-        mtime_ns: n(3)? as i64,
+        mtime_ns: int(f[3])?,
         dev: n(4)? as u64,
         ino: n(5)? as u64,
         uid: n(6)? as u32,

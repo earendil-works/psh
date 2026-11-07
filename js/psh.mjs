@@ -17,22 +17,27 @@
 //
 // The parser module (built without the shell) offers psh.parse() and psh.classify().
 
-const ABI_VERSION = 2;
+const ABI_VERSION = 3;
 
 // host_call kinds (crates/psh-wasm/src/sys.rs).
 const K = {
   OPEN: 1, STAT: 2, ACCESS: 3, READ_DIR: 4, CANONICALIZE: 5, RESOLVE: 6, SPAWN: 7,
   SLEEP: 8, READ: 9, WRITE: 10, CLOSE: 11, WAIT: 12, SIGNAL: 13, RELEASE: 14,
-  ABANDON: 15, WAKE: 16, PANIC: 17, PID: 18, NOW: 19,
+  ABANDON: 15, WAKE: 16, PANIC: 17, PID: 18, NOW: 19, FS: 20, NAME: 21, UTC_OFFSET: 22,
 };
 // Open flags (crates/psh-wasm/src/host.rs).
 // With F.MODE, bits 16..28 hold the permission bits of a file the open creates.
 const F = { READ: 1, WRITE: 2, APPEND: 4, CREATE: 8, TRUNCATE: 16, CREATE_NEW: 32, MODE: 64 };
+// K.FS operations (crates/psh-wasm/src/sys.rs).
+const FS = {
+  STAT_EXTRA: 0, MKDIR: 1, REMOVE_FILE: 2, REMOVE_DIR: 3, RENAME: 4, SYMLINK: 5,
+  HARD_LINK: 6, READ_LINK: 7, SET_MODE: 8, SET_TIMES: 9,
+};
 // Child descriptor kinds of a spawn spec.
 const FD = { FILE: 0, PIPE_IN: 1, PIPE_OUT: 2, DUP: 3, NULL: 4 };
 // Errno numbers the module understands (Linux numbering).
 const E = {
-  PERM: 1, NOENT: 2, BADF: 9, ACCES: 13, EXIST: 17, NOTDIR: 20, ISDIR: 21, INVAL: 22,
+  PERM: 1, NOENT: 2, BADF: 9, ACCES: 13, BUSY: 16, EXIST: 17, XDEV: 18, NOTDIR: 20, ISDIR: 21, INVAL: 22,
   NOSPC: 28, PIPE: 32, NAMETOOLONG: 36, NOTEMPTY: 39, LOOP: 40, NOTSUP: 95,
 };
 const CLOSED = 0xffffffff;
@@ -54,7 +59,29 @@ export class FsError extends Error {
 let nextIno = 1;
 
 function newNode(type, extra) {
-  return { type, ino: nextIno++, mode: type === "dir" ? 0o755 : 0o644, mtime: Date.now(), ...extra };
+  const t = Date.now();
+  return { type, ino: nextIno++, mode: type === "dir" ? 0o755 : 0o644, mtime: t, atime: t, ctime: t, btime: t, ...extra };
+}
+
+// A node's time `key` (mtime, atime, ctime, btime) in nanoseconds, as decimal text. Times
+// are milliseconds on the node; one set through `setTimeNs` keeps its exact nanoseconds
+// until the time changes again.
+function timeNs(node, key) {
+  const ms = node[key] ?? node.mtime;
+  if (node[`${key}Ns`] !== undefined && node[`${key}At`] === ms) return node[`${key}Ns`].toString();
+  return BigInt(Math.round(ms * 1e6)).toString();
+}
+
+function setTimeNs(node, key, ns) {
+  const v = BigInt(ns);
+  node[key] = Number(v) / 1e6;
+  node[`${key}Ns`] = v;
+  node[`${key}At`] = node[key];
+}
+
+// The parent directory of a path changed (an entry added or removed).
+function touchDir(dir) {
+  dir.mtime = dir.ctime = Date.now();
 }
 
 function splitPath(path) {
@@ -256,7 +283,7 @@ class FileHandle {
     }
     node.data.set(data, this.pos);
     this.pos = end;
-    node.mtime = Date.now();
+    node.mtime = node.ctime = Date.now();
     return data.length;
   }
 }
@@ -550,15 +577,150 @@ export class MemHost {
       return { value: this.addHandle(new h()) };
     }
     if (node.type === "dir" && flags & F.WRITE) throw new FsError(E.ISDIR);
-    if (flags & F.TRUNCATE && node.type === "file") node.data = new Uint8Array(0);
+    if (flags & F.TRUNCATE && node.type === "file" && node.data.length > 0) {
+      node.data = new Uint8Array(0);
+      node.mtime = node.ctime = Date.now();
+    }
     return { value: this.addHandle(new FileHandle(node, flags)) };
   }
 
   stat(path, follow) {
-    const n = this.fs.lookup(path, follow);
-    const size = n.type === "file" ? n.data.length : n.type === "symlink" ? n.target.length : n.type === "dir" ? 4096 : 0;
-    const text = `${n.type} ${n.mode} ${size} ${n.mtime * 1e6} 1 ${n.ino} 1000 1000`;
-    return { data: enc.encode(text) };
+    return { data: enc.encode(this.statText(this.fs.lookup(path, follow))) };
+  }
+
+  statText(n) {
+    const size = n.type === "file" ? n.data.length : n.type === "symlink" ? enc.encode(n.target).length : n.type === "dir" ? 4096 : 0;
+    return `${n.type} ${n.mode} ${size} ${timeNs(n, "mtime")} 1 ${n.ino} 1000 1000`;
+  }
+
+  /** User names by uid (`ls -l`, `stat %U`); `undefined`: the host has none. */
+  userName(uid) {
+    return { 0: "root", 1000: "user" }[uid];
+  }
+
+  groupName(gid) {
+    return { 0: "root", 1000: "user" }[gid];
+  }
+
+  /** The local time's offset east of UTC, in seconds, at `epochSecs`. */
+  utcOffset(epochSecs) {
+    return -new Date(epochSecs * 1000).getTimezoneOffset() * 60;
+  }
+
+  // File system changes and stat_extra (D1150): `r` reads the payload.
+  fsOp(op, r) {
+    const fs = this.fs;
+    const path = dec.decode(r.bytes());
+    const entry = (p) => {
+      const { dir, name } = fs.parentOf(p);
+      if (name === "." || name === "..") throw new FsError(E.INVAL);
+      return { dir, name, node: dir.children.get(name) };
+    };
+    switch (op) {
+      case FS.STAT_EXTRA: {
+        const n = fs.lookup(path, r.u32() === 1);
+        const nlink =
+          n.type === "dir" ? 2 + [...n.children.values()].filter((c) => c.type === "dir").length : (n.nlink ?? 1);
+        const size = n.type === "file" ? n.data.length : n.type === "dir" ? 4096 : 0;
+        const blocks = Math.ceil(size / 4096) * 8;
+        const extra = `${timeNs(n, "atime")} ${timeNs(n, "ctime")} ${timeNs(n, "btime")} ${nlink} ${blocks} 4096 0`;
+        return { data: enc.encode(`${this.statText(n)} ${extra}`) };
+      }
+      case FS.MKDIR: {
+        const mode = r.u32();
+        const { dir, name, node } = entry(path);
+        if (node) throw new FsError(E.EXIST);
+        dir.children.set(name, newNode("dir", { children: new Map(), mode: mode & 0o7777 }));
+        touchDir(dir);
+        return {};
+      }
+      case FS.REMOVE_FILE: {
+        const { dir, name, node } = entry(path);
+        if (!node) throw new FsError(E.NOENT);
+        if (node.type === "dir") throw new FsError(E.ISDIR);
+        dir.children.delete(name);
+        node.nlink = Math.max(0, (node.nlink ?? 1) - 1);
+        node.ctime = Date.now();
+        touchDir(dir);
+        return {};
+      }
+      case FS.REMOVE_DIR: {
+        if (splitPath(path).length === 0) throw new FsError(E.BUSY);
+        const { dir, name, node } = entry(path);
+        if (!node) throw new FsError(E.NOENT);
+        if (node.type !== "dir") throw new FsError(E.NOTDIR);
+        if (node.children.size > 0) throw new FsError(E.NOTEMPTY);
+        dir.children.delete(name);
+        touchDir(dir);
+        return {};
+      }
+      case FS.RENAME: {
+        const to = dec.decode(r.bytes());
+        const src = entry(path);
+        if (!src.node) throw new FsError(E.NOENT);
+        const dst = entry(to);
+        if (dst.node === src.node) return {};
+        if (src.node.type === "dir") {
+          // Not into itself: the target's parent must not be below the source.
+          const from = fs.realpath(path.replace(/\/+$/, "").replace(/[^/]*$/, "") || "/") + "/" + src.name;
+          const into = fs.realpath(to.replace(/\/+$/, "").replace(/[^/]*$/, "") || "/");
+          if (into === from || into.startsWith(`${from}/`)) throw new FsError(E.INVAL);
+          if (dst.node && dst.node.type !== "dir") throw new FsError(E.NOTDIR);
+          if (dst.node && dst.node.children.size > 0) throw new FsError(E.NOTEMPTY);
+        } else if (dst.node && dst.node.type === "dir") {
+          throw new FsError(E.ISDIR);
+        }
+        src.dir.children.delete(src.name);
+        dst.dir.children.set(dst.name, src.node);
+        src.node.ctime = Date.now();
+        touchDir(src.dir);
+        touchDir(dst.dir);
+        return {};
+      }
+      case FS.SYMLINK: {
+        const link = dec.decode(r.bytes());
+        const { dir, name, node } = entry(link);
+        if (node) throw new FsError(E.EXIST);
+        dir.children.set(name, newNode("symlink", { target: path, mode: 0o777 }));
+        touchDir(dir);
+        return {};
+      }
+      case FS.HARD_LINK: {
+        const link = dec.decode(r.bytes());
+        const n = fs.lookup(path, false);
+        if (n.type === "dir") throw new FsError(E.PERM);
+        const { dir, name, node } = entry(link);
+        if (node) throw new FsError(E.EXIST);
+        dir.children.set(name, n);
+        n.nlink = (n.nlink ?? 1) + 1;
+        n.ctime = Date.now();
+        touchDir(dir);
+        return {};
+      }
+      case FS.READ_LINK: {
+        const n = fs.lookup(path, false);
+        if (n.type !== "symlink") throw new FsError(E.INVAL);
+        return { data: enc.encode(n.target) };
+      }
+      case FS.SET_MODE: {
+        const n = fs.lookup(path);
+        n.mode = r.u32() & 0o7777;
+        n.ctime = Date.now();
+        return {};
+      }
+      case FS.SET_TIMES: {
+        const flags = r.u32();
+        const atime = dec.decode(r.bytes());
+        const mtime = dec.decode(r.bytes());
+        const n = fs.lookup(path, (flags & 4) !== 0);
+        if (flags & 1) setTimeNs(n, "atime", atime);
+        if (flags & 2) setTimeNs(n, "mtime", mtime);
+        n.ctime = Date.now();
+        return {};
+      }
+      default:
+        throw new FsError(E.NOTSUP);
+    }
   }
 
   access(path, mode) {
@@ -878,6 +1040,14 @@ export class Psh {
         return 0;
       case K.PID:
         return h.pid;
+      case K.FS:
+        return run(() => h.fsOp(arg, new Reader(data())));
+      case K.NAME: {
+        const name = op === 0 ? h.userName?.(arg) : h.groupName?.(arg);
+        return name === undefined ? -1 : this.input(enc.encode(name));
+      }
+      case K.UTC_OFFSET:
+        return h.utcOffset ? h.utcOffset(Number(dec.decode(data()))) | 0 : 0;
       case K.NOW: {
         // Answered in the input buffer: no pointer of the call is used.
         const b = new Uint8Array(8);

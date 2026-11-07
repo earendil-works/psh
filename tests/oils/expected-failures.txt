@@ -125,6 +125,7 @@ oils/builtin-trap-bash/21
 oils/builtin-trap-bash/22
 oils/builtin-trap-err/6
 oils/builtin-trap-err/18
+oils/builtin-type/1: date is an S-mode psh utility (0020); type reports it, not _tmp/date
 oils/builtin-type/3
 oils/builtin-type-bash/5: find and xargs are psh utilities (mode S), which type -t reports as builtin (D1083)
 oils/builtin-type-bash/7: find and xargs are psh utilities (mode S), which type -t reports as builtin (D1083)
@@ -132,9 +133,9 @@ oils/builtin-type-bash/8: S-mode psh utility shadows the PATH file (D1083, D1151
 oils/builtin-type-bash/13
 oils/builtin-type-bash/14
 oils/builtin-type-bash/16: S-mode psh utility shadows the PATH file (D1083, D1151); type reports what runs
-oils/builtin-type-bash/24: date is an S-mode psh utility (0020); type -a reports it before the PATH files
 oils/builtin-type-bash/21
 oils/builtin-type-bash/22
+oils/builtin-type-bash/24: date is an S-mode psh utility (0020); type -a reports it before the PATH files
 oils/builtin-type-bash/30
 oils/builtin-umask/10
 oils/builtin-umask/11

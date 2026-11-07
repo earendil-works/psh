@@ -19,7 +19,6 @@ oils/builtin-type/1: the case puts only some directories on PATH; on macOS sed i
 oils/builtin-type-bash/27: the case puts only some directories on PATH; on macOS sed is not in them
 oils/command-sub/8: macOS has no tac
 oils/command-sub/9: macOS has no tac
-oils/command_/0: which is not where the case's PATH looks on macOS
 oils/globignore/7: APFS is case-insensitive (A and a are one file)
 oils/here-doc/16: macOS has no tac
 oils/here-doc/17: macOS has no tac

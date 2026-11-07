@@ -5,7 +5,6 @@ agent/files/4: macOS BSD utility output differs from GNU (wc/uniq padding, ls, s
 agent/files/5: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
 agent/files/42: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
 agent/files/43: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
-agent/files/47: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
 agent/globs-status/2: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
 agent/procs/40: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
 agent/procs/42: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself

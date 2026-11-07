@@ -356,6 +356,7 @@ fn run(opts: Options) -> Result<ExitCode, String> {
             freshness::check(
                 &root,
                 &psh,
+                &psh.with_file_name("psh.d"),
                 freshness::PSH_CRATES,
                 &freshness::psh_fix(&exe),
             )?;
@@ -363,6 +364,7 @@ fn run(opts: Options) -> Result<ExitCode, String> {
                 freshness::check(
                     &root,
                     &root.join("target/wasm/psh.wasm"),
+                    &root.join(freshness::WASM_DEP_INFO),
                     freshness::WASM_CRATES,
                     "scripts/build-wasm",
                 )?;

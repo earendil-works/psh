@@ -25,3 +25,22 @@ pub enum Leftovers {
     /// Leave them running, as bash does.
     Keep,
 }
+
+/// Starts a helper thread with every asynchronous signal blocked from its first
+/// instruction (Unix): signals for the process then reach the embedder's threads or,
+/// standalone, the engine thread, never ours (a `kill $$` acts before `kill` returns).
+pub(crate) fn spawn_helper<F: FnOnce() + Send + 'static>(
+    name: &str,
+    stack: usize,
+    f: F,
+) -> std::io::Result<std::thread::JoinHandle<()>> {
+    #[cfg(unix)]
+    let old = unix::signals::block_all_in_thread();
+    let r = std::thread::Builder::new()
+        .name(name.into())
+        .stack_size(stack)
+        .spawn(f);
+    #[cfg(unix)]
+    unix::signals::restore_mask(old);
+    r
+}

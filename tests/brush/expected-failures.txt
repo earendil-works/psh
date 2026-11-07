@@ -233,7 +233,6 @@ brush/compat/builtins/kill/12
 brush/compat/builtins/kill/16
 brush/compat/builtins/kill/17
 brush/compat/builtins/kill/18
-brush/compat/builtins/kill/31
 brush/compat/builtins/let/5
 brush/compat/builtins/mapfile/0
 brush/compat/builtins/mapfile/1
@@ -793,6 +792,7 @@ brush/compat/signals/28
 brush/compat/signals/29
 brush/compat/signals/30
 brush/compat/signals/31
+brush/compat/signals/32: a subshell is a vproc, not a process: the cancel for the shell's own TERM ends it too (passed only when the signal lost a race)
 brush/compat/signals/33
 brush/compat/signals/34
 brush/compat/signals/35

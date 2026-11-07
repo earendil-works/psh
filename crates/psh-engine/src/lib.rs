@@ -177,6 +177,14 @@ impl ControlHandle {
         }
     }
 
+    /// The control word and the bit that requests a cancel: setting it with an atomic
+    /// or is what [`ControlHandle::cancel`] does without waking the embedder, and is
+    /// async-signal-safe (a standalone shell's signal handler sets it; its driver wakes
+    /// the shell afterwards).
+    pub fn cancel_word(&self) -> (&std::sync::atomic::AtomicU32, u32) {
+        (&self.shared.control, CANCEL)
+    }
+
     /// Stops at the next safepoint; `step` returns `Blocked` until `resume`.
     pub fn pause(&self) {
         self.shared.control.fetch_or(PAUSE, Ordering::SeqCst);

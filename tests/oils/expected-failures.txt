@@ -64,6 +64,7 @@ oils/assign-extended/9
 oils/assign-extended/10
 oils/assign-extended/21
 oils/assign-extended/32
+oils/background/7: three jobs whose sleeps differ by 10 ms; their order races under load
 oils/background/21
 oils/ble-features/0
 oils/ble-features/1

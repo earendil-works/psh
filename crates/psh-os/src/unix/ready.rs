@@ -84,10 +84,7 @@ impl Poller {
         let started = io::pipe().and_then(|(r, w)| {
             set_nonblocking(w.as_raw_fd())?;
             set_nonblocking(r.as_raw_fd())?;
-            std::thread::Builder::new()
-                .name("psh-ready".into())
-                .stack_size(128 << 10)
-                .spawn(move || run(r))?;
+            crate::spawn_helper("psh-ready", 128 << 10, move || run(r))?;
             Ok(w)
         });
         Poller {

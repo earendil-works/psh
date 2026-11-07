@@ -205,15 +205,22 @@ struct Signals {
     control: Control,
 }
 
+/// The signals the standalone shell catches.
+#[cfg(unix)]
+const CAUGHT: [psh_engine::host::Signal; 3] = [
+    psh_engine::host::SIGINT,
+    psh_engine::host::SIGTERM,
+    psh_engine::host::SIGHUP,
+];
+
 type Control = std::sync::Arc<std::sync::Mutex<(Option<psh_engine::ControlHandle>, i32)>>;
 
 impl Signals {
     #[cfg(unix)]
     fn catch() -> Signals {
-        use psh_engine::host::{SIGHUP, SIGINT, SIGTERM};
         let control: Control = Default::default();
         let c = control.clone();
-        let _ = psh_os::unix::signals::catch(&[SIGINT, SIGTERM, SIGHUP], move |sig| {
+        let _ = psh_os::unix::signals::catch(&CAUGHT, move |sig| {
             let mut g = c.lock().unwrap_or_else(|e| e.into_inner());
             if g.1 == 0 {
                 g.1 = sig;
@@ -222,6 +229,9 @@ impl Signals {
                 ctl.cancel();
             }
         });
+        // Only the engine thread takes these signals (it unblocks them): a `kill $$`
+        // from the script then acts before `kill` returns, as bash dies at once.
+        psh_os::unix::signals::block_in_thread(&CAUGHT);
         Signals { control }
     }
 
@@ -232,11 +242,19 @@ impl Signals {
         }
     }
 
-    /// The shell exists: a signal caught before cancels it now.
+    /// The shell exists, on the engine thread: it takes the signals from now on (the
+    /// handler cancels it directly), and a signal caught before cancels it now.
     fn attach(
         control: &std::sync::Mutex<(Option<psh_engine::ControlHandle>, i32)>,
         ctl: psh_engine::ControlHandle,
     ) {
+        #[cfg(unix)]
+        {
+            // One shell per process: the handle lives as long as the process.
+            let word = Box::leak(Box::new(ctl.clone())).cancel_word();
+            psh_os::unix::signals::cancel_on_signal(word.0, word.1);
+            psh_os::unix::signals::unblock_in_thread(&CAUGHT);
+        }
         let mut g = control.lock().unwrap_or_else(|e| e.into_inner());
         if g.1 != 0 {
             ctl.cancel();

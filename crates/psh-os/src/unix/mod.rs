@@ -259,20 +259,17 @@ fn open_fifo(p: Vec<u8>, opts: OpenOptions) -> HostFuture<io::Result<Rc<dyn Host
     let slot = Arc::new(Mutex::new(Slot::default()));
     let s = slot.clone();
     let tp = p.clone();
-    let started = std::thread::Builder::new()
-        .name("psh-fifo".into())
-        .stack_size(64 << 10)
-        .spawn(move || {
-            let r = std_open_options(opts).open(path(&tp));
-            let mut st = s.lock().unwrap_or_else(|e| e.into_inner());
-            if st.cancelled {
-                return;
-            }
-            st.result = Some(r);
-            if let Some(w) = st.waker.take() {
-                w.wake();
-            }
-        });
+    let started = crate::spawn_helper("psh-fifo", 64 << 10, move || {
+        let r = std_open_options(opts).open(path(&tp));
+        let mut st = s.lock().unwrap_or_else(|e| e.into_inner());
+        if st.cancelled {
+            return;
+        }
+        st.result = Some(r);
+        if let Some(w) = st.waker.take() {
+            w.wake();
+        }
+    });
     if let Err(e) = started {
         return ready(Err(e));
     }

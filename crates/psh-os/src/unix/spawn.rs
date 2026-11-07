@@ -231,22 +231,19 @@ impl Shared {
         let grace = self.grace;
         let fallback = groups.clone();
         *lock(&ESCALATING) += 1;
-        let started = std::thread::Builder::new()
-            .name("psh-kill".into())
-            .stack_size(SMALL_STACK)
-            .spawn(move || {
-                let deadline = Instant::now() + grace;
-                while Instant::now() < deadline && groups.iter().any(|&g| Scope::Group(g).alive()) {
-                    std::thread::sleep(Duration::from_millis(10));
+        let started = crate::spawn_helper("psh-kill", SMALL_STACK, move || {
+            let deadline = Instant::now() + grace;
+            while Instant::now() < deadline && groups.iter().any(|&g| Scope::Group(g).alive()) {
+                std::thread::sleep(Duration::from_millis(10));
+            }
+            for &g in &groups {
+                if Scope::Group(g).alive() {
+                    let _ = Scope::Group(g).signal(libc::SIGKILL);
                 }
-                for &g in &groups {
-                    if Scope::Group(g).alive() {
-                        let _ = Scope::Group(g).signal(libc::SIGKILL);
-                    }
-                }
-                *lock(&ESCALATING) -= 1;
-                SETTLED.notify_all();
-            });
+            }
+            *lock(&ESCALATING) -= 1;
+            SETTLED.notify_all();
+        });
         if started.is_err() {
             *lock(&ESCALATING) -= 1;
             for &g in &fallback {
@@ -798,11 +795,7 @@ fn watch(pid: i32, tracker: Arc<Tracker>) -> io::Result<()> {
         job: Mutex::new(Some((pid, tracker))),
         ready: Condvar::new(),
     });
-    std::thread::Builder::new()
-        .name("psh-wait".into())
-        .stack_size(SMALL_STACK)
-        .spawn(move || waiter(&mb))
-        .map(drop)
+    crate::spawn_helper("psh-wait", SMALL_STACK, move || waiter(&mb)).map(drop)
 }
 
 fn waiter(mb: &Arc<Mailbox>) {
@@ -984,14 +977,11 @@ impl Drop for UnixProc {
                 let deadline = Instant::now() + self.shared.grace;
                 let (tracker, scope, pid) = (self.tracker.clone(), self.scope, self.pid);
                 *lock(&ESCALATING) += 1;
-                let started = std::thread::Builder::new()
-                    .name("psh-kill".into())
-                    .stack_size(SMALL_STACK)
-                    .spawn(move || {
-                        escalate(&tracker, scope, pid, deadline);
-                        *lock(&ESCALATING) -= 1;
-                        SETTLED.notify_all();
-                    });
+                let started = crate::spawn_helper("psh-kill", SMALL_STACK, move || {
+                    escalate(&tracker, scope, pid, deadline);
+                    *lock(&ESCALATING) -= 1;
+                    SETTLED.notify_all();
+                });
                 if started.is_err() {
                     *lock(&ESCALATING) -= 1;
                     // No thread: KILL now rather than never; the waiter reaps.

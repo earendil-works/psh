@@ -1387,3 +1387,16 @@ jobs for `wait PID`, reports signal deaths other than INT, PIPE and TERM as bash
 finished jobs; `disown` hides a job and its externals leave the run (D1067). Signal names
 and numbers are the OS's (BSD numbering on macOS), descriptions glibc's. Job control
 proper (`fg`, `bg`, `set -m`, stopped jobs) stays out of scope (D002).
+
+## D1901: The standalone psh takes its signals on the engine thread
+date: 2026-11-07 · by: procs · issue: 0006
+psh-os starts its helper threads (waiters, escalations, readiness, timers, FIFO opens,
+the signal watcher) with every asynchronous signal blocked from their first
+instruction, so a process signal never lands on them: embedded, it reaches the
+embedder's threads; standalone, `psh` blocks INT, TERM and HUP in its main thread and
+unblocks them only on the engine thread, and the handler also sets the engine's cancel
+bit itself (`ControlHandle::cancel_word`, an atomic or). A `kill $$` (or `kill -INT $$`
+inside `$(…)`) is then delivered before `kill` returns and the run stops before the next
+command, as bash dies at once; before, the watcher thread's cancel raced the following
+commands. A `( … )` subshell, being a vproc, stops with the shell (bash's subshell
+process would go on).

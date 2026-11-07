@@ -89,10 +89,7 @@ pub fn sleep(duration: Duration) -> Pin<Box<dyn Future<Output = ()>>> {
         let t = &*TIMERS;
         let mut g = lock(&t.heap);
         if !g.2 {
-            let started = std::thread::Builder::new()
-                .name("psh-timer".into())
-                .stack_size(64 << 10)
-                .spawn(run);
+            let started = crate::spawn_helper("psh-timer", 64 << 10, run);
             if started.is_err() {
                 // No thread: the timer is due at once rather than never.
                 lock(&slot).fired = true;

@@ -231,6 +231,17 @@ can express neither); `pid()`; `kill()`.
 - Not done (out of scope or later): `fg`/`bg`/`set -m`/stopped jobs (D002), the report of
   a foreground program a signal ended ("Terminated  cmd", stderr only), PIPESTATUS.
 
+- Rebase onto main (0026/0028/0029/0011 landed) conflicted in exec.rs (pipeline split
+  into `run_pipeline_stages`) and lib.rs (`mod options`): resolved. Union-merged ratchets
+  re-gained removed lines; `--update-ratchet` again. wasm ratchet: 9 kill/signal cases
+  that now pass natively cannot run on the JS host (no processes); listed with reason.
+- Gate flakes found and fixed (D1901): `kill $$` in the binary raced the watcher
+  thread's cancel (brush/compat/signals/26 and /32 passed or failed by timing). Helper
+  threads start with signals blocked; the engine thread takes INT/TERM/HUP; the handler
+  sets the cancel bit. signals/32 now fails deterministically (a subshell vproc stops
+  with the shell) and is back in the ratchet with that reason; oils/background/7 (jobs
+  10 ms apart) is back in the ratchet as a timing race.
+
 ## Follow-ups
 - guide: `processes.md` (placement, cancel and abandonment, leak checks).
 - Engine: run files without `#!` in psh itself (bash does), then drop D1063's fallback.

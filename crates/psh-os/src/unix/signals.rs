@@ -15,6 +15,12 @@ use psh_engine::host::Signal;
 
 /// Signals caught and not yet handed to the callback, one bit each.
 static PENDING: AtomicU64 = AtomicU64::new(0);
+/// Where the handler also requests a cancel itself, so it takes effect at the engine's
+/// next safepoint even before the watcher thread runs (`cancel_on_signal`).
+static CANCEL_WORD: std::sync::atomic::AtomicPtr<std::sync::atomic::AtomicU32> =
+    std::sync::atomic::AtomicPtr::new(std::ptr::null_mut());
+static CANCEL_BIT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
 /// The first signal caught (0: none).
 static FIRST: AtomicI32 = AtomicI32::new(0);
 /// The write end of the self-pipe; -1 until `catch` ran.
@@ -25,6 +31,12 @@ extern "C" fn on_signal(sig: libc::c_int) {
     if (0..64).contains(&sig) {
         let _ = FIRST.compare_exchange(0, sig, Ordering::SeqCst, Ordering::SeqCst);
         PENDING.fetch_or(1 << sig, Ordering::SeqCst);
+        let word = CANCEL_WORD.load(Ordering::SeqCst);
+        if !word.is_null() {
+            // SAFETY: `cancel_on_signal` stored a pointer to a `'static` atomic; an
+            // atomic or is async-signal-safe.
+            unsafe { (*word).fetch_or(CANCEL_BIT.load(Ordering::SeqCst), Ordering::SeqCst) };
+        }
     }
     let fd = WAKE_FD.load(Ordering::SeqCst);
     if fd >= 0 {
@@ -66,6 +78,67 @@ pub fn first_caught() -> Option<Signal> {
     }
 }
 
+/// Makes the handler set `bit` in `word` (the engine's control word, see
+/// `psh_engine::ControlHandle::cancel_word`) as it catches a signal: a `kill $$` from the
+/// engine thread then cancels before the next command, as bash dies at once.
+pub fn cancel_on_signal(word: &'static std::sync::atomic::AtomicU32, bit: u32) {
+    CANCEL_BIT.store(bit, Ordering::SeqCst);
+    CANCEL_WORD.store(std::ptr::from_ref(word).cast_mut(), Ordering::SeqCst);
+}
+
+/// Blocks or unblocks `sigs` in the calling thread.
+fn mask(how: libc::c_int, sigs: &[Signal]) {
+    // SAFETY: sigset_t is plain data, initialized by sigemptyset; pthread_sigmask only
+    // reads the set.
+    unsafe {
+        let mut set: libc::sigset_t = std::mem::zeroed();
+        libc::sigemptyset(&raw mut set);
+        for &s in sigs {
+            libc::sigaddset(&raw mut set, s);
+        }
+        libc::pthread_sigmask(how, &raw const set, std::ptr::null_mut());
+    }
+}
+
+/// Blocks `sigs` in the calling thread (threads it starts inherit that).
+pub fn block_in_thread(sigs: &[Signal]) {
+    mask(libc::SIG_BLOCK, sigs);
+}
+
+/// Unblocks `sigs` in the calling thread.
+pub fn unblock_in_thread(sigs: &[Signal]) {
+    mask(libc::SIG_UNBLOCK, sigs);
+}
+
+/// Blocks every asynchronous signal in the calling thread and returns the old mask
+/// (`restore_mask`): around the start of psh-os's helper threads, which inherit it.
+pub(crate) fn block_all_in_thread() -> libc::sigset_t {
+    // SAFETY: as in `mask`; the synchronous signals stay deliverable (blocking them
+    // would make a fault in this thread undefined).
+    unsafe {
+        let mut set: libc::sigset_t = std::mem::zeroed();
+        let mut old: libc::sigset_t = std::mem::zeroed();
+        libc::sigfillset(&raw mut set);
+        for s in [
+            libc::SIGSEGV,
+            libc::SIGBUS,
+            libc::SIGFPE,
+            libc::SIGILL,
+            libc::SIGTRAP,
+        ] {
+            libc::sigdelset(&raw mut set, s);
+        }
+        libc::pthread_sigmask(libc::SIG_BLOCK, &raw const set, &raw mut old);
+        old
+    }
+}
+
+/// Restores a mask `block_all_in_thread` returned.
+pub(crate) fn restore_mask(old: libc::sigset_t) {
+    // SAFETY: `old` is a valid set from pthread_sigmask.
+    unsafe { libc::pthread_sigmask(libc::SIG_SETMASK, &raw const old, std::ptr::null_mut()) };
+}
+
 /// Whether the process ignores `sig` now.
 pub fn is_ignored(sig: Signal) -> bool {
     // SAFETY: sigaction is plain data, valid zeroed.
@@ -89,26 +162,23 @@ pub fn catch(sigs: &[Signal], callback: impl Fn(Signal) + Send + 'static) -> io:
         unsafe { libc::close(wfd) };
         return Err(io::Error::other("signals are caught already"));
     }
-    std::thread::Builder::new()
-        .name("psh-signals".into())
-        .stack_size(64 << 10)
-        .spawn(move || {
-            let mut buf = [0u8; 64];
-            loop {
-                match r.read(&mut buf) {
-                    Ok(0) => return,
-                    Ok(_) => {}
-                    Err(e) if e.kind() == io::ErrorKind::Interrupted => {}
-                    Err(_) => return,
-                }
-                let bits = PENDING.swap(0, Ordering::SeqCst);
-                for sig in 1..64 {
-                    if bits & (1 << sig) != 0 {
-                        callback(sig);
-                    }
+    crate::spawn_helper("psh-signals", 64 << 10, move || {
+        let mut buf = [0u8; 64];
+        loop {
+            match r.read(&mut buf) {
+                Ok(0) => return,
+                Ok(_) => {}
+                Err(e) if e.kind() == io::ErrorKind::Interrupted => {}
+                Err(_) => return,
+            }
+            let bits = PENDING.swap(0, Ordering::SeqCst);
+            for sig in 1..64 {
+                if bits & (1 << sig) != 0 {
+                    callback(sig);
                 }
             }
-        })?;
+        }
+    })?;
     for &sig in sigs {
         if is_ignored(sig) {
             continue;

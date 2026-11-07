@@ -247,8 +247,8 @@ Hosts:
 | Host | Where | Notes |
 | --- | --- | --- |
 | `psh-os::unix` | macOS, Linux, Android; `psh` and psh-spec there | Below (D1060–D1062) |
-| `psh-os::windows` | Windows | Below |
-| `psh_engine::std_host` | `psh`, psh-spec on Windows until 0007 | std `Command`, a waiter thread per child polling `try_wait`, helper threads per pump, KILL only, no process groups; regular files and the shell's own stdio are read and written synchronously |
+| `psh-os::windows` | Windows (x64, arm64); `psh` and psh-spec there | Below (D1074–D1079) |
+| `psh_engine::std_host` | simple embedders and tests | std `Command`, a waiter thread per child polling `try_wait`, helper threads per pump, KILL only, no process groups; regular files and the shell's own stdio are read and written synchronously |
 | test host | `psh_engine::testhost` | In-memory fs, fake commands written as futures, captured stdio; a latency mode makes every op `Pending` once to prove no engine path expects synchronous answers; counts live processes, pipes and files for leak checks |
 | JS host | `psh-wasm` | Virtual fs, host-provided commands, driven from the JS event loop |
 
@@ -289,31 +289,50 @@ From `research/execution-core.md` §5; the pitfalls listed there are requirement
   included) except those ignored when psh started and those the engine asks to ignore.
 
 **Windows.**
-- Spawn: `CreateProcessW` suspended, assigned to a Job Object per job (no breakaway),
-  then resumed; only the three stdio handles inherited (`PROC_THREAD_ATTRIBUTE_HANDLE_LIST`);
-  `CREATE_NEW_PROCESS_GROUP`; no console window flashes.
-- argv: MSVCRT quoting rules; `.bat`/`.cmd` through `cmd.exe` with the hardened quoting
-  Rust std uses (BatBadBut), refusing what cannot be quoted safely.
-- Wait: a waiter thread per external on `WaitForMultipleObjects(process, wake)`.
-- Kill: TERM/INT = `CTRL_BREAK_EVENT` to the group, then `TerminateJobObject`; KILL =
-  `TerminateJobObject`. The whole tree dies, including grandchildren.
-- Pumps: v1 helper threads; later overlapped named pipes (anonymous pipes cannot do
-  overlapped I/O).
+- Spawn (D1074): `CreateProcessW` suspended, assigned to a Job Object of its own (no
+  breakaway), then resumed; only the three stdio handles inherited
+  (`PROC_THREAD_ATTRIBUTE_HANDLE_LIST`). `Placement::Group` (default):
+  `CREATE_NEW_PROCESS_GROUP`, so TERM can be a ctrl-break; `Inherit` (standalone psh)
+  keeps psh's console group. Without a console, `CREATE_NO_WINDOW`: nothing flashes.
+  The run's jobs kill their processes when their last handle closes, so a dying psh
+  takes them along; detached and disowned externals are exempt, and `Leftovers::Keep`
+  clears the flag when the host is dropped. Descriptors above 2 are not passed.
+- Programs: `.exe`/`.com` directly; `.bat`/`.cmd` through `cmd.exe` with the hardened
+  quoting Rust std uses (BatBadBut), refusing line breaks; MSVCRT argv quoting
+  otherwise. A file starting with `#!` runs under its interpreter, looked up on the
+  child's `PATH` (`/usr/bin/env X`, `/bin/X`, `/usr/bin/X` all mean X); `sh`/`bash`
+  scripts and files without an interpreter need psh itself (an engine hook, D1079).
+- Wait: a waiter thread per external on its process handle; holding the handle keeps
+  the pid from being reused.
+- Kill: TERM/INT/HUP/QUIT = `CTRL_BREAK_EVENT` to the external's group, or
+  `TerminateJobObject` when no break can be delivered; KILL = `TerminateJobObject`.
+  Abandon = TERM, then `TerminateJobObject` when the external exits or the grace ends:
+  the whole tree dies. Crash exit codes are reported as signals (access violation as
+  SEGV, fail-fast as ABRT).
+- Files (D1077): pump pipes are private named pipes whose overlapped end a helper
+  thread owns (cancelled at once on drop). Shared pipes (the shell's stdio,
+  `Host::pipe`) are read only as far as `PeekNamedPipe` shows data, with one poller
+  thread for readiness; writes to them are synchronous. Regular files and consoles are
+  synchronous.
+- Decoding (D1078): optional (`Decode::Ansi`), in the host's pump pipes: child output
+  read by the engine that is not UTF-8 is converted from the ANSI code page.
 
 **Windows rules** (from `research/landscape.md` §3):
 - Paths: forward slashes internally; accept `C:\x`, `C:/x` and `/c/x` in builtins and
   `cd`; convert to native form only at the OS boundary. No MSYS-style rewriting of argv
   to external programs. `\\?\` for long paths.
-- `/dev/null` maps to `NUL`; `/dev/stdin|stdout|stderr` are emulated in redirections.
-- Command lookup: PATH (`Path`, `;`-separated) with PATHEXT, case-insensitive; cwd is
-  not searched for bare names. `test -x` and `command -v` decide by extension.
+- `/dev/null` maps to `NUL` and `/tmp` to the user's temp directory;
+  `/dev/stdin|stdout|stderr` are emulated in redirections. `HOME` defaults to
+  `USERPROFILE`, `TMPDIR` to the temp directory, both `/`-separated (D1075).
+- Command lookup (D1076): PATH entries separated by `;`, and by `:` except after a
+  drive letter; PATHEXT, case-insensitive; a bare name only when it is a `#!` script;
+  cwd is not searched for bare names. `test -x` decides by extension or `#!`.
 - Shebangs: `./script` with `#!` is run by the named interpreter (`/usr/bin/env X`
   resolves X on PATH); `#!/bin/sh` and `#!/bin/bash` run in psh itself.
 - Environment names are case-insensitive for the OS environment, case-sensitive for
   shell variables.
-- Output of native programs in the ANSI/OEM code page is decoded per program, with
-  `encoding_rs` (in the tree anyway through `grep-searcher`, D020). **Open:** where
-  decoding lives (engine output layer or host).
+- Output of native programs in the ANSI code page can be decoded where the engine reads
+  it, in the host (D1078, an option, off by default).
 - CRLF: scripts with `\r\n` parse; `$(…)` and `read` strip a trailing `\r` from native
   output.
 - Utilities whose names collide with System32 programs (`find`, `sort`, `timeout`,

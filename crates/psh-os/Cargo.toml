@@ -7,13 +7,28 @@ version.workspace = true
 license.workspace = true
 publish.workspace = true
 
-# psh-engine for the Host trait; libc on Unix (D024). windows-sys arrives with the
-# Windows host (0007).
+# psh-engine for the Host trait; libc on Unix, windows-sys on Windows (D024), at the
+# version pi-env pins.
 [dependencies]
 psh-engine.workspace = true
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.191"
+
+[target.'cfg(windows)'.dependencies.windows-sys]
+version = "=0.61.2"
+features = [
+    "Win32_Foundation",
+    "Win32_Globalization",
+    "Win32_Security",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Console",
+    "Win32_System_IO",
+    "Win32_System_JobObjects",
+    "Win32_System_Pipes",
+    "Win32_System_SystemInformation",
+    "Win32_System_Threading",
+]
 
 # The one crate allowed `unsafe` (AGENTS.md): every block says why it is sound.
 [lints.rust]

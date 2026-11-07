@@ -264,12 +264,16 @@ fn os_host(pid: u32) -> (std::rc::Rc<dyn psh_engine::Host>, WrapFile) {
     })
 }
 
-/// The OS host (Windows: the std host until 0007).
-#[cfg(not(unix))]
+/// The OS host for an in-process shell whose `$$` is `pid`, and how it wraps files.
+#[cfg(windows)]
 fn os_host(pid: u32) -> (std::rc::Rc<dyn psh_engine::Host>, WrapFile) {
-    use psh_engine::std_host::{StdFile, StdHost};
-    (std::rc::Rc::new(StdHost::with_pid(pid)), |f| {
-        std::rc::Rc::new(StdFile::new(f))
+    use psh_os::windows::{WinFile, WindowsConfig, WindowsHost};
+    let host = WindowsHost::new(WindowsConfig {
+        pid: Some(pid),
+        ..WindowsConfig::default()
+    });
+    (std::rc::Rc::new(host), |f| {
+        std::rc::Rc::new(WinFile::new(std::os::windows::io::OwnedHandle::from(f)))
     })
 }
 

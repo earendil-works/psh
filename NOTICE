@@ -68,3 +68,17 @@ Files containing code adapted from oh-my-pi's pi-shell/src/sys:
 
 crates/psh-os/src/unix/ready.rs (from sys/ready.rs: the readiness thread, select on macOS)
 crates/psh-os/src/unix/spawn.rs (from sys/spawn/unix.rs: posix_spawn attributes, waiter pool, waitid loop)
+crates/psh-os/src/windows/spawn.rs (from sys/spawn/windows.rs: suspended CreateProcessW into a job, handle list, environment block, ctrl-break and job termination)
+
+-------------------------------------------------------------------------------
+The Rust standard library (https://github.com/rust-lang/rust), library/std
+-------------------------------------------------------------------------------
+
+Copyright (c) The Rust Project Developers. Licensed under the MIT license or the
+Apache License, Version 2.0, at your option (the texts are those of LICENSE-MIT and
+LICENSE-APACHE in this repository, with this copyright line).
+
+Files containing code adapted from std:
+
+crates/psh-os/src/windows/cmdline.rs (from sys/args/windows.rs: MSVCRT argument quoting and the batch file quoting of CVE-2024-24576)
+crates/psh-os/src/windows/file.rs (the named-pipe pattern of sys/pal/windows/pipe.rs for pump pipes)

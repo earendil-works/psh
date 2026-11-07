@@ -182,7 +182,7 @@ at scale) and syntax ranking. Running anything is never involved.
 - Reads the Oils `.test.sh` format (following Oils' `sh_spec.py` exactly, so each case
   runs the same bytes) and the subset of brush's YAML the cases use (hand parser).
 - Runs psh **in-process** (a new shell per case on its own engine thread over the OS
-  host: psh-os on Unix, the std host on Windows until 0007; the case's cwd and
+  host: psh-os on Unix and Windows; the case's cwd and
   environment, OS pipes for stdout and stderr, a fake `$$`) wherever possible; cases
   that mention `PPID` or `kill` run in the `psh` binary, since they signal their parent
   or process group (D1056); `--shell PATH` runs a shell binary as a subprocess

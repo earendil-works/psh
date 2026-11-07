@@ -43,16 +43,22 @@ fn os_host() -> (Rc<dyn Host>, Stdio) {
     (Rc::new(host), [stdio(0), stdio(1), stdio(2)])
 }
 
-/// The OS host (Windows: the std host until 0007).
-#[cfg(not(unix))]
+/// The OS host. As on Unix, externals stay in psh's console group (a Ctrl-C typed in
+/// the console reaches them) and background jobs outlive it.
+#[cfg(windows)]
 fn os_host() -> (Rc<dyn Host>, Stdio) {
-    use psh_engine::std_host::{StdFile, StdHost};
+    use psh_os::windows::{Leftovers, Placement, WinFile, WindowsConfig, WindowsHost};
+    let host = WindowsHost::new(WindowsConfig {
+        placement: Placement::Inherit,
+        leftovers: Leftovers::Keep,
+        ..WindowsConfig::default()
+    });
     let stdio = |n| {
-        StdFile::stdio(n)
+        WinFile::stdio(n)
             .ok()
             .map(|f| Rc::new(f) as Rc<dyn HostFile>)
     };
-    (Rc::new(StdHost::new()), [stdio(0), stdio(1), stdio(2)])
+    (Rc::new(host), [stdio(0), stdio(1), stdio(2)])
 }
 
 fn os_bytes(s: std::ffi::OsString) -> Vec<u8> {
@@ -154,12 +160,15 @@ fn main() -> ExitCode {
         cfg.cwd = std::env::current_dir()
             .map(|p| os_bytes(p.into_os_string()))
             .unwrap_or_else(|_| b"/".to_vec());
-        if cfg!(windows) {
+        #[cfg(windows)]
+        {
             cfg.cwd = cfg
                 .cwd
                 .iter()
                 .map(|&b| if b == b'\\' { b'/' } else { b })
                 .collect();
+            let defaults = psh_os::windows::env_defaults(&cfg.env);
+            cfg.env.extend(defaults);
         }
         cfg.stdin = stdin;
         cfg.stdout = stdout;

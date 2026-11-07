@@ -1216,3 +1216,77 @@ the wasm build or its host, and the gate keeps the no-externals pass rate equal 
 native one. This is the per-platform ratchet the coordinator planned for macOS and
 Windows (0002 follow-up), with `wasm` as the first platform. A whole run takes about 20 s,
 like the native one.
+## D1074: Windows spawns: a kill-on-close job per external, stdio only, crashes as signals
+date: 2026-11-07 · by: windows · issue: 0007
+Every external gets its own Job Object (no breakaway); the process is created
+suspended, assigned, then resumed. The run's jobs carry `KILL_ON_JOB_CLOSE`, so when psh
+dies (crash, `TerminateProcess`) what it started dies too; detached and disowned
+externals' jobs do not, and `Leftovers::Keep` clears the flag on every job when the host
+is dropped (background jobs then outlive the shell as with bash). Unix cannot offer the
+crash case. Only descriptors 0-2 reach a child: native programs have no inherited
+descriptors beyond the standard handles, so `exec 3>f; cmd` passes nothing for 3
+(ignored, not an error). TERM/INT/HUP/QUIT are a ctrl-break to the external's console
+group (`Placement::Group`); where none can be delivered (no shared console, or
+`Placement::Inherit`) the job is terminated. Exit codes: our termination is KILL (137);
+`STATUS_CONTROL_C_EXIT`, and `STATUS_DLL_INIT_FAILED` after our break, is the signal
+we broke with (INT when the console sent it); access violation, stack overflow and
+in-page errors are SEGV, illegal instructions ILL, arithmetic faults FPE, fail-fast and
+assertion failures ABRT; every other code is an exit code, which the engine truncates.
+
+## D1075: Windows defaults: /dev/null, /tmp, HOME and TMPDIR
+date: 2026-11-07 · by: windows (as proposed by the coordinator) · issue: 0007
+The host maps `/dev/null` to `NUL`, `/tmp` and paths below it to the user's temp
+directory, and `/c/...` to `C:/...` (Git Bash style), at its boundary. The engine still
+sees the path as written (`cd /tmp; pwd` prints `/tmp`). The standalone shell (and any
+embedder that calls `psh_os::windows::env_defaults`) sets `HOME` from `USERPROFILE` and
+`TMPDIR` to the temp directory, `/`-separated, unless they are set.
+
+## D1076: Windows command lookup
+date: 2026-11-07 · by: windows · issue: 0007
+`resolve` splits the shell's `PATH` on `;`, and also on `:` unless the colon follows a
+single drive letter at the start of an entry (`C:/x`): both native values and bash-style
+`PATH="$HOME/bin:$PATH"` work. The owner may still choose the separator policy; the
+splitting is one function (`path::split_path_var`). For each entry: the name as it is
+when it already ends in a `PATHEXT` extension, else the name plus each extension in
+`PATHEXT` order, then the bare name only if it is a `#!` script (so `tsc.cmd` wins over
+the `tsc` sh script npm puts beside it, as cmd would choose). Empty and relative entries
+are relative to the cwd; there is no implicit cwd search. App Execution Aliases (0-byte
+reparse points such as `winget.exe`) count as files. `PATHEXT` comes from the process
+environment. `test -x` is true for directories, `PATHEXT` extensions and `#!` files.
+
+## D1077: Windows files: pump threads for children's pipes, peeking reads for shared ones
+date: 2026-11-07 · by: windows · issue: 0007
+The engine's end of a `ChildFd::Pipe` is a private named pipe (anonymous pipes cannot do
+overlapped I/O) whose overlapped server end a helper thread owns, moving bytes to or from
+a 64 KiB buffer; dropping it sets a cancel event and `CancelIoEx` stops the thread at
+once (a reader) or after the buffer is handed over (a writer, so the child sees end of
+file). Shared pipes (the shell's own stdio, `Host::pipe` ends) are never read
+speculatively, since a thread blocked in `ReadFile` would take bytes meant for a child:
+reads take what `PeekNamedPipe` shows, and otherwise one poller thread checks the
+watched pipes (1 ms, backing off to 16 ms) and wakes them. Writes to shared pipes are
+synchronous: their reader is another process (vprocs exchange data through engine
+pipes), so a full pipe only applies backpressure; anonymous pipes give no reliable free
+space (a pending read reduces the write quota), which rules out a non-blocking check.
+Regular files, `NUL` and consoles are synchronous; console input is read synchronously.
+
+## D1078: Code-page decoding of native output is a host option
+date: 2026-11-07 · by: windows (as proposed by the coordinator) · issue: 0007
+`WindowsConfig::decode = Decode::Ansi` makes the host's pump pipes convert child output
+read by the engine (`$(cmd)`, pipes into builtins) that is not valid UTF-8 from the ANSI
+code page (`GetACP`) to UTF-8, chunk by chunk, keeping an incomplete UTF-8 sequence for
+the next chunk. Valid UTF-8 passes unchanged, and nothing happens when the code page is
+UTF-8. Off by default. It uses Windows' own conversion (`MultiByteToWideChar`), no new
+crate. Output that goes straight from a child to a file, another child or psh's own
+stdout is not touched. A double-byte character split across reads is decoded in halves
+(a known gap).
+
+## D1079: Scripts psh must run itself on Windows: an engine hook, pending
+date: 2026-11-07 · by: windows · issue: 0007
+`#!/bin/sh`, `#!/bin/bash` (also through `/usr/bin/env`) and files with neither an
+interpreter line nor an executable extension cannot be started on Windows, where there
+is no `/bin/sh`; the Unix host's ENOEXEC fallback does not exist. Until the engine runs
+such files in-process, `spawn` fails with `ErrorKind::Unsupported` and a message naming
+the file. Proposed engine hook: a marker error from `spawn` (or a variant of the spawn
+result) that tells the engine to run the program file as a psh script with the same
+argv, environment and descriptors, the way bash runs a file that `execve` rejects. The
+Unix host would use the same marker for ENOEXEC instead of `/bin/sh`.

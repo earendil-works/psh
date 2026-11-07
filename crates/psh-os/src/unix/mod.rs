@@ -29,6 +29,7 @@ use psh_engine::host::{
     Access, DirEntry, FileKind, Host, HostFuture, Metadata, OpenOptions, Signal, SpawnSpec, Spawned,
 };
 
+pub use crate::Leftovers;
 pub use file::UnixFile;
 pub use spawn::{Placement, settle};
 
@@ -46,16 +47,6 @@ pub struct UnixConfig {
     /// What happens to the run's leftovers (released background jobs and what
     /// externals left running) when the host is dropped.
     pub leftovers: Leftovers,
-}
-
-/// The fate of a run's leftovers when its host is dropped (D1067).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Leftovers {
-    /// TERM to every group of the run, KILL after the grace period. Only detached
-    /// (`nohup`, `setsid`) and disowned externals survive. The default.
-    Kill,
-    /// Leave them running, as bash does.
-    Keep,
 }
 
 impl UnixConfig {

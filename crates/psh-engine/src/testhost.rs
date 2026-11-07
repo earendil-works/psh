@@ -527,6 +527,8 @@ pub struct TestHost {
     pub fs: Rc<MemFs>,
     commands: RefCell<HashMap<Vec<u8>, FakeCommand>>,
     latency: Cell<bool>,
+    /// What `path_entries` splits on (`;` plays a Windows host).
+    path_sep: Cell<u8>,
     counters: Rc<Counters>,
     stdin: Rc<RefCell<Vec<u8>>>,
     stdout: Rc<RefCell<Vec<u8>>>,
@@ -549,6 +551,7 @@ impl TestHost {
             fs,
             commands: RefCell::new(HashMap::new()),
             latency: Cell::new(false),
+            path_sep: Cell::new(b':'),
             counters: Rc::new(Counters::default()),
             stdin: Rc::new(RefCell::new(Vec::new())),
             stdout: Rc::new(RefCell::new(Vec::new())),
@@ -561,6 +564,11 @@ impl TestHost {
     /// Every operation is `Pending` once before it completes.
     pub fn set_latency(&self, on: bool) {
         self.latency.set(on);
+    }
+
+    /// The separator of `PATH` entries (`path_entries`).
+    pub fn set_path_sep(&self, sep: u8) {
+        self.path_sep.set(sep);
     }
 
     pub fn set_stdin(&self, data: &[u8]) {
@@ -682,6 +690,11 @@ impl Host for TestHost {
     fn canonicalize(&self, path: &[u8]) -> HostFuture<io::Result<Vec<u8>>> {
         let r = self.fs.stat(path).map(|_| clean(path));
         delayed(self.latency.get(), r)
+    }
+
+    fn path_entries(&self, path: &[u8]) -> Vec<Vec<u8>> {
+        let sep = self.path_sep.get();
+        path.split(|&b| b == sep).map(<[u8]>::to_vec).collect()
     }
 
     fn resolve(&self, name: &[u8], _path: &[u8], _cwd: &[u8]) -> HostFuture<Option<Vec<u8>>> {

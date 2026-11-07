@@ -101,7 +101,8 @@ async fn lookup(vp: &Vp, name: &[u8], o: Lookup) -> Vec<Kind> {
         .var("PATH")
         .map(<[u8]>::to_vec)
         .unwrap_or_else(|| exec::DEFAULT_PATH.to_vec());
-    for dir in path.split(|&b| b == b':') {
+    for dir in vp.host().path_entries(&path) {
+        let dir = &dir[..];
         if let Some(p) = hash::search(vp, name, Some(dir)).await
             && !found
                 .iter()

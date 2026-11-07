@@ -6,7 +6,7 @@ branch: issue/0007-windows
 depends-on: part A: 0001; part B: 0006 (`windows-sys` allowed, D024)
 touches: .github/ or scripts/windows-*, crates/psh-os/ (windows), crates/psh-spec/ (Windows normalization), tests/process/ (Windows cases)
 guide: windows.md (not written yet; list it as a follow-up)
-decisions: D1070–D1079
+decisions: D1070–D1079, D1910–D1919
 
 ## Goal
 Windows as a first-class platform from the start (D011): the gate runs on Windows, and
@@ -285,13 +285,35 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
 - Docs: ARCH.md (hosts table, psh-os Windows, Windows rules), TESTING.md (psh-spec host),
   NOTICE (std, oh-my-pi windows spawn). Guide: none (windows.md is a follow-up).
 
+### 2026-11-07 Part B, part 2: L5 on Windows, console events, Host::path_entries
+- `tests/process/windows.rs` (integration test `process-windows` of psh-os): its own
+  small harness over `WindowsHost` (the Unix one is procs' and Unix-only), with
+  `psh-test-helper` (`tests/process/helper.rs`, a `[[bin]]` of psh-os: sleep, cat, yes,
+  args, exit, crash, tree, stubborn, bytes) as `$H`. 16 cases: exit codes and a crash
+  (134), a 300 KB external pipeline, `yes` into a reader that stops, a 150 KB here-doc,
+  cancel of a tree with a grandchild and of a pipeline with a break-ignoring stage (no
+  leftovers), background jobs killed at the end, `Leftovers::Keep`, an npm-style `.cmd`
+  shim with `a b`, `x&y`, `100%`, a quote, argv quoting, the shell's stdin shared with an
+  external, `/c/`, `C:/` and `/dev/null` paths, CRLF scripts, command not found, 50 short
+  externals, system programs through the real PATH. Pass on arm64 and x64.
+- `psh_os::windows::signals`: console ctrl events (Ctrl-C INT, Ctrl-Break TERM, close/
+  logoff/shutdown HUP) cancel the standalone shell's run; it settles and exits 128+n.
+  Test in `crates/psh/tests/cli.rs` (Windows): a ctrl-break to psh's group ends it with
+  143 and no leftovers.
+- The host maps `/C:/x` (the engine's `normalize` puts a slash before a drive) to
+  `C:\x`; the engine should keep `C:/x` as it is (follow-up for the engine).
+- 0029 made the engine split PATH on `:` itself (type, hash, source), which broke every
+  PATH lookup on Windows. With the coordinator's OK: `Host::path_entries` (default `:`;
+  `WindowsHost` per D1076; the test host can play `;`), used by the three call sites;
+  engine unit test and the Windows L5 case above (D1910). Other `:` splits in the engine
+  are not PATH lookups (tilde expansion in assignments, getopts).
+
 ## Follow-ups
 - Engine: strip the `\r` of CRLF in `$(…)` and `read` on Windows (ARCH "Windows rules").
 - Engine: the "run this file in psh" hook (D1079).
-- L5 on Windows: `tests/process` is Unix-only; a cross-platform helper binary and the
-  Windows cases (part 2).
-- Standalone psh on Windows: a console ctrl handler (Ctrl-C/Ctrl-Break cancel the run,
-  `settle`, exit like bash) (part 2).
+- Engine: `normalize` turns `C:/x` into `/C:/x` (`cd`, `pwd` show it); keep the drive.
+- Engine (routed to builtins): `PATH=/x cmd` ignores the prefix PATH for the lookup.
+- One L5 harness for both platforms once procs' part 3 has settled `tests/process/`.
 - Delete the old per-worktree checkouts in the VM (C:\psh-gate\<worktree>) once no
   old-style run is left.
 - If the owner agrees: disable XtaCache in the VM (D1072); then the wait and retry are a

@@ -192,7 +192,8 @@ async fn find_file(vp: &Vp, file: &[u8], search: Option<&[u8]>) -> Option<Vec<u8
         None => vp.var("PATH").map(<[u8]>::to_vec),
     };
     if let Some(path) = path {
-        for dir in path.split(|&b| b == b':') {
+        for dir in vp.host().path_entries(&path) {
+            let dir = &dir[..];
             let mut cand = if dir.is_empty() {
                 vp.cwd.clone()
             } else {

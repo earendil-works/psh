@@ -739,3 +739,14 @@ fn mapfile_and_process_substitution() {
     );
     check("echo <(true) >(true)", "/dev/fd/63 /dev/fd/62\n");
 }
+
+#[test]
+fn path_lookups_split_path_as_the_host_says() {
+    // Split on `;`, `/x:y` is one absolute entry; split on `:`, `y;/bin` would be a
+    // relative one (D1910).
+    let src = "PATH='/x:y;/bin'; type -a cat; cat </dev/null && echo ran";
+    let o = run_setup(src, |h| h.set_path_sep(b';'));
+    assert_eq!(o.stdout, "cat is /bin/cat\nran\n", "{}", o.stderr);
+    let o = run(src);
+    assert!(o.stdout.contains("cat is y;/bin/cat\n"), "{}", o.stdout);
+}

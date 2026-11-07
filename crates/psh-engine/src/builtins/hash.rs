@@ -72,7 +72,8 @@ pub(crate) fn hashed(vp: &Vp, name: &[u8]) -> Option<Vec<u8>> {
 pub(crate) async fn search(vp: &Vp, name: &[u8], path: Option<&[u8]>) -> Option<Vec<u8>> {
     let path = path.map_or_else(|| current_path(vp), <[u8]>::to_vec);
     let mut fallback = None;
-    for dir in path.split(|&b| b == b':') {
+    for dir in vp.host().path_entries(&path) {
+        let dir = &dir[..];
         let relative = !dir.is_empty() && vp.abs_path(dir) != dir;
         if let Some(found) = vp.host().resolve(name, dir, &vp.cwd).await {
             if !relative {

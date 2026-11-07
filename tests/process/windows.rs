@@ -312,3 +312,20 @@ fn many_short_externals() {
     let want: String = (1..=50).map(|i| format!("[{i}]\n")).collect();
     assert_eq!(r.stdout, want, "{r:?}");
 }
+
+#[test]
+fn system_programs_run_through_path_lookup() {
+    // The real PATH (`C:\WINDOWS\system32;...`): drive letters must survive every
+    // lookup, the engine's (`type`, `command -v`, `hash`) and the host's (D1910).
+    let r = run("ping -n 1 127.0.0.1 >/dev/null; echo $?; \
+         cmd /d /c echo via-cmd; echo hi | findstr hi; \
+         type -P cmd; command -v findstr; hash -r; where.exe /q cmd && echo where-ok");
+    let lines: Vec<String> = r.stdout.lines().map(str::to_ascii_lowercase).collect();
+    assert_eq!(lines[..3], ["0", "via-cmd", "hi"], "{r:?}");
+    assert!(
+        lines[3].ends_with("/cmd.exe") && lines[3].contains(":/"),
+        "{r:?}"
+    );
+    assert!(lines[4].ends_with("/findstr.exe"), "{r:?}");
+    assert_eq!(lines[5], "where-ok", "{r:?}");
+}

@@ -383,6 +383,13 @@ impl Host for WindowsHost {
         ready(r)
     }
 
+    fn path_entries(&self, path_var: &[u8]) -> Vec<Vec<u8>> {
+        path::split_path_var(path_var)
+            .into_iter()
+            .map(<[u8]>::to_vec)
+            .collect()
+    }
+
     fn resolve(&self, name: &[u8], path_var: &[u8], cwd: &[u8]) -> HostFuture<Option<Vec<u8>>> {
         ready(resolve_in(name, path_var, cwd))
     }

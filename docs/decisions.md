@@ -1428,3 +1428,11 @@ that came with the last command still acts. When a default action ended the run,
 `Shell::killed_by` says which signal and `psh` dies by it (after its abandoned externals
 were killed); a trapped or ignored signal leaves psh running. Blocking reads (`read`, a
 FIFO open) do not give way yet.
+## D1910: Host::path_entries: the host splits PATH-like values
+date: 2026-11-07 · by: windows (with the coordinator's OK) · issue: 0007
+The engine's own lookups (`type`, `command -v`, `hash`, `source`) walk `PATH` one entry
+at a time; splitting on `:` there broke every lookup on Windows, where `C:\WINDOWS` has a
+colon. `Host::path_entries(path)` returns the entries; the default splits on `:` (Unix,
+the test host, wasm), `WindowsHost` splits as D1076 says. The separator policy is then
+one host function. The test host can split on `;` to cover the engine side; the Windows
+L5 suite runs system programs through the real PATH, so a regression fails the gate.

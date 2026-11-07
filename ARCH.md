@@ -249,7 +249,8 @@ separated, converted at the host's boundary.
   `canonicalize`; open files are `HostFile`s with `poll_read`/`poll_write` and
   `is_terminal`. To come with their features: mkdir, remove, rename, symlink, temp
   files, umask, FIFOs.
-- `resolve(name, PATH, cwd)` for command lookup (PATH, PATHEXT on Windows); a hook
+- `path_entries(PATH)` splits a `PATH`-like value as the platform does (`:`; Windows `;`,
+  D1910), and `resolve(name, PATH, cwd)` does command lookup (PATH, PATHEXT on Windows); a hook
   where an embedder can veto or rewrite a command at execution time is planned
   (approval at exec time).
 - `sleep` (timers), `pid` (`$$`). To come: clock, user and host names, signals to

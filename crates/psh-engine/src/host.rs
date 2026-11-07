@@ -243,6 +243,12 @@ pub trait Host {
     /// Finds a command name (no slash) in `path` (the shell's `PATH`, relative entries
     /// against `cwd`): the program to spawn, or `None`.
     fn resolve(&self, name: &[u8], path: &[u8], cwd: &[u8]) -> HostFuture<Option<Vec<u8>>>;
+    /// The entries of a `PATH`-like value, in order: what `resolve` and the lookups of
+    /// `type`, `hash` and `source` try one at a time. POSIX splits on `:`; the Windows
+    /// host splits on `;`, and on `:` except after a drive letter (D1910).
+    fn path_entries(&self, path: &[u8]) -> Vec<Vec<u8>> {
+        path.split(|&b| b == b':').map(<[u8]>::to_vec).collect()
+    }
     /// Starts an external process. Errors are the reasons it could not start
     /// (`NotFound`, `PermissionDenied`, ...).
     fn spawn(&self, spec: SpawnSpec) -> io::Result<Spawned>;

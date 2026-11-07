@@ -1,7 +1,7 @@
 # 0033: Per-platform ratchets and the `platform` tag
 
-status: open
-agent: -
+status: in-progress
+agent: shapes
 branch: issue/0033-platform-ratchets
 depends-on: 0002, 0031
 touches: crates/psh-spec/ (groups/ratchets), tests/spec.toml, tests/**/expected-failures*.txt, scripts/status, TESTING.md (ratchet section)

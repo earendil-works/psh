@@ -7,16 +7,17 @@ oils/builtin-bracket/27: no sticky, setuid or setgid bits on Windows
 oils/builtin-bracket/28: psh bug (files): mkdir -p splits off the drive of C:/...
 oils/builtin-bracket/36: psh bug (files): mkdir -p splits off the drive of C:/...
 oils/builtin-bracket/37: no sticky, setuid or setgid bits on Windows
-oils/builtin-cd/7: psh bug (files): mkdir -p splits off the drive of C:/...
-oils/builtin-cd/8: psh bug (files): mkdir -p splits off the drive of C:/...
 oils/builtin-cd/16: psh bug (files): mkdir -p splits off the drive of C:/...
 oils/builtin-cd/18: psh bug (files): mkdir -p splits off the drive of C:/...
 oils/builtin-cd/20: no file symlinks without Developer Mode (ln -s fails)
 oils/builtin-cd/21: no file symlinks without Developer Mode (ln -s fails)
+oils/builtin-cd/7: psh bug (files): mkdir -p splits off the drive of C:/...
+oils/builtin-cd/8: psh bug (files): mkdir -p splits off the drive of C:/...
 oils/builtin-eval-source/15: Windows paths start with a drive (HOME is C:/...), not /
 oils/builtin-eval-source/16: Windows paths start with a drive (HOME is C:/...), not /
 oils/builtin-meta/3: Windows keeps no execute bit: it comes from the extension or a #! line
 oils/builtin-printf/33: needs python2 (the Oils helper argv.py)
+oils/builtin-read/45: Windows file names cannot contain * ? | < > " \ :
 oils/builtin-trap/31: no SIGUSR1 to deliver to a process on Windows
 oils/builtin-type/2: Windows keeps no execute bit: it comes from the extension or a #! line
 oils/command_/1: Windows keeps no execute bit: it comes from the extension or a #! line
@@ -25,18 +26,22 @@ oils/extglob-files/1: Windows drops a trailing dot from file names (foo.)
 oils/extglob-files/10: Windows file names cannot contain * ? | < > " \ :
 oils/extglob-files/11: Windows file names cannot contain * ? | < > " \ :
 oils/extglob-files/12: Windows file names cannot contain * ? | < > " \ :
+oils/glob-bash/7: psh bug (files): mkdir -p splits off the drive of C:/...
 oils/glob/17: Windows file names cannot contain * ? | < > " \ :
 oils/glob/18: Windows file names cannot contain * ? | < > " \ :
 oils/glob/32: Windows file names cannot contain * ? | < > " \ :
 oils/glob/35: Windows file names cannot contain * ? | < > " \ :
 oils/glob/36: Windows file names cannot contain * ? | < > " \ :
-oils/glob-bash/7: psh bug (files): mkdir -p splits off the drive of C:/...
+oils/globignore/10: Windows file names cannot contain * ? | < > " \ :
+oils/globignore/7: Windows file names are case-insensitive (A and a are one file)
+oils/globstar/4: symlinks: none to files without Developer Mode; directory links are junctions with absolute targets
 oils/here-doc/3: descriptors above 2 do not reach Windows programs
-oils/here-doc/4: descriptors above 2 do not reach Windows programs
 oils/here-doc/32: descriptors above 2 do not reach Windows programs
 oils/here-doc/33: descriptors above 2 do not reach Windows programs
+oils/here-doc/4: descriptors above 2 do not reach Windows programs
 oils/introspect/8: needs python2 (the Oils helper argv.py)
 oils/redirect-multi/0: Windows file names cannot contain * ? | < > " \ :
 oils/redirect-multi/1: Windows file names cannot contain * ? | < > " \ :
 oils/redirect-multi/2: Windows file names cannot contain * ? | < > " \ :
 oils/redirect-multi/9: Windows file names cannot contain * ? | < > " \ :
+oils/vars-special/5: no Unix file system layout (/bin, /usr) on Windows

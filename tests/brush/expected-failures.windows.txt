@@ -2,6 +2,7 @@
 # but pass on Linux (they are not in expected-failures.txt), each with its reason.
 # psh-spec --update-ratchet removes cases that pass; never add a regression.
 brush/brush/external_commands/15: Windows keeps no execute bit: it comes from the extension or a #! line
+brush/compat/assignments/6: no root user on Windows (~root)
 brush/compat/builtins/cd/0: no Unix file system layout (/bin, /usr) on Windows
 brush/compat/builtins/cd/2: no Unix file system layout (/bin, /usr) on Windows
 brush/compat/builtins/cd/4: symlinks: none to files without Developer Mode; directory links are junctions with absolute targets
@@ -11,11 +12,11 @@ brush/compat/builtins/pwd/1: symlinks: none to files without Developer Mode; dir
 brush/compat/builtins/test/2: no Unix file system layout (/bin/sh, /etc) on Windows
 brush/compat/builtins/test/23: no file symlinks without Developer Mode (ln -s fails)
 brush/compat/errors/66: no Unix file system layout (/bin/sh, /etc) on Windows
+brush/compat/extended_tests/11: no Unix file system layout (/bin/sh, /etc) on Windows
 brush/compat/extended_tests/5: no file symlinks without Developer Mode (ln -s fails)
 brush/compat/extended_tests/6: no sticky, setuid or setgid bits on Windows
 brush/compat/extended_tests/8: no file symlinks without Developer Mode (ln -s fails)
 brush/compat/extended_tests/9: no file symlinks without Developer Mode (ln -s fails)
-brush/compat/extended_tests/11: no Unix file system layout (/bin/sh, /etc) on Windows
 brush/compat/ifs/93: Windows file names cannot contain * ? | < > " \ : (the case cannot be set up)
 brush/compat/patterns/filename_expansion/17: Windows file names cannot contain * ? | < > " \ : (the case cannot be set up)
 brush/compat/patterns/filename_expansion/34: no file symlinks without Developer Mode (ln -s fails)
@@ -24,3 +25,4 @@ brush/compat/patterns/filename_expansion/45: Windows file names cannot contain *
 brush/compat/patterns/patterns/0: Windows file names cannot contain * ? | < > " \ : (the case cannot be set up)
 brush/compat/signals/30: no Unix file system layout (/bin, /usr) on Windows
 brush/compat/signals/41: no Unix file system layout (/bin, /usr) on Windows
+brush/compat/well_known_vars/3: OSTYPE is msys on Windows, by design

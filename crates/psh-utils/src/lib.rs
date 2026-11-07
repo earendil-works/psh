@@ -44,12 +44,20 @@ mod tee;
 mod tr;
 mod uniq;
 
+mod xargs;
+
 use psh_engine::util::{Mode, UtilEntry, UtilPolicy};
 
 use common::util_fn;
 
 /// Every utility, with its names, mode (D015) and group.
 pub static REGISTRY: &[UtilEntry] = &[
+    UtilEntry {
+        names: &["xargs"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(xargs::run),
+    },
     UtilEntry {
         names: &["timeout", "gtimeout"],
         mode: Mode::WindowsShadow,
@@ -223,6 +231,7 @@ pub static REGISTRY: &[UtilEntry] = &[
 /// The option specs, for the classifier check (D1082).
 pub static SPECS: &[opts::Spec] = &[
     timeout::SPEC,
+    xargs::SPEC,
     head::SPEC,
     tail::SPEC,
     cat::SPEC,

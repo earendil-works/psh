@@ -184,6 +184,12 @@ pub struct SpawnEnv {
     pub unset: Vec<String>,
     /// Variables to set, in order (`env NAME=value`).
     pub set: Vec<(String, Vec<u8>)>,
+    /// The command's working directory instead of the utility's (`find -execdir`), an
+    /// absolute shell path.
+    pub cwd: Option<Vec<u8>>,
+    /// A file opened as the command's stdin instead of the utility's (`xargs` gives its
+    /// commands `/dev/null`, or `/dev/tty` with `-o`); closed if it cannot be opened.
+    pub stdin: Option<Vec<u8>>,
 }
 
 /// Shell builtins that also exist as programs, so wrappers (`env`, `timeout`, `xargs`)
@@ -618,6 +624,15 @@ impl UtilCtx<'_> {
             let var = sub.vars.entry(&name);
             var.set(value);
             var.exported = true;
+        }
+        if let Some(cwd) = env.cwd {
+            sub.cwd = cwd;
+        }
+        if let Some(path) = env.stdin {
+            match self.vp.host().open(&path, OpenOptions::read()).await {
+                Ok(f) => sub.fds.set(0, Rc::new(FdObj::File(f))),
+                Err(_) => sub.fds.close(0),
+            }
         }
         UtilChild {
             fut: Box::pin(async move {

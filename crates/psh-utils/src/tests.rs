@@ -260,3 +260,32 @@ mod files;
 // The text filters (sort uniq cut tr paste nl tee seq comm).
 #[path = "tests_text.rs"]
 mod text;
+
+#[test]
+fn xargs() {
+    check_all("xargs echo", "a 'b c'\nd\\ e\n", 0, "a b c d e\n", "");
+    check_all("xargs -n1 echo x", "a b\n", 0, "x a\nx b\n", "");
+    check_all(
+        "xargs -I{} echo [{}]",
+        "  one two\nthree\n",
+        0,
+        "[one two]\n[three]\n",
+        "",
+    );
+    check_all("xargs -L2", "a\nb\nc\n", 0, "a b\nc\n", "");
+    check_all("xargs -0 echo", "a b\0c\0", 0, "a b c\n", "");
+    check_all("xargs -d, -n2 echo", "a,b,c", 0, "a b\nc\n", "");
+    check_all("xargs -E X echo", "a X b\n", 0, "a\n", "");
+    // Empty input runs nothing (D1170).
+    check_all("xargs echo ran", "\n", 0, "", "");
+    check_all("xargs false", "a\n", 123, "", "");
+    check_all("xargs -P2 -n1 echo", "a\n", 0, "a\n", "");
+    check_all(
+        "xargs echo",
+        "it's\n",
+        1,
+        "",
+        "xargs: unmatched single quote; by default quotes are special to xargs unless you use the -0 option\n",
+    );
+    check_all("xargs -t echo", "a\n", 0, "a\n", "echo a\n");
+}

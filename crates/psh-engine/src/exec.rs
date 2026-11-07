@@ -43,9 +43,7 @@ pub(crate) fn run_list<'a>(
             {
                 // The common case, without the and-or and pipeline frames: less stack
                 // per nesting level (D1050).
-                let st = run_command(vp, code, p.stages[0].cmd).await?;
-                set_pipestatus(vp, &[st]);
-                st
+                run_command(vp, code, p.stages[0].cmd).await?
             } else {
                 Box::pin(run_andor(vp, code, item)).await?
             };
@@ -130,9 +128,7 @@ async fn run_pipeline_stages(vp: &mut Vp, code: &Rc<Code>, p: &Pipeline) -> R {
         return Ok(0);
     }
     if p.stages.len() == 1 {
-        let st = run_command(vp, code, p.stages[0].cmd).await?;
-        set_pipestatus(vp, &[st]);
-        return Ok(st);
+        return run_command(vp, code, p.stages[0].cmd).await;
     }
     let n = p.stages.len();
     // `shopt -s lastpipe`: the last command runs in this shell (no job control here).
@@ -258,17 +254,19 @@ fn run_command_with<'a>(
             _ => Box::pin(with_redirects(vp, code, cmd)).await?,
         };
         // Compound commands other than these fail only through a command inside them,
-        // which errexit has seen already (D1281).
-        if check
-            && matches!(
-                cmd.kind,
-                CommandKind::Simple(_)
-                    | CommandKind::Subshell(_)
-                    | CommandKind::Arith(_)
-                    | CommandKind::Cond(_)
-            )
-        {
-            return check_failure(vp, status).await;
+        // which errexit has seen already (D1281); `PIPESTATUS` follows the same
+        // commands.
+        if matches!(
+            cmd.kind,
+            CommandKind::Simple(_)
+                | CommandKind::Subshell(_)
+                | CommandKind::Arith(_)
+                | CommandKind::Cond(_)
+        ) {
+            set_pipestatus(vp, &[status]);
+            if check {
+                return check_failure(vp, status).await;
+            }
         }
         Ok(status)
     })
@@ -713,6 +711,13 @@ async fn prepare_simple(
         if let Err(msg) = r {
             vp.error(&msg).await;
             return Err(Unwind::Abort(1));
+        }
+    }
+    // `set -a`: what the command assigned is exported (D1280).
+    if argv.is_empty() && vp.opts.get(SetOpt::Allexport) {
+        for a in &s.assigns {
+            let name = vp.resolve(code.ast.text(a.name)).into_owned();
+            vp.vars.entry(&name).exported = true;
         }
     }
 

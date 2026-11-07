@@ -60,8 +60,13 @@ the host), with bash's exact errexit exemptions. errexit must be right: agents r
   `crates/psh` and `crates/psh-spec`.
 - Accidental pass added to the brush ratchet with its reason: compat/options/extdebug/16
   (passed only while `shopt` was unsupported).
-- Scores (macOS, after rebasing on main 28f29c1): oils 1279/2511, brush 1424/3171,
-  agent 123/144; ratchets: 166 oils, 354 brush, 8 agent lines removed.
+- Rebased onto 0026 (Var/Value model): allexport marks assignments in `assign`,
+  `set_var` and `prepare_simple`; `PIPESTATUS` is a real indexed array, set after the
+  same commands errexit looks at (bash: `case` with no match leaves it alone).
+- brush compat/options/set-e/119–122 write `/tmp/test_source_$$.sh` with the runner's
+  fixed fake `$$`: added to `[[serial]]` in tests/spec.toml (they raced).
+- Scores (macOS, on main 89528f0 incl. 0026/0029): oils 1806/2511, brush 2069/3171,
+  agent 131/144.
 - Signal hook agreed with procs through the coordinator (part 2): `ControlHandle::signal`
   → pending mask in `Shared`, taken at safepoints by the trap-owning vproc; trap, ignore
   or default action (EXIT trap, then 128+sig); cancel stays forced;

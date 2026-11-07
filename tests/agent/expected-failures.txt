@@ -8,10 +8,8 @@ agent/globs-status/2
 agent/globs-status/18
 agent/globs-status/19
 agent/heredocs/14
-agent/pipes/4
 agent/pipes/8
 agent/pipes/9
-agent/pipes/12
 agent/redirects/1
 agent/redirects/8
 agent/redirects/10

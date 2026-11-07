@@ -17,7 +17,6 @@ brush/brush/external_commands/12
 brush/brush/external_commands/13
 brush/brush/external_commands/16: passed only with the stub (status 2); bash fails on `"$0" --inherit-fd=3` with $0=bash on PATH, psh $0 is not on PATH
 brush/brush/here_documents/4
-brush/brush/pipelines/5
 brush/brush/pipelines/9
 brush/brush/pipelines/16
 brush/brush/pipelines/19
@@ -67,8 +66,6 @@ brush/compat/basic/6
 brush/compat/basic/13
 brush/compat/builtins/alias/34
 brush/compat/builtins/alias/35
-brush/compat/builtins/alias/38
-brush/compat/builtins/alias/39
 brush/compat/builtins/builtin/7
 brush/compat/builtins/builtin/8
 brush/compat/builtins/builtin/16
@@ -97,17 +94,8 @@ brush/compat/builtins/command/4
 brush/compat/builtins/command/7
 brush/compat/builtins/command/9
 brush/compat/builtins/command/14
-brush/compat/builtins/command/19
-brush/compat/builtins/command/20
-brush/compat/builtins/command/16
-brush/compat/builtins/command/17
-brush/compat/builtins/command/21
-brush/compat/builtins/command/23
-brush/compat/builtins/command/30
-brush/compat/builtins/command/31
 brush/compat/builtins/command/32
 brush/compat/builtins/command/33
-brush/compat/builtins/command/35
 brush/compat/builtins/command/38
 brush/compat/builtins/command/39
 brush/compat/builtins/command/40
@@ -122,7 +110,6 @@ brush/compat/builtins/declare/2
 brush/compat/builtins/declare/3
 brush/compat/builtins/declare/13
 brush/compat/builtins/declare/22
-brush/compat/builtins/declare/23
 brush/compat/builtins/declare/24: passed only while declare was missing (both failed alike); needs `enable`
 brush/compat/builtins/declare/25
 brush/compat/builtins/declare/26
@@ -154,9 +141,6 @@ brush/compat/builtins/declare/91
 brush/compat/builtins/declare/92
 brush/compat/builtins/declare/93
 brush/compat/builtins/declare/99
-brush/compat/builtins/declare/101
-brush/compat/builtins/declare/102
-brush/compat/builtins/declare/100
 brush/compat/builtins/declare/103
 brush/compat/builtins/declare/104
 brush/compat/builtins/declare/107
@@ -209,16 +193,11 @@ brush/compat/builtins/exit/14
 brush/compat/builtins/exit/15
 brush/compat/builtins/export/15
 brush/compat/builtins/export/16
-brush/compat/builtins/export/19
-brush/compat/builtins/export/17
-brush/compat/builtins/export/18
 brush/compat/builtins/export/22
 brush/compat/builtins/export/27
-brush/compat/builtins/export/29
 brush/compat/builtins/export/35
 brush/compat/builtins/export/38
 brush/compat/builtins/export/40
-brush/compat/builtins/export/42
 brush/compat/builtins/export/44
 brush/compat/builtins/getopts/0
 brush/compat/builtins/getopts/1
@@ -241,7 +220,6 @@ brush/compat/builtins/hash/1
 brush/compat/builtins/hash/3
 brush/compat/builtins/hash/10
 brush/compat/builtins/hash/12
-brush/compat/builtins/hash/13
 brush/compat/builtins/hash/16
 brush/compat/builtins/jobs/1
 brush/compat/builtins/jobs/2
@@ -269,11 +247,9 @@ brush/compat/builtins/kill/18
 brush/compat/builtins/kill/19
 brush/compat/builtins/kill/21
 brush/compat/builtins/kill/22
-brush/compat/builtins/kill/25
 brush/compat/builtins/kill/26
 brush/compat/builtins/kill/28
 brush/compat/builtins/kill/29
-brush/compat/builtins/kill/30
 brush/compat/builtins/kill/31
 brush/compat/builtins/kill/32
 brush/compat/builtins/kill/34
@@ -382,7 +358,6 @@ brush/compat/builtins/read/64
 brush/compat/builtins/read/65
 brush/compat/builtins/read/74
 brush/compat/builtins/read/75
-brush/compat/builtins/readonly/6
 brush/compat/builtins/readonly/8
 brush/compat/builtins/return/1
 brush/compat/builtins/return/9
@@ -392,7 +367,6 @@ brush/compat/builtins/set/10
 brush/compat/builtins/set/11
 brush/compat/builtins/set/12
 brush/compat/builtins/set/13
-brush/compat/builtins/set/19
 brush/compat/builtins/set/22
 brush/compat/builtins/set/23
 brush/compat/builtins/set/24
@@ -406,7 +380,6 @@ brush/compat/builtins/set/39
 brush/compat/builtins/shift/2
 brush/compat/builtins/shift/3
 brush/compat/builtins/shift/4
-brush/compat/builtins/shopt/9
 brush/compat/builtins/shopt/10
 brush/compat/builtins/test/3
 brush/compat/builtins/test/4
@@ -528,7 +501,6 @@ brush/compat/builtins/type/18
 brush/compat/builtins/type/19
 brush/compat/builtins/type/20
 brush/compat/builtins/type/21
-brush/compat/builtins/type/24
 brush/compat/builtins/type/25
 brush/compat/builtins/type/26
 brush/compat/builtins/ulimit/5
@@ -549,13 +521,6 @@ brush/compat/builtins/ulimit/30
 brush/compat/builtins/ulimit/31
 brush/compat/builtins/umask/2
 brush/compat/builtins/umask/4
-brush/compat/builtins/unalias/0
-brush/compat/builtins/unset/4
-brush/compat/builtins/unset/5
-brush/compat/builtins/unset/6
-brush/compat/builtins/unset/7
-brush/compat/builtins/unset/8
-brush/compat/builtins/unset/9
 brush/compat/builtins/unset/10
 brush/compat/builtins/unset/11
 brush/compat/builtins/unset/15
@@ -638,7 +603,6 @@ brush/compat/errors/53
 brush/compat/errors/60
 brush/compat/errors/61
 brush/compat/errors/62
-brush/compat/errors/63
 brush/compat/errors/64
 brush/compat/errors/65
 brush/compat/errors/67
@@ -718,7 +682,6 @@ brush/compat/functions/9
 brush/compat/functions/19
 brush/compat/functions/20
 brush/compat/functions/21
-brush/compat/functions/22
 brush/compat/here/6
 brush/compat/here/7
 brush/compat/here/8
@@ -743,8 +706,6 @@ brush/compat/line_continuation/5
 brush/compat/line_continuation/6
 brush/compat/nameref/17
 brush/compat/nameref/20
-brush/compat/nameref/21
-brush/compat/nameref/23
 brush/compat/nameref/24
 brush/compat/nameref/28
 brush/compat/nameref/29
@@ -788,13 +749,6 @@ brush/compat/nameref/156
 brush/compat/nameref/157
 brush/compat/nameref/158
 brush/compat/nameref/166
-brush/compat/nameref/167
-brush/compat/nameref/168
-brush/compat/nameref/169
-brush/compat/nameref/170
-brush/compat/nameref/171
-brush/compat/nameref/172
-brush/compat/nameref/173
 brush/compat/nameref/174
 brush/compat/nameref/184
 brush/compat/nameref/185
@@ -811,9 +765,6 @@ brush/compat/nameref/215
 brush/compat/nameref/216
 brush/compat/nameref/218
 brush/compat/nameref/220
-brush/compat/nameref/221
-brush/compat/nameref/225
-brush/compat/nameref/226
 brush/compat/nameref/229
 brush/compat/options/bash_xtracefd/0
 brush/compat/options/bash_xtracefd/1
@@ -877,10 +828,6 @@ brush/compat/options/set-e/95
 brush/compat/options/set-e/96
 brush/compat/options/set-e/97
 brush/compat/options/set-e/98
-brush/compat/options/set-e/110
-brush/compat/options/set-e/111
-brush/compat/options/set-e/119
-brush/compat/options/set-e/120
 brush/compat/options/set-e/123
 brush/compat/options/set-e/124
 brush/compat/options/set-e/125
@@ -895,26 +842,20 @@ brush/compat/options/set-e/143
 brush/compat/options/set-e/145
 brush/compat/options/set-e/146
 brush/compat/options/set-t/0
-brush/compat/options/set-u/17
 brush/compat/options/set-u/21
 brush/compat/options/set-u/27
 brush/compat/options/set-u/50
 brush/compat/options/set-u/56
-brush/compat/options/set-u/64
-brush/compat/options/set-u/66
 brush/compat/options/set-x/0
 brush/compat/options/set-x/6
-brush/compat/options/set-x/16
 brush/compat/options/set-x/17
 brush/compat/options/set-x/19
 brush/compat/options/set-x/20
-brush/compat/options/set-x/22
 brush/compat/options/set-x/23
 brush/compat/options/set-x/24
 brush/compat/options/shopt-failglob/9
 brush/compat/options/shopt-login_shell/0
 brush/compat/options/shopt-login_shell/2
-brush/compat/options/shopt-nullglob/12
 brush/compat/path_search/0
 brush/compat/path_search/1
 brush/compat/path_search/2
@@ -927,7 +868,6 @@ brush/compat/path_search/9
 brush/compat/path_search/10
 brush/compat/path_search/12
 brush/compat/path_search/13
-brush/compat/path_search/15
 brush/compat/patterns/filename_expansion/3
 brush/compat/patterns/filename_expansion/19
 brush/compat/patterns/filename_expansion/20
@@ -968,9 +908,6 @@ brush/compat/pipeline/9
 brush/compat/pipeline/13
 brush/compat/pipeline/15
 brush/compat/pipeline/17
-brush/compat/pipeline/18
-brush/compat/pipeline/19
-brush/compat/pipeline/20
 brush/compat/process/0
 brush/compat/redirection/10
 brush/compat/redirection/11
@@ -1000,8 +937,6 @@ brush/compat/signals/9
 brush/compat/signals/10
 brush/compat/signals/11
 brush/compat/signals/12
-brush/compat/signals/13
-brush/compat/signals/14
 brush/compat/signals/15
 brush/compat/signals/16
 brush/compat/signals/17: passed in-process only because `kill $$` could not reach the shell; now runs in the binary (D1056); needs trap
@@ -1035,7 +970,6 @@ brush/compat/signals/49
 brush/compat/signals/50
 brush/compat/signals/51
 brush/compat/simple_commands/5
-brush/compat/simple_commands/9
 brush/compat/special_parameters/0
 brush/compat/special_parameters/1
 brush/compat/special_parameters/2
@@ -1071,16 +1005,7 @@ brush/compat/special_parameters/34
 brush/compat/special_parameters/35
 brush/compat/special_parameters/36
 brush/compat/special_parameters/38
-brush/compat/status/0
-brush/compat/status/2
-brush/compat/status/3
 brush/compat/status/4
-brush/compat/status/7
-brush/compat/status/8
-brush/compat/variables/3
-brush/compat/variables/1
-brush/compat/variables/2
-brush/compat/variables/4
 brush/compat/variables/5
 brush/compat/variables/6
 brush/compat/variables/7

@@ -136,5 +136,10 @@ match = [
   "oils/builtin-dirs/15",
   "oils/builtin-type-bash/8",
   "oils/builtin-type-bash/16",
+  # /tmp/test_source_$$.sh with the runner's fixed fake $$ (0028)
+  "brush/compat/options/set-e/119",
+  "brush/compat/options/set-e/120",
+  "brush/compat/options/set-e/121",
+  "brush/compat/options/set-e/122",
 ]
 reason = "fixed paths under /tmp shared between cases (every case of these files that uses /tmp)"

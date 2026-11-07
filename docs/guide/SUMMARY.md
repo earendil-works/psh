@@ -4,23 +4,22 @@
 - [What psh optimizes for](goals.md)
 - [Running psh: the command line]()
 - [The language: bash as agents write it]()
-- [Utilities that run in-process]()
+- [Utilities that run in-process](utilities.md)
 - [psh on Windows](windows.md)
 - [Understanding commands: parsing and classification](classify.md)
 - [Cancellation, timeouts and background jobs]()
 - [Embedding psh in a host]()
-- [psh in the browser]()
-- [psh in pi]()
+- [psh in the browser](wasm.md)
+- [psh in pi](pi.md)
 
 # How it works
 
 - [The parser: spans and printing](syntax.md)
-- [The engine: a stepped interpreter with virtual processes]()
+- [The engine: a stepped interpreter with virtual processes](engine.md)
 - [The host interface]()
 - [Processes on Unix](processes.md)
 - [Processes on Windows]()
-- [Utilities: fall-through and dialects]()
-- [How psh is tested]()
+- [How psh is tested](testing.md)
 
 # Reference
 

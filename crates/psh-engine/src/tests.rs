@@ -636,6 +636,7 @@ fn aliases() {
         "{}",
         o.stderr
     );
+}
 
 #[test]
 fn indexed_arrays() {

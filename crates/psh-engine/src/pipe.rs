@@ -9,9 +9,8 @@
 //! whose buffer is empty, the pipe becomes an OS pipe of the host (`Host::pipe`): the
 //! external gets the OS end itself, so `a | b` of two externals moves no byte through
 //! the engine. From then on vproc writes go to the OS write end (the buffer was empty,
-//! so nothing overtakes), and vproc reads take the buffer first, refilling it from the
-//! OS read end (a read-ahead is safe: an external started later on a pipe with buffered
-//! bytes gets them through a pump, buffer first). The engine holds each OS end while it
+//! so nothing overtakes), and vproc reads take what is left in the buffer, then read the
+//! OS read end directly. The engine holds each OS end while it
 //! holds a reader or writer of that side; the kernel counts the externals' copies.
 
 use std::cell::RefCell;
@@ -118,20 +117,11 @@ impl PipeReader {
         if p.buf.is_empty()
             && let Some((Some(r), _)) = &p.os
         {
-            // Refill the buffer from the OS pipe: one read of what is there.
+            // Nothing buffered: read the OS pipe straight into the caller's buffer
+            // (no copy, no read-ahead to hold for a later pump).
             let r = r.clone();
             drop(p);
-            let mut chunk = vec![0u8; PIPE_CAPACITY.min(16 * 1024)];
-            let n = match r.poll_read(cx, &mut chunk) {
-                Poll::Ready(Ok(n)) => n,
-                Poll::Ready(Err(e)) => return Poll::Ready(Err(e)),
-                Poll::Pending => return Poll::Pending,
-            };
-            if n == 0 {
-                return Poll::Ready(Ok(0));
-            }
-            p = self.0.borrow_mut();
-            p.buf.extend(&chunk[..n]);
+            return r.poll_read(cx, out);
         }
         if !p.buf.is_empty() {
             let n = out.len().min(p.buf.len());

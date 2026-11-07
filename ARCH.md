@@ -255,8 +255,8 @@ separated, converted at the host's boundary.
   D1910), and `resolve(name, PATH, cwd)` does command lookup (PATH, PATHEXT on Windows); a hook
   where an embedder can veto or rewrite a command at execution time is planned
   (approval at exec time).
-- `sleep` (timers), `pid` (`$$`). To come: clock, user and host names, signals to
-  process groups (`kill`).
+- `sleep` (timers), `pid` (`$$`), `now` (clock), `home_dir(user)` (`~user`, D1322).
+  To come: user and host names, signals to process groups (`kill`).
 
 Hosts:
 

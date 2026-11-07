@@ -304,9 +304,14 @@ async fn echo(vp: &mut Vp, args: &[Vec<u8>]) -> R {
 
 /// Normalizes `.` and `..` in an absolute path, lexically (`cd -L`).
 pub(crate) fn normalize(path: &[u8]) -> Vec<u8> {
-    // `C:/x` (Windows) keeps its drive in front; `..` stops at it (D1323).
+    // `C:/x` and `C:\x` (Windows) keep the drive in front, with `/` separators; `..`
+    // stops at the drive (D1323).
     if path.len() >= 2 && path[0].is_ascii_alphabetic() && path[1] == b':' {
-        let rest = normalize(&path[2..]);
+        let rest: Vec<u8> = path[2..]
+            .iter()
+            .map(|&b| if b == b'\\' { b'/' } else { b })
+            .collect();
+        let rest = normalize(&rest);
         let mut out = path[..2].to_vec();
         out.extend_from_slice(&rest);
         return out;

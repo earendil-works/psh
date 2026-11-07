@@ -829,5 +829,6 @@ fn tilde_user_and_drive_paths() {
     );
     assert_eq!(crate::builtins::normalize(b"C:/x/../y/./z"), b"C:/y/z");
     assert_eq!(crate::builtins::normalize(b"C:/.."), b"C:/");
+    assert_eq!(crate::builtins::normalize(br"c:\a\..\b"), b"c:/b");
     assert_eq!(crate::builtins::normalize(b"/a/../b"), b"/b");
 }

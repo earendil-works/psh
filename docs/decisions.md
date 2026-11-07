@@ -1622,3 +1622,48 @@ the watcher thread now only wakes the shell (`ControlHandle::wake`, new) instead
 calling `ControlHandle::signal`, which set the bit a second time: when the shell had
 already taken the first (a trap ran), the second delivery ran the trap again
 (`traps_run_for_signals_from_outside` failed about half the time).
+## D1320: The call-stack variables are dynamic, computed from the vproc's frames
+date: 2026-11-08 · by: engine · issue: 0032
+`FUNCNAME`, `BASH_SOURCE`, `BASH_LINENO`, `BASH_ARGV` and `BASH_ARGC` are dynamic
+variables (D1263) read from the vproc's call frames (`Call`: name, source, call line,
+arguments), not arrays kept up to date on every call. A script run from a file has a
+bottom frame (`main`, the script, line 0); `-c` and stdin have none, as in bash.
+`BASH_ARGV`/`BASH_ARGC` carry function frames only under `extdebug`, plus `source`
+frames (the file and its arguments) and the script's frame (when `extdebug` is on or
+another frame exists). `declare -p` refreshes them first. Alternative: maintained
+arrays (a write per call for variables almost no script reads).
+
+## D1321: One pattern matcher with options; extglob groups backtrack
+date: 2026-11-08 · by: engine · issue: 0032
+`pattern::Pattern::with(pat, MatchOpts { utf8, extglob, nocase })` serves globbing,
+`case`, `${x#…}`/`${x%…}`/`${x/…}` and later `[[ == ]]`; `Vp::match_opts(nocase)`
+fills it from the shell (`extglob`; the caller passes `nocaseglob` or `nocasematch`).
+Patterns without groups keep the linear star-backtracking matcher; groups
+(`?( ) *( ) +( ) @( ) !( )`, nested) use a recursive backtracking matcher over the
+token list, fine at the sizes shells see. Case folding lowers pattern and text
+(one-char mappings). An unquoted `Part::ExtGlob` word part expands each alternative
+as a pattern and joins them back as `op(a|b)`, never split. Glob options: `dotglob`
+lets `*` match leading dots (never `.`/`..`, which `read_dir` omits), `globstar` makes
+a `**` component every directory below (symlinked directories not followed) and,
+last, every file; `a/**` lists `a/` itself, `**/` only directories.
+
+## D1322: `~user` asks the host: `Host::home_dir(user)`
+date: 2026-11-08 · by: engine · issue: 0032
+An additive Host method with a default of `None` (the tilde word stays as written).
+psh-os on Unix answers with `getpwnam_r`; Windows and the JS host keep the default
+until someone needs it. A small op rather than a general user-info op: nothing else
+needs user data yet.
+
+## D1323: Engine paths keep a Windows drive in front: `C:/x`
+date: 2026-11-08 · by: engine · issue: 0032
+`normalize` (cd, `$PWD`) leaves `C:/x` and `C:\x` as `C:/x` (backslashes become `/`;
+`..` stops at the drive) instead of turning them into `/C:/x`. The Windows host's
+`/C:/x` workaround can go (windows agent).
+
+## D1324: `$(…)` drops a `\r` before each removed newline on Windows only
+date: 2026-11-08 · by: engine · issue: 0032
+Native Windows programs end lines with CRLF; `x=$(git rev-parse HEAD)` must not keep a
+`\r`. On Windows, each trailing newline removed by command substitution takes a `\r`
+right before it along. Elsewhere bash behavior is unchanged (a `\r` is data there and
+the goldens keep it). `read` should follow the same rule on Windows (builtins agent).
+Alternative: all platforms (would break byte-exact output on Unix).

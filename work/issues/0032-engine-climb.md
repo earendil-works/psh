@@ -31,7 +31,28 @@ Collect the engine's open items and then climb the hit list for engine-owned are
       in parts; route areas owned by others to the coordinator.
 
 ## Log
+- Call stack (D1320): dynamic FUNCNAME/BASH_SOURCE/BASH_LINENO/BASH_ARGV/BASH_ARGC from
+  the vproc's frames; extdebug frames for BASH_ARGV/ARGC.
+- Patterns (D1321): `MatchOpts` (utf8, extglob, nocase); extglob groups in globbing,
+  `case`, `${x#…}`/`${x/…}`; dotglob, globstar, nocaseglob, nocasematch (case) applied.
+  `[[ ]]` is not run by the engine yet ("not supported"): whoever lands it uses
+  `Pattern::with(pat, vp.match_opts(nocasematch))`. Ratchet: brush
+  command_substitution/51 passed only because extglob was unsupported; it needs the
+  parser to count parens of an unquoted `$(` inside an extglob (parser follow-up).
+- `~user` through `Host::home_dir` (D1322), psh-os Unix via `getpwnam_r` (touches
+  psh-os/src/unix/mod.rs, minimal).
+- Windows: `normalize` keeps `C:/x` (D1323); `$(…)` drops `\r` before removed newlines
+  on Windows only (D1324).
+- Cleanups: removed `Core.msg_name`/`Core.dash_c`. Reviewed util.rs and its dispatch
+  (lookup after functions/builtins, before PATH): fine. Reviewed D1068: changed vproc
+  reads of a materialized pipe to read the OS end straight into the caller's buffer
+  instead of a 16 KiB read-ahead (one copy and allocation less per read).
 
 ## Follow-ups
+- windows agent: drop the `/C:/x` workaround in psh-os/src/windows/path.rs (D1323);
+  Windows/JS `home_dir`.
+- builtins agent: `read` drops `\r` before the newline on Windows (D1324).
+- parser: unquoted `$(` inside an extglob counts parens (brush command_substitution/51).
+- `[[ == ]]` extglob/nocasematch once `[[ ]]` runs (0027).
 
 ## Result

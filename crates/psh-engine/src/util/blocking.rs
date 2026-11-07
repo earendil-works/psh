@@ -838,7 +838,51 @@ mod tests {
         Box::pin(ctx.run_blocking(BlockingOptions::default(), (), bpanic_body))
     }
 
+    /// `bwriter`: `a` through the context, `b` and `e` (fd 2) through writers on another
+    /// thread, then `c`: all in order.
+    fn bwriter_body(ctx: &mut SyncCtx, _: ()) -> i32 {
+        let _ = ctx.write(b"a\n");
+        // Taking a writer flushes the context's own buffer first.
+        let mut out = ctx.writer(1);
+        let mut err = ctx.writer(2);
+        std::thread::scope(|s| {
+            s.spawn(move || {
+                let _ = out.write_all(b"b\n");
+                let _ = err.write_all(b"e\n");
+            });
+        });
+        let _ = ctx.write(b"c\n");
+        0
+    }
+
+    fn bwriter<'a>(ctx: &'a mut UtilCtx<'_>, _: &'a [Vec<u8>]) -> LocalBoxFuture<'a, i32> {
+        Box::pin(ctx.run_blocking(BlockingOptions::default(), (), bwriter_body))
+    }
+
+    /// `breadable`: whether stdin would be read (`yes`/`no`).
+    fn breadable_body(ctx: &mut SyncCtx, _: ()) -> i32 {
+        let r = ctx.stdin_readable();
+        let _ = ctx.write(if r { b"yes\n" } else { b"no\n" });
+        0
+    }
+
+    fn breadable<'a>(ctx: &'a mut UtilCtx<'_>, _: &'a [Vec<u8>]) -> LocalBoxFuture<'a, i32> {
+        Box::pin(ctx.run_blocking(BlockingOptions::default(), (), breadable_body))
+    }
+
     const ENTRIES: &[UtilEntry] = &[
+        UtilEntry {
+            names: &["bwriter"],
+            mode: Mode::Always,
+            destructive: false,
+            run: bwriter,
+        },
+        UtilEntry {
+            names: &["breadable"],
+            mode: Mode::Always,
+            destructive: false,
+            run: breadable,
+        },
         UtilEntry {
             names: &["bupper"],
             mode: Mode::Always,
@@ -911,6 +955,16 @@ mod tests {
         // An endless writer ends at the output bound.
         assert_eq!(inline("byes | { read x; echo $x; }").1, "y\n");
         assert!(inline("bpanic").2.contains("bpanic: internal error: boom"));
+        // Writers for other threads write in order with the context.
+        assert_eq!(
+            inline("bwriter 2>&1"),
+            (0, "a\nb\ne\nc\n".into(), String::new())
+        );
+        assert_eq!(inline("bwriter 2>/dev/null").1, "a\nb\nc\n");
+        // stdin: the test host's file is readable, an engine pipe is, /dev/null not.
+        assert_eq!(inline("breadable").1, "yes\n");
+        assert_eq!(inline("echo | breadable").1, "yes\n");
+        assert_eq!(inline("breadable < /dev/null").1, "no\n");
     }
 
     /// Thread backend: the real file system, output to a file of a temp directory.
@@ -959,6 +1013,16 @@ mod tests {
         assert_eq!(threaded(&dir, "bpanic 2> err5; echo $? > out5"), 0);
         assert_eq!(read("out5"), "2\n");
         assert!(read("err5").contains("internal error: boom"));
+        assert_eq!(threaded(&dir, "bwriter > out6 2>&1"), 0);
+        assert_eq!(read("out6"), "a\nb\ne\nc\n");
+        assert_eq!(
+            threaded(
+                &dir,
+                "{ breadable < in; echo x | breadable; breadable < /dev/null; } > out7"
+            ),
+            0
+        );
+        assert_eq!(read("out7"), "yes\nyes\nno\n");
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

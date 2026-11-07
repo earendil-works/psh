@@ -2,7 +2,6 @@
 # One case id per line, optionally `id: reason`. psh-spec --update-ratchet removes
 # cases that pass; never add a line to hide a regression.
 agent/globs-status/2
-agent/pipes/8
 agent/redirects/1
 agent/control/6: needs [[ ]] (parser/engine, 0027)
 agent/files/4: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux

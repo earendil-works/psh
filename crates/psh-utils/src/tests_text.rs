@@ -84,3 +84,57 @@ fn paste() {
     check("paste - - < f", "one\ttwo\nthree\tfour\n");
     check("paste -d, -s nonl g", "x,y\na b c\n");
 }
+
+#[test]
+fn uniq() {
+    check("printf 'a\\na\\nb\\n' | uniq", "a\nb\n");
+    check("printf 'a\\na\\nb\\n' | uniq -c", "      2 a\n      1 b\n");
+    check("printf 'a\\na\\nb\\n' | uniq -d", "a\n");
+    check("printf 'a\\na\\nb\\n' | uniq -u", "b\n");
+    check(
+        "printf 'a\\na\\nb\\nb\\n' | uniq --all-repeated=prepend",
+        "\na\na\n\nb\nb\n",
+    );
+    check(
+        "printf 'a\\na\\nb\\n' | uniq --group=append",
+        "a\na\n\nb\n\n",
+    );
+    check(
+        "printf 'a\\na\\nb\\n' | uniq - /tmp/o; cat /tmp/o",
+        "a\nb\n",
+    );
+    check("printf '1 x\\n2 x\\n' | uniq -f 1 -c", "      2 1 x\n");
+}
+
+#[test]
+fn comm() {
+    check(
+        "printf 'a\\nb\\n' > /tmp/x; printf 'b\\nc\\n' | comm /tmp/x -",
+        "a\n\t\tb\n\tc\n",
+    );
+    check(
+        "printf 'a\\nb\\n' > /tmp/x; printf 'b\\nc\\n' | comm -12 /tmp/x -",
+        "b\n",
+    );
+    check_all(
+        "printf 'b\\na\\n' > /tmp/x; printf 'c\\n' | comm --check-order /tmp/x -",
+        "",
+        1,
+        "b\n",
+        "comm: file 1 is not in sorted order\n",
+    );
+}
+
+#[test]
+fn nl() {
+    check("nl g", "     1\ta b c\n");
+    check("printf 'a\\n\\nb\\n' | nl -ba -w1 -s' '", "1 a\n2 \n3 b\n");
+    // A regular expression style has no implementation yet: the real nl, or an error.
+    check_all(
+        "nl -bpx g",
+        "",
+        2,
+        "",
+        "nl: unsupported numbering style 'pREGEX' (psh built-in nl)\n",
+    );
+}

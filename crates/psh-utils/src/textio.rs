@@ -69,6 +69,18 @@ impl LineReader {
     }
 }
 
+/// A form psh does not implement (`nl -b pREGEX`): the real program runs if there is
+/// one, else `NAME: unsupported WHAT (psh built-in NAME)` and status 2 (D010).
+pub async fn fall_through(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>], what: &str) -> i32 {
+    if let Some(status) = ctx.run_program(argv.to_vec()).await {
+        return status;
+    }
+    let name = ctx.name().to_string();
+    ctx.error(&format!("unsupported {what} (psh built-in {name})"))
+        .await;
+    2
+}
+
 /// Opens an operand, reporting a failure as `NAME: FILE: reason`.
 pub async fn open_or_report(ctx: &mut UtilCtx<'_>, name: &[u8]) -> Option<Input> {
     match Input::open(ctx, name).await {

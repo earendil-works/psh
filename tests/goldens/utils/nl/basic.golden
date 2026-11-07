@@ -1,0 +1,127 @@
+# Goldens for tests/utils/nl/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: default numbers non-empty lines
+status: 0
+bash-n: 0
+--- stdout
+|     1	a
+|       
+|     2	b
+
+=== 1: -ba numbers every line
+status: 0
+bash-n: 0
+--- stdout
+|     1	a
+|     2	
+|     3	b
+
+=== 2: a file, as agents read code
+status: 0
+bash-n: 0
+--- stdout
+|     1	fn main() {
+|     2	    x();
+|     3	}
+--- file f.rs
+|fn main() {
+|    x();
+|}
+
+=== 3: -n ln and rz
+status: 0
+bash-n: 0
+--- stdout
+|1     	a
+|2     	b
+|001	a
+|002	b
+
+=== 4: -w and -s
+status: 0
+bash-n: 0
+--- stdout
+| 1: a
+| 2: b
+
+=== 5: -v and -i
+status: 0
+bash-n: 0
+--- stdout
+|    10	a
+|    15	b
+|    20	c
+
+=== 6: -bn numbers nothing
+status: 0
+bash-n: 0
+--- stdout
+|       a
+|       b
+
+=== 7: -l joins blank lines
+status: 0
+bash-n: 0
+--- stdout
+|       
+|     1	
+|       
+|     2	
+|     3	x
+
+=== 8: sections
+status: 0
+bash-n: 0
+--- stdout
+|     1	a
+|
+|     1	h
+|
+|     1	b
+|
+|     1	f
+
+=== 9: -p does not renumber at sections
+status: 0
+bash-n: 0
+--- stdout
+|     1	a
+|
+|     2	b
+
+=== 10: a last line without a newline
+status: 0
+bash-n: 0
+--- stdout
+|     1	a
+|     2	b
+
+=== 11: several files continue the numbering
+status: 0
+bash-n: 0
+--- stdout
+|     1	a
+|     2	b
+--- file f
+|a
+--- file g
+|b
+
+=== 12: an invalid style
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|nl: invalid body numbering style: ‘x’
+|Try 'nl --help' for more information.
+
+=== 13: a missing file
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|nl: missing: No such file or directory

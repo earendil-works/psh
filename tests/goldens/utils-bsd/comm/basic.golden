@@ -1,0 +1,199 @@
+# Goldens for tests/utils/comm/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: three columns
+status: 0
+bash-n: 0
+--- stdout
+|a
+|		b
+|	c
+|		d
+|	e
+--- file f
+|a
+|b
+|d
+--- file g
+|b
+|c
+|d
+|e
+
+=== 1: -12 common lines
+status: 0
+bash-n: 0
+--- stdout
+|b
+|d
+--- file f
+|a
+|b
+|d
+--- file g
+|b
+|c
+|d
+|e
+
+=== 2: -23 only in the first
+status: 0
+bash-n: 0
+--- stdout
+|a
+--- file f
+|a
+|b
+|d
+--- file g
+|b
+|c
+|d
+|e
+
+=== 3: -13 only in the second
+status: 0
+bash-n: 0
+--- stdout
+|c
+|e
+--- file f
+|a
+|b
+|d
+--- file g
+|b
+|c
+|d
+|e
+
+=== 4: -3
+status: 0
+bash-n: 0
+--- stdout
+|a
+|	c
+|	e
+--- file f
+|a
+|b
+|d
+--- file g
+|b
+|c
+|d
+|e
+
+=== 5: stdin as one file
+status: 0
+bash-n: 0
+--- stdout
+|a
+|		b
+|	c
+--- file f
+|a
+|b
+
+=== 6: with process substitution and sort
+status: 0
+bash-n: 0
+--- stdout
+|y
+|z
+
+=== 7: --output-delimiter
+status: 1
+bash-n: 0
+--- stderr
+|comm: illegal option -- -
+|usage: comm [-123i] file1 file2
+--- file f
+|a
+|b
+--- file g
+|b
+|c
+
+=== 8: --total
+status: 1
+bash-n: 0
+--- stderr
+|comm: illegal option -- -
+|usage: comm [-123i] file1 file2
+--- file f
+|a
+|b
+|d
+--- file g
+|b
+|c
+|d
+|e
+
+=== 9: unsorted input is reported
+status: 0
+bash-n: 0
+--- stdout
+|		b
+|a
+|	c
+|status=0
+--- file f
+|b
+|a
+--- file g
+|b
+|c
+
+=== 10: --nocheck-order
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|comm: illegal option -- -
+|usage: comm [-123i] file1 file2
+--- file f
+|b
+|a
+--- file g
+|b
+|c
+
+=== 11: a last line without a newline
+status: 0
+bash-n: 0
+--- stdout
+|a
+|		b
+--- file f
+|a
+|b
+~ no newline at end
+--- file g
+|b
+
+=== 12: -i ignores case
+status: 0
+bash-n: 0
+--- stdout
+|		A
+|		b
+--- file f
+|A
+|b
+--- file g
+|a
+|B
+
+=== 13: one operand is an error
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|usage: comm [-123i] file1 file2
+--- file f
+|a

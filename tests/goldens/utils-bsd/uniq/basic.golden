@@ -1,0 +1,149 @@
+# Goldens for tests/utils/uniq/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: adjacent duplicates collapse
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|a
+
+=== 1: -c counts
+status: 0
+bash-n: 0
+--- stdout
+|   2 a
+|   1 b
+|   3 c
+
+=== 2: the frequency idiom
+status: 0
+bash-n: 0
+--- stdout
+|   3 x
+|   2 y
+|   1 z
+
+=== 3: -d only repeated
+status: 0
+bash-n: 0
+--- stdout
+|a
+|c
+
+=== 4: -u only unique
+status: 0
+bash-n: 0
+--- stdout
+|b
+
+=== 5: -c with -d
+status: 0
+bash-n: 0
+--- stdout
+|   2 a
+
+=== 6: -D all repeated lines
+status: 0
+bash-n: 0
+--- stdout
+|a
+|a
+|c
+|c
+
+=== 7: --all-repeated=separate
+status: 0
+bash-n: 0
+--- stdout
+|a
+|a
+|
+|c
+|c
+
+=== 8: --group
+status: 1
+bash-n: 0
+--- stderr
+|uniq: unrecognized option `--group'
+|usage: uniq [-cdiu] [-D[septype]] [-f fields] [-s chars] [input [output]]
+
+=== 9: -f skips fields
+status: 0
+bash-n: 0
+--- stdout
+|1 a
+|3 b
+
+=== 10: -s skips characters
+status: 0
+bash-n: 0
+--- stdout
+|xa
+|zb
+
+=== 11: -w compares the first characters
+status: 1
+bash-n: 0
+--- stderr
+|uniq: invalid option -- w
+|usage: uniq [-cdiu] [-D[septype]] [-f fields] [-s chars] [input [output]]
+
+=== 12: -i ignores case
+status: 0
+bash-n: 0
+--- stdout
+|A
+|B
+
+=== 13: input and output files
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+--- file in
+|a
+|a
+|b
+--- file out
+|a
+|b
+
+=== 14: a last line without a newline
+status: 0
+bash-n: 0
+--- stdout
+|a
+
+=== 15: -z
+status: 0
+bash-n: 0
+--- stdout
+|
+--- stderr
+|uniq: invalid option -- z
+|usage: uniq [-cdiu] [-D[septype]] [-f fields] [-s chars] [input [output]]
+
+=== 16: empty input
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 17: a missing file
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|uniq: missing: No such file or directory
+
+=== 18: -c with -D is an error
+status: 0
+bash-n: 0
+--- stdout
+|status=0

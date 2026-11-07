@@ -27,11 +27,15 @@ mod readlink;
 mod realpath;
 mod rmdir;
 mod touch;
+
+mod comm;
 mod cut;
+mod nl;
 mod paste;
 mod seq;
 mod tee;
 mod tr;
+mod uniq;
 
 use psh_engine::util::{Mode, UtilEntry, UtilPolicy};
 
@@ -153,6 +157,24 @@ pub static REGISTRY: &[UtilEntry] = &[
         destructive: false,
         run: util_fn!(tr::run),
     },
+    UtilEntry {
+        names: &["uniq"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(uniq::run),
+    },
+    UtilEntry {
+        names: &["comm"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(comm::run),
+    },
+    UtilEntry {
+        names: &["nl"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(nl::run),
+    },
 ];
 
 /// The option specs, for the classifier check (D1082).
@@ -176,6 +198,9 @@ pub static SPECS: &[opts::Spec] = &[
     seq::SPEC,
     tee::SPEC,
     tr::SPEC,
+    uniq::SPEC,
+    comm::SPEC,
+    nl::SPEC,
 ];
 
 /// The policy for a shell: every utility on. `sandbox`: no real programs exist (wasm),

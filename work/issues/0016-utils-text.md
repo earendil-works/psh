@@ -45,6 +45,12 @@ The text filters of Tier 1, all S: `sort uniq cut tr paste nl tee seq comm`.
 - Error messages use ASCII quotes like the other utilities; the container's GNU prints
   ‘’ (stderr score only).
 - Guide: none affected (utilities.md not written yet).
+- Part 2: `uniq comm nl`, also written from the manuals. `textio::fall_through(ctx,
+  argv, what)` runs the real program for a form psh lacks (`nl -b pREGEX`: no regex
+  engine in psh-utils yet), else `NAME: unsupported WHAT (psh built-in NAME)`, status 2.
+  Classifier: `nl`'s long value options added. GNU over BSD (D016): `uniq -c` widths,
+  `nl` indents unnumbered lines with spaces and prints section delimiters as empty
+  lines; `comm` checks the order as GNU does; BSD's `comm -i` and `cut -w` accepted.
 
 ## Follow-ups
 

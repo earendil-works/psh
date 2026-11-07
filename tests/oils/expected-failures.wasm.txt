@@ -18,3 +18,15 @@ oils/builtin-eval-source/22: the JS host has no file system changes yet (mkdir, 
 oils/builtin-read/46: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
 oils/builtin-read/47: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
 oils/builtin-read/48: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/extglob-files/0: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/extglob-files/1: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/extglob-files/2: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/extglob-files/3: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/extglob-files/4: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/extglob-files/5: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/extglob-files/6: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/extglob-files/14: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/extglob-files/17: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/extglob-files/18: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/extglob-files/20: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+oils/extglob-files/21: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has

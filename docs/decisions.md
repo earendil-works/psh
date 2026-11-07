@@ -2238,3 +2238,17 @@ The oracle for rg and fd is the version psh implements: `docker/Dockerfile` down
 upstream static musl release binaries of ripgrep 15.2.0 and fd 10.5.1 for the image's
 architecture (arm64, amd64), each pinned by sha256, into `/usr/local/bin`; Debian's
 ripgrep 14.1 is gone. Re-recording the agent layer with it changed no golden.
+
+## D1135: grep-printer is patched in-tree for a clock on wasm
+date: 2026-11-07 · by: infra · issue: 0013 (supersedes D1133's "rg is unavailable on wasm")
+grep-printer 0.3.1 calls `std::time::Instant::now()` whenever a sink is created or a
+search begins (for `Stats`' elapsed time), and that panics on wasm32-unknown-unknown, so
+no printer works there. `third_party/grep-printer/` is the crates.io package of 0.3.1
+(first commit verbatim) with one change: `Instant` comes from a new `src/instant.rs`,
+std's natively and a clock that reads zero elapsed time on wasm32-unknown-unknown
+(`PATCHES.md` lists every changed line). It replaces the registry crate through
+`[patch.crates-io]`; `third_party` is excluded from the workspace, so fmt and clippy keep
+the upstream code as it is (rustc still shows its two dead-code warnings on wasm, which
+upstream has too). The crate keeps its name, so the dependency allowlist is unchanged.
+rg's own `--stats` start time is likewise zero there. The copy goes when upstream stops
+reading the clock unconditionally (an upstream issue text is in 0013's log).

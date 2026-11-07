@@ -2,8 +2,10 @@ use std::{
     io::{self, Write},
     path::Path,
     sync::Arc,
-    time::Instant,
 };
+
+// psh patch: the clock comes from crate::instant (see PATCHES.md).
+use crate::instant::Instant;
 
 use {
     grep_matcher::{Match, Matcher},

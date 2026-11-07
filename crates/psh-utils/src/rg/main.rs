@@ -171,7 +171,7 @@ fn search(
     args: &HiArgs,
     mode: SearchMode,
 ) -> anyhow::Result<bool> {
-    let started_at = std::time::Instant::now();
+    let started_at = Started::now();
     let mut matched = false;
     let mut searched = false;
     let mut stats = args.stats();
@@ -226,7 +226,7 @@ fn search_parallel(
 ) -> anyhow::Result<bool> {
     use std::sync::{Arc, Mutex};
 
-    let started_at = std::time::Instant::now();
+    let started_at = Started::now();
     let mut stats = args.stats();
     let mut matched = false;
     let mut searched = false;
@@ -390,6 +390,25 @@ fn search_parallel(
     }
     let _ = out.flush();
     Ok(matched)
+}
+
+/// psh: when the search started, for `--stats`: wasm32-unknown-unknown has no clock
+/// (`Instant::now` panics there), so the time is zero there.
+#[derive(Clone, Copy)]
+struct Started(Option<std::time::Instant>);
+
+impl Started {
+    fn now() -> Started {
+        if cfg!(all(target_arch = "wasm32", target_os = "unknown")) {
+            Started(None)
+        } else {
+            Started(Some(std::time::Instant::now()))
+        }
+    }
+
+    fn elapsed(&self) -> std::time::Duration {
+        self.0.map_or(std::time::Duration::ZERO, |t| t.elapsed())
+    }
 }
 
 /// psh: one haystack searched on a search thread: its output and result.
@@ -583,10 +602,10 @@ fn eprint_nothing_searched() {
 fn print_stats<W: Write>(
     mode: SearchMode,
     stats: &grep_printer::Stats,
-    started: std::time::Instant,
+    started: Started,
     mut wtr: W,
 ) -> std::io::Result<()> {
-    let elapsed = std::time::Instant::now().duration_since(started);
+    let elapsed = started.elapsed();
     // psh: `--json` runs the real rg for now (D1082), so stats are text.
     {
         let _ = mode;

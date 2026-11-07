@@ -220,6 +220,27 @@ Checkouts: `vendor/ripgrep` (91f5d22), `vendor/fd` (193d0df) in the primary chec
 - Docs: ARCH "Search" (walk sequential, search threads, in-order merge). No guide page
   affected (utilities.md not written yet).
 
+- Landed next (part 3b, D1135): `third_party/grep-printer/` (0.3.1 patched: `Instant`
+  from `src/instant.rs`, zero clock on wasm32-unknown-unknown; PATCHES.md), through
+  `[patch.crates-io]`, excluded from the workspace. rg runs in psh.wasm now (the rg
+  `--stats` clock is zero there too; paths get Unix's color on wasm); all rg wasm ratchet
+  lines removed (49 agent, 28 utils).
+- Upstream issue text for the owner to file (BurntSushi/ripgrep):
+
+  > **grep-printer: sinks panic on wasm32-unknown-unknown (`Instant::now`)**
+  >
+  > `StandardSink`, `SummarySink` and `JSONSink` call `std::time::Instant::now()` when
+  > they are created (`sink_with_path`/`sink`) and in `begin`, to record the elapsed time
+  > for `Stats`. On `wasm32-unknown-unknown` std has no clock and `Instant::now()` panics
+  > ("time not implemented on this platform"), so no printer can be used there, even
+  > with stats off, although grep-searcher and grep-regex work fine on that target.
+  > Proposal: only read the clock when stats are enabled (`config.stats`), i.e. make
+  > `start_time` an `Option<Instant>` set in `begin` when stats are requested, which also
+  > saves two clock reads per searched file in the common case. We patch it locally with
+  > an `Instant` shim (zero elapsed time on that target); happy to send a PR for the
+  > `Option` variant. (Separately, `HyperlinkPath::from_path` and `encode` warn as unused
+  > on targets that are neither `unix` nor `windows`.)
+
 ## Follow-ups
 - rg: `skip_stdout` (real rg skips the file stdout is redirected to, `rg x . > out`) is not
   done; needs the identity of fd 1 from the utility context.

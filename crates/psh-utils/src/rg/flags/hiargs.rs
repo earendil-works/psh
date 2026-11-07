@@ -1239,6 +1239,11 @@ fn stats(low: &LowArgs) -> Option<grep_printer::Stats> {
 /// single configuration.
 fn take_color_specs(_: &mut State, low: &mut LowArgs) -> ColorSpecs {
     let mut specs = grep_printer::default_color_specs();
+    // psh: grep-printer gives paths a color on Unix and Windows only; wasm gets
+    // Unix's.
+    if !cfg!(any(unix, windows)) {
+        specs.insert(0, "path:fg:magenta".parse().unwrap());
+    }
     for spec in low.colors.drain(..) {
         specs.push(spec);
     }

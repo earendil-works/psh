@@ -89,6 +89,8 @@ const MAX_LOOK_AHEAD: usize = 128;
 #[macro_use]
 mod macros;
 
+// psh patch: a clock that also exists on wasm32-unknown-unknown (see PATCHES.md).
+mod instant;
 mod color;
 mod counter;
 mod hyperlink;

@@ -316,7 +316,9 @@ fn metadata(p: &std::path::Path, m: &std::fs::Metadata, follow: bool) -> Metadat
     // Owned by the shell's user (HostInfo's 1000): `test -O` and `ls -l` agree.
     Metadata {
         kind,
-        size: m.len(),
+        // NTFS directories have no size; Unix file systems report a block (Linux 4096),
+        // and `test -s DIR` is true there.
+        size: if m.is_dir() { 4096 } else { m.len() },
         mode,
         mtime_ns,
         dev,

@@ -73,5 +73,8 @@ the host), with bash's exact errexit exemptions. errexit must be right: agents r
   `Vp::signal_trap_ignored` for spawn dispositions.
 
 ## Follow-ups
+- The wasm protocol (psh-wasm `Script`, psh-spec's wasm runner) has no command-line
+  options yet: 22 brush cases listed in `expected-failures.wasm.txt` with that reason.
+- `set -u` inside arithmetic (`$((x+1))` with x unset) is not checked yet.
 
 ## Result

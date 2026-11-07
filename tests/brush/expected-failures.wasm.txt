@@ -2,4 +2,26 @@
 # (not in expected-failures.txt) but may fail here, each with its reason. Cases
 # that need external programs are not listed. psh-spec --update-ratchet removes
 # cases that pass; never add a regression.
+brush/compat/arguments/3: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/arguments/19: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/arguments/26: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/arguments/27: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/arguments/35: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/arguments/86: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/arguments/87: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/arguments/89: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/arguments/91: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/arguments/95: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/arguments/96: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/arguments/97: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/arguments/98: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/builtins/set/2: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/builtins/set/3: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/builtins/set/14: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/builtins/set/15: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/builtins/set/17: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/builtins/set/18: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
 brush/compat/builtins/test/2: needs host files: /bin/sh, /etc/os-release
+brush/compat/options/default/0: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/options/set-e/4: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/options/set-u/2: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)

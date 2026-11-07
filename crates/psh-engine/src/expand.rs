@@ -530,7 +530,7 @@ async fn expand_part(
                 String::from_utf8_lossy(text)
             ))
             .await;
-            return Err(Unwind::Exit(1));
+            return Err(Unwind::Abort(1));
         }
         Part::CmdSubst(list) => {
             let (out, st) = exec::command_subst(vp, code, *list).await?;
@@ -551,9 +551,9 @@ async fn expand_part(
             match crate::arith::eval(vp, &text) {
                 Ok(v) => emit(f, v.to_string().as_bytes(), quoted),
                 Err(msg) => {
-                    // An error in an arithmetic expansion ends a non-interactive shell.
+                    // An error in an arithmetic expansion abandons the command line.
                     vp.error(&msg).await;
-                    return Err(Unwind::Exit(1));
+                    return Err(Unwind::Abort(1));
                 }
             }
         }
@@ -587,6 +587,7 @@ fn is_at(p: &WordPart) -> bool {
 
 pub(crate) async fn unsupported<T>(vp: &Vp, what: &str) -> Result<T, Unwind> {
     vp.error(&format!("{what}: not supported yet")).await;
+    // The script stops: what follows likely depends on it (D1057).
     Err(Unwind::Exit(2))
 }
 
@@ -669,7 +670,7 @@ async fn param(
         let vp = vp.clone();
         async move {
             vp.error(&msg).await;
-            Err::<(), Unwind>(Unwind::Exit(1))
+            Err::<(), Unwind>(Unwind::Abort(1))
         }
     };
     let mut val = match p.name {
@@ -736,7 +737,7 @@ async fn param(
                         String::from_utf8_lossy(name_text)
                     ))
                     .await;
-                    return Err(Unwind::Exit(1));
+                    return Err(Unwind::Abort(1));
                 }
                 Val::List(..) => return bad(vp).await,
             };
@@ -748,7 +749,7 @@ async fn param(
                         String::from_utf8_lossy(&target)
                     ))
                     .await;
-                    return Err(Unwind::Exit(1));
+                    return Err(Unwind::Abort(1));
                 }
             };
         }
@@ -793,13 +794,13 @@ async fn param(
                             String::from_utf8_lossy(name_text)
                         ))
                         .await;
-                        return Err(Unwind::Exit(1));
+                        return Err(Unwind::Abort(1));
                     }
                     let (v, _) = expand_single(vp, code, word, Ctx::Word).await?;
                     let name = code.ast.text(p.name_span);
                     if vp.vars.get(name).is_some_and(|v| v.readonly) {
                         vp.error(&format!("{name}: readonly variable")).await;
-                        return Err(Unwind::Exit(1));
+                        return Err(Unwind::Abort(1));
                     }
                     vp.set_var(name, v.clone());
                     emit(f, &v, quoted);

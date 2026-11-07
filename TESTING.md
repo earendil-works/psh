@@ -172,8 +172,8 @@ at scale) and syntax ranking. Running anything is never involved.
 - Runs psh **in-process** (a new shell per case on its own engine thread over the OS
   host: psh-os on Unix, the std host on Windows until 0007; the case's cwd and
   environment, OS pipes for stdout and stderr, a fake `$$`) wherever possible; cases
-  that mention `$PPID` run in the `psh` binary, since their children signal their
-  parent (D1056); `--shell PATH` runs a shell binary as a subprocess
+  that mention `PPID` or `kill` run in the `psh` binary, since they signal their parent
+  or process group (D1056); `--shell PATH` runs a shell binary as a subprocess
   in its own process group, killed with all its children on timeout and after it exits.
   The same comparison checks the runner itself: bash 5.3 must pass its own goldens
   except for documented platform differences (on macOS: BSD utilities, libc, a

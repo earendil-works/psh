@@ -820,8 +820,9 @@ date: 2026-11-07 · by: engine · issue: 0005
 Each case gets a fresh shell on its own engine thread (`ENGINE_STACK`) over the std
 host, with OS pipes for stdout and stderr (externals write to them directly) and the
 case's cwd and environment. `$$` is a fake pid (99999999) so `kill … $$` cannot hit the
-runner. Cases whose arguments or stdin mention `PPID` run in the `psh` binary as a
-subprocess instead: their children signal their parent, which in-process is the runner.
+runner. Cases whose arguments or stdin mention `PPID` or `kill` run in the `psh` binary
+as a subprocess in its own process group instead: their children signal their parent
+or their process group (`kill -USR1 0`), which in-process is the runner.
 The command line (`-c`, `-s`, file, stdin) is parsed by `psh_engine::invocation`, shared
 with the `psh` binary.
 
@@ -966,3 +967,29 @@ listed pair the workspace does not have, or a line without a decision id. Adding
 dependency is: decision, then the list line(s) for it and everything it pulls in, then
 the code. Workspace crates depending on each other cite ARCH.md's crate layout (D004)
 or their own decision.
+## D1058: Errors that abandon the line, and errors that end the shell
+date: 2026-11-07 · by: engine · issue: 0005
+`Unwind::Abort(status)` abandons the rest of the top-level command line (also from
+inside functions and loops), sets `$?` and goes on with the next line; in a subshell it
+ends the subshell. Used where bash does that (probed with 5.3): bad substitution,
+arithmetic errors in `$((…))`, invalid indirection, assignment to a readonly variable,
+the function nesting limit. `Unwind::Exit` ends the (sub)shell: `exit`, `${x?}` (127
+under `-c`, else 1, as bash), SIGPIPE (141), usage errors of `break`/`continue`, and
+features that are not supported yet (status 2). Keeping unsupported features fatal
+costs about 100 passing cases (they pass when the script goes on) but is the safe
+choice for agents: a script whose `set -e` was not understood must not run on.
+Supersedes the expansion part of D1057.
+
+## D1059: Functions, locals and loops; stack per level
+date: 2026-11-07 · by: engine · issue: 0005
+Functions are `(Rc<Code>, CmdId)` in an `Rc` map in `Vp`, found before builtins (bash
+outside POSIX mode). A call saves `$@`, the loop count and pushes a `Frame` recording
+the previous value of each variable made local (`local`, prefix assignments) and
+restores them on return: dynamic scoping over one variable table, cheap to clone for
+subshells. `break`/`continue` count loops per function body; `continue` in a loop's
+condition ends the loop (bash). Stack: after splitting the dispatch into plain
+functions returning boxed futures (no `async` frame for the dispatcher) and a fast path
+for single-command list items, a function call level costs ~3 KiB in release and
+~15 KiB in debug (was ~13/52 KiB); 1000 levels run in 3 MiB (release) and 16 MiB
+(debug). `STACK_PER_LEVEL` stays 16 KiB, `ENGINE_STACK` ~20 MiB; the limit counts
+function calls and subshells together.

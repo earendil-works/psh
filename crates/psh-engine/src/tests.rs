@@ -266,7 +266,7 @@ fn printf_basics() {
 fn export_unset_readonly() {
     check("x=1; unset x; echo ${x-gone}", "gone\n");
     check("export x=1; export -p | cat | wc; true", "6\n");
-    let o = run("readonly r=1; r=2; echo $?");
+    let o = run("readonly r=1; r=2; echo same line\necho $?");
     assert_eq!(o.stdout, "1\n");
     assert_eq!(o.stderr, "psh: line 1: r: readonly variable\n");
 }
@@ -280,6 +280,17 @@ fn syntax_errors() {
         o.stderr,
         "psh: -c: line 2: syntax error near unexpected token `)'\npsh: -c: line 2: `echo )'\n"
     );
+}
+
+#[test]
+fn errors_abandon_the_line() {
+    let o = run(
+        "echo ${a b}; echo same\necho next $?\nf() { echo $((1+)); echo no; }; f; echo no\necho last",
+    );
+    assert_eq!(o.stdout, "next 1\nlast\n");
+    assert_eq!(o.status, 0);
+    check("x=$(echo ${a b}; echo no); echo \"[$x] $?\"", "[] 1\n");
+    check("until continue; do echo no; done; echo end", "end\n");
 }
 
 #[test]

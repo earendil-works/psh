@@ -47,6 +47,7 @@ pub(crate) fn find(name: &[u8]) -> Option<Builtin> {
         b"continue" => (builtin!(continue_), true),
         b"local" => (builtin!(local), false),
         b"let" => (builtin!(let_), false),
+        b"getopts" => (builtin!(getopts), false),
         b"test" => (builtin!(test::test), false),
         b"[" => (builtin!(test::bracket), false),
         _ => return None,
@@ -512,12 +513,13 @@ async fn loop_control(vp: &mut Vp, args: &[Vec<u8>], name: &str) -> R {
             Some(_) => {
                 vp.error(&format!("{name}: {}: loop count out of range", s(a)))
                     .await;
-                return Err(Unwind::Exit(1));
+                return Ok(1);
             }
             None => {
+                // A usage error of a special builtin ends the shell.
                 vp.error(&format!("{name}: {}: numeric argument required", s(a)))
                     .await;
-                return Err(Unwind::Exit(1));
+                return Err(Unwind::Exit(2));
             }
         },
     };
@@ -622,6 +624,144 @@ async fn let_(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         }
     }
     Ok(i32::from(last == 0))
+}
+
+async fn getopts(vp: &mut Vp, args: &[Vec<u8>]) -> R {
+    let args = match args.get(1) {
+        Some(a) if a == b"--" => {
+            let mut v = args.to_vec();
+            v.remove(1);
+            v
+        }
+        Some(a) if a.len() > 1 && a[0] == b'-' => {
+            vp.error(&format!("getopts: {}: invalid option", s(&a[..2])))
+                .await;
+            vp.error_raw(b"getopts: usage: getopts optstring name [arg ...]\n")
+                .await;
+            return Ok(2);
+        }
+        _ => args.to_vec(),
+    };
+    if args.len() < 3 {
+        vp.error("getopts: usage: getopts optstring name [arg ...]")
+            .await;
+        return Ok(2);
+    }
+    let spec = args[1].clone();
+    let Some(name) = std::str::from_utf8(&args[2])
+        .ok()
+        .filter(|n| is_name(n.as_bytes()))
+        .map(str::to_string)
+    else {
+        vp.error(&format!(
+            "getopts: `{}': not a valid identifier",
+            s(&args[2])
+        ))
+        .await;
+        return Ok(1);
+    };
+    let (silent, spec) = match spec.strip_prefix(b":") {
+        Some(rest) => (true, rest.to_vec()),
+        None => (false, spec),
+    };
+    let params: Vec<Vec<u8>> = if args.len() > 3 {
+        args[3..].to_vec()
+    } else {
+        vp.args.clone()
+    };
+    let mut optind = vp.var("OPTIND").and_then(parse_int).unwrap_or(1).max(1);
+    let mut pos = if vp.getopts.0 == optind {
+        vp.getopts.1
+    } else {
+        0
+    };
+    let end = |vp: &mut Vp, optind: i64| {
+        vp.set_var(&name, b"?".to_vec());
+        vp.vars.remove("OPTARG");
+        vp.set_var("OPTIND", optind.to_string().into_bytes());
+        vp.getopts = (optind, 0);
+        Ok(1)
+    };
+    let Some(arg) = params.get(optind as usize - 1).cloned() else {
+        return end(vp, optind);
+    };
+    if pos >= arg.len() {
+        pos = 0;
+    }
+    if pos == 0 {
+        if arg == b"--" {
+            return end(vp, optind + 1);
+        }
+        if arg.len() < 2 || arg[0] != b'-' {
+            return end(vp, optind);
+        }
+        pos = 1;
+    }
+    let c = arg[pos];
+    pos += 1;
+    let at_end = pos >= arg.len();
+    let found = spec.iter().position(|&x| x == c && x != b':');
+    let mut value = vec![c];
+    let mut optarg: Option<Vec<u8>> = None;
+    let next = |optind: &mut i64, pos: &mut usize| {
+        if *pos >= arg.len() {
+            *optind += 1;
+            *pos = 0;
+        }
+    };
+    match found {
+        Some(i) if spec.get(i + 1) == Some(&b':') => {
+            if !at_end {
+                optarg = Some(arg[pos..].to_vec());
+                optind += 1;
+                pos = 0;
+            } else if let Some(v) = params.get(optind as usize) {
+                optarg = Some(v.clone());
+                optind += 2;
+                pos = 0;
+            } else {
+                optind += 1;
+                pos = 0;
+                if silent {
+                    value = b":".to_vec();
+                    optarg = Some(vec![c]);
+                } else {
+                    let msg = format!(
+                        "{}: option requires an argument -- {}\n",
+                        vp.core.msg_name.borrow(),
+                        c as char
+                    );
+                    vp.error_raw(msg.as_bytes()).await;
+                    value = b"?".to_vec();
+                }
+            }
+        }
+        Some(_) => next(&mut optind, &mut pos),
+        None => {
+            next(&mut optind, &mut pos);
+            if silent {
+                optarg = Some(vec![c]);
+            } else {
+                let msg = format!(
+                    "{}: illegal option -- {}\n",
+                    vp.core.msg_name.borrow(),
+                    c as char
+                );
+                vp.error_raw(msg.as_bytes()).await;
+            }
+            value = b"?".to_vec();
+        }
+    }
+    vp.set_var(&name, value);
+    match optarg {
+        Some(v) => vp.set_var("OPTARG", v),
+        None => {
+            vp.vars.remove("OPTARG");
+        }
+    }
+    vp.set_var("OPTIND", optind.to_string().into_bytes());
+    vp.getopts = (optind, pos);
+    Ok(0)
 }
 
 async fn shift(vp: &mut Vp, args: &[Vec<u8>]) -> R {

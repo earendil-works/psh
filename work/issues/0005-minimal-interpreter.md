@@ -142,7 +142,42 @@ Nothing needs freezing before 0006 starts; the engine-side users are few (`exec.
 glob). Please keep `HostFuture`, `HostFile` (`&self`, `Any`), drop semantics and the
 "never block" rule; the rest may move.
 
+### 2026-11-07 part 2
+- Functions (`f()`, `function f`), `local` (-r, -x), `return`, prefix assignments for
+  calls; `if`/`elif`/`else`, `while`, `until`, `for` (with and without `in`), `for ((;;))`,
+  `case` (`;;`, `;&`, `;;&`), `break n`/`continue n`, `((…))`, `$((…))`, `let` (psh-syntax's
+  `eval_arith`), `getopts` (the macOS `/usr/bin/getopts` wrapper made `while getopts`
+  loop until the timeout), `unset -f`. Safepoint per loop iteration (a `while true` loop
+  yields and cancels: tested).
+- `Unwind::Abort` for errors that drop the rest of the line (D1058), probed with bash
+  5.3: bad substitution, `$((…))` errors, readonly assignments. Unsupported features stay
+  fatal (Exit 2): with Abort ~100 more cases pass, but a script must not run on after
+  an unsupported `set -e`.
+- Stack (D1059): 1000-deep recursion first needed ~13 KiB/level release, ~52 KiB debug
+  (the async dispatch frames). Plain dispatch functions returning boxed futures and a
+  fast path for single-command list items brought it to ~3 KiB / ~15 KiB. Deep
+  recursion test (1000 levels on `ENGINE_STACK`, then past the limit: an error, no
+  overflow) in `tests.rs`; the wasm32 build passes, the wasm limit is a doc note
+  (~200 with the default 1 MiB stack, release).
+- Host: FIFO opens run on a helper thread (`mkfifo f; echo x > f` blocked the engine
+  thread in the kernel, hanging psh-spec); psh-spec gives up on an engine thread 2 s
+  after the deadline instead of joining it forever. psh-spec runs cases that mention
+  `kill` in the binary too (`kill -USR1 0` signals the runner's process group).
+- 4 accidental passes added to the brush ratchet with reasons: caller/3 (passed while
+  functions were unsupported), trap/45, trap/58, signals/17 (passed in-process only
+  because `kill $$` could not reach the shell).
+- Not adopted: making unimplemented bash builtins (`read`, `command`, `type`, `wait`,
+  ...) fail as "not supported yet": on macOS `/usr/bin` has sh wrappers for them that
+  pass ~200 cases by accident; that waits for the builtins issues.
+- Scores (macOS): oils 1105/2511 active (was 731), brush 1061/3171 (was 720), agent
+  115/144 (was 100). Full psh-spec run ~56 s (-j 6; more cases now reach their `sleep`s).
+- ARCH: stack, errors, functions and scope, and "Engine internals other work builds on"
+  (what parallel language issues must not restructure).
+
 ## Follow-ups
+- On macOS, `/usr/bin/{read,command,type,wait,ulimit,...}` sh wrappers stand in for
+  missing builtins; once those builtins exist this goes away. Until then a case can pass
+  on macOS and fail on Linux.
 - guide: `engine.md` (stepping, vprocs, the Host trait for embedders).
 - Scripts on stdin are read whole before running; bash reads as it goes (a `read` in
   the script would consume the following lines).

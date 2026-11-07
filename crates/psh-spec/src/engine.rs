@@ -300,9 +300,11 @@ impl Engine for InProcess {
                 status: Status::Exit(2),
             })
         };
-        // A child of an in-process shell is a child of the runner: a case that signals
-        // `$PPID` would hit the runner. Those run in the psh binary instead.
-        let mentions = |b: &[u8]| b.windows(4).any(|w| w == b"PPID");
+        // A child of an in-process shell is a child of the runner, in its process
+        // group: a case that signals `$PPID` or its group (`kill 0`) would hit the
+        // runner. Cases that mention either run in the psh binary instead, in a
+        // process group of their own.
+        let mentions = |b: &[u8]| b.windows(4).any(|w| w == b"PPID" || w == b"kill");
         if req.args.iter().any(|a| mentions(a.as_bytes())) || req.stdin.is_some_and(mentions) {
             return External::new(self.binary.clone()).run(req);
         }
@@ -390,7 +392,8 @@ impl Engine for InProcess {
         let deadline = Instant::now() + req.timeout;
         let out_file = file_from_writer(out_w);
         let err_file = file_from_writer(err_w);
-        let engine = engine_thread(move || {
+        let (done_tx, done_rx) = std::sync::mpsc::channel();
+        let _engine = engine_thread(move || {
             // `$$` must not be the runner: cases `kill $$`. No pid is this large.
             let (host, file) = os_host(99_999_999);
             let mut cfg = ShellConfig::new(host);
@@ -401,11 +404,20 @@ impl Engine for InProcess {
             cfg.stderr = Some(file(err_file));
             let mut shell = Shell::new(cfg);
             shell.start(script);
-            drive_until(&mut shell, Some(deadline))
+            let r = drive_until(&mut shell, Some(deadline));
+            drop(shell);
+            let _ = done_tx.send(r);
         })?;
-        let result = engine
-            .join()
-            .map_err(|_| std::io::Error::other("the engine thread panicked"))?;
+        // A shell stuck in the kernel (a v1 host limit) cannot be cancelled: give up
+        // on it a little after the deadline and leave its thread behind.
+        let wait = deadline.saturating_duration_since(Instant::now()) + Duration::from_secs(2);
+        let result = match done_rx.recv_timeout(wait) {
+            Ok(r) => r,
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => None,
+            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => {
+                return Err(std::io::Error::other("the engine thread panicked"));
+            }
+        };
         // Output is complete when both pipes close; a process the case left behind can
         // hold them: wait until the deadline.
         while !(out_thread.is_finished() && err_thread.is_finished()) && Instant::now() < deadline {

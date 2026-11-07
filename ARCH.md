@@ -123,15 +123,18 @@ runtime in D005's sense: no runtime crate, no threads, the embedder steps and pa
 - **`!Send`.** A `Shell` holds `Rc`s (a `PhantomData<*const ()>` makes it explicit):
   create and step it on one thread. That fits pi-env's thread per exec, psh-spec's
   worker threads and the JS event loop. `ControlHandle` is `Send + Sync`.
-- **Stack (D1050).** Nested futures are polled recursively, so nesting within one task
-  (compound commands now, function calls and `eval`/`source` later) uses native stack:
-  measured about 5 KiB per level in release builds and 15 KiB in debug builds
-  (`examples/stackprobe.rs`). `ShellConfig::max_depth` (default 1000) bounds the
-  nesting and fails with "maximum nesting level exceeded" instead of overflowing;
-  embedders run the engine on a thread with `std_host::ENGINE_STACK` (20 MiB, only
-  touched pages cost). On wasm32 (1 MiB stack by default) use a limit around 150 or link
-  a larger stack. Subshells, pipeline stages and substitutions are tasks of their own
-  and do not deepen the stack.
+- **Stack (D1050, D1059).** Nested futures are polled recursively, so nesting within one
+  task (compound commands, function calls, later `eval`/`source`) uses native stack:
+  measured about 3 KiB per function call level in release builds and 15 KiB in debug
+  builds (`examples/stackprobe.rs DEPTH BYTES func`). To keep that low, compound
+  commands and simple commands dispatch through plain functions returning boxed
+  futures, and a list item that is a single command skips the and-or and pipeline
+  frames. `ShellConfig::max_depth` (default 1000) bounds functions plus subshells and
+  fails with "maximum function nesting level exceeded" instead of overflowing; embedders
+  run the engine on a thread with `std_host::ENGINE_STACK` (about 20 MiB, only touched
+  pages cost). On wasm32 (1 MiB stack by default) use a limit around 200 or link a
+  larger stack. Subshells, pipeline stages and substitutions are tasks of their own and
+  do not deepen the stack.
 - **Virtual processes.** Subshells, pipeline stages (including compound commands and
   functions), `$(…)`, `<(…)` and `&` jobs are vprocs: a task owning a copy of the
   parent's state (`Vp`: variables, positional parameters, cwd, fd table, `$?`).
@@ -170,8 +173,42 @@ runtime in D005's sense: no runtime crate, no threads, the embedder steps and pa
   not killed (bash leaves background jobs running).
 - **Expansion** (brace expansion, tilde, parameters, command substitution, arithmetic
   as 64-bit, word splitting, globbing, quote removal) is engine code over the AST;
-  globbing reads directories through the host. Features not implemented yet fail
-  loudly (`X: not supported yet`, status 2) rather than doing something else (D1057).
+  globbing reads directories through the host. Arithmetic is psh-syntax's
+  `eval_arith` with the vproc as its `ArithEnv`. Features not implemented yet fail
+  loudly (`X: not supported yet`, the script ends with 2) rather than doing something
+  else (D1057).
+- **Errors (D1058).** How control leaves a command is `Unwind`: `Exit` ends the
+  (sub)shell (`exit`, `${x?}`, SIGPIPE, unsupported features), `Abort` abandons the rest
+  of the top-level line and continues with the next one (bad substitution, arithmetic
+  errors, readonly assignments: bash's behavior), `Return`, `Break(n)`, `Continue(n)`.
+- **Functions and scope (D1059).** Functions live in `Vp::funcs` (an `Rc` map shared
+  with subshells until one changes it) as `(Rc<Code>, CmdId)`; lookup order is
+  function, builtin, external. A call pushes a `Frame` that records the old value of
+  every variable its `local`s (and prefix assignments) shadow and restores them on
+  return: dynamic scope with one flat variable table. `Vp::loops` counts the loops of
+  the current function body (reset per call and per subshell) for `break`/`continue`.
+
+### Engine internals other work builds on
+
+Language work in parallel issues (arrays and expansion, `[[ ]]`/`test`, shell options
+and errexit, builtins) extends these; restructuring them needs a decision first:
+- `sched.rs` (tasks, wakers, budget, safepoints) and the `Shell`/`Step`/`ControlHandle`
+  API; one safepoint per command and per loop iteration.
+- `Vp` as the whole per-vproc state, cloned for subshells; `Unwind` as the only
+  non-local control flow; `R = Result<i32, Unwind>`.
+- The dispatch shape in `exec.rs`: `run_list` → `run_command` (safepoint) →
+  `run_simple` / `run_compound` returning boxed futures; `prepare_simple` (expansion,
+  assignments) then `run_argv` (function, builtin, external). Keep new compound
+  commands as their own boxed async fns (stack per level, D1059).
+- `expand.rs`'s `Fields` model (quoted, literal and unquoted text; `pat` for globbing)
+  and its entry points (`expand_words`, `expand_single`, `expand_pattern`,
+  `expand_target`, `expand_heredoc`, `expand_decl_words`).
+- `FdObj`/`FdTable` and the redirection save/restore in `with_redirects`/`run_simple`;
+  pipes and pumps (`pipe.rs`, `fd::Pump`).
+- Builtins are `fn(&mut Vp, &[Vec<u8>]) -> LocalBoxFuture<R>` in `builtins::find`;
+  output through `builtins::write_fd`/`out` (SIGPIPE as status 141).
+- Variables are `Vars` (name → `Var { value: Option<Vec<u8>>, exported, readonly }`);
+  arrays will extend `Var`'s value, not add a second table.
 
 ### The Host trait
 

@@ -57,6 +57,10 @@ impl Code {
 pub(crate) enum Unwind {
     /// The (sub)shell ends with this status: `exit`, a fatal error, a signal.
     Exit(i32),
+    /// The rest of the top-level command line is abandoned, `$?` is this status, and
+    /// the script goes on with the next line (bash's behavior for expansion errors,
+    /// assignments to readonly variables and the like). Ends a subshell.
+    Abort(i32),
     // Functions and loops (later language work) unwind with these.
     #[allow(dead_code)]
     Return(i32),
@@ -70,7 +74,7 @@ impl Unwind {
     /// The status when this reaches the top of a (sub)shell.
     pub(crate) fn status(self, last: i32) -> i32 {
         match self {
-            Unwind::Exit(s) | Unwind::Return(s) => s,
+            Unwind::Exit(s) | Unwind::Abort(s) | Unwind::Return(s) => s,
             Unwind::Break(_) | Unwind::Continue(_) => last,
         }
     }
@@ -151,6 +155,9 @@ pub(crate) struct Vp {
     pub frames: Vec<Frame>,
     /// Loops running in this function body (or at top level): `break`/`continue`.
     pub loops: u32,
+    /// `getopts`' place inside a cluster of options (`-abc`): the `OPTIND` it was
+    /// at, and the char offset in that argument.
+    pub getopts: (i64, usize),
 }
 
 /// A function: its body command in the chunk that defined it.

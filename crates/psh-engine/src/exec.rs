@@ -125,7 +125,7 @@ pub(crate) async fn enter(vp: &Vp) -> Result<Vp, Unwind> {
             vp.core.max_depth
         ))
         .await;
-        return Err(Unwind::Exit(2));
+        return Err(Unwind::Abort(2));
     }
     Ok(vp.subshell())
 }
@@ -306,6 +306,8 @@ async fn run_while(vp: &mut Vp, code: &Rc<Code>, w: &psh_syntax::WhileCommand) -
         safepoint(&vp.core.sched).await;
         let c = match run_list(vp, code, w.cond).await {
             Ok(c) => c,
+            // `continue` (or `break`) in the condition ends the loop, as in bash.
+            Err(Unwind::Continue(1)) => return Ok(status),
             Err(u) => match loop_unwind(u, status) {
                 Some(r) => return r,
                 None => continue,
@@ -476,7 +478,7 @@ async fn call_function(
             vp.core.max_depth
         ))
         .await;
-        return Err(Unwind::Exit(1));
+        return Err(Unwind::Abort(1));
     }
     let mut args: Vec<Vec<u8>> = argv.into_iter().skip(1).collect();
     std::mem::swap(&mut vp.args, &mut args);
@@ -572,7 +574,7 @@ async fn prepare_simple(
             // Assigned at once: later assignments see earlier ones (`a=1 b=$a`).
             if vp.vars.get(&name).is_some_and(|v| v.readonly) {
                 vp.error(&format!("{name}: readonly variable")).await;
-                return Ok(Prepared::Done(1));
+                return Err(Unwind::Abort(1));
             }
             vp.set_var(&name, value);
         } else {

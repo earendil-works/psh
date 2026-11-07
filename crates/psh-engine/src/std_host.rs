@@ -444,6 +444,19 @@ fn metadata(m: &std::fs::Metadata) -> Metadata {
     }
 }
 
+fn is_fifo(p: &std::path::Path) -> bool {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::FileTypeExt;
+        std::fs::metadata(p).is_ok_and(|m| m.file_type().is_fifo())
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = p;
+        false
+    }
+}
+
 fn is_executable(p: &std::path::Path) -> bool {
     let Ok(m) = std::fs::metadata(p) else {
         return false;
@@ -473,10 +486,37 @@ impl Host for StdHost {
         } else {
             p
         };
-        let r = o
-            .open(path(p))
-            .map(|f| Rc::new(StdFile::new(f)) as Rc<dyn HostFile>);
-        ready(r)
+        let p = path(p);
+        if !is_fifo(&p) {
+            return ready(
+                o.open(&p)
+                    .map(|f| Rc::new(StdFile::new(f)) as Rc<dyn HostFile>),
+            );
+        }
+        // Opening a FIFO waits for the other end, which may be a vproc of this
+        // engine: open it on a helper thread (pitfall 1). If the open is abandoned,
+        // the thread stays blocked until the FIFO's other end shows up.
+        type Slot = (Option<io::Result<File>>, Option<Waker>);
+        let state: Arc<Mutex<Slot>> = Arc::new(Mutex::new((None, None)));
+        let st = state.clone();
+        std::thread::spawn(move || {
+            let r = o.open(&p);
+            let mut s = lock(&st);
+            s.0 = Some(r);
+            if let Some(w) = s.1.take() {
+                w.wake();
+            }
+        });
+        Box::pin(std::future::poll_fn(move |cx| {
+            let mut s = lock(&state);
+            match s.0.take() {
+                Some(r) => Poll::Ready(r.map(|f| Rc::new(StdFile::new(f)) as Rc<dyn HostFile>)),
+                None => {
+                    s.1 = Some(cx.waker().clone());
+                    Poll::Pending
+                }
+            }
+        }))
     }
 
     fn stat(&self, p: &[u8], follow: bool) -> HostFuture<io::Result<Metadata>> {

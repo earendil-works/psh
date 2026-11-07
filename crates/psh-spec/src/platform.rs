@@ -201,8 +201,13 @@ fn plan(
             plat.entries.contains_key(id),
         );
         let on_linux = linux(id);
+        // Listed twice: the Linux result says which file keeps it (else the shared one).
         if in_s && in_p {
-            p.stale_platform.push(id.clone());
+            if on_linux == Some(true) && !wasm {
+                p.stale_shared.push(id.clone());
+            } else {
+                p.stale_platform.push(id.clone());
+            }
         }
         if r.pass {
             if in_p && !in_s {
@@ -229,7 +234,7 @@ fn plan(
         }
         p.other += usize::from(!in_s);
         if in_s {
-            if !wasm && platform != "linux" && on_linux == Some(true) {
+            if !wasm && !in_p && platform != "linux" && on_linux == Some(true) {
                 p.to_platform.push(id.clone());
             }
         } else if in_p {
@@ -262,6 +267,8 @@ fn plan(
     }
     p.stale_platform.sort();
     p.stale_platform.dedup();
+    p.stale_shared.sort();
+    p.stale_shared.dedup();
     p
 }
 

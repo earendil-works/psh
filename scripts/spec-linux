@@ -39,6 +39,8 @@ docker run --rm --user "$(id -u):$(id -g)" -v "$root:/src" -w /src \
 out=work/scratch/spec-linux
 mkdir -p "$out"
 rm -f "$out/results.tsv"
+# A fresh name inside: Docker Desktop's file sharing can keep a just-deleted name stale.
+fresh=results.$$.tsv
 echo "== running in $tag"
 st=0
 # --init: an orphan must be reaped by an init, not left to psh-spec as PID 1 (which
@@ -48,7 +50,10 @@ docker run --rm --init --network none --hostname psh-oracle --user "$(id -u):$(i
   -v "$root:/src:ro" -v "$root/$out:/out" -e HOME=/tmp \
   -e PSH_SPEC_COMMIT="$(git rev-parse --short HEAD)" \
   "$tag" /src/target/record/release/psh-spec --root /src -j "$(docker run --rm "$tag" nproc)" \
-  --results /out/results.tsv "$@" || st=$?
+  --results "/out/$fresh" "$@" || st=$?
+if [ -f "$out/$fresh" ]; then
+  mv "$out/$fresh" "$out/results.tsv"
+fi
 
 if [ $update = 1 ]; then
   echo "== updating the ratchets here from $out/results.tsv"

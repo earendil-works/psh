@@ -676,6 +676,9 @@ impl psh_engine::Host for Noting {
     fn umask(&self) -> u32 {
         self.inner.umask()
     }
+    fn standard_path(&self) -> Vec<u8> {
+        self.inner.standard_path()
+    }
     fn stat_extra(
         &self,
         path: &[u8],

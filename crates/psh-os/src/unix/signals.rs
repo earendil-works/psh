@@ -15,12 +15,15 @@ use psh_engine::host::Signal;
 
 /// Signals caught and not yet handed to the callback, one bit each.
 static PENDING: AtomicU64 = AtomicU64::new(0);
+/// The first signal caught (0: none).
+static FIRST: AtomicI32 = AtomicI32::new(0);
 /// The write end of the self-pipe; -1 until `catch` ran.
 static WAKE_FD: AtomicI32 = AtomicI32::new(-1);
 
 extern "C" fn on_signal(sig: libc::c_int) {
     let saved = io::Error::last_os_error().raw_os_error().unwrap_or(0);
     if (0..64).contains(&sig) {
+        let _ = FIRST.compare_exchange(0, sig, Ordering::SeqCst, Ordering::SeqCst);
         PENDING.fetch_or(1 << sig, Ordering::SeqCst);
     }
     let fd = WAKE_FD.load(Ordering::SeqCst);
@@ -52,6 +55,15 @@ fn set_errno(e: i32) {
         target_os = "android"
     )))]
     let _ = e;
+}
+
+/// The first signal caught, set by the handler itself: the driver checks it before it
+/// exits, since the watcher thread may not have passed the signal on yet.
+pub fn first_caught() -> Option<Signal> {
+    match FIRST.load(Ordering::SeqCst) {
+        0 => None,
+        s => Some(s),
+    }
 }
 
 /// Whether the process ignores `sig` now.

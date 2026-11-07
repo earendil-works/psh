@@ -228,6 +228,12 @@ impl Signals {
     /// killed and reaped, and die by the signal.
     fn finish(self) {
         let sig = self.control.lock().unwrap_or_else(|e| e.into_inner()).1;
+        // A signal the watcher thread has not passed on yet (it came as the run ended).
+        #[cfg(unix)]
+        let sig = match sig {
+            0 => psh_os::unix::signals::first_caught().unwrap_or(0),
+            s => s,
+        };
         #[cfg(unix)]
         if sig != 0 {
             let grace = psh_os::unix::UnixConfig::DEFAULT_GRACE;

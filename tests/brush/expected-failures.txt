@@ -85,10 +85,6 @@ brush/compat/builtins/command/45
 brush/compat/builtins/common/0
 brush/compat/builtins/common/2
 brush/compat/builtins/declare/1
-brush/compat/builtins/declare/24: passed only while declare was missing (both failed alike); needs `enable`
-brush/compat/builtins/declare/2
-brush/compat/builtins/declare/3
-brush/compat/builtins/declare/13
 brush/compat/builtins/declare/24: passed via macOS /usr/bin wrapper
 brush/compat/builtins/declare/25
 brush/compat/builtins/declare/26
@@ -186,36 +182,6 @@ brush/compat/builtins/kill/16
 brush/compat/builtins/kill/17
 brush/compat/builtins/kill/18
 brush/compat/builtins/let/5
-brush/compat/builtins/mapfile/0
-brush/compat/builtins/mapfile/1
-brush/compat/builtins/mapfile/2
-brush/compat/builtins/mapfile/3
-brush/compat/builtins/mapfile/4
-brush/compat/builtins/mapfile/5
-brush/compat/builtins/mapfile/6
-brush/compat/builtins/mapfile/7
-brush/compat/builtins/mapfile/8
-brush/compat/builtins/mapfile/9
-brush/compat/builtins/mapfile/10
-brush/compat/builtins/mapfile/11
-brush/compat/builtins/mapfile/12
-brush/compat/builtins/mapfile/13
-brush/compat/builtins/mapfile/14
-brush/compat/builtins/mapfile/15
-brush/compat/builtins/mapfile/16
-brush/compat/builtins/mapfile/17
-brush/compat/builtins/mapfile/18
-brush/compat/builtins/mapfile/19
-brush/compat/builtins/mapfile/20
-brush/compat/builtins/mapfile/21
-brush/compat/builtins/mapfile/22
-brush/compat/builtins/mapfile/23
-brush/compat/builtins/mapfile/24
-brush/compat/builtins/mapfile/25
-brush/compat/builtins/mapfile/26
-brush/compat/builtins/mapfile/27: passed via macOS /usr/bin wrapper
-brush/compat/builtins/mapfile/28
-brush/compat/builtins/mapfile/29
 brush/compat/builtins/mapfile/30
 brush/compat/builtins/mapfile/36
 brush/compat/builtins/printf/3

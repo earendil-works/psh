@@ -1,6 +1,6 @@
 # 0030: Process follow-ups: run-in-shell, host info, signal robustness
 
-status: in-progress
+status: done
 agent: procs
 branch: issue/0030-process-followups
 depends-on: 0006
@@ -13,20 +13,20 @@ extension: -
 Close the process-layer follow-ups from 0006 and the coordinator's queue.
 
 ## Acceptance criteria
-- [ ] **Run in shell (D1079)**: `pub struct RunInShell;` marker in host.rs; spawn returns it
+- [x] **Run in shell (D1079)**: `pub struct RunInShell;` marker in host.rs; spawn returns it
       (Unix: ENOEXEC instead of D1063's /bin/sh fallback; Windows: `#!/bin/sh`/`#!/bin/bash`
       and files with neither interpreter line nor executable extension — the windows agent
       switches its spawn once the engine side is in). The engine runs `spec.program` as a
       psh script in a subshell vproc (argv[1..] as `$@`, `$0` = argv[0], same env/cwd/fds),
       reusing the existing script runner. Decision + tests.
-- [ ] **Host info**: an additive Host op for UID, EUID, PPID, HOSTNAME, OSTYPE, MACHTYPE,
+- [x] **Host info**: an additive Host op for UID, EUID, PPID, HOSTNAME, OSTYPE, MACHTYPE,
       HOSTTYPE, GROUPS (sensible defaults; per-platform values as bash reports them;
       propose Windows values). The engine agent wires the variables.
-- [ ] **Signal robustness**: the flaky binary cases (brush kill/5, kill/6, signals/13,
+- [x] **Signal robustness**: the flaky binary cases (brush kill/5, kill/6, signals/13,
       oils background/7) pass 200× under `-j 12` load or are understood and fixed;
       blocking reads give way to fatal signals; the foreground "Terminated" stderr report
       as bash prints it non-interactively.
-- [ ] **psh-spec per-case leak check**: after each case run through the binary or
+- [x] **psh-spec per-case leak check**: after each case run through the binary or
       in-process, no process from that case survives (fails the case otherwise).
 
 ## Log
@@ -93,6 +93,34 @@ Close the process-layer follow-ups from 0006 and the coordinator's queue.
   a `read` on a FIFO and `$(sleep 30)`; a trapped USR1 runs its trap during a `read`,
   which then reads its line.
 
+### 2026-11-07 part 5: stress, the guide
+- kill/5 and kill/6 (binary, `kill -HUP $$`): 200/200 under two `psh-spec -j 12` runs.
+  signals/13 and background/7 stay quarantined as understood races: background/7 is
+  10 ms between jobs (any shell misorders them under load); signals/13 is psh's engine
+  buffer (64 KiB) on top of the kernel pipe when the loop writes before `head` starts, so
+  all 192 KiB fit where bash's writer gets SIGPIPE. Fixing it means kernel pipes for
+  every pipeline pipe (also between builtins) or a smaller engine buffer; both cost
+  builtin-pipeline speed, so not done here.
+- Guide: `processes.md` ("Processes on Unix") written and listed in SUMMARY.md.
+
 ## Follow-ups
+- Engine: wire `Host::info()` into `UID`, `EUID`, `PPID`, `GROUPS`, `HOSTNAME`, `OSTYPE`,
+  `MACHTYPE`, `HOSTTYPE` (engine agent).
+- Windows: return `RunInShell` from spawn for the D1079 cases; implement `Host::info`
+  (values proposed in D1301); a per-case leak check for psh-spec.
+- The signal-death report for a pipeline whose last stage died and for a subshell (bash
+  prints the pipeline or `( … )`).
+- brush/compat/signals/13: kernel pipes for every pipeline pipe, or a smaller engine
+  buffer, if exact SIGPIPE timing matters.
+- Processes that call setsid themselves escape psh-spec's leak check.
+- Guide: "Cancellation, timeouts and background jobs" (the user's view) is still a stub.
 
 ## Result
+Landed on main in parts (eeee71f, 6f78467, 0861876, b839f5b, 4e6d705, 6934418, and this
+merge): RunInShell (D1300), `Host::info` (D1301), the double-trap fix (D1302), the
+signal-death report (D1303), default dispositions for tests and the runner (D1304),
+psh-spec's per-case leak check (D1305), blocking reads giving way to signals (D1306);
+`processes.md` in the guide. Tests: psh-os unit (37), L5 (47), standalone (12), engine
+job/run-in-shell tests; all also pass under a parent ignoring INT TERM HUP QUIT USR1
+USR2 ALRM. Scores (macOS, at 6934418): oils 2094/2511, brush 2562/3171, agent 629/701,
+utils 148/148; no regressions; no leaks in a full psh-spec run.

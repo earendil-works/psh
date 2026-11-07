@@ -17,7 +17,7 @@
 - [The parser: spans and printing](syntax.md)
 - [The engine: a stepped interpreter with virtual processes]()
 - [The host interface]()
-- [Processes on Unix]()
+- [Processes on Unix](processes.md)
 - [Processes on Windows]()
 - [Utilities: fall-through and dialects]()
 - [How psh is tested]()

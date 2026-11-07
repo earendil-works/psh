@@ -32,10 +32,12 @@ mod expand;
 mod fd;
 pub mod host;
 pub mod invocation;
+mod jobs;
 mod options;
 mod pattern;
 mod pipe;
 mod sched;
+mod signals;
 mod state;
 #[cfg(any(unix, windows))]
 pub mod std_host;
@@ -261,6 +263,8 @@ impl Shell {
             line: 0,
             depth: 0,
             last_bg: None,
+            jobs: Default::default(),
+            job: None,
             funcs: Rc::new(Default::default()),
             frames: Vec::new(),
             loops: 0,

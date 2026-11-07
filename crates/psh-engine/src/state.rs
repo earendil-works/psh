@@ -138,8 +138,13 @@ pub(crate) struct Vp {
     pub line: u32,
     /// Nesting of subshells, substitutions and (later) function calls.
     pub depth: u32,
-    /// `$!`
-    pub last_bg: Option<u32>,
+    /// `$!`: the newest background job.
+    pub last_bg: Option<Rc<crate::jobs::Job>>,
+    /// The background jobs this vproc started (`jobs`, `wait`); a subshell starts
+    /// with none.
+    pub jobs: Rc<RefCell<crate::jobs::JobTable>>,
+    /// The job this vproc runs in, if it is part of one (`cmd &`).
+    pub job: Option<Rc<crate::jobs::Job>>,
     /// Function definitions; shared with subshells until one defines or unsets.
     pub funcs: Rc<HashMap<String, Rc<Func>>>,
     /// One frame per running function call: the variables its `local`s shadow.
@@ -208,6 +213,7 @@ impl Vp {
             self.opts.get(crate::options::SetOpt::Errtrace),
             self.opts.get(crate::options::SetOpt::Functrace),
         );
+        sub.jobs = Default::default();
         sub
     }
 

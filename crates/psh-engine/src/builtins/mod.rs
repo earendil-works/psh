@@ -8,6 +8,9 @@ mod core_tests;
 pub(crate) mod declare;
 mod eval;
 pub(crate) mod hash;
+mod jobs;
+#[cfg(test)]
+mod jobs_tests;
 mod printf;
 mod read;
 pub(crate) mod set;
@@ -80,6 +83,10 @@ pub(crate) fn find(name: &[u8]) -> Option<Builtin> {
         b"enable" => (builtin!(command::enable), false),
         b"times" => (builtin!(command::times), true),
         b"hash" => (builtin!(hash::hash), false),
+        b"wait" => (builtin!(jobs::wait), false),
+        b"kill" => (builtin!(jobs::kill), false),
+        b"jobs" => (builtin!(jobs::jobs), false),
+        b"disown" => (builtin!(jobs::disown), false),
         // Every other bash builtin: an error, never a program of the same name.
         _ if false && BASH_BUILTINS.contains(&name) => {
             (builtin!(unsupported), SPECIAL.contains(&name))

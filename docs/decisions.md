@@ -1370,3 +1370,20 @@ assignment (`x=` for an empty value); declaration builtins and then their assign
 iteration. Words are quoted as bash does: as is when safe, in single quotes when they
 contain blanks or shell metacharacters (`#`/`~` only at the start, `~` also after `=`
 or `:`), `$'…'` for control characters and bytes that are not UTF-8.
+## D1900: Jobs: `$!` is the program for a one-command job, a job pid otherwise
+date: 2026-11-07 · by: procs · issue: 0006
+`cmd &` is a job: a detached vproc task in the starting vproc's job table (a subshell
+starts with an empty table, as it cannot wait for its parent's jobs; a pipeline stage's
+`jobs` still lists them, as bash's does). A job that is one simple command is its program,
+as bash runs it as the job's own process: `$!` is the external's OS pid (so `kill $!`,
+`wait $!` and pid files mean the program); reading `$!` (and `jobs`, `kill %n`) first
+gives such a job a bounded number of scheduler rounds to start it. Any other job is a
+bash subshell: its `$!` is a pid of its own above every real one (2^22 + n), and a signal
+that ends processes ends its task at once with status 128+n, its externals released as a
+killed subshell's children would run on. Background jobs ignore SIGINT and SIGQUIT (their
+externals start with them ignored). `wait` returns the job's status, remembers reported
+jobs for `wait PID`, reports signal deaths other than INT, PIPE and TERM as bash does;
+`jobs` shows Running/Done/Exit N/glibc signal texts in bash's columns and drops reported
+finished jobs; `disown` hides a job and its externals leave the run (D1067). Signal names
+and numbers are the OS's (BSD numbering on macOS), descriptions glibc's. Job control
+proper (`fg`, `bg`, `set -m`, stopped jobs) stays out of scope (D002).

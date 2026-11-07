@@ -628,8 +628,8 @@ fn special(vp: &Vp, c: u8) -> Val {
         b'?' => Val::Str(vp.status.to_string().into_bytes()),
         b'#' => Val::Str(vp.args.len().to_string().into_bytes()),
         b'$' => Val::Str(vp.host().pid().to_string().into_bytes()),
-        b'!' => match vp.last_bg {
-            Some(p) => Val::Str(p.to_string().into_bytes()),
+        b'!' => match &vp.last_bg {
+            Some(job) => Val::Str(job.pid().to_string().into_bytes()),
             None => Val::Unset,
         },
         b'-' => Val::Str(vp.opts.dash()),
@@ -680,6 +680,12 @@ async fn param(
     quoted: bool,
     f: &mut Fields,
 ) -> Result<(), Unwind> {
+    // `$!` names the job's first external: let the job start it (D1900).
+    if p.name == ParamName::Special(b'!')
+        && let Some(job) = vp.last_bg.clone()
+    {
+        crate::jobs::settle(&vp.core.sched, &job).await;
+    }
     let name_text = code.ast.text(p.name_span).as_bytes();
     let bad = |vp: &Vp| {
         let msg = format!("{}: bad substitution", code.ast.text(part.span));

@@ -213,6 +213,24 @@ can express neither); `pid()`; `kill()`.
   /proc, else 0o022); test host stores the mode, fixed clock. Tests in psh-os and
   std_host; macOS and Linux.
 
+### 2026-11-07 part 3b: jobs (D1900)
+- Engine: `jobs.rs` (Job, JobTable, `settle`), `signals.rs` (names/numbers per OS,
+  glibc descriptions), `builtins/jobs.rs` (`wait [-fn] [-p var]`, `kill` with bash's option
+  rules and `-l/-L`, `jobs [-lprs]`, `disown [-ar]`), `sched::has_ready`/`drop_task`
+  (`spawn_task` returns the id). Shared files, minimal: Vp gets `jobs` and `job`
+  (`last_bg` is now the job), `subshell()` empties `jobs`; `run_background` registers the
+  job; a pipeline stage's table shows the parent's jobs; `run_command` ends a killed job's
+  vproc; `run_external_with` puts the ExtProc in a cell the job can signal, sets
+  `sig_ignore` INT/QUIT in jobs and `detach` for nohup/setsid/disowned jobs; expand.rs
+  settles `$!` before reading it. Test host: fakes have pids and wake their waiter when
+  signalled.
+- Tests: engine `builtins/jobs_tests.rs`; L5 background + wait, `$!` = the program's real
+  pid, `kill $!` reaches the job's whole group (grandchild gone), nohup and disown survive
+  the run's end. Ratchets: 27 brush, 22 oils, 1 agent entries removed (oils 1627, brush
+  1676, agent 122 on macOS). No new orphans after a full psh-spec run (ppid-1 check).
+- Not done (out of scope or later): `fg`/`bg`/`set -m`/stopped jobs (D002), the report of
+  a foreground program a signal ended ("Terminated  cmd", stderr only), PIPESTATUS.
+
 ## Follow-ups
 - guide: `processes.md` (placement, cancel and abandonment, leak checks).
 - Engine: run files without `#!` in psh itself (bash does), then drop D1063's fallback.

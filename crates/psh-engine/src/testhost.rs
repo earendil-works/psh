@@ -83,6 +83,8 @@ pub type FakeCommand = Rc<dyn Fn(FakeProc) -> Pin<Box<dyn Future<Output = i32>>>
 #[derive(Default)]
 struct Counters {
     procs: Cell<usize>,
+    /// Pids handed to fakes (`ExtProc::pid`).
+    spawned: Cell<u32>,
     files: Cell<usize>,
     pipes: Cell<usize>,
 }
@@ -460,6 +462,9 @@ impl HostFile for NullFile {
 }
 
 struct FakeExt {
+    pid: u32,
+    /// The waiter to wake when a signal ends the fake.
+    waker: Option<std::task::Waker>,
     fut: Option<Pin<Box<dyn Future<Output = i32>>>>,
     status: Option<ExitStatus>,
     delay: Delay,
@@ -467,6 +472,10 @@ struct FakeExt {
 }
 
 impl ExtProc for FakeExt {
+    fn pid(&self) -> Option<u32> {
+        Some(self.pid)
+    }
+
     fn poll_wait(&mut self, cx: &mut Context<'_>) -> Poll<ExitStatus> {
         if self.delay.poll(cx).is_pending() {
             return Poll::Pending;
@@ -483,7 +492,10 @@ impl ExtProc for FakeExt {
                 self.status = Some(ExitStatus::Exited(code));
                 Poll::Ready(ExitStatus::Exited(code))
             }
-            Poll::Pending => Poll::Pending,
+            Poll::Pending => {
+                self.waker = Some(cx.waker().clone());
+                Poll::Pending
+            }
         }
     }
 
@@ -496,6 +508,9 @@ impl ExtProc for FakeExt {
             // The fake dies at once: dropping its future closes its pipes.
             self.fut = None;
             self.status = Some(ExitStatus::Signaled(sig));
+            if let Some(w) = self.waker.take() {
+                w.wake();
+            }
         }
     }
 }
@@ -729,8 +744,11 @@ impl Host for TestHost {
             fs: self.fs.clone(),
         };
         self.counters.procs.set(self.counters.procs.get() + 1);
+        self.counters.spawned.set(self.counters.spawned.get() + 1);
         Ok(Spawned {
             proc: Box::new(FakeExt {
+                pid: 5000 + self.counters.spawned.get(),
+                waker: None,
                 fut: Some(cmd(proc)),
                 status: None,
                 delay: Delay {

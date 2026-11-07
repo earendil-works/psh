@@ -125,8 +125,8 @@ impl Sched {
         }
     }
 
-    /// Starts a task; it is polled on the next round.
-    pub(crate) fn spawn_task(&self, fut: LocalBoxFuture<'static, ()>) {
+    /// Starts a task; it is polled on the next round. Returns its id.
+    pub(crate) fn spawn_task(&self, fut: LocalBoxFuture<'static, ()>) -> usize {
         let id = match self.free.borrow_mut().pop() {
             Some(id) => id,
             None => {
@@ -146,6 +146,27 @@ impl Sched {
             busy: false,
         });
         self.ready.borrow_mut().push_back(id);
+        id
+    }
+
+    /// Drops task `id` now, as a cancel would (its host resources are released by
+    /// `Drop`); false if it is the task being polled or gone. The id must still be the
+    /// task the caller means (ids are reused once a task ends).
+    pub(crate) fn drop_task(&self, id: usize) -> bool {
+        let fut = {
+            let mut slots = self.slots.borrow_mut();
+            match slots.get_mut(id) {
+                Some(Some(slot)) if !slot.busy => {
+                    let fut = slot.fut.take();
+                    slots[id] = None;
+                    self.free.borrow_mut().push(id);
+                    fut
+                }
+                _ => return false,
+            }
+        };
+        drop(fut);
+        true
     }
 
     /// Starts a task and returns a handle to await its result. Dropping the handle
@@ -156,7 +177,7 @@ impl Sched {
             waker: None,
         }));
         let st = state.clone();
-        self.spawn_task(Box::pin(async move {
+        let _ = self.spawn_task(Box::pin(async move {
             let r = fut.await;
             let waker = {
                 let mut s = st.borrow_mut();
@@ -168,6 +189,17 @@ impl Sched {
             }
         }));
         Join { state }
+    }
+
+    /// Whether a task other than the one being polled is ready to run, or was woken.
+    pub(crate) fn has_ready(&self) -> bool {
+        !self.ready.borrow().is_empty()
+            || !self
+                .shared
+                .woken
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .is_empty()
     }
 
     /// The number of live tasks.

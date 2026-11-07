@@ -54,12 +54,34 @@ pub(crate) fn run_list<'a>(
     })
 }
 
-/// `cmd &`: a detached subshell task. `$!` gets a made-up id until jobs exist (0006).
+/// `cmd &`: a job, run as a detached subshell task (D1900).
 async fn run_background(vp: &mut Vp, code: &Rc<Code>, list: ListId, item: usize) -> R {
     let mut sub = enter(vp).await?;
     let code = code.clone();
-    vp.last_bg = Some(vp.core.next_job_id());
-    vp.core.sched.spawn_task(Box::pin(async move {
+    let ao = &code.ast.list(list).items[item];
+    let text = code.ast.text(ao.span).trim_end();
+    let text = text
+        .strip_suffix('&')
+        .unwrap_or(text)
+        .trim_end()
+        .to_string();
+    // One simple command: the job is its program (bash runs it as the job's process).
+    let direct = ao.rest.is_empty()
+        && ao.first.stages.len() == 1
+        && !ao.first.negated()
+        && ao.first.time.is_none()
+        && matches!(
+            code.ast.cmd(ao.first.stages[0].cmd).kind,
+            CommandKind::Simple(_)
+        );
+    let job = vp
+        .jobs
+        .borrow_mut()
+        .add(text, vp.core.next_job_id(), direct);
+    sub.job = Some(job.clone());
+    vp.last_bg = Some(job.clone());
+    let j = job.clone();
+    let id = vp.core.sched.spawn_task(Box::pin(async move {
         let ao = &code.ast.list(list).items[item];
         // The job's own status is not errexit's or the ERR trap's to judge (only the
         // commands inside it are).
@@ -71,7 +93,9 @@ async fn run_background(vp: &mut Vp, code: &Rc<Code>, list: ListId, item: usize)
         };
         let status = r.unwrap_or_else(|u| u.status(sub.status));
         Box::pin(trap::exit_trap(&mut sub, status)).await;
+        j.finish(status);
     }));
+    job.set_task(id);
     Ok(0)
 }
 
@@ -212,6 +236,7 @@ async fn run_pipeline_stages(vp: &mut Vp, code: &Rc<Code>, p: &Pipeline) -> R {
             break;
         }
         let mut sub = enter(vp).await?;
+        sub.jobs = Rc::new(std::cell::RefCell::new(vp.jobs.borrow().for_stage()));
         if let Some(r) = next_in.take() {
             sub.fds.set(0, r);
         }
@@ -313,6 +338,10 @@ fn run_command_with<'a>(
     // (D1059). Traps and errexit go through the boxed helpers below.
     Box::pin(async move {
         safepoint(&vp.core.sched).await;
+        // A job sent a signal that ends processes ends here (D1900).
+        if let Some(sig) = vp.job.as_ref().and_then(|j| j.killed()) {
+            return Err(Unwind::Exit(128 + sig));
+        }
         let cmd = code.ast.cmd(id);
         if let Some(f) = before_command(vp, code, cmd) {
             f.await?;
@@ -1168,6 +1197,17 @@ pub(crate) async fn run_external_with(
         env,
         cwd: vp.cwd.clone(),
         fds,
+        // Background jobs ignore INT and QUIT, as bash's do without job control.
+        sig_ignore: if vp.job.is_some() {
+            vec![crate::host::SIGINT, crate::host::SIGQUIT]
+        } else {
+            Vec::new()
+        },
+        // `nohup` and `setsid` leave the shell's run (D1067), as do disowned jobs.
+        detach: matches!(
+            name.rsplit(|&b| b == b'/').next(),
+            Some(b"nohup" | b"setsid")
+        ) || vp.job.as_ref().is_some_and(|j| j.disowned.get()),
         ..SpawnSpec::default()
     };
     let program = spec.program.clone();
@@ -1190,9 +1230,13 @@ pub(crate) async fn run_external_with(
         }
     };
     let mut proc = ProcGuard {
-        proc: Some(spawned.proc),
+        proc: Rc::new(std::cell::RefCell::new(Some(spawned.proc))),
         core: vp.core.clone(),
+        job: vp.job.clone(),
     };
+    if let Some(job) = &vp.job {
+        job.started(&proc.proc);
+    }
     let mut inputs = Vec::new();
     let mut outputs = Vec::new();
     for (n, theirs) in spawned.pipes {
@@ -1216,7 +1260,7 @@ pub(crate) async fn run_external_with(
         }
         outputs.retain(|p| !p.is_done());
         if status.is_none()
-            && let Poll::Ready(s) = proc.get().poll_wait(cx)
+            && let Poll::Ready(s) = proc.poll_wait(cx)
         {
             status = Some(s);
             // The process is gone: its input pipes close, and a vproc writing to
@@ -1230,26 +1274,42 @@ pub(crate) async fn run_external_with(
         }
     })
     .await;
+    if let Some(job) = &vp.job {
+        job.ended(match st {
+            crate::host::ExitStatus::Signaled(sig) => Some(sig),
+            crate::host::ExitStatus::Exited(_) => None,
+        });
+    }
     Ok(st.code())
 }
 
-/// Owns a running external: dropping it abandons the process (cancel), or releases it
-/// when the script ended normally and only its background jobs are being dropped.
+/// Owns a running external: dropping it abandons the process (cancel), releases it
+/// when the script ended normally and only its background jobs are being dropped, or
+/// disowns it when its job was disowned. The process sits in a cell its job shares,
+/// so `kill` can signal it.
 struct ProcGuard {
-    proc: Option<Box<dyn crate::host::ExtProc>>,
+    proc: Rc<crate::jobs::ProcCell>,
     core: Rc<crate::state::Core>,
+    job: Option<Rc<crate::jobs::Job>>,
 }
 
 impl ProcGuard {
-    fn get(&mut self) -> &mut dyn crate::host::ExtProc {
-        self.proc.as_deref_mut().expect("process")
+    fn poll_wait(&mut self, cx: &mut std::task::Context<'_>) -> Poll<crate::host::ExitStatus> {
+        match self.proc.borrow_mut().as_mut() {
+            Some(p) => p.poll_wait(cx),
+            None => Poll::Pending,
+        }
     }
 }
 
 impl Drop for ProcGuard {
     fn drop(&mut self) {
-        if let Some(p) = self.proc.take()
-            && self.core.release_on_drop.get()
+        let Some(p) = self.proc.borrow_mut().take() else {
+            return;
+        };
+        if self.job.as_ref().is_some_and(|j| j.disowned.get()) {
+            p.disown();
+        } else if self.core.release_on_drop.get() || self.job.as_ref().is_some_and(|j| j.releases())
         {
             p.release();
         }

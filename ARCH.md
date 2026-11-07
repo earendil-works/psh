@@ -171,7 +171,9 @@ runtime in D005's sense: no runtime crate, no threads, the embedder steps and pa
   refer to the vproc's descriptors (embedded, the process's are not the shell's; D1055).
 - **Shell builtins** (`cd`, `export`, `set`, `trap`, `read`, `printf`, `test`, `kill`,
   `wait`, ...) are part of the engine, async functions on the calling vproc. Job control
-  is limited to `&`, `wait`, `kill`, `$!`, `jobs` (D002). When a script ends, detached
+  is limited to `&`, `wait`, `kill`, `$!`, `jobs`, `disown` (D002): a job that is one
+  simple command is its program (`$!` is its OS pid), any other job a vproc with a pid
+  of its own that a signal ends at once (D1900). When a script ends, detached
   vprocs (`cmd &`) get one more round; then, by `ShellConfig::exit_grace`, their
   externals still running are released (`None`, bash parity: background jobs outlive
   the shell) or waited for up to the grace and then abandoned (embedders that must

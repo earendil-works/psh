@@ -243,3 +243,68 @@ fn two_externals_share_one_os_pipe() {
         "{r:?}"
     );
 }
+
+// Jobs (D1900): `&`, `wait`, `$!`, `kill`.
+
+#[test]
+fn background_and_wait() {
+    let r = run(
+        "sleep 0.2 & echo started; wait $!; echo $?; (exit 3) & wait; echo $?; wait %1; echo $?",
+    );
+    assert_eq!(r.stdout, "started\n0\n0\n127\n", "{r:?}");
+}
+
+#[test]
+fn bang_is_the_programs_real_pid() {
+    let r = run("cd \"$TMPDIR_CASE\"; sh -c 'echo $$ > p; exec sleep 30' & \
+         while [ ! -s p ]; do sleep 0.02; done; \
+         test \"$(cat p)\" = \"$!\" && echo same; kill $!; wait $!; echo $?");
+    assert_eq!(r.stdout, "same\n143\n", "{r:?}");
+}
+
+#[test]
+fn kill_reaches_the_jobs_whole_group() {
+    let r = run(
+        "cd \"$TMPDIR_CASE\"; sh -c 'sleep 30 & echo $! > gc; wait' & \
+         while [ ! -s gc ]; do sleep 0.02; done; \
+         kill $!; wait $!; echo $?; sleep 0.2; kill -0 $(cat gc) 2>/dev/null || echo gone",
+    );
+    assert_eq!(r.stdout, "143\ngone\n", "{r:?}");
+}
+
+/// A pid file outside the case directory (which the harness removes).
+fn pidfile(tag: &str) -> std::path::PathBuf {
+    std::env::temp_dir()
+        .canonicalize()
+        .unwrap()
+        .join(format!("psh-l5-{tag}-{}", std::process::id()))
+}
+
+fn survived(file: &std::path::Path) {
+    let pid: i32 = std::fs::read_to_string(file)
+        .unwrap()
+        .trim()
+        .parse()
+        .unwrap();
+    let _ = std::fs::remove_file(file);
+    let alive = psh_os::unix::kill(pid, 0).is_ok();
+    let _ = psh_os::unix::kill(pid, 9);
+    assert!(alive, "the detached process did not survive the run");
+}
+
+#[test]
+fn nohup_and_disown_survive_the_runs_end() {
+    let (a, b) = (pidfile("nohup"), pidfile("disown"));
+    let r = run(&format!(
+        "nohup sh -c 'echo $$ > {}; exec sleep 30' >/dev/null 2>&1 & \
+         sh -c 'echo $$ > {}; exec sleep 30' >/dev/null 2>&1 & disown; \
+         while [ ! -s {} ] || [ ! -s {} ]; do sleep 0.02; done; echo ok",
+        a.display(),
+        b.display(),
+        a.display(),
+        b.display()
+    ));
+    assert_eq!(r.stdout, "ok\n", "{r:?}");
+    survived(&a);
+    survived(&b);
+}

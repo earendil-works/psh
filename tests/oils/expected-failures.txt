@@ -148,9 +148,9 @@ oils/builtin-trap-err/18
 oils/builtin-type/1
 oils/builtin-type/3
 oils/builtin-type-bash/8: S-mode psh utility shadows the PATH file (D1083, D1151); type reports what runs (the -P half passes)
-oils/builtin-type-bash/16: S-mode psh utility shadows the PATH file (D1083, D1151); type reports what runs
 oils/builtin-type-bash/13
 oils/builtin-type-bash/14
+oils/builtin-type-bash/16: S-mode psh utility shadows the PATH file (D1083, D1151); type reports what runs
 oils/builtin-type-bash/21
 oils/builtin-type-bash/22
 oils/builtin-type-bash/27
@@ -184,6 +184,14 @@ oils/globignore/1
 oils/globignore/7
 oils/globignore/8
 oils/globstar/4
+oils/globignore/9
+oils/globignore/10
+oils/globignore/11
+oils/globignore/12
+oils/globignore/13
+oils/globignore/15
+oils/globignore/16
+oils/globignore/17
 oils/here-doc/16
 oils/here-doc/17
 oils/here-doc/26

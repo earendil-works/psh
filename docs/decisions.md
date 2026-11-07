@@ -2305,3 +2305,19 @@ engine drops it too: a sandbox runs every utility anyway). psh-spec sets
 psh (a recording bash would export it). So every utility's L4 cases test psh's
 implementation, not the host's program, whatever its mode. Other layers are unchanged.
 Reason: in F mode the spec runner's PATH (/usr/bin/awk) would answer the awk cases.
+
+## D1193: awk: gawk's behavior where gawk and BSD awk differ; for-in in insertion order
+date: 2026-11-08 · by: text · issue: 0019
+psh's `awk` (a port of GoAWK, F mode for now) is POSIX awk with the gawk extensions
+agents use. Where gawk 5.2 and BSD awk (macOS's onetrueawk 20200816) disagree, it does
+what gawk does (D016, GNU on conflict); the vendored suites list 83 such cases
+(tests/vendor-awk/README.md): syntax errors exit 1 (fatal errors 2) in gawk's words,
+a multi-character RS is a regex and sets RT, CONVFMT/OFMT take integer conversions,
+integral numbers print with all their digits (`1e30`), `close()` returns a command's
+exit status, `printf "%c", ""` is a NUL, `-Ft` is the letter t, length and substr count
+characters in a UTF-8 locale. Numbers in input are decimal only (no hex), `inf`/`nan`
+only with a sign. `for (k in a)` visits keys in insertion order: awk leaves the order
+unspecified, gawk's and BSD's hash orders cannot be reproduced, and insertion order is
+stable and what people expect. `system()`, `cmd | getline` and `print | cmd` run the
+command in psh's shell (`spawn_shell`, D1191), never /bin/sh. The switch to S mode is
+the coordinator's, once the suites pass.

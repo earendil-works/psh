@@ -28,6 +28,7 @@ mod rules;
 mod sed;
 mod sqlite;
 pub mod utils;
+mod vars;
 mod walk;
 
 use alloc::string::String;

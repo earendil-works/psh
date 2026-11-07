@@ -6,12 +6,13 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 use psh_syntax::{
-    AssignValue, Ast, Brace, CmdId, Command, CommandKind, CondExpr, CondKind, DefaultKind, ListId,
-    Param, ParamOp, Part, RedirFd, RedirOp, RedirTarget, Redirect, SimpleCommand, Span, Subscript,
-    Word, WordPart, backtick_body, literal_text,
+    AndOrOp, AssignValue, Ast, Brace, CmdId, Command, CommandKind, CondExpr, CondKind, DefaultKind,
+    ListId, Param, ParamOp, Part, RedirFd, RedirOp, RedirTarget, Redirect, SimpleCommand, Span,
+    Subscript, Word, WordPart, backtick_body, literal_text,
 };
 
 use crate::rules::{self, Nested, Outcome, PathRef, harmless_path};
+use crate::vars::{self, Vars};
 use crate::{
     Arg, Categories, Category, Classification, CommandInfo, NestedSource, PathEffect, RedirInfo,
     Via,
@@ -55,6 +56,10 @@ pub(crate) struct Walker {
     extra: Categories,
     functions: BTreeSet<String>,
     aliases: BTreeSet<String>,
+    /// Variables with a known literal value (D1240) in the script being walked.
+    vars: Vars,
+    /// Tracked variables definitely assigned at this point of the walk.
+    defined: Vec<String>,
 }
 
 impl Walker {
@@ -64,6 +69,8 @@ impl Walker {
             extra: Categories::empty(),
             functions: BTreeSet::new(),
             aliases: BTreeSet::new(),
+            vars: Vars::scan(ast),
+            defined: Vec::new(),
         };
         let cx = Cx {
             source: None,
@@ -98,17 +105,54 @@ impl Walker {
     }
 
     fn list(&mut self, ast: &Ast, id: ListId, cx: Cx) {
+        let mark = self.defined.len();
         for item in &ast.list(id).items {
             if item.background {
                 self.extra.insert(Category::LongRunning);
             }
+            // An assignment is definite for the rest of an `&&` chain, and, as the first
+            // step of an item run in the current shell, for the rest of the list.
+            let chain = self.defined.len();
+            let mut and_only = !item.background;
+            let ops = core::iter::once(None).chain(item.rest.iter().map(|(op, _)| Some(*op)));
             let pipes = core::iter::once(&item.first).chain(item.rest.iter().map(|(_, p)| p));
-            for p in pipes {
+            for (op, p) in ops.zip(pipes) {
+                if op == Some(AndOrOp::Or) {
+                    and_only = false;
+                    self.defined.truncate(chain);
+                }
                 for (k, stage) in p.stages.iter().enumerate() {
                     self.command(ast, stage.cmd, cx, k > 0);
                 }
+                if and_only && p.stages.len() == 1 {
+                    let names = self.vars.assigned(ast, p.stages[0].cmd);
+                    self.defined.extend(names);
+                }
+            }
+            self.defined.truncate(chain);
+            if !item.background && item.first.stages.len() == 1 {
+                let names = self.vars.assigned(ast, item.first.stages[0].cmd);
+                self.defined.extend(names);
             }
         }
+        self.defined.truncate(mark);
+    }
+
+    /// A variable's value where it is used, if known (D1240).
+    fn lookup(&self, name: &str) -> Option<String> {
+        if self.defined.iter().any(|d| d == name) {
+            self.vars.value(name).map(String::from)
+        } else {
+            None
+        }
+    }
+
+    fn arg(&self, ast: &Ast, w: &Word) -> Arg {
+        let mut a = arg(ast, w);
+        if a.value.is_none() {
+            a.value = vars::value(ast, w, &|n| self.lookup(n));
+        }
+        a
     }
 
     fn command(&mut self, ast: &Ast, id: CmdId, cx: Cx, piped: bool) {
@@ -202,7 +246,7 @@ impl Walker {
     }
 
     fn simple(&mut self, ast: &Ast, cmd: &Command, sc: &SimpleCommand, cx: Cx, piped: bool) {
-        let words: Vec<Arg> = sc.words.iter().map(|w| arg(ast, w)).collect();
+        let words: Vec<Arg> = sc.words.iter().map(|w| self.arg(ast, w)).collect();
         let assigns: Vec<Arg> = sc
             .assigns
             .iter()
@@ -399,7 +443,18 @@ impl Walker {
                     depth: cx.depth + 1,
                     ..cx
                 };
-                self.list(&ast, ast.root(), inner);
+                if cx.via == Via::Backtick {
+                    // A command substitution sees the shell's variables.
+                    self.list(&ast, ast.root(), inner);
+                } else {
+                    // Another shell (`bash -c`) or a later time (`trap`, aliases): what is
+                    // known here does not hold there.
+                    let vars = core::mem::replace(&mut self.vars, Vars::scan(&ast));
+                    let defined = core::mem::take(&mut self.defined);
+                    self.list(&ast, ast.root(), inner);
+                    self.vars = vars;
+                    self.defined = defined;
+                }
             }
             Err(_) => self.mark_unknown(owner, "a shell string does not parse"),
         }
@@ -556,7 +611,7 @@ impl Walker {
             let target = match &r.target {
                 RedirTarget::Word(w) => {
                     self.word(ast, w, cx, false);
-                    Some(arg(ast, w))
+                    Some(self.arg(ast, w))
                 }
                 RedirTarget::HereDoc(h) => {
                     let doc = ast.heredoc(*h);

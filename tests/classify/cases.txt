@@ -602,3 +602,77 @@ read	find . -exec sh -c 'echo "$1"' _ {} \;
 unknown	zsh -i -c exit
 unknown	bash -lc 'ls'
 unknown	bash --login -c ls
+
+# --- Variables with a known literal value
+read	S=/x; sed -n 1,2p $S/f
+read	S=/x && sed -n 1p "$S/f"
+read	cd /w; F=src/a.rs; sed -n 1,10p $F; rg -n foo $F
+read	export D=src; find $D -name x
+read	S=/x; for f in a b; do sed -n 1p "$S/x"; done
+read	S=/x; S=/x; sed -n 1p $S
+read	S=/x; echo $(sed -n 1p $S)
+read	S=/x; echo `sed -n 1p $S`
+read	PAT=foo; rg -n "$PAT" src
+read	S='a b'; sed -n 1p "$S"
+read	if true; then S=/x; sed -n 1p $S; fi
+read	f() { local S=/x; sed -n 1p $S; }
+mutate	S=-i; sed $S s/a/b/ f	w:f
+unknown	S=/x; if c; then S=-i; fi; sed $S s/a/b/ f
+unknown	S=/x; f() { S=-i; }; f; sed -n 1p $S
+unknown	S=/x; read S; sed -n 1p $S
+unknown	S=/x; read -r -p 'name: ' S; sed -n 1p $S
+unknown	S=/x; mapfile -t S < f; sed -n 1p $S
+unknown	declare -n S=T; T=/x; sed -n 1p $S
+unknown	S=/x; declare -n R=S; sed -n 1p $S
+unknown	sed -n 1p $S; S=/x
+unknown	true || S=/x; sed -n 1p $S
+unknown	cd x && S=/x; sed -n 1p $S
+unknown	(S=/x); sed -n 1p $S
+unknown	{ S=/x; }; sed -n 1p $S
+unknown	S=/x | cat; sed -n 1p $S
+unknown	S=/x & sed -n 1p $S
+unknown	S=/x; bash -c 'sed -n 1p $S'
+unknown	S='a b'; sed -n 1p $S
+unknown	S=/x; eval 'S=-i'; sed $S s/a/b/ f
+unknown	S=/x; ((S=1)); sed -n 1p $S
+unknown	S=/x; echo $((S++)); sed -n 1p $S
+unknown	S=/x; : ${S:=y}; sed -n 1p $S
+unknown	S=/x; unset S; sed -n 1p $S
+unknown	S=~/x; sed -n 1p $S
+unknown	S=/x; S=/y; sed -n 1p $S
+unknown	S=/x; printf -v S %s -i; sed $S s/a/b/ f
+unknown	S=/x; getopts ab S; sed -n 1p $S
+unknown	S=/x; for S in -i; do :; done; sed $S s/a/b/ f
+unknown	S=/x; let S=1; sed -n 1p $S
+unknown	S=/x; source env.sh; sed -n 1p $S
+unknown	S=/x; trap 'S=-i' DEBUG; sed $S s/a/b/ f
+unknown	S=/x; declare -i S=1; sed -n 1p $S
+unknown	S=/x; S+=y; sed -n 1p $S
+unknown	S=/x; S[1]=y; sed -n 1p $S
+unknown	S=/x; command read S; sed -n 1p $S
+unknown	S=/x; $cmd; sed -n 1p $S
+mutate	S=/x; echo hi > $S; sed -n 1p $S	w:/x
+unknown	x=rm; $x -rf /
+
+# --- sqlite3
+read	sqlite3 db.sqlite "select count(*) from users"
+read	sqlite3 -readonly db .schema
+read	sqlite3 -header -column app.db 'SELECT id, name FROM t LIMIT 5'
+read	sqlite3 app.db "PRAGMA table_info(users)"
+read	sqlite3 app.db ".tables"
+read	DB=app.db; sqlite3 $DB 'select 1'
+mutate	sqlite3 app.db "update t set a = 1"	w:app.db
+mutate	sqlite3 app.db 'PRAGMA journal_mode=WAL'
+mutate	sqlite3 app.db "create table t(a); insert into t values (1)"
+unknown	sqlite3 app.db < schema.sql
+unknown	sqlite3 app.db
+unknown	sqlite3 app.db ".shell rm -rf /"
+unknown	sqlite3 app.db "select 1; .system ls"
+unknown	sqlite3 app.db ".output out.txt"
+unknown	sqlite3 app.db "attach 'other.db' as o"
+unknown	sqlite3 app.db "select writefile('x', 'y')"
+unknown	sqlite3 app.db "select load_extension('evil')"
+unknown	sqlite3 app.db "vacuum into 'copy.db'"
+unknown	sqlite3 app.db "$query"
+unknown	sqlite3 -init setup.sql app.db 'select 1'
+unknown	sqlite3 app.db <<'EOF'␤select 1;␤EOF

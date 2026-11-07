@@ -42,6 +42,8 @@ enum Kind {
     Keyword,
     Function(Rc<Func>),
     Builtin,
+    /// An in-process utility (D1080).
+    Utility,
     /// A program: its path, and whether the hash table had it.
     File(Vec<u8>, bool),
 }
@@ -74,6 +76,9 @@ async fn lookup(vp: &Vp, name: &[u8], o: Lookup) -> Vec<Kind> {
         }
         if super::is_builtin(vp, name) {
             found.push(Kind::Builtin);
+        }
+        if crate::util::lookup(vp, name).await.is_some() {
+            found.push(Kind::Utility);
         }
         if !found.is_empty() && !o.all {
             return found;
@@ -196,6 +201,9 @@ pub(super) async fn command(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     if let Some(b) = super::get(vp, name) {
         return (b.run)(vp, rest).await;
     }
+    if let Some(e) = crate::util::lookup(vp, name).await {
+        return crate::util::run(vp, e, rest.to_vec(), Vec::new()).await;
+    }
     let opts = ExtOpts {
         path: default_path.then(|| exec::DEFAULT_PATH.to_vec()),
         ..ExtOpts::default()
@@ -222,6 +230,7 @@ fn describe(buf: &mut Vec<u8>, name: &[u8], k: &Kind) {
         }
         Kind::Keyword => buf.extend_from_slice(b" is a shell keyword\n"),
         Kind::Builtin => buf.extend_from_slice(b" is a shell builtin\n"),
+        Kind::Utility => buf.extend_from_slice(b" is a psh utility\n"),
         Kind::Function(f) => {
             buf.extend_from_slice(b" is a function\n");
             buf.extend_from_slice(function_text(f).as_bytes());
@@ -290,7 +299,7 @@ pub(super) async fn type_(vp: &mut Vp, args: &[Vec<u8>]) -> R {
                     Kind::Alias(_) => b"alias\n".as_slice(),
                     Kind::Keyword => b"keyword\n",
                     Kind::Function(_) => b"function\n",
-                    Kind::Builtin => b"builtin\n",
+                    Kind::Builtin | Kind::Utility => b"builtin\n",
                     Kind::File(..) => b"file\n",
                 });
             } else if path || force_path {

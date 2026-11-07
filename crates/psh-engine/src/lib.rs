@@ -44,6 +44,7 @@ pub mod std_host;
 pub mod testhost;
 #[cfg(test)]
 mod tests;
+pub mod util;
 mod vars;
 
 use std::cell::{Cell, RefCell};
@@ -94,6 +95,9 @@ pub struct ShellConfig {
     /// shell waits up to `grace` for them, then abandons them (TERM, KILL): for
     /// embedders that must leave no process behind (D1051).
     pub exit_grace: Option<std::time::Duration>,
+    /// The in-process utilities (psh-utils' registry) and their off switches; empty by
+    /// default: every command name not a function or builtin is a program (D1080).
+    pub utilities: util::UtilPolicy,
 }
 
 impl ShellConfig {
@@ -117,6 +121,7 @@ impl ShellConfig {
             stderr: None,
             max_depth: ShellConfig::DEFAULT_MAX_DEPTH,
             exit_grace: None,
+            utilities: util::UtilPolicy::default(),
         }
     }
 }
@@ -224,6 +229,7 @@ impl Shell {
             jobs: Cell::new(0),
             release_on_drop: Cell::new(false),
             died_of: Cell::new(None),
+            utilities: cfg.utilities.clone(),
         });
         let mut vars = Vars::default();
         let mut foreign = Vec::new();

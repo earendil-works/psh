@@ -30,6 +30,8 @@ pub(crate) struct Core {
     /// The signal whose default action ended the run (D1903): a standalone shell then
     /// dies by it.
     pub died_of: Cell<Option<i32>>,
+    /// The in-process utilities and their off switches (D1080).
+    pub utilities: crate::util::UtilPolicy,
 }
 
 impl Core {

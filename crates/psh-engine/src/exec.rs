@@ -1131,14 +1131,28 @@ fn run_argv(
         vp.exec_now = false;
         return Box::pin(call_function(vp, f, argv, assigns));
     }
-    if builtins::get(vp, name).is_none() {
-        return Box::pin(run_external(vp, argv, assigns));
+    if builtins::get(vp, name).is_some() {
+        vp.exec_now = false;
+        return Box::pin(run_builtin(vp, argv, assigns));
     }
-    vp.exec_now = false;
-    Box::pin(run_builtin(vp, argv, assigns))
+    // Utilities after builtins, before PATH (D1080). They run in-process: never as the
+    // shell's exec tail.
+    Box::pin(async move {
+        match crate::util::lookup(vp, &argv[0]).await {
+            Some(e) => {
+                vp.exec_now = false;
+                crate::util::run(vp, e, argv, assigns).await
+            }
+            None => run_external(vp, argv, assigns).await,
+        }
+    })
 }
 
-async fn run_builtin(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec<u8>)>) -> R {
+pub(crate) async fn run_builtin(
+    vp: &mut Vp,
+    argv: Vec<Vec<u8>>,
+    assigns: Vec<(String, Vec<u8>)>,
+) -> R {
     let name = argv[0].clone();
     if let Some(b) = builtins::get(vp, &name) {
         // Assignments in front of a builtin, special or not (bash outside POSIX mode),
@@ -1166,7 +1180,11 @@ async fn run_builtin(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec<
     Ok(0)
 }
 
-async fn run_external(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec<u8>)>) -> R {
+pub(crate) async fn run_external(
+    vp: &mut Vp,
+    argv: Vec<Vec<u8>>,
+    assigns: Vec<(String, Vec<u8>)>,
+) -> R {
     run_external_with(vp, argv, assigns, ExtOpts::default()).await
 }
 

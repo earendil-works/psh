@@ -378,6 +378,13 @@ name = "psh-syntax"
 version = "0.0.0"
 
 [[package]]
+name = "psh-utils"
+version = "0.0.0"
+dependencies = [
+ "psh-classify",
+]
+
+[[package]]
 name = "psh-wasm"
 version = "0.0.0"
 dependencies = [

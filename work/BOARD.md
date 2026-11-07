@@ -9,7 +9,9 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | 0031 | Grow the L3 agent layer to the shapes agents actually use | shapes | .worktrees/shapes |
 | 0030 | Process follow-ups: run-in-shell, host info, signal robustness | procs | .worktrees/procs |
 | 0007 | Windows: part A merged (bad4d63, rework 6ca3d08); part B in progress | windows | .worktrees/windows |
-| 0008 | Utility framework and first batch | infra | .worktrees/infra |
+| 0008-wasm | JS host: Host::now/mode (D1069), then 0013 | infra | .worktrees/infra |
+| 0015 | Utilities D: files and paths | files | .worktrees/files |
+| 0016 | Utilities E: text filters (then 0019 awk) | text | .worktrees/text |
 | 0027 | [[ ]], test, and a POSIX regex engine | parser | .worktrees/parser |
 | 0026 | Arrays and the rest of word expansion | engine | .worktrees/engine |
 | 0029 | Core shell builtins | builtins | .worktrees/builtins |
@@ -27,8 +29,6 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | 0010 | pi-env integration behind a flag | 0006, 0007, L3 high |
 | 0013 | Utilities B: rg, fd, grep + shared search layer | 0008 |
 | 0014 | Utilities C: sed | 0008, 0013 |
-| 0015 | Utilities D: files and paths (17 names) | 0008 |
-| 0016 | Utilities E: text filters (9 names) | 0008 |
 | 0017 | Utilities F: find, xargs | 0008, 0006, 0013 |
 | 0018 | Utilities G: jq | 0008 |
 | 0019 | Utilities H: awk (goawk port) | 0008 |
@@ -66,3 +66,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0011 | WASM build and JS host | f5116a3 (infra) |
 | 0006 | Unix process layer | 9de10bb (procs) |
 | 0028 | Shell options, errexit and traps | 08e81d0 (shapes) |
+| 0008 | Utility framework and first batch | d4241b1 (infra) |

@@ -2072,3 +2072,11 @@ stdin and read its stdout meanwhile. `ShellChild::wait()` closes stdin and retur
 status; dropping an unfinished child drops its task (cancel: its externals get TERM, then
 KILL). Reason: a second fresh-shell mechanism would drift from D1300's; `spawn` runs an
 argv, not a command string, and only when awaited.
+## D1151: type reports the utility that runs, not a shadowed PATH file
+date: 2026-11-07 · by: files · issue: 0015 (coordinator's call)
+When an S-mode utility shadows a program on PATH (`mv` with `/tmp/mv` on PATH), `type`,
+`type -p`, `type -f` and `command -v` report the utility, because that is what runs;
+printing the PATH file would tell an agent the wrong program runs. `type -P` is bash's
+forced PATH search and prints the PATH file, as bash does for real builtins. Two Oils
+cases that expect `type -p`/`-f` to print the file (builtin-type-bash 8 and 16, written
+for bash where `mv` is no builtin) are ratcheted with this reason.

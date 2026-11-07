@@ -1,6 +1,6 @@
 # 0011: WASM build and JS host
 
-status: in-progress
+status: done
 agent: infra
 branch: issue/0011-wasm
 depends-on: 0005 (0008 for utilities in WASM); coordinator: is it needed before 0010? (ARCH.md open question 3)
@@ -67,3 +67,20 @@ commands in place of processes.
 - guide: wasm.md.
 
 ## Result
+- `crates/psh-wasm`: `scripts/build-wasm` builds `target/wasm/psh.wasm` (the shell) and
+  `target/wasm/psh-parser.wasm` (parse + classify). Sizes at main 89528f0: psh.wasm
+  926,941 bytes / 339,751 gzipped (it grows with the engine), psh-parser.wasm 388,202 /
+  148,282. ABI: one import `psh.host_call`, answers through `psh_complete` (D1110); 16 MiB
+  stack, nesting limit 768 (D1111).
+- `js/psh.mjs`: `loadPsh(bytes)`, `psh.run(cmd, {cwd, env, stdin})`, `createShell()` /
+  `shell.run()`, `psh.parse()`, `psh.classify()`; `MemHost` with `fs` (MemFs, lazy mounts)
+  and `host.command(name, fn)` (D1112).
+- `psh-spec --wasm`: every layer through the JS host under node; platform ratchet
+  `tests/<layer>/expected-failures.wasm.txt` (D1113). L1: every case psh passes natively
+  and that needs no external program passes in wasm.
+- Gate leg `65-wasm-host`: wasm clippy, both builds, `node js/test/smoke.mjs`, the
+  `--wasm` run (about 25 s).
+
+Known gaps: no utilities in wasm yet (0008's in-process utilities will make most of the
+"needs external" cases pass); host commands cannot be stopped by signals; no OPFS or
+remote file system host yet; the JSON code is shared with the psh binary by `#[path]`.

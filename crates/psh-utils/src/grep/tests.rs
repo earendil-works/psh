@@ -106,7 +106,10 @@ fn line_ends() {
     };
     assert_eq!(c, want);
     // -z: NUL ends a line and a newline is ordinary.
-    assert_eq!(out(r"printf 'a\nb\0c\0' | grep -z 'a.b' | tr '\0' @"), "a\nb@");
+    assert_eq!(
+        out(r"printf 'a\nb\0c\0' | grep -z 'a.b' | tr '\0' @"),
+        "a\nb@"
+    );
 }
 
 #[test]

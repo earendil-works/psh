@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# The spec cases on Linux, locally (TESTING.md "Ratchets", D1331): psh and psh-spec are
+# built for Linux in the pinned Rust image and run in the recording image
+# (docker/Dockerfile), the system the goldens come from. Needs Docker.
+#
+#   scripts/spec-linux [PSH-SPEC ARGS...]   run (all cases, or the filtered ones), held
+#                                           to the shared ratchets; writes
+#                                           work/scratch/spec-linux/results.tsv
+#   scripts/spec-linux --update             a whole run, then psh-spec here with
+#                                           --update-ratchet --linux-results: entries
+#                                           move to the file they belong in (shared for
+#                                           failures on Linux, expected-failures.<os>.txt
+#                                           for failures only here)
+#
+# The repository is mounted read-only: the Linux run reports but never edits a ratchet.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+root=$(pwd)
+
+update=0
+if [ "${1:-}" = --update ]; then
+  update=1
+  shift
+fi
+
+rust_image=rust:1.96-trixie@sha256:1f0dbad1df66647807e6952d1db85d0b2bda7606cb2139d82517e4f009967376
+tag=psh-goldens:$(git hash-object docker/Dockerfile | cut -c1-12)
+if ! docker image inspect "$tag" >/dev/null 2>&1; then
+  echo "== building $tag (bash from source; the download can take minutes)"
+  docker build -q -t "$tag" docker/ >/dev/null
+fi
+
+echo "== building psh and psh-spec for Linux"
+mkdir -p target/record
+docker run --rm --user "$(id -u):$(id -g)" -v "$root:/src" -w /src \
+  -e CARGO_HOME=/src/target/record/cargo-home -e CARGO_TARGET_DIR=/src/target/record \
+  "$rust_image" cargo build -q --release --locked -p psh -p psh-spec
+
+out=work/scratch/spec-linux
+mkdir -p "$out"
+rm -f "$out/results.tsv"
+echo "== running in $tag"
+st=0
+# --init: an orphan must be reaped by an init, not left to psh-spec as PID 1 (which
+# would report it as a leak). The commit is stamped from here: a worktree's .git points
+# outside the mount.
+docker run --rm --init --network none --hostname psh-oracle --user "$(id -u):$(id -g)" \
+  -v "$root:/src:ro" -v "$root/$out:/out" -e HOME=/tmp \
+  -e PSH_SPEC_COMMIT="$(git rev-parse --short HEAD)" \
+  "$tag" /src/target/record/release/psh-spec --root /src -j "$(docker run --rm "$tag" nproc)" \
+  --results /out/results.tsv "$@" || st=$?
+
+if [ $update = 1 ]; then
+  echo "== updating the ratchets here from $out/results.tsv"
+  cargo build -q -p psh -p psh-spec
+  exec scripts/timeout.sh 1800 target/debug/psh-spec -j 6 --update-ratchet \
+    --linux-results "$out/results.tsv"
+fi
+exit $st

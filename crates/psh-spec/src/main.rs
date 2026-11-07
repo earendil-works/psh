@@ -34,7 +34,6 @@ use case::{Case, Layer};
 use engine::{Engine, External, InProcess};
 use golden::Golden;
 use groups::{Group, Groups};
-use ratchet::Ratchet;
 use runner::{Observed, RunDir, Runner};
 
 const USAGE: &str = "\
@@ -48,7 +47,8 @@ Engines:
   (default)           psh in-process
   --wasm              psh.wasm under node through js/psh.mjs (scripts/build-wasm first);
                       checked against the shared ratchets plus
-                      tests/<layer>/expected-failures.wasm.txt
+                      tests/<layer>/expected-failures.wasm.txt (off Linux, a native
+                      run likewise adds expected-failures.<os>.txt)
   --shell PATH        a shell binary as a subprocess (e.g. bash for the self-check);
                       the ratchets apply only when it is psh
 
@@ -77,6 +77,10 @@ Options:
   --all-groups        also run `skip` cases (they never count)
   --update-ratchet    remove ratchet entries of cases that pass
   --add-failures      add failing active cases missing from the ratchet (new cases only)
+  --results FILE      write each active case's pass/fail (scripts/spec-linux)
+  --linux-results F   a Linux --results file: with it, --update-ratchet moves entries
+                      between the shared and this platform's ratchet, and
+                      --add-failures puts cases that pass on Linux in the latter
   --summary FILE      write a Markdown summary per layer and file
   --keep              keep the run directory (printed) for inspection
 ";
@@ -95,6 +99,8 @@ struct Options {
     all_groups: bool,
     update_ratchet: bool,
     add_failures: bool,
+    results: Option<PathBuf>,
+    linux_results: Option<PathBuf>,
     summary: Option<PathBuf>,
     keep: bool,
     diff_goldens: Option<(PathBuf, PathBuf)>,
@@ -122,6 +128,8 @@ fn parse_args(args: Vec<String>) -> Result<Options, String> {
         diff: false,
         all_groups: false,
         update_ratchet: false,
+        results: None,
+        linux_results: None,
         add_failures: false,
         summary: None,
         keep: false,
@@ -163,6 +171,8 @@ fn parse_args(args: Vec<String>) -> Result<Options, String> {
             "--all-groups" => o.all_groups = true,
             "--update-ratchet" => o.update_ratchet = true,
             "--add-failures" => o.add_failures = true,
+            "--results" => o.results = Some(value("--results")?.into()),
+            "--linux-results" => o.linux_results = Some(value("--linux-results")?.into()),
             "--summary" => o.summary = Some(value("--summary")?.into()),
             "--keep" => o.keep = true,
             "--record-l0" => o.record_shapes = true,
@@ -331,6 +341,7 @@ fn run(opts: Options) -> Result<ExitCode, String> {
     for c in &mut cases {
         c.serial = groups.is_serial(c);
         c.flaky = groups.flaky_reason(c).map(str::to_string);
+        c.platform = groups.platform_reason(c).map(str::to_string);
     }
     let items: Vec<Item> = cases
         .iter()
@@ -440,7 +451,13 @@ fn run(opts: Options) -> Result<ExitCode, String> {
 
     if opts.status {
         print!("{}", status::render_status(&results, &items, &opts.layers));
+        let platform = platform::current(opts.wasm);
+        print!(
+            "{}",
+            platform::status_section(&root, platform, &opts.layers, &results)
+        );
         print!("{}", report::flaky(&results));
+        print!("{}", platform::host_specific(&results, platform));
         let append = !opts.no_append && opts.filters.is_empty() && engine.name() == "psh";
         print!("{}", status::l0_section(&root, opts.jobs, append)?);
         if append {
@@ -456,100 +473,15 @@ fn run(opts: Options) -> Result<ExitCode, String> {
 
     // Ratchets: per layer, over the cases this run covered. They describe psh; another
     // shell (the bash self-check) is only compared and summarized.
-    let mut regressions = Vec::new();
     let filtered = !opts.filters.is_empty();
-    // Platforms whose results differ from the native Unix ones in known ways check their
-    // own ratchet on top of the shared one, which they never change (D1113, D1914).
-    let platform = if opts.wasm {
-        Some("wasm")
-    } else if cfg!(windows) && engine.name() == "psh" {
-        Some("windows")
-    } else {
-        None
-    };
-    let ratchet_layers: &[Layer] = if engine.name() == "psh" && platform.is_none() {
-        &opts.layers
-    } else {
-        &[]
-    };
-    for &layer in ratchet_layers {
-        let path = root.join(layer.ratchet_path());
-        let text = std::fs::read_to_string(&path).unwrap_or_default();
-        let mut ratchet = Ratchet::parse(&text);
-        // Flaky cases are quarantined (D1225): never a regression, never in the ratchet.
-        let layer_results: Vec<&report::CaseResult> = results
-            .iter()
-            .filter(|r| r.case.layer == layer && r.group == Group::Active && r.case.flaky.is_none())
-            .collect();
-        let mut stale = Vec::new();
-        for r in &layer_results {
-            let listed = ratchet.entries.contains_key(&r.case.id);
-            if !r.pass && !listed {
-                regressions.push(*r);
-            }
-            if r.pass && listed {
-                stale.push(r.case.id.clone());
-            }
-        }
-        // Entries for cases that are not active (or no longer exist) are stale too, when
-        // the whole layer ran.
-        if !filtered {
-            let active: std::collections::HashSet<&str> =
-                layer_results.iter().map(|r| r.case.id.as_str()).collect();
-            for id in ratchet.entries.keys() {
-                if !active.contains(id.as_str()) {
-                    stale.push(id.clone());
-                }
-            }
-        }
-        let mut changed = false;
-        if opts.update_ratchet && !stale.is_empty() {
-            for id in &stale {
-                ratchet.entries.remove(id);
-            }
-            changed = true;
-            println!(
-                "{layer}: removed {} passing entries from the ratchet",
-                stale.len()
-            );
-        } else if !stale.is_empty() {
-            println!(
-                "{layer}: {} ratchet entries pass now (or are not active); run with --update-ratchet",
-                stale.len()
-            );
-            for id in stale.iter().take(10) {
-                println!("  {id}");
-            }
-        }
-        if opts.add_failures {
-            let mut added = 0;
-            for r in &layer_results {
-                if !r.pass && !ratchet.entries.contains_key(&r.case.id) {
-                    ratchet.entries.insert(r.case.id.clone(), String::new());
-                    added += 1;
-                }
-            }
-            if added > 0 {
-                changed = true;
-                println!("{layer}: added {added} failing cases to the ratchet");
-            }
-            regressions.retain(|r| r.case.layer != layer);
-        }
-        if changed {
-            if ratchet.header.is_empty() {
-                ratchet.header = vec![
-                    format!("# Ratchet for layer {layer}: active cases that may fail (TESTING.md \"Ratchets\")."),
-                    "# One case id per line, optionally `id: reason`. psh-spec --update-ratchet removes".into(),
-                    "# cases that pass; never add a line to hide a regression.".into(),
-                ];
-            }
-            std::fs::write(&path, ratchet.render())
-                .map_err(|e| format!("{}: {e}", path.display()))?;
-        }
-    }
-
-    if let Some(platform) = platform {
-        regressions.extend(platform::check(
+    let platform = platform::current(opts.wasm);
+    let mut regressions = Vec::new();
+    if engine.name() == "psh" {
+        let linux = match &opts.linux_results {
+            Some(f) => Some(platform::read_results(f, "linux", &head_commit(&root))?),
+            None => None,
+        };
+        regressions = platform::check(
             &root,
             platform,
             &opts.layers,
@@ -558,11 +490,20 @@ fn run(opts: Options) -> Result<ExitCode, String> {
                 filtered,
                 update: opts.update_ratchet,
                 add: opts.add_failures,
+                linux,
             },
-        )?);
+        )?;
+    }
+    if let Some(f) = &opts.results {
+        std::fs::write(
+            f,
+            platform::render_results(&results, platform, &head_commit(&root)),
+        )
+        .map_err(|e| format!("{}: {e}", f.display()))?;
     }
     report::print_summary(&results, &items, &opts.layers);
     print!("{}", report::flaky(&results));
+    print!("{}", platform::host_specific(&results, platform));
     if opts.diff {
         report::print_diffs(&results);
     }
@@ -594,6 +535,22 @@ fn run(opts: Options) -> Result<ExitCode, String> {
     } else {
         ExitCode::from(1)
     })
+}
+
+/// The checkout's HEAD commit (short): `PSH_SPEC_COMMIT` when set (scripts/spec-linux,
+/// where git cannot see the worktree), or empty outside git.
+fn head_commit(root: &Path) -> String {
+    if let Ok(c) = std::env::var("PSH_SPEC_COMMIT") {
+        return c;
+    }
+    std::process::Command::new("git")
+        .args(["rev-parse", "--short", "HEAD"])
+        .current_dir(root)
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .unwrap_or_default()
 }
 
 fn resolve_shell(path: &Path) -> Result<PathBuf, String> {

@@ -1,0 +1,69 @@
+# Ratchet for layer agent on macos (D1113, D1331): active cases that may fail here
+# but pass on Linux (they are not in expected-failures.txt), each with its reason.
+# psh-spec --update-ratchet removes cases that pass; never add a regression.
+agent/files/4: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
+agent/files/5: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
+agent/files/42: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
+agent/files/43: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
+agent/files/47: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
+agent/globs-status/2: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
+agent/procs/40: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
+agent/procs/42: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
+agent/redirects/1: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
+agent/scripts/35: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
+agent/search/0: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/1: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/2: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/3: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/4: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/5: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/6: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/7: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/8: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/9: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/10: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/11: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/12: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/13: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/14: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/15: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/16: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/17: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/18: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/19: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/20: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/21: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/22: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/23: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/24: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/25: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/26: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/27: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/28: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/29: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/30: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/31: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/32: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/33: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/34: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/35: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/36: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/search/37: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/text/13: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
+agent/top-shapes/9: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/top-shapes/10: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/top-shapes/11: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/top-shapes/12: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/top-shapes/13: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/top-shapes/14: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/top-shapes/15: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/top-shapes/16: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/top-shapes/17: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/top-shapes/18: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/top-shapes/19: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/top-shapes/20: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/top-shapes/21: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/top-shapes/22: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/top-shapes/23: needs psh's rg (utilities, search batch): macOS has no rg on the PATH the cases get
+agent/view/30: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself
+agent/view/34: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes on Linux and once psh runs these utilities itself

@@ -1,7 +1,7 @@
 # Ratchet for layer oils: active cases that may fail (TESTING.md "Ratchets").
 # One case id per line, optionally `id: reason`. psh-spec --update-ratchet removes
 # cases that pass; never add a line to hide a regression.
-oils/alias/47
+oils/bugs/13: ulimit is not supported yet (fails on Linux; macOS lacks /dev/full, so it is host-specific there)
 oils/arg-parse/1
 oils/arg-parse/2
 oils/arith/7
@@ -59,11 +59,8 @@ oils/bugs/21
 oils/builtin-bash/0
 oils/builtin-bash/1
 oils/builtin-bash/6
-oils/builtin-bracket/31
 oils/builtin-cd/1
 oils/builtin-cd/3
-oils/builtin-cd/11
-oils/builtin-cd/12
 oils/builtin-cd/14
 oils/builtin-cd/23
 oils/builtin-cd/26
@@ -85,15 +82,6 @@ oils/builtin-dirs/14
 oils/builtin-dirs/15
 oils/builtin-dirs/16: passed via macOS /usr/bin wrapper
 oils/builtin-dirs/17: passed via macOS /usr/bin wrapper
-oils/builtin-echo/17
-oils/builtin-echo/18
-oils/builtin-echo/19
-oils/builtin-echo/20
-oils/builtin-echo/21
-oils/builtin-echo/22
-oils/builtin-echo/23
-oils/builtin-echo/24
-oils/builtin-echo/25
 oils/builtin-getopts/6
 oils/builtin-getopts/13
 oils/builtin-getopts/14
@@ -103,10 +91,6 @@ oils/builtin-meta/10: tr is an always-on psh utility (mode S, D015), so a tr scr
 oils/builtin-misc/0
 oils/builtin-misc/1
 oils/builtin-printf/3
-oils/builtin-printf/38
-oils/builtin-printf/46
-oils/builtin-printf/48: macOS has the legacy zone Portugal, the recording container does not
-oils/builtin-printf/58
 oils/builtin-process/4
 oils/builtin-process/10: passed via macOS /usr/bin wrapper
 oils/builtin-process/11: passed via macOS /usr/bin wrapper
@@ -145,7 +129,6 @@ oils/builtin-trap-bash/21
 oils/builtin-trap-bash/22
 oils/builtin-trap-err/6
 oils/builtin-trap-err/18
-oils/builtin-type/1
 oils/builtin-type/3
 oils/builtin-type-bash/8: S-mode psh utility shadows the PATH file (D1083, D1151); type reports what runs (the -P half passes)
 oils/builtin-type-bash/13
@@ -165,11 +148,11 @@ oils/builtin-vars/32
 oils/command-sub/8
 oils/command-sub/9
 oils/command_/0
+oils/command-sub-ksh/0
+oils/command-sub-ksh/3
 oils/command_/15
 oils/divergence/2
-oils/divergence/3
 oils/dparen/10
-oils/errexit/9
 oils/exit-status/2
 oils/extglob-files/9
 oils/extglob-files/13
@@ -195,6 +178,14 @@ oils/globignore/17
 oils/here-doc/16
 oils/here-doc/17
 oils/here-doc/26
+oils/globignore/9
+oils/globignore/10
+oils/globignore/11
+oils/globignore/12
+oils/globignore/13
+oils/globignore/15
+oils/globignore/16
+oils/globignore/17
 oils/introspect/1
 oils/let/1
 oils/loop/17
@@ -203,32 +194,19 @@ oils/nameref/15
 oils/nameref/26
 oils/nameref/27
 oils/nameref/29
-oils/nul-bytes/0
 oils/nul-bytes/1
-oils/nul-bytes/2
 oils/nul-bytes/3
 oils/nul-bytes/4
 oils/nul-bytes/6
 oils/nul-bytes/7
 oils/nul-bytes/8
-oils/nul-bytes/9
-oils/nul-bytes/10
-oils/nul-bytes/11
 oils/nul-bytes/12
-oils/nul-bytes/13
-oils/nul-bytes/14
 oils/parse-errors/22
-oils/pipeline/0
-oils/pipeline/1
-oils/process-sub/1
-oils/process-sub/2
-oils/process-sub/3
-oils/quote/27
-oils/quote/28
-oils/quote/33
 oils/redirect/3
 oils/redirect/27
 oils/redirect-command/8
+oils/redirect/36
+oils/redirect/39
 oils/serialize/3
 oils/serialize/5
 oils/sh-options-bash/4
@@ -241,8 +219,11 @@ oils/tilde/13
 oils/toysh/1
 oils/toysh/2
 oils/toysh/5
+oils/tilde/11
+oils/toysh/1
+oils/toysh/2
+oils/toysh/6
 oils/type-compat/3
-oils/unicode/0
 oils/var-op-bash/17
 oils/var-op-bash/19
 oils/var-op-bash/23
@@ -252,6 +233,7 @@ oils/var-op-patsub/23
 oils/var-op-patsub/26
 oils/var-op-slice/20
 oils/var-op-strip/10
+oils/var-op-test/17
 oils/var-op-test/35
 oils/var-ref/3
 oils/var-ref/4

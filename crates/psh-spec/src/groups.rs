@@ -18,6 +18,12 @@
 //! quarantine cases that pass or fail by timing (D1225). Such a case runs as usual and
 //! is reported, but never fails the run and is never in a ratchet.
 //!
+//! `[[platform]]` tables (same keys, `reason` required) are not a group either: they tag
+//! cases that are inherently host-specific (`/dev/full`, `/proc`, the `/bin` layout, a
+//! case-insensitive file system, signals a system lacks). Goldens come from Linux, so
+//! such a case is gated only there; on other platforms it runs and is reported apart,
+//! never in a ratchet (D1331).
+//!
 //! Rules are tried in file order; the first that matches decides. A rule may be
 //! `[[active]]` to carve an exception out of a later, broader rule. Unmatched cases
 //! are active. Only this subset of TOML is accepted: arrays of tables, and string or
@@ -66,15 +72,16 @@ pub struct Groups {
     pub serial: Vec<Rule>,
     /// `[[flaky]]` rules; their `group` field is unused.
     pub flaky: Vec<Rule>,
+    /// `[[platform]]` rules; their `group` field is unused.
+    pub platform: Vec<Rule>,
 }
 
 impl Groups {
     pub fn parse(text: &str) -> Result<Groups, String> {
         let mut rules: Vec<Rule> = Vec::new();
-        // Indexes into `rules` of the `[[serial]]` and `[[flaky]]` tables, split off at
-        // the end.
-        let mut serial_at: Vec<usize> = Vec::new();
-        let mut flaky_at: Vec<usize> = Vec::new();
+        // Indexes into `rules` of the `[[serial]]`, `[[flaky]]` and `[[platform]]` tables
+        // (kind 0, 1, 2), split off at the end.
+        let mut split: Vec<(usize, u8)> = Vec::new();
         let mut lines = text.lines().enumerate().peekable();
         while let Some((n, raw)) = lines.next() {
             let err = |m: &str| format!("spec.toml line {}: {m}", n + 1);
@@ -84,12 +91,13 @@ impl Groups {
             }
             if let Some(name) = line.strip_prefix("[[").and_then(|l| l.strip_suffix("]]")) {
                 match name.trim() {
-                    "serial" => serial_at.push(rules.len()),
-                    "flaky" => flaky_at.push(rules.len()),
+                    "serial" => split.push((rules.len(), 0)),
+                    "flaky" => split.push((rules.len(), 1)),
+                    "platform" => split.push((rules.len(), 2)),
                     _ => {}
                 }
                 let group = match name.trim() {
-                    "serial" | "flaky" => Group::Active,
+                    "serial" | "flaky" | "platform" => Group::Active,
                     "skip" => Group::Skip,
                     "later" => Group::Later,
                     "active" => Group::Active,
@@ -138,24 +146,23 @@ impl Groups {
                 return Err(format!("spec.toml line {}: rule matches nothing", r.line));
             }
         }
-        let (mut serial, mut flaky) = (Vec::new(), Vec::new());
-        let mut split: Vec<(usize, bool)> = serial_at.into_iter().map(|i| (i, true)).collect();
-        split.extend(flaky_at.into_iter().map(|i| (i, false)));
-        split.sort_unstable();
-        for (i, is_serial) in split.into_iter().rev() {
+        let (mut serial, mut flaky, mut platform) = (Vec::new(), Vec::new(), Vec::new());
+        for (i, kind) in split.into_iter().rev() {
             let r = rules.remove(i);
-            if is_serial {
-                serial.push(r)
-            } else {
-                flaky.push(r)
+            match kind {
+                0 => serial.push(r),
+                1 => flaky.push(r),
+                _ => platform.push(r),
             }
         }
         serial.reverse();
         flaky.reverse();
+        platform.reverse();
         Ok(Groups {
             rules,
             serial,
             flaky,
+            platform,
         })
     }
 
@@ -167,6 +174,14 @@ impl Groups {
     /// Whether a `[[serial]]` rule matches the case.
     pub fn is_serial(&self, case: &Case) -> bool {
         self.serial.iter().any(|r| r.matches(case))
+    }
+
+    /// The reason of the `[[platform]]` rule that matches the case, if any.
+    pub fn platform_reason(&self, case: &Case) -> Option<&str> {
+        self.platform
+            .iter()
+            .find(|r| r.matches(case))
+            .map(|r| r.reason.as_str())
     }
 
     /// The reason of the `[[flaky]]` rule that matches the case, if any.
@@ -328,6 +343,12 @@ reason = "needs a terminal"
         assert_eq!((g.rules.len(), g.serial.len(), g.flaky.len()), (1, 1, 1));
         assert_eq!(g.flaky[0].reason, "race");
         assert!(Groups::parse("[[flaky]]\nmatch = \"a/1\"\n").is_err());
+        let p = Groups::parse(
+            "[[platform]]\nmatch = \"a/1\"\nreason = \"/dev/full\"\n[[skip]]\nmatch = \"a/1\"\nreason = \"r\"\n",
+        )
+        .unwrap();
+        assert_eq!((p.rules.len(), p.platform.len()), (1, 1));
+        assert_eq!(p.platform[0].reason, "/dev/full");
         assert_eq!(g.rules.len(), 1);
         assert_eq!(g.rules[0].group, Group::Skip);
         assert!(Groups::parse("[[nope]]\n").is_err());

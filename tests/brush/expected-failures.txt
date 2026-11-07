@@ -58,9 +58,6 @@ brush/compat/builtins/cd/15
 brush/compat/builtins/cd/16
 brush/compat/builtins/command/3
 brush/compat/builtins/command/4
-brush/compat/builtins/command/7
-brush/compat/builtins/command/9
-brush/compat/builtins/command/32
 brush/compat/builtins/command/33
 brush/compat/builtins/command/38
 brush/compat/builtins/command/39
@@ -101,13 +98,11 @@ brush/compat/builtins/declare/153
 brush/compat/builtins/declare/155
 brush/compat/builtins/dot/1
 brush/compat/builtins/dot/15
-brush/compat/builtins/echo/2
 brush/compat/builtins/echo/8
 brush/compat/builtins/exec/5
 brush/compat/builtins/exec/6
 brush/compat/builtins/exec/7
 brush/compat/builtins/exec/8
-brush/compat/builtins/exec/12
 brush/compat/builtins/exec/14
 brush/compat/builtins/exec/15
 brush/compat/builtins/exec/16
@@ -136,7 +131,6 @@ brush/compat/builtins/getopts/35
 brush/compat/builtins/getopts/42
 brush/compat/builtins/getopts/44
 brush/compat/builtins/hash/1
-brush/compat/builtins/hash/3
 brush/compat/builtins/hash/10
 brush/compat/builtins/hash/12
 brush/compat/builtins/hash/16
@@ -149,14 +143,10 @@ brush/compat/builtins/jobs/6: passed via macOS /usr/bin wrapper
 brush/compat/builtins/jobs/9
 brush/compat/builtins/jobs/10
 brush/compat/builtins/jobs/11
-brush/compat/builtins/jobs/12
 brush/compat/builtins/jobs/14
 brush/compat/builtins/jobs/15
-brush/compat/builtins/kill/1
-brush/compat/builtins/kill/3
 brush/compat/builtins/kill/9
 brush/compat/builtins/kill/11
-brush/compat/builtins/kill/12
 brush/compat/builtins/kill/16
 brush/compat/builtins/kill/17
 brush/compat/builtins/kill/18
@@ -198,7 +188,6 @@ brush/compat/builtins/pwd/3
 brush/compat/builtins/pwd/5
 brush/compat/builtins/pwd/7
 brush/compat/builtins/readonly/8
-brush/compat/builtins/return/1
 brush/compat/builtins/return/15
 brush/compat/builtins/set/9
 brush/compat/builtins/set/10
@@ -222,18 +211,9 @@ brush/compat/builtins/trap/90
 brush/compat/builtins/trap/109
 brush/compat/builtins/trap/113
 brush/compat/builtins/trap/115
-brush/compat/builtins/type/1
-brush/compat/builtins/type/7
-brush/compat/builtins/type/9
-brush/compat/builtins/type/11
-brush/compat/builtins/type/12
-brush/compat/builtins/type/15
-brush/compat/builtins/type/18
 brush/compat/builtins/type/19
 brush/compat/builtins/type/20
-brush/compat/builtins/type/21
 brush/compat/builtins/type/25
-brush/compat/builtins/type/26
 brush/compat/builtins/ulimit/0: passed via macOS /usr/bin wrapper
 brush/compat/builtins/ulimit/1: passed via macOS /usr/bin wrapper
 brush/compat/builtins/ulimit/2: passed via macOS /usr/bin wrapper
@@ -299,7 +279,6 @@ brush/compat/functions/19
 brush/compat/functions/21
 brush/compat/here/22
 brush/compat/here/24
-brush/compat/here/43
 brush/compat/here/65
 brush/compat/here/71
 brush/compat/here/84
@@ -316,7 +295,6 @@ brush/compat/nameref/202
 brush/compat/nameref/204
 brush/compat/nameref/216
 brush/compat/nameref/218
-brush/compat/options/bash_xtracefd/6
 brush/compat/options/extdebug/0
 brush/compat/options/extdebug/1
 brush/compat/options/extdebug/2
@@ -366,13 +344,10 @@ brush/compat/path_search/12
 brush/compat/path_search/13
 brush/compat/patterns/patterns/8
 brush/compat/patterns/patterns/9
-brush/compat/pipeline/4
 brush/compat/pipeline/8
 brush/compat/pipeline/17
 brush/compat/process/0
 brush/compat/redirection/15
-brush/compat/redirection/18
-brush/compat/redirection/22: platform-dependent: GNU ls exits 2 for a missing file, macOS BSD ls 1 (passes on Linux; per-platform ratchet or psh ls later)
 brush/compat/redirection/34
 brush/compat/redirection/35
 brush/compat/redirection/44
@@ -381,7 +356,6 @@ brush/compat/redirection/47
 brush/compat/signals/2
 brush/compat/signals/3
 brush/compat/signals/6
-brush/compat/signals/10
 brush/compat/signals/11
 brush/compat/signals/15
 brush/compat/signals/16
@@ -428,13 +402,6 @@ brush/compat/well_known_vars/25
 brush/compat/well_known_vars/29
 brush/compat/word_expansion/braces/0
 brush/compat/word_expansion/braces/7
-brush/compat/word_expansion/command_substitution/33
-brush/compat/word_expansion/command_substitution/34
-brush/compat/word_expansion/command_substitution/35
-brush/compat/word_expansion/command_substitution/36
-brush/compat/word_expansion/command_substitution/37
-brush/compat/word_expansion/command_substitution/38
-brush/compat/word_expansion/command_substitution/39
 brush/compat/word_expansion/command_substitution/51: passed only while extglob was unsupported (status 2); bash counts the parens of an unquoted $( inside an extglob instead of parsing a command (parser)
 brush/compat/word_expansion/params/40
 brush/compat/word_expansion/params/53
@@ -443,4 +410,24 @@ brush/compat/word_expansion/quotes/2
 brush/compat/word_expansion/quotes/3
 brush/compat/word_expansion/quotes/4
 brush/compat/word_expansion/tilde/1
+brush/compat/word_expansion/command_substitution/57
+brush/compat/word_expansion/param_transformation/3
+brush/compat/word_expansion/param_transformation/5
+brush/compat/word_expansion/param_transformation/6
+brush/compat/word_expansion/param_transformation/10
+brush/compat/word_expansion/param_transformation/11
+brush/compat/word_expansion/params/7
+brush/compat/word_expansion/params/9
+brush/compat/word_expansion/params/10
+brush/compat/word_expansion/params/30
+brush/compat/word_expansion/params/35
+brush/compat/word_expansion/params/36
+brush/compat/word_expansion/params/37
+brush/compat/word_expansion/params/38
+brush/compat/word_expansion/params/39
+brush/compat/word_expansion/params/47
+brush/compat/word_expansion/params/53
+brush/compat/word_expansion/params/63
+brush/compat/word_expansion/params/64
+brush/compat/word_expansion/params/65
 brush/compat/word_expansion/tilde/3

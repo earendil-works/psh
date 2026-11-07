@@ -253,7 +253,8 @@ separated, converted at the host's boundary.
   `is_terminal`. To come with their features: mkdir, remove, rename, symlink, temp
   files, umask, FIFOs.
 - `path_entries(PATH)` splits a `PATH`-like value as the platform does (`:`; Windows `;`,
-  D1910), and `resolve(name, PATH, cwd)` does command lookup (PATH, PATHEXT on Windows); a hook
+  D1910), `standard_path()` is the system's standard `PATH` (`confstr(_CS_PATH)`, for
+  `command -p`, D1332), and `resolve(name, PATH, cwd)` does command lookup (PATH, PATHEXT on Windows); a hook
   where an embedder can veto or rewrite a command at execution time is planned
   (approval at exec time).
 - `sleep` (timers), `pid` (`$$`), `now` (clock), `home_dir(user)` (`~user`, D1322).

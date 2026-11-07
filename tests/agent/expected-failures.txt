@@ -72,3 +72,4 @@ agent/top-shapes/23: needs psh's rg (utilities, search batch); rg is not on the 
 agent/view/30: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/view/34: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
 agent/view/37: macOS BSD utility output differs from GNU (wc/uniq padding, ls, sed, od, nl, seq, cmp, head); passes with psh's utilities or on Linux
+agent/files/7: a glob ending in / matches files too (pkg-*/ gives pkg-file/; engine, glob)

@@ -157,3 +157,93 @@ reason = "timing race: jobs started 10 ms apart finish in either order on a load
 [[flaky]]
 match = "brush/compat/signals/13"
 reason = "race: when the loop writes before head starts, psh's pumped pipe buffers 64 KiB more than bash's kernel pipe, so the writer can finish instead of getting SIGPIPE (0006 log; owner: procs, 0030)"
+
+[[flaky]]
+match = "brush/compat/background_jobs/18"
+reason = "timing under load: background job inside command substitution (flaked in several gates; owner: procs, 0030)"
+
+# --- Platform: host-specific cases -----------------------------------------------------
+# Not a group either: these cases depend on the host itself, not on psh (a device only
+# Linux has, the /bin layout, /proc, a case-insensitive file system, a signal a system
+# lacks). The goldens come from Linux, so they are gated there; on other platforms they
+# run and are reported apart, in no ratchet (D1331). A case that differs only because a
+# platform's *programs* differ (BSD utilities) is no such case: it goes in that
+# platform's expected-failures.<os>.txt.
+
+[[platform]]
+match = [
+  "oils/bugs/13",
+  "brush/compat/builtins/return/1",
+  "brush/compat/options/bash_xtracefd/6",
+]
+reason = "writes to /dev/full, which only Linux has"
+
+[[platform]]
+match = [
+  "oils/builtin-cd/11",
+  "oils/builtin-cd/12",
+]
+reason = "/tmp is a symlink to /private/tmp on macOS"
+
+[[platform]]
+match = [
+  "oils/tilde/7",
+  "oils/tilde/13",
+  "oils/toysh/5",
+  "brush/compat/word_expansion/tilde/1",
+]
+reason = "root's home is /var/root on macOS, /root on Linux"
+
+[[platform]]
+match = [
+  "brush/compat/builtins/kill/1",
+  "brush/compat/builtins/kill/3",
+  "brush/compat/builtins/kill/12",
+  "brush/compat/signals/10",
+]
+reason = "signal numbers differ: SIGUSR1 is 30 on macOS, 10 on Linux"
+
+[[platform]]
+match = [
+  "oils/builtin-type-bash/13",
+  "oils/builtin-type-bash/14",
+  "oils/builtin-type-bash/21",
+  "oils/builtin-type-bash/22",
+  "brush/compat/builtins/type/11",
+]
+reason = "macOS ships /usr/bin/cd, /usr/bin/type and /usr/bin/command scripts"
+
+[[platform]]
+match = [
+  "oils/builtin-type-bash/30",
+  "oils/divergence/3",
+  "oils/errexit/9",
+  "brush/compat/builtins/command/7",
+  "brush/compat/builtins/hash/3",
+  "brush/compat/builtins/type/1",
+  "brush/compat/builtins/type/7",
+  "brush/compat/builtins/type/9",
+  "brush/compat/builtins/type/12",
+  "brush/compat/builtins/type/15",
+  "brush/compat/builtins/type/18",
+  "brush/compat/builtins/type/21",
+  "brush/compat/builtins/type/26",
+]
+reason = "the /bin layout: Linux (merged /usr) has ls, cat and true in /usr/bin, macOS only in /bin"
+
+[[platform]]
+match = [
+  "oils/builtin-printf/46",
+  "oils/builtin-printf/48",
+]
+reason = "the time zone database: macOS has legacy zones (Portugal, US/Eastern) the recording image lacks"
+
+[[platform]]
+match = [
+  "oils/unicode/0",
+]
+reason = "APFS rejects file names that are not UTF-8"
+
+[[platform]]
+match = "brush/compat/builtins/jobs/12"
+reason = "needs /proc"

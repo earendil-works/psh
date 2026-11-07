@@ -114,6 +114,9 @@ pub struct Case {
     /// Quarantined (tests/spec.toml `[[flaky]]`, D1225): run and reported, never gated,
     /// never in a ratchet. The reason.
     pub flaky: Option<String>,
+    /// Host-specific (tests/spec.toml `[[platform]]`, D1331): gated on Linux only, where
+    /// the goldens come from. The reason.
+    pub platform: Option<String>,
     /// The golden to match: `## expect: gnu | bsd | both` in L4 (default both); GNU's
     /// for every other layer.
     pub expect: Dialect,
@@ -240,6 +243,7 @@ fn load_oils(layer: Layer, file: &str, text: &str) -> Result<Vec<Case>, String> 
                 tags: tags.clone(),
                 serial: false,
                 flaky: None,
+                platform: None,
                 expect,
                 ignore_stdout: false,
                 ignore_whitespace: false,
@@ -338,6 +342,7 @@ fn load_brush(file: &str, text: &str, dir: &Path) -> Result<Vec<Case>, String> {
             tags,
             serial: false,
             flaky: None,
+            platform: None,
             expect: Dialect::Gnu,
             ignore_stdout: flag("ignore_stdout"),
             ignore_whitespace: flag("ignore_whitespace"),

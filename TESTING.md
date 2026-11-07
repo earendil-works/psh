@@ -148,13 +148,35 @@ Moving cases between groups is a coordinator decision.
   red on day one. That is the first milestone.
 - Never add a line to hide a regression your change caused (AGENTS.md). Lines are added
   only when new cases are vendored or written, or when a case moves into `active`.
-- **Platform ratchets** (D1113): `tests/<layer>/expected-failures.<platform>.txt` lists
-  active cases that pass natively (they are not in the shared file) but may fail on that
-  platform, each with its reason. The first platform is `wasm`: `psh-spec --wasm` runs
-  every case in `psh.wasm` under node through the JS host (`js/test/spec-driver.mjs`),
-  where no external programs exist. A case that looked for a command and did not find
-  one may fail there without a line (the run prints how many); the file lists only the
-  other differences, which are bugs or missing host features (one today).
+- **Platform ratchets** (D1113, D1331). The shared file lists psh's own gaps: cases
+  that fail on Linux, where the goldens come from. `tests/<layer>/expected-failures.<platform>.txt`
+  (`macos`, `windows`, `wasm`) lists active cases that pass on Linux but may fail on that
+  platform because its programs or OS differ (BSD `od`, `ls` and `sed`, no `tac` or
+  `rg`), each with its reason; never a case the shared file has. A run checks the shared
+  file plus its platform's (`psh-spec` picks the OS it runs on; Linux has only the
+  shared file). These files shrink as psh's own utilities replace the host's.
+  - Which file a failure belongs in takes a Linux run: `scripts/spec-linux` builds psh
+    for Linux and runs every case in the recording image (Docker, about two minutes),
+    held to the shared ratchet; it writes each case's result to
+    `work/scratch/spec-linux/results.tsv`. `scripts/spec-linux --update` then runs here
+    with `psh-spec --update-ratchet --linux-results FILE`: entries move to the file they
+    belong in, shared entries that pass here but fail on Linux stay, and cases that fail
+    on Linux but are listed nowhere are reported as regressions. With `--linux-results`,
+    `--add-failures` puts a new case that passes on Linux in the platform's file; without
+    it, everything goes to the shared one. Run it after adding cases and now and then
+    (the gate does not: it only type-checks Linux, leg `linux`).
+  - `wasm`: `psh-spec --wasm` runs every case in `psh.wasm` under node through the JS
+    host (`js/test/spec-driver.mjs`), where no external programs exist. A case that
+    looked for a command and did not find one may fail there without a line (the run
+    prints how many); the file lists only the other differences, which are bugs or
+    missing host features.
+- **Host-specific cases** (`[[platform]]` in `tests/spec.toml`, D1331) depend on the
+  host itself, not on its programs: `/dev/full` and `/proc` (Linux only), where `ls` and
+  `cat` live, `/tmp` being `/private/tmp`, root's home, signal numbers, the time zone
+  database, file names APFS rejects. They are gated on Linux only; elsewhere they run, are
+  listed apart ("host-specific") and are in neither ratchet file of that platform. Their
+  Linux failures are in the shared file. `scripts/status` shows, per layer, the failing
+  cases by the file that lists them and the host-specific ones.
 
 ## Status and the hit list
 

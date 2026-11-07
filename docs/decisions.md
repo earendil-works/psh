@@ -2080,3 +2080,31 @@ printing the PATH file would tell an agent the wrong program runs. `type -P` is 
 forced PATH search and prints the PATH file, as bash does for real builtins. Two Oils
 cases that expect `type -p`/`-f` to print the file (builtin-type-bash 8 and 16, written
 for bash where `mv` is no builtin) are ratcheted with this reason.
+
+## D1331: Shared ratchets hold Linux's failures; platform files and host-specific cases
+date: 2026-11-07 · by: shapes · issue: 0033
+The goldens come from Linux, but the gate runs on macOS, where BSD utilities and the
+host's own layout made a sixth of the shared ratchet entries macOS-only (and hid two
+Linux failures). Now `expected-failures.txt` is what fails on Linux; each platform
+(`macos`, `windows`, `wasm`) adds `expected-failures.<platform>.txt` for cases that fail
+only there because its *programs* differ, with reasons. psh-spec checks the shared file
+plus the file of the OS it runs on. Cases that depend on the *host itself* (`/dev/full`,
+`/proc`, the `/bin` layout, `/private/tmp`, root's home, signal numbers, the time zone
+database, APFS file names) are tagged `[[platform]]` in tests/spec.toml: gated on Linux
+only, reported apart elsewhere, in no platform file. The Linux truth comes from
+`scripts/spec-linux` (Docker: psh built in the pinned Rust image, run with `--init` in the
+recording image, repository read-only), whose `--results` file `--linux-results` feeds
+to `--update-ratchet` (moves between the files) and `--add-failures` (picks the file).
+It is a manual step; the gate type-checks Linux (D1330) but runs no Linux cases, since
+it would need Docker and two minutes.
+
+## D1332: `command -p` searches the host's standard path
+date: 2026-11-07 · by: shapes · issue: 0033
+bash's `command -p` uses the system's standard `PATH` (`confstr(_CS_PATH)`):
+`/bin:/usr/bin` on Linux, `/usr/bin:/bin:/usr/sbin:/sbin` on macOS. psh used its own
+default `PATH`, which on merged-/usr Linux finds `/usr/bin/cat` where bash finds
+`/bin/cat` (hidden on macOS, which has only `/bin/cat`). `Host::standard_path()` gives
+it: a default of `/usr/bin:/bin:/usr/sbin:/sbin`, `confstr(_CS_PATH)` in psh-os on Unix;
+Windows keeps the default until its host overrides it. `command -p NAME` runs, and
+`command -pv`/`-pV` report, the program found there (not a psh utility, and a hashed
+program still wins, as in bash).

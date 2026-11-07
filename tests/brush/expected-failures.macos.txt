@@ -1,0 +1,21 @@
+# Ratchet for layer brush on macos (D1113, D1331): active cases that may fail here
+# but pass on Linux (they are not in expected-failures.txt), each with its reason.
+# psh-spec --update-ratchet removes cases that pass; never add a regression.
+brush/compat/builtins/command/9: BSD ls: other messages and exit status than GNU ls
+brush/compat/builtins/echo/2: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it
+brush/compat/builtins/exec/12: macOS's /usr/bin/printf has no -v
+brush/compat/here/43: BSD sed does not read - as stdin
+brush/compat/pipeline/4: macOS's /bin/sh (bash 3.2, POSIX mode) has an echo that prints -n
+brush/compat/redirection/18: BSD ls: other messages and exit status than GNU ls
+brush/compat/redirection/22: BSD ls: other messages and exit status than GNU ls
+brush/compat/word_expansion/command_substitution/33: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it
+brush/compat/word_expansion/command_substitution/34: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it
+brush/compat/word_expansion/command_substitution/35: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it
+brush/compat/word_expansion/command_substitution/36: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it
+brush/compat/word_expansion/command_substitution/37: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it
+brush/compat/word_expansion/command_substitution/38: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it
+brush/compat/word_expansion/command_substitution/39: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it
+brush/compat/word_expansion/params/40: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it
+brush/compat/word_expansion/quotes/2: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it
+brush/compat/word_expansion/quotes/3: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it
+brush/compat/word_expansion/quotes/4: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it

@@ -1,7 +1,7 @@
-# Ratchet for layer brush on wasm (D1113): active cases that pass natively
-# (not in expected-failures.txt) but may fail here, each with its reason. Cases
-# that need external programs are not listed. psh-spec --update-ratchet removes
-# cases that pass; never add a regression.
+# Ratchet for layer brush on wasm (D1113, D1331): active cases that may fail here
+# but pass on Linux (they are not in expected-failures.txt), each with its reason.
+# Cases that need external programs are not listed. psh-spec --update-ratchet
+# removes cases that pass; never add a regression.
 brush/compat/builtins/kill/2: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/builtins/kill/4: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/builtins/kill/5: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals

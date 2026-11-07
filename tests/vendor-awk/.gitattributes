@@ -1,0 +1,2 @@
+# The suites compare bytes: keep their files as they are (t.crlf has CRLF lines).
+* -text

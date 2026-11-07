@@ -372,3 +372,7 @@ fn xargs_unsupported() {
         "xargs: unsupported option '-p' (psh built-in xargs)\n",
     );
 }
+
+// base64, the checksums, cmp, which, printenv, env's flags (0020).
+#[path = "tests_misc.rs"]
+mod misc;

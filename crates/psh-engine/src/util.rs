@@ -184,7 +184,7 @@ pub struct SpawnEnv {
     pub unset: Vec<String>,
     /// Variables to set, in order (`env NAME=value`).
     pub set: Vec<(String, Vec<u8>)>,
-    /// The command's working directory instead of the utility's (`find -execdir`), an
+    /// The command's working directory instead of the utility's (`find -execdir`, `env -C`), an
     /// absolute shell path.
     pub cwd: Option<Vec<u8>>,
     /// A file opened as the command's stdin instead of the utility's (`xargs` gives its
@@ -579,6 +579,35 @@ impl UtilCtx<'_> {
     /// A safepoint for long loops: yields when the step's budget is spent.
     pub async fn check(&self) {
         crate::sched::safepoint(&self.vp.core.sched).await;
+    }
+
+    /// Whether `name` runs as one of psh's utilities here: what `which` reports.
+    pub async fn is_utility(&self, name: &[u8]) -> bool {
+        lookup(self.vp, name).await.is_some()
+    }
+
+    /// Every program named `name` (no slash) in the directories of `path`, in order:
+    /// what `which -a` lists. A relative directory gives a relative path, as in
+    /// `type`.
+    pub async fn search_path(&self, name: &[u8], path: &[u8]) -> Vec<Vec<u8>> {
+        let host = self.vp.host();
+        let mut found = Vec::new();
+        for dir in host.path_entries(path) {
+            let Some(hit) = host.resolve(name, &dir, &self.vp.cwd).await else {
+                continue;
+            };
+            if dir.is_empty() || self.vp.abs_path(&dir) == dir {
+                found.push(hit);
+            } else {
+                // The host may have added an extension (PATHEXT): keep its file name.
+                let base = hit.rsplit(|&b| b == b'/').next().unwrap_or(name);
+                let mut shown = dir.clone();
+                shown.push(b'/');
+                shown.extend_from_slice(base);
+                found.push(shown);
+            }
+        }
+        found
     }
 
     /// Runs the real program of this name from `PATH` with these arguments, for an

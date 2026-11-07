@@ -1,0 +1,311 @@
+# Goldens for tests/utils/sum/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: GNU names print HASH  FILE
+status: 0
+bash-n: 0
+--- stdout
+|b1946ac92492d2347c6235b4d2611184  a
+|9dd4e461268c8034f5c8564e155c67a6  b
+|f572d396fae9206628714fb2ce00f72e94f2258f  a
+|2d6d67d91d0badcdd06cbbba1fe11538a68a37ec9c2e26457ceff12b  a
+|5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03  a
+|e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  e
+|1d0f284efe3edea4b9ca3bd514fa134b17eae361ccc7a1eefeff801b9bd6604e01f21f6bf249ef030599f0c218f2ba8c  a
+|cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e  e
+--- file a
+|hello
+--- file b
+|x
+~ no newline at end
+--- file e
+
+=== 1: stdin is -
+status: 0
+bash-n: 0
+--- stdout
+|764efa883dda1e11db47671c4a3bbd9e  -
+|2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881  -
+--- file b
+|x
+~ no newline at end
+
+=== 2: -b marks binary, --tag writes BSD lines
+status: 0
+bash-n: 0
+--- stdout
+|b1946ac92492d2347c6235b4d2611184 *a
+|MD5 (a) = b1946ac92492d2347c6235b4d2611184
+|SHA256 (a) = 5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03
+--- file a
+|hello
+
+=== 3: -z ends lines with NUL
+status: 0
+bash-n: 0
+--- stdout
+|b1946ac92492d2347c6235b4d2611184  a@
+~ no newline at end
+--- file a
+|hello
+
+=== 4: a missing file or a directory
+status: 0
+bash-n: 0
+--- stdout
+|b1946ac92492d2347c6235b4d2611184  a
+|st=1
+|st=1
+--- stderr
+|md5sum: nope: No such file or directory
+|md5sum: d: Is a directory
+|md5sum: no such: No such file or directory
+--- file a
+|hello
+--- dir d
+
+=== 5: a name with a newline is escaped
+status: 0
+bash-n: 0
+--- stdout
+|8cdeb44417f3c26826595d5820cf5700  n
+|l
+|st=1
+--- stderr
+|usage: md5sum [-bctwz] [files ...]
+
+=== 6: -c verifies
+status: 0
+bash-n: 0
+--- stdout
+|a: OK
+|b: OK
+|st=0
+|a: FAILED
+|b: OK
+|st=1
+--- stderr
+|md5sum: WARNING: 1 computed checksum did NOT match
+--- file a
+|changed
+~ no newline at end
+--- file b
+|x
+~ no newline at end
+--- file sums
+|b1946ac92492d2347c6235b4d2611184  a
+|9dd4e461268c8034f5c8564e155c67a6  b
+
+=== 7: -c --quiet and --status
+status: 0
+bash-n: 0
+--- stdout
+|st=0
+|a: FAILED
+|st=1
+|st=1
+--- stderr
+|md5sum: WARNING: 1 computed checksum did NOT match
+--- file a
+|changed
+~ no newline at end
+--- file b
+|x
+~ no newline at end
+--- file sums
+|b1946ac92492d2347c6235b4d2611184  a
+|9dd4e461268c8034f5c8564e155c67a6  b
+
+=== 8: -c reports bad lines
+status: 0
+bash-n: 0
+--- stdout
+|a: OK
+|st=0
+|a: OK
+|st=1
+|a: OK
+|st=0
+|st=0
+--- stderr
+|md5sum: WARNING: 3 lines are improperly formatted
+|md5sum: WARNING: 3 lines are improperly formatted
+|md5sum: sums: 2: improperly formatted MD5 checksum line
+|md5sum: sums: 3: improperly formatted MD5 checksum line
+|md5sum: sums: 4: improperly formatted MD5 checksum line
+|md5sum: WARNING: 3 lines are improperly formatted
+|md5sum: WARNING: 1 line is improperly formatted
+--- file a
+|hello
+--- file j
+|junk
+--- file sums
+|b1946ac92492d2347c6235b4d2611184  a
+|garbage
+|
+|# comment
+
+=== 9: -c a missing file
+status: 0
+bash-n: 0
+--- stdout
+|a: OK
+|st=1
+|a: OK
+|st=0
+--- stderr
+|md5sum:  b: No such file or directory
+--- file a
+|hello
+--- file sums
+|b1946ac92492d2347c6235b4d2611184  a
+|9dd4e461268c8034f5c8564e155c67a6  b
+
+=== 10: -c from stdin, both line formats
+status: 0
+bash-n: 0
+--- stdout
+|a: OK
+|st=1
+|st=1
+--- stderr
+|usage: md5sum [-bctwz] [files ...]
+|usage: md5sum [-bctwz] [files ...]
+|usage: sha1sum [-bctwz] [files ...]
+|usage: md5sum [-bctwz] [files ...]
+--- file a
+|hello
+
+=== 11: -c counts failures
+status: 0
+bash-n: 0
+--- stdout
+|st=1
+--- stderr
+|usage: md5sum [-bctwz] [files ...]
+--- file a
+|hello
+--- file b
+|x
+~ no newline at end
+
+=== 12: options that need -c
+status: 0
+bash-n: 0
+--- stdout
+|b1946ac92492d2347c6235b4d2611184
+|st=0
+|st=0
+--- stderr
+|md5sum: WARNING: 1 line is improperly formatted
+--- file a
+|hello
+
+=== 13: sha256sum -c
+status: 0
+bash-n: 0
+--- stdout
+|a: OK
+|a: OK
+--- file a
+|hello
+--- file s
+|e7c22b994c59d9cf2b48e549b1e24666636045930d3da7c1acb299d1c3b7f931f94aae41edda2c2b207a36e10f8bcb8d45223e54878f5b316e7ce3b6bc019629  a
+
+=== 14: md5 (BSD)
+status: 0
+bash-n: 0
+--- stdout
+|MD5 (a) = b1946ac92492d2347c6235b4d2611184
+|b1946ac92492d2347c6235b4d2611184 a
+|b1946ac92492d2347c6235b4d2611184
+|764efa883dda1e11db47671c4a3bbd9e
+|900150983cd24fb0d6963f7d28e17f72
+|st=1
+--- stderr
+|md5: nope: No such file or directory
+--- file a
+|hello
+
+=== 15: md5 -c compares with a hash (BSD)
+status: 0
+bash-n: 0
+--- stdout
+|MD5 (a) = 5d41402abc4b2a76b9719d911017c592
+|st=0
+|MD5 (a) = 5d41402abc4b2a76b9719d911017c592 [ Failed ]
+|st=2
+--- file a
+|hello
+~ no newline at end
+
+=== 16: md5 -p passes stdin through (BSD)
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|764efa883dda1e11db47671c4a3bbd9e
+
+=== 17: shasum
+status: 0
+bash-n: 0
+--- stdout
+|f572d396fae9206628714fb2ce00f72e94f2258f  a
+|f572d396fae9206628714fb2ce00f72e94f2258f  a
+|2d6d67d91d0badcdd06cbbba1fe11538a68a37ec9c2e26457ceff12b  a
+|5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03  a
+|1d0f284efe3edea4b9ca3bd514fa134b17eae361ccc7a1eefeff801b9bd6604e01f21f6bf249ef030599f0c218f2ba8c  a
+|e7c22b994c59d9cf2b48e549b1e24666636045930d3da7c1acb299d1c3b7f931f94aae41edda2c2b207a36e10f8bcb8d45223e54878f5b316e7ce3b6bc019629 *a
+|4d32058e76908e46640feeaf6e3f47ca6c124e971745748aa0ce8f7a  a
+|7f3f0c0d5219f51459578305ed2bbc198588758da85d08024c79c1195d1cd611  a
+|SHA1 (a) = f572d396fae9206628714fb2ce00f72e94f2258f
+|55ca6286e3e4f4fba5d0448333fa99fc5a404a73  -
+--- file a
+|hello
+
+=== 18: shasum -c takes the algorithm from the hash
+status: 0
+bash-n: 0
+--- stdout
+|a: OK
+|st=0
+|a: OK
+|st=0
+|a: OK
+|st=0
+--- file a
+|hello
+--- file s1
+|f572d396fae9206628714fb2ce00f72e94f2258f  a
+
+=== 19: shasum -c failures
+status: 0
+bash-n: 0
+--- stdout
+|a: FAILED
+|st=1
+|zz: FAILED open or read
+|st=1
+|st=1
+--- stderr
+|shasum: WARNING: 1 computed checksum did NOT match
+|shasum: zz: No such file or directory
+|shasum: WARNING: 1 listed file could not be read
+|shasum: standard input: no properly formatted SHA checksum lines found
+--- file a
+|hello
+
+=== 20: shasum errors
+status: 0
+bash-n: 0
+--- stdout
+|st=1
+|st=1
+|st=1
+--- stderr
+|shasum: nope: No such file or directory
+|shasum: d: Is a directory
+|shasum: Unrecognized algorithm
+|Type shasum -h for help
+--- dir d

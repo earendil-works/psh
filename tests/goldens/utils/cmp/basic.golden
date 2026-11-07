@@ -1,0 +1,176 @@
+# Goldens for tests/utils/cmp/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: equal files
+status: 0
+bash-n: 0
+--- stdout
+|st=0
+--- file a
+|hello
+|world
+--- file b
+|hello
+|world
+
+=== 1: the first difference
+status: 0
+bash-n: 0
+--- stdout
+|a b differ: byte 8, line 2
+|st=1
+--- file a
+|hello
+|world
+--- file b
+|hello
+|wOrld
+
+=== 2: -s says nothing
+status: 0
+bash-n: 0
+--- stdout
+|st=1
+|st=0
+|st=2
+--- file a
+|hello
+|world
+--- file b
+|hello
+|wOrld
+
+=== 3: EOF on the shorter file
+status: 0
+bash-n: 0
+--- stdout
+|st=1
+|st=1
+|st=1
+|st=1
+--- stderr
+|cmp: EOF on c after byte 6, line 1
+|cmp: EOF on c after byte 6, line 1
+|cmp: EOF on e which is empty
+|cmp: EOF on c after byte 6
+--- file a
+|hello
+|world
+--- file c
+|hello
+--- file e
+
+=== 4: -l lists every differing byte
+status: 0
+bash-n: 0
+--- stdout
+| 5 157 117
+| 8 157 117
+|11 144 104
+|st=1
+--- file a
+|hello
+|world
+--- file d
+|hellO
+|wOrlD
+
+=== 5: -b prints the differing bytes
+status: 1
+bash-n: 0
+--- stdout
+|a b differ: byte 8, line 2 is 157 o 117 O
+|x y differ: byte 1, line 1 is   1 ^A 142 b
+--- file a
+|hello
+|world
+--- file b
+|hello
+|wOrld
+--- file x
+\\x01\x80\xffa
+~ no newline at end
+--- file y
+|bbbb
+~ no newline at end
+
+=== 6: -lb
+status: 1
+bash-n: 0
+--- stdout
+| 5 157 o    117 O
+| 8 157 o    117 O
+|11 144 d    104 D
+|1   1 ^A   142 b
+|2 200 M-^@ 142 b
+|3 377 M-^? 142 b
+|4 141 a    142 b
+--- file a
+|hello
+|world
+--- file d
+|hellO
+|wOrlD
+--- file x
+\\x01\x80\xffa
+~ no newline at end
+--- file y
+|bbbb
+~ no newline at end
+
+=== 7: -n limits the bytes compared
+status: 0
+bash-n: 0
+--- stdout
+|st=0
+|a b differ: byte 8, line 2
+|st=1
+--- file a
+|hello
+|world
+--- file b
+|hello
+|wOrld
+
+=== 8: -i and operands skip initial bytes
+status: 0
+bash-n: 0
+--- stdout
+|a b differ: byte 6, line 2
+|a b differ: byte 7, line 2
+|a b differ: byte 7, line 2
+|a b differ: byte 1, line 1
+|st=1
+|st=0
+--- file a
+|hello
+|world
+--- file b
+|hello
+|wOrld
+
+=== 9: stdin as - or the missing operand
+status: 0
+bash-n: 0
+--- stdout
+|a - differ: byte 8, line 2
+|a - differ: byte 8, line 2
+|st=1
+--- file a
+|hello
+|world
+--- file b
+|hello
+|wOrld
+
+=== 10: a missing file is trouble
+status: 0
+bash-n: 0
+--- stdout
+|st=2
+--- stderr
+|cmp: nope: No such file or directory
+--- file a
+|x
+~ no newline at end

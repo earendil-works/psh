@@ -10,6 +10,7 @@ mod fsutil;
 mod modes;
 pub mod opts;
 pub mod search;
+mod sum_hash;
 mod textio;
 mod timefmt;
 
@@ -51,6 +52,11 @@ mod uniq;
 
 mod find;
 mod xargs;
+
+mod base64;
+mod cmp;
+mod sum;
+mod which;
 
 use psh_engine::util::{Mode, UtilEntry, UtilPolicy};
 
@@ -244,6 +250,55 @@ pub static REGISTRY: &[UtilEntry] = &[
         destructive: false,
         run: util_fn!(rg::run),
     },
+    UtilEntry {
+        names: &["base64"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(base64::run),
+    },
+    UtilEntry {
+        names: &["cmp"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(cmp::run),
+    },
+    UtilEntry {
+        names: &[
+            "md5sum",
+            "sha1sum",
+            "sha224sum",
+            "sha256sum",
+            "sha384sum",
+            "sha512sum",
+        ],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(sum::run),
+    },
+    UtilEntry {
+        names: &["md5"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(sum::run_md5),
+    },
+    UtilEntry {
+        names: &["shasum"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(sum::run_shasum),
+    },
+    UtilEntry {
+        names: &["which"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(which::run),
+    },
+    UtilEntry {
+        names: &["printenv"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(env::run_printenv),
+    },
 ];
 
 /// The option specs, for the classifier check (D1082).
@@ -278,6 +333,13 @@ pub static SPECS: &[opts::Spec] = &[
     cp::SPEC,
     ln::SPEC,
     chmod::SPEC,
+    base64::SPEC,
+    cmp::SPEC,
+    sum::SPEC,
+    sum::MD5_SPEC,
+    sum::SHASUM_SPEC,
+    which::SPEC,
+    env::PRINTENV_SPEC,
 ];
 
 /// The policy for a shell: every utility on. `sandbox`: no real programs exist (wasm),

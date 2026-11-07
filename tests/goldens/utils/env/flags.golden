@@ -1,0 +1,40 @@
+# Goldens for tests/utils/env/flags.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: -S splits a string into words
+status: 0
+bash-n: 0
+--- stdout
+|a b
+|x y z	w
+|bar
+|1
+|a b
+|a
+
+=== 1: -S words can be options
+status: 0
+bash-n: 0
+--- stdout
+|B=2
+
+=== 2: -C runs the command in a directory
+status: 0
+bash-n: 0
+--- stdout
+|sub
+|file
+--- dir sub
+--- file sub/file
+
+=== 3: -C errors
+status: 0
+bash-n: 0
+--- stdout
+|st=125
+|st=125
+--- stderr
+|env: cannot change directory to 'nodir': No such file or directory
+|env: must specify command with --chdir (-C)
+|Try 'env --help' for more information.

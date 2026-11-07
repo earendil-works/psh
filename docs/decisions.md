@@ -2252,3 +2252,43 @@ the upstream code as it is (rustc still shows its two dead-code warnings on wasm
 upstream has too). The crate keeps its name, so the dependency allowlist is unchanged.
 rg's own `--stats` start time is likewise zero there. The copy goes when upstream stops
 reading the clock unconditionally (an upstream issue text is in 0013's log).
+## D1200: `which` prints the program's path first; utility-only names say so
+date: 2026-11-07 · by: shapes · issue: 0020
+`which NAME` prints the first executable on `PATH` even when psh runs NAME as a utility,
+and `NAME: shell builtin` only when no program exists (wasm, Windows without the tool);
+`-a` lists the utility line first, then every `PATH` hit. Reason: `$(which env)` and
+`command $(which ls)` are common idioms (Oils and brush cases use them) that need a path
+that runs; ARCH's "report utilities truthfully" stays true for `type` and `command -V`,
+which name the utility. GNU (debianutils) and BSD agree otherwise: `-s`, status 1 when a
+name is not found or none is given.
+
+## D1201: Checksums in-house, each name with its native format
+date: 2026-11-07 · by: shapes · issue: 0020
+MD5 (RFC 1321), SHA-1 and SHA-2 (FIPS 180-4, including SHA-512/224 and /256 for
+`shasum -a`) are ours (`sum_hash.rs`, no dependency), tested against the specifications'
+vectors. `md5sum sha1sum sha224sum sha256sum sha384sum sha512sum` follow GNU (escaped
+names, `--tag`, `-z`, `-c` with GNU's messages, quoted names, `--quiet --status --strict
+-w --ignore-missing`); `md5` follows macOS (`MD5 (f) = h`, `-q -r -p`, `-c HASH`
+mismatch is status 2; `-s` prints the bare hash, as macOS 26 does); `shasum` follows the
+perl script (`-a`, and `-c` takes each line's algorithm from the hash's length). `-c`
+reads both line formats. b2sum and cksum are left for later.
+
+## D1202: base64 is GNU's encoder and decoder with BSD's file flags
+date: 2026-11-07 · by: shapes · issue: 0020
+Encoding wraps at 76 (GNU; BSD does not wrap) and `-w 0`/`-b 0` writes one line without
+a newline (GNU). Decoding skips newlines, accepts missing padding and padding mid-stream,
+and stops at any other byte with `invalid input` (status 1) after what decoded so far,
+as GNU does (BSD also skips spaces). The D016 `-i` rule is an argv rewrite: `-i` (or a
+cluster ending in it) before an option or at the end is `--ignore-garbage`, else BSD's
+input file; `-o FILE`, `-D`, `-b N` are BSD's. One file operand (GNU).
+
+## D1203: cmp and printenv follow GNU; env -C and -S
+date: 2026-11-07 · by: shapes · issue: 0020
+`cmp` prints GNU's `differ: byte N, line L` (BSD: `char`), `EOF on F after byte N[, line
+L]` / `which is empty`, `-l` offsets right-aligned to the digits of the largest offset
+that can be printed (the smaller remaining regular-file size or `-n`, else 19), `-b`
+with `cat -v` spellings; usage errors are status 2. `printenv` takes several names (BSD
+one). `env -C DIR` checks the directory (`cannot change directory to 'DIR'`, 125) and
+runs the command there: `SpawnEnv::cwd`, set on the command's subshell. `env -S` splits
+by GNU's documented rules and its words may be options again. `which` uses two new
+`UtilCtx` calls: `is_utility(name)` and `search_path(name, PATH)`.

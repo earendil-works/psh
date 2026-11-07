@@ -1,0 +1,48 @@
+# Goldens for tests/utils/printenv/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: one name
+status: 0
+bash-n: 0
+--- stdout
+|bar
+|st=0
+|st=1
+
+=== 1: several names (GNU)
+status: 0
+bash-n: 0
+--- stdout
+|bar
+|qux
+|st=0
+|bar
+|qux
+|st=1
+
+=== 2: a name with = is never set
+status: 0
+bash-n: 0
+--- stdout
+|st=1
+
+=== 3: only exported variables
+status: 0
+bash-n: 0
+--- stdout
+|st=1
+|prefix
+
+=== 4: the whole environment
+status: 0
+bash-n: 0
+--- stdout
+|FOO=bar
+
+=== 5: -0 ends values with NUL (GNU)
+status: 0
+bash-n: 0
+--- stdout
+|bar@
+~ no newline at end

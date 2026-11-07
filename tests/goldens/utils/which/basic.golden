@@ -1,0 +1,65 @@
+# Goldens for tests/utils/which/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: the first hit and -a
+status: 0
+bash-n: 0
+--- stdout
+|./bin/tool
+|st=0
+|./bin/tool
+|./bin2/tool
+--- dir bin
+--- file bin/tool
+|#!/bin/sh
+--- dir bin2
+--- file bin2/tool
+|#!/bin/sh
+
+=== 1: not found is status 1
+status: 0
+bash-n: 0
+--- stdout
+|st=1
+|st=1
+--- dir bin
+--- file bin/noexec
+|x
+~ no newline at end
+
+=== 2: several names, one missing
+status: 0
+bash-n: 0
+--- stdout
+|./bin/tool
+|st=1
+--- dir bin
+--- file bin/tool
+|#!/bin/sh
+
+=== 3: -s only sets the status
+status: 0
+bash-n: 0
+--- stdout
+|st=0
+|st=1
+--- dir bin
+--- file bin/tool
+|#!/bin/sh
+
+=== 4: a path is checked as it is
+status: 0
+bash-n: 0
+--- stdout
+|./bin/tool
+|st=0
+|bin/tool
+|st=0
+|st=1
+--- dir bin
+--- file bin/plain
+|x
+~ no newline at end
+--- file bin/tool
+|#!/bin/sh

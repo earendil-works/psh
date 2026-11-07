@@ -1,0 +1,268 @@
+# Goldens for tests/utils/base64/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: encode stdin
+status: 0
+bash-n: 0
+--- stdout
+|aGVsbG8K
+|Zm9vYmFy
+--- file a
+|hello
+
+=== 1: encode a file operand (GNU); empty input is no output
+status: 0
+bash-n: 0
+--- stdout
+|       1
+--- stderr
+|base64: invalid argument a
+|Usage:	base64 [-Ddh] [-b num] [-i in_file] [-o out_file]
+|  -b, --break       break encoded output up into lines of length num
+|  -D, -d, --decode  decode input
+|  -h, --help        display this message
+|  -i, --input       input file (default: "-" for stdin)
+|  -o, --output      output file (default: "-" for stdout)
+--- file a
+|hello
+
+=== 2: the RFC 4648 vectors
+status: 0
+bash-n: 0
+--- stdout
+|Zg==
+|Zm8=
+|Zm9v
+|Zm9vYg==
+|Zm9vYmE=
+|Zm9vYmFy
+
+=== 3: long input wraps at 76 columns
+status: 0
+bash-n: 0
+--- stdout
+|MQoyCjMKNAo1CjYKNwo4CjkKMTAKMTEKMTIKMTMKMTQKMTUKMTYKMTcKMTgKMTkKMjAKMjEKMjIKMjMKMjQKMjUKMjYKMjcKMjgKMjkKMzAKMzEKMzIKMzMKMzQKMzUKMzYKMzcKMzgKMzkKNDAK
+
+=== 4: -w N wraps at N (GNU)
+status: 0
+bash-n: 0
+--- stdout
+|MQoyCjMKNAo1CjYKNwo4
+|CjkKMTAKMTEKMTIKMTMK
+|MTQKMTUKMTYKMTcKMTgK
+|MTkKMjAKMjEKMjIKMjMK
+|MjQKMjUKMjYKMjcKMjgK
+|MjkKMzAK
+|MQoyCjMKNAo1CjYKNwo4CjkKMTAKMT
+|EKMTIKMTMKMTQKMTUKMTYKMTcKMTgK
+|MTkKMjAKMjEKMjIKMjMKMjQKMjUKMj
+|YKMjcKMjgKMjkKMzAK
+
+=== 5: -w 0 writes one line without a newline (GNU)
+status: 0
+bash-n: 0
+--- stdout
+|MQoyCjMKNAo1CjYKNwo4CjkKMTAKMTEKMTIKMTMKMTQKMTUKMTYKMTcKMTgKMTkKMjAKMjEKMjIKMjMKMjQKMjUKMjYKMjcKMjgKMjkKMzAK
+|
+
+=== 6: -b N breaks lines (BSD)
+status: 0
+bash-n: 0
+--- stdout
+|MQoyCjMKNAo1CjYKNwo4
+|CjkKMTAKMTEKMTIKMTMK
+|MTQKMTUKMTYKMTcKMTgK
+|MTkKMjAKMjEKMjIKMjMK
+|MjQKMjUKMjYKMjcKMjgK
+|MjkKMzAK
+
+=== 7: -d decodes
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|hello
+|hello
+
+=== 8: -D decodes (BSD)
+status: 0
+bash-n: 0
+--- stdout
+|hi
+~ no newline at end
+
+=== 9: decoding round trip
+status: 0
+bash-n: 0
+--- stdout
+|same
+--- file f
+|1
+|2
+|3
+|4
+|5
+|6
+|7
+|8
+|9
+|10
+|11
+|12
+|13
+|14
+|15
+|16
+|17
+|18
+|19
+|20
+|21
+|22
+|23
+|24
+|25
+|26
+|27
+|28
+|29
+|30
+|31
+|32
+|33
+|34
+|35
+|36
+|37
+|38
+|39
+|40
+|41
+|42
+|43
+|44
+|45
+|46
+|47
+|48
+|49
+|50
+|51
+|52
+|53
+|54
+|55
+|56
+|57
+|58
+|59
+|60
+|61
+|62
+|63
+|64
+|65
+|66
+|67
+|68
+|69
+|70
+|71
+|72
+|73
+|74
+|75
+|76
+|77
+|78
+|79
+|80
+|81
+|82
+|83
+|84
+|85
+|86
+|87
+|88
+|89
+|90
+|91
+|92
+|93
+|94
+|95
+|96
+|97
+|98
+|99
+|100
+
+=== 10: invalid input fails after what decoded
+status: 0
+bash-n: 0
+--- stdout
+|hello
+| st=0
+| st=0
+
+=== 11: unpadded input decodes
+status: 0
+bash-n: 0
+--- stdout
+| st=0
+| st=1
+--- stderr
+|base64: stdin: (null): error decoding base64 input stream
+
+=== 12: -i alone ignores garbage (GNU)
+status: 0
+bash-n: 0
+--- stdout
+|st=64
+--- stderr
+|base64: option requires an argument -- i
+|Usage:	base64 [-Ddh] [-b num] [-i in_file] [-o out_file]
+|  -b, --break       break encoded output up into lines of length num
+|  -D, -d, --decode  decode input
+|  -h, --help        display this message
+|  -i, --input       input file (default: "-" for stdin)
+|  -o, --output      output file (default: "-" for stdout)
+
+=== 13: -i FILE reads the file (BSD, D016)
+status: 0
+bash-n: 0
+--- stdout
+|aGVsbG8K
+|hello
+--- file a
+|hello
+
+=== 14: -o FILE writes the file (BSD)
+status: 0
+bash-n: 0
+--- stdout
+|st=0
+|aGVsbG8K
+|hello
+--- file a
+|hello
+--- file back
+|hello
+--- file out
+|aGVsbG8K
+
+=== 15: a missing file
+status: 0
+bash-n: 0
+--- stdout
+|st=64
+--- stderr
+|base64: invalid argument nope
+|Usage:	base64 [-Ddh] [-b num] [-i in_file] [-o out_file]
+|  -b, --break       break encoded output up into lines of length num
+|  -D, -d, --decode  decode input
+|  -h, --help        display this message
+|  -i, --input       input file (default: "-" for stdin)
+|  -o, --output      output file (default: "-" for stdout)

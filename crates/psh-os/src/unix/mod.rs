@@ -323,6 +323,16 @@ impl Host for UnixHost {
     }
 
     fn kill(&self, pid: i32, sig: Signal) -> io::Result<()> {
+        // Embedded (a fake `$$`), the process and its group are the embedder's: a
+        // script must not reach them (`kill 0`, `kill -1` and the real pid included).
+        if self.pid.is_some() {
+            // SAFETY: plain syscall without pointers.
+            let own_group = unsafe { libc::getpgrp() };
+            let me = std::process::id() as i32;
+            if pid == 0 || pid == -1 || pid == me || pid == -own_group {
+                return Err(io::ErrorKind::PermissionDenied.into());
+            }
+        }
         kill(pid, sig)
     }
 

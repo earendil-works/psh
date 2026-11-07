@@ -162,6 +162,16 @@ can express neither); `pid()`; `kill()`.
   In Docker, run with `--init`: without a reaping PID 1, killed grandchildren stay
   zombies in their group and the leak check sees them.
 
+- Checked against the engine's Host v1 contract (0005 log): kept HostFuture, HostFile
+  (`&self`, Any), drop semantics, never-block, byte paths. `Host::kill` on an embedded
+  host (fake `$$`) refuses the embedder's pid, its group, `0` and `-1`. Open against the
+  contract: ENOEXEC still falls back to `/bin/sh` in the host (D1063) until the engine
+  can run such files; then the host reports it as an error instead. Bounded draining of
+  grandchildren: the engine waits for EOF as bash does (also for `$(…)`); the bound
+  belongs to whoever drains the shell's final output (psh-spec: its deadline; pi-env:
+  its window), and with part 2 externals write to OS pipes directly, so nothing is lost
+  with a dropped pump.
+
 ## Follow-ups
 - guide: `processes.md` (placement, cancel and abandonment, leak checks).
 - Engine: run files without `#!` in psh itself (bash does), then drop D1063's fallback.

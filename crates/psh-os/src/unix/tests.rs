@@ -398,3 +398,20 @@ fn kill_reaches_a_pid() {
     assert_eq!(block(|cx| p.poll_wait(cx)), ExitStatus::Signaled(15));
     assert!(h.kill(-1_000_000, 0).is_err());
 }
+
+#[test]
+fn an_embedded_host_refuses_to_signal_its_embedder() {
+    let h = UnixHost::new(UnixConfig {
+        pid: Some(99_999_999),
+        ..UnixConfig::default()
+    });
+    let me = std::process::id() as i32;
+    // SAFETY: plain syscall.
+    let group = unsafe { libc::getpgrp() };
+    for target in [0, -1, me, -group] {
+        let e = h.kill(target, 0).unwrap_err();
+        assert_eq!(e.kind(), io::ErrorKind::PermissionDenied, "{target}");
+    }
+    // A standalone host may (bash's `kill $$`).
+    assert!(host().kill(me, 0).is_ok());
+}

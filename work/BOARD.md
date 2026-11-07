@@ -6,10 +6,10 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
-| 0006 | Unix process layer (part 1 merged 46375e2) | procs | .worktrees/procs |
-| 0007 | Windows: part A merged (bad4d63, rework 6ca3d08); part B next after 0006 | windows | .worktrees/windows |
+| 0006 | Unix process layer (parts 1-2 merged a08132b; part 3: detach, OS pipes, wait/kill/jobs) | procs | .worktrees/procs |
+| 0007 | Windows: part A merged (bad4d63, rework 6ca3d08); part B in progress | windows | .worktrees/windows |
 | 0011 | WASM build and JS host | infra | .worktrees/infra |
-| 0025 | Alias expansion in the parser, syntax guide page | parser | .worktrees/parser |
+| 0027 | [[ ]], test, and a POSIX regex engine | parser | .worktrees/parser |
 | 0026 | Arrays and the rest of word expansion | engine | .worktrees/engine |
 | 0028 | Shell options, errexit and traps | shapes | .worktrees/shapes |
 | 0029 | Core shell builtins | builtins | .worktrees/builtins |
@@ -18,7 +18,6 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | depends-on | touches |
 | --- | --- | --- | --- |
-| 0027 | [[ ]], test, and a POSIX regex engine (parser agent after 0025) | 0005 ✓ | crates/psh-regex/, builtins/test.rs, cond.rs |
 
 ## Open (blocked on dependencies)
 
@@ -64,3 +63,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0023 | Arithmetic parser, bash-format printer, byte-exact sources | 35a1a89 (parser) |
 | 0005 | Minimal interpreter | e98333b (engine) |
 | 0022 | L0 leg, gate caching, hit list on the parser, deps allowlist | 342ca7a (infra) |
+| 0025 | Alias expansion in the parser, syntax guide page | 64a1c69 (parser) |

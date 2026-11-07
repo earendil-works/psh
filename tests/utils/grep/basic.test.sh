@@ -75,10 +75,10 @@ grep -b ab f; grep -bo b f
 #### -Z after file names
 ## expect: gnu (D016: BSD's -Z is decompression)
 printf 'a\n' > f; cp f g
-grep -Z a f g | od -c | sed 's/  */ /g; s/ $//'; grep -lZ a f g | od -c | sed 's/  */ /g; s/ $//'
+grep -Z a f g | cat -v; grep -lZ a f g | cat -v
 
 #### -z: NUL-terminated lines
-printf 'one\0two\0one two\0' | grep -z one | od -c | sed 's/  */ /g; s/ $//'
+printf 'one\0two\0one two\0' | grep -z one | cat -v
 
 #### stdin, -, --label
 printf 'x\n' > f
@@ -105,7 +105,7 @@ grep -E '*a' f; echo --; grep -E 'x{1' f
 #### binary files
 ## expect: gnu (D016: GNU 3.11 reports a binary match on stderr)
 printf 'text a\nbin\0ary a\n' > b; printf 'a\n' > t
-grep a b; echo "st=$?"; grep -c a b; grep -l a b; grep -a a b | od -c | sed 's/  */ /g; s/ $//'; grep -I a b t; echo "st=$?"
+grep a b; echo "st=$?"; grep -c a b; grep -l a b; grep -a a b | cat -v; grep -I a b t; echo "st=$?"
 
 #### -r: hidden files searched, .gitignore not read, ./ only when given
 ## expect: gnu (D016: GNU leaves ./ out of the implicit path)
@@ -140,20 +140,20 @@ grep -r hit d | sort; echo --; grep -R hit d | sort; echo --; grep -r hit d/link
 #### --color=always
 ## expect: gnu (D016: GNU's GREP_COLORS escapes)
 printf '1a\n2\n3a\n' > f; cp f g
-grep --color=always a f | od -c | sed 's/  */ /g; s/ $//'
-grep --color=always -n -A1 a f g | od -c | sed 's/  */ /g; s/ $//'
+grep --color=always a f | cat -v
+grep --color=always -n -A1 a f g | cat -v
 
 #### --color: -o, -c, -l and -v context
 ## expect: gnu (D016: GNU's GREP_COLORS escapes)
 printf '1a\n2\n' > f; cp f g
-grep --color=always -o a f | od -c | sed 's/  */ /g; s/ $//'; grep --color=always -c a f g | od -c | sed 's/  */ /g; s/ $//'
-grep --color=always -l a f g | od -c | sed 's/  */ /g; s/ $//'; grep --color=always -v -A1 a f | od -c | sed 's/  */ /g; s/ $//'
+grep --color=always -o a f | cat -v; grep --color=always -c a f g | cat -v
+grep --color=always -l a f g | cat -v; grep --color=always -v -A1 a f | cat -v
 
 #### GREP_COLORS
 ## expect: gnu (BSD grep has no GREP_COLORS)
 printf '1a\n2\n' > f
-GREP_COLORS='mt=1;34:fn=33:ne' grep --color=always -H a f | od -c | sed 's/  */ /g; s/ $//'
-GREP_COLORS='sl=1:cx=2' grep --color=always -A1 a f | od -c | sed 's/  */ /g; s/ $//'
+GREP_COLORS='mt=1;34:fn=33:ne' grep --color=always -H a f | cat -v
+GREP_COLORS='sl=1:cx=2' grep --color=always -A1 a f | cat -v
 
 #### --color=auto and never are plain when not a terminal
 printf 'a\n' > f

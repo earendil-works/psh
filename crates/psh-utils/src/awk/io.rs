@@ -159,12 +159,13 @@ impl RecordReader {
                         break;
                     }
                     let base = self.pos;
-                    if !self.fill(ctx).await? {
-                        break;
-                    }
+                    let more = self.fill(ctx).await?;
                     let moved = base - self.pos;
                     end -= moved;
                     searched -= moved;
+                    if !more {
+                        break;
+                    }
                 }
                 let at = searched + i;
                 let rec = self.buf[self.pos..at].to_vec();

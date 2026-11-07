@@ -1,0 +1,547 @@
+BEGIN { print "b" }	
+BEGIN { print "b" }	foo
+END { print "e" }	
+END { print "e" }	foo
+BEGIN { print "b"} END { print "e" }	
+BEGIN { print "b"} END { print "e" }	foo
+BEGIN { print "b"} $0 { print NR } END { print "e" }	foo
+BEGIN { printf "x" }; BEGIN { printf "y" }	
+	foo
+0	foo
+1	foo
+{}	foo
+0 {}	foo
+1 {}	foo
+{ print $1 }	foo
+0 { print $1 }	foo
+1 { print $1 }	foo
+$0	foo\n\nbar
+{ print $0 }	foo\n\nbar
+$1=="foo"	foo\n\nbar
+$1==42	foo\n42\nbar
+$1=="42"	foo\n42\nbar
+/foo/	foo\nx\nfood\nxfooz\nbar
+/foo/ { print NR }  /foo/	foo\nx\nfood\n
+NR==2, NR==4	1\n2\n3\n4\n5\n6\n
+\nNR==2, NR==4 { print $0 }\nNR==3, NR==5 { print NR }\n	a\nb\nc\nd\ne\nf\ng
+BEGIN {FS = "[^,]*"} {for (i=1;i<=NF;i++) print i, "<"$i">"}	x,,z
+BEGIN {FS = "[^a-z]*"} {for (i=1;i<=NF;i++) print i, "<"$i">"}	xyz
+BEGIN {FS = "[0-9]*"} {for (i=1;i<=NF;i++) print i, "<"$i">"}	xyz
+BEGIN {FS = "(abc)?"} {for (i=1;i<=NF;i++) print i, "<"$i">"}	abcdef
+BEGIN { print "x", "y" }	
+BEGIN { print OFS; OFS = ","; print "x", "y" }	
+BEGIN { print ORS; ORS = "."; print "x", "y" }	
+BEGIN { print ORS; ORS = ""; print "x", "y" }	
+{ print; print }	foo
+BEGIN { print; print }	
+BEGIN { printf "%% %d %x %c %f %s", 42, 42, 42, 42, 42 }	
+BEGIN { printf "%3d", 42 }	
+BEGIN { printf "%3s", "x" }	
+BEGIN { printf "%.1g", 42 }  # !windows-gawk	
+BEGIN { printf "%g", 12345.678 }	
+BEGIN { printf "%G", 12345.678 }	
+BEGIN { printf "%g", 0.666666666666 }	
+BEGIN { printf "%g %g", 3.14159265358979, 100000 }	
+BEGIN { printf "%d", 12, 34 }	
+BEGIN { printf "%d" }	
+BEGIN { printf "%c", 0 }	
+BEGIN { printf "%c", 127 }	
+BEGIN { printf "%c", "xyz" }	
+BEGIN { printf "%c", "" }  # !awk	
+BEGIN { printf }  # !awk !posix - doesn't error on this	
+BEGIN { printf("%%%dd", 4) }	
+BEGIN { printf "%d %i %o %u %x %X", 42, 42, 42, 42, 42, 42 }	
+BEGIN { printf "%d %i %o %u %x %X", -42, -42, -42, -42, -42, -42 }	
+BEGIN { printf "%a %A\\n", 1234.56, 1234.56 }  # !windows-gawk	
+BEGIN { if (1) print "t"; }	
+BEGIN { if (0) print "t"; }	
+BEGIN { if (1) print "t"; else print "f" }	
+BEGIN { if (0) print "t"; else print "f" }	
+BEGIN { if (1==1) print "t"; else print "f" }	
+BEGIN { if (1==2) print "t"; else print "f" }	
+BEGIN { if (1!=1) print "t"; else print "f" }	
+BEGIN { if (1!=2) print "t"; else print "f" }	
+BEGIN { if (1>2) print "t"; else print "f" }	
+BEGIN { if (2>1) print "t"; else print "f" }	
+BEGIN { if (1>2) print "t"; else print "f" }	
+BEGIN { if (2>1) print "t"; else print "f" }	
+BEGIN { if (1>=2) print "t"; else print "f" }	
+BEGIN { if (2>=1) print "t"; else print "f" }	
+BEGIN { if (1<2) print "t"; else print "f" }	
+BEGIN { if (2<1) print "t"; else print "f" }	
+BEGIN { if (1<=2) print "t"; else print "f" }	
+BEGIN { if (2<=1) print "t"; else print "f" }	
+BEGIN { if ("a"=="a") print "t"; else print "f" }	
+BEGIN { if ("a"=="b") print "t"; else print "f" }	
+BEGIN { if ("a"!="a") print "t"; else print "f" }	
+BEGIN { if ("a"!="b") print "t"; else print "f" }	
+BEGIN { if ("a">"b") print "t"; else print "f" }	
+BEGIN { if ("b">"a") print "t"; else print "f" }	
+BEGIN { if ("a">"b") print "t"; else print "f" }	
+BEGIN { if ("b">"a") print "t"; else print "f" }	
+BEGIN { if ("a">="b") print "t"; else print "f" }	
+BEGIN { if ("b">="a") print "t"; else print "f" }	
+BEGIN { if ("a"<"b") print "t"; else print "f" }	
+BEGIN { if ("b"<"a") print "t"; else print "f" }	
+BEGIN { if ("a"<="b") print "t"; else print "f" }	
+BEGIN { if ("b"<="a") print "t"; else print "f" }	
+BEGIN { for (;;) { print "x"; break } }	
+BEGIN { for (;;) { printf "%d ", i; i++; if (i>2) break; } }	
+BEGIN { for (i=5; ; ) { printf "%d ", i; i++; if (i>8) break; } }	
+BEGIN { for (i=5; ; i++) { printf "%d ", i; if (i>8) break; } }	
+BEGIN { for (i=5; i<8; i++) { printf "%d ", i } }	
+BEGIN { for (i=3; i>0; i--) { printf "%d ", i } }	
+BEGIN { for (i=3; i>=0; i--) { printf "%d ", i } }	
+BEGIN { for (i=0; i<10; i++) { if (i < 5) continue; printf "%d ", i } }	
+BEGIN { for (i=0; i<100; i++) s+=i; print s }	
+BEGIN { a[1]=1; a[2]=1; for (k in a) { s++; break } print s }	
+BEGIN { a[1]=1; a[2]=1; a[3]=1; for (k in a) { if (k==2) continue; s++ } print s }	
+function alen(a, k, n) { n=0; for (k in a) n++; return n }  BEGIN { a[1]=1; a[2]=1; print alen(a) }	
+BEGIN { a["x"]=1; for (SUBSEP in a) print SUBSEP, a[SUBSEP] }	
+BEGIN { a["x"]=1; for (NR in a) print NR, a[NR] }	
+BEGIN { while (i<3) { i++; s++; break } print s }	
+BEGIN { while (i<3) { i++; if (i==2) continue; s++ } print s }	
+BEGIN { do { i++; s++; break } while (i<3); print s }	
+BEGIN { do { i++; if (i==2) continue; s++ } while (i<3); print s }	
+BEGIN { a["x"] = 3; a["y"] = 4; for (k in a) x += a[k]; print x }	
+BEGIN { while (i < 5) { print i; i++ } }	
+BEGIN { do { print i; i++ } while (i < 5) }	
+BEGIN { for (i=0; i<10; i++); printf "x" }	
+BEGIN { s="x"; while (s=="x") { print s; s="y" } }	
+BEGIN { s="x"; while (s!="") { print s; s="" } }	
+BEGIN { s="x"; while (s) { print s; s="" } }	
+BEGIN { do { print 1 }\nwhile (0) }	
+\nBEGIN {\n\tfor (i = 0; i < 1; i++) {\n\t\tfor (j = 0; j < 1; j++) {\n\t\t\tprint i, j\n\t\t}\n\t\tbreak\n\t}\n}\n	
+\nBEGIN {\n\tfor (i = 0; i < 1; i++) {\n\t\tfor (j = 0; j < 1; j++) {\n\t\t\tprint i, j\n\t\t}\n\t\tcontinue\n\t}\n}\n	
+{ if (NR==2) next; print }	a\nb\nc
+{ if (NR==2) f(); print }  function f() { next }	a\nb\nc
+BEGIN { next }	
+END { next }	
+{ if (NR==2) nextfile; print }	a\nb\nc
+{ if (NR==2) f(); print }  function f() { nextfile }	a\nb\nc
+BEGIN { nextfile }	
+END { nextfile }	
+BEGIN { a["x"] = 3; print "x" in a, "y" in a }	
+BEGIN { a["x"] = 3; a["y"] = 4; delete a["x"]; for (k in a) print k, a[k] }	
+BEGIN { a["x"] = 3; a["y"] = 4; for (k in a) delete a[k]; for (k in a) print k, a[k] }	
+BEGIN { a["x"]; "y" in a; for (k in a) print k, a[k] }	
+BEGIN { a[] }	
+BEGIN { delete a[] }	
+BEGIN { a["x"] = 3; a["y"] = 4; delete a; for (k in a) print k, a[k] }	
+function f(a) { print "x" in a, "y" in a }  BEGIN { b["x"] = 3; f(b) }	
+BEGIN { print !42, !1, !0, !!42, !!1, !!0 }	
+BEGIN { print !42, !1, !0, !!42, !!1, !!0 }	
+BEGIN { print +4, +"3", +0, +-3, -3, - -4, -"3" }	
+BEGIN { $0="0"; print !$0 }	
+BEGIN { $0="1"; print !$0 }	
+{ print !$0 }	0\n
+{ print !$0 }	1\n
+!seen[$0]++	1\n2\n3\n2\n3\n3\n
+!seen[$0]--	1\n2\n3\n2\n3\n3\n
+BEGIN { print (1==1, 1==0, "1"==1, "1"==1.0) }	
+{ print ($0=="1", $0==1) }	1\n1.0\n+1
+{ print ($1=="1", $1==1) }	1\n1.0\n+1
+BEGIN { print (1!=1, 1!=0, "1"!=1, "1"!=1.0) }	
+{ print ($0!="1", $0!=1) }	1\n1.0\n+1
+{ print ($1!="1", $1!=1) }	1\n1.0\n+1
+BEGIN { print (0<1, 1<1, 2<1, "12"<"2") }	
+{ print ($1<2) }	1\n1.0\n+1
+BEGIN { print (0<=1, 1<=1, 2<=1, "12"<="2") }	
+{ print ($1<=2) }	1\n1.0\n+1
+BEGIN { print (0>1, 1>1, 2>1, "12">"2") }	
+{ print ($1>2) }	1\n1.0\n+1
+BEGIN { print (0>=1, 1>=1, 2>=1, "12">="2") }	
+{ print ($1>=2) }	1\n1.0\n+1
+{ print($0<2) }	10
+{ print($1<2) }	10
+{ print($1<2) }	10x
+BEGIN { $0="10"; print($0<2) }	
+BEGIN { $1="10"; print($1<2) }	
+BEGIN { $1="10x"; print($1<2) }	
+\nfunction t() { print "t"; return 2 }\nfunction f() { print "f"; return 0 }\nBEGIN {\n\tprint f() && f()\n\tprint f() && t()\n\tprint t() && f()\n\tprint t() && t()\n}\n	
+\nfunction t() { print "t"; return 2 }\nfunction f() { print "f"; return 0 }\nBEGIN {\n\tprint f() || f()\n\tprint f() || t()\n\tprint t() || f()\n\tprint t() || t()\n}\n	
+BEGIN { print 0&&0, 0&&2, 2&&0, 2&&2 }	
+BEGIN { print 0||0, 0||2, 2||0, 2||2 }	
+BEGIN { print 1+2, 1+2+3, 1+-2, -1+2, "1"+"2", 3+.14 }	
+BEGIN { print 1-2, 1-2-3, 1-+2, -1-2, "1"-"2", 3-.14 }	
+BEGIN { print 2*3, 2*3*4, 2*-3, -2*3, "2"*"3", 3*.14 }	
+BEGIN { print 2/3, 2/3/4, 2/-3, -2/3, "2"/"3", 3/.14 }  # !darwin-gawk	
+BEGIN { print 2%3, 2%3%4, 2%-3, -2%3, "2"%"3", 3%.14 }  # !darwin-gawk	
+BEGIN { print 2^3, 2^3^3, 2^-3, -2^3, "2"^"3", 3^.14 }	
+BEGIN { print 2**3, 2**3**3, 2**-3, -2**3, "2"**"3", 3**.14 }  # !posix	
+BEGIN { print 1 2, "x" "yz", 1+2 3+4 }	
+BEGIN { print "food"~/oo/, "food"~/[oO]+d/, "food"~"f", "food"~"F", "food"~0 }	
+BEGIN { print "food"!~/oo/, "food"!~/[oO]+d/, "food"!~"f", "food"!~"F", "food"!~0 }	
+BEGIN { print 1+2*3/4^5%6 7, (1+2)*3/4^5%6 "7" }	
+BEGIN { print 1/0 }	
+BEGIN { print 1%0 }	
+BEGIN { x /= 0 }	
+BEGIN { x %= 0 }	
+BEGIN { print 1, 1., .1, 1e0, -1, 1e }	
+BEGIN { print '\\"' '\\'' 'xy' "z" "'" '\\"' }	
+BEGIN { print "0\\n1\\t2\\r3\\a4\\b5\\f6\\v7\\x408\\xf" }  # !posix	
+{ print /foo/ }	food\nfoo\nxfooz\nbar\n
+/[a-/	foo
+/\\Q/	
+/=foo/	=foo
+BEGIN { RS="x" } /^a.*c$/	a\nb\nc
+BEGIN { print "-12"+0, "+12"+0, " \\t\\r\\n7foo"+0, ".5"+0, "5."+0, "+."+0 }	
+BEGIN { print "1e3"+0, "1.2e-1"+0, "1e+1"+0, "1e"+0, "1e+"+0 }	
+BEGIN { print atan2(0, 8020020000000e20G-0)}	
+BEGIN { printf "\\x0.\\x00.\\x0A\\x10\\xff\\xFF\\x41" }  # !awk !posix	
+BEGIN { printf "\\x1.\\x01.\\x0A\\x10\\xff\\xFF\\x41" }  # !posix	
+BEGIN { printf "\\0\\78\\7\\77\\777\\0 \\141 " }  # !awk	
+BEGIN { printf "\\1\\78\\7\\77\\777\\1 \\141 " }	
+BEGIN { e="x"; E="X"; print 1e, 1E }	
+BEGIN { e="x"; E="X"; print 1e1e, 1E1E }	
+BEGIN { a=2; print 1e+a, 1E+a, 1e+1, 1E+1 }	
+BEGIN { a=2; print 1e-a, 1E-a, 1e-1, 1E-1 }	
+BEGIN { print 1e+ }	
+BEGIN { print 1e- }	
+{ print /x/?"t":"f" }	x\ny\nxx\nz\n
+BEGIN { print 1?2?3:4:5, 1?0?3:4:5, 0?2?3:4:5 }	
+BEGIN { $0="0"; print ($0?1:0) }	
+{ print $0?1:0 }	0\n
+{ print $0?1:0 }	1\n
+BEGIN { $0="1"; print ($0?1:0) }	
+BEGIN { print 0?1:0, 1?1:0, ""?1:0, "0"?1:0, "1"?1:0, x?1:0 }	
+BEGIN { ARGC=1234567 }	
+\nBEGIN {\n\tprint CONVFMT, 1.2345678 ""\n\tCONVFMT = "%.3g"\n\tprint CONVFMT, 1.234567 ""\n\tCONVFMT = "%g"\n\tprint CONVFMT, 12345.678 ""\n}	
+BEGIN { CONVFMT = "%d"; print 1234.5678 "" }	
+BEGIN { CONVFMT = "%i"; print 1234.5678 "" }	
+BEGIN { CONVFMT = "%u"; print 1234.5678 "" }	
+BEGIN { CONVFMT = "%x"; print 1234.5678 "" }	
+BEGIN { CONVFMT = "%o"; print 1234.5678 "" }	
+BEGIN { CONVFMT = "%e"; print 1234.5678 "" }  # !windows-gawk	
+BEGIN { CONVFMT = "x%dy"; print 1234.5678 "" }	
+BEGIN { CONVFMT = "abc"; print 1234.5678 "" }	
+BEGIN { CONVFMT = ""; print "[" 1234.5678 "" "]" }	
+BEGIN { CONVFMT = "%%"; print 1234.5678 "" }	
+BEGIN { CONVFMT = "%z"; print 1234.5678 "" }  # !posix	
+BEGIN { CONVFMT = "%c"; print 65 "" }	
+BEGIN { CONVFMT = "%d"; a[1.5] = 1; for (k in a) print k }	
+BEGIN { FILENAME = "foo"; print FILENAME }	
+BEGIN { FILENAME = "123.0"; print (FILENAME==123) }	
+BEGIN { FNR = 123; print FNR }	
+{ print FNR, $0 }	a\nb\nc
+{ print NR, FNR } END { print NR, FNR }	a\nb\nc\n
+BEGIN { print "|" FS "|"; FS="," } { print $1, $2 }	a b\na,b\nx,,y
+BEGIN { print "|" FS "|"; FS="\\\\." } { print $1, $2 }	a b\na.b\nx..y
+BEGIN { FS="\\x1f"; RS="\\x1e"; OFS="," } { print $1, $2, $3 }  # !posix	id\x1fname\x1fage\x1e1\x1fBob "Billy" Smith\x1f42\x1e2\x1fJane\nBrown\x1f37
+BEGIN { FS="\xe2\x90\x9f"; RS="\xe2\x90\x9e"; OFS="," } { print $1, $2, $3 }  # !windows-gawk !posix	id\xe2\x90\x9fname\xe2\x90\x9fage\xe2\x90\x9e1\xe2\x90\x9fBob "Billy" Smith\xe2\x90\x9f42\xe2\x90\x9e2\xe2\x90\x9fJane\nBrown\xe2\x90\x9f37
+BEGIN { FS="\\\\" } { print $1, $2 }	a\\b
+BEGIN { RS="x"; FS=",.*," } { for (i=1; i<=NF; i++) print $i }	one,\n,two
+BEGIN { FS="x"; RS=",.*," } { print }  # !posix	one,\n,two
+{ print NF }	\na\nc d\ne f g
+BEGIN { NR = 123; print NR }	
+{ print NR, $0 }	a\nb\nc
+\nBEGIN {\n\tprint OFMT, 1.2345678\n\tOFMT = "%.3g"\n\tprint OFMT, 1.234567\n\tOFMT = "%G"\n\tprint OFMT, 0.666666666666\n}	
+BEGIN { OFMT = "%e"; print OFMT, 12345.678 }  # !windows-gawk	
+BEGIN { OFMT = "%d"; print 1234.5678 }	
+BEGIN { OFMT = "%x"; print 1234.5678 }	
+BEGIN { OFMT = "abc"; print 1234.5678 }	
+BEGIN { OFMT = "%c"; print 65 }	
+BEGIN { OFMT = "%s"; print 1234.5678 }	
+BEGIN { OFMT = "%s"; CONVFMT = "%d"; print 1234.5678 }	
+BEGIN { print RSTART, RLENGTH; RSTART=5; RLENGTH=42; print RSTART, RLENGTH; } 	
+BEGIN { print RS }	
+BEGIN { print RS; RS="|"; print RS }  { print }	a b|c d|
+BEGIN { RS=""; FS="\\n" }  { printf "%d (%d):\\n", NR, NF; for (i=1; i<=NF; i++) print $i }	a\n\nb\nc
+BEGIN { RS=""; FS="\\n" }  { printf "%d (%d):\\n", NR, NF; for (i=1; i<=NF; i++) print $i }	1\n2\n\na\nb
+BEGIN { RS=""; FS="\\n" }  { printf "%d (%d):\\n", NR, NF; for (i=1; i<=NF; i++) print $i }	a b\nc d\n\ne f\n\n\n  \n\n\ng h\n\n\n
+BEGIN { RS=""; FS="\\n" }  { printf "%d (%d):\\n", NR, NF; for (i=1; i<=NF; i++) print $i }	\n\na b\n\nc d\n
+BEGIN { RS=""; FS="X" }  { printf "%d (%d):\\n", NR, NF; for (i=1; i<=NF; i++) printf "%s|", $i }	aXb\ncXd\n\neXf\n\n\n  \n\n\ngXh\n\n\n
+BEGIN { RS = "" }  { print "got", $0 }	\n\n\n\n
+BEGIN { RS="\\n" }  { print }	a\n\nb\nc
+BEGIN { RS="\xc3\xb6" }  { print }  # !windows-gawk	1\xc3\xb6two\xc3\xb6three
+BEGIN { RS="\\\\.+" }  { print }  # !posix	1.two..three...4.
+BEGIN { RS = "\\n|( *[[:upper:]]+ *)" } { print "Record =", $0,"and RT = [" RT "]" }  # !posix	record 1 AAAA record 2 BBBB record 3\n
+BEGIN { RS = "\\n|( *[[:upper:]]+ *)" } { print "Record =", $0,"and RT = [" RT "]" }  # !posix	record 1 AAAA record 2 BBBB record 3
+BEGIN { RS=".." } { print $0 RT }  # !posix	foo bar bazz
+BEGIN { RS="\\\\.+" } NR==2 { RS="x+" } { print NR, $0 }  # !posix !awk	1.2..3xxx4x5
+\n# Regression test for https://github.com/benhoyt/goawk/issues/143\nBEGIN { RS=".{9}" }\nNR==1 { $0=substr(RT,1,8); RS=substr(RT,9,1) }\n{ print $0 }\n# !posix !awk\n	UNA:+,? 'UNB+UNOC:3+4042805000102:14+4016001000655:14+201231:0206+EC33218279A++TL'UNH+1+MSCONS:D:04B:UN:2.3'BGM+7+EC33218279A-1+9'DTM+137:202012310206:203'RFF+Z13:13018'NAD+MS+4042805000102::9'NAD+MR+4016001000655::9'UNS+D'NAD+DP'LOC+172+DE00108108359V0000000000000088446'DTM+163:202012300000?+01:303
+BEGIN { RT="foo"; print RT }	
+\nBEGIN {\n\tprint SUBSEP\n\ta[1, 2] = "onetwo"\n\tprint a[1, 2]\n\tfor (k in a) {\n\t\tprint k, a[k]\n\t}\n\tdelete a[1, 2]\n\tSUBSEP = "|"\n\tprint SUBSEP\n\ta[1, 2] = "onetwo"\n\tprint a[1, 2]\n\tfor (k in a) {\n\t\tprint k, a[k]\n\t}\n}	
+{ FS=","; print $1; print $2 }	a,b c
+{ FS="X+"; print $1; print $2 }	aXXb c
+BEGIN { FS="," } { print $1; print $2 }	a,b c
+BEGIN { FS="X+" } { print $1; print $2 }	aXXb c
+BEGIN { print "NF", NF, "NR", NR, "FNR", FNR, "RSTART", RSTART, "RLENGTH", RLENGTH, "ARGC>0", (ARGC>0) }	
+BEGIN { NF = "x"; print NF } { print NF }	a\na b c\n
+BEGIN { NF = "3.14x"; print NF } { print NF }	a\na b c\n
+BEGIN { NR = "x"; print NR } { print NR }	a\nb\n
+BEGIN { FNR = "x"; print FNR } { print FNR }	a\nb\n
+BEGIN { RSTART = "x"; print RSTART; match("foo", /o/); print RSTART }	
+BEGIN { RSTART = "3.14x"; print RSTART; match("foo", /o/); print RSTART }	
+BEGIN { RLENGTH = "x"; print RLENGTH; match("foo", /o+/); print RLENGTH }	
+BEGIN { RLENGTH = "3.14x"; print RLENGTH; match("foo", /o+/); print RLENGTH }	
+BEGIN { ARGC = "x"; print ARGC }	
+BEGIN { ARGC = "3.14x"; print ARGC }	
+{ print NF; NF=1; $2="two"; print $0, NF }	\n
+{ print NF; NF=2; $2="two"; print $0, NF}	\n
+{ print NF; NF=3; $2="two"; print $0, NF}	a b c\n
+{ print; print $1, $3, $NF }	a b c d e
+{ print $1,$3; $2="x"; print; print $2 }	a b c
+{ print; $0="x y z"; print; print $1, $3 }	a b c
+{ print $1^2 }	10
+{ print $-1 }	a\nb c\nd e f\n
+{ print $-2 }	a\nb c\nd e f\n
+{ print $-3 }	a\nb c\nd e f\n
+{ $-1="x"; print }	a\nb c\nd e f\n
+{ $-2="y"; print }	a\nb c\nd e f\n
+{ $-3="z"; print }	a\nb c\nd e f\n
+{ NF=-1; }  # !awk - awk allows setting negative NF	x
+{ NF=1234567; }	x
+BEGIN { $1234567=1 }	
+0 in FS  # !awk - doesn't flag this as an error	x
+{ $$0++; print $0 }	2 3 4
+BEGIN { $0="3 4 5 6 7 8 9"; a=3; print $$a++++; print }	
+BEGIN { n = split("12345", a, ""); i = 1; a[a[a[1]++]++]++; for (i=1;i<=n;i++) printf a[i]; print }	
+\nBEGIN {\n    a[1] = "ciao"\n    a[2] = "."\n    a[3] = ".."\n    print gsub("ciao", "hello", a[gsub(".", ",", a[gsub(".", ",", a[f()])])])\n    print a[1]\n    print a[2]\n    print a[3]\n}\n\nfunction f() {\n    print "f"\n    return 3\n}\n	
+{ NF=1; $1="x"; print $0; print NF }	a
+{ NF=1; $1="x"; print $0; print NF }	a b
+{ NF=1; $1="x"; print $0; print NF }	a b c
+{ NF=1; $2="x"; print $0; print NF }	a
+{ NF=1; $2="x"; print $0; print NF }	a b
+{ NF=1; $2="x"; print $0; print NF }	a b c
+{ NF=1; $3="x"; print $0; print NF }	a
+{ NF=1; $3="x"; print $0; print NF }  # !awk - awk differs from gawk (but gawk seems right)	a b
+{ NF=1; $3="x"; print $0; print NF }  # !awk - awk differs from gawk (but gawk seems right)	a b c
+{ NF=2; $1="x"; print $0; print NF }	a
+{ NF=2; $1="x"; print $0; print NF }	a b
+{ NF=2; $1="x"; print $0; print NF }	a b c
+{ NF=2; $2="x"; print $0; print NF }	a
+{ NF=2; $2="x"; print $0; print NF }	a b
+{ NF=2; $2="x"; print $0; print NF }	a b c
+{ NF=2; $3="x"; print $0; print NF }	a
+{ NF=2; $3="x"; print $0; print NF }	a b
+{ NF=2; $3="x"; print $0; print NF }	a b c
+{ NF=3; $1="x"; print $0; print NF }  # !awk - segmentation fault	a
+{ NF=3; $1="x"; print $0; print NF }  # !awk - segmentation fault	a b
+{ NF=3; $1="x"; print $0; print NF }	a b c
+{ NF=3; $2="x"; print $0; print NF }  # !awk - segmentation fault	a
+{ NF=3; $2="x"; print $0; print NF }  # !awk - segmentation fault	a b
+{ NF=3; $2="x"; print $0; print NF }	a b c
+{ NF=3; $3="x"; print $0; print NF }	a
+{ NF=3; $3="x"; print $0; print NF }	a b
+{ NF=3; $3="x"; print $0; print NF }	a b c
+BEGIN { print x; x = 4; print x; }	
+BEGIN { a["foo"]=1; b[2]="x"; k="foo"; print a[k], b["2"] }	
+BEGIN { s+=5; print s; s-=2; print s; s-=s; print s }	
+BEGIN { x=2; x*=x; print x; x*=3; print x }	
+BEGIN { x=6; x/=3; print x; x/=x; print x; x/=.6; print x }	
+BEGIN { x=12; x%=5; print x }	
+BEGIN { x=2; x^=5; print x; x^=0.5; print x }	
+BEGIN { x=2; x**=5; print x; x**=0.5; print x }  # !posix	
+{ $2+=10; print; $3/=2; print }	1 2 3
+BEGIN { a[2] += 1; a["2"] *= 3; print a[2] }	
+function inc(x, n) { x += n; return x }  BEGIN { print inc(3, 2) }	
+function inca(a, k, n) { a[k] += n }  BEGIN { b["x"]=7; inca(b, "x", 2); print b["x"] }	
+BEGIN { NF += 3; print NF }	
+BEGIN { x=1; x += x+=3; print x }	
+BEGIN { if (1&&x=2) print "t", x }	
+BEGIN { if (0||x+=2) print "t", x }	
+BEGIN { print(1&&x=2, 1||x=2, 1~x=2, 1!~x=2, 1==x=2, 1!=x=2, 1<x=2, 1<=x=2, 1>x=2, 1>=x=2); print x }	
+BEGIN { print a[f()]+=g(); print a["x"] }  function f() { print "f"; return "x" }  function g() { print "g"; return 1 }	
+{ print $f()+=g(); print }  function f() { print "f"; return 2 }  function g() { print "g"; return 1 }	1 2 3
+BEGIN { x += x++; print x }	
+BEGIN { print(x += x++); print x }	
+BEGIN { print x++; print x }	
+BEGIN { print x; print x++; print ++x; print x }	
+BEGIN { print x; print x--; print --x; print x }	
+BEGIN { s++; s++; print s }	
+BEGIN { y=" "; --x[y = y y]; print length(y) }	
+BEGIN { x[y++]++; print y }	
+BEGIN { x[y++] += 3; print y }	
+BEGIN { $(y++)++; print y }	
+BEGIN { print "s" ++n; print "s" --n }	
+function inc(x) { x++; return x }  BEGIN { print inc(3) }	
+function inca(a, k) { a[k]++ }  BEGIN { b["x"]=7; inca(b, "x"); print b["x"] }	
+BEGIN { NF++; print NF }	
+{ print $++n; print $--n }	x y
+{ print $++a }	1 2 3\na b c\nd e f\n
+BEGIN{ a = 3; b = 7; c = (a)++b; print a, b, c }	
+BEGIN { print ++a[f()]; print a["x"] }  function f() { print "f"; return "x" }	
+BEGIN { print a[f()]++; print a["x"] }  function f() { print "f"; return "x" }	
+{ print ++$f(); print }  function f() { print "f"; return 2 }	1 2 3
+{ print $f()++; print }  function f() { print "f"; return 2 }	1 2 3
+BEGIN { print sin(0), sin(0.5), sin(1), sin(-1) }	
+BEGIN { print cos(0), cos(0.5), cos(1), cos(-1) }	
+BEGIN { print exp(0), exp(0.5), exp(1), exp(-1) }	
+BEGIN { print log(0), log(0.5), log(1) }	
+BEGIN { print sqrt(0), sqrt(2), sqrt(4) }	
+BEGIN { print int(3.5), int("1.9"), int(4), int(-3.6), int("x"), int("") }	
+BEGIN { print match("food", "foo"), RSTART, RLENGTH }	
+BEGIN { print match("x food y", "fo"), RSTART, RLENGTH }	
+BEGIN { print match("x food y", "fox"), RSTART, RLENGTH }	
+BEGIN { print match("x food y", /[fod]+/), RSTART, RLENGTH }	
+BEGIN { print match("a\\nb\\nc", /^a.*c$/), RSTART, RLENGTH }	
+{ print length, length(), length("buzz"), length("") }	foo bar
+{ a[$0]++ } END { print length(a) }  # !posix	a\nc\nb\na\na\nb
+BEGIN { a[1]=1; a[2]=2; a[3]=3; print len(a) } function len(x) { return length(x) }  # !posix	
+BEGIN { print index("foo", "f"), index("foo0", 0), index("foo", "o"), index("foo", "x") }	
+BEGIN { print atan2(1, 0.5), atan2(-1, 0) }	
+BEGIN { print sprintf("%3d", 42) }	
+BEGIN { print sprintf("%d", 12, 34) }	
+BEGIN { print sprintf("%d") }	
+BEGIN { print sprintf("%d", 12, 34) }	
+BEGIN { print sprintf("% 5d", 42) }	
+BEGIN { print sprintf("%*s %.*s", 5, "abc", 5, "abcdefghi") }	
+BEGIN { print substr("food", 1) }	
+BEGIN { print substr("food", 1, 2) }	
+BEGIN { print substr("food", 1, 4) }	
+BEGIN { print substr("food", 1, 8) }	
+BEGIN { print substr("food", 2) }	
+BEGIN { print substr("food", 2, 2) }	
+BEGIN { print substr("food", 2, 3) }	
+BEGIN { print substr("food", 2, 8) }	
+BEGIN { print substr("food", 0, 8) }	
+BEGIN { print substr("food", -1, 8) }	
+BEGIN { print substr("food", 5) }	
+BEGIN { print substr("food", -1) }	
+BEGIN { print substr("food", 5, 8) }	
+BEGIN { print substr("food", 2, -3), substr("f\xc3\xb6\xc3\xb6d", 2, -3) }	
+BEGIN { n = split("", a); for (i=1; i<=n; i++) print a[i] }	
+BEGIN { n = split("", a, "."); for (i=1; i<=n; i++) print a[i] }	
+BEGIN { n = split("ab c d ", a); for (i=1; i<=n; i++) print a[i] }	
+BEGIN { n = split("ab,c,d,", a, ","); for (i=1; i<=n; i++) print a[i] }	
+BEGIN { n = split("ab,c.d,", a, /[,.]/); for (i=1; i<=n; i++) print a[i] }	
+BEGIN { n = split("a b\\tc", a, / /); print n; for (i=1; i<=n; i++) print a[i] }	
+BEGIN { n = split("1 2", a); print (n, a[1], a[2], a[1]==1, a[2]==2) }	
+BEGIN { x = "1.2.3"; print sub(/\\./, ",", x); print x }	
+BEGIN { x = "1.2.3"; print sub(/\\./, ",\\\\", x); print x }	
+BEGIN { a["x"] = "1.2.3"; print sub(/\\./, ",", a[f()]); print a["x"] }  function f() { print "f"; return "x" }	
+{ print sub(/\\./, ",", $f()); print }  function f() { print "f"; return 2 }	x 1.2.3 y
+{ print sub(/\\./, ","); print $0 }	1.2.3
+BEGIN { x = "1.2.3"; print gsub(/\\./, ",", x); print x }	
+{ print gsub(/\\./, ","); print $0 }	1.2.3
+{ print gsub(/[0-9]/, "(&)"); print $0 }	0123x. 42y
+{ print gsub(/[0-9]+/, "(&)"); print $0 }	0123x. 42y
+{ print gsub(/[0-9]/, "\\\\&"); print $0 }	0123x. 42y
+{ print gsub(/[0-9]/, "\\\\z"); print $0 }	0123x. 42y
+BEGIN { s = "#!a"; sub(/(#|#!)/, "", s); print s }	
+BEGIN { print tolower("Foo BaR") }	
+BEGIN { print toupper("Foo BaR") }	
+\nBEGIN {\n    srand()\n\tsrand(1)\n\ta = rand(); b = rand(); c = rand()\n\tsrand(1)\n\tx = rand(); y = rand(); z = rand()\n\tprint (a==b, b==c, x==y, y==z)\n\tprint (a==x, b==y, c==z)\n}\n	
+BEGIN { s = srand(srand()); print (s > 1700000000) }	
+\nBEGIN {\n\tfor (i = 0; i < 1000; i++) {\n\t\tif (rand() < 0.5) n++\n\t}\n\tprint (n>400)\n}\n	
+BEGIN { print system("echo foo"); print system("echo bar") }  # !fuzz	
+BEGIN { print system("exit 42") }  # !fuzz !posix	
+BEGIN { system("cat") }	foo\nbar
+BEGIN { print system("exec /bin/kill -9 $$") } # !awk !posix !windows	
+BEGIN { print 0?"t":"f" }	
+BEGIN { print 1?"t":"f" }	
+BEGIN { print (1+2)?"t":"f" }	
+BEGIN { print (1+2?"t":"f") }	
+BEGIN { print(1 ? x="t" : "f"); print x; }	
+\nfunction f(loc) {\n\tglob += 1\n\tloc += 1\n\tloc = loc * 2\n\tprint glob, loc\n}\nBEGIN {\n\tglob = 1\n\tloc = 42\n\tf(3)\n\tprint loc\n\tf(4)\n\tprint loc\n}\n	
+\nfunction set(a, x, v) { a[x] = v }\nfunction get(a, x) { return a[x] }\nfunction get2(x, a) { return a[x] }\nfunction get3(x, a, b) { b[0]; return a[x] }\nBEGIN {\n\ta["x"] = 1\n\tset(b, "y", 2)\n\tfor (k in a) print k, a[k]\n\tprint "---"\n\tfor (k in b) print k, b[k]\n\tprint "---"\n\tprint get(a, "x"), get(b, "y")\n\tprint get2("x", a), get2("y", b)\n\tprint get3("x", a), get2("y", b)\n}\n	
+\nfunction fib(n) {\n\treturn n < 3 ? 1 : fib(n-2) + fib(n-1)\n}\nBEGIN {\n\tfor (i = 1; i <= 7; i++) {\n\t\tprintf "%d ", fib(i)\n\t}\n}\n	
+\nfunction f(a, x) { return a[x] }\nfunction g(b, y) { f(b, y) }\nBEGIN { c[1]=2; print f(c, 1); print g(c, 1) }\n	
+\nfunction g(b, y) { return f(b, y) }\nfunction f(a, x) { return a[x] }\nBEGIN { c[1]=2; print f(c, 1); print g(c, 1) }\n	
+\nfunction h(b, y) { g(b, y) }\nfunction g(b, y) { f(b, y) }\nfunction f(a, x) { return a[x] }\nBEGIN { c[1]=2; print f(c, 1); print g(c, 1) }\n	
+\nfunction h(b, y) { return g(b, y) }\nfunction g(b, y) { return f(b, y) }\nfunction f(a, x) { return a[x] }\nBEGIN { c[1]=2; print f(c, 1); print g(c, 1); print h(c, 1) }\n	
+\nfunction get(a, x) { return a[x] }\nBEGIN { a[1]=2; print get(a, x); print get(1, 2); }\n# !awk - awk doesn't detect this\n	
+\nfunction early() {\n\tprint "x"\n\treturn\n\tprint "y"\n}\nBEGIN { early() }\n	
+BEGIN { return }	
+function f() { printf "x" }; BEGIN { f() } 	
+BEGIN { arr[0]; f(arr) } function f(a) { printf "x" }	
+BEGIN { for (i=0; i<1001; i++) f(); print x }  function f() { x++ }	
+\nfunction bar(y) { return y[1] }\nfunction foo() { return bar(x) }\nBEGIN { x[1] = 42; print foo() }\n	
+\nfunction f1(x) { }\nfunction f2(x, y) { return x[y] }\nBEGIN { a[1]=2; f1(a); print f2(a, 1) }\n	
+BEGIN { arr[0]; f(arr) } function f(a) { print "x" }	
+function add(a, b) { return a+b }  BEGIN { print add(1, 2), add(1), add() }	
+function f1(A) {}  function f2(x, A) { x[0]; f1(a); f2(a) }	
+BEGIN { a[x]; a=42 }	
+BEGIN { s=42; s[x] }	
+function get(a, k) { return a[k] }  BEGIN { a = 42; print get(a, 1); }  # !awk - doesn't error in awk	
+function get(a, k) { return a+k } BEGIN { a[42]; print get(a, 1); }	
+{ f(z) }  function f(x) { print NR }	abc
+function f(x) { 0 in x }  BEGIN { f(FS) }  # !awk	
+\nfunction foo(x) { print "foo", x }\nfunction bar(foo) { print "bar", foo }\nBEGIN { foo(5); bar(10) }\n# !posix\n	
+\nfunction foo(foo) { print "foo", foo }\nfunction bar(foo) { print "bar", foo }\nBEGIN { foo(5); bar(10) }\n	
+function foo() { print foo }  BEGIN { foo() }	
+function f(x) { print x, x(); }  BEGIN { f() }	
+# mutually recursive functions\nfunction f(n) { if (!n) return; print "f(" n ")"; g(n-1) }\nfunction g(n) { if (!n) return; print "g(" n ")"; f(n-1) }\nBEGIN { f(4) }\n	
+\nfunction f1(a) { f2(a) }\nfunction f2(b) { f3(b) }\nfunction f3(c) { f4(c) }\nfunction f4(d) { f5(d) }\nfunction f5(i) { i[1]=42 }\nBEGIN { x[1]=3; f5(x); print x[1] }\n	
+\nfunction f1(a) { f2(a) }\nfunction f2(b) { f3(b) }\nfunction f5(i) { i[1]++ }\nfunction f4(d) { f5(d) }\nfunction f3(c) { f4(c) }\nBEGIN { x[1]=3; f5(x); print x[1] }\n	
+\nfunction f1(a) { if (0) f5(z1); f2(a) }\nfunction f2(b) { if (0) f4(z2); f3(b) }\nfunction f3(c) { if (0) f3(z3); f4(c) }\nfunction f4(d) { if (0) f2(z4); f5(d) }\nfunction f5(i) { if (0) f1(z5); i[1]=42 }\nBEGIN { x[1]=3; f5(x); print x[1] }\n	
+BEGIN { getline x; print x }	foo
+function f(x) { getline x; print x }  BEGIN { f(); print x }	foo
+BEGIN { getline SUBSEP; print SUBSEP }	foo
+BEGIN { getline a[1]; print a[1] }	foo
+BEGIN { getline $1; print $1 }	foo
+BEGIN { "echo foo" | getline a[1]; print a[1] }	
+BEGIN { "echo foo" | getline $1; print $1 }	
+BEGIN { print "foo" |"sort"; print "bar" |"sort" }  # !fuzz	
+BEGIN { "cat" | getline; print }  # !fuzz	bar
+BEGIN { print getline x < "/no/such/file" }  # !fuzz	
+BEGIN { print getline "z"; print $0 }	foo
+BEGIN { print getline x+1; print x }	foo
+BEGIN { print getline (x+1); print $0 }	foo
+BEGIN { print getline foo(); print $0 } function foo() { print "z" }	foo
+BEGIN { print("echo foo" | getline x+1); print x }	
+BEGIN { print("echo foo" | getline $0+1); print }	
+BEGIN { print("echo foo" | getline ($0+1)); print }	
+BEGIN { print("echo foo" | getline foo()); print } function foo() { print "z" }	
+BEGIN {\n\tprint "foo" >"out"\n\tprint close("out")\n\tprint "bar" >"out"\n\tprint close("out")\n\tgetline <"out"\n\tprint $0\n\tprint close("out")\n\tprint close("out")\n}	
+BEGIN {\n\tprint "foo" >"out"\n\tprint "bar" >"out"\n\tprint close("out")\n\tgetline <"out"\n\tprint $0\n\tprint close("out")\n\tgetline <"out"\n\tprint $0\n\tprint close("out")\n\tprint close("out")\n}	
+BEGIN { print close("nothing") }	
+BEGIN {\n\tprint "foo">"out"\n\tclose("out")\n\tprint "bar">>"out"\n\tclose("out")\n\tgetline <"out"\n\tprint $0\n\tgetline <"out"\n\tprint $0\n}	
+BEGIN { print "x" | "cat"; close("cat"); print "y" }	
+BEGIN { getline; print($0==0) }	0.0
+BEGIN { getline x; print(x==0) }	0.0
+BEGIN { "echo 0.0" | getline; print($0==0) }	
+BEGIN { "echo 0.0" | getline x; print(x==0) }	
+BEGIN { cmd="read FOO; exit 9"; print "" |cmd; print close(cmd) } # !awk !posix !windows-gawk	
+BEGIN { cmd="read FOO; exec /bin/kill -9 $$"; print "" |cmd; print close(cmd) } # !awk !posix !windows	
+BEGIN { cmd="exit 9"; cmd |getline; print close(cmd) } # !awk !posix	
+BEGIN { cmd="exec /bin/kill -9 $$"; cmd |getline; print close(cmd) } # !awk !posix !windows	
+BEGIN { print getline x < "-"; print x }	a\nb\n
+{ print $0; print getline x <"-"; print x }	one\ntwo\n
+BEGIN { print "x" >"-"; print "y" >"-" }	
+BEGIN { print fflush(); print fflush("") }	
+BEGIN { print "x"; print fflush(); print "y"; print fflush("") }	
+BEGIN { print "x" >"out"; print fflush("out"); print "y"; print fflush("") }  # !fuzz	
+BEGIN { print "x" > "out" }  # !fuzz	
+BEGIN { printf "x" > "out" }  # !fuzz	
+BEGIN { print("x" > "out") }	
+BEGIN { printf("x" > "out") }	
+function f(){} ; 0	
+{}             ; 0	
+1              ; 0	
+function f(){} ;  	
+{}             ;  	
+1              ;  	
+BEGIN {;}	
+BEGIN { while (0) {;;} }	
+BEGIN { if (1) printf "x"; else printf "y" }	
+BEGIN { printf "x"; { printf "y"; printf "z" } }	
+BEGIN { print 1,\\\n 2 }	
+BEGIN { print 1,\\\x0d\n 2 }	
+{ $1 = substr($1, 1, 3) print $1 }	
+BEGIN { 1 + 1 - | }	
+BEGIN { | }	
+BEGIN { f() }	
+function f() {} function f() {} BEGIN { }	
+BEGIN { print (1,2),(3,4) }	
+BEGIN { print (1,2,(3,4),(5,6)) }	
+BEGIN { print 1,\\2 }	
+BEGIN { print . }	
+BEGIN { print "foo }	
+BEGIN { print "foo\n"}	
+/foo	
+/foo\n	
+BEGIN { print 1&*2 }	
+BEGIN { ` }	
+BEGIN { ++3 }	
+BEGIN { ($i)++ }	
+BEGIN { rand() = 1 }	
+BEGIN { 1 && rand()=1 }	
+{ break }	
+{ continue }	
+{ a[] }	
+{ print $1<$2 }	1_0 2
+BEGIN { RS=";" } { print ($0 == 1), $0+0 }	 \t\n\x0b\x0c\x0d1 \t\n\x0b\x0c\x0d
+BEGIN { RS=";" } { print ($0 == 1), $0+0 }	\xc2\xa01
+BEGIN { RS=";" } { print ($0 == 1), $0+0 }	1\xc2\xa0

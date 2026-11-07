@@ -84,6 +84,7 @@ pub struct Interp<'c, 'v> {
 
     // The record.
     line: S,
+    line_is_str: bool,
     fields: Vec<Value>,
     fields_ok: bool,
     nf: usize,
@@ -107,6 +108,9 @@ pub struct Interp<'c, 'v> {
     rstart: f64,
     rlength: f64,
     pub argc: f64,
+    /// What the program assigned to NR, FNR, RSTART, RLENGTH, ARGC or NF, until awk
+    /// changes the variable itself: `NR = "x"; print NR` prints `x`.
+    assigned: [Option<Value>; 6],
 
     // Input and output.
     main: Option<RecordReader>,
@@ -149,6 +153,7 @@ impl<'c, 'v> Interp<'c, 'v> {
             for_in: Vec::new(),
             steps: 0,
             line: s(b""),
+            line_is_str: false,
             fields: Vec::new(),
             fields_ok: true,
             nf: 0,
@@ -167,8 +172,9 @@ impl<'c, 'v> Interp<'c, 'v> {
             ofmt: s(b"%.6g"),
             filename: Value::Uninit,
             rstart: 0.0,
-            rlength: -1.0,
+            rlength: 0.0,
             argc: 0.0,
+            assigned: Default::default(),
             main: None,
             argv_index: 1,
             had_files: false,
@@ -199,7 +205,14 @@ impl<'c, 'v> Interp<'c, 'v> {
             printf::format_float(&mut out, &printf::Spec::default(), b'g', n);
             return Rc::from(out);
         }
-        let to_str = |v: &Value| self.plain_str(v);
+        // `%s` in OFMT converts with CONVFMT; in CONVFMT itself it would recurse, and
+        // gives "" as in gawk.
+        let in_convfmt = Rc::ptr_eq(fmt, &self.convfmt) || **fmt == *self.convfmt;
+        let to_str = |v: &Value| match v {
+            Value::Num(x) if !in_convfmt => self.num_to_str(*x, &self.convfmt),
+            Value::Num(_) => s(b""),
+            _ => self.plain_str(v),
+        };
         let env = Env {
             utf8: self.utf8,
             to_str: &to_str,
@@ -284,8 +297,11 @@ impl<'c, 'v> Interp<'c, 'v> {
 
     // ---- Fields and the record.
 
+    /// A new record from input ($0 a strnum).
     pub fn set_line(&mut self, line: &[u8]) {
         self.line = s(line);
+        self.line_is_str = false;
+        self.assigned[5] = None;
         self.fields_ok = false;
         self.record_fs = self.fs_split.clone();
     }
@@ -313,10 +329,19 @@ impl<'c, 'v> Interp<'c, 'v> {
         }
         let i = i as usize;
         if i == 0 {
-            return Ok(Value::StrNum(self.line.clone()));
+            return Ok(if self.line_is_str {
+                Value::Str(self.line.clone())
+            } else {
+                Value::StrNum(self.line.clone())
+            });
         }
         self.ensure_fields();
-        Ok(self.fields.get(i - 1).cloned().unwrap_or(Value::Uninit))
+        // A field past NF is "" (a string: `$9 == 0` is false, as in gawk).
+        Ok(self
+            .fields
+            .get(i - 1)
+            .cloned()
+            .unwrap_or(Value::Str(s(b""))))
     }
 
     fn set_field(&mut self, i: f64, v: Value) -> R<()> {
@@ -330,6 +355,8 @@ impl<'c, 'v> Interp<'c, 'v> {
         if i == 0 {
             let line = self.to_str(&v);
             self.set_line(&line);
+            // An assigned record is a string ($0 = "0" is true).
+            self.line_is_str = true;
             return Ok(());
         }
         self.ensure_fields();
@@ -355,6 +382,8 @@ impl<'c, 'v> Interp<'c, 'v> {
             line.extend_from_slice(&self.to_str(f));
         }
         self.line = Rc::from(line);
+        self.line_is_str = true;
+        self.assigned[5] = None;
     }
 
     fn set_nf(&mut self, n: f64) -> R<()> {
@@ -376,6 +405,13 @@ impl<'c, 'v> Interp<'c, 'v> {
 
     fn get_special(&mut self, sp: Special) -> Value {
         use Special::*;
+        if let Some(i) = assigned_slot(sp)
+            && let Some(v) = &self.assigned[i]
+        {
+            if sp != Nf || self.fields_ok {
+                return v.clone();
+            }
+        }
         match sp {
             Nf => {
                 self.ensure_fields();
@@ -400,6 +436,7 @@ impl<'c, 'v> Interp<'c, 'v> {
 
     pub fn set_special(&mut self, sp: Special, v: Value) -> R<()> {
         use Special::*;
+        let keep = v.clone();
         match sp {
             Nf => self.set_nf(v.num())?,
             Nr => self.nr = v.num().trunc(),
@@ -424,6 +461,9 @@ impl<'c, 'v> Interp<'c, 'v> {
             }
             Rt => self.rt = self.to_str(&v),
             Subsep => self.subsep = self.to_str(&v),
+        }
+        if let Some(i) = assigned_slot(sp) {
+            self.assigned[i] = Some(keep);
         }
         Ok(())
     }
@@ -845,6 +885,8 @@ impl<'c, 'v> Interp<'c, 'v> {
                     let start = match re.exec(&text, ExecOptions::default()) {
                         Some(caps) => {
                             let (s0, e0) = caps[0].unwrap();
+                            self.assigned[2] = None;
+                            self.assigned[3] = None;
                             self.rstart = self.char_pos(&text, s0) as f64 + 1.0;
                             self.rlength = self.char_pos(&text[s0..], e0 - s0) as f64;
                             let mut arr = arr.borrow_mut();
@@ -866,6 +908,8 @@ impl<'c, 'v> Interp<'c, 'v> {
                             self.rstart
                         }
                         None => {
+                            self.assigned[2] = None;
+                            self.assigned[3] = None;
                             self.rstart = 0.0;
                             self.rlength = -1.0;
                             0.0
@@ -1123,7 +1167,9 @@ impl<'c, 'v> Interp<'c, 'v> {
                 Ok(Some((rec, rt))) => {
                     self.rt = Rc::from(rt);
                     self.nr += 1.0;
+                    self.assigned[0] = None;
                     self.fnr += 1.0;
+                    self.assigned[1] = None;
                     return Ok(Some(rec));
                 }
                 Ok(None) => self.main = None,
@@ -1153,6 +1199,7 @@ impl<'c, 'v> Interp<'c, 'v> {
                 self.main = Some(RecordReader::new(Src::Stdin));
                 self.filename = Value::Uninit;
                 self.fnr = 0.0;
+                self.assigned[1] = None;
                 return Ok(true);
             }
             let k = self.argv_index.to_string();
@@ -1173,6 +1220,7 @@ impl<'c, 'v> Interp<'c, 'v> {
             }
             self.had_files = true;
             self.fnr = 0.0;
+            self.assigned[1] = None;
             self.filename = Value::StrNum(arg.clone());
             if &*arg == b"-" || &*arg == b"/dev/stdin" {
                 self.main = Some(RecordReader::new(Src::Stdin));
@@ -1278,6 +1326,7 @@ impl<'c, 'v> Interp<'c, 'v> {
                         self.rt = Rc::from(rt);
                         if cmd {
                             self.nr += 1.0;
+                            self.assigned[0] = None;
                         }
                         Some(rec)
                     }
@@ -1465,7 +1514,7 @@ impl<'c, 'v> Interp<'c, 'v> {
                 let hay = self.to_str(&args[0]);
                 let needle = self.to_str(&args[1]);
                 let pos = if needle.is_empty() {
-                    0
+                    1
                 } else {
                     hay.windows(needle.len())
                         .position(|w| w == &*needle)
@@ -1512,10 +1561,14 @@ impl<'c, 'v> Interp<'c, 'v> {
                 let re = self.regex_of(&args[1])?;
                 match re.find(&text, ExecOptions::default()) {
                     Some((st, en)) => {
+                        self.assigned[2] = None;
+                        self.assigned[3] = None;
                         self.rstart = self.char_pos(&text, st) as f64 + 1.0;
                         self.rlength = self.char_pos(&text[st..], en - st) as f64;
                     }
                     None => {
+                        self.assigned[2] = None;
+                        self.assigned[3] = None;
                         self.rstart = 0.0;
                         self.rlength = -1.0;
                     }
@@ -1921,4 +1974,17 @@ fn gensub(re: &Regex, repl: &[u8], text: &[u8], which: usize, utf8: bool) -> Vec
         out.extend_from_slice(&text[pos..]);
     }
     out
+}
+
+/// The slot in `Interp::assigned` of a special variable that keeps an assigned value.
+fn assigned_slot(sp: Special) -> Option<usize> {
+    Some(match sp {
+        Special::Nr => 0,
+        Special::Fnr => 1,
+        Special::Rstart => 2,
+        Special::Rlength => 3,
+        Special::Argc => 4,
+        Special::Nf => 5,
+        _ => return None,
+    })
 }

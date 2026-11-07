@@ -116,8 +116,17 @@ struct Resolver<'p> {
 
 type RResult<T> = Result<T, ParseError>;
 
-fn err(pos: Pos, msg: String) -> ParseError {
+/// An error gawk reports at parse time (status 1, with the source excerpt).
+fn syntax(pos: Pos, msg: String) -> ParseError {
     ParseError { pos, msg }
+}
+
+/// The resolver's other errors are gawk's fatal errors (status 2, no excerpt).
+fn err(pos: Pos, msg: String) -> ParseError {
+    ParseError {
+        pos,
+        msg: format!("fatal: {msg}"),
+    }
 }
 
 fn show(n: &[u8]) -> String {
@@ -128,7 +137,7 @@ pub fn resolve(prog: &Program) -> RResult<Resolved> {
     let mut funcs = HashMap::new();
     for (i, f) in prog.functions.iter().enumerate() {
         if funcs.insert(f.name.clone(), i).is_some() {
-            return Err(err(
+            return Err(syntax(
                 f.pos,
                 format!("function `{}' previously defined", show(&f.name)),
             ));
@@ -334,7 +343,7 @@ impl Resolver<'_> {
     fn record(&mut self, name: &[u8], ty: Type, pos: Pos) -> RResult<()> {
         let Some((func, info)) = self.lookup(name) else {
             if self.funcs.contains_key(name) {
-                return Err(err(
+                return Err(syntax(
                     pos,
                     format!(
                         "function `{}' called with space between name and `(',\nor used as a variable or an array",
@@ -449,7 +458,7 @@ impl Resolver<'_> {
                 if self.funcs.contains_key(name)
                     && !self.cur.is_some_and(|f| self.locals[f].contains_key(name))
                 {
-                    return Err(err(
+                    return Err(syntax(
                         *pos,
                         format!(
                             "function `{}' called with space between name and `(',\nor used as a variable or an array",
@@ -506,7 +515,7 @@ impl Resolver<'_> {
             },
             Expr::UserCall(name, pos, args) => {
                 if self.cur.is_some_and(|f| self.locals[f].contains_key(name)) {
-                    return Err(err(
+                    return Err(syntax(
                         *pos,
                         format!("function `{}' is not defined", show(name)),
                     ));

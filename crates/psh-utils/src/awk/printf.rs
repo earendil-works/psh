@@ -199,9 +199,15 @@ pub fn format_one(env: &Env, out: &mut Vec<u8>, spec: &Spec, conv: u8, arg: &Val
         }
         b'c' => {
             let mut buf = [0u8; 4];
-            let body: Vec<u8> = match arg {
-                Value::Num(n) => {
-                    let code = *n as i64;
+            // Numbers (and input that looks like one) are character codes; a string
+            // gives its first character, "" a NUL (as gawk).
+            let code = match arg {
+                Value::Str(_) => None,
+                _ => arg.cmp_num(),
+            };
+            let body: Vec<u8> = match code {
+                Some(n) => {
+                    let code = n as i64;
                     if env.utf8 && code >= 128 {
                         match char::from_u32(code as u32) {
                             Some(c) => c.encode_utf8(&mut buf).as_bytes().to_vec(),
@@ -211,9 +217,13 @@ pub fn format_one(env: &Env, out: &mut Vec<u8>, spec: &Spec, conv: u8, arg: &Val
                         vec![code as u8]
                     }
                 }
-                _ => {
+                None => {
                     let s = (env.to_str)(arg);
-                    prefix_chars(env, &s, 1).to_vec()
+                    if s.is_empty() {
+                        vec![0]
+                    } else {
+                        prefix_chars(env, &s, 1).to_vec()
+                    }
                 }
             };
             pad(env, out, spec, &body);

@@ -1,0 +1,7 @@
+# The vendored awk cases psh fails (tests/vendor-awk/README.md); update with
+# PSH_UPDATE_RATCHET=1 cargo test -p psh-utils awk::tests::vendored_suites
+goawk/425: the test host's clock is at the epoch (srand() seeds with the time)
+goawk/430: gawk's system() reports a signal death as 256+N, psh's shell as 128+N (and the test host has no /bin/kill)
+goawk/443: gawk reports an array/scalar argument mismatch when the call runs (after the first print), psh at parse time
+goawk/496: as goawk/430 (close() of an output pipe)
+goawk/498: as goawk/430 (close() of an input pipe)

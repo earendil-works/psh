@@ -666,17 +666,20 @@ impl Compiler<'_> {
     /// `l op= r`, leaving the new value on the stack.
     fn aug_assign(&mut self, l: &Expr, op: BinOp, r: &Expr) -> CResult {
         match l {
+            // The right side first, as gawk: `x += x++`, `$f() += g()` calls g first.
             Expr::Var(..) => {
-                self.expr(l)?;
                 self.expr(r)?;
+                self.expr(l)?;
+                self.add(Op::Swap);
                 self.bin(op);
                 self.add(Op::Dup);
                 self.assign(l)?;
             }
             _ => {
-                // [index old] r -> [index new] -> [new new index] -> store, keep one.
-                self.dupe_index_lvalue(l)?;
+                // r [index old] -> [index old r] -> [index new] -> [new new index].
                 self.expr(r)?;
+                self.dupe_index_lvalue(l)?;
+                self.add(Op::Rote);
                 self.bin(op);
                 self.add(Op::Dup);
                 self.add(Op::Rote);
@@ -787,6 +790,16 @@ impl Compiler<'_> {
                     }
                 }
                 _ => {
+                    // gawk folds constants: a constant division by zero is an error.
+                    if matches!(op, BinOp::Div | BinOp::Mod)
+                        && matches!(**l, Expr::Num(_))
+                        && matches!(**r, Expr::Num(z) if z == 0.0)
+                    {
+                        return Err(ParseError {
+                            pos: Pos::default(),
+                            msg: "error: division by zero attempted".into(),
+                        });
+                    }
                     self.expr(l)?;
                     self.expr(r)?;
                     self.bin(*op);

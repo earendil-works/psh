@@ -178,7 +178,7 @@ impl Parser<'_> {
                 };
                 if printf {
                     if args.is_empty() {
-                        return Err(self.error("syntax error"));
+                        return Err(self.error("fatal: printf: no arguments"));
                     }
                     Ok(Stmt::Printf {
                         args,

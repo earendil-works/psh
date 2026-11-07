@@ -1,0 +1,11 @@
+# How some vendored awk cases are compared (README.md): `id: MODE (reason)`.
+#   bsd     held to BSD awk's recording instead of gawk's (D016, the reason given)
+#   sorted  output lines compared sorted: `for (k in a)` order is unspecified, and
+#           psh's (insertion order) is neither gawk's nor BSD's
+#   status  only the exit status: the output depends on rand()
+onetrueawk/p.43: sorted (for-in order)
+onetrueawk/t.in2: sorted (for-in order)
+onetrueawk/t.intest2: sorted (for-in order)
+onetrueawk/t.in1: sorted (for-in order)
+onetrueawk/p.48b: status (rand)
+onetrueawk/t.randk: status (rand)

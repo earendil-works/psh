@@ -141,6 +141,14 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
     let utf8 = ctx.utf8();
     let prog = match build(&source.text, utf8) {
         Ok(p) => Rc::new(p),
+        Err(e) if e.msg.starts_with("fatal: ") || e.msg.starts_with("error: ") => {
+            // gawk's fatal errors (status 2) and its errors without an excerpt (1).
+            let place = source.place(e.pos.line.max(1));
+            let _ = ctx.flush().await;
+            ctx.error_raw(format!("awk: {place}: {}\n", e.msg).as_bytes())
+                .await;
+            return if e.msg.starts_with("fatal: ") { 2 } else { 1 };
+        }
         Err(e) => {
             let place = source.place(e.pos.line.max(1));
             let line = source.line_text(e.pos.line.max(1)).to_vec();

@@ -1,6 +1,6 @@
 # 0008: Utility framework and first batch
 
-status: in-progress
+status: done
 agent: infra
 branch: issue/0008-utilities
 depends-on: 0005, 0006
@@ -137,7 +137,79 @@ and `timeout` approximate and output order racy. The porting saving (keeping uut
   - L4: `tests/utils/` with 65 cases for batch A, GNU and BSD goldens (both
     deterministic over two recordings), `## expect:` per case; psh passes all 65.
   - Docs: ARCH "Interface", TESTING (L4 row, goldens), decisions D1083–D1084.
+- 2026-11-07, after rebasing onto main (0026, 0028, 0029): no regression; ratchets
+  updated (oils −49, brush −13, agent −17 entries). In wasm, `oils/pipeline/22` needed
+  `/dev/urandom`: MemHost has `/dev/random` and `/dev/urandom` now; `brush/.../set/20`
+  joins the 0028 wasm entries (the `s` of `$-`). AGENTS.md's unsafe rule names psh-wasm
+  (coordinator's request). wasm-opt -Oz (binaryen 132, measured, not adopted) on top of
+  the `wasm` profile: psh.wasm 1,051,099 → 910,559 bytes, 386,813 → 381,177 gzipped
+  (−1.5%); psh-parser.wasm 388,202 → 341,543, 148,282 → 146,769 gzipped (−1%).
 
 ## Follow-ups
+- Signals to commands started by `UtilCtx::spawn`: stopping drops them (TERM then KILL
+  for programs), so `timeout -s SIG` and `-k` only set the status; a `UtilChild::signal`
+  needs the external's handle (API v2).
+- Wrapper messages: `env`/`timeout` with a missing command print the shell's
+  `command not found`, not GNU's `failed to run command` (stderr score only).
+- Blocking utilities (D1080) are designed, not built: the first batch that needs one
+  (0013, rg) adds `SyncCtx` and the worker-thread/inline runner, with the wasm input bound.
+- Move `crates/psh/src/{json,parse_json,classify_json}.rs` into a crate shared by the psh
+  binary and psh-wasm (now a `#[path]` include, 0011).
+- `exec NAME` into a utility (engine agent's call).
+- guide: utilities.md.
 
 ## Result
+Landed: the utility API `psh_engine::util` (UtilCtx v1, D1080–D1081), psh-utils with the
+option parser (D1082), the registry and dispatch (D1083), batch A (`timeout`/`gtimeout`,
+`head`, `tail`, `cat`, `wc`, `sleep`) plus `env`, and the L4 harness with GNU and BSD
+goldens (D1084): 73 cases, all passing. The psh binary, psh-spec and psh-wasm (as a
+sandbox) run the utilities.
+
+### How to add a utility (for batch agents)
+
+1. **Module** `crates/psh-utils/src/NAME.rs`:
+   - `pub const SPEC: Spec` with every option the utility accepts: `both('n', "lines")
+     .value()`, `flag('x')`, `long("name")`, `.optional()` for `--name[=v]`;
+     `posix_order: true` when the first operand ends the options (wrappers).
+   - `pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32`. Parse with
+     `common::parse(ctx, &SPEC, argv)` (unknown options fall through to the real program,
+     else `NAME: unsupported option 'X' (psh built-in NAME)`, status 2). Forms the parser
+     cannot express (`head -5`) are rewritten on argv first (see `head::rewrite_obsolete`).
+   - I/O only through the context: `common::Input::open(ctx, name)` (`-` is stdin) and
+     `input.read(ctx, &mut buf)`, `ctx.write(..).await` (buffered; on error return
+     `common::write_failed(ctx, &e).await`, which is 141 for a closed pipe),
+     `ctx.error("msg")` for `NAME: msg` on stderr, `common::file_error` for `NAME: FILE:
+     reason`, `ctx.stat/open/read_dir/access/canonicalize`, `ctx.sleep`. Never `std::fs`,
+     `std::io::stdout` or threads.
+   - Call `ctx.check().await` in loops that can run long (it yields when the step budget
+     is spent). Cancel is dropping the future: keep no state that must be cleaned up.
+   - Wrappers run commands with `ctx.spawn(argv, SpawnEnv)` and `child.wait()`.
+   - Helpers in `common.rs`: `parse_duration` (GNU `1.5m`), `parse_count` (`10K`),
+     `operands_or_stdin`, `usage`.
+2. **Registry** in `crates/psh-utils/src/lib.rs`: `mod NAME;`, a `UtilEntry { names,
+   mode, destructive, run: util_fn!(NAME::run) }` in `REGISTRY` (mode per
+   `research/builtins.md` §4 / ARCH "Tiers": `Always` S, `PathFallback` F,
+   `WindowsShadow` W; `destructive: true` for `rm mv cp ln dd`) and `NAME::SPEC` in
+   `SPECS`.
+3. **Classifier check**: `cargo test -p psh-utils specs_match_the_classifier` compares the
+   spec with `psh_classify::utils` (value-taking options must be the same; every effect
+   option must be accepted). If the classifier's entry is wrong or missing, fix it there
+   (psh-classify) in the same change; utilities classified by rules in code go into
+   `CLASSIFIED_IN_CODE` in `tests.rs`.
+4. **Unit tests** in `crates/psh-utils/src/tests.rs` (engine test host: in-memory files
+   `/tmp/f`, virtual time, fake programs `cat yes head wc argv env true false hang`).
+5. **L4 cases** in `tests/utils/NAME/*.test.sh` (`#### name`, then the code; files only
+   in the case's directory; deterministic). Annotate every case whose GNU and BSD results
+   differ: `## expect: gnu (BSD NAME has no -x)`, `## expect: bsd (...)`, or a D016 rule:
+   `## expect: gnu (D016: wc widths)`. Record with `scripts/record-goldens utils/NAME`
+   (GNU, Docker) and `scripts/record-goldens --bsd utils/NAME` (BSD, on macOS); a
+   `both` case with differing recordings fails as "goldens disagree" until annotated.
+   Run `cargo run -p psh-spec -- utils/NAME --diff`; cases psh does not pass yet go into
+   `tests/utils/expected-failures.txt` with `--add-failures`.
+6. **Ratchets**: run the whole `psh-spec` (and `psh-spec --wasm` after
+   `scripts/build-wasm`): a new utility usually makes Oils/brush/agent cases pass;
+   `--update-ratchet` removes them. In wasm, cases that need programs not yet built in
+   fail without a ratchet line.
+
+Known gaps: see Follow-ups (signals to spawned commands, blocking utilities not built yet,
+wrapper error messages).

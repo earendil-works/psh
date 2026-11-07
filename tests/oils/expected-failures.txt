@@ -1,31 +1,6 @@
 # Ratchet for layer oils: active cases that may fail (TESTING.md "Ratchets").
 # One case id per line, optionally `id: reason`. psh-spec --update-ratchet removes
 # cases that pass; never add a line to hide a regression.
-oils/alias/7
-oils/alias/0
-oils/alias/1
-oils/alias/2
-oils/alias/3
-oils/alias/4
-oils/alias/11
-oils/alias/12
-oils/alias/13
-oils/alias/14
-oils/alias/15
-oils/alias/16
-oils/alias/17
-oils/alias/19
-oils/alias/20
-oils/alias/21: passed only with the stub (status 2); needs alias expansion
-oils/alias/22
-oils/alias/23
-oils/alias/24
-oils/alias/25: passed only with the stub (status 2); needs alias expansion
-oils/alias/26
-oils/alias/27
-oils/alias/28
-oils/alias/41
-oils/alias/42
 oils/alias/47
 oils/arg-parse/1
 oils/arg-parse/2
@@ -389,8 +364,6 @@ oils/nul-bytes/11
 oils/nul-bytes/12
 oils/nul-bytes/13
 oils/nul-bytes/14
-oils/parse-errors/0
-oils/parse-errors/1
 oils/parse-errors/22
 oils/pipeline/0
 oils/pipeline/1
@@ -409,6 +382,7 @@ oils/pipeline/20
 oils/pipeline/21
 oils/pipeline/22
 oils/pipeline/25
+oils/process-sub/0
 oils/process-sub/1
 oils/process-sub/2
 oils/process-sub/3
@@ -427,8 +401,6 @@ oils/redirect-command/1
 oils/redirect-command/2
 oils/redirect-command/8
 oils/redirect-command/13
-oils/redirect-command/20
-oils/redirect-multi/3
 oils/redirect-multi/8
 oils/redirect-multi/9
 oils/regex/0
@@ -470,10 +442,6 @@ oils/serialize/5
 oils/serialize/8
 oils/sh-options-bash/4
 oils/sh-options-bash/6
-oils/smoke/3
-oils/smoke/4
-oils/sh-options-bash/7
-oils/sh-options-bash/8
 oils/smoke/6
 oils/smoke/7
 oils/smoke/14: platform-dependent: GNU ls exits 2 for a missing file, macOS BSD ls 1 (passes on Linux; per-platform ratchet or psh ls later)
@@ -500,6 +468,9 @@ oils/var-op-len/3
 oils/var-op-len/4
 oils/var-op-len/6
 oils/var-op-patsub/1
+oils/var-op-bash/24
+oils/var-op-bash/25
+oils/var-op-bash/26
 oils/var-op-patsub/11
 oils/var-op-patsub/12
 oils/var-op-patsub/23

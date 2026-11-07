@@ -31,6 +31,7 @@ brush/compat/builtins/set/15: command-line options and the `s` of `$-` are not i
 brush/compat/builtins/set/17: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
 brush/compat/builtins/set/18: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
 brush/compat/builtins/set/29: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/builtins/set/20: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
 brush/compat/builtins/test/2: needs host files: /bin/sh, /etc/os-release
 brush/compat/options/default/0: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
 brush/compat/options/set-e/4: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)

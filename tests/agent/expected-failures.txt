@@ -3,24 +3,5 @@
 # cases that pass; never add a line to hide a regression.
 agent/control/6
 agent/globs-status/2
-agent/globs-status/18
-agent/globs-status/19
-agent/heredocs/14
 agent/pipes/8
-agent/pipes/9
 agent/redirects/1
-agent/redirects/8
-agent/redirects/10
-agent/vars-quotes/20
-agent/globs-status/6
-agent/globs-status/12
-agent/globs-status/13
-agent/globs-status/14
-agent/pipes/4
-agent/pipes/8
-agent/pipes/11
-agent/pipes/12
-agent/redirects/1
-agent/redirects/14
-agent/redirects/15
-agent/vars-quotes/17

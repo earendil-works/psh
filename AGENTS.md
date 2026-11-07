@@ -67,8 +67,9 @@ GNU bash 5.3 is the reference (TESTING.md "Oracle"):
 - Allowed dependencies so far: the ripgrep crate set (D020/D021) in `psh-utils`,
   `libc`/`windows-sys` in `psh-os` (D024), jaq for `jq` (D028), `deser-json` for all
   JSON (D029). Anything else needs a decision.
-- No `unsafe` outside the OS host crates (`psh-os`) unless a decision records why. In
-  `psh-os`, every `unsafe` block says which invariant makes it sound.
+- No `unsafe` outside the OS host crates (`psh-os`) and the wasm export layer
+  (`psh-wasm`: only its JS import and its `no_mangle` exports, D1110) unless a decision
+  records why. Every `unsafe` block says which invariant makes it sound.
 - Prefer plain, direct code. Comments explain *why*. No speculative abstraction.
 - Every feature comes with tests: unit tests next to the code, behavior cases in
   `tests/` (TESTING.md).

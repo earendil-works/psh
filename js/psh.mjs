@@ -280,6 +280,18 @@ class ZeroHandle {
   }
 }
 
+/** /dev/urandom and /dev/random: random bytes, writes vanish. */
+class RandomHandle {
+  read(max) {
+    const b = new Uint8Array(Math.min(max, 65536));
+    globalThis.crypto.getRandomValues(b);
+    return b;
+  }
+  write(data) {
+    return data.length;
+  }
+}
+
 class NullHandle {
   read() {
     return new Uint8Array(0);
@@ -486,7 +498,7 @@ export class MemHost {
     // The devices and directories every system has: /dev/null, /dev/zero and /dev/full
     // (character devices), /tmp (sticky, world-writable).
     fs.mkdir("/dev");
-    for (const dev of ["null", "zero", "full"]) {
+    for (const dev of ["null", "zero", "full", "random", "urandom"]) {
       if (!fs.root.children.get("dev").children.has(dev))
         fs.root.children.get("dev").children.set(dev, newNode("char", { device: dev, mode: 0o666 }));
     }
@@ -530,7 +542,7 @@ export class MemHost {
       dir.mtime = Date.now();
     }
     if (node.type === "char") {
-      const h = { full: FullHandle, zero: ZeroHandle }[node.device] ?? NullHandle;
+      const h = { full: FullHandle, zero: ZeroHandle, random: RandomHandle, urandom: RandomHandle }[node.device] ?? NullHandle;
       return { value: this.addHandle(new h()) };
     }
     if (node.type === "dir" && flags & F.WRITE) throw new FsError(E.ISDIR);

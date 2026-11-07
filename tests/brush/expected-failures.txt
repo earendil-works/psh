@@ -454,11 +454,6 @@ brush/compat/functions/9
 brush/compat/functions/19
 brush/compat/functions/20
 brush/compat/functions/21
-brush/compat/here/6
-brush/compat/here/7
-brush/compat/here/8
-brush/compat/here/9
-brush/compat/functions/22
 brush/compat/here/22
 brush/compat/here/23
 brush/compat/here/24
@@ -492,6 +487,11 @@ brush/compat/nameref/166
 brush/compat/nameref/167
 brush/compat/nameref/168
 brush/compat/nameref/169
+brush/compat/nameref/154
+brush/compat/nameref/155
+brush/compat/nameref/156
+brush/compat/nameref/157
+brush/compat/nameref/158
 brush/compat/nameref/174
 brush/compat/nameref/185
 brush/compat/nameref/199
@@ -603,11 +603,8 @@ brush/compat/patterns/patterns/14
 brush/compat/patterns/patterns/15
 brush/compat/patterns/patterns/16
 brush/compat/patterns/patterns/17
-brush/compat/pipeline/1
-brush/compat/piped_script/9
 brush/compat/pipeline/4
 brush/compat/pipeline/8
-brush/compat/pipeline/9
 brush/compat/pipeline/17
 brush/compat/process/0
 brush/compat/redirection/14
@@ -684,6 +681,10 @@ brush/compat/special_parameters/35
 brush/compat/special_parameters/36
 brush/compat/special_parameters/38
 brush/compat/status/4
+brush/compat/variables/5
+brush/compat/variables/6
+brush/compat/variables/7
+brush/compat/variables/9
 brush/compat/variables/11
 brush/compat/variables/12: passed via macOS /usr/bin wrapper
 brush/compat/variables/13

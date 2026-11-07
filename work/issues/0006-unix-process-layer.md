@@ -82,6 +82,61 @@ the pitfalls in `research/execution-core.md` §5, with the L5 process tests.
 - Docs: ARCH.md (hosts table, psh-os Unix), TESTING.md (L5 row, psh-spec host). Guide:
   none (processes.md is a follow-up).
 
+### 2026-11-07 part 2 proposal: Host additions (not landed; for the coordinator and engine)
+All additive; every new trait method has a default, so the test host and the std host
+need no change unless they want the feature.
+
+```rust
+// host.rs
+pub trait Host {
+    // ...
+    /// A new OS pipe: (read end, write end). Both are files of this host: the engine
+    /// may read or write them like any file and pass them to externals as
+    /// `ChildFd::File`. Hosts without OS pipes keep the default.
+    fn pipe(&self) -> io::Result<(Rc<dyn HostFile>, Rc<dyn HostFile>)> {
+        Err(io::ErrorKind::Unsupported.into())
+    }
+    /// `kill(2)` for the `kill` builtin's numeric pids (negative: a process group).
+    fn kill(&self, pid: i32, sig: Signal) -> io::Result<()> {
+        let _ = (pid, sig);
+        Err(io::ErrorKind::Unsupported.into())
+    }
+}
+
+pub trait ExtProc {
+    // ...
+    /// The OS process id (`$!`, `jobs -p`), where there is one.
+    fn pid(&self) -> Option<u32> { None }
+}
+
+#[derive(Default)]                 // new: the engine writes `..SpawnSpec::default()`
+pub struct SpawnSpec {
+    // ... program, argv, env, cwd, fds as now
+    /// Signals the child starts with ignored (bash: SIGINT and SIGQUIT in `&` jobs;
+    /// `trap '' SIG`). Every other signal starts at its default.
+    pub sig_ignore: Vec<Signal>,
+    /// The child's umask; `None` keeps the process's (the `umask` builtin sets it).
+    pub umask: Option<u32>,
+}
+```
+
+Engine change (pipe.rs, exec.rs `run_external` only): an engine pipe whose buffer is empty
+when an external is spawned on one of its ends is *materialized*: the engine asks
+`host.pipe()` once, keeps both OS ends in the pipe object, and hands the external the OS
+end as `ChildFd::File`. From then on vproc reads drain the in-memory buffer first and
+then read the OS read end; vproc writes go to the OS write end (so order is kept: the
+buffer was empty when the OS pipe took over). The engine drops the OS read end when its
+last `PipeReader` goes and the OS write end when its last `PipeWriter` goes; the kernel
+counts the externals' copies. Waiting readers are woken at materialization so they
+re-poll the OS end. Not materialized: pipes with buffered data (here-docs, a vproc wrote
+first and nobody read yet) and hosts without `pipe()`: those keep today's pumps. Effect:
+`a | b | c` of externals passes OS pipes directly with no pump and no engine wakeups
+per chunk; `cmd | while read` reads the OS pipe directly.
+
+Host side (psh-os): `pipe()` returns two shared `UnixFile`s (blocking, readiness-checked);
+`sig_ignore` or a `umask` different from the process's take the fork path (`posix_spawn`
+can express neither); `pid()`; `kill()`.
+
 ## Follow-ups
 - guide: `processes.md` (placement, cancel and abandonment, leak checks).
 - Engine: run files without `#!` in psh itself (bash does), then drop D1063's fallback.

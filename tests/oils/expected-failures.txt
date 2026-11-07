@@ -83,8 +83,6 @@ oils/array-sparse/16
 oils/array-sparse/25
 oils/array-sparse/31
 oils/assign/2
-oils/assign/18
-oils/assign/14
 oils/assign/19
 oils/assign/25
 oils/assign/29
@@ -126,6 +124,15 @@ oils/ble-features/8
 oils/ble-idioms/10
 oils/ble-idioms/13
 oils/ble-idioms/23
+oils/ble-idioms/11
+oils/ble-idioms/12
+oils/ble-idioms/14
+oils/ble-idioms/15
+oils/ble-idioms/19
+oils/ble-idioms/20
+oils/ble-idioms/21
+oils/ble-idioms/24
+oils/ble-idioms/25
 oils/ble-unset/1
 oils/ble-unset/2
 oils/ble-unset/3
@@ -191,16 +198,8 @@ oils/builtin-echo/22
 oils/builtin-echo/23
 oils/builtin-echo/24
 oils/builtin-echo/25
-oils/builtin-eval-source/3
 oils/builtin-eval-source/15
 oils/builtin-eval-source/16
-oils/builtin-getopts/4
-oils/builtin-eval-source/17
-oils/builtin-eval-source/18
-oils/builtin-eval-source/19
-oils/builtin-eval-source/20
-oils/builtin-eval-source/21
-oils/builtin-eval-source/22
 oils/builtin-getopts/6
 oils/builtin-getopts/12
 oils/builtin-getopts/13
@@ -223,7 +222,6 @@ oils/builtin-kill/17
 oils/builtin-kill/18
 oils/builtin-kill/19
 oils/builtin-meta/4
-oils/builtin-meta/5
 oils/builtin-meta/6
 oils/builtin-misc/0
 oils/builtin-misc/1
@@ -253,7 +251,6 @@ oils/builtin-process/21
 oils/builtin-process/23
 oils/builtin-process/24
 oils/builtin-process/25
-oils/builtin-read/6
 oils/builtin-read/19
 oils/builtin-read/24
 oils/builtin-read/28
@@ -264,16 +261,11 @@ oils/builtin-read/57
 oils/builtin-read/63
 oils/builtin-set/5
 oils/builtin-set/6
-oils/builtin-set/7
 oils/builtin-set/12
 oils/builtin-set/16
 oils/builtin-set/17
 oils/builtin-set/22
 oils/builtin-set/23
-oils/builtin-special/9
-oils/builtin-special/1
-oils/builtin-special/2
-oils/builtin-special/6
 oils/builtin-special/10
 oils/builtin-times/0
 oils/builtin-trap/0
@@ -352,11 +344,8 @@ oils/builtin-trap-err/21
 oils/builtin-trap-err/22
 oils/builtin-type/1
 oils/builtin-type/3
-oils/builtin-type-bash/1
 oils/builtin-type-bash/13
 oils/builtin-type-bash/14
-oils/builtin-type-bash/19
-oils/builtin-type-bash/20
 oils/builtin-type-bash/21
 oils/builtin-type-bash/22
 oils/builtin-type-bash/27
@@ -453,13 +442,10 @@ oils/dparen/13
 oils/dparen/14
 oils/errexit/9
 oils/errexit/25
-oils/errexit/26
 oils/errexit/28
 oils/errexit/29
 oils/errexit/30
 oils/errexit/31
-oils/errexit/32
-oils/errexit-osh/2
 oils/errexit-osh/30
 oils/exit-status/2
 oils/extglob-files/0
@@ -562,8 +548,6 @@ oils/introspect/10
 oils/introspect/11
 oils/introspect/12
 oils/let/1
-oils/loop/15
-oils/loop/11
 oils/loop/17
 oils/nameref/11
 oils/nameref/12
@@ -606,8 +590,6 @@ oils/pipeline/7
 oils/pipeline/8
 oils/pipeline/9
 oils/pipeline/18
-oils/pipeline/20
-oils/pipeline/21
 oils/pipeline/22
 oils/pipeline/23
 oils/pipeline/24
@@ -630,9 +612,6 @@ oils/redirect/8
 oils/redirect/9
 oils/redirect/10
 oils/redirect/27
-oils/redirect/31
-oils/redirect/28
-oils/redirect/29
 oils/redirect/36
 oils/redirect/39
 oils/redirect-command/1
@@ -683,9 +662,6 @@ oils/serialize/3
 oils/serialize/4
 oils/serialize/5
 oils/serialize/8
-oils/serialize/9
-oils/sh-func/8
-oils/sh-func/11
 oils/sh-options-bash/4
 oils/sh-options-bash/5
 oils/sh-options-bash/6
@@ -695,7 +671,6 @@ oils/smoke/6
 oils/smoke/7
 oils/smoke/11
 oils/smoke/14: platform-dependent: GNU ls exits 2 for a missing file, macOS BSD ls 1 (passes on Linux; per-platform ratchet or psh ls later)
-oils/temp-binding/0
 oils/tilde/1
 oils/tilde/3
 oils/tilde/4

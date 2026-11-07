@@ -19,3 +19,8 @@ deser-core = { version = "0.10.2", default-features = false, features = ["std"] 
 
 [lints]
 workspace = true
+
+# L5: the standalone binary's signal handling (tests/process/, TESTING.md).
+[[test]]
+name = "standalone"
+path = "../../tests/process/standalone.rs"

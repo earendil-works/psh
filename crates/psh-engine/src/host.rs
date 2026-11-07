@@ -30,7 +30,9 @@ pub type HostFuture<T> = Pin<Box<dyn Future<Output = T>>>;
 /// INT become a console break, KILL terminates the job).
 pub type Signal = i32;
 
+pub const SIGHUP: Signal = 1;
 pub const SIGINT: Signal = 2;
+pub const SIGQUIT: Signal = 3;
 pub const SIGKILL: Signal = 9;
 pub const SIGPIPE: Signal = 13;
 pub const SIGTERM: Signal = 15;

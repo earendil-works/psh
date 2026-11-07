@@ -1032,3 +1032,25 @@ group), and psh-spec runs each such case while holding an exclusive `File::lock`
 between concurrent psh-spec runs (gates of other worktrees, recordings). Other cases stay
 parallel. Alternatives: a per-worker `/tmp` (needs OS isolation; not portable), or running
 serial cases in a separate phase (does not cover other processes).
+## D1065: An abandoned group is killed when its leader exits
+date: 2026-11-07 · by: procs · issue: 0006
+Supersedes D1062 in one point. After TERM, the escalation sends KILL to the group as
+soon as the leader exits or when the grace period ends, whichever comes first, then
+reaps. Waiting out the full grace period after the leader is gone made every cancel of
+an obedient pipeline cost the whole grace (and a standalone psh waits for its
+escalations before exiting); whatever is still in the group had TERM already and would
+be an orphan. Measured why there is no cheaper "is only our zombie left?" check: with
+only an unreaped leader, `kill(-pgid, 0)` succeeds on Linux and fails with EPERM on
+macOS.
+
+## D1066: The standalone psh cancels on INT, TERM and HUP and dies by the signal
+date: 2026-11-07 · by: procs · issue: 0006
+`psh_os::unix::signals::catch` installs handlers (atomic bit + self-pipe byte, nothing
+else) for the signals not ignored at start; a watcher thread cancels the run through the
+`ControlHandle`. The driver then waits (`psh_os::unix::settle`, bounded by the grace
+period plus 1 s) until abandoned externals are killed and reaped, resets the signal and
+raises it, so the parent sees psh die by it as with bash. bash differs in waiting for a
+foreground child to react to INT itself; psh tears the run down, which is what an agent
+harness sending TERM wants. Signals ignored when psh starts stay ignored, in psh (no
+handler) and in its children (the host passes them on; SIGPIPE and SIGCHLD excepted,
+since Rust ignores SIGPIPE before `main`). Embedded hosts install nothing.

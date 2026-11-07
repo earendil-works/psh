@@ -12,6 +12,7 @@
 
 mod file;
 pub mod ready;
+pub mod signals;
 mod spawn;
 
 use std::ffi::{CString, OsStr, OsString};
@@ -29,7 +30,7 @@ use psh_engine::host::{
 };
 
 pub use file::UnixFile;
-pub use spawn::Placement;
+pub use spawn::{Placement, settle};
 
 use spawn::Shared;
 

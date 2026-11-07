@@ -17,8 +17,8 @@
 //! SIGCHLD handler. macOS reports stops even for `WEXITED`; those are consumed.
 //!
 //! **Abandon.** Dropping the `ExtProc` of a running process sends TERM (and CONT, for a
-//! stopped group) to its group, and an escalation thread sends KILL to the group after
-//! the grace period, then reaps; see [`crate::lifecycle`].
+//! stopped group) to its group, and an escalation thread sends KILL to the group when
+//! the leader exits or after the grace period, then reaps; see [`crate::lifecycle`].
 //!
 //! The recipe follows oh-my-pi's `pi-shell/src/sys/spawn` (MIT, see NOTICE).
 
@@ -897,11 +897,17 @@ impl Drop for UnixProc {
                 drop(life);
                 let deadline = Instant::now() + self.shared.grace;
                 let (tracker, scope, pid) = (self.tracker.clone(), self.scope, self.pid);
+                *lock(&ESCALATING) += 1;
                 let started = std::thread::Builder::new()
                     .name("psh-kill".into())
                     .stack_size(SMALL_STACK)
-                    .spawn(move || escalate(&tracker, scope, pid, deadline));
+                    .spawn(move || {
+                        escalate(&tracker, scope, pid, deadline);
+                        *lock(&ESCALATING) -= 1;
+                        SETTLED.notify_all();
+                    });
                 if started.is_err() {
+                    *lock(&ESCALATING) -= 1;
                     // No thread: KILL now rather than never; the waiter reaps.
                     let mut life = self.tracker.lock();
                     let _ = self.scope.signal(libc::SIGKILL);
@@ -915,19 +921,35 @@ impl Drop for UnixProc {
     }
 }
 
-/// After the grace period, KILL the process if it still runs and whatever is left in
-/// its group (the unreaped leader keeps the group id ours), then reap.
+/// Escalations running (abandoned externals not yet killed and reaped), process-wide.
+static ESCALATING: Mutex<usize> = Mutex::new(0);
+static SETTLED: Condvar = Condvar::new();
+
+/// Waits up to `timeout` until every abandoned external of the process was killed and
+/// reaped; whether they were. A standalone shell calls it before it exits, since the
+/// escalation threads die with the process.
+pub fn settle(timeout: Duration) -> bool {
+    let deadline = Instant::now() + timeout;
+    let mut n = lock(&ESCALATING);
+    while *n > 0 {
+        let now = Instant::now();
+        if now >= deadline {
+            return false;
+        }
+        n = SETTLED
+            .wait_timeout(n, deadline - now)
+            .unwrap_or_else(|e| e.into_inner())
+            .0;
+    }
+    true
+}
+
+/// KILL the group when its leader exits or the grace period ends, whichever comes
+/// first (the unreaped leader keeps the group id ours), then reap. Members still there
+/// when the leader is gone had TERM already; they would be orphans (D1065).
 fn escalate(tracker: &Tracker, scope: Scope, pid: i32, deadline: Instant) {
-    if !tracker.wait_exit_until(Some(deadline)) {
-        let _ = scope.signal(libc::SIGKILL);
-    }
-    let now = Instant::now();
-    if deadline > now {
-        std::thread::sleep(deadline - now);
-    }
-    if let Scope::Group(_) = scope {
-        let _ = scope.signal(libc::SIGKILL);
-    }
+    tracker.wait_exit_until(Some(deadline));
+    let _ = scope.signal(libc::SIGKILL);
     tracker.wait_exit_until(None);
     let mut life = tracker.lock();
     reap(pid);

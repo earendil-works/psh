@@ -137,6 +137,26 @@ Host side (psh-os): `pipe()` returns two shared `UnixFile`s (blocking, readiness
 `sig_ignore` or a `umask` different from the process's take the fork path (`posix_spawn`
 can express neither); `pid()`; `kill()`.
 
+### 2026-11-07 part 2/3 groundwork (no engine logic yet; merge freeze)
+- Host trait additions as proposed (coordinator OK, engine agent asked): `Host::pipe`,
+  `Host::kill`, `ExtProc::pid`, `SpawnSpec: Default` with `sig_ignore`, `umask`; plus
+  `SIGHUP`/`SIGQUIT` constants. exec.rs only gets `..SpawnSpec::default()`. psh-os
+  implements all of them: `sig_ignore` beyond what the process ignores and a umask other
+  than the process's take the fork path; signals ignored when the host was made stay
+  ignored in children (bash's rule), except SIGPIPE and SIGCHLD.
+- Standalone signals (D1066): `psh_os::unix::signals` (`catch`, `die_by`,
+  `is_ignored`), `psh_os::unix::settle`; the psh driver cancels on INT/TERM/HUP, waits
+  for the escalations and dies by the signal.
+- Escalation (D1065): KILL to the group at the leader's exit or after the grace period,
+  whichever is first (measured: a zombie-only group answers `kill(-pgid, 0)` with 0 on
+  Linux, EPERM on macOS, so "only our zombie left" cannot be checked cheaply).
+- L5: `tests/process/standalone.rs` (an integration test of the `psh` crate, 5 tests):
+  TERM cancels a pipeline and psh dies by TERM without waiting the grace, INT and HUP,
+  a TERM-ignoring external is KILLed before psh exits, a signal ignored at start stays
+  ignored in psh and its children, exit codes unchanged. psh-os unit tests for
+  `sig_ignore`, `umask`, `pipe()` between two externals, `kill`, `pid`. All pass on macOS
+  and Linux (Docker).
+
 ## Follow-ups
 - guide: `processes.md` (placement, cancel and abandonment, leak checks).
 - Engine: run files without `#!` in psh itself (bash does), then drop D1063's fallback.

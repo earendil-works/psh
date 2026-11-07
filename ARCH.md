@@ -268,11 +268,14 @@ From `research/execution-core.md` §5; the pitfalls listed there are requirement
   redirections) keep their flags: a zero-timeout readiness check before each read or
   write, writes to streams capped at `PIPE_BUF`. FIFO opens run on a helper thread.
   Timers run on one process-wide thread.
-- Kill: TERM (and CONT) to the group, KILL to the group after a grace period (default
-  2 s), then a reap. `UnixHost::leftovers()` lists groups with live members (leak
+- Kill: TERM (and CONT) to the group, KILL to the group when the leader exits or after
+  a grace period (default 2 s), then a reap (D1065). `UnixHost::leftovers()` lists groups with live members (leak
   checks).
-- Signals: embedded, install no handlers at all. Standalone `psh`, handlers only set
-  atomic bits and wake the driver; SIGPIPE is reset to default for children.
+- Signals: embedded, install no handlers at all. Standalone `psh` (D1066): handlers
+  for INT, TERM and HUP only set an atomic bit and write a self-pipe byte; a watcher
+  thread cancels the run, the driver waits for the abandoned externals to be killed and
+  dies by the signal. Children start with every signal at its default (SIGPIPE
+  included) except those ignored when psh started and those the engine asks to ignore.
 
 **Windows.**
 - Spawn: `CreateProcessW` suspended, assigned to a Job Object per job (no breakaway),

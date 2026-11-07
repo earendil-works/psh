@@ -146,6 +146,8 @@ fn main() -> ExitCode {
             }
         }
     };
+    let signals = Signals::catch();
+    let control = signals.control.clone();
     let thread = engine_thread(move || {
         let (host, [stdin, stdout, stderr]) = os_host();
         let mut cfg = ShellConfig::new(host);
@@ -166,12 +168,76 @@ fn main() -> ExitCode {
         cfg.stdout = stdout;
         cfg.stderr = stderr;
         let mut shell = Shell::new(cfg);
+        Signals::attach(&control, shell.control());
         shell.start(script);
         drive(&mut shell)
     });
-    match thread.map(|t| t.join()) {
+    let result = thread.map(|t| t.join());
+    signals.finish();
+    match result {
         Ok(Ok(status)) => ExitCode::from((status & 0xff) as u8),
         _ => ExitCode::from(2),
+    }
+}
+
+/// The standalone shell's signals (ARCH.md "psh-os"): INT, TERM and HUP cancel the run
+/// (its externals get TERM, KILL after the grace period), then psh ends by that signal,
+/// so its parent sees what bash would show. Embedded shells install nothing.
+struct Signals {
+    /// The running shell's control, once it exists, and the first signal caught.
+    control: Control,
+}
+
+type Control = std::sync::Arc<std::sync::Mutex<(Option<psh_engine::ControlHandle>, i32)>>;
+
+impl Signals {
+    #[cfg(unix)]
+    fn catch() -> Signals {
+        use psh_engine::host::{SIGHUP, SIGINT, SIGTERM};
+        let control: Control = Default::default();
+        let c = control.clone();
+        let _ = psh_os::unix::signals::catch(&[SIGINT, SIGTERM, SIGHUP], move |sig| {
+            let mut g = c.lock().unwrap_or_else(|e| e.into_inner());
+            if g.1 == 0 {
+                g.1 = sig;
+            }
+            if let Some(ctl) = &g.0 {
+                ctl.cancel();
+            }
+        });
+        Signals { control }
+    }
+
+    #[cfg(not(unix))]
+    fn catch() -> Signals {
+        Signals {
+            control: Default::default(),
+        }
+    }
+
+    /// The shell exists: a signal caught before cancels it now.
+    fn attach(
+        control: &std::sync::Mutex<(Option<psh_engine::ControlHandle>, i32)>,
+        ctl: psh_engine::ControlHandle,
+    ) {
+        let mut g = control.lock().unwrap_or_else(|e| e.into_inner());
+        if g.1 != 0 {
+            ctl.cancel();
+        }
+        g.0 = Some(ctl);
+    }
+
+    /// The run is over: if a signal ended it, wait until the abandoned externals were
+    /// killed and reaped, and die by the signal.
+    fn finish(self) {
+        let sig = self.control.lock().unwrap_or_else(|e| e.into_inner()).1;
+        #[cfg(unix)]
+        if sig != 0 {
+            let grace = psh_os::unix::UnixConfig::DEFAULT_GRACE;
+            psh_os::unix::settle(grace + std::time::Duration::from_secs(1));
+            psh_os::unix::signals::die_by(sig);
+        }
+        let _ = sig;
     }
 }
 

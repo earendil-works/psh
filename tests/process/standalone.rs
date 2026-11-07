@@ -1,0 +1,183 @@
+//! L5 tests of the standalone `psh` binary's signals (TESTING.md): INT, TERM and HUP
+//! cancel the run, the externals' groups are killed (TERM, KILL after the grace
+//! period), and psh ends by the signal. Every psh runs in a process group of its own
+//! under a deadline; the externals report their pids into files, and every test checks
+//! that their groups are gone.
+
+#![cfg(unix)]
+
+use std::os::unix::process::{CommandExt, ExitStatusExt};
+use std::path::PathBuf;
+use std::process::{Child, Command, ExitStatus, Stdio};
+use std::time::{Duration, Instant};
+
+use psh_os::unix::kill;
+
+const SIGHUP: i32 = 1;
+const SIGINT: i32 = 2;
+const SIGKILL: i32 = 9;
+const SIGTERM: i32 = 15;
+
+struct Case {
+    dir: PathBuf,
+    child: Child,
+}
+
+impl Case {
+    /// Starts `psh -c script` in a fresh directory (the script's cwd).
+    fn start(script: &str) -> Case {
+        Case::start_with(Command::new(env!("CARGO_BIN_EXE_psh")).args(["-c", script]))
+    }
+
+    fn start_with(cmd: &mut Command) -> Case {
+        use std::sync::atomic::{AtomicU32, Ordering};
+        static N: AtomicU32 = AtomicU32::new(0);
+        let dir = std::env::temp_dir().canonicalize().unwrap().join(format!(
+            "psh-l5s-{}-{}",
+            std::process::id(),
+            N.fetch_add(1, Ordering::Relaxed)
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let child = cmd
+            .current_dir(&dir)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .process_group(0)
+            .spawn()
+            .expect("spawn psh");
+        Case { dir, child }
+    }
+
+    /// Waits until the file `name` holds a pid (written by an external).
+    fn pid(&self, name: &str) -> i32 {
+        let path = self.dir.join(name);
+        let deadline = Instant::now() + Duration::from_secs(10);
+        loop {
+            if let Ok(s) = std::fs::read_to_string(&path)
+                && let Ok(p) = s.trim().parse()
+            {
+                return p;
+            }
+            assert!(Instant::now() < deadline, "{name} never appeared");
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
+
+    fn signal(&self, sig: i32) {
+        kill(self.child.id() as i32, sig).unwrap();
+    }
+
+    fn wait(&mut self, within: Duration) -> ExitStatus {
+        let deadline = Instant::now() + within;
+        loop {
+            if let Some(s) = self.child.try_wait().unwrap() {
+                return s;
+            }
+            assert!(Instant::now() < deadline, "psh did not exit");
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
+}
+
+impl Drop for Case {
+    fn drop(&mut self) {
+        let _ = kill(-(self.child.id() as i32), SIGKILL);
+        let _ = self.child.wait();
+        let _ = std::fs::remove_dir_all(&self.dir);
+    }
+}
+
+/// Whether process group `pgid` (an external's session) still has a member.
+fn group_alive(pgid: i32) -> bool {
+    match kill(-pgid, 0) {
+        Ok(()) => true,
+        Err(e) => e.kind() == std::io::ErrorKind::PermissionDenied,
+    }
+}
+
+fn gone(pgid: i32, within: Duration) -> bool {
+    let deadline = Instant::now() + within;
+    while group_alive(pgid) {
+        if Instant::now() > deadline {
+            let _ = kill(-pgid, SIGKILL);
+            return false;
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    true
+}
+
+/// An external that writes its pid to `file` and sleeps, ignoring TERM if `stubborn`.
+fn sleeper(file: &str, stubborn: bool) -> String {
+    let trap = if stubborn { "trap \"\" TERM; " } else { "" };
+    format!("sh -c '{trap}echo $$ > {file}; sleep 30; echo never'")
+}
+
+fn assert_signaled(s: ExitStatus, sig: i32) {
+    assert_eq!(s.signal(), Some(sig), "{s:?}");
+}
+
+#[test]
+fn term_cancels_a_pipeline_and_psh_dies_by_term() {
+    let mut c = Case::start(&format!(
+        "{} | {}",
+        sleeper("a", false),
+        sleeper("b", false)
+    ));
+    let (a, b) = (c.pid("a"), c.pid("b"));
+    let start = Instant::now();
+    c.signal(SIGTERM);
+    assert_signaled(c.wait(Duration::from_secs(10)), SIGTERM);
+    // Externals that obey TERM end at once; psh does not wait out the grace period.
+    assert!(start.elapsed() < Duration::from_millis(1500));
+    assert!(gone(a, Duration::from_secs(1)) && gone(b, Duration::from_secs(1)));
+}
+
+#[test]
+fn int_and_hup_too() {
+    for sig in [SIGINT, SIGHUP] {
+        let mut c = Case::start(&sleeper("a", false));
+        let a = c.pid("a");
+        c.signal(sig);
+        assert_signaled(c.wait(Duration::from_secs(10)), sig);
+        assert!(gone(a, Duration::from_secs(1)));
+    }
+}
+
+#[test]
+fn an_external_ignoring_term_is_killed_before_psh_exits() {
+    let mut c = Case::start(&sleeper("a", true));
+    let a = c.pid("a");
+    let start = Instant::now();
+    c.signal(SIGTERM);
+    assert_signaled(c.wait(Duration::from_secs(15)), SIGTERM);
+    // KILL came after the grace period (2 s), before psh ended.
+    assert!(start.elapsed() >= Duration::from_millis(1500));
+    assert!(!group_alive(a), "the external survived psh");
+}
+
+#[test]
+fn a_signal_ignored_at_start_stays_ignored() {
+    // bash: signals ignored on entry cannot be trapped or reset; children inherit that.
+    let script = "sh -c 'kill -INT $$; echo $$ > a; sleep 0.3; echo alive > b'";
+    let mut c = Case::start_with(Command::new("/bin/sh").args([
+        "-c",
+        "trap '' INT; exec \"$0\" -c \"$1\"",
+        env!("CARGO_BIN_EXE_psh"),
+        script,
+    ]));
+    c.pid("a");
+    c.signal(SIGINT);
+    let s = c.wait(Duration::from_secs(10));
+    assert_eq!(s.code(), Some(0), "{s:?}");
+    assert_eq!(std::fs::read_to_string(c.dir.join("b")).unwrap(), "alive\n");
+}
+
+#[test]
+fn normal_exit_codes_are_unchanged() {
+    let mut c = Case::start("sh -c 'exit 3'");
+    assert_eq!(c.wait(Duration::from_secs(10)).code(), Some(3));
+    let mut c = Case::start("sh -c 'kill -TERM $$'");
+    assert_eq!(c.wait(Duration::from_secs(10)).code(), Some(143));
+}

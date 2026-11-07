@@ -6,14 +6,9 @@ use std::io;
 use psh_engine::host::{FileKind, error_text};
 use psh_engine::util::UtilCtx;
 
-/// A name quoted as GNU quotes it in messages: `‘x’` in a UTF-8 locale, `'x'` otherwise.
+/// A name quoted as GNU quotes it in messages (`common::quote`, D1163).
 pub fn q(ctx: &UtilCtx<'_>, name: &[u8]) -> String {
-    let s = String::from_utf8_lossy(name);
-    if ctx.utf8() {
-        format!("\u{2018}{s}\u{2019}")
-    } else {
-        format!("'{s}'")
-    }
+    crate::common::quote(ctx, name)
 }
 
 /// `NAME: what ‘FILE’: reason` (`cannot create directory ‘x’: File exists`).

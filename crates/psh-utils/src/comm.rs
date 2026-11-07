@@ -71,13 +71,13 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
     match p.operands.len() {
         0 => return common::usage(ctx, "missing operand").await,
         1 => {
-            let o = String::from_utf8_lossy(&p.operands[0]).into_owned();
-            return common::usage(ctx, &format!("missing operand after '{o}'")).await;
+            let o = common::quote(ctx, &p.operands[0]);
+            return common::usage(ctx, &format!("missing operand after {o}")).await;
         }
         2 => {}
         _ => {
-            let o = String::from_utf8_lossy(&p.operands[2]).into_owned();
-            return common::usage(ctx, &format!("extra operand '{o}'")).await;
+            let o = common::quote(ctx, &p.operands[2]);
+            return common::usage(ctx, &format!("extra operand {o}")).await;
         }
     }
     let mut sides = Vec::new();

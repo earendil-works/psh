@@ -119,9 +119,10 @@ struct Key {
     order: Order,
 }
 
-fn parse_key(spec: &[u8], global: &Order) -> Result<Key, String> {
+fn parse_key(spec: &[u8], global: &Order, utf8: bool) -> Result<Key, String> {
     let text = String::from_utf8_lossy(spec).into_owned();
-    let bad = |why: &str| format!("{why}: invalid field specification '{text}'");
+    let q = |s: &str| common::quote_in(utf8, s.as_bytes());
+    let bad = |why: &str| format!("{why}: invalid field specification {}", q(&text));
     let (a, b) = match text.split_once(',') {
         Some((a, b)) => (a, Some(b)),
         None => (text.as_str(), None),
@@ -132,7 +133,8 @@ fn parse_key(spec: &[u8], global: &Order) -> Result<Key, String> {
         let digits = s.bytes().take_while(u8::is_ascii_digit).count();
         if digits == 0 {
             return Err(format!(
-                "invalid number at field start: invalid count at start of '{s}'"
+                "invalid number at field start: invalid count at start of {}",
+                q(s)
             ));
         }
         let field: usize = s[..digits].parse().unwrap_or(usize::MAX);
@@ -142,7 +144,8 @@ fn parse_key(spec: &[u8], global: &Order) -> Result<Key, String> {
             let d = r.bytes().take_while(u8::is_ascii_digit).count();
             if d == 0 {
                 return Err(format!(
-                    "invalid number after '.': invalid count at start of '{r}'"
+                    "invalid number after '.': invalid count at start of {}",
+                    q(r)
                 ));
             }
             ch = r[..d].parse().unwrap_or(usize::MAX);
@@ -151,7 +154,8 @@ fn parse_key(spec: &[u8], global: &Order) -> Result<Key, String> {
         for c in rest.bytes() {
             if !order.set(c, end) {
                 return Err(format!(
-                    "stray character in field spec: invalid field specification '{text}'"
+                    "stray character in field spec: invalid field specification {}",
+                    q(&text)
                 ));
             }
         }
@@ -640,9 +644,12 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
                 b"random" => Some(b'R'),
                 b"version" => Some(b'V'),
                 other => {
-                    let o = String::from_utf8_lossy(other).into_owned();
-                    return common::usage(ctx, &format!("invalid argument '{o}' for '--sort'"))
-                        .await;
+                    let msg = format!(
+                        "invalid argument {} for {}",
+                        common::quote(ctx, other),
+                        common::quote(ctx, b"--sort")
+                    );
+                    return common::usage(ctx, &msg).await;
                 }
             },
             _ => None,
@@ -661,12 +668,12 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
                     None | Some(b"diagnose-first") => false,
                     Some(b"quiet" | b"silent") => true,
                     Some(o) => {
-                        let o = String::from_utf8_lossy(o).into_owned();
-                        return common::usage(
-                            ctx,
-                            &format!("invalid argument '{o}' for '--check'"),
-                        )
-                        .await;
+                        let msg = format!(
+                            "invalid argument {} for {}",
+                            common::quote(ctx, o),
+                            common::quote(ctx, b"--check")
+                        );
+                        return common::usage(ctx, &msg).await;
                     }
                 })
             }
@@ -681,8 +688,8 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
                     b"\\0" => 0,
                     [c] => *c,
                     _ => {
-                        let o = String::from_utf8_lossy(v).into_owned();
-                        ctx.error(&format!("multi-character tab '{o}'")).await;
+                        let msg = format!("multi-character tab {}", common::quote(ctx, v));
+                        ctx.error(&msg).await;
                         return 2;
                     }
                 });
@@ -692,7 +699,7 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
     }
     let mut keys = Vec::new();
     for spec in &key_specs {
-        match parse_key(spec, &global) {
+        match parse_key(spec, &global, ctx.utf8()) {
             Ok(k) => keys.push(k),
             Err(e) => {
                 ctx.error(&e).await;
@@ -816,7 +823,7 @@ mod tests {
         }
         let mut ks: Vec<Key> = keys
             .iter()
-            .map(|k| parse_key(k.as_bytes(), &g).unwrap())
+            .map(|k| parse_key(k.as_bytes(), &g, false).unwrap())
             .collect();
         if ks.is_empty() {
             ks.push(Key {
@@ -922,9 +929,9 @@ mod tests {
             sorted(&["x 1.b", "y 1.a"], &["2.3"], ""),
             ["y 1.a", "x 1.b"]
         );
-        assert!(parse_key(b"0", &Order::default()).is_err());
-        assert!(parse_key(b"1.0", &Order::default()).is_err());
-        assert!(parse_key(b"1x", &Order::default()).is_err());
-        assert!(parse_key(b"2,1.0", &Order::default()).is_ok());
+        assert!(parse_key(b"0", &Order::default(), false).is_err());
+        assert!(parse_key(b"1.0", &Order::default(), false).is_err());
+        assert!(parse_key(b"1x", &Order::default(), false).is_err());
+        assert!(parse_key(b"2,1.0", &Order::default(), false).is_ok());
     }
 }

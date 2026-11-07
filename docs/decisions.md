@@ -1923,3 +1923,19 @@ access and creation times, `ctime` = mtime, links from the file information, 512
 blocks. Files are owned by uid/gid 1000, the user `HostInfo` reports; `user_name(1000)`
 and `home_dir` know the current user. `utc_offset` follows the system's time zone rules.
 psh-spec writes the case's cwd and recognizes its paths in the `C:/x` spelling psh uses.
+## D1163: Utility messages quote values as GNU does for the locale
+date: 2026-11-07 · by: text · issue: 0019 (for 0016, coordinator's rule)
+Values and operands in utility messages (`invalid field value ‘x’`, `extra operand ‘c’`,
+`invalid argument ‘x’ for ‘--sort’`) are quoted by one helper, `common::quote(ctx, s)`
+(`quote_in(utf8, s)` where no context is at hand): `‘x’` when the locale's character set
+is UTF-8, `'x'` otherwise. The character set is GNU's test (LC_ALL, then LC_CTYPE, then
+LANG, as `UtilCtx::utf8`); LC_MESSAGES only selects translations, which psh has none of.
+What GNU prints literally stays ASCII: getopt's `invalid option -- 'x'`, `Try 'NAME
+--help'`, fixed texts (`'upper' and 'lower'`, `after '.'`), and messages GNU quotes with
+plain apostrophes (`tr`'s `range-endpoints of 'z-a'`, `sort`'s `extra operand 'b' not
+allowed with -c`). File names in `NAME: FILE: reason` stay unquoted, as GNU's are unless
+they need shell quoting. psh's own texts (`unsupported option '--x' (psh built-in
+NAME)`) stay ASCII. `fsutil::q` is this helper. Applied to the text filters and to
+head, tail, sleep, timeout and wc; other utilities follow it when they are next touched.
+Reason: the stderr score against GNU's goldens (recorded in C.UTF-8), and one rule
+instead of one per batch.

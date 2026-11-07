@@ -127,7 +127,8 @@ struct Format {
     conv: char,
 }
 
-fn parse_format(f: &str) -> Result<Format, String> {
+fn parse_format(f: &str, utf8: bool) -> Result<Format, String> {
+    let qf = common::quote_in(utf8, f.as_bytes());
     let mut prefix = String::new();
     let mut chars = f.char_indices().peekable();
     while let Some((i, c)) = chars.next() {
@@ -185,10 +186,10 @@ fn parse_format(f: &str) -> Result<Format, String> {
             j += 1;
         }
         let Some(conv) = rest[j..].chars().next() else {
-            return Err(format!("format '{f}' ends in %"));
+            return Err(format!("format {qf} ends in %"));
         };
         if !"eEfFgG".contains(conv) {
-            return Err(format!("format '{f}' has unknown %{conv} directive"));
+            return Err(format!("format {qf} has unknown %{conv} directive"));
         }
         fmt.conv = conv;
         let tail = &rest[j + conv.len_utf8()..];
@@ -201,7 +202,7 @@ fn parse_format(f: &str) -> Result<Format, String> {
                     suffix.push('%');
                     continue;
                 }
-                return Err(format!("format '{f}' has too many % directives"));
+                return Err(format!("format {qf} has too many % directives"));
             }
             suffix.push(c);
         }
@@ -209,7 +210,7 @@ fn parse_format(f: &str) -> Result<Format, String> {
         fmt.suffix = suffix;
         return Ok(fmt);
     }
-    Err(format!("format '{f}' has no % directive"))
+    Err(format!("format {qf} has no % directive"))
 }
 
 impl Format {
@@ -331,7 +332,7 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
                 )
                 .await;
             }
-            match parse_format(&String::from_utf8_lossy(f)) {
+            match parse_format(&String::from_utf8_lossy(f), ctx.utf8()) {
                 Ok(f) => Some(f),
                 Err(e) => {
                     ctx.error(&e).await;
@@ -346,17 +347,16 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         return common::usage(ctx, "missing operand").await;
     }
     if ops.len() > 3 {
-        let extra = String::from_utf8_lossy(&ops[3]).into_owned();
-        return common::usage(ctx, &format!("extra operand '{extra}'")).await;
+        let extra = common::quote(ctx, &ops[3]);
+        return common::usage(ctx, &format!("extra operand {extra}")).await;
     }
     let mut nums = Vec::new();
     for o in ops {
         match parse_num(o) {
             Some(n) if !n.value.is_nan() => nums.push(n),
             _ => {
-                let o = String::from_utf8_lossy(o).into_owned();
-                return common::usage(ctx, &format!("invalid floating point argument: '{o}'"))
-                    .await;
+                let o = common::quote(ctx, o);
+                return common::usage(ctx, &format!("invalid floating point argument: {o}")).await;
             }
         }
     }
@@ -372,8 +372,8 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         _ => unreachable!(),
     };
     if step.value == 0.0 {
-        let s = String::from_utf8_lossy(&ops[1]).into_owned();
-        return common::usage(ctx, &format!("invalid Zero increment value: '{s}'")).await;
+        let s = common::quote(ctx, &ops[1]);
+        return common::usage(ctx, &format!("invalid Zero increment value: {s}")).await;
     }
     let mut out = Vec::new();
     let mut count = 0u64;
@@ -498,12 +498,15 @@ mod tests {
 
     #[test]
     fn formats() {
-        let f = parse_format("x%%%5.1fy").unwrap();
+        let f = parse_format("x%%%5.1fy", false).unwrap();
         assert_eq!(f.apply(1.0), "x%  1.0y");
-        assert_eq!(parse_format("%03g").unwrap().apply(1.0), "001");
-        assert_eq!(parse_format("%e").unwrap().apply(2.0), "2.000000e+00");
-        assert!(parse_format("%d").is_err());
-        assert!(parse_format("%g %g").is_err());
-        assert!(parse_format("abc").is_err());
+        assert_eq!(parse_format("%03g", false).unwrap().apply(1.0), "001");
+        assert_eq!(
+            parse_format("%e", false).unwrap().apply(2.0),
+            "2.000000e+00"
+        );
+        assert!(parse_format("%d", false).is_err());
+        assert!(parse_format("%g %g", false).is_err());
+        assert!(parse_format("abc", false).is_err());
     }
 }

@@ -148,9 +148,9 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
                     _ => None,
                 };
                 let Some(d) = d else {
-                    let v = String::from_utf8_lossy(v).into_owned();
-                    return common::usage(ctx, &format!("invalid argument '{v}' for '--{k}'"))
-                        .await;
+                    let v = common::quote(ctx, v);
+                    let opt = common::quote(ctx, format!("--{k}").as_bytes());
+                    return common::usage(ctx, &format!("invalid argument {v} for {opt}")).await;
                 };
                 mode = if all {
                     Mode::AllRepeated(d)
@@ -180,8 +180,8 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         repeated = true;
     }
     if p.operands.len() > 2 {
-        let o = String::from_utf8_lossy(&p.operands[2]).into_owned();
-        return common::usage(ctx, &format!("extra operand '{o}'")).await;
+        let o = common::quote(ctx, &p.operands[2]);
+        return common::usage(ctx, &format!("extra operand {o}")).await;
     }
     let eol = if p.has(&SPEC, "zero-terminated") {
         0

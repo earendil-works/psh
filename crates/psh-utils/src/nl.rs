@@ -58,7 +58,7 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
     let mut delim = b"\\:".to_vec();
     for (k, v) in p.iter(&SPEC) {
         let v = v.unwrap_or_default();
-        let text = String::from_utf8_lossy(v).into_owned();
+        let text = common::quote(ctx, v);
         let section = match k.as_str() {
             "header-numbering" => Some((0, "header")),
             "body-numbering" => Some((1, "body")),
@@ -74,19 +74,16 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
                     return textio::fall_through(ctx, argv, "numbering style 'pREGEX'").await;
                 }
                 _ => {
-                    return common::usage(
-                        ctx,
-                        &format!("invalid {what} numbering style: '{text}'"),
-                    )
-                    .await;
+                    return common::usage(ctx, &format!("invalid {what} numbering style: {text}"))
+                        .await;
                 }
             };
             continue;
         }
         let num = |what: &str, min: i64| -> Result<i64, String> {
-            match text.parse::<i64>() {
+            match String::from_utf8_lossy(v).parse::<i64>() {
                 Ok(n) if n >= min => Ok(n),
-                _ => Err(format!("invalid {what}: '{text}'")),
+                _ => Err(format!("invalid {what}: {text}")),
             }
         };
         let r = match k.as_str() {
@@ -98,7 +95,7 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
                     _ => {
                         return common::usage(
                             ctx,
-                            &format!("invalid line numbering format: '{text}'"),
+                            &format!("invalid line numbering format: {text}"),
                         )
                         .await;
                     }

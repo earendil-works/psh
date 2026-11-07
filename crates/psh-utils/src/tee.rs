@@ -36,12 +36,9 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
                 b"warn" | b"exit" => warn_pipe = true,
                 b"warn-nopipe" | b"exit-nopipe" => {}
                 v => {
-                    let v = String::from_utf8_lossy(v).into_owned();
-                    return common::usage(
-                        ctx,
-                        &format!("invalid argument '{v}' for '--output-error'"),
-                    )
-                    .await;
+                    let v = common::quote(ctx, v);
+                    let opt = common::quote(ctx, b"--output-error");
+                    return common::usage(ctx, &format!("invalid argument {v} for {opt}")).await;
                 }
             }
         }

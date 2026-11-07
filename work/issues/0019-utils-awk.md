@@ -1,7 +1,7 @@
 # 0019: Utilities batch H: awk
 
-status: open
-agent: -
+status: in-progress
+agent: text
 branch: issue/0019-utils-awk
 depends-on: 0008
 touches: crates/psh-utils/src/awk/, tests/utils/awk/, tests/vendor-awk/ (goawk and onetrueawk tests)
@@ -33,6 +33,10 @@ implementation. Port goawk (MIT) to Rust (D018); F mode until conformant, then S
 - Likely several sessions: land the lexer/parser, then the interpreter, then I/O.
 
 ## Log
+- Part 0 (coordinator's request, outside this issue's touches): one quoting rule for
+  utility messages, D1163 (decision recorded in 0016's range). `common::quote` /
+  `common::quote_in` hold it; `fsutil::q` (0015) now calls it. Switched the nine text
+  filters and head, tail, sleep, timeout, wc. utils stderr score 322 -> 336 of 339.
 
 ## Follow-ups
 

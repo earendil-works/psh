@@ -119,7 +119,8 @@ fn decode(s: &[u8], chars: bool) -> Option<(u32, usize)> {
 }
 
 /// `repeats`: whether `[c*n]` is a construct (SET2) or literal text (SET1).
-fn parse_set(s: &[u8], chars: bool, repeats: bool) -> Result<Vec<Item>, String> {
+fn parse_set(s: &[u8], chars: bool, repeats: bool, utf8: bool) -> Result<Vec<Item>, String> {
+    let q = |t: &str| common::quote_in(utf8, t.as_bytes());
     let mut items = Vec::new();
     let mut i = 0;
     while i < s.len() {
@@ -130,7 +131,7 @@ fn parse_set(s: &[u8], chars: bool, repeats: bool) -> Result<Vec<Item>, String> 
             {
                 let name = String::from_utf8_lossy(&s[i + 2..i + 2 + end]).into_owned();
                 let Some(&c) = CLASSES.iter().find(|&&c| c == name) else {
-                    return Err(format!("invalid character class '{name}'"));
+                    return Err(format!("invalid character class {}", q(&name)));
                 };
                 items.push(Item::Class(c));
                 i += end + 4;
@@ -169,7 +170,8 @@ fn parse_set(s: &[u8], chars: bool, repeats: bool) -> Result<Vec<Item>, String> 
                                 Some(n) => Some(n),
                                 None => {
                                     return Err(format!(
-                                        "invalid repeat count '{text}' in [c*n] construct"
+                                        "invalid repeat count {} in [c*n] construct",
+                                        q(&text)
                                     ));
                                 }
                             }
@@ -295,24 +297,24 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         return common::usage(ctx, "missing operand").await;
     }
     if ops.len() < wanted {
-        let o = String::from_utf8_lossy(&ops[0]).into_owned();
+        let o = common::quote(ctx, &ops[0]);
         let why = if squeeze {
             "Two strings must be given when both deleting and squeezing repeats."
         } else {
             "Two strings must be given when translating."
         };
-        return common::usage(ctx, &format!("missing operand after '{o}'\n{why}")).await;
+        return common::usage(ctx, &format!("missing operand after {o}\n{why}")).await;
     }
     if ops.len() > wanted && !(squeeze && !delete && ops.len() == 2) {
-        let o = String::from_utf8_lossy(&ops[wanted]).into_owned();
-        let mut msg = format!("extra operand '{o}'");
+        let o = common::quote(ctx, &ops[wanted]);
+        let mut msg = format!("extra operand {o}");
         if delete && ops.len() == 2 {
             msg.push_str("\nOnly one string may be given when deleting without squeezing repeats.");
         }
         return common::usage(ctx, &msg).await;
     }
     let chars = ops.iter().any(|o| o.iter().any(|&b| b >= 0x80));
-    let set1_items = match parse_set(&ops[0], chars, false) {
+    let set1_items = match parse_set(&ops[0], chars, false, ctx.utf8()) {
         Ok(s) => s,
         Err(e) => {
             ctx.error(&e).await;
@@ -322,7 +324,7 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
     let mut set1 = expand(&set1_items, 0);
     let set2 = match ops.get(1) {
         Some(o) => {
-            let items = match parse_set(o, chars, true) {
+            let items = match parse_set(o, chars, true, ctx.utf8()) {
                 Ok(s) => s,
                 Err(e) => {
                     ctx.error(&e).await;
@@ -485,7 +487,7 @@ mod tests {
     use super::*;
 
     fn set(s: &str) -> Vec<u32> {
-        expand(&parse_set(s.as_bytes(), false, true).unwrap(), 0)
+        expand(&parse_set(s.as_bytes(), false, true, false).unwrap(), 0)
     }
 
     #[test]
@@ -495,15 +497,15 @@ mod tests {
         assert_eq!(set("[:digit:]").len(), 10);
         assert_eq!(set("[=a=]x"), vec![97, 120]);
         assert_eq!(
-            expand(&parse_set(b"[x*]y", false, true).unwrap(), 4),
+            expand(&parse_set(b"[x*]y", false, true, false).unwrap(), 4),
             vec![120, 120, 120, 121]
         );
         assert_eq!(
-            expand(&parse_set(b"[x*3]", false, true).unwrap(), 0),
+            expand(&parse_set(b"[x*3]", false, true, false).unwrap(), 0),
             vec![120; 3]
         );
-        assert!(parse_set(b"z-a", false, true).is_err());
-        assert!(parse_set(b"[:nope:]", false, true).is_err());
+        assert!(parse_set(b"z-a", false, true, false).is_err());
+        assert!(parse_set(b"[:nope:]", false, true, false).is_err());
         assert_eq!(set("a-"), vec![97, 45]);
         assert_eq!(set("\\\\"), vec![92]);
     }

@@ -31,7 +31,7 @@ pub const SPEC: Spec = Spec {
 /// 1-based inclusive ranges, sorted and merged; `usize::MAX` is an open end.
 type Ranges = Vec<(usize, usize)>;
 
-fn parse_list(list: &[u8], fields: bool) -> Result<Ranges, String> {
+fn parse_list(list: &[u8], fields: bool, utf8: bool) -> Result<Ranges, String> {
     let text = String::from_utf8_lossy(list);
     let mut out = Vec::new();
     let what = if fields {
@@ -50,7 +50,10 @@ fn parse_list(list: &[u8], fields: bool) -> Result<Ranges, String> {
                 } else {
                     "byte/character position"
                 };
-                return Err(format!("invalid {kind} '{part}'"));
+                return Err(format!(
+                    "invalid {kind} {}",
+                    common::quote_in(utf8, part.as_bytes())
+                ));
             }
             match s.parse::<usize>() {
                 Ok(0) => Err(format!("{what} numbered from 1")),
@@ -173,7 +176,7 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         }
         None => vec![b'\t'],
     };
-    let mut ranges = match parse_list(&list, fields) {
+    let mut ranges = match parse_list(&list, fields, ctx.utf8()) {
         Ok(r) => r,
         Err(e) => return common::usage(ctx, &e).await,
     };
@@ -354,15 +357,15 @@ mod tests {
 
     #[test]
     fn lists() {
-        assert_eq!(parse_list(b"1,3-4,2", true).unwrap(), vec![(1, 4)]);
+        assert_eq!(parse_list(b"1,3-4,2", true, false).unwrap(), vec![(1, 4)]);
         assert_eq!(
-            parse_list(b"-2,5-", false).unwrap(),
+            parse_list(b"-2,5-", false, false).unwrap(),
             vec![(1, 2), (5, usize::MAX)]
         );
-        assert!(parse_list(b"0", true).is_err());
-        assert!(parse_list(b"3-1", true).is_err());
-        assert!(parse_list(b"x", true).is_err());
-        assert!(parse_list(b"-", true).is_err());
+        assert!(parse_list(b"0", true, false).is_err());
+        assert!(parse_list(b"3-1", true, false).is_err());
+        assert!(parse_list(b"x", true, false).is_err());
+        assert!(parse_list(b"-", true, false).is_err());
         assert_eq!(complement(&vec![(2, 3)]), vec![(1, 1), (4, usize::MAX)]);
         assert_eq!(complement(&vec![(1, usize::MAX)]), vec![]);
     }

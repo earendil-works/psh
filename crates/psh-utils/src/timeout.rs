@@ -104,11 +104,8 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
             "kill-after" => match common::parse_duration(v) {
                 Some(d) => kill_after = Some(d),
                 None => {
-                    ctx.error(&format!(
-                        "invalid time interval '{}'",
-                        String::from_utf8_lossy(v)
-                    ))
-                    .await;
+                    let msg = format!("invalid time interval {}", common::quote(ctx, v));
+                    ctx.error(&msg).await;
                     return 125;
                 }
             },
@@ -123,21 +120,15 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         return 125;
     };
     let Some(secs) = common::parse_duration(duration) else {
-        ctx.error(&format!(
-            "invalid time interval '{}'",
-            String::from_utf8_lossy(duration)
-        ))
-        .await;
+        let msg = format!("invalid time interval {}", common::quote(ctx, duration));
+        ctx.error(&msg).await;
         let name = ctx.name().to_string();
         ctx.error_raw(format!("Try '{name} --help' for more information.\n").as_bytes())
             .await;
         return 125;
     };
     if p.operands.len() < 2 {
-        let msg = format!(
-            "missing operand after '{}'",
-            String::from_utf8_lossy(duration)
-        );
+        let msg = format!("missing operand after {}", common::quote(ctx, duration));
         common::usage(ctx, &msg).await;
         return 125;
     }

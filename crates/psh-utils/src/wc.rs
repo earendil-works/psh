@@ -134,11 +134,12 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
             "total" => {
                 total_mode = String::from_utf8_lossy(value.unwrap_or(b"always")).into_owned();
                 if !matches!(total_mode.as_str(), "auto" | "always" | "only" | "never") {
-                    return common::usage(
-                        ctx,
-                        &format!("invalid argument '{total_mode}' for '--total'"),
-                    )
-                    .await;
+                    let msg = format!(
+                        "invalid argument {} for {}",
+                        common::quote(ctx, total_mode.as_bytes()),
+                        common::quote(ctx, b"--total")
+                    );
+                    return common::usage(ctx, &msg).await;
                 }
             }
             _ => {}

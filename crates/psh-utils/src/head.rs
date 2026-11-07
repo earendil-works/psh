@@ -68,11 +68,8 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
                 };
                 let Some(n) = common::parse_count(num) else {
                     let what = if key == "lines" { "lines" } else { "bytes" };
-                    ctx.error(&format!(
-                        "invalid number of {what}: '{}'",
-                        String::from_utf8_lossy(v)
-                    ))
-                    .await;
+                    let msg = format!("invalid number of {what}: {}", common::quote(ctx, v));
+                    ctx.error(&msg).await;
                     return 1;
                 };
                 amount = match (key.as_str(), neg) {

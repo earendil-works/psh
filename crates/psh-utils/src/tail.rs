@@ -88,11 +88,8 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
                 };
                 let Some(n) = common::parse_count(num) else {
                     let what = if key == "lines" { "lines" } else { "bytes" };
-                    ctx.error(&format!(
-                        "invalid number of {what}: '{}'",
-                        String::from_utf8_lossy(v)
-                    ))
-                    .await;
+                    let msg = format!("invalid number of {what}: {}", common::quote(ctx, v));
+                    ctx.error(&msg).await;
                     return 1;
                 };
                 amount = match (key.as_str(), from) {
@@ -106,11 +103,11 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
             "sleep-interval" => match common::parse_duration(value.unwrap_or_default()) {
                 Some(d) if d.is_finite() => interval = Duration::from_secs_f64(d),
                 _ => {
-                    ctx.error(&format!(
-                        "invalid number of seconds: '{}'",
-                        String::from_utf8_lossy(value.unwrap_or_default())
-                    ))
-                    .await;
+                    let msg = format!(
+                        "invalid number of seconds: {}",
+                        common::quote(ctx, value.unwrap_or_default())
+                    );
+                    ctx.error(&msg).await;
                     return 1;
                 }
             },

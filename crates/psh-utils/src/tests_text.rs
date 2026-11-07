@@ -182,3 +182,21 @@ fn unknown_options_fail_clearly() {
         );
     }
 }
+
+#[test]
+fn messages_quote_as_gnu_does_for_the_locale() {
+    check_all(
+        "LC_ALL=C.UTF-8 cut -f x < /dev/null",
+        "",
+        1,
+        "",
+        "cut: invalid field value \u{2018}x\u{2019}\nTry 'cut --help' for more information.\n",
+    );
+    check_all(
+        "LANG=C cut -f x < /dev/null",
+        "",
+        1,
+        "",
+        "cut: invalid field value 'x'\nTry 'cut --help' for more information.\n",
+    );
+}

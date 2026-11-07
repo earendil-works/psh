@@ -31,11 +31,8 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         match common::parse_duration(a) {
             Some(d) => total += d,
             None => {
-                ctx.error(&format!(
-                    "invalid time interval '{}'",
-                    String::from_utf8_lossy(a)
-                ))
-                .await;
+                let msg = format!("invalid time interval {}", common::quote(ctx, a));
+                ctx.error(&msg).await;
                 bad = true;
             }
         }

@@ -63,6 +63,24 @@ pub async fn usage(ctx: &mut UtilCtx<'_>, msg: &str) -> i32 {
     1
 }
 
+/// A value quoted for a message as GNU quotes it (D1163): `‘x’` when the locale's
+/// character set is UTF-8 (`LC_ALL`, `LC_CTYPE`, `LANG`), `'x'` otherwise. For values
+/// and operands in messages (`invalid field value ‘x’`), not for the `NAME: FILE:
+/// reason` prefix of file errors, which GNU leaves unquoted.
+pub fn quote(ctx: &UtilCtx<'_>, s: &[u8]) -> String {
+    quote_in(ctx.utf8(), s)
+}
+
+/// [`quote`] for code that has no context, given whether the locale is UTF-8.
+pub fn quote_in(utf8: bool, s: &[u8]) -> String {
+    let s = String::from_utf8_lossy(s);
+    if utf8 {
+        format!("\u{2018}{s}\u{2019}")
+    } else {
+        format!("'{s}'")
+    }
+}
+
 /// The status after a failed write to stdout: a closed pipe ends the utility silently
 /// like SIGPIPE ends a program (141); other errors are reported.
 pub async fn write_failed(ctx: &mut UtilCtx<'_>, e: &io::Error) -> i32 {
@@ -206,6 +224,12 @@ mod tests {
         assert_eq!(parse_duration(b"x"), None);
         assert_eq!(parse_duration(b"-1"), None);
         assert_eq!(parse_duration(b"1x"), None);
+    }
+
+    #[test]
+    fn quotes() {
+        assert_eq!(quote_in(true, b"x"), "\u{2018}x\u{2019}");
+        assert_eq!(quote_in(false, b"x"), "'x'");
     }
 
     #[test]

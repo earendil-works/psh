@@ -14,7 +14,7 @@
 
 # How it works
 
-- [The parser: spans and printing]()
+- [The parser: spans and printing](syntax.md)
 - [The engine: a stepped interpreter with virtual processes]()
 - [The host interface]()
 - [Processes on Unix]()

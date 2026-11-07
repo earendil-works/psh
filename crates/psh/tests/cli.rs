@@ -315,6 +315,7 @@ fn unreadable_scripts() {
     let dir = std::env::temp_dir();
     let out = psh(&[dir.to_str().unwrap()]);
     assert_eq!(out.status, Some(126), "{}", out.stderr);
+    assert!(out.stderr.ends_with(": Is a directory\n"), "{}", out.stderr);
 }
 
 #[test]

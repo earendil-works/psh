@@ -180,10 +180,17 @@ fn main() -> ExitCode {
                 options,
             },
             Err(e) => {
-                eprintln!("psh: {}: {}", text(&path), psh_engine::host::error_text(&e));
                 // As bash: 127 for a script that does not exist, 126 for one that
-                // cannot be read (a directory, no permission).
-                let missing = e.kind() == std::io::ErrorKind::NotFound;
+                // cannot be read (a directory, no permission). Windows reports a
+                // directory as missing or as access denied, so ask.
+                let dir = std::fs::metadata(os_path(&path)).is_ok_and(|m| m.is_dir());
+                let why = if dir {
+                    "Is a directory".to_string()
+                } else {
+                    psh_engine::host::error_text(&e)
+                };
+                eprintln!("psh: {}: {why}", text(&path));
+                let missing = !dir && e.kind() == std::io::ErrorKind::NotFound;
                 return ExitCode::from(if missing { 127 } else { 126 });
             }
         },

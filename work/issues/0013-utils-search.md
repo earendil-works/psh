@@ -99,6 +99,22 @@ Common
 - The backtracking backreference matcher and the leftmost-longest mode are follow-ups,
   not part of this issue.
 
+
+- Read `research/builtins.md` §5 first; the seams list in §5.4 is the patch checklist.
+  The experiments of that section are in `/tmp/embed` (may be gone; reproduce from the
+  section if so).
+- oh-my-pi's `pi-builtins/src/{rg,grep,fd,bre}.rs` are MIT references; `pi-walker` is
+  MIT but async (tokio, flume) and is not reused (D005).
+- GNU grep's source is off limits (D007); its manual is fine.
+- Large issue. Suggested order, merging after each: shared layer + rg; then grep; then
+  fd. Tell the coordinator if it should be split into three issues.
+- The backtracking backreference matcher and the leftmost-longest mode are follow-ups,
+  not part of this issue.
+
+- WASM: blocking utilities read stdin to EOF first, capped (D1080). grep/rg should feed the
+  searcher incrementally in wasm if the crates allow it (e.g. an async utility wrapping
+  grep-searcher over chunks), so `yes | grep x | head -1` finishes there too.
+
 ## Log
 
 ## Follow-ups

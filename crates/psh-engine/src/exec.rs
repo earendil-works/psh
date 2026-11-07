@@ -21,7 +21,7 @@ use crate::pipe;
 use crate::sched::{Join, LocalBoxFuture, safepoint};
 use crate::state::{Code, Frame, Func, R, Unwind, Vp, is_name};
 
-const DEFAULT_PATH: &[u8] = b"/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+pub(crate) const DEFAULT_PATH: &[u8] = b"/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
 
 pub(crate) fn run_list<'a>(
     vp: &'a mut Vp,
@@ -661,13 +661,7 @@ fn run_argv(
     {
         return Box::pin(call_function(vp, f, argv, assigns));
     }
-    if builtins::find(name).is_none() {
-        if name == b"exec" {
-            return Box::pin(async move {
-                let r = run_external(vp, argv[1..].to_vec(), assigns).await?;
-                Err(Unwind::Exit(r))
-            });
-        }
+    if builtins::get(vp, name).is_none() {
         return Box::pin(run_external(vp, argv, assigns));
     }
     Box::pin(run_builtin(vp, argv, assigns))
@@ -675,20 +669,17 @@ fn run_argv(
 
 async fn run_builtin(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec<u8>)>) -> R {
     let name = argv[0].clone();
-    if let Some(b) = builtins::find(&name) {
-        if b.special {
-            for (n, v) in assigns {
-                vp.set_var(&n, v);
-            }
-            return (b.run)(vp, &argv).await;
-        }
-        // Assignments in front of a regular builtin last for the builtin only.
+    if let Some(b) = builtins::get(vp, &name) {
+        // Assignments in front of a builtin, special or not (bash outside POSIX mode),
+        // last for the builtin only and are exported to what it runs (`x=1 eval cmd`).
         let saved: Vec<(String, Option<crate::state::Var>)> = assigns
             .iter()
             .map(|(n, _)| (n.clone(), vp.vars.get(n).cloned()))
             .collect();
         for (n, v) in assigns {
-            vp.set_var(&n, v);
+            let var = vp.vars.entry(&n);
+            var.value = Some(v);
+            var.exported = true;
         }
         let r = (b.run)(vp, &argv).await;
         for (n, old) in saved {
@@ -704,8 +695,28 @@ async fn run_builtin(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec<
     Ok(0)
 }
 
-/// Starts an external command and waits for it, pumping its pipes to engine objects.
 async fn run_external(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec<u8>)>) -> R {
+    run_external_with(vp, argv, assigns, ExtOpts::default()).await
+}
+
+/// How `exec` and `command` change running an external.
+#[derive(Default)]
+pub(crate) struct ExtOpts {
+    /// `argv[0]` for the program instead of the name (`exec -a`).
+    pub arg0: Option<Vec<u8>>,
+    /// Only the assignments in front of the command as environment (`exec -c`).
+    pub clear_env: bool,
+    /// Search this instead of `PATH` (`command -p`).
+    pub path: Option<Vec<u8>>,
+}
+
+/// Starts an external command and waits for it, pumping its pipes to engine objects.
+pub(crate) async fn run_external_with(
+    vp: &mut Vp,
+    mut argv: Vec<Vec<u8>>,
+    assigns: Vec<(String, Vec<u8>)>,
+    opts: ExtOpts,
+) -> R {
     if argv.is_empty() {
         return Ok(0);
     }
@@ -714,17 +725,26 @@ async fn run_external(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec
     let program = if name.contains(&b'/') {
         vp.abs_path(&name)
     } else {
-        let path = vp
-            .var("PATH")
-            .map(<[u8]>::to_vec)
-            .unwrap_or_else(|| DEFAULT_PATH.to_vec());
-        match vp.host().resolve(&name, &path, &vp.cwd).await {
-            Some(p) => p,
+        match builtins::hash::find(vp, &name, opts.path.as_deref(), true).await {
+            Some(p) => vp.abs_path(&p),
             None => {
                 vp.error(&format!("{shown}: command not found")).await;
                 return Ok(127);
             }
         }
+    };
+    if let Some(a) = opts.arg0 {
+        argv[0] = a;
+    }
+    let env = if opts.clear_env {
+        let mut env: Vec<(Vec<u8>, Vec<u8>)> = assigns
+            .iter()
+            .map(|(n, v)| (n.as_bytes().to_vec(), v.clone()))
+            .collect();
+        env.sort();
+        env
+    } else {
+        vp.env(&assigns)
     };
     let mut fds = Vec::new();
     let mut has = [false; 3];
@@ -752,13 +772,20 @@ async fn run_external(vp: &mut Vp, argv: Vec<Vec<u8>>, assigns: Vec<(String, Vec
     let spec = SpawnSpec {
         program,
         argv,
-        env: vp.env(&assigns),
+        env,
         cwd: vp.cwd.clone(),
         fds,
         ..SpawnSpec::default()
     };
+    let program = spec.program.clone();
     let spawned = match vp.host().spawn(spec) {
         Ok(s) => s,
+        // Spawning a directory fails with EACCES; bash says what it is.
+        Err(_) if matches!(vp.host().stat(&program, true).await, Ok(m) if m.kind == crate::host::FileKind::Dir) =>
+        {
+            vp.error(&format!("{shown}: Is a directory")).await;
+            return Ok(126);
+        }
         Err(e) => {
             let status = if e.kind() == std::io::ErrorKind::NotFound {
                 127
@@ -865,7 +892,7 @@ pub(crate) async fn apply_redirects(
 
 /// `/dev/stdin`, `/dev/stdout`, `/dev/stderr` and `/dev/fd/N` refer to the vproc's own
 /// descriptors (the process's are not the shell's when it runs embedded).
-fn dev_fd(path: &[u8]) -> Option<u32> {
+pub(crate) fn dev_fd(path: &[u8]) -> Option<u32> {
     match path {
         b"/dev/stdin" => Some(0),
         b"/dev/stdout" => Some(1),

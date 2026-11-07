@@ -256,6 +256,9 @@ impl Shell {
             getopts: (0, 0),
             aliases: psh_syntax::Aliases::new(),
             expand_aliases: false,
+            sourced: Vec::new(),
+            hash: Default::default(),
+            disabled: Default::default(),
         };
         Shell {
             core,

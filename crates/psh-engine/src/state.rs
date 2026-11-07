@@ -170,6 +170,13 @@ pub(crate) struct Vp {
     pub aliases: psh_syntax::Aliases,
     /// `shopt expand_aliases`: off, as in non-interactive bash.
     pub expand_aliases: bool,
+    /// The files being `source`d, innermost last: `return` ends one, and messages
+    /// name it instead of `$0`.
+    pub sourced: Vec<String>,
+    /// Remembered command paths (`hash`); shared with subshells until one changes it.
+    pub hash: Rc<crate::builtins::hash::HashTable>,
+    /// Builtins turned off with `enable -n`.
+    pub disabled: Rc<Vec<Vec<u8>>>,
 }
 
 /// A function: its body command in the chunk that defined it.
@@ -254,15 +261,18 @@ impl Vp {
         env
     }
 
+    /// The name in front of messages: the file being sourced, else `$0`.
+    pub(crate) fn msg_name(&self) -> String {
+        match self.sourced.last() {
+            Some(f) => f.clone(),
+            None => self.core.msg_name.borrow().clone(),
+        }
+    }
+
     /// Writes a message to fd 2, as `NAME: line N: MSG`. Write errors are ignored, as
     /// bash does.
     pub(crate) async fn error(&self, msg: &str) {
-        let text = format!(
-            "{}: line {}: {}\n",
-            self.core.msg_name.borrow(),
-            self.line,
-            msg
-        );
+        let text = format!("{}: line {}: {}\n", self.msg_name(), self.line, msg);
         self.error_raw(text.as_bytes()).await;
     }
 

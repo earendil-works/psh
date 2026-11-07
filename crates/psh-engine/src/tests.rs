@@ -38,7 +38,7 @@ fn run_on(host: Rc<TestHost>, src: &str) -> Out {
     }
 }
 
-fn run_setup(src: &str, setup: impl Fn(&TestHost)) -> Out {
+pub(crate) fn run_setup(src: &str, setup: impl Fn(&TestHost)) -> Out {
     let a = {
         let h = Rc::new(TestHost::new());
         setup(&h);

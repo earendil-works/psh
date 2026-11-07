@@ -2,8 +2,11 @@
 //! them.
 
 mod alias;
+mod command;
 #[cfg(test)]
 mod core_tests;
+mod eval;
+pub(crate) mod hash;
 mod printf;
 mod read;
 mod test;
@@ -18,7 +21,9 @@ pub(crate) type BuiltinFn = for<'a> fn(&'a mut Vp, &'a [Vec<u8>]) -> LocalBoxFut
 #[derive(Clone, Copy)]
 pub(crate) struct Builtin {
     pub run: BuiltinFn,
-    /// A POSIX special builtin: assignments in front of it stay.
+    /// A POSIX special builtin. Outside POSIX mode bash treats them like the others;
+    /// `set -o posix` will (assignments in front of them stay, errors end the shell).
+    #[allow(dead_code)]
     pub special: bool,
 }
 
@@ -57,9 +62,127 @@ pub(crate) fn find(name: &[u8]) -> Option<Builtin> {
         b"test" => (builtin!(test::test), false),
         b"[" => (builtin!(test::bracket), false),
         b"read" => (builtin!(read::read), false),
+        b"eval" => (builtin!(eval::eval), true),
+        b"source" | b"." => (builtin!(eval::source), true),
+        b"command" => (builtin!(command::command), false),
+        b"type" => (builtin!(command::type_), false),
+        b"builtin" => (builtin!(command::builtin), false),
+        b"exec" => (builtin!(command::exec_), true),
+        b"enable" => (builtin!(command::enable), false),
+        b"times" => (builtin!(command::times), true),
+        b"hash" => (builtin!(hash::hash), false),
+        // Every other bash builtin: an error, never a program of the same name.
+        _ if false && BASH_BUILTINS.contains(&name) => {
+            (builtin!(unsupported), SPECIAL.contains(&name))
+        }
         _ => return None,
     };
     Some(Builtin { run, special })
+}
+
+/// The builtin `name` runs, unless `enable -n` turned it off.
+pub(crate) fn get(vp: &Vp, name: &[u8]) -> Option<Builtin> {
+    if vp.disabled.iter().any(|d| d == name) {
+        return None;
+    }
+    find(name)
+}
+
+/// Whether `name` is an enabled builtin (`type`, `command -v`).
+pub(crate) fn is_builtin(vp: &Vp, name: &[u8]) -> bool {
+    (find(name).is_some() || BASH_BUILTINS.contains(&name))
+        && !vp.disabled.iter().any(|d| d == name)
+}
+
+/// Bash 5.3's builtins (`enable -a`), in its order.
+pub(crate) const BASH_BUILTINS: &[&[u8]] = &[
+    b".",
+    b":",
+    b"[",
+    b"alias",
+    b"bg",
+    b"bind",
+    b"break",
+    b"builtin",
+    b"caller",
+    b"cd",
+    b"command",
+    b"compgen",
+    b"complete",
+    b"compopt",
+    b"continue",
+    b"declare",
+    b"dirs",
+    b"disown",
+    b"echo",
+    b"enable",
+    b"eval",
+    b"exec",
+    b"exit",
+    b"export",
+    b"false",
+    b"fc",
+    b"fg",
+    b"getopts",
+    b"hash",
+    b"help",
+    b"history",
+    b"jobs",
+    b"kill",
+    b"let",
+    b"local",
+    b"logout",
+    b"mapfile",
+    b"popd",
+    b"printf",
+    b"pushd",
+    b"pwd",
+    b"read",
+    b"readarray",
+    b"readonly",
+    b"return",
+    b"set",
+    b"shift",
+    b"shopt",
+    b"source",
+    b"suspend",
+    b"test",
+    b"times",
+    b"trap",
+    b"true",
+    b"type",
+    b"typeset",
+    b"ulimit",
+    b"umask",
+    b"unalias",
+    b"unset",
+    b"wait",
+];
+
+/// The POSIX special builtins (`enable -s`).
+pub(crate) const SPECIAL: &[&[u8]] = &[
+    b".",
+    b":",
+    b"break",
+    b"continue",
+    b"eval",
+    b"exec",
+    b"exit",
+    b"export",
+    b"readonly",
+    b"return",
+    b"set",
+    b"shift",
+    b"source",
+    b"times",
+    b"trap",
+    b"unset",
+];
+
+/// A bash builtin psh does not have yet: fails instead of running a program of the
+/// same name (macOS has `/usr/bin/read`, `/usr/bin/type`, ... as sh wrappers).
+async fn unsupported(vp: &mut Vp, args: &[Vec<u8>]) -> R {
+    crate::expand::unsupported(vp, &s(&args[0])).await
 }
 
 /// Whether `name` is a declaration builtin, whose `name=value` arguments are expanded
@@ -482,7 +605,7 @@ async fn set(vp: &mut Vp, args: &[Vec<u8>]) -> R {
 }
 
 async fn return_(vp: &mut Vp, args: &[Vec<u8>]) -> R {
-    if vp.frames.is_empty() {
+    if vp.frames.is_empty() && vp.sourced.is_empty() {
         vp.error("return: can only `return' from a function or sourced script")
             .await;
         return Ok(2);

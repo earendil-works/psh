@@ -1,4 +1,5 @@
 # timeout: 60
+# inputs: scripts/
 # Every script parses (they run under macOS's bash 3.2 too): the .sh files and the
 # extensionless bash scripts in scripts/.
 for f in scripts/*.sh scripts/gate.d/*.sh; do bash -n "$f"; done

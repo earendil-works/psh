@@ -1,4 +1,5 @@
 # timeout: 300
+# inputs: crates/ Cargo.toml Cargo.lock .cargo/
 # Dependency sets (D006, D1013): a new dependency changes this list along with its
 # decision in docs/decisions.md.
 #

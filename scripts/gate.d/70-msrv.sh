@@ -1,4 +1,5 @@
 # timeout: 1800
+# inputs: crates/ Cargo.toml Cargo.lock .cargo/ tests/
 # The workspace builds with the MSRV (rust-version in Cargo.toml, D025), not only with
 # the current stable that development uses.
 msrv=$(sed -n 's/^rust-version = "\(.*\)"/\1/p' Cargo.toml)

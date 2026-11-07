@@ -1707,6 +1707,7 @@ brush/compat/signals/13
 brush/compat/signals/14
 brush/compat/signals/15
 brush/compat/signals/16
+brush/compat/signals/17: passed in-process only because `kill $$` could not reach the shell; now runs in the binary (D1056); needs trap
 brush/compat/signals/18
 brush/compat/signals/19
 brush/compat/signals/20

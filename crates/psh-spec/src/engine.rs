@@ -49,6 +49,9 @@ pub struct RunOutput {
     pub stdout: Vec<u8>,
     pub stderr: Vec<u8>,
     pub status: Status,
+    /// Engine remarks about the run: the wasm engine lists the commands the case looked
+    /// for and did not find (it needed external programs).
+    pub notes: Vec<String>,
 }
 
 pub trait Engine: Sync {
@@ -226,6 +229,7 @@ impl Engine for External {
             stdout,
             stderr,
             status,
+            notes: Vec::new(),
         })
     }
 }
@@ -314,6 +318,7 @@ impl Engine for InProcess {
                 stdout: Vec::new(),
                 stderr: format!("psh: {msg}\n").into_bytes(),
                 status: Status::Exit(2),
+                notes: Vec::new(),
             })
         };
         // A child of an in-process shell is a child of the runner, in its process
@@ -357,6 +362,7 @@ impl Engine for InProcess {
                             stderr: format!("psh: {}: No such file or directory\n", text(&path))
                                 .into_bytes(),
                             status: Status::Exit(127),
+                            notes: Vec::new(),
                         });
                     }
                 }
@@ -464,6 +470,7 @@ impl Engine for InProcess {
             stdout,
             stderr,
             status,
+            notes: Vec::new(),
         })
     }
 }

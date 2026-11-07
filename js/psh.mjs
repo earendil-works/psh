@@ -32,7 +32,7 @@ const FD = { FILE: 0, PIPE_IN: 1, PIPE_OUT: 2, DUP: 3, NULL: 4 };
 // Errno numbers the module understands (Linux numbering).
 const E = {
   PERM: 1, NOENT: 2, BADF: 9, ACCES: 13, EXIST: 17, NOTDIR: 20, ISDIR: 21, INVAL: 22,
-  PIPE: 32, NAMETOOLONG: 36, NOTEMPTY: 39, LOOP: 40, NOTSUP: 95,
+  NOSPC: 28, PIPE: 32, NAMETOOLONG: 36, NOTEMPTY: 39, LOOP: 40, NOTSUP: 95,
 };
 const CLOSED = 0xffffffff;
 
@@ -61,9 +61,40 @@ function splitPath(path) {
 }
 
 /** An in-memory file system: directories, files and symlinks; paths are absolute. */
+export { newNode };
+
 export class MemFs {
   constructor() {
     this.root = newNode("dir", { children: new Map() });
+  }
+
+  /**
+   * A directory node whose entries are made on first use by `load()` (a Map of name to
+   * node): mounts of other storage, filled lazily. `node.loaded` tells whether it was.
+   */
+  static lazyDir(load, extra = {}) {
+    const node = newNode("dir", extra);
+    node.loaded = false;
+    Object.defineProperty(node, "children", {
+      configurable: true,
+      enumerable: true,
+      get() {
+        const children = load();
+        Object.defineProperty(node, "children", { value: children, writable: true, enumerable: true });
+        node.loaded = true;
+        return children;
+      },
+    });
+    return node;
+  }
+
+  /** Puts `node` at `path` (its parent directories are made). */
+  mount(path, node) {
+    const parts = splitPath(path);
+    if (parts.length === 0) throw new FsError(E.EXIST);
+    this.mkdir("/" + parts.slice(0, -1).join("/"));
+    const { dir, name } = this.parentOf(path);
+    dir.children.set(name, node);
   }
 
   // Walks to `path`: the node, or throws. `follow`: resolve a final symlink.
@@ -225,6 +256,26 @@ class FileHandle {
     node.data.set(data, this.pos);
     this.pos = end;
     node.mtime = Date.now();
+    return data.length;
+  }
+}
+
+/** /dev/full: reads zeros, every write fails with ENOSPC. */
+class FullHandle {
+  read(max) {
+    return new Uint8Array(max);
+  }
+  write() {
+    throw new FsError(E.NOSPC);
+  }
+}
+
+/** /dev/zero: reads zeros, writes vanish. */
+class ZeroHandle {
+  read(max) {
+    return new Uint8Array(max);
+  }
+  write(data) {
     return data.length;
   }
 }
@@ -432,6 +483,16 @@ class StreamWriter {
 export class MemHost {
   constructor({ fs = new MemFs(), pid = 4242 } = {}) {
     this.fs = fs;
+    // The devices and directories every system has: /dev/null, /dev/zero and /dev/full
+    // (character devices), /tmp (sticky, world-writable).
+    fs.mkdir("/dev");
+    for (const dev of ["null", "zero", "full"]) {
+      if (!fs.root.children.get("dev").children.has(dev))
+        fs.root.children.get("dev").children.set(dev, newNode("char", { device: dev, mode: 0o666 }));
+    }
+    fs.mkdir("/tmp");
+    fs.lookup("/tmp").mode = 0o1777;
+    for (const d of ["/bin", "/etc", "/home", "/usr/bin", "/usr/lib", "/var"]) fs.mkdir(d);
     this.pid = pid;
     this.commands = new Map();
     this.handles = new Map();
@@ -456,14 +517,21 @@ export class MemHost {
   // The operations. Each returns { err, value, data } or undefined (answered later
   // through `answer`).
   open(path, flags) {
-    if (path === "/dev/null") return { value: this.addHandle(new NullHandle()) };
     let node;
     try {
       node = this.fs.lookup(path);
       if (flags & F.CREATE_NEW) throw new FsError(E.EXIST);
     } catch (e) {
       if (!(e instanceof FsError) || e.errno !== E.NOENT || !(flags & F.CREATE)) throw e;
-      node = this.fs.writeFile(path, new Uint8Array(0));
+      // The parent must exist (no implicit mkdir, unlike MemFs.writeFile).
+      const { dir, name } = this.fs.parentOf(path);
+      node = newNode("file", { data: new Uint8Array(0) });
+      dir.children.set(name, node);
+      dir.mtime = Date.now();
+    }
+    if (node.type === "char") {
+      const h = { full: FullHandle, zero: ZeroHandle }[node.device] ?? NullHandle;
+      return { value: this.addHandle(new h()) };
     }
     if (node.type === "dir" && flags & F.WRITE) throw new FsError(E.ISDIR);
     if (flags & F.TRUNCATE && node.type === "file") node.data = new Uint8Array(0);
@@ -472,7 +540,7 @@ export class MemHost {
 
   stat(path, follow) {
     const n = this.fs.lookup(path, follow);
-    const size = n.type === "file" ? n.data.length : n.type === "symlink" ? n.target.length : 4096;
+    const size = n.type === "file" ? n.data.length : n.type === "symlink" ? n.target.length : n.type === "dir" ? 4096 : 0;
     const text = `${n.type} ${n.mode} ${size} ${n.mtime * 1e6} 1 ${n.ino} 1000 1000`;
     return { data: enc.encode(text) };
   }
@@ -699,14 +767,14 @@ export class Psh {
   // Copies bytes into the module's input buffer; returns the length.
   input(data) {
     data = bytes(data);
-    const ptr = this.x.psh_in(data.length);
+    const ptr = this.x.psh_in(data.length) >>> 0;
     this.mem().set(data, ptr);
     return data.length;
   }
 
   output() {
-    const ptr = this.x.psh_out_ptr();
-    const len = this.x.psh_out_len();
+    const ptr = this.x.psh_out_ptr() >>> 0;
+    const len = this.x.psh_out_len() >>> 0;
     return this.mem().slice(ptr, ptr + len);
   }
 
@@ -728,6 +796,11 @@ export class Psh {
   }
 
   hostCall(kind, op, arg, ptr, len) {
+    // wasm i32s arrive signed; these are u32s.
+    op >>>= 0;
+    arg >>>= 0;
+    ptr >>>= 0;
+    len >>>= 0;
     const h = this.host;
     const data = () => this.mem().slice(ptr, ptr + len);
     const later = (result) => this.answer(op, result);
@@ -761,7 +834,8 @@ export class Psh {
       case K.SPAWN:
         return run(() => h.spawn(decodeSpawn(data())));
       case K.SLEEP:
-        setTimeout(() => this.answer(op, {}), arg);
+        // setTimeout takes at most 2^31-1 ms; longer sleeps never end in practice.
+        if (arg < 0x7fffffff) setTimeout(() => this.answer(op, {}), arg);
         return 0;
       case K.READ:
         return run(() => h.read(arg, len, later));

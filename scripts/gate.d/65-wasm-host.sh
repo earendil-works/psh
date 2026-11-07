@@ -1,9 +1,12 @@
 # timeout: 900
-# inputs: crates/ Cargo.toml Cargo.lock .cargo/ js/ scripts/build-wasm
-# The wasm modules (0011): both build (target/wasm/psh.wasm, psh-parser.wasm) and the
-# JS host's smoke tests pass under node.
-# The wasm-only code (the import, the stack) gets clippy too, in both builds.
+# inputs: crates/ Cargo.toml Cargo.lock .cargo/ js/ scripts/build-wasm tests/
+# The wasm modules (0011): clippy for the wasm-only code in both builds, the build
+# (target/wasm/psh.wasm, psh-parser.wasm), the JS host's smoke tests under node, and the
+# conformance cases through the JS host against the shared ratchets plus the wasm ones
+# (tests/<layer>/expected-failures.wasm.txt, D1113).
 cargo clippy -q -p psh-wasm --target wasm32-unknown-unknown --locked -- -D warnings
 cargo clippy -q -p psh-wasm --target wasm32-unknown-unknown --locked --no-default-features -- -D warnings
 scripts/build-wasm --sizes
 node js/test/smoke.mjs
+cargo build -q -p psh -p psh-spec --locked
+cargo run -q -p psh-spec --locked -- --wasm -j 6

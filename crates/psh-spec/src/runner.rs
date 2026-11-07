@@ -248,6 +248,7 @@ impl Runner<'_> {
                 stdout: paths.apply(&output.stdout),
                 stderr: paths.apply(&output.stderr),
                 status: output.status,
+                notes: output.notes,
             },
             files: files
                 .into_iter()

@@ -1137,7 +1137,9 @@ date: 2026-11-07 · by: infra · issue: 0011
 `MemHost` (js/psh.mjs) is the default host: an in-memory file system (directories, files,
 symlinks; `/dev/null`), unbounded pipes between the shell and commands, timers, and
 commands written in JS (`host.command(name, async ctx => status)`, with `ctx.argv`,
-`ctx.env`, `ctx.cwd`, `ctx.stdin`/`stdout`/`stderr` streams and `ctx.fs`). A command is
+`ctx.env`, `ctx.cwd`, `ctx.stdin`/`stdout`/`stderr` streams and `ctx.fs`), the devices
+`/dev/null`, `/dev/zero`, `/dev/full`, a sticky `/tmp` and the usual empty system
+directories (`/bin`, `/usr/bin`, `/etc`, ...). A command is
 found under `/usr/bin/NAME` by every PATH lookup; anything else is "command not found",
 recorded in `host.missing`. Signals cannot stop a JS function: a signalled command counts
 as killed at once and its later output goes nowhere. Hosts with other storage (OPFS, a
@@ -1197,3 +1199,16 @@ host answers a fixed instant). Hosts never change the process's umask (threads, 
 embedder): psh-os reads it from `/proc/self/status` on Linux and through a forked child
 elsewhere, and applies `mode` by creating exclusively and then `fchmod`ing, so a mask
 looser than the process's still yields exact bits; an existing file keeps its bits.
+## D1113: psh-spec's wasm engine and platform ratchets
+date: 2026-11-07 · by: infra · issue: 0011
+`psh-spec --wasm` runs the cases in `target/wasm/psh.wasm` under node: each worker thread
+takes a long-lived `node js/test/spec-driver.mjs` from a pool and sends it the case
+(invocation parsed in Rust, as for the in-process engine). The driver gives each case a
+fresh `MemHost` whose file system mounts the case's directory, HOME and REPO_ROOT from
+disk (loaded lazily) and writes the case's changes back, so the snapshot and the goldens
+work unchanged; there are no external programs, and the commands the shell looked for and
+did not find come back as notes on the run. Ratchets: the shared
+`tests/<layer>/expected-failures.txt` plus `expected-failures.wasm.txt`, which lists cases
+that pass natively but not in wasm, with their reason (`needs external: ...`). This is the
+per-platform ratchet the coordinator planned for macOS and Windows (0002 follow-up), with
+`wasm` as the first platform. A whole run takes about 20 s, like the native one.

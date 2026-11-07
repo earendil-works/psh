@@ -1,0 +1,387 @@
+# Ratchet for layer oils on wasm (D1113): active cases that pass natively
+# (not in expected-failures.txt) but may fail here, each with its reason.
+# psh-spec --update-ratchet removes cases that pass; never add a regression.
+oils/alias/9: needs external: grep
+oils/append/8: needs external: printenv.py
+oils/arith/13: needs external: psh
+oils/arith/65: needs external: psh
+oils/arith/68: needs external: psh
+oils/array/49: needs external: psh
+oils/array-basic/2: needs external: argv.py
+oils/array-compat/0: needs external: argv.py
+oils/array-compat/1: needs external: argv.py
+oils/assign/0: needs external: printenv.py
+oils/assign/1: needs external: printenv.py
+oils/assign/3: needs external: printenv.py
+oils/assign/4: needs external: printenv.py
+oils/assign/7: needs external: printenv.py
+oils/assign/8: needs external: foo=bar
+oils/assign/11: needs external: printenv.py
+oils/assign/12: needs external: argv.py
+oils/assign/13: needs external: touch, argv.py
+oils/assign/14: needs external: printenv.py
+oils/assign/17: needs external: argv.py
+oils/assign/28: needs external: argv.py
+oils/assign/30: needs external: argv.py
+oils/assign/31: needs external: argv.py
+oils/assign/32: needs external: touch, argv.py
+oils/assign/36: needs external: printenv.py
+oils/assign/37: needs external: argv.py
+oils/assign/39: needs external: stdout_stderr.py
+oils/background/0: needs external: wait
+oils/background/5: needs external: wait
+oils/background/6: needs external: wait, sleep
+oils/background/8: needs external: wait
+oils/background/9: needs external: wait, sleep
+oils/background/14: needs external: wait, sleep
+oils/background/18: needs external: wait, sleep
+oils/background/19: needs external: wait
+oils/background/23: needs external: wait, sleep, cat
+oils/background/24: needs external: wait, sleep
+oils/background/25: needs external: wait, sleep
+oils/blog1/0: needs external: seq
+oils/blog1/1: needs external: seq
+oils/blog1/2: needs external: seq
+oils/blog1/3: needs external: seq
+oils/blog1/4: needs external: seq
+oils/brace-expansion/20: needs external: argv.py
+oils/brace-expansion/21: needs external: argv.py
+oils/bugs/13: needs external: ulimit
+oils/bugs/14: needs external: cat, psh
+oils/builtin-bracket/24: needs external: rm, chmod
+oils/builtin-bracket/25: needs external: chmod
+oils/builtin-bracket/26: needs external: rm, chmod
+oils/builtin-bracket/28: needs external: mkdir, touch, ln
+oils/builtin-bracket/33: needs external: touch
+oils/builtin-bracket/35: needs external: mkfifo
+oils/builtin-bracket/36: needs external: mkdir
+oils/builtin-bracket/37: needs external: touch, chmod
+oils/builtin-bracket/41: needs external: touch, ln
+oils/builtin-cd/2: needs external: shopt, mkdir
+oils/builtin-cd/5: needs external: env, grep
+oils/builtin-cd/7: needs external: mkdir, basename
+oils/builtin-cd/8: needs external: mkdir, ln, basename
+oils/builtin-cd/9: needs external: mkdir
+oils/builtin-cd/10: needs external: mkdir
+oils/builtin-cd/13: needs external: mkdir, rmdir
+oils/builtin-cd/15: needs external: mkdir, ln, ls
+oils/builtin-cd/16: needs external: mkdir
+oils/builtin-cd/18: needs external: mkdir, rmdir, basename
+oils/builtin-cd/20: needs external: mkdir, ln
+oils/builtin-cd/21: needs external: mkdir, ln
+oils/builtin-cd/24: needs external: mkdir, python2
+oils/builtin-echo/26: needs external: mkdir
+oils/builtin-eval-source/18: needs external: mkdir, rm
+oils/builtin-eval-source/19: needs external: mkdir
+oils/builtin-eval-source/20: needs external: mkdir, rm
+oils/builtin-eval-source/21: needs external: mkdir
+oils/builtin-eval-source/22: needs external: mkdir
+oils/builtin-getopts/23: needs external: psh
+oils/builtin-getopts/24: needs external: psh
+oils/builtin-kill/10: needs external: kill
+oils/builtin-meta/1: needs external: grep, egrep, ls
+oils/builtin-meta/3: needs external: mkdir, touch, chmod
+oils/builtin-meta/7: needs external: seq
+oils/builtin-meta/8: needs external: seq
+oils/builtin-meta/10: needs external: mkdir, chmod, tr, rm
+oils/builtin-meta/11: needs external: mkdir, chmod, hello
+oils/builtin-meta/12: needs external: ls
+oils/builtin-meta/13: needs external: grep
+oils/builtin-printf/1: needs external: argv.py
+oils/builtin-printf/32: needs external: argv.py
+oils/builtin-printf/33: needs external: argv.py
+oils/builtin-printf/34: needs external: argv.py
+oils/builtin-process/0: needs external: echo
+oils/builtin-process/2: needs external: psh
+oils/builtin-process/3: needs external: echo
+oils/builtin-process/5: needs external: sh
+oils/builtin-process/10: needs external: ulimit, diff
+oils/builtin-process/11: needs external: ulimit
+oils/builtin-process/12: needs external: ulimit
+oils/builtin-process/15: needs external: ulimit
+oils/builtin-process/17: needs external: ulimit
+oils/builtin-process/20: needs external: ulimit
+oils/builtin-process/22: needs external: python2, psh
+oils/builtin-read/1: needs external: argv.py
+oils/builtin-read/7: needs external: argv.py
+oils/builtin-read/8: needs external: argv.py
+oils/builtin-read/17: needs external: argv.py
+oils/builtin-read/18: needs external: argv.py
+oils/builtin-read/20: needs external: argv.py
+oils/builtin-read/21: needs external: argv.py
+oils/builtin-read/45: needs external: mkdir, rm, touch, find
+oils/builtin-read/46: needs external: mkdir
+oils/builtin-read/47: needs external: mkdir
+oils/builtin-read/49: needs external: argv.py
+oils/builtin-read/50: needs external: argv.py
+oils/builtin-read/51: needs external: argv.py
+oils/builtin-read/52: needs external: argv.py
+oils/builtin-read/53: needs external: argv.py
+oils/builtin-read/56: needs external: argv.py
+oils/builtin-read/58: needs external: argv.py
+oils/builtin-read/59: needs external: argv.py
+oils/builtin-read/60: needs external: argv.py
+oils/builtin-read/61: needs external: argv.py
+oils/builtin-read/62: needs external: argv.py
+oils/builtin-special/2: needs external: printenv.py
+oils/builtin-special/3: needs external: sh
+oils/builtin-special/8: needs external: psh
+oils/builtin-trap/32: needs external: builtin-trap-int.sh
+oils/builtin-trap-err/11: needs external: trap, wait
+oils/builtin-type/2: needs external: mkdir, touch, chmod
+oils/builtin-type-bash/5: needs external: find, xargs
+oils/builtin-type-bash/6: needs external: touch, non-executable
+oils/builtin-type-bash/7: needs external: ZZZ, find, ==
+oils/builtin-type-bash/8: needs external: touch, chmod, mv, tar, grep
+oils/builtin-type-bash/9: needs external: touch, chmod, pwd
+oils/builtin-type-bash/16: needs external: touch, chmod, mv, tar, grep
+oils/builtin-type-bash/24: needs external: touch, chmod, date
+oils/builtin-type-bash/25: needs external: touch, chmod, date
+oils/builtin-type-bash/26: needs external: touch, chmod, pwd
+oils/builtin-type-bash/28: needs external: touch, chmod, pwd
+oils/builtin-type-bash/29: needs external: touch, chmod, executable
+oils/builtin-umask/0: needs external: umask
+oils/builtin-umask/1: needs external: umask
+oils/builtin-umask/5: needs external: umask
+oils/builtin-umask/6: needs external: umask
+oils/builtin-umask/7: needs external: umask, tail
+oils/builtin-umask/8: needs external: umask, grep
+oils/builtin-umask/9: needs external: umask
+oils/builtin-vars/0: needs external: printenv.py
+oils/builtin-vars/1: needs external: printenv.py
+oils/builtin-vars/4: needs external: printenv.py
+oils/builtin-vars/5: needs external: printenv.py
+oils/builtin-vars/6: needs external: printenv.py
+oils/builtin-vars/7: needs external: printenv.py
+oils/builtin-vars/8: needs external: printenv.py
+oils/builtin-vars/9: needs external: printenv.py
+oils/builtin-vars/10: needs external: printenv.py
+oils/builtin-vars/11: needs external: printenv.py
+oils/case_/10: needs external: seq
+oils/command-sub/5: needs external: grep, ls
+oils/command-sub/10: needs external: argv.py
+oils/command-sub/11: needs external: python2, argv.py
+oils/command-sub/12: needs external: python2, argv.py
+oils/command-sub/28: needs external: psh
+oils/command_/1: needs external: touch, text-file
+oils/command_/3: needs external: 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
+oils/command_/4: needs external: env, grep
+oils/command_/5: needs external: chmod, psh
+oils/command_/6: needs external: chmod, psh
+oils/command_/7: needs external: mkdir, chmod, psh
+oils/command_/8: needs external: mkdir, chmod, mycmd
+oils/command_/9: needs external: mkdir, rm, chmod, mycmd
+oils/command_/10: needs external: mkdir, rm, chmod, mycmd
+oils/command_/11: needs external: mkdir, rm, chmod, mycmd
+oils/command_/12: needs external: whoami
+oils/command_/13: needs external: whoami, grep, _nonexistent_
+oils/command_/14: needs external: whoami
+oils/dparen/11: needs external: stdout_stderr.py, cat
+oils/errexit-osh/3: needs external: psh
+oils/exit-status/0: needs external: psh
+oils/exit-status/3: needs external: psh, cat, egrep
+oils/fatal-errors/0: needs external: psh
+oils/fatal-errors/1: needs external: psh
+oils/fatal-errors/2: needs external: psh
+oils/glob/7: needs external: echo.sh
+oils/glob/8: needs external: touch
+oils/glob/9: needs external: touch
+oils/glob/11: needs external: touch
+oils/glob/16: needs external: touch
+oils/glob/17: needs external: touch
+oils/glob/18: needs external: touch
+oils/glob/19: needs external: touch
+oils/glob/20: needs external: touch
+oils/glob/21: needs external: touch
+oils/glob/22: needs external: touch
+oils/glob/26: needs external: touch
+oils/glob/27: needs external: touch
+oils/glob/30: needs external: touch
+oils/glob/32: needs external: mkdir, touch, argv.py
+oils/glob/35: needs external: mkdir, touch, argv.py
+oils/glob/36: needs external: mkdir, touch, argv.py
+oils/globignore/14: needs external: touch, shopt
+oils/globstar/0: needs external: shopt, mkdir, touch, sort
+oils/here-doc/0: needs external: cat
+oils/here-doc/1: needs external: cat
+oils/here-doc/2: needs external: cat
+oils/here-doc/3: needs external: read_from_fd.py
+oils/here-doc/4: needs external: read_from_fd.py
+oils/here-doc/5: needs external: cat
+oils/here-doc/6: needs external: cat
+oils/here-doc/7: needs external: cat
+oils/here-doc/8: needs external: cat
+oils/here-doc/9: needs external: cat
+oils/here-doc/10: needs external: cat
+oils/here-doc/11: needs external: cat
+oils/here-doc/12: needs external: cat
+oils/here-doc/13: needs external: cat
+oils/here-doc/14: needs external: cat
+oils/here-doc/20: needs external: cat
+oils/here-doc/21: needs external: cat
+oils/here-doc/22: needs external: cat
+oils/here-doc/23: needs external: cat
+oils/here-doc/25: needs external: cat
+oils/here-doc/27: needs external: cat
+oils/here-doc/28: needs external: cat
+oils/here-doc/30: needs external: cat
+oils/here-doc/31: needs external: cat
+oils/here-doc/32: needs external: read_from_fd.py
+oils/here-doc/33: needs external: read_from_fd.py
+oils/here-doc/34: needs external: cat
+oils/here-doc/35: needs external: cat
+oils/known-differences/0: needs external: grep, head
+oils/loop/11: needs external: seq
+oils/loop/14: needs external: seq
+oils/loop/21: needs external: seq
+oils/loop/22: needs external: seq
+oils/loop/23: needs external: psh
+oils/nocasematch-match/4: needs external: shopt, touch
+oils/nul-bytes/5: needs external: argv.py
+oils/osh-bugs/2: needs external: touch, shopt
+oils/osh-bugs/3: needs external: psh
+oils/paren-ambiguity/4: needs external: head, grep, cut, -v
+oils/parse-errors/21: needs external: psh
+oils/pipeline/2: needs external: seq
+oils/pipeline/4: needs external: tr
+oils/pipeline/5: needs external: egrep
+oils/pipeline/10: needs external: stdout_stderr.py, cat
+oils/pipeline/12: needs external: psh
+oils/posix/10: needs external: ls
+oils/posix/13: needs external: cat
+oils/posix/14: needs external: cat
+oils/quote/30: needs external: shopt, touch, ls
+oils/redir-order/0: needs external: cat
+oils/redir-order/1: needs external: cat
+oils/redir-order/2: needs external: cat
+oils/redir-order/3: needs external: cat
+oils/redirect/6: needs external: cat
+oils/redirect/7: needs external: cat
+oils/redirect/11: needs external: cat
+oils/redirect/12: needs external: cat
+oils/redirect/15: needs external: cat
+oils/redirect/16: needs external: cat
+oils/redirect/17: needs external: cat
+oils/redirect/25: needs external: cat
+oils/redirect/26: needs external: cat
+oils/redirect/28: needs external: cat
+oils/redirect/29: needs external: rm, mkfifo
+oils/redirect/30: needs external: stdout_stderr.py, grep
+oils/redirect-command/3: needs external: seq
+oils/redirect-command/5: needs external: cat
+oils/redirect-command/6: needs external: cat
+oils/redirect-command/11: needs external: cat
+oils/redirect-command/14: needs external: cat
+oils/redirect-command/15: needs external: cat
+oils/redirect-command/16: needs external: cat
+oils/redirect-command/17: needs external: seq, cat
+oils/redirect-command/21: needs external: cat
+oils/redirect-command/22: needs external: cat
+oils/redirect-multi/0: needs external: touch, cat
+oils/redirect-multi/6: needs external: touch, head
+oils/redirect-multi/7: needs external: touch, head
+oils/redirect-multi/10: needs external: touch
+oils/redirect-multi/11: needs external: head
+oils/redirect-multi/12: needs external: cat
+oils/serialize/6: needs external: grep
+oils/smoke/1: needs external: expr
+oils/smoke/9: needs external: expr, cat
+oils/smoke/10: needs external: cat
+oils/smoke/12: needs external: argv.py
+oils/smoke/13: needs external: argv.py
+oils/subshell/1: needs external: env, cat
+oils/toysh-posix/6: needs external: touch
+oils/toysh-posix/7: needs external: cat, chmod, psh
+oils/toysh-posix/9: needs external: psh
+oils/toysh-posix/13: needs external: psh
+oils/toysh-posix/20: needs external: psh
+oils/toysh-posix/22: needs external: cat, sed
+oils/var-op-bash/10: needs external: argv.py
+oils/var-op-len/2: needs external: cat
+oils/var-op-strip/3: needs external: argv.py
+oils/var-op-strip/11: needs external: argv.py
+oils/var-op-strip/12: needs external: argv.py
+oils/var-op-strip/19: needs external: argv.py
+oils/var-op-strip/20: needs external: argv.py
+oils/var-op-strip/21: needs external: argv.py
+oils/var-op-strip/22: needs external: argv.py
+oils/var-op-strip/23: needs external: argv.py
+oils/var-op-strip/25: needs external: argv.py
+oils/var-op-test/3: needs external: argv.py
+oils/var-op-test/4: needs external: argv.py
+oils/var-op-test/5: needs external: argv.py
+oils/var-op-test/10: needs external: argv.py
+oils/var-ref/7: needs external: argv.py
+oils/var-sub/1: needs external: ls
+oils/var-sub-quote/0: needs external: argv.py
+oils/var-sub-quote/1: needs external: argv.py
+oils/var-sub-quote/3: needs external: argv.py
+oils/var-sub-quote/4: needs external: argv.py
+oils/var-sub-quote/5: needs external: argv.py
+oils/var-sub-quote/6: needs external: argv.py
+oils/var-sub-quote/8: needs external: argv.py
+oils/var-sub-quote/9: needs external: argv.py
+oils/var-sub-quote/11: needs external: argv.py
+oils/var-sub-quote/12: needs external: argv.py
+oils/var-sub-quote/13: needs external: argv.py
+oils/var-sub-quote/14: needs external: argv.py
+oils/var-sub-quote/17: needs external: argv.py
+oils/var-sub-quote/19: needs external: argv.py
+oils/var-sub-quote/20: needs external: argv.py
+oils/var-sub-quote/21: needs external: argv.py
+oils/var-sub-quote/22: needs external: argv.py
+oils/var-sub-quote/23: needs external: argv.py
+oils/var-sub-quote/24: needs external: argv.py
+oils/var-sub-quote/27: needs external: argv.py
+oils/var-sub-quote/28: needs external: argv.py
+oils/var-sub-quote/29: needs external: argv.py
+oils/var-sub-quote/30: needs external: argv.py
+oils/vars-special/0: needs external: grep
+oils/vars-special/1: needs external: env, grep
+oils/vars-special/7: needs external: psh
+oils/vars-special/9: needs external: sh
+oils/vars-special/11: needs external: egrep
+oils/vars-special/14: needs external: wait, sleep, egrep
+oils/whitespace/0: needs external: python2, psh
+oils/whitespace/1: needs external: python2, psh
+oils/whitespace/2: needs external: python2, psh
+oils/whitespace/3: needs external: python2, psh
+oils/whitespace/4: needs external: python2, psh
+oils/word-eval/0: needs external: argv.py
+oils/word-eval/2: needs external: argv.py
+oils/word-eval/4: needs external: argv.py
+oils/word-eval/6: needs external: mkdir, touch, argv.py
+oils/word-eval/7: needs external: mkdir, touch, argv.py
+oils/word-split/0: needs external: argv.py
+oils/word-split/1: needs external: argv.py
+oils/word-split/2: needs external: argv.py
+oils/word-split/3: needs external: argv.py
+oils/word-split/4: needs external: argv.py
+oils/word-split/5: needs external: argv.py
+oils/word-split/6: needs external: argv.py
+oils/word-split/7: needs external: argv.py
+oils/word-split/8: needs external: argv.py
+oils/word-split/9: needs external: argv.py
+oils/word-split/10: needs external: argv.py
+oils/word-split/11: needs external: argv.py
+oils/word-split/12: needs external: argv.py
+oils/word-split/13: needs external: argv.py
+oils/word-split/14: needs external: argv.py
+oils/word-split/15: needs external: argv.py
+oils/word-split/16: needs external: argv.py
+oils/word-split/17: needs external: argv.py
+oils/word-split/18: needs external: argv.py
+oils/word-split/19: needs external: argv.py
+oils/word-split/20: needs external: argv.py
+oils/word-split/24: needs external: python2, argv.py
+oils/word-split/25: needs external: python2, argv.py
+oils/word-split/26: needs external: argv.py
+oils/word-split/27: needs external: argv.py
+oils/word-split/28: needs external: argv.py
+oils/word-split/29: needs external: argv.py
+oils/word-split/33: needs external: argv.py
+oils/word-split/34: needs external: argv.py
+oils/word-split/36: needs external: argv.py
+oils/word-split/41: needs external: argv.py
+oils/word-split/46: needs external: setopt, argv.py
+oils/word-split/51: needs external: argv.py

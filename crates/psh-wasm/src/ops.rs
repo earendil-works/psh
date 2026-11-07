@@ -28,34 +28,39 @@ impl Answer {
     }
 }
 
-/// The errors the JS host reports, as errno numbers (Linux numbering).
+/// The errors the JS host reports, as errno numbers (Linux numbering), with the text
+/// bash prints for them (`strerror`).
 pub fn errno_error(err: i32) -> io::Error {
     use io::ErrorKind::*;
-    let kind = match err {
-        1 | 13 => PermissionDenied,
-        2 => NotFound,
-        17 => AlreadyExists,
-        20 => NotADirectory,
-        21 => IsADirectory,
-        22 => InvalidInput,
-        30 => ReadOnlyFilesystem,
-        32 => BrokenPipe,
-        36 => InvalidFilename,
-        39 => DirectoryNotEmpty,
-        95 => Unsupported,
-        _ => Other,
+    let (kind, text) = match err {
+        1 => (PermissionDenied, "Operation not permitted"),
+        2 => (NotFound, "No such file or directory"),
+        9 => (Other, "Bad file descriptor"),
+        13 => (PermissionDenied, "Permission denied"),
+        17 => (AlreadyExists, "File exists"),
+        20 => (NotADirectory, "Not a directory"),
+        21 => (IsADirectory, "Is a directory"),
+        22 => (InvalidInput, "Invalid argument"),
+        28 => (StorageFull, "No space left on device"),
+        30 => (ReadOnlyFilesystem, "Read-only file system"),
+        32 => (BrokenPipe, "Broken pipe"),
+        36 => (InvalidFilename, "File name too long"),
+        39 => (DirectoryNotEmpty, "Directory not empty"),
+        40 => (Other, "Too many levels of symbolic links"),
+        95 => (Unsupported, "Operation not supported"),
+        _ => (Other, "Input/output error"),
     };
-    io::Error::new(kind, ErrorText(kind))
+    io::Error::new(kind, ErrorText(text))
 }
 
-/// The message of an error from the JS host: `psh_engine::host::error_text` prints its
-/// kind's text, so the message only matters for kinds without one.
+/// The text of an error from the JS host (a small type: a `&str` message would pull in
+/// `String`'s error machinery).
 #[derive(Debug)]
-struct ErrorText(io::ErrorKind);
+struct ErrorText(&'static str);
 
 impl std::fmt::Display for ErrorText {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        f.write_str(self.0)
     }
 }
 

@@ -1,0 +1,227 @@
+# Ratchet for layer brush on wasm (D1113): active cases that pass natively
+# (not in expected-failures.txt) but may fail here, each with its reason.
+# psh-spec --update-ratchet removes cases that pass; never add a regression.
+brush/brush/external_commands/15: needs external: not-executable
+brush/compat/arithmetic/37: needs external: cat
+brush/compat/background_jobs/0: needs external: touch
+brush/compat/background_jobs/1: needs external: touch
+brush/compat/background_jobs/2: needs external: touch
+brush/compat/background_jobs/3: needs external: touch
+brush/compat/background_jobs/4: needs external: touch
+brush/compat/background_jobs/5: needs external: touch
+brush/compat/background_jobs/6: needs external: touch
+brush/compat/background_jobs/7: needs external: touch
+brush/compat/background_jobs/8: needs external: wait, touch
+brush/compat/background_jobs/9: needs external: wait, touch
+brush/compat/background_jobs/10: needs external: wait
+brush/compat/background_jobs/11: needs external: wait
+brush/compat/background_jobs/12: needs external: wait
+brush/compat/background_jobs/13: needs external: wait
+brush/compat/background_jobs/21: needs external: wait
+brush/compat/builtins/cd/1: needs external: ls
+brush/compat/builtins/cd/3: needs external: mkdir, realpath, basename
+brush/compat/builtins/cd/4: needs external: mkdir, ln, basename
+brush/compat/builtins/cd/5: needs external: mkdir, ln, basename
+brush/compat/builtins/cd/10: needs external: mkdir
+brush/compat/builtins/command/0: needs external: ls, which, non-existent
+brush/compat/builtins/command/1: needs external: mkdir, subdir
+brush/compat/builtins/command/8: needs external: ls
+brush/compat/builtins/command/13: needs external: sh
+brush/compat/builtins/command/15: needs external: ls
+brush/compat/builtins/command/28: needs external: mkdir, chmod, mytool, sed
+brush/compat/builtins/command/29: needs external: chmod
+brush/compat/builtins/command/42: needs external: head, sed
+brush/compat/builtins/declare/17: needs external: declare, env, grep
+brush/compat/builtins/dot/6: needs external: cat
+brush/compat/builtins/enable/2: needs external: grep
+brush/compat/builtins/enable/4: needs external: grep
+brush/compat/builtins/enable/5: needs external: grep, echo
+brush/compat/builtins/enable/6: needs external: echo
+brush/compat/builtins/exec/9: needs external: myscript
+brush/compat/builtins/exec/11: needs external: true, sh, cat
+brush/compat/builtins/export/0: needs external: env, grep
+brush/compat/builtins/export/8: needs external: env, grep
+brush/compat/builtins/export/24: needs external: sed
+brush/compat/builtins/export/33: needs external: env, grep
+brush/compat/builtins/export/34: needs external: env, grep
+brush/compat/builtins/export/41: needs external: grep
+brush/compat/builtins/getopts/47: needs external: sed, rm
+brush/compat/builtins/hash/2: needs external: ls
+brush/compat/builtins/hash/14: needs external: prog
+brush/compat/builtins/hash/18: needs external: cat
+brush/compat/builtins/hash/19: needs external: prog, grep
+brush/compat/builtins/jobs/0: needs external: wait
+brush/compat/builtins/jobs/4: needs external: fg
+brush/compat/builtins/jobs/6: needs external: fg, sed, rm
+brush/compat/builtins/kill/5: needs external: kill
+brush/compat/builtins/kill/6: needs external: kill
+brush/compat/builtins/kill/7: needs external: kill
+brush/compat/builtins/kill/10: needs external: sh
+brush/compat/builtins/kill/13: needs external: kill
+brush/compat/builtins/kill/15: needs external: kill
+brush/compat/builtins/kill/20: needs external: kill
+brush/compat/builtins/kill/23: needs external: sleep, sh
+brush/compat/builtins/kill/24: needs external: kill, ps, tr, sh
+brush/compat/builtins/kill/33: needs external: kill
+brush/compat/builtins/let/4: needs external: sed, rm
+brush/compat/builtins/pwd/1: needs external: mkdir, ln, basename
+brush/compat/builtins/set/0: needs external: grep, rm
+brush/compat/builtins/shift/1: needs external: sed, rm
+brush/compat/builtins/test/2: needs host files: /bin/sh, /etc/os-release
+brush/compat/builtins/test/19: needs external: touch, mkdir
+brush/compat/builtins/test/20: needs external: touch
+brush/compat/builtins/test/21: needs external: touch, mkdir
+brush/compat/builtins/test/22: needs external: mkdir, touch
+brush/compat/builtins/test/23: needs external: touch, ln
+brush/compat/builtins/test/24: needs external: touch
+brush/compat/builtins/test/25: needs external: touch
+brush/compat/builtins/test/26: needs external: touch
+brush/compat/builtins/test/27: needs external: touch
+brush/compat/builtins/test/28: needs external: touch
+brush/compat/builtins/test/29: needs external: touch
+brush/compat/builtins/test/30: needs external: touch
+brush/compat/builtins/test/31: needs external: touch
+brush/compat/builtins/type/4: needs external: ls
+brush/compat/builtins/type/23: needs external: mkdir, prog
+brush/compat/builtins/ulimit/0: needs external: ulimit
+brush/compat/builtins/ulimit/1: needs external: ulimit
+brush/compat/builtins/ulimit/2: needs external: ulimit
+brush/compat/builtins/ulimit/3: needs external: ulimit
+brush/compat/builtins/ulimit/4: needs external: ulimit
+brush/compat/builtins/ulimit/7: needs external: ulimit
+brush/compat/builtins/ulimit/9: needs external: ulimit
+brush/compat/builtins/ulimit/11: needs external: ulimit
+brush/compat/builtins/ulimit/12: needs external: ulimit
+brush/compat/builtins/ulimit/13: needs external: ulimit
+brush/compat/builtins/ulimit/14: needs external: ulimit
+brush/compat/builtins/ulimit/16: needs external: ulimit
+brush/compat/builtins/ulimit/23: needs external: ulimit
+brush/compat/builtins/ulimit/27: needs external: ulimit
+brush/compat/builtins/ulimit/28: needs external: ulimit
+brush/compat/builtins/ulimit/29: needs external: ulimit
+brush/compat/builtins/umask/0: needs external: umask
+brush/compat/builtins/umask/1: needs external: umask
+brush/compat/builtins/umask/3: needs external: umask
+brush/compat/builtins/wait/11: needs external: wait
+brush/compat/complete_commands/2: needs external: cat
+brush/compat/compound_cmds/for/17: needs external: grep
+brush/compat/compound_cmds/subshell/3: needs external: cat
+brush/compat/compound_cmds/subshell/6: needs external: cat
+brush/compat/errors/14: needs external: cat
+brush/compat/errors/15: needs external: cat
+brush/compat/errors/56: needs external: head
+brush/compat/errors/59: needs external: sed
+brush/compat/errors/66: needs external: nonexistent-command, passwd, shopt
+brush/compat/fd_management/0: needs external: ulimit
+brush/compat/fd_management/1: needs external: ulimit
+brush/compat/fd_management/2: needs external: ulimit
+brush/compat/here/0: needs external: cat
+brush/compat/here/1: needs external: cat
+brush/compat/here/2: needs external: cat
+brush/compat/here/3: needs external: cat
+brush/compat/here/4: needs external: cat
+brush/compat/here/5: needs external: cat
+brush/compat/here/10: needs external: cat
+brush/compat/here/11: needs external: cat
+brush/compat/here/12: needs external: cat
+brush/compat/here/13: needs external: cat
+brush/compat/here/14: needs external: cat
+brush/compat/here/15: needs external: cat
+brush/compat/here/16: needs external: cat
+brush/compat/here/17: needs external: cat
+brush/compat/here/18: needs external: cat
+brush/compat/here/19: needs external: cat
+brush/compat/here/20: needs external: cat
+brush/compat/here/21: needs external: cat
+brush/compat/here/25: needs external: cat
+brush/compat/here/26: needs external: cat
+brush/compat/here/27: needs external: cat
+brush/compat/here/28: needs external: cat
+brush/compat/here/29: needs external: cat
+brush/compat/here/30: needs external: cat
+brush/compat/here/32: needs external: cat
+brush/compat/here/33: needs external: cat
+brush/compat/here/35: needs external: cat
+brush/compat/here/36: needs external: cat
+brush/compat/here/37: needs external: cat
+brush/compat/here/38: needs external: cat
+brush/compat/here/39: needs external: cat
+brush/compat/here/40: needs external: cat
+brush/compat/here/41: needs external: cat
+brush/compat/here/42: needs external: cat
+brush/compat/here/44: needs external: cat
+brush/compat/here/45: needs external: cat
+brush/compat/here/46: needs external: cat
+brush/compat/here/47: needs external: cat
+brush/compat/here/48: needs external: cat
+brush/compat/here/49: needs external: cat
+brush/compat/here/50: needs external: cat
+brush/compat/here/51: needs external: cat
+brush/compat/here/52: needs external: cat
+brush/compat/here/53: needs external: cat
+brush/compat/here/58: needs external: cat
+brush/compat/here/59: needs external: cat
+brush/compat/here/60: needs external: cat
+brush/compat/here/62: needs external: cat
+brush/compat/here/63: needs external: cat
+brush/compat/here/64: needs external: cat, tr
+brush/compat/here/66: needs external: cat
+brush/compat/here/67: needs external: cat
+brush/compat/here/68: needs external: cat
+brush/compat/here/69: needs external: cat, tr
+brush/compat/here/70: needs external: cat
+brush/compat/here/76: needs external: cat
+brush/compat/here/77: needs external: cat
+brush/compat/here/79: needs external: tr, cat
+brush/compat/here/80: needs external: cat
+brush/compat/here/81: needs external: cat
+brush/compat/here/83: needs external: cat
+brush/compat/here/85: needs external: cat
+brush/compat/here/86: needs external: cat
+brush/compat/line_continuation/0: needs external: cat
+brush/compat/nameref/100: needs external: declare, tail
+brush/compat/options/functrace/7: needs external: trap, cat
+brush/compat/options/shopt-failglob/1: needs external: touch, shopt
+brush/compat/options/shopt-nullglob/1: needs external: touch, shopt
+brush/compat/path_search/4: needs external: prog
+brush/compat/path_search/11: needs external: true, prog
+brush/compat/path_search/14: needs external: chmod, prog
+brush/compat/patterns/filename_expansion/26: needs external: touch, shopt
+brush/compat/patterns/filename_expansion/27: needs external: touch, mkdir, shopt
+brush/compat/patterns/filename_expansion/34: needs external: ln
+brush/compat/patterns/filename_expansion/35: needs external: ln
+brush/compat/patterns/filename_expansion/45: needs external: mkdir, touch
+brush/compat/piped_script/2: needs external: cat
+brush/compat/piped_script/3: needs external: tr
+brush/compat/pipeline/0: needs external: grep
+brush/compat/pipeline/5: needs external: cat
+brush/compat/pipeline/14: needs external: head
+brush/compat/pipeline/16: needs external: cat
+brush/compat/redirection/1: needs external: ls, cat
+brush/compat/redirection/2: needs external: ls, cat
+brush/compat/redirection/3: needs external: cat
+brush/compat/redirection/5: needs external: cat
+brush/compat/redirection/6: needs external: cat
+brush/compat/redirection/17: needs external: cat
+brush/compat/redirection/21: needs external: cat
+brush/compat/redirection/28: needs external: cat
+brush/compat/redirection/30: needs external: cat
+brush/compat/redirection/36: needs external: env
+brush/compat/redirection/42: needs external: cat, fd4.txt, fd5.txt
+brush/compat/redirection/43: needs external: cat
+brush/compat/signals/26: needs external: kill
+brush/compat/simple_commands/2: needs external: mkdir, test-dir
+brush/compat/simple_commands/6: needs external: mkdir, prog
+brush/compat/simple_commands/7: needs external: mkdir, touch, only, chmod, both
+brush/compat/simple_commands/8: needs external: mkdir, chmod, prog
+brush/compat/special_parameters/29: needs external: declare, grep
+brush/compat/special_parameters/32: needs external: grep, which
+brush/compat/word_expansion/braces/26: needs external: cat
+brush/compat/word_expansion/command_substitution/4: needs external: echo
+brush/compat/word_expansion/command_substitution/21: needs external: cat
+brush/compat/word_expansion/command_substitution/32: needs external: true, false
+brush/compat/word_expansion/command_substitution/43: needs external: cat
+brush/compat/word_expansion/command_substitution/53: needs external: sed
+brush/compat/word_expansion/params/51: needs external: sed
+brush/compat/word_expansion/tilde/0: needs external: realpath, mkdir
+brush/compat/word_expansion/tilde/2: needs external: mkdir

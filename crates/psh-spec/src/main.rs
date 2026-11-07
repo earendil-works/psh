@@ -15,11 +15,13 @@ mod json;
 mod l0;
 mod normalize;
 mod oils;
+mod platform;
 mod ratchet;
 mod report;
 mod runner;
 mod sandbox;
 mod status;
+mod wasm;
 mod yaml;
 
 use std::collections::{BTreeMap, HashMap};
@@ -43,6 +45,9 @@ glob on case ids (oils/var-*/*). Without filters, every case of the selected lay
 
 Engines:
   (default)           psh in-process
+  --wasm              psh.wasm under node through js/psh.mjs (scripts/build-wasm first);
+                      checked against the shared ratchets plus
+                      tests/<layer>/expected-failures.wasm.txt
   --shell PATH        a shell binary as a subprocess (e.g. bash for the self-check);
                       the ratchets apply only when it is psh
 
@@ -92,6 +97,7 @@ struct Options {
     keep: bool,
     diff_goldens: Option<(PathBuf, PathBuf)>,
     record_shapes: bool,
+    wasm: bool,
     l0: bool,
     status: bool,
     hitlist: bool,
@@ -118,6 +124,7 @@ fn parse_args(args: Vec<String>) -> Result<Options, String> {
         keep: false,
         diff_goldens: None,
         record_shapes: false,
+        wasm: false,
         l0: false,
         status: false,
         hitlist: false,
@@ -156,6 +163,7 @@ fn parse_args(args: Vec<String>) -> Result<Options, String> {
             "--keep" => o.keep = true,
             "--record-l0" => o.record_shapes = true,
             "--l0" => o.l0 = true,
+            "--wasm" => o.wasm = true,
             "--status" => o.status = true,
             "--hitlist" => {
                 o.status = true;
@@ -306,7 +314,11 @@ fn run(opts: Options) -> Result<ExitCode, String> {
         None => {
             let exe = std::env::current_exe().map_err(|e| e.to_string())?;
             let psh = exe.with_file_name(format!("psh{}", std::env::consts::EXE_SUFFIX));
-            Box::new(InProcess::new(psh))
+            if opts.wasm {
+                Box::new(wasm::WasmEngine::new(&root, psh)?)
+            } else {
+                Box::new(InProcess::new(psh))
+            }
         }
     };
     let dir = RunDir::create(&root, opts.keep)?;
@@ -379,7 +391,7 @@ fn run(opts: Options) -> Result<ExitCode, String> {
     // shell (the bash self-check) is only compared and summarized.
     let mut regressions = Vec::new();
     let filtered = !opts.filters.is_empty();
-    let ratchet_layers: &[Layer] = if engine.name() == "psh" {
+    let ratchet_layers: &[Layer] = if engine.name() == "psh" && !opts.wasm {
         &opts.layers
     } else {
         &[]
@@ -459,6 +471,19 @@ fn run(opts: Options) -> Result<ExitCode, String> {
         }
     }
 
+    if opts.wasm {
+        regressions.extend(platform::check(
+            &root,
+            "wasm",
+            &opts.layers,
+            &results,
+            &platform::Options {
+                filtered,
+                update: opts.update_ratchet,
+                add: opts.add_failures,
+            },
+        )?);
+    }
     report::print_summary(&results, &items, &opts.layers);
     if opts.diff {
         report::print_diffs(&results);

@@ -134,6 +134,14 @@ Moving cases between groups is a coordinator decision.
   red on day one. That is the first milestone.
 - Never add a line to hide a regression your change caused (AGENTS.md). Lines are added
   only when new cases are vendored or written, or when a case moves into `active`.
+- **Platform ratchets** (D1113): `tests/<layer>/expected-failures.<platform>.txt` lists
+  active cases that pass natively (they are not in the shared file) but may fail on that
+  platform, each with its reason. The first platform is `wasm`: `psh-spec --wasm` runs
+  every case in `psh.wasm` under node through the JS host (`js/test/spec-driver.mjs`),
+  where no external programs exist, so the reasons are `needs external: NAMES` (the
+  commands the case looked for). A reason of any other kind is a difference of the wasm
+  build and a bug. When a case starts to pass natively and needs an external program,
+  the wasm leg fails until `psh-spec --wasm --add-failures` lists it there.
 
 ## Status and the hit list
 
@@ -205,6 +213,9 @@ reaches `main` (AGENTS.md). Legs, as they come into existence:
    `guide`: `psh-docs check` holds the guide to its writing rules (0012, D1120).
 4. `spec`: the ratchets of every layer that exists (0002 onward); `l0`: the L0 ratchet
    (0022).
+   `wasm-host` (0011): `psh-wasm` passes clippy for wasm32, both wasm modules build, the
+   JS host's smoke tests pass under node, and `psh-spec --wasm` holds the shared and the
+   wasm ratchets.
 5. `windows`, always last: `fmt`, clippy, `cargo test` (arm64 and x64) and the MSRV
    check on the owner's Windows VM, through `scripts/windows-gate.sh` (0007; D027,
    D1070, D1071). See "Windows" below.

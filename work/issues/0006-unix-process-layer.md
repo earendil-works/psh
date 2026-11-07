@@ -191,6 +191,12 @@ can express neither); `pid()`; `kill()`.
 - psh-spec in-process is `Kill` now: brush/compat/background_jobs/0,1,4,5 (bg `touch`
   without `wait`) fail until 0005's `exit_grace` (500 ms in psh-spec) is on main; I
   merge after it, so they must pass then.
+- Rebased on main e98333b (0005 part 2, `exit_grace`): no conflicts; the four
+  background_jobs cases pass; psh-spec: oils 1111/2511, brush 1066/3171, agent 115/144,
+  no regressions. Orphan check (processes with ppid 1, before vs 5 s after a full
+  `psh-spec -j 6` run, in-process and binary cases): this branch 0 new; main e98333b
+  6 new (4 `sh -c 'trap "exit 0" TERM; …; while :; do sleep 0.05; done'` loops from the
+  binary-run cases, 2 `sleep`s).
 
 ## Follow-ups
 - guide: `processes.md` (placement, cancel and abandonment, leak checks).

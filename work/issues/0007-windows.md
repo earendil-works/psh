@@ -104,6 +104,150 @@ Part B:
   -> 80-150ms. test-x64 stays whole (D1073). The windows leg's inputs gained
   `.gitattributes` (it decides the line endings of the VM's checkout).
 
+### 2026-11-07 Part B design (draft; no code until 0006 lands its Host additions)
+Read: psh-os on main (`lifecycle.rs`, `timer.rs`, `unix/`), the Host v1 contract (0005
+log), the 0006 plan, research/execution-core.md §5, oh-my-pi `sys/spawn/windows.rs` and
+`sys/job.rs` (MIT), and pi-env `daemon/src/sys/windows.rs`. Wherever possible the plan
+mirrors the Unix host.
+
+**Crate.** `crates/psh-os/src/windows/` (`mod.rs` WindowsHost + fs ops, `spawn.rs`,
+`job.rs`, `cmdline.rs` argv/batch quoting, `file.rs` WinFile, `poller.rs`, `path.rs`,
+`shebang.rs`). The dependency is `windows-sys = "=0.61.2"`, the version pi-env pins,
+under `[target.'cfg(windows)'.dependencies]`, with only the features used. The `deps`
+leg gets the Windows set. Wherever an ntdll call is needed
+(`NtQueryInformationFile`, later `NtSuspendProcess`), it goes through windows-sys `Wdk_*`
+features if they cover it, otherwise `raw-dylib`. `lifecycle.rs` and `timer.rs` are
+shared as they are. On Windows, "reap" means closing the process handle: while we hold
+it, the pid cannot be recycled, which gives the same guarantee as `WNOWAIT`.
+
+**WindowsHost** (`WindowsConfig { placement, grace, pid }`):
+- `Placement::Session`, the default (agents, embedding): every external gets
+  `CREATE_NEW_PROCESS_GROUP` plus a Job Object of its own. `Inherit`, for the standalone
+  psh in a console: no new group, so the console's Ctrl-C reaches the children as it
+  would with cmd. Each external still gets its job, so kills reach the whole tree.
+- Console windows: when the host has no console (a daemon or GUI embedder),
+  externals get `CREATE_NO_WINDOW`, so nothing flashes. Without a shared console,
+  ctrl-break cannot be delivered, so TERM falls back to killing the job (as oh-my-pi
+  does). The host never allocates or changes the process's console: an embedder's
+  process-wide state stays untouched.
+- `leftovers()` lists the jobs that still have active processes
+  (`JobObjectBasicAccountingInformation`), for the L5 leak checks, same as Unix.
+
+**Spawn.** `CreateProcessW` with `CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT |
+EXTENDED_STARTUPINFO_PRESENT` (+ group/no-window as above), then assign to the job, then
+`ResumeThread`, so nothing the child starts escapes the job. The job is created without
+breakaway. Only the stdio handles are inherited (`PROC_THREAD_ATTRIBUTE_HANDLE_LIST`,
+deduplicated), so concurrent spawns never leak each other's pipe ends.
+- Proposed: the job gets `KILL_ON_JOB_CLOSE`, and `release()` clears it
+  (`SetInformationJobObject`) before closing. Then a crashed or killed psh takes its
+  unreleased externals with it. Unix cannot offer that, so it would be a decision.
+- argv: MSVCRT quoting (std's `make_command_line` rules, argv[0] included). Programs
+  that parse their own command line (cmd.exe, msiexec) get exactly this quoting; there is
+  no raw-argument escape hatch in v1.
+- `.bat`/`.cmd`: run through `%SystemRoot%\System32\cmd.exe /e:ON /v:OFF /d /c` with std's
+  hardened batch quoting (BatBadBut, CVE-2024-24576). Arguments it cannot quote safely
+  are refused with an `InvalidInput` error and a clear message. The code is copied from
+  std or oh-my-pi `cmdline.rs` (both MIT/Apache), with attribution in NOTICE.
+- Environment: a `CREATE_UNICODE_ENVIRONMENT` block, sorted case-insensitively as
+  Windows requires. Of case-insensitive duplicates the last wins. Names containing `=`
+  (other than the leading one of `=C:`) or NUL are an error.
+- cwd: `C:/x` becomes `C:\x`. CreateProcess cannot take a cwd longer than MAX_PATH; that
+  is a clear error, not a silent fallback.
+- fds > 2 (`exec 3>f; cmd`) cannot reach a native program: they are ignored, not an
+  error. Recorded as a decision.
+- Exit status: `GetExitCodeProcess` gives `Exited(code)`. After our
+  `TerminateJobObject` it is reported as `Signaled(KILL)` (137); after our ctrl-break,
+  `STATUS_CONTROL_C_EXIT` is reported as `Signaled(the signal sent)`. Crash NTSTATUS
+  codes map to signals: access violation and stack overflow → SEGV (139), illegal
+  instruction → ILL, other `0xC…` codes → ABRT. A plain `code & 0xff` would be
+  misleading (an access violation would become 5). Recorded as a decision.
+
+**Wait and signals.** One waiter thread per external (64 KiB stack) on
+`WaitForMultipleObjects(process, wake event)`, with the pending KILL deadline as the
+timeout, feeding `lifecycle::Tracker`. TERM/INT/HUP/QUIT send `CTRL_BREAK_EVENT` to the
+external's group (Session placement); if it cannot be delivered (no shared console, or
+Inherit placement), the job is terminated at once. TERM also schedules a KILL after the
+grace period. KILL is `TerminateJobObject`. Abandon is TERM, then
+`TerminateJobObject` after the grace period, then the handle closes; the whole tree dies.
+Stop/continue (`NtSuspendProcess`/`NtResumeProcess` on the job's members) arrive with
+0006 part 3's job builtins.
+
+**Pipes and files** (the "never block the engine thread" rule):
+- Engine ↔ external (`ChildFd::Pipe`), v1 as ARCH.md says: an anonymous pipe plus one
+  helper thread per engine end. A reader thread does blocking `ReadFile` into a bounded
+  buffer and wakes the waker; a writer thread drains a bounded buffer. Dropping our end
+  calls `CancelSynchronousIo` on the thread, then closes the handle, so the child sees
+  EOF or a broken pipe. Overlapped named pipes on the thread pool can replace the threads
+  later without changing the engine.
+- External ↔ external: an anonymous `CreatePipe`, both ends passed directly (0006's
+  planned `Host::pipe()`; the ends are `ChildFd::File`).
+- psh's own inherited stdio, and FIFOs (named pipes): a thread blocked in `ReadFile` on a
+  shared handle would steal bytes meant for a child (`read line; cat`). So shared
+  handles are never read speculatively. A poller thread (the counterpart of the Unix
+  readiness thread) checks `PeekNamedPipe` for pipes, `WaitForMultipleObjects` +
+  `PeekConsoleInput` for consoles, and reads only what the engine asked for, when it is
+  there. Pipes are polled at a short interval, since anonymous pipes have no readiness
+  event. Writes to a shared pipe first ask `NtQueryInformationFile(FilePipeLocalInformation)`
+  for `WriteQuotaAvailable` and write at most that, the counterpart of the PIPE_BUF cap
+  on Unix. Regular files are read and written synchronously. Consoles are written with
+  `WriteFile`; console output is UTF-8 if the console code page is 65001, otherwise
+  decoded (open: see below).
+
+**Paths and lookup:**
+- Engine paths are bytes, `/`-separated, `C:/x` (Host contract). The host converts them
+  to UTF-16 (invalid UTF-8 is `InvalidInput`), `\`-separated. It also accepts `/c/x`
+  and `C:\x`. std adds `\\?\` for long paths in `std::fs`; the host's own `CreateFileW`
+  calls do the same. `/dev/null` and `ChildFd::Null` become `NUL`.
+- `stat`: kind and size from std. mtime from the last write time. dev and ino from
+  `GetFileInformationByHandle` (volume serial and file index, for `-ef` and `cd -P` loop
+  detection). uid and gid are 0. mode is synthesized: directories 0755; files 0644, plus
+  0111 when the extension is in PATHEXT or the file starts with `#!`; read-only
+  attribute removes the write bits.
+- `access`: Read means the file can be opened. Write: not read-only. Execute:
+  directories, files with a PATHEXT extension, files with a shebang (ARCH: "decide by
+  extension"). App Execution Aliases (0-byte `IO_REPARSE_TAG_APPEXECLINK` files in
+  WindowsApps, like `python.exe` or `winget.exe`) count as executable files, which std's
+  metadata does not do.
+- `resolve(name, PATH, cwd)`: entries separated by `;`, names compared case-insensitively
+  (the file system already is). For each entry: if `name` already ends in a PATHEXT
+  extension, try it as is; otherwise try `name` plus each PATHEXT extension in order, and
+  then the bare name only if it starts with `#!` (so `node_modules/.bin/tsc` with
+  `tsc.cmd` beside it resolves to `tsc.cmd`, as cmd would). Explicit empty or `.` entries
+  mean the cwd (POSIX). There is never an implicit cwd search, unlike cmd.exe.
+- Shebangs (in `spawn`, for a program without `.exe`/`.com` that starts with `#!`):
+  `/usr/bin/env X [args]` resolves X on PATH. `/bin/X`, `/usr/bin/X` and
+  `/usr/local/bin/X` resolve the basename X on PATH. `sh` and `bash` (direct or via env)
+  run in psh itself: the host reports this the way Unix reports ENOEXEC, and the engine
+  runs the file as a psh script. Other absolute interpreters are tried as written.
+
+**Questions for the engine** (0005/0006; I'll raise them when part B starts, not now):
+1. "Run this file in psh": the Unix host falls back to `/bin/sh FILE` on ENOEXEC
+   (D1063). Windows has no `/bin/sh`, and an embedder's `current_exe()` is not psh. The
+   engine needs a distinct spawn result (an `io::Error` with a marker payload, or an
+   enum) to run the file as a psh script itself. The same path serves `#!/bin/sh`.
+2. PATH on Windows: the OS variable is `Path` and `;`-separated. The engine should
+   import it as `PATH` (environment names are case-insensitive for the OS). Its
+   separator is a policy question for the owner: native `;` (consistent with children,
+   ARCH.md today), or bash's `:` with `/c/x` entries, which agent-written
+   `PATH="$HOME/bin:$PATH"` assumes. Converting at the boundary, as Git Bash does, is
+   possible, but `C:` makes `:` ambiguous. I lean to `;`, plus a rewrite of a
+   `:`-separated value that contains only `/x/...` or `C:/...` entries when it is
+   exported. To be decided with the owner.
+3. `$HOME`, `/tmp`, `$TMPDIR` defaults on Windows (engine or embedder).
+4. Output decoding of native programs (ANSI/OEM code page; ARCH's open question): I
+   propose the host decodes per external output pipe, when the console or the active
+   code page is not UTF-8, with `encoding_rs` (already in the tree, D020). Undecided.
+
+**Tests.** L5 runs on Windows too. `tests/process/harness.rs` picks the host by cfg. The
+cases need programs that exist on both systems, so I propose a small test helper binary in
+the workspace with modes: `sleep N`, `cat`, `echo-args` (prints its argv, one per line,
+for quoting tests), `spawn-grandchild`, `ignore-break`, `exit N`, `crash`. Windows-specific
+cases: a timeout kills a tree with grandchildren; no orphan after cancel; a `.cmd` shim
+with arguments containing spaces, quotes, `&`, `%`, `^` (and refusal of unquotable
+ones); PATHEXT lookup and the `#!` rule; `/dev/null`, `C:\x`, `C:/x`, `/c/x` in `cd`
+and redirections; CRLF scripts; a 64+ KiB here-doc into an external; psh's stdin shared
+between `read` and a child. They run in the gate's `test` and `test-x64` legs.
+
 ## Follow-ups
 - Delete the old per-worktree checkouts in the VM (C:\psh-gate\<worktree>) once no
   old-style run is left.

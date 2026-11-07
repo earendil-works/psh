@@ -8,6 +8,7 @@
 mod ast_features;
 mod case;
 mod engine;
+mod freshness;
 mod golden;
 mod groups;
 mod helpers;
@@ -314,7 +315,21 @@ fn run(opts: Options) -> Result<ExitCode, String> {
         None => {
             let exe = std::env::current_exe().map_err(|e| e.to_string())?;
             let psh = exe.with_file_name(format!("psh{}", std::env::consts::EXE_SUFFIX));
+            // Cases that run `$SH` (or must not share the runner's process group) run in
+            // this binary: a stale one shows old behavior as regressions.
+            freshness::check(
+                &root,
+                &psh,
+                freshness::PSH_CRATES,
+                &freshness::psh_fix(&exe),
+            )?;
             if opts.wasm {
+                freshness::check(
+                    &root,
+                    &root.join("target/wasm/psh.wasm"),
+                    freshness::WASM_CRATES,
+                    "scripts/build-wasm",
+                )?;
                 Box::new(wasm::WasmEngine::new(&root, psh)?)
             } else {
                 Box::new(InProcess::new(psh))

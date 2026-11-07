@@ -195,6 +195,10 @@ at scale) and syntax ranking. Running anything is never involved.
   `--timeout`, `--summary FILE` (Markdown per layer and file), `--list`, `--keep`.
   `--record`, `--record-shapes` and `--diff-goldens` serve `scripts/record-goldens`.
   All of L1 and L2 (about 5,700 active cases) take seconds.
+- The psh binary next to psh-spec (some cases run in it) and, for `--wasm`,
+  `target/wasm/psh.wasm` must be newer than their sources: psh-spec refuses to run with
+  a stale one and prints the command that rebuilds it (`cargo build -p psh`,
+  `scripts/build-wasm`).
 
 ## The gate
 

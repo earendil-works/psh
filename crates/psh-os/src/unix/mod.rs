@@ -205,6 +205,43 @@ fn eaccess(p: &[u8], mode: libc::c_int) -> io::Result<bool> {
     }
 }
 
+/// Opens `p`. With `opts.mode` and `create`, a file the open creates gets exactly those
+/// bits: it is created exclusively (`open` would AND them with the process's umask,
+/// which a shell with a looser mask of its own must not inherit), then `fchmod`ed; an
+/// existing file is opened as it is and keeps its bits. The process's umask is never
+/// touched.
+fn open_file(p: &std::path::Path, opts: OpenOptions) -> io::Result<std::fs::File> {
+    use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+    let Some(mode) = opts.mode.filter(|_| opts.create) else {
+        return std_open_options(opts).open(p);
+    };
+    loop {
+        let mut create = std_open_options(OpenOptions {
+            truncate: false,
+            ..opts
+        });
+        create.create_new(true).mode(mode);
+        match create.open(p) {
+            Ok(f) => {
+                f.set_permissions(std::fs::Permissions::from_mode(mode & 0o7777))?;
+                return Ok(f);
+            }
+            Err(e) if e.kind() == io::ErrorKind::AlreadyExists && !opts.create_new => {
+                let existing = std_open_options(OpenOptions {
+                    create: false,
+                    ..opts
+                });
+                match existing.open(p) {
+                    // Removed in between: create it after all.
+                    Err(e) if e.kind() == io::ErrorKind::NotFound => continue,
+                    r => return r,
+                }
+            }
+            Err(e) => return Err(e),
+        }
+    }
+}
+
 fn std_open_options(opts: OpenOptions) -> std::fs::OpenOptions {
     let mut o = std::fs::OpenOptions::new();
     o.read(opts.read)
@@ -305,9 +342,7 @@ impl Host for UnixHost {
         {
             return open_fifo(p.to_vec(), opts);
         }
-        let r = std_open_options(opts)
-            .open(path(p))
-            .map(|f| Rc::new(UnixFile::new(f)) as Rc<dyn HostFile>);
+        let r = open_file(&path(p), opts).map(|f| Rc::new(UnixFile::new(f)) as Rc<dyn HostFile>);
         ready(r)
     }
 
@@ -388,6 +423,16 @@ impl Host for UnixHost {
             }
         }
         kill(pid, sig)
+    }
+
+    fn umask(&self) -> u32 {
+        spawn::process_umask()
+    }
+
+    fn now(&self) -> Duration {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
     }
 
     fn sleep(&self, duration: Duration) -> HostFuture<()> {

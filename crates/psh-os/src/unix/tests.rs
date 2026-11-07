@@ -485,3 +485,91 @@ fn keep_leaves_the_run_alone() {
     assert!(alive(g));
     kill(-g, libc::SIGKILL).unwrap();
 }
+
+#[test]
+fn umask_is_the_process_umask_and_now_is_the_clock() {
+    let h = host();
+    let s = h.spawn(sh("umask", piped_out())).unwrap();
+    let out = String::from_utf8(read_all(&s.pipes[0].1)).unwrap();
+    assert_eq!(u32::from_str_radix(out.trim(), 8).unwrap(), h.umask());
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap();
+    assert!(h.now().abs_diff(now) < Duration::from_secs(5));
+}
+
+#[test]
+fn open_with_mode_sets_exact_bits_on_create_only() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = std::env::temp_dir().join(format!("psh-os-mode-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let h = host();
+    let open = |name: &str, opts: OpenOptions| {
+        let p = dir.join(name);
+        let mut f = h.open(p.as_os_str().as_bytes(), opts);
+        block(|cx| f.as_mut().poll(cx))
+    };
+    let mode = |name: &str| {
+        std::fs::metadata(dir.join(name))
+            .unwrap()
+            .permissions()
+            .mode()
+            & 0o777
+    };
+    // Looser than any usual process umask: still exact.
+    open(
+        "loose",
+        OpenOptions {
+            mode: Some(0o666),
+            ..OpenOptions::write()
+        },
+    )
+    .unwrap();
+    assert_eq!(mode("loose"), 0o666);
+    open(
+        "tight",
+        OpenOptions {
+            mode: Some(0o600),
+            ..OpenOptions::append()
+        },
+    )
+    .unwrap();
+    assert_eq!(mode("tight"), 0o600);
+    // An existing file keeps its bits and is truncated as asked.
+    std::fs::write(dir.join("tight"), b"data").unwrap();
+    let f = open(
+        "tight",
+        OpenOptions {
+            mode: Some(0o644),
+            ..OpenOptions::write()
+        },
+    )
+    .unwrap();
+    drop(f);
+    assert_eq!(mode("tight"), 0o600);
+    assert_eq!(std::fs::read(dir.join("tight")).unwrap(), b"");
+    let e = open(
+        "tight",
+        OpenOptions {
+            mode: Some(0o644),
+            create_new: true,
+            ..OpenOptions::write()
+        },
+    )
+    .err()
+    .unwrap();
+    assert_eq!(e.kind(), io::ErrorKind::AlreadyExists);
+    // No mode: the process's umask applies as usual.
+    open("plain", OpenOptions::write()).unwrap();
+    assert_eq!(mode("plain"), 0o666 & !h.umask());
+    std::fs::remove_dir_all(&dir).unwrap();
+}
+
+#[test]
+fn the_umask_probe_agrees() {
+    assert_eq!(
+        super::spawn::umask_probe(),
+        Some(super::spawn::process_umask())
+    );
+}

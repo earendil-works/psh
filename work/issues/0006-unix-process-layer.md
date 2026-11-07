@@ -206,6 +206,13 @@ can express neither); `pid()`; `kill()`.
   happen mid-stream); Linux: both externals' ends are one kernel pipe (`/proc/PID/fd`).
   1 GB through three externals: 1.8 s, 0.12 s psh CPU. psh-spec: oils/loop/11 passes now.
 
+### 2026-11-07 Host umask/mode/now (D1069, for builtins 0029 and windows 0007B)
+- `Host::umask()`, `Host::now()` (defaults `0o022`, epoch), `OpenOptions::mode`. psh-os:
+  umask from /proc or a forked probe (never set in-process), exact create mode via
+  `create_new` + `fchmod`, existing files untouched; std host the same on Unix (Linux
+  /proc, else 0o022); test host stores the mode, fixed clock. Tests in psh-os and
+  std_host; macOS and Linux.
+
 ## Follow-ups
 - guide: `processes.md` (placement, cancel and abandonment, leak checks).
 - Engine: run files without `#!` in psh itself (bash does), then drop D1063's fallback.

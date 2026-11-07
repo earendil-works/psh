@@ -85,8 +85,9 @@ pub(crate) fn ignored_now() -> [bool; NSIG as usize] {
     out
 }
 
-/// The process's umask: Linux reads it from `/proc/self/status`; elsewhere it is set
-/// and restored once (there is no read-only call).
+/// The process's umask, read once without changing it (other threads may be creating
+/// files): Linux from `/proc/self/status`; elsewhere a forked child reads it with
+/// `umask` (which sets it, in the child only) and reports it through a pipe.
 pub(crate) fn process_umask() -> u32 {
     static UMASK: std::sync::LazyLock<u32> = std::sync::LazyLock::new(|| {
         #[cfg(any(target_os = "linux", target_os = "android"))]
@@ -96,14 +97,34 @@ pub(crate) fn process_umask() -> u32 {
         {
             return m;
         }
-        // SAFETY: umask only swaps the process's mask; the old value is restored at once.
-        unsafe {
-            let old = libc::umask(0o022);
-            libc::umask(old);
-            old as u32
-        }
+        umask_probe().unwrap_or(0o022)
     });
     *UMASK
+}
+
+pub(crate) fn umask_probe() -> Option<u32> {
+    let (mut r, w) = io::pipe().ok()?;
+    let wfd = w.as_raw_fd();
+    // SAFETY: the child calls only async-signal-safe functions (umask, write, _exit)
+    // and never returns.
+    let pid = unsafe { libc::fork() };
+    if pid == 0 {
+        // SAFETY: as above (the forked child).
+        unsafe {
+            let m = libc::umask(0) as u32;
+            let b = m.to_ne_bytes();
+            libc::write(wfd, b.as_ptr().cast(), b.len());
+            libc::_exit(0);
+        }
+    }
+    drop(w);
+    if pid < 0 {
+        return None;
+    }
+    let mut b = [0u8; 4];
+    let ok = r.read_exact(&mut b).is_ok();
+    reap(pid);
+    ok.then(|| u32::from_ne_bytes(b))
 }
 
 /// Waiter and escalation threads only wait and signal.

@@ -272,7 +272,7 @@ impl MemFs {
             p,
             Node::File {
                 data: data.clone(),
-                mode: 0o644,
+                mode: opts.mode.unwrap_or(0o644) & 0o7777,
                 mtime: t,
             },
         );
@@ -740,6 +740,11 @@ impl Host for TestHost {
             }),
             pipes,
         })
+    }
+
+    /// A fixed instant (2023-11-14T22:13:20Z): tests stay deterministic.
+    fn now(&self) -> Duration {
+        Duration::from_secs(1_700_000_000)
     }
 
     fn sleep(&self, _duration: Duration) -> HostFuture<()> {

@@ -472,6 +472,63 @@ fn is_executable(p: &std::path::Path) -> bool {
     }
 }
 
+/// Opens with `o`; on Unix, a file created with `opts.mode` gets exactly those bits
+/// (exclusive create, then `fchmod`; an existing file keeps its own). Elsewhere the
+/// mode is not applied.
+fn open_with_mode(
+    p: &std::path::Path,
+    o: &mut std::fs::OpenOptions,
+    opts: OpenOptions,
+) -> io::Result<File> {
+    #[cfg(unix)]
+    if let Some(mode) = opts.mode.filter(|_| opts.create) {
+        use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+        loop {
+            let mut create = std::fs::OpenOptions::new();
+            create
+                .read(opts.read)
+                .write(opts.write || opts.append)
+                .append(opts.append)
+                .create_new(true)
+                .mode(mode);
+            match create.open(p) {
+                Ok(f) => {
+                    f.set_permissions(std::fs::Permissions::from_mode(mode & 0o7777))?;
+                    return Ok(f);
+                }
+                Err(e) if e.kind() == io::ErrorKind::AlreadyExists && !opts.create_new => {
+                    let mut existing = std::fs::OpenOptions::new();
+                    existing
+                        .read(opts.read)
+                        .write(opts.write && !opts.append)
+                        .append(opts.append)
+                        .truncate(opts.truncate);
+                    match existing.open(p) {
+                        Err(e) if e.kind() == io::ErrorKind::NotFound => continue,
+                        r => return r,
+                    }
+                }
+                Err(e) => return Err(e),
+            }
+        }
+    }
+    let _ = opts;
+    o.open(p)
+}
+
+/// The process's umask, read without changing it: Linux from `/proc/self/status`;
+/// elsewhere the usual `0o022` (the std host has no way to read it safely).
+fn process_umask() -> u32 {
+    #[cfg(target_os = "linux")]
+    if let Ok(status) = std::fs::read_to_string("/proc/self/status")
+        && let Some(line) = status.lines().find(|l| l.starts_with("Umask:"))
+        && let Ok(m) = u32::from_str_radix(line[6..].trim(), 8)
+    {
+        return m;
+    }
+    0o022
+}
+
 impl Host for StdHost {
     fn open(&self, p: &[u8], opts: OpenOptions) -> HostFuture<io::Result<Rc<dyn HostFile>>> {
         let mut o = std::fs::OpenOptions::new();
@@ -489,7 +546,7 @@ impl Host for StdHost {
         let p = path(p);
         if !is_fifo(&p) {
             return ready(
-                o.open(&p)
+                open_with_mode(&p, &mut o, opts)
                     .map(|f| Rc::new(StdFile::new(f)) as Rc<dyn HostFile>),
             );
         }
@@ -701,6 +758,16 @@ impl Host for StdHost {
         })
     }
 
+    fn umask(&self) -> u32 {
+        process_umask()
+    }
+
+    fn now(&self) -> Duration {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+    }
+
     fn sleep(&self, duration: Duration) -> HostFuture<()> {
         let state: Arc<Mutex<(bool, Option<Waker>)>> = Arc::new(Mutex::new((false, None)));
         let s = state.clone();
@@ -780,5 +847,33 @@ pub fn drive_until(shell: &mut crate::Shell, deadline: Option<std::time::Instant
                 None => std::thread::park(),
             },
         }
+    }
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+    use std::os::unix::fs::PermissionsExt;
+
+    #[test]
+    fn open_with_mode_sets_exact_bits_on_create_only() {
+        let dir = std::env::temp_dir().join(format!("psh-std-mode-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.join("f");
+        let opts = OpenOptions {
+            mode: Some(0o666),
+            ..OpenOptions::write()
+        };
+        let mut o = std::fs::OpenOptions::new();
+        open_with_mode(&p, &mut o, opts).unwrap();
+        let mode = || std::fs::metadata(&p).unwrap().permissions().mode() & 0o777;
+        assert_eq!(mode(), 0o666);
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o600)).unwrap();
+        open_with_mode(&p, &mut o, opts).unwrap();
+        assert_eq!(mode(), 0o600);
+        std::fs::remove_dir_all(&dir).unwrap();
+        let h = StdHost::new();
+        assert!(h.now() > Duration::from_secs(1_600_000_000));
     }
 }

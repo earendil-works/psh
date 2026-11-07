@@ -1180,3 +1180,14 @@ receive `DeclArg`s from the interpreter: `name=(…)` with expanded array items,
 and other words expanded normally and then classified. The same builtins called with
 plain words (`builtin declare`, `command export`) parse `name=value` from the text.
 Assignments in front of them are temporary. They live in `builtins/declare.rs`.
+
+## D1069: Host umask, creation mode and clock
+date: 2026-11-07 · by: procs · issue: 0006
+Additive, with defaults: `Host::umask()` is the process's umask when the host was made
+(the shell's own mask starts there; default `0o022`); `OpenOptions::mode` gives the exact
+bits of a file the open creates (the engine applies the shell's mask); `Host::now()` is
+the time since the Unix epoch (default: the epoch, for hosts without a clock; the test
+host answers a fixed instant). Hosts never change the process's umask (threads, the
+embedder): psh-os reads it from `/proc/self/status` on Linux and through a forked child
+elsewhere, and applies `mode` by creating exclusively and then `fchmod`ing, so a mask
+looser than the process's still yields exact bits; an existing file keeps its bits.

@@ -60,6 +60,12 @@ pub struct OpenOptions {
     pub truncate: bool,
     /// Fail if the file exists (`set -o noclobber`).
     pub create_new: bool,
+    /// Permission bits of a file this open creates, exactly (the shell's own umask is
+    /// already applied by the engine). `None`: the host's default (`0o666` less the
+    /// process's umask). A host applies them only to a file the open really created,
+    /// never to an existing one, and never by changing the process's umask (other
+    /// threads and the embedder share it); on Unix: create exclusively, then `fchmod`.
+    pub mode: Option<u32>,
 }
 
 impl OpenOptions {
@@ -251,6 +257,17 @@ pub trait Host {
     fn kill(&self, pid: i32, sig: Signal) -> io::Result<()> {
         let _ = (pid, sig);
         Err(io::ErrorKind::Unsupported.into())
+    }
+    /// The process's file mode creation mask when the host was made: where the shell's
+    /// own mask (`umask`) starts. Hosts without one report `0o022`.
+    fn umask(&self) -> u32 {
+        0o022
+    }
+    /// The current time as a duration since the Unix epoch (`printf '%(fmt)T'`, `$EPOCHSECONDS`).
+    /// The default is the epoch itself: hosts with a clock override it (wasm32 has no
+    /// `SystemTime`; the JS host supplies `Date.now()`).
+    fn now(&self) -> Duration {
+        Duration::ZERO
     }
     /// Completes after `duration`.
     fn sleep(&self, duration: Duration) -> HostFuture<()>;

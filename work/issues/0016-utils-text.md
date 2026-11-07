@@ -58,6 +58,12 @@ The text filters of Tier 1, all S: `sort uniq cut tr paste nl tee seq comm`.
   sort in well under a second natively. `-S -T --parallel --batch-size` are accepted and
   ignored; `--compress-program --files0-from --random-source --debug` fall through.
   Classifier: `sort`'s long value options completed.
+- With `tr`/`sort` built in, five wasm cases that used to be excused as "needs external
+  programs" now run and fail on the JS host's missing mkdir/touch (D1150): wasm-ratcheted
+  with the existing reason (oils/glob-bash/7, oils/globstar/0,1,3,
+  utils/realpath/basic/11). Six utils wasm entries pass now and were removed.
+- Gate runs started in the background inherit SIGINT ignored (non-interactive `&`) and
+  fail psh-os/psh signal tests; run merge-to-main in the foreground or reset INT first.
 
 ## Follow-ups
 - `nl -b pREGEX` (and `-h`/`-f` with `p`) falls through: needs the regex crate in

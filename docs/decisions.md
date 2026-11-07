@@ -1054,3 +1054,33 @@ foreground child to react to INT itself; psh tears the run down, which is what a
 harness sending TERM wants. Signals ignored when psh starts stay ignored, in psh (no
 handler) and in its children (the host passes them on; SIGPIPE and SIGCHLD excepted,
 since Rust ignores SIGPIPE before `main`). Embedded hosts install nothing.
+
+## D1067: Who survives a run: only what was explicitly detached
+date: 2026-11-07 · by: procs · issue: 0006
+Supersedes D1060's placement of the standalone psh. Problem (0005 found it): released
+background jobs plus a session per external were orphans no group kill reached; the gates
+left dozens of TERM-ignoring loops behind, the corpus shows agents' servers alive for days.
+- **Embedded (pi-env, psh-spec, L5): a host is one run.** Each external still leads a
+  session of its own (cancel of one command never hits its siblings, no terminal), and
+  the host records every session it made. Dropping the host ends the run: with
+  `Leftovers::Kill` (the default) every recorded session with a live member gets
+  TERM+CONT, then KILL after the grace period: released background jobs and whatever
+  finished externals left in their sessions. `UnixHost::kill_all()` and the `Send`
+  `RunKiller` do the same on demand ("the embedder kills the run"); `settle()` waits.
+  `Leftovers::Keep` leaves them, as bash does. Only `SpawnSpec::detach` (`nohup`,
+  `setsid`; the engine sets it) and `ExtProc::disown` (`disown`) leave the run;
+  a process that calls setsid itself also escapes. The engine's `exit_grace` lets
+  background jobs finish before the end.
+- **Standalone `psh`: psh's own process group**, as a non-interactive bash: externals
+  and background jobs stay in it, so a harness's or terminal's group kill reaches
+  everything; jobs outlive psh as with bash (`Keep`). On a fatal signal psh abandons its
+  externals and, when it leads its group, signals the whole group as it dies, so what
+  they left goes too even when only psh's pid was signalled. Detached externals get a
+  session of their own.
+Alternatives: one process group per run in the embedder's session (one id for outside
+killers, but a group cannot be joined once its leader is reaped and empty, the leader
+must be pinned as a zombie, and `disown` could not escape a group kill); one session per
+run (impossible without a helper process: nothing can join another session); a reaper on
+the harness side only (leaves the embedded case open). Residual risk: a session whose
+leader was reaped is signalled at the end only while it still has members, so its id
+cannot have been reused, but the check and the signal are not atomic.

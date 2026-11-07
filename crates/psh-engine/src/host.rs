@@ -188,16 +188,27 @@ pub struct SpawnSpec {
     pub sig_ignore: Vec<Signal>,
     /// The child's umask; `None` keeps the process's.
     pub umask: Option<u32>,
+    /// Detached (`nohup`, `setsid`): the child leaves the shell's run. It gets a session
+    /// of its own, is not killed with the run's leftovers, and dropping its `ExtProc`
+    /// releases it instead of abandoning it.
+    pub detach: bool,
 }
 
 /// A running external process. Dropping it while it runs abandons it: the host sends
-/// TERM, KILL after a grace period, and reaps it in the background.
+/// TERM, KILL after a grace period, and reaps it in the background. What a released
+/// external leaves running is the run's leftovers: a host may kill them when the shell
+/// is done (psh-os: by default, when the host is dropped).
 pub trait ExtProc {
     fn poll_wait(&mut self, cx: &mut Context<'_>) -> Poll<ExitStatus>;
     fn signal(&mut self, sig: Signal);
     /// Lets the process run on: no signal, reaped in the background (`nohup`, and
     /// background jobs still running when the shell exits, as bash leaves them).
     fn release(self: Box<Self>);
+    /// Like `release`, and the process also leaves the shell's run: it is not killed
+    /// with the run's leftovers (`disown`).
+    fn disown(self: Box<Self>) {
+        self.release();
+    }
     /// The OS process id (`$!`, `jobs -p`), where there is one.
     fn pid(&self) -> Option<u32> {
         None

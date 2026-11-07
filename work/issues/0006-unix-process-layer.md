@@ -172,6 +172,26 @@ can express neither); `pid()`; `kill()`.
   its window), and with part 2 externals write to OS pipes directly, so nothing is lost
   with a dropped pump.
 
+### 2026-11-07 part 3a: who survives a run (D1067)
+- Coordinator flagged it (0005 found it): released jobs + a session per external =
+  orphans nothing reaches. Evaluated the proposal (one group/session per run): a run
+  session cannot be joined from outside without a helper process; a run group in the
+  embedder's session needs a pinned zombie leader and cannot let `disown` escape. Chosen:
+  embedded host = one run, per-external sessions recorded, killed at host drop
+  (`Leftovers::Kill`, default; `Keep` for bash's behavior), `kill_all`/`RunKiller`,
+  `SpawnSpec::detach` and `ExtProc::disown` (new, additive, default = release) as the
+  escapes. Standalone psh: psh's own group always (bash-like), `Keep`, and `die_by`
+  signals the group when psh leads it.
+- Tests: L5 normal end kills two TERM-ignoring background loops; a finished external's
+  grandchild is killed at the end; cancel kills background jobs; the embedder kills the
+  run from another thread; `Keep` leaves jobs (checked, then killed); host unit test:
+  released and leftover sessions die at drop, detached and disowned survive. Standalone:
+  background jobs stay in psh's group and die with a group kill; a grandchild dies with
+  psh when only psh's pid gets TERM.
+- psh-spec in-process is `Kill` now: brush/compat/background_jobs/0,1,4,5 (bg `touch`
+  without `wait`) fail until 0005's `exit_grace` (500 ms in psh-spec) is on main; I
+  merge after it, so they must pass then.
+
 ## Follow-ups
 - guide: `processes.md` (placement, cancel and abandonment, leak checks).
 - Engine: run files without `#!` in psh itself (bash does), then drop D1063's fallback.

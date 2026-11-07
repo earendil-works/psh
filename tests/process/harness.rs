@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 
 use psh_engine::std_host::{drive_until, engine_thread};
 use psh_engine::{HostFile, Script, Shell, ShellConfig, Step};
-use psh_os::unix::{UnixConfig, UnixFile, UnixHost};
+use psh_os::unix::{Leftovers, UnixConfig, UnixFile, UnixHost, settle};
 
 /// Everything a test may wait for, in total.
 const DEADLINE: Duration = Duration::from_secs(30);
@@ -29,7 +29,9 @@ pub struct Run {
     script: String,
     stdin: Option<Vec<u8>>,
     cancel_after: Option<Duration>,
-    expect_leak: bool,
+    kill_run_after: Option<Duration>,
+    leftovers: Leftovers,
+    expect_survivors: bool,
 }
 
 pub fn run(script: &str) -> Out {
@@ -42,14 +44,28 @@ impl Run {
             script: script.to_string(),
             stdin: None,
             cancel_after: None,
-            expect_leak: false,
+            kill_run_after: None,
+            leftovers: Leftovers::Kill,
+            expect_survivors: false,
         }
     }
 
-    /// The script leaves a process behind on purpose: the leak check must see it (and
-    /// then kills it).
-    pub fn expect_leak(mut self) -> Run {
-        self.expect_leak = true;
+    /// The host keeps the run's leftovers (bash's behavior) instead of killing them.
+    pub fn keep_leftovers(mut self) -> Run {
+        self.leftovers = Leftovers::Keep;
+        self
+    }
+
+    /// The embedder kills the run's processes from another thread after `d`.
+    pub fn kill_run_after(mut self, d: Duration) -> Run {
+        self.kill_run_after = Some(d);
+        self
+    }
+
+    /// Processes of the run survive it on purpose: the check must see them (and then
+    /// kills them).
+    pub fn expect_survivors(mut self) -> Run {
+        self.expect_survivors = true;
         self
     }
 
@@ -89,14 +105,24 @@ impl Run {
         let deadline = start + DEADLINE;
         let script = self.script;
         let cancel_after = self.cancel_after;
-        let expect_leak = self.expect_leak;
+        let expect_survivors = self.expect_survivors;
+        let leftovers_mode = self.leftovers;
+        let kill_run_after = self.kill_run_after;
         let cwd = dir.clone();
         let engine = engine_thread(move || {
             let host = Rc::new(UnixHost::new(UnixConfig {
                 grace: GRACE,
                 pid: Some(99_999_999),
+                leftovers: leftovers_mode,
                 ..UnixConfig::default()
             }));
+            let killer = kill_run_after.map(|after| {
+                let k = host.killer();
+                thread::spawn(move || {
+                    thread::sleep(after);
+                    k.kill_all();
+                })
+            });
             let mut cfg = ShellConfig::new(host.clone());
             let path = std::env::var("PATH").unwrap_or_else(|_| "/usr/bin:/bin".into());
             cfg.env = vec![
@@ -127,23 +153,35 @@ impl Run {
             let done_after = start.elapsed();
             assert_eq!(shell.step(1), Step::Idle);
             drop(shell);
-            // The leak check: every group this host made empties (abandoned ones after
-            // TERM, the grace period and KILL).
-            if expect_leak {
-                let left = host.leftovers();
+            if let Some(k) = killer {
+                k.join().unwrap();
+            }
+            // The leak check: dropping the host ends the run (killing its leftovers in
+            // `Kill` mode); then every group it made must empty: abandoned and killed
+            // ones after TERM, the grace period and KILL, plus a moment for init to
+            // reap killed grandchildren.
+            let groups = host.groups();
+            drop(host);
+            settle(GRACE + Duration::from_secs(2));
+            let alive = |g: &i32| match psh_os::unix::kill(-g, 0) {
+                Ok(()) => true,
+                Err(e) => e.kind() == std::io::ErrorKind::PermissionDenied,
+            };
+            if expect_survivors {
+                let left: Vec<i32> = groups.iter().copied().filter(alive).collect();
                 for g in &left {
                     let _ = psh_os::unix::kill(-g, sigkill());
                 }
-                return (
-                    status,
-                    done_after,
-                    if left.is_empty() { vec![-1] } else { vec![] },
-                );
+                let missing = if left.is_empty() { vec![-1] } else { vec![] };
+                return (status, done_after, missing);
             }
-            let leak_deadline = Instant::now() + GRACE + Duration::from_secs(5);
+            let leak_deadline = Instant::now() + Duration::from_secs(5);
             let leftovers = loop {
-                let left = host.leftovers();
+                let left: Vec<i32> = groups.iter().copied().filter(alive).collect();
                 if left.is_empty() || Instant::now() > leak_deadline {
+                    for g in &left {
+                        let _ = psh_os::unix::kill(-g, sigkill());
+                    }
                     break left;
                 }
                 thread::sleep(Duration::from_millis(20));
@@ -163,11 +201,8 @@ impl Run {
             let _ = f.join();
         }
         let _ = std::fs::remove_dir_all(&dir);
-        if expect_leak {
-            assert!(
-                leftovers.is_empty(),
-                "the leak check missed a leftover process"
-            );
+        if expect_survivors {
+            assert!(leftovers.is_empty(), "nothing survived the run");
         } else {
             assert!(leftovers.is_empty(), "leaked process groups: {leftovers:?}");
         }

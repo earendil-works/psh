@@ -43,6 +43,19 @@ pub struct UnixConfig {
     /// `$$`, when it must not be the process's own id (an embedder running shells
     /// in-process, where `kill $$` must not reach the embedder).
     pub pid: Option<u32>,
+    /// What happens to the run's leftovers (released background jobs and what
+    /// externals left running) when the host is dropped.
+    pub leftovers: Leftovers,
+}
+
+/// The fate of a run's leftovers when its host is dropped (D1067).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Leftovers {
+    /// TERM to every group of the run, KILL after the grace period. Only detached
+    /// (`nohup`, `setsid`) and disowned externals survive. The default.
+    Kill,
+    /// Leave them running, as bash does.
+    Keep,
 }
 
 impl UnixConfig {
@@ -55,14 +68,35 @@ impl Default for UnixConfig {
             placement: Placement::Session,
             grace: UnixConfig::DEFAULT_GRACE,
             pid: None,
+            leftovers: Leftovers::Kill,
         }
     }
 }
 
-/// The host.
+/// The host. One per shell: everything it spawned is that shell's run, and dropping
+/// it ends the run ([`Leftovers`]).
 pub struct UnixHost {
     shared: Arc<Shared>,
     pid: Option<u32>,
+    leftovers: Leftovers,
+}
+
+/// Kills a run's leftovers from any thread ([`UnixHost::killer`]).
+#[derive(Clone)]
+pub struct RunKiller(Arc<Shared>);
+
+impl RunKiller {
+    pub fn kill_all(&self) {
+        self.0.kill_all();
+    }
+}
+
+impl Drop for UnixHost {
+    fn drop(&mut self) {
+        if self.leftovers == Leftovers::Kill {
+            self.shared.kill_all();
+        }
+    }
 }
 
 impl Default for UnixHost {
@@ -82,7 +116,27 @@ impl UnixHost {
                 fork_only: Default::default(),
             }),
             pid: cfg.pid,
+            leftovers: cfg.leftovers,
         }
+    }
+
+    /// Kills the run's leftovers now (see [`Leftovers::Kill`]): for an embedder that
+    /// ends a run without dropping the host. Returns at once; [`settle`] waits.
+    pub fn kill_all(&self) {
+        self.shared.kill_all();
+    }
+
+    /// A handle that kills the run's leftovers from any thread (the host itself stays
+    /// on the shell's thread).
+    pub fn killer(&self) -> RunKiller {
+        RunKiller(self.shared.clone())
+    }
+
+    /// Every process group of the run recorded so far, live or not (tests check them
+    /// after the host is gone).
+    pub fn groups(&self) -> Vec<i32> {
+        let scopes = self.shared.scopes.lock().unwrap_or_else(|e| e.into_inner());
+        scopes.iter().map(|s| s.id()).collect()
     }
 
     /// The process groups (or, under [`Placement::Inherit`], processes) this host
@@ -343,14 +397,6 @@ impl Host for UnixHost {
     fn pid(&self) -> u32 {
         self.pid.unwrap_or_else(std::process::id)
     }
-}
-
-/// Whether descriptor `fd` is a terminal whose foreground process group is ours: the
-/// shell runs in the foreground of a terminal (a person ran it), so externals should
-/// share the terminal ([`Placement::Inherit`]).
-pub fn terminal_foreground(fd: i32) -> bool {
-    // SAFETY: plain syscalls without pointers.
-    unsafe { libc::isatty(fd) == 1 && libc::tcgetpgrp(fd) == libc::getpgrp() }
 }
 
 /// Sends `sig` to process `pid` (negative: a process group), as `kill(2)`.

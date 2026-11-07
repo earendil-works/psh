@@ -280,8 +280,11 @@ fn signal_reaches_the_group() {
 fn release_lets_it_run_and_reaps() {
     let h = host();
     let p = h.spawn(sh("sleep 0.2", nulls())).unwrap().proc;
+    let g = p.pid().unwrap() as i32;
     p.release();
-    assert!(h.leftovers().is_empty(), "released is not a leak");
+    // Still part of the run until it exits; the waiter reaps it.
+    assert_eq!(h.leftovers(), vec![g]);
+    no_leftovers(&h);
 }
 
 #[test]
@@ -414,4 +417,71 @@ fn an_embedded_host_refuses_to_signal_its_embedder() {
     }
     // A standalone host may (bash's `kill $$`).
     assert!(host().kill(me, 0).is_ok());
+}
+
+fn alive(g: i32) -> bool {
+    match kill(-g, 0) {
+        Ok(()) => true,
+        Err(e) => e.kind() == io::ErrorKind::PermissionDenied,
+    }
+}
+
+/// Waits until group `g` is gone (killed members are reaped by init a moment later).
+fn wait_gone(g: i32) -> bool {
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while alive(g) {
+        if Instant::now() > deadline {
+            return false;
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    true
+}
+
+#[test]
+fn dropping_the_host_kills_released_and_leftover_groups_but_not_detached_or_disowned() {
+    let h = host();
+    let released = h.spawn(sh("trap '' TERM; sleep 30", nulls())).unwrap().proc;
+    let r = released.pid().unwrap() as i32;
+    released.release();
+    // A finished external that left a child in its session.
+    let mut parent = h
+        .spawn(sh("sleep 30 >/dev/null 2>&1 &", nulls()))
+        .unwrap()
+        .proc;
+    let p = parent.pid().unwrap() as i32;
+    assert_eq!(block(|cx| parent.poll_wait(cx)), ExitStatus::Exited(0));
+    drop(parent);
+    let mut spec = sh("sleep 30", nulls());
+    spec.detach = true;
+    let detached = h.spawn(spec).unwrap().proc;
+    let d = detached.pid().unwrap() as i32;
+    drop(detached); // released, not abandoned
+    let disowned = h.spawn(sh("sleep 30", nulls())).unwrap().proc;
+    let o = disowned.pid().unwrap() as i32;
+    disowned.disown();
+    std::thread::sleep(Duration::from_millis(100));
+    assert!(alive(r) && alive(p) && alive(d) && alive(o));
+    drop(h);
+    assert!(settle(Duration::from_secs(5)));
+    assert!(wait_gone(r), "released job survived");
+    assert!(wait_gone(p), "leftover grandchild survived");
+    assert!(alive(d) && alive(o), "detached or disowned was killed");
+    kill(-d, libc::SIGKILL).unwrap();
+    kill(-o, libc::SIGKILL).unwrap();
+}
+
+#[test]
+fn keep_leaves_the_run_alone() {
+    let h = UnixHost::new(UnixConfig {
+        leftovers: Leftovers::Keep,
+        ..UnixConfig::default()
+    });
+    let p = h.spawn(sh("sleep 30", nulls())).unwrap().proc;
+    let g = p.pid().unwrap() as i32;
+    p.release();
+    drop(h);
+    std::thread::sleep(Duration::from_millis(100));
+    assert!(alive(g));
+    kill(-g, libc::SIGKILL).unwrap();
 }

@@ -44,8 +44,8 @@ pub enum Placement {
     /// it cannot touch the terminal's foreground. The default (agents, embedding).
     Session,
     /// Externals stay in the host's group and session, as with a non-interactive bash:
-    /// for a standalone shell run from a terminal, so terminal programs work. Group-wide
-    /// operations then reach only the external's own pid.
+    /// for the standalone shell, so a group kill of the shell reaches everything it
+    /// started (D1067). Signals and abandonment then reach only the external's own pid.
     Inherit,
 }
 
@@ -162,7 +162,8 @@ impl Scope {
 pub(crate) struct Shared {
     pub(crate) grace: Duration,
     pub(crate) placement: Placement,
-    /// Scopes of externals not released, for leak checks.
+    /// Scopes of the run's externals (all but detached and disowned ones): leak checks
+    /// and the leftovers killed at the end.
     pub(crate) scopes: Mutex<Vec<Scope>>,
     /// Signals ignored when the host was made ([`ignored_now`]).
     pub(crate) ignored_at_start: [bool; NSIG as usize],
@@ -183,6 +184,54 @@ impl Shared {
 
     fn unrecord(&self, s: Scope) {
         lock(&self.scopes).retain(|x| *x != s);
+    }
+
+    /// Kills what is left of the run: TERM and CONT to every recorded group with a live
+    /// member now, KILL to those still alive after the grace period (on a thread,
+    /// counted for [`settle`]). Process scopes (`Placement::Inherit`) are skipped: their
+    /// group is the shell's own, not ours to kill. A group whose leader was reaped is
+    /// signalled only while it still has members; its id cannot be reused before it is
+    /// empty, and the check comes right before the signal.
+    pub(crate) fn kill_all(&self) {
+        let groups: Vec<i32> = lock(&self.scopes)
+            .iter()
+            .filter_map(|s| match s {
+                Scope::Group(g) if s.alive() => Some(*g),
+                _ => None,
+            })
+            .collect();
+        if groups.is_empty() {
+            return;
+        }
+        for &g in &groups {
+            let _ = Scope::Group(g).signal(libc::SIGTERM);
+            let _ = Scope::Group(g).signal(libc::SIGCONT);
+        }
+        let grace = self.grace;
+        let fallback = groups.clone();
+        *lock(&ESCALATING) += 1;
+        let started = std::thread::Builder::new()
+            .name("psh-kill".into())
+            .stack_size(SMALL_STACK)
+            .spawn(move || {
+                let deadline = Instant::now() + grace;
+                while Instant::now() < deadline && groups.iter().any(|&g| Scope::Group(g).alive()) {
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+                for &g in &groups {
+                    if Scope::Group(g).alive() {
+                        let _ = Scope::Group(g).signal(libc::SIGKILL);
+                    }
+                }
+                *lock(&ESCALATING) -= 1;
+                SETTLED.notify_all();
+            });
+        if started.is_err() {
+            *lock(&ESCALATING) -= 1;
+            for &g in &fallback {
+                let _ = Scope::Group(g).signal(libc::SIGKILL);
+            }
+        }
     }
 }
 
@@ -346,7 +395,7 @@ pub(crate) fn spawn(shared: &Arc<Shared>, mut spec: SpawnSpec) -> io::Result<Spa
         .iter()
         .map(|(t, i)| (*t, sources[*i].raw()))
         .collect();
-    let session = shared.placement == Placement::Session;
+    let session = spec.detach || shared.placement == Placement::Session;
     let mut setup = Setup {
         session,
         ignore: shared.ignored_at_start,
@@ -408,7 +457,9 @@ pub(crate) fn spawn(shared: &Arc<Shared>, mut spec: SpawnSpec) -> io::Result<Spa
     } else {
         Scope::Process(pid)
     };
-    shared.record(scope);
+    if !spec.detach {
+        shared.record(scope);
+    }
     let tracker = Arc::new(Tracker::new());
     if let Err(e) = watch(pid, tracker.clone()) {
         // Without a waiter nobody would observe the exit: undo the spawn.
@@ -423,6 +474,7 @@ pub(crate) fn spawn(shared: &Arc<Shared>, mut spec: SpawnSpec) -> io::Result<Spa
             scope,
             tracker,
             shared: shared.clone(),
+            detached: spec.detach,
         }),
         pipes,
     })
@@ -842,6 +894,8 @@ struct UnixProc {
     scope: Scope,
     tracker: Arc<Tracker>,
     shared: Arc<Shared>,
+    /// `SpawnSpec::detach`: dropping it releases instead of abandoning.
+    detached: bool,
 }
 
 impl ExtProc for UnixProc {
@@ -865,14 +919,18 @@ impl ExtProc for UnixProc {
     }
 
     fn release(self: Box<Self>) {
+        // Still part of the run: its group is killed with the leftovers (`Drop`).
         let mut life = self.tracker.lock();
         if Tracker::release(&mut life) {
             reap(self.pid);
             life.set_reaped();
         }
-        drop(life);
-        // A released process is meant to outlive the shell: not a leak.
+    }
+
+    fn disown(self: Box<Self>) {
+        // Its session is no longer the run's: not killed with the leftovers.
         self.shared.unrecord(self.scope);
+        self.release();
     }
 }
 
@@ -880,6 +938,13 @@ impl Drop for UnixProc {
     fn drop(&mut self) {
         let mut life = self.tracker.lock();
         if life.owner() != Owner::Engine {
+            return;
+        }
+        if self.detached {
+            if Tracker::release(&mut life) {
+                reap(self.pid);
+                life.set_reaped();
+            }
             return;
         }
         match Tracker::abandon(&mut life) {

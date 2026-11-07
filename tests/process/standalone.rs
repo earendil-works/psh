@@ -88,19 +88,20 @@ impl Drop for Case {
     }
 }
 
-/// Whether process group `pgid` (an external's session) still has a member.
-fn group_alive(pgid: i32) -> bool {
-    match kill(-pgid, 0) {
+/// Whether process `pid` (or group `-pid`) still exists (zombies included).
+fn alive(pid: i32) -> bool {
+    match kill(pid, 0) {
         Ok(()) => true,
         Err(e) => e.kind() == std::io::ErrorKind::PermissionDenied,
     }
 }
 
-fn gone(pgid: i32, within: Duration) -> bool {
+/// Waits until `pid` is gone (killed orphans are reaped by init a moment later).
+fn gone(pid: i32, within: Duration) -> bool {
     let deadline = Instant::now() + within;
-    while group_alive(pgid) {
+    while alive(pid) {
         if Instant::now() > deadline {
-            let _ = kill(-pgid, SIGKILL);
+            let _ = kill(pid, SIGKILL);
             return false;
         }
         std::thread::sleep(Duration::from_millis(10));
@@ -111,7 +112,7 @@ fn gone(pgid: i32, within: Duration) -> bool {
 /// An external that writes its pid to `file` and sleeps, ignoring TERM if `stubborn`.
 fn sleeper(file: &str, stubborn: bool) -> String {
     let trap = if stubborn { "trap \"\" TERM; " } else { "" };
-    format!("sh -c '{trap}echo $$ > {file}; sleep 30; echo never'")
+    format!("sh -c '{trap}echo $$ > {file}; exec sleep 30'")
 }
 
 fn assert_signaled(s: ExitStatus, sig: i32) {
@@ -154,7 +155,6 @@ fn an_external_ignoring_term_is_killed_before_psh_exits() {
     assert_signaled(c.wait(Duration::from_secs(15)), SIGTERM);
     // KILL came after the grace period (2 s), before psh ended.
     assert!(start.elapsed() >= Duration::from_millis(1500));
-    // Killed members are reaped by init (they were reparented), which takes a moment.
     assert!(gone(a, Duration::from_secs(2)), "the external survived psh");
 }
 
@@ -181,4 +181,28 @@ fn normal_exit_codes_are_unchanged() {
     assert_eq!(c.wait(Duration::from_secs(10)).code(), Some(3));
     let mut c = Case::start("sh -c 'kill -TERM $$'");
     assert_eq!(c.wait(Duration::from_secs(10)).code(), Some(143));
+}
+
+#[test]
+fn background_jobs_stay_in_psh_group_and_die_with_it() {
+    // As with bash: the job outlives psh, in psh's process group, where the harness's
+    // group kill reaches it.
+    let mut c = Case::start(&format!("{} & echo started", sleeper("a", false)));
+    let a = c.pid("a");
+    assert_eq!(c.wait(Duration::from_secs(10)).code(), Some(0));
+    let psh = c.child.id() as i32;
+    assert!(alive(a) && alive(-psh), "the job left psh's group");
+    kill(-psh, SIGTERM).unwrap();
+    assert!(gone(a, Duration::from_secs(2)));
+}
+
+#[test]
+fn what_an_external_left_dies_with_psh_even_if_only_psh_is_signalled() {
+    // `sh` leaves a background sleep in psh's group; TERM to psh's pid alone: psh
+    // abandons `sh` and, leading its group, ends the group too.
+    let mut c = Case::start("sh -c 'sleep 30 & echo $! > a; wait'");
+    let a = c.pid("a");
+    c.signal(SIGTERM);
+    assert_signaled(c.wait(Duration::from_secs(10)), SIGTERM);
+    assert!(gone(a, Duration::from_secs(2)), "the grandchild survived");
 }

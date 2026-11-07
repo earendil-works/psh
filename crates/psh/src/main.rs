@@ -23,19 +23,16 @@ use psh_engine::{Host, HostFile, Script, Shell, ShellConfig};
 /// The shell's descriptors 0, 1 and 2.
 type Stdio = [Option<Rc<dyn HostFile>>; 3];
 
-/// The OS host. A shell in the foreground of a terminal (a person ran it) keeps its
-/// externals in its own process group, so terminal programs work as under bash;
-/// otherwise every external leads a session of its own, so a cancel reaches its tree.
+/// The OS host. The standalone shell keeps its externals in its own process group, as a
+/// non-interactive bash does, so whoever kills psh's group (a terminal's Ctrl-C, a
+/// harness, `timeout`) reaches everything it started; background jobs outlive it as
+/// with bash (D1067).
 #[cfg(unix)]
 fn os_host() -> (Rc<dyn Host>, Stdio) {
-    use psh_os::unix::{Placement, UnixConfig, UnixFile, UnixHost, terminal_foreground};
-    let placement = if terminal_foreground(0) {
-        Placement::Inherit
-    } else {
-        Placement::Session
-    };
+    use psh_os::unix::{Leftovers, Placement, UnixConfig, UnixFile, UnixHost};
     let host = UnixHost::new(UnixConfig {
-        placement,
+        placement: Placement::Inherit,
+        leftovers: Leftovers::Keep,
         ..UnixConfig::default()
     });
     let stdio = |n| {

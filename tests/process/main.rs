@@ -70,7 +70,9 @@ fn cancel_in_a_substitution_leaves_no_process() {
 fn output_after_the_shells_exit_is_collected() {
     // The shell is done at once; a background process still writes to its stdout,
     // and the reader gets that at the end of the pipe, as with bash -c.
-    let r = Run::new("echo first; sh -c 'sleep 0.3; echo late' &").go();
+    let r = Run::new("echo first; sh -c 'sleep 0.3; echo late' &")
+        .keep_leftovers()
+        .go();
     assert_eq!(r.status, 0);
     assert_eq!(r.stdout, "first\nlate\n", "{r:?}");
     assert!(r.done_after < Duration::from_millis(250), "{r:?}");
@@ -118,16 +120,6 @@ fn command_not_found() {
     let r = run("no_such_command_psh_l5; echo $?");
     assert_eq!(r.stdout, "127\n", "{r:?}");
     assert!(r.stderr.contains("command not found"), "{r:?}");
-}
-
-#[test]
-fn the_leak_check_sees_a_leftover() {
-    // The grandchild stays in the external's session after the command is done; the
-    // check must notice (and kills it).
-    let r = Run::new("sh -c 'sleep 30 >/dev/null 2>&1 &'")
-        .expect_leak()
-        .go();
-    assert_eq!(r.status, 0, "{r:?}");
 }
 
 #[test]
@@ -181,4 +173,47 @@ fn concurrent_shells_do_not_interfere() {
     for h in handles {
         h.join().unwrap();
     }
+}
+
+// What survives a run (D1067): only detached and disowned processes. A loop that
+// ignores TERM, started in the background, is what the gates once left behind by the
+// dozen.
+const STUBBORN_LOOP: &str = "sh -c 'trap \"\" TERM; while :; do sleep 0.05; done'";
+
+#[test]
+fn a_normal_end_kills_background_jobs() {
+    let r = run(&format!("{STUBBORN_LOOP} & {STUBBORN_LOOP} & echo started"));
+    assert_eq!(r.stdout, "started\n", "{r:?}");
+}
+
+#[test]
+fn a_normal_end_kills_what_a_finished_external_left() {
+    let r = run("sh -c 'sleep 30 >/dev/null 2>&1 &'; echo done");
+    assert_eq!(r.stdout, "done\n", "{r:?}");
+}
+
+#[test]
+fn a_cancel_kills_background_jobs() {
+    let r = Run::new(&format!("{STUBBORN_LOOP} & sleep 30"))
+        .cancel_after(Duration::from_millis(200))
+        .go();
+    assert_eq!(r.status, 143, "{r:?}");
+}
+
+#[test]
+fn the_embedder_kills_the_run_from_another_thread() {
+    // The foreground external dies with the run, so the script goes on.
+    let r = Run::new(&format!("{STUBBORN_LOOP} & sleep 30; echo after $?"))
+        .kill_run_after(Duration::from_millis(300))
+        .go();
+    assert_eq!(r.stdout, "after 143\n", "{r:?}");
+}
+
+#[test]
+fn keep_leaves_background_jobs_running() {
+    let r = Run::new("sh -c 'sleep 30' & echo started")
+        .keep_leftovers()
+        .expect_survivors()
+        .go();
+    assert_eq!(r.stdout, "started\n", "{r:?}");
 }

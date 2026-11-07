@@ -253,10 +253,10 @@ From `research/execution-core.md` §5; the pitfalls listed there are requirement
 - Spawn (D1060): `posix_spawn` with a session of its own per external (`SETSID`),
   `SETSIGDEF` for every catchable signal (SIGPIPE back to default), an empty signal
   mask, `CLOEXEC_DEFAULT` on macOS, `addchdir_np` where available (glibc ≥ 2.29, found
-  with `dlsym`); a bare `fork`+`execve` elsewhere and, later, for umask and ignored
-  signals. The standalone `psh` in the foreground of a terminal keeps externals in its
-  own group instead (`Placement::Inherit`), so terminal programs work. A file without
-  `#!` runs in `/bin/sh` until the engine runs it itself (D1063).
+  with `dlsym`); a bare `fork`+`execve` elsewhere and for a umask or ignored signals
+  `posix_spawn` cannot express. The standalone `psh` keeps externals in its own
+  process group, as bash does (D1067). A file without `#!` runs in `/bin/sh` until the engine runs it itself
+  (D1063).
 - Wait: a pooled waiter thread per running external in `waitid(..., WNOWAIT)`, which
   wakes the engine. No SIGCHLD handler. Exited group leaders stay unreaped while their
   group may still be signalled (no pid reuse). One party reaps, under the lifecycle
@@ -269,7 +269,11 @@ From `research/execution-core.md` §5; the pitfalls listed there are requirement
   write, writes to streams capped at `PIPE_BUF`. FIFO opens run on a helper thread.
   Timers run on one process-wide thread.
 - Kill: TERM (and CONT) to the group, KILL to the group when the leader exits or after
-  a grace period (default 2 s), then a reap (D1065). `UnixHost::leftovers()` lists
+  a grace period (default 2 s), then a reap (D1065).
+- Runs (D1067): embedded, a host is one run; dropping it kills what the run left
+  (released background jobs, what finished externals left in their sessions) unless it
+  was detached (`nohup`, `setsid`) or disowned; `Leftovers::Keep` leaves it, as bash.
+  Standalone, everything stays in psh's group, which a harness's group kill reaches. `UnixHost::leftovers()` lists
   groups with live members (leak checks).
 - Signals: embedded, install no handlers at all. Standalone `psh` (D1066): handlers
   for INT, TERM and HUP only set an atomic bit and write a self-pipe byte; a watcher

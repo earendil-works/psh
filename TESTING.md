@@ -18,9 +18,13 @@ plan behind this is `research/hillclimb.md`.
   its GNU userland plus `gawk`, `procps` and the `en_US.UTF-8` locale; GNU bash 5.3
   built from the release tarball and the official patches through 5.3.9, each pinned by
   sha256 (building it is fine; nobody reads its source, D007). 5.3.9 is the Homebrew
-  bash used for probes. Cases run as the user `spec` (uid 1000), umask 022, hostname
-  `psh-oracle`, no network, `TZ=UTC`. The official `bash:5.3` image is Alpine with
-  busybox utilities and is not suitable.
+  bash used for probes. It also has git 2.47 and jq 1.7 (Debian, pinned) and the
+  upstream static binaries of ripgrep 15.2.0 and fd 10.5.1 (pinned by sha256), the
+  versions psh's `rg` and `fd` implement (D1310, D1134); cases that use git build their
+  repositories locally, and `.git` directories are left out of the compared files. Cases
+  run as the user `spec` (uid 1000), umask 022, hostname `psh-oracle`, no network,
+  `TZ=UTC`. The official `bash:5.3` image is Alpine with busybox utilities and is not
+  suitable.
 - `scripts/record-goldens [FILTER...]` builds the image (once; the GNU download is
   slow), builds psh-spec for Linux in the pinned Rust image, records every case (about a
   minute) and replaces `tests/goldens/`. `scripts/record-goldens --check` records again
@@ -44,10 +48,10 @@ plan behind this is `research/hillclimb.md`.
 | L0 parse | every script of L1–L3, the shape corpus and `tests/l0/syntax.txt` | ours | psh-syntax agrees with `bash -n` on parse/no-parse; print → re-parse round trip (`psh-spec --l0`); spans cover the source |
 | L1 Oils spec | `oils/spec/*.test.sh` at d114978 | Apache-2.0, vendored in `tests/oils/` | the language, per area; ~2.7k cases in the compat set |
 | L2 brush cases | `brush-shell/tests/cases/**/*.yaml` | MIT, vendored in `tests/brush/` | the same, ~3.7k cases; the files hold no expectations, so the goldens come from our recording |
-| L3 agent shapes | our own cases written to the patterns in `research/corpus.md`, in the Oils format, run as `bash -c` | ours, `tests/agent/` | what agents do: `cd X && …`, `\| head`, `2>&1`, quoted here-docs, `timeout`, globs that match nothing; 144 cases, growing toward ~500 |
-| L4 utilities | per-utility cases in `tests/utils/NAME/`, recorded from GNU (container) and BSD (macOS); each case expects one or both (D1084) | ours; uutils/GNU tests may be *run* for reference, never vendored | each in-process utility, including "unsupported flag → fall through or clear error" |
+| L3 agent shapes | our own cases written to the patterns in `research/corpus.md`, in the Oils format, run as `bash -c` | ours, `tests/agent/` | what agents do: `cd X && …`, `\| head`, `2>&1`, quoted here-docs, `timeout`, globs that match nothing, git, rg and jq pipelines; 701 cases. `tests/agent/coverage.py` measures them against the shape corpus: about half of the agent commands the shapes stand for have a case with the same command structure (D1311) |
+| L4 utilities | per-utility cases in `tests/utils/NAME/`, recorded from GNU (container) and BSD (macOS); each case expects one or both (D1084) | ours; uutils/GNU tests may be *run* for reference, never vendored | each in-process utility, including "unsupported flag → fall through or clear error"; `awk` also runs the vendored onetrueawk and GoAWK suites (`tests/vendor-awk/`) |
 | L5 process | Rust integration tests in `tests/process/` (`cargo test -p psh-os --test process`: portable cases with `psh-test-helper` as the external program, plus Unix and Windows ones; the standalone binary's signals: `cargo test -p psh --test standalone`), each under a deadline (scaled by `PSH_TEST_TIME_SCALE`) and with a leak check (D1064) | ours | cancel; `timeout` kills the whole tree; no orphans; here-docs past the pipe buffer; SIGPIPE in `\| head`; background jobs; encodings; Job Objects |
-| L6 stress | L1–L3 re-run under perturbation | – | cancel at a random step (no leaked process, shell still usable); pause/resume at every k-th safepoint; a host where every op is `Pending`; tiny pipe buffers; slow consumers |
+| L6 stress (not built yet) | L1–L3 re-run under perturbation | – | cancel at a random step (no leaked process, shell still usable); pause/resume at every k-th safepoint; a host where every op is `Pending`; tiny pipe buffers; slow consumers |
 
 For L4, where GNU and BSD agree both goldens must match; where they conflict, the
 expected output follows the tie-break rules (ARCH.md "psh-utils", D016), and the case
@@ -215,7 +219,10 @@ in two or more sessions plus enough single-session ones to cover every syntax 4-
 that every token is a vocabulary word or a placeholder. The skeletons feed L0 (parser
 at scale) and syntax ranking. Running anything is never involved.
 
-`psh-spec` is our own runner in Rust, with no dependencies:
+## The runner
+
+`psh-spec` is our own runner in Rust, with no external dependencies (it uses the
+workspace's engine, parser, OS host and utilities):
 
 - Reads the Oils `.test.sh` format (following Oils' `sh_spec.py` exactly, so each case
   runs the same bytes) and the subset of brush's YAML the cases use (hand parser).
@@ -231,8 +238,10 @@ at scale) and syntax ranking. Running anything is never involved.
 - `psh-spec [FILTER...]`: filters are case id prefixes (`oils/alias`, `oils/alias/3`)
   or globs; `--layer`, `--diff`, `--update-ratchet`, `--add-failures`, `-j N`,
   `--timeout`, `--summary FILE` (Markdown per layer and file), `--list`, `--keep`.
-  `--record`, `--record-shapes` and `--diff-goldens` serve `scripts/record-goldens`.
-  All of L1 and L2 (about 5,700 active cases) take seconds.
+  `--record`, `--record-shapes` and `--diff-goldens` serve `scripts/record-goldens`;
+  `--l0` runs L0, `--wasm` runs the cases in `psh.wasm` under node (see "Ratchets"),
+  `--status` serves `scripts/status`. All of L1 and L2 (about 5,700 active cases) take
+  seconds.
 - The psh binary next to psh-spec (some cases run in it) and, for `--wasm`,
   `target/wasm/psh.wasm` must be newer than their sources: psh-spec refuses to run with
   a stale one and prints the command that rebuilds it (`cargo build -p psh`,
@@ -241,27 +250,23 @@ at scale) and syntax ranking. Running anything is never involved.
 ## The gate
 
 `scripts/gate.sh` runs inside `scripts/merge-to-main.sh` and must pass before anything
-reaches `main` (AGENTS.md). Legs, as they come into existence:
+reaches `main` (AGENTS.md). Its legs, in order (`scripts/gate.d/`):
 
-1. `cargo fmt --check`, clippy `-D warnings`, `cargo test --workspace` (0001).
-2. `psh-syntax` and `psh-engine` build for `wasm32-unknown-unknown` (0001). `deps`:
-   every dependency of every workspace crate (direct or transitive, any target) is
-   listed in `scripts/deps-allowlist.txt` with the decision that allows it, and nothing
-   else is (0022, D1223).
-3. `cargo check` with Rust 1.96, the MSRV (D025, 0001); `linux`: `cargo check` of the
-   workspace, tests included, for `aarch64-` and `x86_64-unknown-linux-musl` (0033,
-   D1330), since no other leg compiles Linux-only code; the scripts parse and the
-   tests of `timeout.sh` and `merge-to-main.sh` pass (0001, D1013).
-   `shapes`: the shape corpus passes its privacy check (0003, D1030).
-   `guide`: `psh-docs check` holds the guide to its writing rules (0012, D1120).
-4. `spec`: the ratchets of every layer that exists (0002 onward); `l0`: the L0 ratchet
-   (0022).
-   `wasm-host` (0011): `psh-wasm` passes clippy for wasm32, both wasm modules build, the
-   JS host's smoke tests pass under node, and `psh-spec --wasm` holds the shared and the
-   wasm ratchets.
-5. `windows`, always last: `fmt`, clippy, `cargo test` (arm64 and x64) and the MSRV
-   check on the owner's Windows VM, through `scripts/windows-gate.sh` (0007; D027,
-   D1070, D1071). See "Windows" below.
+| Leg | What it checks |
+| --- | --- |
+| `scripts` | every script parses (they also run under macOS's bash 3.2) |
+| `fmt`, `clippy`, `test` | `cargo fmt --check`, clippy `-D warnings`, `cargo test --workspace` |
+| `deps` | every dependency of every workspace crate (direct or transitive, any target) is in `scripts/deps-allowlist.txt` with the decision that allows it, and nothing else is (D1223) |
+| `wasm` | `psh-syntax`, `psh-engine` and `psh-classify` build for `wasm32-unknown-unknown` |
+| `wasm-host` | `psh-wasm` passes clippy for wasm32, both wasm modules build, the JS host's tests pass under node, and `psh-spec --wasm` holds the shared and the wasm ratchets (D1113) |
+| `msrv` | the workspace builds with Rust 1.96 (D025) |
+| `linux` | `cargo check` of the workspace, tests included, for `aarch64-` and `x86_64-unknown-linux-musl`, since no other leg compiles Linux-only code (D1330) |
+| `script-tests` | the tests of `timeout.sh` and `merge-to-main.sh` (D1013) |
+| `shapes` | the shape corpus passes its privacy check (D1030) |
+| `guide` | `psh-docs check` holds the guide to its writing rules (D1120) |
+| `spec` | the ratchets of every layer, shared and this platform's |
+| `l0` | the L0 ratchet (D1220) |
+| `windows` | always last: `fmt`, clippy, `cargo test` (arm64 and x64), the MSRV check and L4 on the owner's Windows VM (D027, D1070); see "Windows" below |
 
 Each leg is a file `scripts/gate.d/NN-name.sh`, run in order under
 `scripts/timeout.sh` with the timeout on its first line (D1026); adding a leg is adding

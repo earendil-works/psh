@@ -434,6 +434,8 @@ enum Term {
     Words(&'static [&'static str]),
     /// `;;`, `;&`, `;;&` or `esac`.
     Case,
+    /// The end of the text (a `$(…)` in an extglob, bounded beforehand).
+    End,
 }
 
 /// What opened a compound list, for the end-of-file message.
@@ -1226,6 +1228,7 @@ impl<'a> P<'a> {
                     Some((Op::DSemi | Op::SemiAnd | Op::DSemiAnd, _))
                 ) || self.at_reserved("esac")
             }
+            Term::End => self.at_eof(),
         }
     }
 
@@ -1237,11 +1240,11 @@ impl<'a> P<'a> {
             // Aliases expand before reserved words are seen (`alias e=fi`).
             self.maybe_alias();
             self.skip_linebreaks()?;
-            if self.at_eof() {
-                return Err(self.eof_from(opener));
-            }
             if self.at_term(term) {
                 break;
+            }
+            if self.at_eof() {
+                return Err(self.eof_from(opener));
             }
             let mut ao = self.parse_and_or()?;
             self.skip_blanks();
@@ -2824,6 +2827,68 @@ impl<'a> P<'a> {
         Ok(list)
     }
 
+    /// The `)` that balances an open `(` before `from`, counting parens outside quotes
+    /// and backslash escapes.
+    fn paren_end(&self, from: usize) -> Option<usize> {
+        let mut depth = 1;
+        let mut i = from;
+        while i < self.end {
+            match self.b[i] {
+                b'\\' => i += 1,
+                b'\'' => {
+                    i += 1;
+                    while i < self.end && self.b[i] != b'\'' {
+                        i += 1;
+                    }
+                }
+                b'"' => {
+                    i += 1;
+                    while i < self.end && self.b[i] != b'"' {
+                        if self.b[i] == b'\\' {
+                            i += 1;
+                        }
+                        i += 1;
+                    }
+                }
+                b'(' => depth += 1,
+                b')' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        return Some(i);
+                    }
+                }
+                _ => {}
+            }
+            i += 1;
+        }
+        None
+    }
+
+    /// The list of a `$(` whose `)` is at `close`: parsed as if the text ended there.
+    fn parse_bounded_list(&mut self, start: usize, close: usize) -> R<ListId> {
+        let end = core::mem::replace(&mut self.end, close);
+        self.comsub += 1;
+        let outer = self.stash_pending();
+        let r = self.parse_compound_list(
+            Term::End,
+            Opener {
+                what: ")",
+                pos: start,
+                matching: true,
+            },
+            true,
+        );
+        self.unstash_pending(outer);
+        self.comsub -= 1;
+        self.end = end;
+        let list = r?;
+        if self.pos != close {
+            return Err(self.unexpected());
+        }
+        self.pos = close + 1;
+        Ok(list)
+    }
+
     fn parse_dollar(&mut self, ctx: Ctx, out: &mut Vec<WordPart>) -> R<()> {
         let start = self.pos;
         let next = self.cont(start + 1);
@@ -2861,7 +2926,15 @@ impl<'a> P<'a> {
                     return Ok(());
                 }
                 self.pos += 2;
-                let list = self.parse_nested_list(start, ")")?;
+                let list = match ctx {
+                    // In an extglob, bash finds the end of `$(` by counting parens (a
+                    // `)` in a comment counts) and parses the text inside only then.
+                    Ctx::ExtGlob => match self.paren_end(self.pos) {
+                        Some(close) => self.parse_bounded_list(start, close)?,
+                        None => self.parse_nested_list(start, ")")?,
+                    },
+                    _ => self.parse_nested_list(start, ")")?,
+                };
                 out.push(WordPart {
                     span: sp(start, self.pos),
                     kind: Part::CmdSubst(list),

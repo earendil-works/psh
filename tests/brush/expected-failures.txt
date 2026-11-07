@@ -327,7 +327,6 @@ brush/compat/well_known_vars/23
 brush/compat/well_known_vars/25
 brush/compat/word_expansion/braces/0
 brush/compat/word_expansion/braces/7
-brush/compat/word_expansion/command_substitution/51: passed only while extglob was unsupported (status 2); bash counts the parens of an unquoted $( inside an extglob instead of parsing a command (parser)
 brush/compat/word_expansion/params/53
 brush/compat/word_expansion/params/63
 brush/compat/word_expansion/tilde/1

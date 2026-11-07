@@ -578,6 +578,18 @@ fn extglob() {
         dx("case x in @(a|b)) ;; esac"),
         "(list (case <\"x\"> (<@(<\"a\">|<\"b\">)>) ;;))"
     );
+    // In an extglob, a `$(` ends at the paren that balances it, even one in what would
+    // be a comment; its text is parsed only up to there (bash).
+    assert_eq!(
+        dx("echo @($(echo \"a)\"))z"),
+        "(list (cmd <\"echo\"> <@(<$(list (cmd <\"echo\"> <dq(\"a)\")>))>) \"z\">))"
+    );
+    assert_eq!(
+        dx("echo @($(echo x # ))"),
+        "(list (cmd <\"echo\"> <@(<$(list (cmd <\"echo\"> <\"x\">))>)>))"
+    );
+    let e = parse_with("echo @($(echo x # )\n))y", Options { extglob: true }).unwrap_err();
+    assert_eq!(e.message, "syntax error near unexpected token `)'");
 }
 
 #[test]

@@ -30,6 +30,21 @@ The text filters of Tier 1, all S: `sort uniq cut tr paste nl tee seq comm`.
 - uutils (MIT).
 
 ## Log
+- Part 1: `tee seq tr cut paste`, written for psh from GNU's manual and man pages (no
+  uutils code copied, so no NOTICE entries). Shared helpers for the text filters go in
+  `crates/psh-utils/src/textio.rs` (line reader over `common::Input`, UTF-8 character
+  lengths, open-or-report); unit tests in `src/tests_text.rs` (a submodule of
+  `tests.rs`, so other batches' edits there do not conflict).
+- Classifier: `seq` now declares `-f -s -t`/`--format --separator` as value options.
+- Decisions: D1161 (`cut -c` counts characters everywhere), D1162 (`tr` on bytes unless a
+  set has a non-ASCII character). `seq`, `paste` follow GNU where BSD differs (D016):
+  `seq 0` prints nothing, `-s` separates (no trailing separator), decimals follow the
+  operands; `paste -s` always ends lines, `-d ''` is no delimiter.
+- `oils/builtin-meta/10` puts a `tr` script on PATH and expects it to win; `tr` is mode S,
+  so it is ratcheted with that reason.
+- Error messages use ASCII quotes like the other utilities; the container's GNU prints
+  ‘’ (stderr score only).
+- Guide: none affected (utilities.md not written yet).
 
 ## Follow-ups
 

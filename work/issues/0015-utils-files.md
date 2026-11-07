@@ -1,7 +1,7 @@
 # 0015: Utilities batch D: files and paths
 
-status: open
-agent: -
+status: in-progress
+agent: files
 branch: issue/0015-utils-files
 depends-on: 0008
 touches: crates/psh-utils/src/{ls,cp,mv,rm,mkdir,rmdir,touch,ln,chmod,pwd,basename,dirname,realpath,readlink,mktemp,stat,du}*, tests/utils/ (same names)
@@ -40,6 +40,14 @@ group (off switch).
 - Mostly uutils (MIT). The BSD `stat` formatter is ours.
 
 ## Log
+- Host and UtilCtx lacked every file system change. Added them (D1150): `Host::{stat_extra,
+  mkdir, remove_file, remove_dir, rename, symlink, hard_link, read_link, set_mode,
+  set_times, user_name, group_name, utc_offset}` with Unsupported/None defaults,
+  `ExtraMetadata`, UtilCtx v2 (same plus `now`, `umask`, `utc_offset`). Implemented in
+  psh-os unix (`unix/fs.rs`), std_host and the test host (MemFs now has symlinks, inode
+  numbers, dir modes, link counts). Windows and JS hosts: by their owners, on the
+  coordinator's split; until then they answer Unsupported. Outside `touches:` by
+  necessity: psh-engine host.rs/util.rs/std_host.rs/testhost.rs, psh-os unix.
 
 ## Follow-ups
 

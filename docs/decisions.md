@@ -1693,3 +1693,34 @@ with a non-ASCII char (`[à-é]` is "Invalid collation character"). psh-regex ac
 and compares code points, as other UTF-8 locales effectively do. Reason: agent-first
 over bash's behavior (D033); an agent's `[[ $x =~ [à-ÿ] ]]` should work, and no golden
 depends on the error.
+## D1150: Host file system changes and UtilCtx v2
+date: 2026-11-07 · by: files · issue: 0015
+The `Host` trait grows what the file utilities need, every method with a default so that
+hosts without it still build: the changes answer `ErrorKind::Unsupported` (a utility
+reports `Operation not supported` and fails; nothing is emulated), the queries `None`/UTC.
+Paths are absolute like `open`'s; a symlink target is stored as given.
+- `stat_extra(path, follow) -> HostFuture<io::Result<(Metadata, ExtraMetadata)>>`;
+  `ExtraMetadata { atime_ns, ctime_ns, btime_ns: Option<i64>, nlink, blocks (512-byte),
+  blksize, rdev }`. A separate struct, not new `Metadata` fields, so the hosts that
+  build `Metadata` literals (Windows, JS) need no change; the default derives it from
+  `stat` (`ExtraMetadata::derived`: times = mtime, one link, size in blocks).
+- `mkdir(path, mode)`: exactly these bits (the caller applies the shell's umask; the
+  host undoes the process's). `remove_file(path)` (unlink; a symlink or junction itself,
+  never followed), `remove_dir(path)` (empty), `rename(from, to)` (POSIX replace rules;
+  `CrossesDevices` across file systems), `symlink(target, link)` (Windows: a junction for
+  a directory when symlinks are not allowed, else an error, never a copy),
+  `hard_link(existing, link)` (the symlink itself, not its target), `read_link(path)`
+  (`InvalidInput` for a non-link), `set_mode(path, mode)` (follows; Windows maps the
+  write bits to the read-only attribute), `set_times(path, atime_ns: Option<i64>,
+  mtime_ns: Option<i64>, follow)` (`None` keeps that time).
+- `user_name(uid)`, `group_name(gid) -> Option<Vec<u8>>`; `utc_offset(epoch_secs) -> i32`
+  (seconds east of UTC in the process's zone).
+`UtilCtx` (UTIL_API_VERSION 2, additive) has the same operations with paths made absolute
+against the cwd (`stat_extra mkdir remove_file remove_dir rename symlink hard_link
+read_link set_mode set_times user_name group_name`), plus `now()`, `umask()` (the shell's
+`umask`, else the host's) and `utc_offset(secs)`, which is 0 when the command's `TZ`
+names UTC (`UTC`, `UTC0`, `GMT`, `Etc/UTC`, empty) and the host's otherwise. Implemented
+in psh-os unix, std_host and the test host (in-memory symlinks, inode numbers, link
+counts; `MemFs::set_unsupported` plays a host without them); the Windows and JS hosts
+follow in their own issues. Reason: ARCH listed these as "to come with their features";
+copy (`cp`) stays a read/write loop over `open`, so no copy primitive is added.

@@ -16,8 +16,8 @@ use std::task::{Context, Poll, Waker};
 use std::time::Duration;
 
 use crate::host::{
-    Access, ChildFd, DirEntry, ExitStatus, ExtProc, FileKind, Host, HostFile, HostFuture, Metadata,
-    OpenOptions, Signal, SpawnSpec, Spawned,
+    Access, ChildFd, DirEntry, ExitStatus, ExtProc, ExtraMetadata, FileKind, Host, HostFile,
+    HostFuture, Metadata, OpenOptions, Signal, SpawnSpec, Spawned,
 };
 
 /// What a fake command gets.
@@ -149,14 +149,42 @@ enum Node {
         data: Rc<RefCell<Vec<u8>>>,
         mode: u32,
         mtime: i64,
+        atime: i64,
+        ino: u64,
     },
-    Dir,
+    Dir {
+        mode: u32,
+        mtime: i64,
+        ino: u64,
+    },
+    Symlink {
+        target: Vec<u8>,
+        mtime: i64,
+        ino: u64,
+    },
 }
 
-/// An in-memory file system: absolute `/`-separated paths.
+impl Node {
+    fn ino(&self) -> u64 {
+        match self {
+            Node::File { ino, .. } | Node::Dir { ino, .. } | Node::Symlink { ino, .. } => *ino,
+        }
+    }
+
+    fn is_dir(&self) -> bool {
+        matches!(self, Node::Dir { .. })
+    }
+}
+
+/// An in-memory file system: absolute `/`-separated paths, directories, files and
+/// symlinks (resolved physically, `..` included). Times come from a clock that ticks
+/// once per change.
 pub struct MemFs {
     nodes: RefCell<BTreeMap<Vec<u8>, Node>>,
     clock: Cell<i64>,
+    next_ino: Cell<u64>,
+    /// The file system changes of D1150 answer `Unsupported` (a host without them).
+    unsupported: Cell<bool>,
 }
 
 fn parent(path: &[u8]) -> &[u8] {
@@ -171,13 +199,49 @@ fn clean(path: &[u8]) -> Vec<u8> {
     crate::builtins::normalize(path)
 }
 
+fn join(dir: &[u8], name: &[u8]) -> Vec<u8> {
+    let mut p = dir.to_vec();
+    if p != b"/" {
+        p.push(b'/');
+    }
+    p.extend_from_slice(name);
+    p
+}
+
+fn err<T>(kind: io::ErrorKind) -> io::Result<T> {
+    Err(kind.into())
+}
+
 impl MemFs {
     fn new() -> MemFs {
         let mut nodes = BTreeMap::new();
-        nodes.insert(b"/".to_vec(), Node::Dir);
+        nodes.insert(
+            b"/".to_vec(),
+            Node::Dir {
+                mode: 0o755,
+                mtime: 0,
+                ino: 1,
+            },
+        );
         MemFs {
             nodes: RefCell::new(nodes),
             clock: Cell::new(1),
+            next_ino: Cell::new(2),
+            unsupported: Cell::new(false),
+        }
+    }
+
+    fn ino(&self) -> u64 {
+        let i = self.next_ino.get();
+        self.next_ino.set(i + 1);
+        i
+    }
+
+    fn new_dir(&self, mode: u32) -> Node {
+        Node::Dir {
+            mode,
+            mtime: self.tick(),
+            ino: self.ino(),
         }
     }
 
@@ -187,10 +251,10 @@ impl MemFs {
         for c in p.split(|&b| b == b'/').filter(|c| !c.is_empty()) {
             cur.push(b'/');
             cur.extend_from_slice(c);
-            self.nodes
-                .borrow_mut()
-                .entry(cur.clone())
-                .or_insert(Node::Dir);
+            if !self.nodes.borrow().contains_key(&cur) {
+                let d = self.new_dir(0o755);
+                self.nodes.borrow_mut().insert(cur.clone(), d);
+            }
         }
     }
 
@@ -198,21 +262,53 @@ impl MemFs {
         let p = clean(path.as_bytes());
         self.mkdir_all(&String::from_utf8_lossy(parent(&p)));
         let t = self.tick();
+        let ino = self.ino();
         self.nodes.borrow_mut().insert(
             p,
             Node::File {
                 data: Rc::new(RefCell::new(data.to_vec())),
                 mode: 0o644,
                 mtime: t,
+                atime: t,
+                ino,
+            },
+        );
+    }
+
+    /// Adds a symlink (its parent directories are made).
+    pub fn symlink(&self, target: &str, path: &str) {
+        let p = clean(path.as_bytes());
+        self.mkdir_all(&String::from_utf8_lossy(parent(&p)));
+        let mtime = self.tick();
+        let ino = self.ino();
+        self.nodes.borrow_mut().insert(
+            p,
+            Node::Symlink {
+                target: target.as_bytes().to_vec(),
+                mtime,
+                ino,
             },
         );
     }
 
     pub fn read_file(&self, path: &str) -> Option<Vec<u8>> {
-        match self.nodes.borrow().get(&clean(path.as_bytes())) {
+        let p = self.resolve(path.as_bytes(), true).ok()?;
+        match self.nodes.borrow().get(&p) {
             Some(Node::File { data, .. }) => Some(data.borrow().clone()),
             _ => None,
         }
+    }
+
+    /// Whether a path exists (a symlink itself counts).
+    pub fn exists(&self, path: &str) -> bool {
+        self.resolve(path.as_bytes(), false)
+            .is_ok_and(|p| self.nodes.borrow().contains_key(&p))
+    }
+
+    /// Makes the file system changes of D1150 answer `Unsupported`, as a host without
+    /// them does.
+    pub fn set_unsupported(&self, on: bool) {
+        self.unsupported.set(on);
     }
 
     fn tick(&self) -> i64 {
@@ -220,90 +316,417 @@ impl MemFs {
         self.clock.get()
     }
 
-    fn stat(&self, path: &[u8]) -> io::Result<Metadata> {
-        let nodes = self.nodes.borrow();
-        let node = nodes.get(&clean(path)).ok_or(io::ErrorKind::NotFound)?;
-        let (kind, size, mode, mtime) = match node {
-            Node::Dir => (FileKind::Dir, 0, 0o755, 0),
-            Node::File { data, mode, mtime } => {
-                (FileKind::File, data.borrow().len() as u64, *mode, *mtime)
+    /// The physical path of `path`: symlinks in its directories resolved, and the last
+    /// component too when `follow`. The result need not exist; its parent does.
+    fn resolve(&self, path: &[u8], follow: bool) -> io::Result<Vec<u8>> {
+        self.resolve_in(path, follow, 0)
+    }
+
+    fn resolve_in(&self, path: &[u8], follow: bool, depth: u32) -> io::Result<Vec<u8>> {
+        if depth > 40 {
+            return Err(io::Error::from_raw_os_error(40));
+        }
+        let parts: Vec<&[u8]> = path
+            .split(|&b| b == b'/')
+            .filter(|c| !c.is_empty() && *c != b".")
+            .collect();
+        let mut cur = b"/".to_vec();
+        for (i, c) in parts.iter().enumerate() {
+            let last = i + 1 == parts.len();
+            if *c == b".." {
+                cur = parent(&cur).to_vec();
+                continue;
             }
+            let next = join(&cur, c);
+            let nodes = self.nodes.borrow();
+            match nodes.get(&next) {
+                Some(Node::Symlink { target, .. }) if !last || follow => {
+                    let mut t = if target.first() == Some(&b'/') {
+                        target.clone()
+                    } else {
+                        join(&cur, target)
+                    };
+                    for rest in &parts[i + 1..] {
+                        t.push(b'/');
+                        t.extend_from_slice(rest);
+                    }
+                    drop(nodes);
+                    return self.resolve_in(&t, follow, depth + 1);
+                }
+                Some(Node::Dir { .. }) => cur = next,
+                Some(_) if !last => return err(io::ErrorKind::NotADirectory),
+                None if !last => return err(io::ErrorKind::NotFound),
+                _ => cur = next,
+            }
+        }
+        Ok(cur)
+    }
+
+    /// The existing parent directory of a path that is to be created or removed, and
+    /// the path with its last component unresolved.
+    fn entry_path(&self, path: &[u8]) -> io::Result<Vec<u8>> {
+        let p = self.resolve(path, false)?;
+        match self.nodes.borrow().get(parent(&p)) {
+            Some(Node::Dir { .. }) => Ok(p),
+            Some(_) => err(io::ErrorKind::NotADirectory),
+            None => err(io::ErrorKind::NotFound),
+        }
+    }
+
+    fn touch_dir(&self, dir: &[u8]) {
+        let t = self.tick();
+        if let Some(Node::Dir { mtime, .. }) = self.nodes.borrow_mut().get_mut(dir) {
+            *mtime = t;
+        }
+    }
+
+    fn check(&self) -> io::Result<()> {
+        if self.unsupported.get() {
+            return err(io::ErrorKind::Unsupported);
+        }
+        Ok(())
+    }
+
+    fn stat(&self, path: &[u8], follow: bool) -> io::Result<Metadata> {
+        Ok(self.stat_extra(path, follow)?.0)
+    }
+
+    fn stat_extra(&self, path: &[u8], follow: bool) -> io::Result<(Metadata, ExtraMetadata)> {
+        let p = self.resolve(path, follow)?;
+        let nodes = self.nodes.borrow();
+        let node = nodes.get(&p).ok_or(io::ErrorKind::NotFound)?;
+        let (kind, size, mode, mtime, atime) = match node {
+            Node::Dir { mode, mtime, .. } => (FileKind::Dir, 4096, *mode, *mtime, *mtime),
+            Node::File {
+                data,
+                mode,
+                mtime,
+                atime,
+                ..
+            } => (
+                FileKind::File,
+                data.borrow().len() as u64,
+                *mode,
+                *mtime,
+                *atime,
+            ),
+            Node::Symlink { target, mtime, .. } => (
+                FileKind::Symlink,
+                target.len() as u64,
+                0o777,
+                *mtime,
+                *mtime,
+            ),
         };
-        Ok(Metadata {
+        let ino = node.ino();
+        let nlink = match node {
+            Node::Dir { .. } => {
+                2 + self
+                    .children(&nodes, &p)
+                    .filter(|k| nodes.get(*k).is_some_and(Node::is_dir))
+                    .count() as u64
+            }
+            _ => nodes.values().filter(|n| n.ino() == ino).count() as u64,
+        };
+        let meta = Metadata {
             kind,
             size,
             mode,
             mtime_ns: mtime,
             dev: 1,
-            ino: 0,
+            ino,
             uid: 1000,
             gid: 1000,
+        };
+        let extra = ExtraMetadata {
+            atime_ns: atime,
+            ctime_ns: mtime,
+            btime_ns: None,
+            nlink,
+            blocks: size.div_ceil(4096) * 8,
+            blksize: 4096,
+            rdev: 0,
+        };
+        Ok((meta, extra))
+    }
+
+    fn children<'a>(
+        &self,
+        nodes: &'a BTreeMap<Vec<u8>, Node>,
+        dir: &[u8],
+    ) -> impl Iterator<Item = &'a Vec<u8>> + 'a {
+        let mut prefix = dir.to_vec();
+        if prefix != b"/" {
+            prefix.push(b'/');
+        }
+        nodes.keys().filter(move |k| {
+            k.starts_with(&prefix) && k.len() > prefix.len() && !k[prefix.len()..].contains(&b'/')
         })
     }
 
     fn open(&self, path: &[u8], opts: OpenOptions) -> io::Result<Rc<RefCell<Vec<u8>>>> {
-        let p = clean(path);
+        let p = self.resolve(path, true)?;
         let mut nodes = self.nodes.borrow_mut();
-        match nodes.get(&p) {
-            Some(Node::Dir) => {
+        match nodes.get_mut(&p) {
+            Some(Node::Dir { .. }) => {
                 return Err(io::ErrorKind::IsADirectory.into());
             }
-            Some(Node::File { data, .. }) => {
+            Some(Node::File {
+                data, mtime, atime, ..
+            }) => {
                 if opts.create_new {
                     return Err(io::ErrorKind::AlreadyExists.into());
                 }
+                let t = self.clock.get() + 1;
+                self.clock.set(t);
                 if opts.truncate {
                     data.borrow_mut().clear();
                 }
+                if opts.write || opts.append {
+                    *mtime = t;
+                } else {
+                    *atime = t;
+                }
                 return Ok(data.clone());
             }
+            Some(Node::Symlink { .. }) => return err(io::ErrorKind::NotFound),
             None => {}
         }
         if !opts.create {
             return Err(io::ErrorKind::NotFound.into());
         }
         match nodes.get(parent(&p)) {
-            Some(Node::Dir) => {}
+            Some(Node::Dir { .. }) => {}
             Some(_) => return Err(io::ErrorKind::NotADirectory.into()),
             None => return Err(io::ErrorKind::NotFound.into()),
         }
         let data = Rc::new(RefCell::new(Vec::new()));
         let t = self.clock.get() + 1;
         self.clock.set(t);
+        let ino = self.ino();
         nodes.insert(
             p,
             Node::File {
                 data: data.clone(),
                 mode: opts.mode.unwrap_or(0o644) & 0o7777,
                 mtime: t,
+                atime: t,
+                ino,
             },
         );
         Ok(data)
     }
 
     fn read_dir(&self, path: &[u8]) -> io::Result<Vec<DirEntry>> {
-        let p = clean(path);
+        let p = self.resolve(path, true)?;
         let nodes = self.nodes.borrow();
         match nodes.get(&p) {
-            Some(Node::Dir) => {}
+            Some(Node::Dir { .. }) => {}
             Some(_) => return Err(io::ErrorKind::NotADirectory.into()),
             None => return Err(io::ErrorKind::NotFound.into()),
         }
-        let mut prefix = p.clone();
-        if prefix != b"/" {
-            prefix.push(b'/');
-        }
-        Ok(nodes
-            .keys()
-            .filter(|k| {
-                k.starts_with(&prefix)
-                    && k.len() > prefix.len()
-                    && !k[prefix.len()..].contains(&b'/')
-            })
+        let skip = if p == b"/" { 1 } else { p.len() + 1 };
+        Ok(self
+            .children(&nodes, &p)
             .map(|k| DirEntry {
-                name: k[prefix.len()..].to_vec(),
+                name: k[skip..].to_vec(),
             })
             .collect())
+    }
+
+    fn canonicalize(&self, path: &[u8]) -> io::Result<Vec<u8>> {
+        let p = self.resolve(path, true)?;
+        if !self.nodes.borrow().contains_key(&p) {
+            return err(io::ErrorKind::NotFound);
+        }
+        Ok(p)
+    }
+
+    fn mkdir(&self, path: &[u8], mode: u32) -> io::Result<()> {
+        self.check()?;
+        let p = self.entry_path(path)?;
+        if self.nodes.borrow().contains_key(&p) {
+            return err(io::ErrorKind::AlreadyExists);
+        }
+        let d = self.new_dir(mode & 0o7777);
+        self.nodes.borrow_mut().insert(p.clone(), d);
+        self.touch_dir(parent(&p));
+        Ok(())
+    }
+
+    fn remove(&self, path: &[u8], dir: bool) -> io::Result<()> {
+        self.check()?;
+        let p = self.entry_path(path)?;
+        let mut nodes = self.nodes.borrow_mut();
+        match nodes.get(&p) {
+            None => return err(io::ErrorKind::NotFound),
+            Some(Node::Dir { .. }) if !dir => return err(io::ErrorKind::IsADirectory),
+            Some(Node::Dir { .. }) => {
+                if p == b"/" {
+                    return err(io::ErrorKind::ResourceBusy);
+                }
+                if self.children(&nodes, &p).next().is_some() {
+                    return err(io::ErrorKind::DirectoryNotEmpty);
+                }
+            }
+            Some(_) if dir => return err(io::ErrorKind::NotADirectory),
+            Some(_) => {}
+        }
+        nodes.remove(&p);
+        drop(nodes);
+        self.touch_dir(parent(&p));
+        Ok(())
+    }
+
+    fn rename(&self, from: &[u8], to: &[u8]) -> io::Result<()> {
+        self.check()?;
+        let from = self.entry_path(from)?;
+        let to = self.entry_path(to)?;
+        let mut nodes = self.nodes.borrow_mut();
+        let Some(src) = nodes.get(&from) else {
+            return err(io::ErrorKind::NotFound);
+        };
+        if from == to {
+            return Ok(());
+        }
+        let src_dir = src.is_dir();
+        if src_dir && to.starts_with(&from) && to.get(from.len()) == Some(&b'/') {
+            return err(io::ErrorKind::InvalidInput);
+        }
+        match nodes.get(&to) {
+            Some(Node::Dir { .. }) if !src_dir => return err(io::ErrorKind::IsADirectory),
+            Some(Node::Dir { .. }) => {
+                if self.children(&nodes, &to).next().is_some() {
+                    return err(io::ErrorKind::DirectoryNotEmpty);
+                }
+            }
+            Some(_) if src_dir => return err(io::ErrorKind::NotADirectory),
+            _ => {}
+        }
+        // The node and everything below it move.
+        let mut prefix = from.clone();
+        prefix.push(b'/');
+        let moved: Vec<Vec<u8>> = nodes
+            .keys()
+            .filter(|k| **k == from || k.starts_with(&prefix))
+            .cloned()
+            .collect();
+        nodes.remove(&to);
+        for k in moved {
+            let node = nodes.remove(&k).expect("listed");
+            let mut nk = to.clone();
+            nk.extend_from_slice(&k[from.len()..]);
+            nodes.insert(nk, node);
+        }
+        drop(nodes);
+        self.touch_dir(parent(&from));
+        self.touch_dir(parent(&to));
+        Ok(())
+    }
+
+    fn symlink_at(&self, target: &[u8], link: &[u8]) -> io::Result<()> {
+        self.check()?;
+        let p = self.entry_path(link)?;
+        if self.nodes.borrow().contains_key(&p) {
+            return err(io::ErrorKind::AlreadyExists);
+        }
+        let mtime = self.tick();
+        let ino = self.ino();
+        self.nodes.borrow_mut().insert(
+            p.clone(),
+            Node::Symlink {
+                target: target.to_vec(),
+                mtime,
+                ino,
+            },
+        );
+        self.touch_dir(parent(&p));
+        Ok(())
+    }
+
+    fn hard_link(&self, existing: &[u8], link: &[u8]) -> io::Result<()> {
+        self.check()?;
+        let src = self.resolve(existing, false)?;
+        let p = self.entry_path(link)?;
+        let mut nodes = self.nodes.borrow_mut();
+        if nodes.contains_key(&p) {
+            return err(io::ErrorKind::AlreadyExists);
+        }
+        let node = match nodes.get(&src) {
+            None => return err(io::ErrorKind::NotFound),
+            Some(Node::Dir { .. }) => return err(io::ErrorKind::PermissionDenied),
+            Some(Node::File {
+                data,
+                mode,
+                mtime,
+                atime,
+                ino,
+            }) => Node::File {
+                data: data.clone(),
+                mode: *mode,
+                mtime: *mtime,
+                atime: *atime,
+                ino: *ino,
+            },
+            Some(Node::Symlink { target, mtime, ino }) => Node::Symlink {
+                target: target.clone(),
+                mtime: *mtime,
+                ino: *ino,
+            },
+        };
+        nodes.insert(p, node);
+        Ok(())
+    }
+
+    fn read_link(&self, path: &[u8]) -> io::Result<Vec<u8>> {
+        self.check()?;
+        let p = self.resolve(path, false)?;
+        match self.nodes.borrow().get(&p) {
+            Some(Node::Symlink { target, .. }) => Ok(target.clone()),
+            Some(_) => err(io::ErrorKind::InvalidInput),
+            None => err(io::ErrorKind::NotFound),
+        }
+    }
+
+    fn set_mode(&self, path: &[u8], new: u32) -> io::Result<()> {
+        self.check()?;
+        let p = self.resolve(path, true)?;
+        match self.nodes.borrow_mut().get_mut(&p) {
+            Some(Node::File { mode, .. } | Node::Dir { mode, .. }) => {
+                *mode = new & 0o7777;
+                Ok(())
+            }
+            _ => err(io::ErrorKind::NotFound),
+        }
+    }
+
+    fn set_times(
+        &self,
+        path: &[u8],
+        at: Option<i64>,
+        mt: Option<i64>,
+        follow: bool,
+    ) -> io::Result<()> {
+        self.check()?;
+        let p = self.resolve(path, follow)?;
+        match self.nodes.borrow_mut().get_mut(&p) {
+            Some(Node::File { mtime, atime, .. }) => {
+                if let Some(a) = at {
+                    *atime = a;
+                }
+                if let Some(m) = mt {
+                    *mtime = m;
+                }
+                Ok(())
+            }
+            Some(Node::Dir { mtime, .. } | Node::Symlink { mtime, .. }) => {
+                if let Some(m) = mt {
+                    *mtime = m;
+                }
+                Ok(())
+            }
+            None => err(io::ErrorKind::NotFound),
+        }
     }
 }
 
@@ -670,12 +1093,73 @@ impl Host for TestHost {
         delayed(self.latency.get(), r)
     }
 
-    fn stat(&self, path: &[u8], _follow: bool) -> HostFuture<io::Result<Metadata>> {
-        delayed(self.latency.get(), self.fs.stat(path))
+    fn stat(&self, path: &[u8], follow: bool) -> HostFuture<io::Result<Metadata>> {
+        delayed(self.latency.get(), self.fs.stat(path, follow))
+    }
+
+    fn stat_extra(
+        &self,
+        path: &[u8],
+        follow: bool,
+    ) -> HostFuture<io::Result<(Metadata, ExtraMetadata)>> {
+        delayed(self.latency.get(), self.fs.stat_extra(path, follow))
+    }
+
+    fn mkdir(&self, path: &[u8], mode: u32) -> HostFuture<io::Result<()>> {
+        delayed(self.latency.get(), self.fs.mkdir(path, mode))
+    }
+
+    fn remove_file(&self, path: &[u8]) -> HostFuture<io::Result<()>> {
+        delayed(self.latency.get(), self.fs.remove(path, false))
+    }
+
+    fn remove_dir(&self, path: &[u8]) -> HostFuture<io::Result<()>> {
+        delayed(self.latency.get(), self.fs.remove(path, true))
+    }
+
+    fn rename(&self, from: &[u8], to: &[u8]) -> HostFuture<io::Result<()>> {
+        delayed(self.latency.get(), self.fs.rename(from, to))
+    }
+
+    fn symlink(&self, target: &[u8], link: &[u8]) -> HostFuture<io::Result<()>> {
+        delayed(self.latency.get(), self.fs.symlink_at(target, link))
+    }
+
+    fn hard_link(&self, existing: &[u8], link: &[u8]) -> HostFuture<io::Result<()>> {
+        delayed(self.latency.get(), self.fs.hard_link(existing, link))
+    }
+
+    fn read_link(&self, path: &[u8]) -> HostFuture<io::Result<Vec<u8>>> {
+        delayed(self.latency.get(), self.fs.read_link(path))
+    }
+
+    fn set_mode(&self, path: &[u8], mode: u32) -> HostFuture<io::Result<()>> {
+        delayed(self.latency.get(), self.fs.set_mode(path, mode))
+    }
+
+    fn set_times(
+        &self,
+        path: &[u8],
+        atime_ns: Option<i64>,
+        mtime_ns: Option<i64>,
+        follow: bool,
+    ) -> HostFuture<io::Result<()>> {
+        delayed(
+            self.latency.get(),
+            self.fs.set_times(path, atime_ns, mtime_ns, follow),
+        )
+    }
+
+    fn user_name(&self, uid: u32) -> Option<Vec<u8>> {
+        (uid == 1000).then(|| b"user".to_vec())
+    }
+
+    fn group_name(&self, gid: u32) -> Option<Vec<u8>> {
+        (gid == 1000).then(|| b"users".to_vec())
     }
 
     fn access(&self, path: &[u8], mode: Access) -> HostFuture<io::Result<bool>> {
-        let r = self.fs.stat(path).map(|m| match mode {
+        let r = self.fs.stat(path, true).map(|m| match mode {
             Access::Read => m.mode & 0o444 != 0,
             Access::Write => m.mode & 0o222 != 0,
             Access::Execute => m.mode & 0o111 != 0,
@@ -688,8 +1172,7 @@ impl Host for TestHost {
     }
 
     fn canonicalize(&self, path: &[u8]) -> HostFuture<io::Result<Vec<u8>>> {
-        let r = self.fs.stat(path).map(|_| clean(path));
-        delayed(self.latency.get(), r)
+        delayed(self.latency.get(), self.fs.canonicalize(path))
     }
 
     fn path_entries(&self, path: &[u8]) -> Vec<Vec<u8>> {

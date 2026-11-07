@@ -11,6 +11,7 @@
 //! Embedded, the host installs no signal handlers and changes no process-wide state.
 
 mod file;
+mod fs;
 pub mod ready;
 pub mod signals;
 pub mod signum;
@@ -27,7 +28,8 @@ use std::time::Duration;
 
 use psh_engine::HostFile;
 use psh_engine::host::{
-    Access, DirEntry, FileKind, Host, HostFuture, Metadata, OpenOptions, Signal, SpawnSpec, Spawned,
+    Access, DirEntry, ExtraMetadata, FileKind, Host, HostFuture, Metadata, OpenOptions, Signal,
+    SpawnSpec, Spawned,
 };
 
 pub use crate::Leftovers;
@@ -366,6 +368,73 @@ impl Host for UnixHost {
 
     fn canonicalize(&self, p: &[u8]) -> HostFuture<io::Result<Vec<u8>>> {
         ready(std::fs::canonicalize(path(p)).map(|p| OsString::from(p).into_vec()))
+    }
+
+    fn stat_extra(
+        &self,
+        p: &[u8],
+        follow: bool,
+    ) -> HostFuture<io::Result<(Metadata, ExtraMetadata)>> {
+        let m = if follow {
+            std::fs::metadata(path(p))
+        } else {
+            std::fs::symlink_metadata(path(p))
+        };
+        ready(m.map(|m| (metadata(&m), fs::extra(&m))))
+    }
+
+    fn mkdir(&self, p: &[u8], mode: u32) -> HostFuture<io::Result<()>> {
+        ready(fs::mkdir(p, mode))
+    }
+
+    fn remove_file(&self, p: &[u8]) -> HostFuture<io::Result<()>> {
+        ready(fs::remove_file(p))
+    }
+
+    fn remove_dir(&self, p: &[u8]) -> HostFuture<io::Result<()>> {
+        ready(fs::remove_dir(p))
+    }
+
+    fn rename(&self, from: &[u8], to: &[u8]) -> HostFuture<io::Result<()>> {
+        ready(fs::rename(from, to))
+    }
+
+    fn symlink(&self, target: &[u8], link: &[u8]) -> HostFuture<io::Result<()>> {
+        ready(fs::symlink(target, link))
+    }
+
+    fn hard_link(&self, existing: &[u8], link: &[u8]) -> HostFuture<io::Result<()>> {
+        ready(fs::hard_link(existing, link))
+    }
+
+    fn read_link(&self, p: &[u8]) -> HostFuture<io::Result<Vec<u8>>> {
+        ready(fs::read_link(p))
+    }
+
+    fn set_mode(&self, p: &[u8], mode: u32) -> HostFuture<io::Result<()>> {
+        ready(fs::set_mode(p, mode))
+    }
+
+    fn set_times(
+        &self,
+        p: &[u8],
+        atime_ns: Option<i64>,
+        mtime_ns: Option<i64>,
+        follow: bool,
+    ) -> HostFuture<io::Result<()>> {
+        ready(fs::set_times(p, atime_ns, mtime_ns, follow))
+    }
+
+    fn user_name(&self, uid: u32) -> Option<Vec<u8>> {
+        fs::user_name(uid)
+    }
+
+    fn group_name(&self, gid: u32) -> Option<Vec<u8>> {
+        fs::group_name(gid)
+    }
+
+    fn utc_offset(&self, epoch_secs: i64) -> i32 {
+        fs::utc_offset(epoch_secs)
     }
 
     fn resolve(&self, name: &[u8], path_var: &[u8], cwd: &[u8]) -> HostFuture<Option<Vec<u8>>> {

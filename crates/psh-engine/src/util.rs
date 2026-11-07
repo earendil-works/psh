@@ -4,7 +4,8 @@
 //! [`crate::ShellConfig::utilities`]; the engine looks a name up after functions and
 //! builtins and before `PATH`.
 //!
-//! Version 1 (`UTIL_API_VERSION`); a change to anything public here is a new decision.
+//! Version 2 (`UTIL_API_VERSION`, D1081, D1150); a change to anything public here is a
+//! new decision.
 
 use std::future::Future;
 use std::io;
@@ -14,13 +15,14 @@ use std::task::{Context, Poll};
 use std::time::Duration;
 
 use crate::fd::{Fd, FdObj, bad_fd};
-use crate::host::{DirEntry, Metadata, OpenOptions};
+use crate::host::{DirEntry, ExtraMetadata, Metadata, OpenOptions};
 use crate::signals::Gives;
 use crate::state::{R, Vp};
 
 pub use crate::host::Access;
 
-pub const UTIL_API_VERSION: u32 = 1;
+/// 2: file system changes, `stat_extra`, names, time and umask (D1150).
+pub const UTIL_API_VERSION: u32 = 2;
 
 /// A boxed future that stays on the engine's thread.
 pub type LocalBoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + 'a>>;
@@ -376,6 +378,106 @@ impl UtilCtx<'_> {
 
     pub async fn canonicalize(&self, path: &[u8]) -> io::Result<Vec<u8>> {
         self.vp.host().canonicalize(&self.path(path)).await
+    }
+
+    // Version 2 (D1150): the rest of stat, file system changes, names, time.
+
+    /// `stat` plus the rest of `stat(2)` (links, blocks, other times).
+    pub async fn stat_extra(
+        &self,
+        path: &[u8],
+        follow: bool,
+    ) -> io::Result<(Metadata, ExtraMetadata)> {
+        self.vp.host().stat_extra(&self.path(path), follow).await
+    }
+
+    /// Creates one directory with exactly these permission bits (apply [`Self::umask`]
+    /// first for the default).
+    pub async fn mkdir(&self, path: &[u8], mode: u32) -> io::Result<()> {
+        self.vp.host().mkdir(&self.path(path), mode).await
+    }
+
+    /// Removes a name that is not a directory (a symlink itself, never its target).
+    pub async fn remove_file(&self, path: &[u8]) -> io::Result<()> {
+        self.vp.host().remove_file(&self.path(path)).await
+    }
+
+    /// Removes an empty directory.
+    pub async fn remove_dir(&self, path: &[u8]) -> io::Result<()> {
+        self.vp.host().remove_dir(&self.path(path)).await
+    }
+
+    pub async fn rename(&self, from: &[u8], to: &[u8]) -> io::Result<()> {
+        let (from, to) = (self.path(from), self.path(to));
+        self.vp.host().rename(&from, &to).await
+    }
+
+    /// Creates the symlink `link` to `target` (stored as given, not made absolute).
+    pub async fn symlink(&self, target: &[u8], link: &[u8]) -> io::Result<()> {
+        self.vp.host().symlink(target, &self.path(link)).await
+    }
+
+    pub async fn hard_link(&self, existing: &[u8], link: &[u8]) -> io::Result<()> {
+        let (existing, link) = (self.path(existing), self.path(link));
+        self.vp.host().hard_link(&existing, &link).await
+    }
+
+    /// A symlink's target as stored.
+    pub async fn read_link(&self, path: &[u8]) -> io::Result<Vec<u8>> {
+        self.vp.host().read_link(&self.path(path)).await
+    }
+
+    /// `chmod` (follows symlinks).
+    pub async fn set_mode(&self, path: &[u8], mode: u32) -> io::Result<()> {
+        self.vp.host().set_mode(&self.path(path), mode).await
+    }
+
+    /// Sets the access and modification times (ns since the epoch; `None` keeps one).
+    pub async fn set_times(
+        &self,
+        path: &[u8],
+        atime_ns: Option<i64>,
+        mtime_ns: Option<i64>,
+        follow: bool,
+    ) -> io::Result<()> {
+        self.vp
+            .host()
+            .set_times(&self.path(path), atime_ns, mtime_ns, follow)
+            .await
+    }
+
+    pub fn user_name(&self, uid: u32) -> Option<Vec<u8>> {
+        self.vp.host().user_name(uid)
+    }
+
+    pub fn group_name(&self, gid: u32) -> Option<Vec<u8>> {
+        self.vp.host().group_name(gid)
+    }
+
+    /// The local time's offset east of UTC at `epoch_secs`, in seconds: the host's time
+    /// zone, or UTC when the command's `TZ` names UTC (`UTC`, `UTC0`, `GMT`, `Etc/UTC`,
+    /// empty).
+    pub fn utc_offset(&self, epoch_secs: i64) -> i32 {
+        if let Some(tz) = self.var(b"TZ") {
+            let tz = tz.strip_prefix(b":").unwrap_or(tz);
+            if matches!(
+                tz,
+                b"" | b"UTC" | b"UTC0" | b"GMT" | b"GMT0" | b"Etc/UTC" | b"Etc/GMT" | b"UCT"
+            ) {
+                return 0;
+            }
+        }
+        self.vp.host().utc_offset(epoch_secs)
+    }
+
+    /// The current time since the epoch.
+    pub fn now(&self) -> Duration {
+        self.vp.host().now()
+    }
+
+    /// The shell's file creation mask (`umask`).
+    pub fn umask(&self) -> u32 {
+        self.vp.umask.unwrap_or_else(|| self.vp.host().umask())
     }
 
     /// Completes after `duration` (cancellable: dropping it stops the wait).

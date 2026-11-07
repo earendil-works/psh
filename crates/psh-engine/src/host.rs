@@ -133,6 +133,43 @@ pub struct Metadata {
     pub gid: u32,
 }
 
+/// The rest of `stat(2)`, for `ls -l`, `stat` and `du` (D1150). Separate from
+/// [`Metadata`] so that hosts without it keep compiling: [`Host::stat_extra`] has a
+/// default that derives it from `stat`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ExtraMetadata {
+    /// Last access, nanoseconds since the epoch.
+    pub atime_ns: i64,
+    /// Last status change, nanoseconds since the epoch.
+    pub ctime_ns: i64,
+    /// Creation, where the file system records it.
+    pub btime_ns: Option<i64>,
+    /// Hard links.
+    pub nlink: u64,
+    /// Allocated size in 512-byte blocks (`du`, `ls -s`).
+    pub blocks: u64,
+    /// The preferred I/O block size.
+    pub blksize: u64,
+    /// The device a device file stands for.
+    pub rdev: u64,
+}
+
+impl ExtraMetadata {
+    /// What a host without the fields reports: times from `mtime`, one link, the size
+    /// rounded up to blocks.
+    pub fn derived(m: &Metadata) -> ExtraMetadata {
+        ExtraMetadata {
+            atime_ns: m.mtime_ns,
+            ctime_ns: m.mtime_ns,
+            btime_ns: None,
+            nlink: 1,
+            blocks: m.size.div_ceil(512),
+            blksize: 4096,
+            rdev: 0,
+        }
+    }
+}
+
 /// What `access` checks (`test -r/-w/-x`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Access {
@@ -342,6 +379,99 @@ pub trait Host {
     fn umask(&self) -> u32 {
         0o022
     }
+    /// `stat` plus the rest of `stat(2)` (D1150). The default derives the rest from
+    /// `stat` ([`ExtraMetadata::derived`]).
+    fn stat_extra(
+        &self,
+        path: &[u8],
+        follow: bool,
+    ) -> HostFuture<io::Result<(Metadata, ExtraMetadata)>> {
+        let fut = self.stat(path, follow);
+        Box::pin(async move {
+            let m = fut.await?;
+            Ok((m, ExtraMetadata::derived(&m)))
+        })
+    }
+
+    // File system changes (D1150). Each defaults to `ErrorKind::Unsupported`, which a
+    // utility reports as `Operation not supported`; paths are absolute like `open`'s.
+
+    /// Creates one directory with exactly the permission bits `mode` (the caller has
+    /// applied the shell's umask; the host does not apply the process's). An existing
+    /// path is `AlreadyExists`; a missing parent `NotFound`.
+    fn mkdir(&self, path: &[u8], mode: u32) -> HostFuture<io::Result<()>> {
+        let _ = (path, mode);
+        unsupported()
+    }
+    /// Removes a name that is not a directory (`unlink`): a file, or a symlink itself
+    /// (on Windows also a symlink or junction to a directory, which is never followed).
+    fn remove_file(&self, path: &[u8]) -> HostFuture<io::Result<()>> {
+        let _ = path;
+        unsupported()
+    }
+    /// Removes an empty directory (`rmdir`).
+    fn remove_dir(&self, path: &[u8]) -> HostFuture<io::Result<()>> {
+        let _ = path;
+        unsupported()
+    }
+    /// `rename(2)`: replaces `to` when it is a file (or an empty directory and `from`
+    /// is one). Across file systems: `ErrorKind::CrossesDevices`.
+    fn rename(&self, from: &[u8], to: &[u8]) -> HostFuture<io::Result<()>> {
+        let _ = (from, to);
+        unsupported()
+    }
+    /// Creates the symlink `link` pointing to `target`, which is stored as given
+    /// (relative to the link's directory unless absolute; it need not exist). A host
+    /// that cannot make symlinks may make an equivalent (a Windows junction for a
+    /// directory), never a copy.
+    fn symlink(&self, target: &[u8], link: &[u8]) -> HostFuture<io::Result<()>> {
+        let _ = (target, link);
+        unsupported()
+    }
+    /// Creates the hard link `link` to the existing file `existing`.
+    fn hard_link(&self, existing: &[u8], link: &[u8]) -> HostFuture<io::Result<()>> {
+        let _ = (existing, link);
+        unsupported()
+    }
+    /// A symlink's target as stored. Not a symlink: `ErrorKind::InvalidInput`.
+    fn read_link(&self, path: &[u8]) -> HostFuture<io::Result<Vec<u8>>> {
+        let _ = path;
+        unsupported()
+    }
+    /// `chmod`: sets the permission bits (`0o7777`), following symlinks. A host maps
+    /// what it can (Windows: the write bits are the read-only attribute).
+    fn set_mode(&self, path: &[u8], mode: u32) -> HostFuture<io::Result<()>> {
+        let _ = (path, mode);
+        unsupported()
+    }
+    /// Sets access and modification times, nanoseconds since the epoch; `None` leaves
+    /// that time as it is. `follow`: the symlink's target, else the link itself.
+    fn set_times(
+        &self,
+        path: &[u8],
+        atime_ns: Option<i64>,
+        mtime_ns: Option<i64>,
+        follow: bool,
+    ) -> HostFuture<io::Result<()>> {
+        let _ = (path, atime_ns, mtime_ns, follow);
+        unsupported()
+    }
+    /// The name of a user id (`ls -l`, `stat %U`), if the host knows it.
+    fn user_name(&self, uid: u32) -> Option<Vec<u8>> {
+        let _ = uid;
+        None
+    }
+    /// The name of a group id, if the host knows it.
+    fn group_name(&self, gid: u32) -> Option<Vec<u8>> {
+        let _ = gid;
+        None
+    }
+    /// The local time's offset east of UTC, in seconds, at `epoch_secs` (the process's
+    /// time zone). The default is UTC.
+    fn utc_offset(&self, epoch_secs: i64) -> i32 {
+        let _ = epoch_secs;
+        0
+    }
     /// The current time as a duration since the Unix epoch (`printf '%(fmt)T'`, `$EPOCHSECONDS`).
     /// The default is the epoch itself: hosts with a clock override it (wasm32 has no
     /// `SystemTime`; the JS host supplies `Date.now()`).
@@ -359,6 +489,10 @@ pub trait Host {
     }
 }
 
+fn unsupported<T: 'static>() -> HostFuture<io::Result<T>> {
+    Box::pin(std::future::ready(Err(io::ErrorKind::Unsupported.into())))
+}
+
 /// The text bash prints for an error (`strerror`), without Rust's `(os error N)`.
 pub fn error_text(err: &io::Error) -> String {
     use io::ErrorKind::*;
@@ -374,6 +508,8 @@ pub fn error_text(err: &io::Error) -> String {
         InvalidFilename => "File name too long",
         Interrupted => "Interrupted system call",
         Unsupported => "Operation not supported",
+        CrossesDevices => "Invalid cross-device link",
+        InvalidInput => "Invalid argument",
         _ => {
             let text = err.to_string();
             return match text.find(" (os error") {

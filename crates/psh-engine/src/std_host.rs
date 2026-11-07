@@ -19,8 +19,8 @@ use std::task::{Context, Poll, Waker};
 use std::time::Duration;
 
 use crate::host::{
-    Access, ChildFd, DirEntry, ExitStatus, ExtProc, FileKind, Host, HostFile, HostFuture, Metadata,
-    OpenOptions, Signal, SpawnSpec, Spawned,
+    Access, ChildFd, DirEntry, ExitStatus, ExtProc, ExtraMetadata, FileKind, Host, HostFile,
+    HostFuture, Metadata, OpenOptions, Signal, SpawnSpec, Spawned,
 };
 
 fn lock<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
@@ -621,6 +621,125 @@ impl Host for StdHost {
 
     fn canonicalize(&self, p: &[u8]) -> HostFuture<io::Result<Vec<u8>>> {
         ready(std::fs::canonicalize(path(p)).map(|p| bytes(p.as_os_str())))
+    }
+
+    fn stat_extra(
+        &self,
+        p: &[u8],
+        follow: bool,
+    ) -> HostFuture<io::Result<(Metadata, ExtraMetadata)>> {
+        let m = if follow {
+            std::fs::metadata(path(p))
+        } else {
+            std::fs::symlink_metadata(path(p))
+        };
+        ready(m.map(|m| {
+            let meta = metadata(&m);
+            #[cfg(unix)]
+            let extra = {
+                use std::os::unix::fs::MetadataExt;
+                let ns = |s: i64, n: i64| s.saturating_mul(1_000_000_000).saturating_add(n);
+                ExtraMetadata {
+                    atime_ns: ns(m.atime(), m.atime_nsec()),
+                    ctime_ns: ns(m.ctime(), m.ctime_nsec()),
+                    btime_ns: None,
+                    nlink: m.nlink(),
+                    blocks: m.blocks(),
+                    blksize: m.blksize(),
+                    rdev: m.rdev(),
+                }
+            };
+            #[cfg(not(unix))]
+            let extra = ExtraMetadata::derived(&meta);
+            (meta, extra)
+        }))
+    }
+
+    fn mkdir(&self, p: &[u8], mode: u32) -> HostFuture<io::Result<()>> {
+        let r = std::fs::create_dir(path(p));
+        #[cfg(unix)]
+        let r = r.and_then(|()| {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(path(p), std::fs::Permissions::from_mode(mode & 0o7777))
+        });
+        #[cfg(not(unix))]
+        let _ = mode;
+        ready(r)
+    }
+
+    fn remove_file(&self, p: &[u8]) -> HostFuture<io::Result<()>> {
+        ready(std::fs::remove_file(path(p)))
+    }
+
+    fn remove_dir(&self, p: &[u8]) -> HostFuture<io::Result<()>> {
+        ready(std::fs::remove_dir(path(p)))
+    }
+
+    fn rename(&self, from: &[u8], to: &[u8]) -> HostFuture<io::Result<()>> {
+        ready(std::fs::rename(path(from), path(to)))
+    }
+
+    fn symlink(&self, target: &[u8], link: &[u8]) -> HostFuture<io::Result<()>> {
+        #[cfg(unix)]
+        let r = std::os::unix::fs::symlink(path(target), path(link));
+        #[cfg(not(unix))]
+        let r = {
+            let _ = (target, link);
+            Err(io::ErrorKind::Unsupported.into())
+        };
+        ready(r)
+    }
+
+    fn hard_link(&self, existing: &[u8], link: &[u8]) -> HostFuture<io::Result<()>> {
+        ready(std::fs::hard_link(path(existing), path(link)))
+    }
+
+    fn read_link(&self, p: &[u8]) -> HostFuture<io::Result<Vec<u8>>> {
+        ready(std::fs::read_link(path(p)).map(|t| bytes(t.as_os_str())))
+    }
+
+    fn set_mode(&self, p: &[u8], mode: u32) -> HostFuture<io::Result<()>> {
+        let r = std::fs::metadata(path(p)).and_then(|m| {
+            let mut perm = m.permissions();
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                perm.set_mode(mode & 0o7777);
+            }
+            #[cfg(not(unix))]
+            perm.set_readonly(mode & 0o222 == 0);
+            std::fs::set_permissions(path(p), perm)
+        });
+        ready(r)
+    }
+
+    fn set_times(
+        &self,
+        p: &[u8],
+        atime_ns: Option<i64>,
+        mtime_ns: Option<i64>,
+        follow: bool,
+    ) -> HostFuture<io::Result<()>> {
+        // std sets times through an open file, which follows symlinks.
+        if !follow && std::fs::symlink_metadata(path(p)).is_ok_and(|m| m.is_symlink()) {
+            return ready(Err(io::ErrorKind::Unsupported.into()));
+        }
+        let at = |ns: i64| {
+            let d = Duration::from_nanos(ns.unsigned_abs());
+            if ns >= 0 {
+                std::time::UNIX_EPOCH + d
+            } else {
+                std::time::UNIX_EPOCH - d
+            }
+        };
+        let mut times = std::fs::FileTimes::new();
+        if let Some(a) = atime_ns {
+            times = times.set_accessed(at(a));
+        }
+        if let Some(m) = mtime_ns {
+            times = times.set_modified(at(m));
+        }
+        ready(File::open(path(p)).and_then(|f| f.set_times(times)))
     }
 
     fn resolve(&self, name: &[u8], path_var: &[u8], cwd: &[u8]) -> HostFuture<Option<Vec<u8>>> {

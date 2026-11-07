@@ -1,7 +1,7 @@
 # 0017: Utilities batch F: find and xargs
 
-status: open
-agent: -
+status: in-progress
+agent: procs
 branch: issue/0017-utils-find-xargs
 depends-on: 0008, 0006, 0013 (shared walker, globset matching, BRE/ERE translator)
 touches: crates/psh-utils/src/{find,xargs}*, tests/utils/{find,xargs}/

@@ -1,0 +1,190 @@
+# Goldens for tests/utils/cut/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: one field with a delimiter
+status: 0
+bash-n: 0
+--- stdout
+|b
+
+=== 1: several fields and ranges
+status: 0
+bash-n: 0
+--- stdout
+|a:c:d
+|c:d:e
+|a:b
+
+=== 2: tab is the default delimiter
+status: 0
+bash-n: 0
+--- stdout
+|b
+
+=== 3: lines without the delimiter print whole
+status: 0
+bash-n: 0
+--- stdout
+|b
+|nodelim
+
+=== 4: -s drops lines without the delimiter
+status: 0
+bash-n: 0
+--- stdout
+|b
+
+=== 5: a field past the end is empty
+status: 0
+bash-n: 0
+--- stdout
+|
+
+=== 6: fields in list order are printed in input order
+status: 0
+bash-n: 0
+--- stdout
+|a:c
+
+=== 7: characters
+status: 0
+bash-n: 0
+--- stdout
+|bcd
+|abc
+|fgh
+|ace
+
+=== 8: bytes
+status: 0
+bash-n: 0
+--- stdout
+|abc
+
+=== 9: several lines and files
+status: 0
+bash-n: 0
+--- stdout
+|k1
+|k2
+|v1
+|v2
+|v1
+|v2
+--- file f
+|k1=v1
+|k2=v2
+
+=== 10: the last line without a newline
+status: 0
+bash-n: 0
+--- stdout
+|a
+
+=== 11: /etc/passwd style
+status: 0
+bash-n: 0
+--- stdout
+|root:/bin/bash
+|bin:/sbin/nologin
+
+=== 12: a space delimiter
+status: 0
+bash-n: 0
+--- stdout
+|two
+
+=== 13: --complement
+status: 1
+bash-n: 0
+--- stderr
+|cut: illegal option -- -
+|usage: cut -b list [-n] [file ...]
+|       cut -c list [file ...]
+|       cut -f list [-s] [-w | -d delim] [file ...]
+
+=== 14: --output-delimiter
+status: 1
+bash-n: 0
+--- stderr
+|cut: illegal option -- -
+|usage: cut -b list [-n] [file ...]
+|       cut -c list [file ...]
+|       cut -f list [-s] [-w | -d delim] [file ...]
+|cut: illegal option -- -
+|usage: cut -b list [-n] [file ...]
+|       cut -c list [file ...]
+|       cut -f list [-s] [-w | -d delim] [file ...]
+
+=== 15: -w splits on blank runs
+status: 0
+bash-n: 0
+--- stdout
+|b	c
+
+=== 16: -c counts characters on UTF-8
+status: 0
+bash-n: 0
+--- stdout
+|héll
+
+=== 17: -b counts bytes
+status: 0
+bash-n: 0
+--- stdout
+|       4
+
+=== 18: a missing file
+status: 0
+bash-n: 0
+--- stdout
+|x
+|status=1
+--- stderr
+|cut: missing: No such file or directory
+--- file f
+|x
+
+=== 19: no list
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|usage: cut -b list [-n] [file ...]
+|       cut -c list [file ...]
+|       cut -f list [-s] [-w | -d delim] [file ...]
+
+=== 20: field zero
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|cut: [-bcf] list: values may not include zero
+
+=== 21: a decreasing range
+status: 0
+bash-n: 0
+--- stdout
+|x
+|status=0
+
+=== 22: a delimiter with -c
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|usage: cut -b list [-n] [file ...]
+|       cut -c list [file ...]
+|       cut -f list [-s] [-w | -d delim] [file ...]
+
+=== 23: a long delimiter
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|cut: bad delimiter

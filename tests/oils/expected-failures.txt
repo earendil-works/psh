@@ -99,6 +99,7 @@ oils/builtin-getopts/13
 oils/builtin-getopts/14
 oils/builtin-meta/4
 oils/builtin-meta/6
+oils/builtin-meta/10: tr is an always-on psh utility (mode S, D015), so a tr script earlier on PATH does not shadow it
 oils/builtin-misc/0
 oils/builtin-misc/1
 oils/builtin-printf/3

@@ -1,0 +1,184 @@
+# Goldens for tests/utils/cut/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: one field with a delimiter
+status: 0
+bash-n: 0
+--- stdout
+|b
+
+=== 1: several fields and ranges
+status: 0
+bash-n: 0
+--- stdout
+|a:c:d
+|c:d:e
+|a:b
+
+=== 2: tab is the default delimiter
+status: 0
+bash-n: 0
+--- stdout
+|b
+
+=== 3: lines without the delimiter print whole
+status: 0
+bash-n: 0
+--- stdout
+|b
+|nodelim
+
+=== 4: -s drops lines without the delimiter
+status: 0
+bash-n: 0
+--- stdout
+|b
+
+=== 5: a field past the end is empty
+status: 0
+bash-n: 0
+--- stdout
+|
+
+=== 6: fields in list order are printed in input order
+status: 0
+bash-n: 0
+--- stdout
+|a:c
+
+=== 7: characters
+status: 0
+bash-n: 0
+--- stdout
+|bcd
+|abc
+|fgh
+|ace
+
+=== 8: bytes
+status: 0
+bash-n: 0
+--- stdout
+|abc
+
+=== 9: several lines and files
+status: 0
+bash-n: 0
+--- stdout
+|k1
+|k2
+|v1
+|v2
+|v1
+|v2
+--- file f
+|k1=v1
+|k2=v2
+
+=== 10: the last line without a newline
+status: 0
+bash-n: 0
+--- stdout
+|a
+
+=== 11: /etc/passwd style
+status: 0
+bash-n: 0
+--- stdout
+|root:/bin/bash
+|bin:/sbin/nologin
+
+=== 12: a space delimiter
+status: 0
+bash-n: 0
+--- stdout
+|two
+
+=== 13: --complement
+status: 0
+bash-n: 0
+--- stdout
+|a:c
+
+=== 14: --output-delimiter
+status: 0
+bash-n: 0
+--- stdout
+|a c
+|ab:de
+
+=== 15: -w splits on blank runs
+status: 1
+bash-n: 0
+--- stderr
+|cut: invalid option -- 'w'
+|Try 'cut --help' for more information.
+
+=== 16: -c counts characters on UTF-8
+status: 0
+bash-n: 0
+--- stdout
+|hél
+
+=== 17: -b counts bytes
+status: 0
+bash-n: 0
+--- stdout
+|4
+
+=== 18: a missing file
+status: 0
+bash-n: 0
+--- stdout
+|x
+|status=1
+--- stderr
+|cut: missing: No such file or directory
+--- file f
+|x
+
+=== 19: no list
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|cut: you must specify a list of bytes, characters, or fields
+|Try 'cut --help' for more information.
+
+=== 20: field zero
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|cut: fields are numbered from 1
+|Try 'cut --help' for more information.
+
+=== 21: a decreasing range
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|cut: invalid decreasing range
+|Try 'cut --help' for more information.
+
+=== 22: a delimiter with -c
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|cut: an input delimiter may be specified only when operating on fields
+|Try 'cut --help' for more information.
+
+=== 23: a long delimiter
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|cut: the delimiter must be a single character
+|Try 'cut --help' for more information.

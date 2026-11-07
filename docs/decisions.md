@@ -1838,3 +1838,20 @@ match, untouched with an error on an invalid regex or when readonly/associative.
 -x` prints each primary as evaluated (`+ [[ -n a ]]`, `! ` under negation), with the
 right side escaped as bash shows it. The unary and file/string binary tests are shared
 with `test` (`builtins::test::{unary, binary}`).
+## D1161: cut -c counts UTF-8 characters in every locale
+date: 2026-11-07 · by: text · issue: 0016
+`cut -c` selects characters: valid UTF-8 sequences are one position, other bytes one
+each, whatever the locale. `-b` (with or without `-n`) stays bytes. GNU's `-c` counts
+bytes (it splits `é`), BSD's counts characters in a UTF-8 locale; psh takes the BSD
+meaning everywhere, a deliberate difference from GNU. Reason: agents mean characters
+(`cut -c1-80` to shorten lines), and a split character breaks the next tool's UTF-8.
+
+## D1162: tr works on bytes unless a set has a non-ASCII character
+date: 2026-11-07 · by: text · issue: 0016
+When both sets are ASCII (escapes included, `'\200-\377'` too), `tr` works on bytes,
+exactly as GNU's (and BSD's in the C locale): `tr -c 'a-z' _` turns `é` into two `_`.
+When a set contains a non-ASCII character, input and sets are UTF-8 characters (bytes
+that are not valid UTF-8 stay single units), as BSD's `tr` in a UTF-8 locale: `tr 'é' e`
+means the character, where GNU would map its two bytes separately and corrupt other
+characters. Classes (`[:alpha:]`) are the C locale's in both modes. Reason: GNU's
+behavior wherever it is sane; the character meaning where GNU's output is garbage.

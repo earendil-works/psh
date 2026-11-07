@@ -457,7 +457,7 @@ pub static UTILITIES: &[Utility] = &[
     // Producing text.
     u("echo", Read, NoOps),
     u("printf", Read, NoOps),
-    u("seq", Read, NoOps),
+    v("seq", Read, "fst", &["--format", "--separator"], NoOps, &[]),
     u("yes", Read, NoOps),
     u("expr", Read, NoOps),
     u("bc", Read, Reads),

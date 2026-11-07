@@ -1,0 +1,190 @@
+# Goldens for tests/utils/tr/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: lower to upper with ranges
+status: 0
+bash-n: 0
+--- stdout
+|HELLO WORLD
+
+=== 1: classes
+status: 0
+bash-n: 0
+--- stdout
+|hello world 42
+|HELLO WORLD 42
+
+=== 2: delete
+status: 0
+bash-n: 0
+--- stdout
+|abc
+
+=== 3: delete a class
+status: 0
+bash-n: 0
+--- stdout
+|a1 b2 c3
+
+=== 4: delete carriage returns
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+
+=== 5: newlines to spaces
+status: 0
+bash-n: 0
+--- stdout
+|a b c 
+
+=== 6: squeeze
+status: 0
+bash-n: 0
+--- stdout
+|a b c
+
+=== 7: squeeze while translating
+status: 0
+bash-n: 0
+--- stdout
+|xdd
+
+=== 8: complement and delete
+status: 0
+bash-n: 0
+--- stdout
+|abc123XYZ
+
+=== 9: complement and squeeze into newlines
+status: 0
+bash-n: 0
+--- stdout
+|one
+|two
+|three
+
+=== 10: complement translate
+status: 0
+bash-n: 0
+--- stdout
+|ab_cd_
+
+=== 11: octal escapes
+status: 0
+bash-n: 0
+--- stdout
+|a	b	c
+|a-b
+
+=== 12: backslash escapes
+status: 0
+bash-n: 0
+--- stdout
+|a,b
+
+=== 13: set2 shorter than set1 is padded with its last character
+status: 0
+bash-n: 0
+--- stdout
+|xyyyy
+
+=== 14: -t truncates set1
+status: 1
+bash-n: 0
+--- stderr
+|tr: illegal option -- t
+|usage: tr [-Ccsu] string1 string2
+|       tr [-Ccu] -d string1
+|       tr [-Ccu] -s string1
+|       tr [-Ccu] -ds string1 string2
+
+=== 15: repeat construct
+status: 0
+bash-n: 0
+--- stdout
+|xxxyyy
+|z-----
+
+=== 16: brackets are literal outside constructs
+status: 0
+bash-n: 0
+--- stdout
+|[A]
+
+=== 17: -d and -s together
+status: 0
+bash-n: 0
+--- stdout
+|ab
+
+=== 18: squeeze alone with complement
+status: 0
+bash-n: 0
+--- stdout
+|a#b#c#
+~ no newline at end
+
+=== 19: delete the space class
+status: 0
+bash-n: 0
+--- stdout
+|ab
+
+=== 20: digits to letters
+status: 0
+bash-n: 0
+--- stdout
+|cace
+
+=== 21: reversed range
+status: 0
+bash-n: 0
+--- stdout
+|x
+|status=0
+
+=== 22: missing operand
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|usage: tr [-Ccsu] string1 string2
+|       tr [-Ccu] -d string1
+|       tr [-Ccu] -s string1
+|       tr [-Ccu] -ds string1 string2
+
+=== 23: invalid class
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|tr: unknown class nope
+
+=== 24: delete with two sets is an error
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|usage: tr [-Ccsu] string1 string2
+|       tr [-Ccu] -d string1
+|       tr [-Ccu] -s string1
+|       tr [-Ccu] -ds string1 string2
+
+=== 25: UTF-8 characters in a set are characters
+status: 0
+bash-n: 0
+--- stdout
+|cafe
+
+=== 26: ASCII sets leave UTF-8 text intact
+status: 0
+bash-n: 0
+--- stdout
+|HéLLO WöRLD
+|héo

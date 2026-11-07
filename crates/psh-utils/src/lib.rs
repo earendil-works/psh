@@ -10,6 +10,7 @@ mod fsutil;
 mod modes;
 pub mod opts;
 mod timefmt;
+mod textio;
 
 mod cat;
 mod env;
@@ -26,6 +27,11 @@ mod readlink;
 mod realpath;
 mod rmdir;
 mod touch;
+mod cut;
+mod paste;
+mod seq;
+mod tee;
+mod tr;
 
 use psh_engine::util::{Mode, UtilEntry, UtilPolicy};
 
@@ -117,6 +123,36 @@ pub static REGISTRY: &[UtilEntry] = &[
         destructive: false,
         run: util_fn!(touch::run),
     },
+    UtilEntry {
+        names: &["cut"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(cut::run),
+    },
+    UtilEntry {
+        names: &["paste"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(paste::run),
+    },
+    UtilEntry {
+        names: &["seq"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(seq::run),
+    },
+    UtilEntry {
+        names: &["tee"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(tee::run),
+    },
+    UtilEntry {
+        names: &["tr"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(tr::run),
+    },
 ];
 
 /// The option specs, for the classifier check (D1082).
@@ -135,6 +171,11 @@ pub static SPECS: &[opts::Spec] = &[
     mkdir::SPEC,
     rmdir::SPEC,
     touch::SPEC,
+    cut::SPEC,
+    paste::SPEC,
+    seq::SPEC,
+    tee::SPEC,
+    tr::SPEC,
 ];
 
 /// The policy for a shell: every utility on. `sandbox`: no real programs exist (wasm),

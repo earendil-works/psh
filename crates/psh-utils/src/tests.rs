@@ -256,3 +256,7 @@ fn sleep_and_timeout() {
 }
 
 mod files;
+
+// The text filters (sort uniq cut tr paste nl tee seq comm).
+#[path = "tests_text.rs"]
+mod text;

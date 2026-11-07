@@ -1,0 +1,105 @@
+# Goldens for tests/utils/tee/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: to stdout and a file
+status: 0
+bash-n: 0
+--- stdout
+|hello
+|hello
+--- file f
+|hello
+
+=== 1: several files
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|a
+|b
+--- file f
+|a
+|b
+--- file g
+|a
+|b
+
+=== 2: -a appends
+status: 0
+bash-n: 0
+--- stdout
+|two
+|one
+|two
+--- file f
+|one
+|two
+
+=== 3: without -a the file is truncated
+status: 0
+bash-n: 0
+--- stdout
+|new
+--- file f
+|new
+
+=== 4: a file that cannot be opened does not stop the rest
+status: 0
+bash-n: 0
+--- stdout
+|x
+|status=1
+|x
+--- stderr
+|tee: nodir/f: No such file or directory
+--- file g
+|x
+
+=== 5: - is a file name
+status: 0
+bash-n: 0
+--- stdout
+|x
+--- file -
+|x
+
+=== 6: no input, no files
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 7: -i is accepted
+status: 0
+bash-n: 0
+--- stdout
+|x
+|x
+--- file f
+|x
+
+=== 8: -p and --output-error
+status: 1
+bash-n: 0
+--- stderr
+|tee: illegal option -- p
+|usage: tee [-ai] [file ...]
+|tee: illegal option -- -
+|usage: tee [-ai] [file ...]
+|cat: f: No such file or directory
+|cat: g: No such file or directory
+
+=== 9: in the middle of a pipeline
+status: 0
+bash-n: 0
+--- stdout
+|3
+|1
+|2
+|3
+--- file f
+|1
+|2
+|3

@@ -13,8 +13,6 @@ oils/arith-context/15
 oils/arith-dynamic/1
 oils/array/27
 oils/array/28
-oils/array/67
-oils/array/68
 oils/array-assign/3
 oils/array-assign/4
 oils/array-assign/7
@@ -27,7 +25,6 @@ oils/array-literal/9
 oils/array-literal/10
 oils/array-sparse/31
 oils/assign/45
-oils/assign-dialects/2
 oils/assign-extended/4
 oils/assign-extended/5
 oils/assign-extended/7

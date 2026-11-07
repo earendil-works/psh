@@ -84,6 +84,11 @@ pub struct ShellConfig {
     /// The nesting limit for subshells and substitutions (D1050). Each level costs
     /// native stack while it is polled; see [`ShellConfig::STACK_PER_LEVEL`].
     pub max_depth: u32,
+    /// What happens to background jobs (`cmd &`) still running when the script ends.
+    /// `None`: they are released and outlive the shell, as in bash. `Some(grace)`: the
+    /// shell waits up to `grace` for them, then abandons them (TERM, KILL): for
+    /// embedders that must leave no process behind (D1051).
+    pub exit_grace: Option<std::time::Duration>,
 }
 
 impl ShellConfig {
@@ -106,6 +111,7 @@ impl ShellConfig {
             stdout: None,
             stderr: None,
             max_depth: ShellConfig::DEFAULT_MAX_DEPTH,
+            exit_grace: None,
         }
     }
 }
@@ -169,6 +175,10 @@ pub struct Shell {
     /// The state before the current run, restored if it is cancelled.
     before: Option<Vp>,
     main: Option<Join<(i32, Vp)>>,
+    /// The script ended with this status; its background jobs get until the timer
+    /// (`exit_grace`) to finish.
+    draining: Option<(i32, Join<()>)>,
+    exit_grace: Option<std::time::Duration>,
     /// `Rc` inside: a shell stays on the thread that made it.
     _not_send: PhantomData<*const ()>,
 }
@@ -250,6 +260,8 @@ impl Shell {
             vp: Some(vp),
             before: None,
             main: None,
+            draining: None,
+            exit_grace: cfg.exit_grace,
             _not_send: PhantomData,
         }
     }
@@ -284,6 +296,28 @@ impl Shell {
     /// Runs ready work for at most `budget` safepoints (about one command each).
     pub fn step(&mut self, budget: u32) -> Step {
         loop {
+            if let Some((status, timer)) = &self.draining {
+                let status = *status;
+                let ctl = self.shared.control.load(Ordering::SeqCst);
+                let sched = &self.core.sched;
+                // Done when only the timer is left, or it fired.
+                let end = if ctl & CANCEL != 0 {
+                    RunEnd::Done
+                } else {
+                    sched.run(budget, &|| timer.is_done() || sched.task_count() <= 1)
+                };
+                match end {
+                    RunEnd::Done => {
+                        self.draining = None;
+                        self.core.sched.drop_all();
+                        self.shared.control.store(0, Ordering::SeqCst);
+                        return Step::Done(status);
+                    }
+                    RunEnd::Yield => return Step::Yield,
+                    RunEnd::Blocked => return Step::Blocked,
+                    RunEnd::Control => continue,
+                }
+            }
             let Some(main) = &self.main else {
                 return Step::Idle;
             };
@@ -302,12 +336,21 @@ impl Shell {
                         .take()
                         .and_then(|m| m.try_take())
                         .expect("main result");
-                    // Give detached vprocs (`cmd &`) what is ready, then drop the rest.
+                    self.vp = Some(vp);
+                    // Give detached vprocs (`cmd &`) what is ready.
                     self.core.sched.run(budget, &|| false);
+                    if let Some(grace) = self.exit_grace
+                        && self.core.sched.task_count() > 0
+                    {
+                        let timer = self.core.host.sleep(grace);
+                        let join = self.core.sched.spawn(timer);
+                        self.draining = Some((status, join));
+                        continue;
+                    }
+                    // Release what still runs (bash leaves background jobs running).
                     self.core.release_on_drop.set(true);
                     self.core.sched.drop_all();
                     self.core.release_on_drop.set(false);
-                    self.vp = Some(vp);
                     return Step::Done(status);
                 }
                 RunEnd::Yield => return Step::Yield,

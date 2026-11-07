@@ -364,7 +364,6 @@ oils/background/13
 oils/background/15
 oils/background/16
 oils/background/17
-oils/background/18
 oils/background/20
 oils/background/21
 oils/ble-features/0
@@ -994,9 +993,6 @@ oils/globstar/1
 oils/globstar/2
 oils/globstar/3
 oils/globstar/4
-oils/here-doc/9
-oils/here-doc/3
-oils/here-doc/4
 oils/here-doc/16
 oils/here-doc/17
 oils/here-doc/18
@@ -1004,8 +1000,6 @@ oils/here-doc/19
 oils/here-doc/24
 oils/here-doc/26
 oils/here-doc/29
-oils/here-doc/32
-oils/here-doc/33
 oils/if_/3
 oils/introspect/0
 oils/introspect/1
@@ -1215,7 +1209,6 @@ oils/toysh/3
 oils/toysh/5
 oils/toysh/6
 oils/toysh/7
-oils/toysh-posix/8
 oils/toysh-posix/11
 oils/toysh-posix/12
 oils/toysh-posix/15

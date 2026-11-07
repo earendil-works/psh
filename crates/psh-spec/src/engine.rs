@@ -186,9 +186,25 @@ impl Engine for External {
             Some(status) => status,
             None => child.wait()?,
         };
-        let stdout = out_thread.join().unwrap_or_default();
-        let stderr = err_thread.join().unwrap_or_default();
-        if let Some(t) = stdin_thread {
+        // A process outside the group (psh puts each external in a group of its own,
+        // and releases background jobs at exit) can still hold the pipes: then give up
+        // on the output rather than wait forever.
+        let grace = Instant::now() + Duration::from_secs(2);
+        while !(out_thread.is_finished() && err_thread.is_finished()) && Instant::now() < grace {
+            std::thread::sleep(Duration::from_millis(2));
+        }
+        let (stdout, stderr) = if out_thread.is_finished() && err_thread.is_finished() {
+            (
+                out_thread.join().unwrap_or_default(),
+                err_thread.join().unwrap_or_default(),
+            )
+        } else {
+            timed_out = true;
+            (Vec::new(), Vec::new())
+        };
+        if let Some(t) = stdin_thread
+            && t.is_finished()
+        {
             let _ = t.join();
         }
         let status = if timed_out {
@@ -402,6 +418,9 @@ impl Engine for InProcess {
             cfg.stdin = Some(file(stdin_file));
             cfg.stdout = Some(file(out_file));
             cfg.stderr = Some(file(err_file));
+            // Background jobs of the case may finish for a moment after the script,
+            // then they are killed: nothing may outlive the case.
+            cfg.exit_grace = Some(Duration::from_millis(500));
             let mut shell = Shell::new(cfg);
             shell.start(script);
             let r = drive_until(&mut shell, Some(deadline));

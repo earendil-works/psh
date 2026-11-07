@@ -532,3 +532,28 @@ fn loops_yield_at_safepoints() {
     shell.control().cancel();
     assert_eq!(shell.step(50), Step::Done(143));
 }
+
+#[test]
+fn background_jobs_at_exit() {
+    // Without a grace they are released (the test host's fakes just stop); with one,
+    // the shell waits for them, then abandons what is left.
+    for grace in [None, Some(std::time::Duration::from_millis(10))] {
+        let host = Rc::new(TestHost::new());
+        let mut cfg = host.config();
+        cfg.exit_grace = grace;
+        let mut shell = Shell::new(cfg);
+        shell.start(Script::command("hang & { echo bg; } & echo fg"));
+        let st = loop {
+            match shell.step(100) {
+                Step::Done(s) => break s,
+                Step::Yield => {}
+                s => panic!("{s:?}"),
+            }
+        };
+        assert_eq!(st, 0);
+        assert_eq!(shell.task_count(), 0);
+        assert_eq!(host.live_procs(), 0);
+        let out = String::from_utf8(host.stdout()).unwrap();
+        assert!(out.contains("fg\n") && out.contains("bg\n"), "{out}");
+    }
+}

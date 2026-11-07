@@ -187,8 +187,6 @@ brush/compat/arrays/51
 brush/compat/arrays/52
 brush/compat/arrays/53
 brush/compat/assignments/6
-brush/compat/background_jobs/2
-brush/compat/background_jobs/3
 brush/compat/background_jobs/14
 brush/compat/background_jobs/15
 brush/compat/background_jobs/16
@@ -2093,7 +2091,6 @@ brush/compat/word_expansion/params/46
 brush/compat/word_expansion/params/47
 brush/compat/word_expansion/params/48
 brush/compat/word_expansion/params/53
-brush/compat/word_expansion/params/60
 brush/compat/word_expansion/params/61
 brush/compat/word_expansion/params/63
 brush/compat/word_expansion/params/64

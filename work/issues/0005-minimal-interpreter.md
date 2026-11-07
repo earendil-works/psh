@@ -174,7 +174,27 @@ glob). Please keep `HostFuture`, `HostFile` (`&self`, `Any`), drop semantics and
 - ARCH: stack, errors, functions and scope, and "Engine internals other work builds on"
   (what parallel language issues must not restructure).
 
+### 2026-11-07 after rebasing onto 0006 (psh-os)
+- psh-os puts every external in a session of its own; with D1051's "release background
+  jobs at exit" that leaked processes from psh-spec runs (many `sh -c 'trap …; while :;
+  do sleep 0.05; done'` orphans from brush's wait/trap/signals cases, from every gate
+  run since part 1; I killed the ones on this machine). Fix in the engine:
+  `ShellConfig::exit_grace` — `None` releases (bash parity, the `psh` binary), `Some(d)`
+  waits up to `d` for background jobs, then abandons them; psh-spec in-process uses
+  500 ms. psh-spec's `External` no longer joins its output threads forever (a released
+  job outside the group held the pipes: the brush/compat/builtins/wait cases hung the
+  whole run). Still open: the `psh` binary run as a subprocess (cases mentioning
+  `kill`/`PPID`) releases its background jobs into their own sessions, where the
+  harness's group kill cannot reach them. (D1051 refined here; my decision range is
+  used up.)
+- Scores after the rebase (psh-os host): oils 1111/2511, brush 1064/3171, agent 115/144;
+  full psh-spec ~26 s.
+
 ## Follow-ups
+- Background jobs of a non-interactive bash share its process group; psh-os gives each
+  external its own session, so `psh -c 'long &'` leaves an orphan session no group kill
+  reaches. Decide with 0006: jobs in the shell's group, or `exit_grace` for the binary
+  in Session placement, or a harness-side reaper.
 - On macOS, `/usr/bin/{read,command,type,wait,ulimit,...}` sh wrappers stand in for
   missing builtins; once those builtins exist this goes away. Until then a case can pass
   on macOS and fail on Linux.

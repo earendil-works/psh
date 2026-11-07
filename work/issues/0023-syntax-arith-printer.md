@@ -1,6 +1,6 @@
 # 0023: Arithmetic parser, bash-format printer, byte-exact sources
 
-status: in-progress
+status: done
 agent: parser
 branch: issue/0023-syntax-arith-printer
 depends-on: 0004
@@ -13,7 +13,7 @@ Parser-side pieces the engine needs next (0004 follow-ups), built in psh-syntax 
 engine agent builds the interpreter (0005), so the two don't collide.
 
 ## Acceptance criteria
-- [ ] **Arithmetic**: a parser for bash arithmetic expressions (`$(( ))`, `(( ))`,
+- [x] **Arithmetic**: a parser for bash arithmetic expressions (`$(( ))`, `(( ))`,
       `for (( ;; ))`, array subscripts, `let`) over *expanded* text, as bash parses it
       after expansion: all operators and precedence, assignment operators, `++`/`--`,
       ternary, comma, bases (`0x`, `0`, `N#`), variable references. An AST with spans,
@@ -21,14 +21,14 @@ engine agent builds the interpreter (0005), so the two don't collide.
       matching bash's (`syntax error: operand expected (error token is "…")`).
       Evaluation stays in the engine; offer a pure `eval` over an env trait only if it is
       small and the engine agent agrees.
-- [ ] **Printer in bash's format**: `declare -f` / `type` output, matching bash 5.3 for
+- [x] **Printer in bash's format**: `declare -f` / `type` output, matching bash 5.3 for
       the Oils/brush cases that print functions (indentation, `;` placement, here-docs).
-- [ ] **Bytes**: sources that are not valid UTF-8 parse byte-exactly (spans stay byte
+- [x] **Bytes**: sources that are not valid UTF-8 parse byte-exactly (spans stay byte
       offsets into the original input); decide and record how the AST carries non-UTF-8
       words.
-- [ ] Tests: unit tests, L0 snippets for arithmetic syntax errors where bash reports
+- [x] Tests: unit tests, L0 snippets for arithmetic syntax errors where bash reports
       them at parse time, and agreement with recorded goldens for the printer.
-- [ ] Stays `#![no_std]` + `alloc`, zero dependencies, wasm32 build.
+- [x] Stays `#![no_std]` + `alloc`, zero dependencies, wasm32 build.
 
 ## Notes
 - Coordinate API shapes with the engine agent (0005) through your issue log and reports
@@ -171,5 +171,30 @@ value, side effects and runtime error text.
   L0 ratchet (round trip), which is empty now.
 
 ## Follow-ups
+- Guide page `docs/guide/syntax.md` (still unwritten; from 0004): parsing, spans, bytes,
+  `--parse`, arithmetic.
+- Engine (0005): switch line tables to `LineIndex::from_bytes(ast.source_bytes())` and
+  restore printed text with `Ast::restore_bytes` for scripts that are not UTF-8; `psh -c`
+  takes `String` arguments today (`std::env::args` panics on non-UTF-8).
+- `print_function_bash`: 10 of ~2000 random functions differ, all with here-docs and
+  further substitutions inside a `$((…) )` that is not arithmetic.
+- `psh --parse` does not include arithmetic trees; the classifier has not needed them.
 
 ## Result
+Landed in three parts (e7bdba0 arithmetic, be8e708 printer, then bytes with this record).
+
+- **Arithmetic** (D1230, D1231): `parse_arith(&[u8])` over expanded text, and
+  `eval_arith`/`eval_arith_expr` over `trait ArithEnv` (agreed with the engine agent:
+  the environment owns variables, subscript kinds, `set -u` and readonly). Bash's exact
+  error texts via `ArithError::bash_text`/`EvalError::bash_text`. Differential fuzzing
+  against bash 5.3: 30k token strings (parse errors) and 9k expressions (values, side
+  effects, runtime errors) agree.
+- **declare -f printer** (D1232): `print_function_bash`; identical to bash for all 1027
+  functions of the Oils/brush scripts and 99.5% of random ones; `tests/l0/declare-f.txt`
+  (206 cases) in the tests. `decode_ansi_c` for `$'…'`.
+- **Bytes** (D1233): `parse_bytes`, `Parser::from_bytes`, `Ast::bytes`, a UTF-8 view
+  with reversible U+F7xx stand-ins; 20k fuzzed byte scripts agree with bash's verdicts
+  (Linux container) and round-trip.
+- L0 on main's leg: cases 6576/6576, shapes 26234/26234, syntax 228/228; the ratchet is
+  empty.
+- Still `#![no_std]` + `alloc`, no dependencies, wasm32 builds.

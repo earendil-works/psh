@@ -731,6 +731,10 @@ async fn param(
         return emit_val(vp, f, Val::List(items, star), quoted);
     }
     let mut val = match p.name {
+        // `$LINENO`: the line of the command running (in a trap, the line it fired at).
+        ParamName::Var if code.ast.text(p.name_span) == "LINENO" && p.index.is_none() => {
+            Val::Str(vp.line.to_string().into_bytes())
+        }
         ParamName::Var => match vp.resolve_checked(code.ast.text(p.name_span)) {
             Ok(name) => {
                 let name = name.into_owned();

@@ -3,7 +3,6 @@
 # cases that pass; never add a line to hide a regression.
 agent/control/6
 agent/control/14
-agent/control/24
 agent/globs-status/2
 agent/globs-status/18
 agent/globs-status/19

@@ -166,6 +166,15 @@ pub(crate) struct Vp {
     /// except the last, `!`) is running, or a function or compound command called from
     /// one (D1281).
     pub no_errexit: bool,
+    /// Traps (D1283); shared with subshells until one changes them.
+    pub traps: Rc<crate::builtins::trap::Traps>,
+    /// A trap action is running, entered with this `$?`: DEBUG and ERR traps do not
+    /// fire inside it, and a bare `exit` uses this status.
+    pub in_trap: Option<i32>,
+    /// This is the shell itself, not a subshell: it takes the shell's signals.
+    pub top: bool,
+    /// Levels of command substitution and `eval`: `set -x` repeats PS4's first char.
+    pub xtrace_level: u32,
 }
 
 /// A function: its body command in the chunk that defined it.
@@ -194,7 +203,22 @@ impl Vp {
         let mut sub = self.clone();
         sub.depth += 1;
         sub.loops = 0;
+        sub.top = false;
+        sub.traps = self.traps.for_subshell(
+            self.opts.get(crate::options::SetOpt::Errtrace),
+            self.opts.get(crate::options::SetOpt::Functrace),
+        );
         sub
+    }
+
+    /// Whether a signal is ignored here (`trap '' SIG`): externals start with it ignored
+    /// (D1284).
+    #[allow(dead_code)] // for 0006's spawn dispositions
+    pub(crate) fn signal_trap_ignored(&self, sig: i32) -> bool {
+        self.traps
+            .map
+            .get(&crate::builtins::trap::TrapKey::Signal(sig))
+            .is_some_and(|t| t.action.is_empty())
     }
 
     /// Makes `name` local to the innermost function call (saving its outer value once).

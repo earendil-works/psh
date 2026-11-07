@@ -7,10 +7,21 @@ use super::{out, s, shell_quote};
 
 const USAGE: &str = "set: usage: set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]";
 
+/// One step of `set`'s options, applied in order once all of them are known to be valid.
+enum Step {
+    Opt(SetOpt, bool),
+    /// `-o`/`+o` without a name: the listing, as the options stand at that point.
+    List(bool),
+    /// `-`: turns off -x and -v.
+    Dash,
+}
+
 pub(crate) async fn set(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     if args.len() == 1 {
         return list_vars(vp).await;
     }
+    // First read every option word: an invalid one fails before any is applied.
+    let mut steps = Vec::new();
     let mut i = 1;
     let mut positional = false;
     while i < args.len() {
@@ -21,47 +32,64 @@ pub(crate) async fn set(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             break;
         }
         if a == b"-" {
-            // Turns off -x and -v and ends the options.
-            set_opt(vp, SetOpt::Xtrace, false);
-            set_opt(vp, SetOpt::Verbose, false);
+            steps.push(Step::Dash);
             i += 1;
             positional = i < args.len();
             break;
+        }
+        // A lone `+` is skipped.
+        if a == b"+" {
+            i += 1;
+            continue;
         }
         let on = match a.first() {
             Some(b'-') => true,
             Some(b'+') => false,
             _ => break,
         };
-        if a.len() == 1 {
-            break;
-        }
+        let mut ended = false;
         for &c in &a[1..] {
             if c == b'o' {
+                // The name, unless the next word is empty, a lone `-` or `+`, or starts
+                // with `+` or `-` (then the options are listed).
                 match args.get(i + 1) {
-                    Some(name) if !name.starts_with(b"-") && !name.starts_with(b"+") => {
+                    Some(name)
+                        if !name.is_empty()
+                            && !name.starts_with(b"-")
+                            && !name.starts_with(b"+") =>
+                    {
                         i += 1;
                         match options::by_name(name) {
                             Some(SetOpt::Posix) if on => return refuse_posix(vp).await,
-                            Some(opt) => set_opt(vp, opt, on),
+                            Some(opt) => steps.push(Step::Opt(opt, on)),
                             None => {
+                                // An unknown name stops here; what came before applies.
+                                apply(vp, steps).await?;
                                 vp.error(&format!("set: {}: invalid option name", s(name)))
                                     .await;
                                 return Ok(2);
                             }
                         }
                     }
-                    _ => {
-                        let st = list_options(vp, on).await?;
-                        if st != 0 {
-                            return Ok(st);
+                    Some(name) => {
+                        steps.push(Step::List(on));
+                        // An empty word is the first operand.
+                        if name.is_empty() {
+                            ended = true;
                         }
                     }
+                    None => steps.push(Step::List(on)),
                 }
                 continue;
             }
             match options::by_letter(c) {
-                Some(opt) => set_opt(vp, opt, on),
+                Some(opt) => steps.push(Step::Opt(opt, on)),
+                // `+r` (restricted mode off) is accepted; restricted mode itself is not
+                // something psh has.
+                None if c == b'r' && !on => {}
+                None if c == b'r' => {
+                    return crate::expand::unsupported(vp, "set -r (restricted mode)").await;
+                }
                 None => {
                     vp.error(&format!(
                         "set: {}{}: invalid option",
@@ -75,9 +103,36 @@ pub(crate) async fn set(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             }
         }
         i += 1;
+        if ended {
+            positional = true;
+            break;
+        }
+    }
+    let st = apply(vp, steps).await?;
+    if st != 0 {
+        return Ok(st);
     }
     if positional || i < args.len() {
         vp.args = args[i..].to_vec();
+    }
+    Ok(0)
+}
+
+async fn apply(vp: &mut Vp, steps: Vec<Step>) -> R {
+    for step in steps {
+        match step {
+            Step::Opt(opt, on) => set_opt(vp, opt, on),
+            Step::Dash => {
+                set_opt(vp, SetOpt::Xtrace, false);
+                set_opt(vp, SetOpt::Verbose, false);
+            }
+            Step::List(on) => {
+                let st = list_options(vp, on).await?;
+                if st != 0 {
+                    return Ok(st);
+                }
+            }
+        }
     }
     Ok(0)
 }
@@ -165,6 +220,182 @@ pub(crate) fn apply_invocation_options(vp: &mut Vp, words: &[Vec<u8>]) {
     options::sync(vp);
 }
 
+/// `set -x` (D1285): `PS4` (expanded, its first char repeated per level of command
+/// substitution and `eval`) and the line, on `BASH_XTRACEFD` or stderr.
+pub(crate) fn xtrace<'a>(vp: &'a mut Vp, line: &'a [u8]) -> crate::sched::LocalBoxFuture<'a, ()> {
+    // Boxed: callers sit on every command's path, and this future is large (D1059).
+    Box::pin(xtrace_inner(vp, line))
+}
+
+async fn xtrace_inner(vp: &mut Vp, line: &[u8]) {
+    let mut buf = ps4(vp).await;
+    buf.extend_from_slice(line);
+    buf.push(b'\n');
+    let fd = vp
+        .var("BASH_XTRACEFD")
+        .and_then(|v| std::str::from_utf8(v).ok())
+        .and_then(|v| v.trim().parse::<u32>().ok())
+        .filter(|&n| vp.fd(n).is_some())
+        .unwrap_or(2);
+    if let Some(f) = vp.fd(fd) {
+        let _ = f.write_all(&buf).await;
+    }
+}
+
+/// The expanded `PS4` prefix; tracing is off while it expands.
+async fn ps4(vp: &mut Vp) -> Vec<u8> {
+    let raw = vp
+        .var("PS4")
+        .map(<[u8]>::to_vec)
+        .unwrap_or_else(|| b"+ ".to_vec());
+    let expanded = if raw.contains(&b'$') || raw.contains(&b'`') {
+        // Expanded as the inside of double quotes.
+        let mut src = b": \"".to_vec();
+        for &b in &raw {
+            if b == b'"' {
+                src.push(b'\\');
+            }
+            src.push(b);
+        }
+        src.push(b'"');
+        match psh_syntax::parse_bytes(&src, psh_syntax::Options::default()) {
+            Ok(ast) => {
+                let word = match &ast
+                    .cmd(ast.list(ast.root()).items[0].first.stages[0].cmd)
+                    .kind
+                {
+                    psh_syntax::CommandKind::Simple(sc) => sc.words.get(1).cloned(),
+                    _ => None,
+                };
+                let code = std::rc::Rc::new(crate::state::Code {
+                    lines: std::rc::Rc::new(psh_syntax::LineIndex::from_bytes(&src)),
+                    ast: std::sync::Arc::new(ast),
+                    line_base: 0,
+                });
+                let line = vp.line;
+                vp.opts.set(SetOpt::Xtrace, false);
+                let r = match word {
+                    Some(w) => {
+                        crate::expand::expand_single(vp, &code, &w, crate::expand::Ctx::Word)
+                            .await
+                            .map(|(v, _)| v)
+                            .ok()
+                    }
+                    None => None,
+                };
+                vp.opts.set(SetOpt::Xtrace, true);
+                vp.line = line;
+                r.unwrap_or(raw)
+            }
+            Err(_) => raw,
+        }
+    } else {
+        raw
+    };
+    let mut out = Vec::new();
+    if let Some(&first) = expanded.first() {
+        for _ in 1..vp.xtrace_level {
+            out.push(first);
+        }
+    }
+    out.extend_from_slice(&expanded);
+    out
+}
+
+/// A word as `set -x` shows it: as is when it needs no quotes, else in single quotes,
+/// or `$'…'` when it has control characters or bytes that are not UTF-8.
+pub(crate) fn xtrace_word(w: &[u8]) -> Vec<u8> {
+    if w.is_empty() {
+        return b"''".to_vec();
+    }
+    let valid = std::str::from_utf8(w).is_ok();
+    if !valid || w.iter().any(|&b| b < 0x20 || b == 0x7f) {
+        return ansi_c_quote(w);
+    }
+    let needs = w.iter().enumerate().any(|(i, &b)| {
+        b" \t\n'\"\\|&;()<>!{}*[]?^$`".contains(&b)
+            || (b == b'#' && i == 0)
+            || (b == b'~' && (i == 0 || matches!(w[i - 1], b'=' | b':')))
+    });
+    if !needs {
+        return w.to_vec();
+    }
+    let mut out = vec![b'\''];
+    for &b in w {
+        if b == b'\'' {
+            out.extend_from_slice(b"'\\''");
+        } else {
+            out.push(b);
+        }
+    }
+    out.push(b'\'');
+    out
+}
+
+/// `$'…'` quoting: C escapes, octal for other control chars and invalid bytes.
+fn ansi_c_quote(w: &[u8]) -> Vec<u8> {
+    let mut out = b"$'".to_vec();
+    let mut i = 0;
+    while i < w.len() {
+        let b = w[i];
+        // A valid multibyte UTF-8 sequence stays as it is.
+        if b >= 0x80 {
+            let len = match b {
+                0xc2..=0xdf => 2,
+                0xe0..=0xef => 3,
+                0xf0..=0xf4 => 4,
+                _ => 0,
+            };
+            if len > 0 && i + len <= w.len() && std::str::from_utf8(&w[i..i + len]).is_ok() {
+                out.extend_from_slice(&w[i..i + len]);
+                i += len;
+                continue;
+            }
+        }
+        match b {
+            0x07 => out.extend_from_slice(b"\\a"),
+            0x08 => out.extend_from_slice(b"\\b"),
+            0x1b => out.extend_from_slice(b"\\E"),
+            0x0c => out.extend_from_slice(b"\\f"),
+            b'\n' => out.extend_from_slice(b"\\n"),
+            b'\r' => out.extend_from_slice(b"\\r"),
+            b'\t' => out.extend_from_slice(b"\\t"),
+            0x0b => out.extend_from_slice(b"\\v"),
+            b'\'' => out.extend_from_slice(b"\\'"),
+            b'\\' => out.extend_from_slice(b"\\\\"),
+            b if !(0x20..0x7f).contains(&b) => {
+                out.extend_from_slice(format!("\\{b:03o}").as_bytes())
+            }
+            b => out.push(b),
+        }
+        i += 1;
+    }
+    out.push(b'\'');
+    out
+}
+
+/// An assignment as `set -x` shows it: `name=value`, an empty value without quotes.
+pub(crate) fn xtrace_assign(name: &[u8], op: &[u8], value: &[u8]) -> Vec<u8> {
+    let mut line = name.to_vec();
+    line.extend_from_slice(op);
+    if !value.is_empty() {
+        line.extend_from_slice(&xtrace_word(value));
+    }
+    line
+}
+
+/// The line `set -x` shows for words: each one quoted as needed, joined by spaces.
+pub(crate) fn xtrace_line(words: &[Vec<u8>]) -> Vec<u8> {
+    let mut line = Vec::new();
+    for (i, w) in words.iter().enumerate() {
+        if i > 0 {
+            line.push(b' ');
+        }
+        line.extend_from_slice(&xtrace_word(w));
+    }
+    line
+}
+
 #[cfg(test)]
 mod tests {
     use crate::run_on_test_host as run;
@@ -208,6 +439,35 @@ mod tests {
         for (src, st, want) in cases {
             assert_eq!(out(src), (*st, want.to_string()), "{src}");
         }
+    }
+
+    #[test]
+    fn xtrace_quoting_and_lines() {
+        use super::xtrace_word as q;
+        assert_eq!(q(b"a b"), b"'a b'");
+        assert_eq!(q(b"it's"), b"'it'\\''s'");
+        assert_eq!(q(b""), b"''");
+        assert_eq!(q(b"x=1"), b"x=1");
+        assert_eq!(q(b"a,b:c%d@e+f"), b"a,b:c%d@e+f");
+        assert_eq!(q(b"#c"), b"'#c'");
+        assert_eq!(q(b"a#b"), b"a#b");
+        assert_eq!(q(b"~x"), b"'~x'");
+        assert_eq!(q(b"x~"), b"x~");
+        assert_eq!(q(b"a=~b"), b"'a=~b'");
+        assert_eq!(q(b"a\nb"), b"$'a\\nb'");
+        assert_eq!(q(b"\x1b"), b"$'\\E'");
+        assert_eq!(q(b"\xff"), b"$'\\377'");
+        assert_eq!(q("é".as_bytes()), "é".as_bytes());
+        let (_, _, err) = run("set -x; x=; y='a b'; echo \"$y\" $(echo s); f() { :; }; f");
+        assert_eq!(
+            String::from_utf8_lossy(&err),
+            "+ x=\n+ y='a b'\n++ echo s\n+ echo 'a b' s\n+ f\n+ :\n"
+        );
+        let (_, _, err) = run("PS4='[$LINENO] '; set -x; for i in 1 2; do :; done; ((1 + 1))");
+        assert_eq!(
+            String::from_utf8_lossy(&err),
+            "[1] for i in 1 2\n[1] :\n[1] for i in 1 2\n[1] :\n[1] (( 1 + 1 ))\n"
+        );
     }
 
     #[test]

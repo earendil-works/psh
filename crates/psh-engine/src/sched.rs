@@ -29,6 +29,8 @@ pub(crate) struct Shared {
     /// wake the embedder.
     in_step: AtomicBool,
     pub(crate) control: AtomicU32,
+    /// Signals sent to the shell and not delivered yet (bit n = signal n, D1284).
+    pub(crate) signals: std::sync::atomic::AtomicU64,
 }
 
 impl Shared {
@@ -38,6 +40,7 @@ impl Shared {
             outer: Mutex::new(None),
             in_step: AtomicBool::new(false),
             control: AtomicU32::new(0),
+            signals: std::sync::atomic::AtomicU64::new(0),
         }
     }
 
@@ -168,6 +171,19 @@ impl Sched {
     }
 
     /// The number of live tasks.
+    /// Whether signals are pending (D1284).
+    pub(crate) fn has_signals(&self) -> bool {
+        self.shared.signals.load(Ordering::Relaxed) != 0
+    }
+
+    /// Takes the pending signals (D1284).
+    pub(crate) fn take_signals(&self) -> u64 {
+        if self.shared.signals.load(Ordering::SeqCst) == 0 {
+            return 0;
+        }
+        self.shared.signals.swap(0, Ordering::SeqCst)
+    }
+
     pub(crate) fn task_count(&self) -> usize {
         self.slots.borrow().iter().filter(|s| s.is_some()).count()
     }

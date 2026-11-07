@@ -10,9 +10,10 @@ mod eval;
 pub(crate) mod hash;
 mod printf;
 mod read;
-mod set;
+pub(crate) mod set;
 mod shopt;
 mod test;
+pub(crate) mod trap;
 
 pub(crate) use set::apply_invocation_options;
 
@@ -59,6 +60,7 @@ pub(crate) fn find(name: &[u8]) -> Option<Builtin> {
         b"exit" => (builtin!(exit), true),
         b"set" => (builtin!(set::set), true),
         b"shopt" => (builtin!(shopt::shopt), false),
+        b"trap" => (builtin!(trap::trap), true),
         b"shift" => (builtin!(shift), true),
         b"return" => (builtin!(return_), true),
         b"break" => (builtin!(break_), true),
@@ -466,7 +468,8 @@ async fn exit(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         rest = &rest[1..];
     }
     match rest {
-        [] => Err(Unwind::Exit(vp.status)),
+        // In a trap, a bare `exit` keeps the status the trap was entered with.
+        [] => Err(Unwind::Exit(vp.in_trap.unwrap_or(vp.status))),
         [a] => match parse_int(a) {
             Some(n) => Err(Unwind::Exit((n & 0xff) as i32)),
             None => {

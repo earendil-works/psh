@@ -14,6 +14,7 @@ use psh_syntax::{
 };
 
 use crate::builtins;
+use crate::builtins::trap::{self, TrapKey};
 use crate::expand::{self, Ctx};
 use crate::fd::{Fd, FdObj, Pump};
 use crate::host::{ChildFd, OpenOptions, SpawnSpec, error_text};
@@ -60,7 +61,16 @@ async fn run_background(vp: &mut Vp, code: &Rc<Code>, list: ListId, item: usize)
     vp.last_bg = Some(vp.core.next_job_id());
     vp.core.sched.spawn_task(Box::pin(async move {
         let ao = &code.ast.list(list).items[item];
-        let _ = Box::pin(run_andor(&mut sub, &code, ao)).await;
+        // The job's own status is not errexit's or the ERR trap's to judge (only the
+        // commands inside it are).
+        let p = &ao.first;
+        let r = if ao.rest.is_empty() && p.stages.len() == 1 && !p.negated() {
+            run_command_unchecked(&mut sub, &code, p.stages[0].cmd).await
+        } else {
+            Box::pin(run_andor(&mut sub, &code, ao)).await
+        };
+        let status = r.unwrap_or_else(|u| u.status(sub.status));
+        Box::pin(trap::exit_trap(&mut sub, status)).await;
     }));
     Ok(0)
 }
@@ -89,6 +99,15 @@ async fn run_andor(vp: &mut Vp, code: &Rc<Code>, ao: &AndOr) -> R {
     Ok(status)
 }
 
+/// `set -x` for a simple command: its prefix assignments, then its words (D1285).
+async fn xtrace_command(vp: &mut Vp, assigns: &[(String, Vec<u8>)], argv: &[Vec<u8>]) {
+    for (n, v) in assigns {
+        let line = builtins::set::xtrace_assign(n.as_bytes(), b"=", v);
+        builtins::set::xtrace(vp, &line).await;
+    }
+    builtins::set::xtrace(vp, &builtins::set::xtrace_line(argv)).await;
+}
+
 /// `PIPESTATUS`: the statuses of the last foreground pipeline's commands.
 fn set_pipestatus(vp: &mut Vp, statuses: &[i32]) {
     let map = statuses
@@ -103,10 +122,55 @@ fn set_pipestatus(vp: &mut Vp, statuses: &[i32]) {
 /// (with function calls), a subshell, `((…))`, `[[ … ]]`, a pipeline of several
 /// commands (D1281).
 pub(crate) async fn check_failure(vp: &mut Vp, status: i32) -> R {
-    if status != 0 && !vp.no_errexit && vp.opts.get(SetOpt::Errexit) {
-        return Err(Unwind::Exit(status));
+    if status != 0 && !vp.no_errexit {
+        if !vp.traps.map.is_empty() {
+            Box::pin(trap::err_trap(vp, status)).await?;
+        }
+        if vp.opts.get(SetOpt::Errexit) {
+            return Err(Unwind::Exit(status));
+        }
     }
     Ok(status)
+}
+
+/// The DEBUG trap before a command, with `BASH_COMMAND` set to its text (D1283).
+async fn debug_trap(vp: &mut Vp, code: &Rc<Code>, cmd: &Command) -> Result<(), Unwind> {
+    if vp.in_trap.is_some() || vp.traps.action(TrapKey::Debug).is_none_or(|a| a.is_empty()) {
+        return Ok(());
+    }
+    let text = command_text(code, cmd);
+    vp.vars.entry("BASH_COMMAND").set(text);
+    vp.line = code.line(cmd.span.start);
+    trap::run_trap(vp, TrapKey::Debug).await
+}
+
+/// A command's text for `BASH_COMMAND`: its source with blanks collapsed (bash prints
+/// it from the tree; this is close for the commands agents write).
+fn command_text(code: &Rc<Code>, cmd: &Command) -> Vec<u8> {
+    let text = code.ast.text(cmd.span);
+    let text = match &cmd.kind {
+        // The header only: `for i in 1 2`, `case x in `.
+        CommandKind::For(_) => text.split([';', '\n']).next().unwrap_or(text).trim_end(),
+        CommandKind::Case(_) => text
+            .find(" in")
+            .and_then(|i| text.get(..i + 4))
+            .unwrap_or(text),
+        _ => text,
+    };
+    let mut out = Vec::with_capacity(text.len());
+    let mut blank = false;
+    for b in text.bytes() {
+        if b == b' ' || b == b'\t' {
+            if !blank {
+                out.push(b' ');
+            }
+            blank = true;
+        } else {
+            out.push(b);
+            blank = false;
+        }
+    }
+    out
 }
 
 async fn run_pipeline(vp: &mut Vp, code: &Rc<Code>, p: &Pipeline) -> R {
@@ -170,6 +234,9 @@ async fn run_pipeline_stages(vp: &mut Vp, code: &Rc<Code>, p: &Pipeline) -> R {
         statuses.push(r?);
     }
     let last = statuses.last().copied().unwrap_or(0);
+    if let Some(stage) = p.stages.last() {
+        vp.line = code.line(code.ast.cmd(stage.cmd).span.start);
+    }
     // `set -o pipefail`: the last command that failed decides.
     let status = if vp.opts.get(SetOpt::Pipefail) {
         statuses
@@ -214,7 +281,8 @@ pub(crate) fn spawn_sub(sub: Vp, code: Rc<Code>, body: Body) -> Join<i32> {
             Body::Stage(c) => run_command_unchecked(&mut sub, &code, c).await,
         };
         let last = sub.status;
-        r.unwrap_or_else(|u| u.status(last))
+        let status = r.unwrap_or_else(|u| u.status(last));
+        Box::pin(trap::exit_trap(&mut sub, status)).await
     })
 }
 
@@ -241,9 +309,14 @@ fn run_command_with<'a>(
     id: CmdId,
     check: bool,
 ) -> LocalBoxFuture<'a, R> {
+    // Keep this body lean: its poll frame is on the stack once per nesting level
+    // (D1059). Traps and errexit go through the boxed helpers below.
     Box::pin(async move {
         safepoint(&vp.core.sched).await;
         let cmd = code.ast.cmd(id);
+        if let Some(f) = before_command(vp, code, cmd) {
+            f.await?;
+        }
         let status = match &cmd.kind {
             CommandKind::Simple(s) => run_simple(vp, code, cmd, s).await?,
             CommandKind::Select(_) | CommandKind::Cond(_) | CommandKind::Coproc(_) => {
@@ -253,23 +326,73 @@ fn run_command_with<'a>(
             _ if cmd.redirects.is_empty() => run_compound(vp, code, cmd).await?,
             _ => Box::pin(with_redirects(vp, code, cmd)).await?,
         };
-        // Compound commands other than these fail only through a command inside them,
-        // which errexit has seen already (D1281); `PIPESTATUS` follows the same
-        // commands.
-        if matches!(
+        match after_command(vp, code, cmd, status, check) {
+            Some(f) => f.await,
+            None => Ok(status),
+        }
+    })
+}
+
+/// Before a command: pending signals, the DEBUG trap (D1283, D1284).
+fn before_command<'a>(
+    vp: &'a mut Vp,
+    code: &'a Rc<Code>,
+    cmd: &'a Command,
+) -> Option<LocalBoxFuture<'a, Result<(), Unwind>>> {
+    let signals = vp.top && vp.core.sched.has_signals();
+    let debug = !vp.traps.map.is_empty()
+        && matches!(
             cmd.kind,
             CommandKind::Simple(_)
-                | CommandKind::Subshell(_)
                 | CommandKind::Arith(_)
                 | CommandKind::Cond(_)
-        ) {
-            set_pipestatus(vp, &[status]);
-            if check {
-                return check_failure(vp, status).await;
-            }
+                | CommandKind::Case(_)
+        );
+    if !signals && !debug {
+        return None;
+    }
+    Some(Box::pin(async move {
+        if signals {
+            trap::take_signals(vp).await?;
         }
-        Ok(status)
-    })
+        if debug {
+            debug_trap(vp, code, cmd).await?;
+        }
+        Ok(())
+    }))
+}
+
+/// After a command: `PIPESTATUS`, then errexit and the ERR trap. Compound commands
+/// other than these fail only through a command inside them, which errexit has seen
+/// already (D1281).
+fn after_command<'a>(
+    vp: &'a mut Vp,
+    code: &'a Rc<Code>,
+    cmd: &'a Command,
+    status: i32,
+    check: bool,
+) -> Option<LocalBoxFuture<'a, R>> {
+    if !matches!(
+        cmd.kind,
+        CommandKind::Simple(_)
+            | CommandKind::Subshell(_)
+            | CommandKind::Arith(_)
+            | CommandKind::Cond(_)
+    ) {
+        return None;
+    }
+    set_pipestatus(vp, &[status]);
+    if !check || status == 0 || vp.no_errexit {
+        return None;
+    }
+    // `$LINENO` in the ERR trap: this command's line, not the last line a function it
+    // called ran; `$BASH_COMMAND` its text.
+    vp.line = code.line(cmd.span.start);
+    if vp.traps.action(TrapKey::Err).is_some() {
+        let text = command_text(code, cmd);
+        vp.vars.entry("BASH_COMMAND").set(text);
+    }
+    Some(Box::pin(check_failure(vp, status)))
 }
 
 fn compound_name(kind: &CommandKind) -> &'static str {
@@ -296,11 +419,14 @@ async fn with_redirects(vp: &mut Vp, code: &Rc<Code>, cmd: &Command) -> R {
         None
     } else {
         let saved = vp.fds.clone();
+        vp.line = code.line(cmd.redirects[0].span.start);
         match Box::pin(apply_redirects(vp, code, &cmd.redirects)).await {
             Ok(true) => {}
             Ok(false) => {
                 vp.fds = saved;
-                return Ok(1);
+                // The compound command failed itself: errexit and ERR see it (D1281).
+                set_pipestatus(vp, &[1]);
+                return check_failure(vp, 1).await;
             }
             Err(u) => {
                 vp.fds = saved;
@@ -340,7 +466,7 @@ fn run_compound<'a>(vp: &'a mut Vp, code: &'a Rc<Code>, cmd: &'a Command) -> Loc
         CommandKind::Case(c) => Box::pin(run_case(vp, code, cmd, c)),
         CommandKind::Arith(w) => Box::pin(async move {
             vp.line = code.line(cmd.span.start);
-            match arith_command(vp, code, w, "((: ").await? {
+            match arith_command(vp, code, w, "((: ", false).await? {
                 Some(v) => Ok(i32::from(v == 0)),
                 None => Ok(1),
             }
@@ -467,7 +593,7 @@ async fn run_for(vp: &mut Vp, code: &Rc<Code>, cmd: &Command, f: &psh_syntax::Fo
         None => vp.args.clone(),
     };
     vp.loops += 1;
-    let r = run_for_items(vp, code, &name, items, f.body).await;
+    let r = run_for_items(vp, code, &name, items, f.body, cmd).await;
     vp.loops -= 1;
     r
 }
@@ -478,10 +604,18 @@ async fn run_for_items(
     name: &str,
     items: Vec<Vec<u8>>,
     body: ListId,
+    cmd: &Command,
 ) -> R {
     let mut status = 0;
     for item in items {
         safepoint(&vp.core.sched).await;
+        // The DEBUG trap and `set -x` see the loop header on every iteration.
+        if !vp.traps.map.is_empty() {
+            Box::pin(debug_trap(vp, code, cmd)).await?;
+        }
+        if vp.opts.get(SetOpt::Xtrace) {
+            builtins::set::xtrace(vp, &command_text(code, cmd)).await;
+        }
         if vp.vars.get(name).is_some_and(|v| v.nameref) {
             // A nameref loop variable refers to each item in turn.
             vp.vars.entry(name).set(item);
@@ -503,13 +637,16 @@ async fn run_for_items(
 }
 
 async fn run_arith_for(vp: &mut Vp, code: &Rc<Code>, f: &psh_syntax::ArithForCommand) -> R {
-    if arith_command(vp, code, &f.init, "((: ").await?.is_none() {
+    if arith_command(vp, code, &f.init, "((: ", true)
+        .await?
+        .is_none()
+    {
         return Ok(1);
     }
     let mut status = 0;
     loop {
         safepoint(&vp.core.sched).await;
-        match arith_command(vp, code, &f.cond, "((: ").await? {
+        match arith_command(vp, code, &f.cond, "((: ", true).await? {
             None => return Ok(1),
             // An empty condition is true.
             Some(0) if !f.cond.parts.is_empty() => return Ok(status),
@@ -524,7 +661,10 @@ async fn run_arith_for(vp: &mut Vp, code: &Rc<Code>, f: &psh_syntax::ArithForCom
                 status = vp.status;
             }
         }
-        if arith_command(vp, code, &f.step, "((: ").await?.is_none() {
+        if arith_command(vp, code, &f.step, "((: ", true)
+            .await?
+            .is_none()
+        {
             return Ok(1);
         }
     }
@@ -537,8 +677,18 @@ async fn arith_command(
     code: &Rc<Code>,
     w: &psh_syntax::Word,
     prefix: &str,
+    clause: bool,
 ) -> Result<Option<i64>, Unwind> {
     let (text, _) = Box::pin(expand::expand_single(vp, code, w, Ctx::Word)).await?;
+    if vp.opts.get(SetOpt::Xtrace) {
+        // `(( x ))`: the text as written between the parentheses; a clause of
+        // `for ((…))` trimmed.
+        let t: &[u8] = if clause { text.trim_ascii() } else { &text };
+        let mut line = b"(( ".to_vec();
+        line.extend_from_slice(t);
+        line.extend_from_slice(b" ))");
+        builtins::set::xtrace(vp, &line).await;
+    }
     match crate::arith::eval(vp, &text) {
         Ok(v) => Ok(Some(v)),
         Err(msg) => {
@@ -551,6 +701,10 @@ async fn arith_command(
 async fn run_case(vp: &mut Vp, code: &Rc<Code>, cmd: &Command, c: &psh_syntax::CaseCommand) -> R {
     vp.line = code.line(cmd.span.start);
     let (word, _) = Box::pin(expand::expand_single(vp, code, &c.word, Ctx::Word)).await?;
+    if vp.opts.get(SetOpt::Xtrace) {
+        let text = command_text(code, cmd);
+        builtins::set::xtrace(vp, text.trim_ascii_end()).await;
+    }
     let utf8 = vp.utf8();
     let mut status = 0;
     let mut i = 0;
@@ -617,7 +771,13 @@ async fn call_function(
         var.set(v);
         var.exported = true;
     }
-    let r = run_command(vp, &f.code, f.body).await;
+    let hidden = trap::enter_function(vp);
+    let mut r = run_command(vp, &f.code, f.body).await;
+    if let Some(t) = function_return(vp, &r, hidden)
+        && let Err(u) = t.await
+    {
+        r = Err(u);
+    }
     if let Some(frame) = vp.frames.pop() {
         for (n, old) in frame.saved.into_iter().rev() {
             match old {
@@ -636,6 +796,22 @@ async fn call_function(
         Err(Unwind::Break(_) | Unwind::Continue(_)) => Ok(vp.status),
         r => r,
     }
+}
+
+/// The RETURN trap after a function body (it sees the function's status in `$?`), and
+/// the traps the call hid come back (D1283).
+fn function_return<'a>(
+    vp: &'a mut Vp,
+    r: &R,
+    hidden: Option<trap::Hidden>,
+) -> Option<LocalBoxFuture<'a, Result<(), Unwind>>> {
+    if vp.traps.map.is_empty() && hidden.is_none() {
+        return None;
+    }
+    if let Ok(s) | Err(Unwind::Return(s)) = *r {
+        vp.status = s;
+    }
+    Some(Box::pin(trap::leave_function(vp, hidden)))
 }
 
 /// Expands a simple command: `Done` when there is nothing to run (assignments and
@@ -677,6 +853,11 @@ async fn prepare_simple(
                 let (v, st) = Box::pin(expand::assign_value(vp, code, w)).await?;
                 subst_status = st.or(subst_status);
                 if argv.is_empty() {
+                    if vp.opts.get(SetOpt::Xtrace) {
+                        let op: &[u8] = if a.append { b"+=" } else { b"=" };
+                        let line = builtins::set::xtrace_assign(name.as_bytes(), op, &v);
+                        builtins::set::xtrace(vp, &line).await;
+                    }
                     // Assigned at once: later assignments see earlier ones (`a=1 b=$a`).
                     let target = vp.resolve(&name).into_owned();
                     vp.prepare_value(&target, v, a.append)
@@ -758,8 +939,37 @@ fn run_simple<'a>(
         vp.line = code.line(cmd.span.start);
         let (argv, assigns) = match Box::pin(prepare_simple(vp, code, cmd, s)).await? {
             Prepared::Done(status) => return Ok(status),
-            Prepared::Run(argv, assigns) => (argv, assigns),
+            Prepared::Run(argv, assigns) => {
+                if vp.opts.get(SetOpt::Xtrace) {
+                    Box::pin(xtrace_command(vp, &assigns, &argv)).await;
+                }
+                (argv, assigns)
+            }
             Prepared::Decl(which, args, assigns) => {
+                if vp.opts.get(SetOpt::Xtrace) {
+                    let mut words = vec![code.ast.text(s.words[0].span).as_bytes().to_vec()];
+                    for a in &args {
+                        if let builtins::declare::DeclArg::Word(w)
+                        | builtins::declare::DeclArg::Assign { value: w, .. } = a
+                        {
+                            let mut word = Vec::new();
+                            if let builtins::declare::DeclArg::Assign { name, .. } = a {
+                                word.extend_from_slice(name);
+                                word.push(b'=');
+                            }
+                            word.extend_from_slice(w);
+                            words.push(word);
+                        }
+                    }
+                    Box::pin(xtrace_command(vp, &assigns, &words)).await;
+                    // The declaration's own assignments follow, as in bash.
+                    for a in &args {
+                        if let builtins::declare::DeclArg::Assign { name, value, .. } = a {
+                            let line = builtins::set::xtrace_assign(name, b"=", value);
+                            builtins::set::xtrace(vp, &line).await;
+                        }
+                    }
+                }
                 // Assignments in front of a declaration builtin last for it only.
                 let old: Vec<_> = assigns
                     .iter()
@@ -1299,6 +1509,8 @@ async fn subst(vp: &mut Vp, code: Rc<Code>, list: ListId) -> Result<(Vec<u8>, i3
     if !sub.opts.shopt(Shopt::InheritErrexit) && !sub.opts.get(SetOpt::Posix) {
         sub.opts.set(SetOpt::Errexit, false);
     }
+    // `set -x` shows one more `+` inside (D1285).
+    sub.xtrace_level += 1;
     let (r, w) = pipe::pipe();
     sub.fds.set(1, Rc::new(FdObj::PipeWrite(w)));
     let join = spawn_sub(sub, code, Body::List(list));

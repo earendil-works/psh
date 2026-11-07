@@ -163,6 +163,18 @@ impl ControlHandle {
         self.shared.wake_outer();
     }
 
+    /// Sends signal `sig` (Linux numbering, as `kill -l`) to the shell (D1284): at its
+    /// next safepoint the shell runs the trap for it, ignores it (`trap '' SIG`), or
+    /// takes the default action: the EXIT trap, then the run ends with `128+sig`. Unlike
+    /// `cancel`, it waits for the command running in the foreground to finish, as bash
+    /// does. For `kill` on the shell and for an embedder's own signal handling.
+    pub fn signal(&self, sig: i32) {
+        if (1..64).contains(&sig) {
+            self.shared.signals.fetch_or(1u64 << sig, Ordering::SeqCst);
+            self.shared.wake_outer();
+        }
+    }
+
     /// Stops at the next safepoint; `step` returns `Blocked` until `resume`.
     pub fn pause(&self) {
         self.shared.control.fetch_or(PAUSE, Ordering::SeqCst);
@@ -260,6 +272,10 @@ impl Shell {
             disabled: Default::default(),
             opts: options::Options::default(),
             no_errexit: false,
+            traps: Rc::new(Default::default()),
+            in_trap: None,
+            top: true,
+            xtrace_level: 1,
         };
         let mut vp = vp;
         options::sync_vars(&mut vp.vars, &vp.opts);
@@ -292,6 +308,7 @@ impl Shell {
     pub fn start(&mut self, script: Script) {
         assert!(self.main.is_none(), "a script is already running");
         self.shared.control.store(0, Ordering::SeqCst);
+        self.shared.signals.store(0, Ordering::SeqCst);
         let mut vp = self.vp.take().expect("shell state");
         self.before = Some(vp.clone());
         *self.core.msg_name.borrow_mut() = String::from_utf8_lossy(&script.arg0).into_owned();
@@ -387,8 +404,16 @@ impl Shell {
     }
 }
 
-/// The main vproc: parses and runs the script one top-level line at a time.
-async fn run_script(mut vp: Vp, source: Vec<u8>) -> (i32, Vp) {
+/// The main vproc: runs the script, then the EXIT trap (D1283).
+async fn run_script(vp: Vp, source: Vec<u8>) -> (i32, Vp) {
+    let (status, mut vp) = run_script_lines(vp, source).await;
+    let status = builtins::trap::exit_trap(&mut vp, status).await;
+    vp.status = status;
+    (status, vp)
+}
+
+/// Parses and runs the script one top-level line at a time.
+async fn run_script_lines(mut vp: Vp, source: Vec<u8>) -> (i32, Vp) {
     let lines = Rc::new(LineIndex::from_bytes(&source));
     let mut parser = Parser::from_bytes(&source, Options::default());
     loop {

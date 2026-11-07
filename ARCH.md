@@ -191,6 +191,12 @@ runtime in D005's sense: no runtime crate, no threads, the embedder steps and pa
   `((…))` and `[[ ]]`, and in `run_pipeline_stages` after multi-command pipelines;
   `Vp::no_errexit` suspends it in conditions, `&&`/`||` operands but the last and `!`
   pipelines. Pipeline stages run unchecked (`Body::Stage`).
+- **Traps and signals (D1283, D1284).** `Vp::traps`; EXIT runs when a (sub)shell ends,
+  ERR beside errexit, DEBUG/RETURN around commands and function calls. Signals to the
+  shell come in through `ControlHandle::signal(sig)` (Linux numbering): a pending mask
+  in `Shared`, taken by the shell's own vproc at its next safepoint (trap, ignore, or
+  the EXIT trap and `128+sig`). `kill` on the shell and the standalone driver's OS
+  handlers feed it (0006); `cancel` stays a forced TERM.
 - **Functions and scope (D1059).** Functions live in `Vp::funcs` (an `Rc` map shared
   with subshells until one changes it) as `(Rc<Code>, CmdId)`; lookup order is
   function, builtin, external. A call pushes a `Frame` that records the old value of

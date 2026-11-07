@@ -1327,3 +1327,46 @@ An unset parameter without an operator that handles it (`-`, `=`, `?`, `+`) is
 `${!x}` is `!x`); `$@`, `$*` and `${a[@]}` are exempt. Like `${x?}`, it ends the shell
 with 127 under `-c` and 1 otherwise, and with 1 under `-c` when errexit is on: that is
 what bash 5.3 does. Unset variables inside arithmetic are not checked yet (follow-up).
+
+## D1283: Traps
+date: 2026-11-07 · by: shapes · issue: 0028
+`Vp::traps` (an `Rc` shared until changed) maps EXIT, signals (Linux numbering, as bash
+on Linux lists them), DEBUG, ERR and RETURN to their action text; an empty action
+ignores the signal. Actions run in the vproc through the `eval` path with `$?` set and
+restored; a bare `exit` inside one keeps the status the trap was entered with. EXIT runs
+once when the shell or a subshell ends (also after errexit and fatal signals; `exit N`
+in it sets the status). ERR runs where errexit would look (D1281), whether or not `-e`
+is on, with `$LINENO` and `$BASH_COMMAND` of the failing command. DEBUG runs before
+simple commands, `((…))`, `[[ ]]`, `case` and each `for` iteration. A function call
+hides DEBUG and RETURN unless functrace, and ERR unless errtrace; they come back on
+return unless the function set its own, and RETURN runs as the function (or a sourced
+file) returns. Subshells keep their parent's traps for `trap` to list but do not run
+them, except ignored signals and, with errtrace/functrace, ERR/DEBUG/RETURN; the first
+`trap` in the subshell drops the parent's. No DEBUG or ERR trap fires inside a trap.
+Not done: extdebug's skip/return semantics, DEBUG in pipeline children, FUNCNAME.
+
+## D1284: Signals to the shell: the engine half
+date: 2026-11-07 · by: shapes · issue: 0028 (agreed with procs, 0006, via the coordinator)
+`ControlHandle::signal(sig)` (Linux numbering) sets a bit in an atomic pending mask in
+`sched::Shared` and wakes the embedder. The shell's own vproc (`Vp::top`, not subshells)
+takes pending signals at its next safepoint, before a command: a trap runs its action
+(`$?` kept); an ignored signal does nothing; otherwise the default action: signals that
+terminate end the shell with `128+n` after the EXIT trap (CHLD, CONT, STOP, TSTP, TTIN,
+TTOU, URG, WINCH do nothing). A foreground command finishes first, as in bash. `cancel`
+stays a forced TERM without traps. `start` clears pending signals. `Vp::
+signal_trap_ignored(sig)` tells spawn which signals children start ignored. Procs' half:
+`kill` on the shell (`$$`, 0, its group) sets the mask instead of signalling the host;
+the standalone `psh` forwards its OS signals (mapped to Linux numbers) to
+`ControlHandle::signal`; `wait` and foreground waits wake on pending signals.
+
+## D1285: xtrace
+date: 2026-11-07 · by: shapes · issue: 0028
+`set -x` writes `PS4` (expanded like a double-quoted string, its first char repeated once
+more per level of command substitution and `eval`) and the traced line to
+`BASH_XTRACEFD` (if it names an open fd) or stderr: simple commands after expansion, with
+their prefix assignments on lines of their own; assignment-only commands one line per
+assignment (`x=` for an empty value); declaration builtins and then their assignments;
+`(( … ))`, each clause of `for ((…))`, `case WORD in` and the `for` header on each
+iteration. Words are quoted as bash does: as is when safe, in single quotes when they
+contain blanks or shell metacharacters (`#`/`~` only at the start, `~` also after `=`
+or `:`), `$'…'` for control characters and bytes that are not UTF-8.

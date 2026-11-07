@@ -84,7 +84,11 @@ pub(super) async fn eval(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     let mut text = rest.join(&b' ');
     text.push(b'\n');
     let line_base = vp.line.saturating_sub(1);
-    run_text(vp, &text, line_base, Origin::Eval).await
+    // `set -x` shows one more `+` inside eval (D1285).
+    vp.xtrace_level += 1;
+    let r = run_text(vp, &text, line_base, Origin::Eval).await;
+    vp.xtrace_level -= 1;
+    r
 }
 
 /// `source FILE [ARGS]` and `. FILE [ARGS]`.
@@ -155,10 +159,18 @@ pub(super) async fn source(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     if let Some(a) = saved_args {
         vp.args = a;
     }
-    match r {
+    let r = match r {
         Err(Unwind::Return(st)) => Ok(st),
         r => r,
+    };
+    // The RETURN trap runs when a sourced file finishes (D1283).
+    if let Ok(st) = r
+        && !vp.traps.map.is_empty()
+    {
+        vp.status = st;
+        Box::pin(super::trap::run_trap(vp, super::trap::TrapKey::Return)).await?;
     }
+    r
 }
 
 /// The file `source` reads: a name with a slash as it is; else the first regular file

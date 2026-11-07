@@ -62,6 +62,15 @@ implementation. Port goawk (MIT) to Rust (D018); F mode until conformant, then S
   - Land in parts: (1) lexer+parser+resolver with parse tests over the suites' programs,
     (2) VM and values, (3) I/O, getline, printf, builtins, (4) the vendored suites as an
     L4 leg with a ratchet, plus GNU/BSD L4 cases.
+- Part 1: `UtilCtx::spawn_shell` (UTIL_API_VERSION 3, D1191, coordinator-approved),
+  outside this issue's touches: `crates/psh-engine/src/util.rs` (the API, tests with the
+  test host: fresh state, prefix assignments, pipes beyond the pipe capacity, an external
+  on the pipes, drop = cancel), `exec.rs` (`run_in_shell`'s reset moved into
+  `start_afresh`, shared), `sched.rs` (`spawn_with_id`, to cancel the task on drop), one
+  sentence in ARCH.md "Interface". For sed's `e` and find/xargs: `ctx.spawn_shell(script,
+  ShellStdio { stdin: ShellIo::Pipe|Inherit, stdout: ... })`, then `child.stdin` /
+  `child.stdout` (`Option<UtilFile>`, take/drop to close), `child.wait().await`. psh-utils
+  tests come with awk's `system()`.
 
 ## Follow-ups
 

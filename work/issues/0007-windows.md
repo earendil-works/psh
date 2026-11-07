@@ -408,7 +408,21 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
   through `RunKiller::leftovers` after the grace period. Host test; L4 on Windows runs
   with it (433 cases; the windows ratchet the files agent keeps covers the others).
 
+### 2026-11-07 Review of tests/utils/expected-failures.windows.txt (27 cases)
+- Ran all 27 in the VM with `--diff`. 22 are file symlinks without Developer Mode: `ln`
+  and `cp -s` fail with "Permission denied", create nothing, and what follows fails
+  visibly (clear errors, no wrong data). 5 are directory links as junctions: they work
+  as links, but their stored target is absolute (`<case>\\old`). Two are behavior
+  differences: `chmod -v/-c` (11) prints "changed ... to 0755" although Windows keeps no
+  x bit and a later `stat` shows 0644; `rm` in a read-only directory (13) succeeds.
+  D1919: x bits come from extension/`#!` only, not tracked; read-only directories are
+  not emulated. For files (0015): `chmod -v/-c` should report the mode `stat` shows
+  afterwards; `ln -s` could print the host's reason (Developer Mode) instead of the bare
+  "Permission denied".
+
 ## Follow-ups
+- For files (0015): `chmod -v/-c` reports the mode after the change as `stat` sees it
+  (D1919); `ln -s` shows why a file symlink failed on Windows.
 - psh-spec on Windows for the oils, brush and agent layers: triage the differences into
   `expected-failures.windows.txt` (and normalization rules where a difference is not
   psh's), then add them to the `spec` leg.

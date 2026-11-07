@@ -2134,3 +2134,20 @@ ctrl-break to the run's jobs, termination after the grace period) any job with a
 process left after the grace period plus a second is the case's leak: it is killed and
 reported, and the case fails. The jobs see grandchildren that left their parent, which
 the Unix group check sees only while they stay in the group.
+
+## D1919: Windows execute bits and read-only directories are not emulated
+date: 2026-11-07 · by: windows · issue: 0007
+On Windows a file's execute bits come from the file itself: set for directories, files
+with a `PATHEXT` extension and `#!` scripts (D1076), as the lookup decides what runs.
+`chmod +x`/`-x` changes nothing there and psh keeps no side record of them (an alternate
+data stream or a table would be invisible to every other program, lost by copies,
+archives and git, and could disagree with what actually runs). `chmod` on a directory
+sets its read-only attribute, which Windows does not enforce for the directory's
+entries, and psh does not emulate Unix's protection either (only psh would honor it).
+Utilities that report modes should report what `stat` shows afterwards, so a request
+Windows cannot keep is not described as done. Reviewed against
+`tests/utils/expected-failures.windows.txt` (27 cases): file symlinks without Developer
+Mode fail with "Permission denied" and nothing is created; directory links are junctions
+with absolute targets that work as links; the two behavior differences are `chmod -v/-c`
+reporting x-bit changes that do not stick (utility follow-up) and `rm` succeeding in a
+read-only directory (this decision).

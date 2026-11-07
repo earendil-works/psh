@@ -167,12 +167,14 @@ fn choices() -> BTreeMap<String, String> {
         .collect()
 }
 
-/// The command and the files of a case.
+type Files = Vec<(String, Vec<u8>)>;
+
+/// The command, stdin and files of a case.
 fn case(
     id: &str,
     ota_files: &[(String, Vec<u8>)],
     goawk: &[(Vec<u8>, Vec<u8>)],
-) -> (String, Vec<u8>, Vec<(String, Vec<u8>)>) {
+) -> (String, Vec<u8>, Files) {
     if let Some(p) = id.strip_prefix("onetrueawk/") {
         let input = if p.starts_with("t.") {
             "test.data"

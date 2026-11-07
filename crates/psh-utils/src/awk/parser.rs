@@ -511,24 +511,23 @@ impl Parser<'_> {
             // `1 && x = 1`: assignments bind looser than binary operators, but
             // onetrueawk, gawk and mawk take this for logical, match and comparison
             // operators (goawk's partial backtracking).
-            if let Expr::Binary(l, bop, r) = expr {
-                if r.is_lvalue()
-                    && matches!(
-                        bop,
-                        BinOp::And
-                            | BinOp::Or
-                            | BinOp::Match
-                            | BinOp::NotMatch
-                            | BinOp::Eq
-                            | BinOp::Ne
-                            | BinOp::Lt
-                            | BinOp::Le
-                            | BinOp::Gt
-                            | BinOp::Ge
-                    )
-                {
-                    return Ok(Expr::Binary(l, bop, Box::new(make_assign(*r, op, right))));
-                }
+            if let Expr::Binary(l, bop, r) = expr
+                && r.is_lvalue()
+                && matches!(
+                    bop,
+                    BinOp::And
+                        | BinOp::Or
+                        | BinOp::Match
+                        | BinOp::NotMatch
+                        | BinOp::Eq
+                        | BinOp::Ne
+                        | BinOp::Lt
+                        | BinOp::Le
+                        | BinOp::Gt
+                        | BinOp::Ge
+                )
+            {
+                return Ok(Expr::Binary(l, bop, Box::new(make_assign(*r, op, right))));
             }
             return Err(ParseError {
                 pos: left_pos,

@@ -84,7 +84,11 @@ fn format(out: &mut Vec<u8>, fmt: &[u8], tm: &Tm, t: i64) {
             conv = fmt[i];
             i += 1;
         }
-        let hour12 = if tm.hour % 12 == 0 { 12 } else { tm.hour % 12 };
+        let hour12 = if tm.hour.is_multiple_of(12) {
+            12
+        } else {
+            tm.hour % 12
+        };
         let s: String = match conv {
             b'a' => DAYS[tm.wday as usize][..3].into(),
             b'A' => DAYS[tm.wday as usize].into(),

@@ -41,6 +41,8 @@ pub const SPEC: Spec = Spec {
         both('F', "field-separator").value(),
         both('f', "file").value(),
         both('v', "assign").value(),
+        // gawk: a library source file, read before the program.
+        both('i', "include").value(),
     ],
     posix_order: true,
 };
@@ -48,7 +50,7 @@ pub const SPEC: Spec = Spec {
 /// A program and where its lines come from, for messages.
 struct Source {
     text: Vec<u8>,
-    /// (first line in `text`, name) per `-f` file; empty for a command-line program.
+    /// (first line in `text`, name) per `-i`/`-f` file and the command-line program.
     files: Vec<(u32, String)>,
 }
 
@@ -78,30 +80,32 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
     let mut fs = None;
     let mut assigns = Vec::new();
     let mut files = Vec::new();
+    let mut includes = Vec::new();
     for (key, value) in p.iter(&SPEC) {
         let value = value.unwrap_or_default().to_vec();
         match key.as_str() {
             "field-separator" => fs = Some(value),
             "assign" => assigns.push(value),
+            "include" => includes.push(value),
             _ => files.push(value),
         }
     }
 
-    // The program: the -f files in order, else the first operand.
-    let source = if files.is_empty() {
+    // The program: the -i files, then the -f files in order, else the first operand.
+    let program = if files.is_empty() {
         let Some(text) = operands.next() else {
             ctx.error_raw(b"usage: awk [-F fs][-v var=value][prog | -f progfile][file ...]\n")
                 .await;
             return 2;
         };
-        Source {
-            text,
-            files: Vec::new(),
-        }
+        Some(text)
     } else {
+        None
+    };
+    let source = {
         let mut text = Vec::new();
         let mut names = Vec::new();
-        for f in &files {
+        for f in includes.iter().chain(&files) {
             let line = text.iter().filter(|&&b| b == b'\n').count() as u32 + 1;
             let name = String::from_utf8_lossy(f).into_owned();
             let data = if f.as_slice() == b"-" {
@@ -134,6 +138,11 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
                 }
             }
             names.push((line, name));
+        }
+        if let Some(p) = program {
+            let line = text.iter().filter(|&&b| b == b'\n').count() as u32 + 1;
+            names.push((line, "cmd. line".into()));
+            text.extend_from_slice(&p);
         }
         Source { text, files: names }
     };

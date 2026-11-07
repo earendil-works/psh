@@ -263,7 +263,7 @@ impl<'c, 'v> Interp<'c, 'v> {
             utf8: self.utf8,
             to_str: &to_str,
         };
-        printf::sprintf(&env, fmt, args).or_else(|e| fatal(e))
+        printf::sprintf(&env, fmt, args).or_else(fatal)
     }
 
     fn compare(&self, l: &Value, r: &Value) -> Option<std::cmp::Ordering> {
@@ -407,10 +407,9 @@ impl<'c, 'v> Interp<'c, 'v> {
         use Special::*;
         if let Some(i) = assigned_slot(sp)
             && let Some(v) = &self.assigned[i]
+            && (sp != Nf || self.fields_ok)
         {
-            if sp != Nf || self.fields_ok {
-                return v.clone();
-            }
+            return v.clone();
         }
         match sp {
             Nf => {
@@ -1118,11 +1117,11 @@ impl<'c, 'v> Interp<'c, 'v> {
         if let Some(out) = self.outputs.remove(name) {
             return out.close().await;
         }
-        if let Some(mut r) = self.cmds_in.remove(name) {
-            if let Src::Cmd(c) = &mut r.src {
-                c.stdout = None;
-                return c.wait().await;
-            }
+        if let Some(mut r) = self.cmds_in.remove(name)
+            && let Src::Cmd(c) = &mut r.src
+        {
+            c.stdout = None;
+            return c.wait().await;
         }
         if self.files_in.remove(name).is_some() {
             return 0;

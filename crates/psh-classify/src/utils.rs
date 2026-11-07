@@ -239,8 +239,8 @@ pub static UTILITIES: &[Utility] = &[
     v(
         "awk",
         Read,
-        "Ffv",
-        &["--field-separator", "--file", "--assign"],
+        "Ffiv",
+        &["--field-separator", "--file", "--assign", "--include"],
         Script("f"),
         &[
             ("-f", Opaque),
@@ -252,10 +252,15 @@ pub static UTILITIES: &[Utility] = &[
     v(
         "gawk",
         Read,
-        "Ffv",
-        &["--field-separator", "--file", "--assign"],
+        "Ffiv",
+        &["--field-separator", "--file", "--assign", "--include"],
         Script("f"),
-        &[("-f", Opaque), ("-i", Opaque)],
+        &[
+            ("-f", Opaque),
+            ("--file", Opaque),
+            ("-i", Opaque),
+            ("--include", Opaque),
+        ],
     ),
     v(
         "cut",

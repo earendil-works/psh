@@ -26,6 +26,7 @@ extern crate alloc;
 mod category;
 mod rules;
 mod sed;
+mod sqlite;
 pub mod utils;
 mod walk;
 

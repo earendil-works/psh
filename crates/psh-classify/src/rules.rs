@@ -213,6 +213,26 @@ pub(crate) fn classify(name: &str, args: &[Arg]) -> Outcome {
             o.reads.extend(files.map(|i| path(args, i)));
             o
         }
+        "sqlite3" => {
+            let vals: Vec<Option<&str>> = args[1..].iter().map(|a| a.value.as_deref()).collect();
+            match crate::sqlite::classify(&vals) {
+                Some((c, file)) => {
+                    let mut o = Outcome::of(c);
+                    if let Some(f) = file {
+                        let p = path(args, f + 1);
+                        if c == Category::Mutate {
+                            o.writes.push(p);
+                        } else {
+                            o.reads.push(p);
+                        }
+                    }
+                    o
+                }
+                None => Outcome::unknown(
+                    "sqlite3 runs SQL that is not literal, or that can run programs or write other files",
+                ),
+            }
+        }
         "sips" => {
             let gets = |v: &str| {
                 matches!(

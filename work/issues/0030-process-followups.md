@@ -1,7 +1,7 @@
 # 0030: Process follow-ups: run-in-shell, host info, signal robustness
 
-status: open
-agent: -
+status: in-progress
+agent: procs
 branch: issue/0030-process-followups
 depends-on: 0006
 touches: crates/psh-os/, crates/psh-engine/src/{host.rs,exec.rs (run_external only),jobs.rs}, crates/psh-spec/ (leak check), tests/process/

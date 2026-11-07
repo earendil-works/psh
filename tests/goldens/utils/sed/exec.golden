@@ -1,0 +1,63 @@
+# Goldens for tests/utils/sed/exec.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: e with a command prints its output first
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|a
+|b
+
+=== 1: e runs the pattern space
+status: 0
+bash-n: 0
+--- stdout
+|x
+|b
+|1
+|2
+
+=== 2: the e flag of s
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|b
+
+=== 3: e with -n and i
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|ins
+|hi
+|a
+
+=== 4: e takes the rest of the line
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|there
+|a
+
+=== 5: e sees exported variables, and its status does not matter
+status: 0
+bash-n: 0
+--- stdout
+|5
+|a
+|a
+|0
+
+=== 6: e when editing in place
+status: 0
+bash-n: 0
+--- stdout
+|hi
+|a
+--- file f
+|hi
+|a

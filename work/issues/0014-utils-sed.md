@@ -53,9 +53,12 @@ decisions: D1140–D1149
 - Ratchets: three agent and three oils/brush macOS entries pass now (they ran BSD sed).
 - just-bash's fixtures: not used (the checkout is gone; GNU itself was the oracle).
 
+### 2026-11-08: `e` in-process
+- `e command`, `e` and `s///e` run through `UtilCtx::spawn_shell` (D1142), probed
+  against GNU (`work/scratch/0014/p6.txt`); L4 `tests/utils/sed/exec.test.sh` (7 cases).
+
 ## Follow-ups
-- `e` (command and `s///e` flag) and `--debug` fall through to a real sed; in-process
-  `e` would need `ctx.spawn` with the shell.
+- `--debug` falls through to a real sed.
 - GNU's full `--help`/usage text is not reproduced (only its first line).
 - just-bash's recorded fixtures (acceptance item): not reused; GNU was probed directly.
 - `--follow-symlinks` resolves through `ctx.canonicalize`; untested on Windows.
@@ -64,4 +67,4 @@ decisions: D1140–D1149
 - `sed` in-process (mode S) with GNU sed 4.9's language, options and messages (D1140)
   and both `-i` forms by D016's rule (D1141). 98 L4 cases (GNU and BSD goldens) pass
   natively and on wasm; 6 macOS ratchet entries removed.
-- Known gaps: the `e` command falls through; no GNU `--help` text.
+- Known gaps: no GNU `--help` text; `--debug` falls through.

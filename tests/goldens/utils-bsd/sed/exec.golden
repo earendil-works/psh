@@ -1,0 +1,66 @@
+# Goldens for tests/utils/sed/exec.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: e with a command prints its output first
+status: 1
+bash-n: 0
+--- stderr
+|sed: 1: "1e echo hi
+|": invalid command code e
+
+=== 1: e runs the pattern space
+status: 1
+bash-n: 0
+--- stderr
+|sed: 1: "1e
+|": invalid command code e
+|sed: 1: "e
+|": invalid command code e
+
+=== 2: the e flag of s
+status: 1
+bash-n: 0
+--- stderr
+|sed: 1: "s/a/echo hi/e
+|": bad flag in substitute command: 'e'
+|sed: 1: "s/a/echo hi/e
+|": bad flag in substitute command: 'e'
+
+=== 3: e with -n and i
+status: 1
+bash-n: 0
+--- stderr
+|sed: 1: "1e echo hi
+|": invalid command code e
+|sed: 1: "ins
+|": command i expects \ followed by text
+
+=== 4: e takes the rest of the line
+status: 1
+bash-n: 0
+--- stderr
+|sed: 1: "1e echo hi; echo there
+|": invalid command code e
+
+=== 5: e sees exported variables, and its status does not matter
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: 1: "e echo $X
+|": invalid command code e
+|sed: 1: "1e false
+|": invalid command code e
+
+=== 6: e when editing in place
+status: 0
+bash-n: 0
+--- stdout
+|a
+--- stderr
+|sed: 1: "f
+|": invalid command code f
+--- file f
+|a

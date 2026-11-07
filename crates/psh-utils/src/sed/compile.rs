@@ -78,6 +78,8 @@ pub struct Subst {
     pub nth: usize,
     pub print: bool,
     pub write: Option<usize>,
+    /// `e`: run the result as a shell command; its output is the pattern space.
+    pub eval: bool,
 }
 
 #[derive(Debug)]
@@ -115,6 +117,9 @@ pub enum Kind {
     WriteFirst(usize),
     Exchange,
     Translate(Vec<(Vec<u8>, Vec<u8>)>),
+    /// `e [command]`: the command's output is printed; without one, the pattern space is
+    /// the command and its output replaces it.
+    Exec(Option<Vec<u8>>),
     Zap,
     FileName,
     Nop,
@@ -146,8 +151,6 @@ pub enum Error {
     At(String),
     /// `sed: msg` (labels).
     Plain(String),
-    /// The `e` command or flag: run by the real program, if there is one.
-    Unsupported(&'static str),
 }
 
 pub fn compile(src: &Source, flags: Flags) -> Result<Program, Error> {
@@ -204,7 +207,6 @@ pub fn compile(src: &Source, flags: Flags) -> Result<Program, Error> {
             };
             return Err(Error::At(format!("{at}: {msg}")));
         }
-        Err(E::Unsupported(what)) => return Err(Error::Unsupported(what)),
     }
     if !p.blocks.is_empty() {
         let at = match src.pieces.last().map(|p| &p.1) {
@@ -240,7 +242,6 @@ pub fn compile(src: &Source, flags: Flags) -> Result<Program, Error> {
 enum E {
     At(usize, String),
     AtEnd(String),
-    Unsupported(&'static str),
 }
 
 type R<T> = Result<T, E>;
@@ -436,7 +437,22 @@ impl P<'_> {
             }
             b's' => Kind::Subst(Box::new(self.subst()?)),
             b'y' => Kind::Translate(self.translate()?),
-            b'e' => return Err(E::Unsupported("the e command")),
+            b'e' => {
+                if self.flags.sandbox {
+                    return at(self.i, "e/r/w commands disabled in sandbox mode");
+                }
+                // The rest of the line is the command.
+                self.skip_spaces();
+                let start = self.i;
+                while self.peek().is_some_and(|c| c != b'\n') {
+                    self.i += 1;
+                }
+                let cmd = self.s[start..self.i].to_vec();
+                if self.peek() == Some(b'\n') {
+                    self.i += 1;
+                }
+                Kind::Exec((!cmd.is_empty()).then_some(cmd))
+            }
             b'v' => {
                 // `v [version]`: psh is new enough.
                 while self
@@ -709,6 +725,7 @@ impl P<'_> {
             nth: 0,
             print: false,
             write: None,
+            eval: false,
         };
         let (mut icase, mut multi) = (false, false);
         while let Some(c) = self.peek() {
@@ -735,7 +752,13 @@ impl P<'_> {
                     self.i += 1;
                     multi = true;
                 }
-                b'e' => return Err(E::Unsupported("the e flag of s")),
+                b'e' => {
+                    self.i += 1;
+                    if self.flags.sandbox {
+                        return at(self.i, "e/r/w commands disabled in sandbox mode");
+                    }
+                    s.eval = true;
+                }
                 b'0'..=b'9' => {
                     if s.nth != 0 {
                         self.number();

@@ -1,8 +1,9 @@
 //! `sed [-nEsz] [-i[SUFFIX]] [-l N] [-e SCRIPT]... [-f FILE]... [SCRIPT] [FILE...]`:
 //! GNU sed's language and options (D1140), with both forms of `-i`: GNU's
 //! `-i[SUFFIX]` and BSD's `-i SUFFIX`, told apart by D016's rule (D1141). Regexes are
-//! psh-regex's POSIX BRE/ERE with GNU's extensions. The `e` command and `--debug`
-//! fall through to a real sed. Written for psh after the GNU sed manual and POSIX.
+//! psh-regex's POSIX BRE/ERE with GNU's extensions; `e` runs its commands in a fresh
+//! psh shell (`sh -c`). `--debug` falls through to a real sed. Written for psh after
+//! the GNU sed manual and POSIX.
 
 mod compile;
 mod exec;
@@ -83,7 +84,7 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
             return 1;
         }
     };
-    run_parsed(ctx, argv, o, utf8).await
+    run_parsed(ctx, o, utf8).await
 }
 
 async fn fall_through(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>], what: &str) -> i32 {
@@ -305,10 +306,7 @@ fn bsd_suffix(
             utf8,
             ..Flags::default()
         };
-        !matches!(
-            compile::compile(&src, flags),
-            Err(Error::At(_) | Error::Plain(_))
-        )
+        compile::compile(&src, flags).is_ok()
     };
     if parses(word) && !after.is_empty() {
         return false;
@@ -316,7 +314,7 @@ fn bsd_suffix(
     dotted && after.first().is_some_and(|s| parses(s))
 }
 
-async fn run_parsed(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>], mut o: Opts, utf8: bool) -> i32 {
+async fn run_parsed(ctx: &mut UtilCtx<'_>, mut o: Opts, utf8: bool) -> i32 {
     if o.scripts.is_empty() {
         if o.operands.is_empty() {
             ctx.error_raw(format!("{USAGE}\n").as_bytes()).await;
@@ -373,7 +371,6 @@ async fn run_parsed(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>], mut o: Opts, utf8: 
             ctx.error(&msg).await;
             return 4;
         }
-        Err(Error::Unsupported(what)) => return fall_through(ctx, argv, what).await,
     };
     let set = Settings {
         quiet: o.quiet || prog.quiet,

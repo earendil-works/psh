@@ -68,6 +68,10 @@ fn commands() {
     check("sed 's/x*/-/g'", "abc\n", "-a-b-c-\n");
     check("sed -s -n '$p' /tmp/f /tmp/f", "", "three\nthree\n");
     check("sed -z 's/^/>/'", "a\0b\0", ">a\0>b\0");
+    // e runs shell commands (a fresh shell, as sh -c).
+    check("sed '1e echo hi' /tmp/f", "", "hi\none\ntwo\nthree\n");
+    check("sed 's/.*/echo [&]/e'", "x\n", "[x]\n");
+    check("sed e", "echo a; echo b\n", "a\nb\n");
 }
 
 #[test]

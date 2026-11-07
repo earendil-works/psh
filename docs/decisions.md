@@ -2632,3 +2632,11 @@ to ignore) closes every descriptor the child does not keep (`proc_pidinfo` on ma
 does, and makes its in-process cases' pipes through `psh_os::unix::pipe`). A stress run
 (two full suites and four loops of brush kill/signals at once, 200 rounds) went from
 about 9 spurious timeouts to none.
+
+## D1142: sed's `e` runs in a fresh psh shell
+date: 2026-11-08 · by: parser · issue: 0014
+`e command`, bare `e` and `s///e` run their command through `UtilCtx::spawn_shell`
+(D1191: `sh -c` semantics, exported variables only) with an empty stdin and the
+output captured: `e command` prints it at once; bare `e` and the `e` flag replace the
+pattern space with it, less one trailing newline; the command's status is ignored,
+as in GNU. They no longer fall through to a real sed (D1140); `--sandbox` rejects them.

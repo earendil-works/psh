@@ -6,7 +6,7 @@ use std::io;
 use std::rc::Rc;
 
 use psh_engine::host::{OpenOptions, error_text};
-use psh_engine::util::{UtilCtx, UtilFile};
+use psh_engine::util::{ShellIo, ShellStdio, UtilCtx, UtilFile};
 use psh_regex::{ExecOptions, Regex};
 
 use super::compile::{Addr, Addr2, CaseOp, Kind, Program, Repl, Subst, char_len};
@@ -901,6 +901,10 @@ impl<'p> Run<'p> {
             Kind::Subst(s) => {
                 if self.subst(st, s)? {
                     self.tflag = true;
+                    if s.eval {
+                        let ps = std::mem::take(&mut self.ps);
+                        self.ps = shell_output(ctx, &ps, true).await;
+                    }
                     if s.print {
                         let ps = std::mem::take(&mut self.ps);
                         self.emit_line(&ps, self.ps_nl);
@@ -912,6 +916,18 @@ impl<'p> Run<'p> {
                         self.ps = ps;
                     }
                 }
+                Flow::Next
+            }
+            Kind::Exec(Some(cmd)) => {
+                let out = shell_output(ctx, cmd, false).await;
+                if !out.is_empty() {
+                    self.emit_text(&out);
+                }
+                Flow::Next
+            }
+            Kind::Exec(None) => {
+                let ps = std::mem::take(&mut self.ps);
+                self.ps = shell_output(ctx, &ps, true).await;
                 Flow::Next
             }
             Kind::Translate(map) => {
@@ -996,6 +1012,26 @@ impl<'p> Run<'p> {
         }
         Ok(did)
     }
+}
+
+/// `e`: runs `script` in a fresh shell (`sh -c`, empty stdin) and returns what it
+/// printed, without its last newline when it replaces the pattern space.
+async fn shell_output(ctx: &mut UtilCtx<'_>, script: &[u8], chomp: bool) -> Vec<u8> {
+    let stdio = ShellStdio {
+        stdin: ShellIo::Pipe,
+        stdout: ShellIo::Pipe,
+    };
+    let mut child = ctx.spawn_shell(script, stdio).await;
+    child.stdin = None;
+    let mut out = Vec::new();
+    if let Some(f) = child.stdout.take() {
+        let _ = f.read_to_end(&mut out).await;
+    }
+    child.wait().await;
+    if chomp && out.last() == Some(&b'\n') {
+        out.pop();
+    }
+    out
 }
 
 fn emit(out: &mut Out, text: &[u8], nl: bool, delim: u8) {

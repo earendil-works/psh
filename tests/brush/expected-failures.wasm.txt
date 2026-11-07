@@ -22,6 +22,7 @@ brush/compat/builtins/kill/6: signals a process (`kill $$`, a shell dying of a s
 brush/compat/builtins/kill/7: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/builtins/kill/13: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/builtins/kill/29: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
+brush/compat/builtins/kill/31: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/builtins/set/2: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
 brush/compat/builtins/set/3: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
 brush/compat/builtins/set/14: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)

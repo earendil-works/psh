@@ -138,10 +138,9 @@ Moving cases between groups is a coordinator decision.
   active cases that pass natively (they are not in the shared file) but may fail on that
   platform, each with its reason. The first platform is `wasm`: `psh-spec --wasm` runs
   every case in `psh.wasm` under node through the JS host (`js/test/spec-driver.mjs`),
-  where no external programs exist, so the reasons are `needs external: NAMES` (the
-  commands the case looked for). A reason of any other kind is a difference of the wasm
-  build and a bug. When a case starts to pass natively and needs an external program,
-  the wasm leg fails until `psh-spec --wasm --add-failures` lists it there.
+  where no external programs exist. A case that looked for a command and did not find
+  one may fail there without a line (the run prints how many); the file lists only the
+  other differences, which are bugs or missing host features (one today).
 
 ## Status and the hit list
 

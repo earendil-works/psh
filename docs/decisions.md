@@ -1209,6 +1209,10 @@ disk (loaded lazily) and writes the case's changes back, so the snapshot and the
 work unchanged; there are no external programs, and the commands the shell looked for and
 did not find come back as notes on the run. Ratchets: the shared
 `tests/<layer>/expected-failures.txt` plus `expected-failures.wasm.txt`, which lists cases
-that pass natively but not in wasm, with their reason (`needs external: ...`). This is the
-per-platform ratchet the coordinator planned for macOS and Windows (0002 follow-up), with
-`wasm` as the first platform. A whole run takes about 20 s, like the native one.
+that pass natively but not in wasm, with their reason. Cases that needed external programs
+may fail without a line: listing them would make every native improvement of an
+external-using case edit the wasm file. So the wasm ratchet holds only real differences of
+the wasm build or its host, and the gate keeps the no-externals pass rate equal to the
+native one. This is the per-platform ratchet the coordinator planned for macOS and
+Windows (0002 follow-up), with `wasm` as the first platform. A whole run takes about 20 s,
+like the native one.

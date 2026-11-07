@@ -51,6 +51,11 @@ commands in place of processes.
   the no-externals rate is the native one. brush: 223 need externals, 1 needs host system
   files (`/bin/sh`, `/etc/os-release`); agent: 65 need externals. The whole run takes
   ~20 s (native ~22 s). Gate leg `65-wasm-host` now runs it.
+  The first merge attempt failed: the engine had improved meanwhile, 175 more cases
+  passed natively and failed in wasm, all needing externals. Listing such cases would
+  make every engine change edit the wasm ratchet, so cases that needed externals are now
+  allowed without a line; `expected-failures.wasm.txt` holds only the other differences
+  (one brush case). After the rebase: Oils 526 cases need externals, 0 other.
   Sizes at this point (the engine grew since part 1): psh.wasm 846,806 bytes, 312,634
   gzipped; psh-parser.wasm 388,202 / 148,282.
 

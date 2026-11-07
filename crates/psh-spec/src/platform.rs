@@ -1,9 +1,11 @@
 //! Platform ratchets (D1113): `tests/<layer>/expected-failures.<platform>.txt` next to the
 //! shared ratchet. On a platform, an active case may fail if either file lists it; the
 //! platform file lists only cases the shared ratchet does not (they pass natively), with
-//! the reason. The first platform is `wasm` (`psh-spec --wasm`), where a reason is either
-//! the external programs the case needed (`needs external: cat, sort`) or `wasm only`, a
-//! difference of the wasm build itself; the latter should not exist.
+//! the reason. The first platform is `wasm` (`psh-spec --wasm`). There, a case that
+//! needed external programs (the run's notes name the commands it looked for) may fail
+//! without being listed: no external program exists in wasm, and listing them would make
+//! every native improvement touch the wasm file. What is listed are the other
+//! differences, which should be few.
 
 use std::path::Path;
 
@@ -69,18 +71,19 @@ pub fn check<'a>(
         for r in &active {
             let in_shared = shared.entries.contains_key(&r.case.id);
             let in_plat = plat.entries.contains_key(&r.case.id);
-            if in_plat && (r.pass || in_shared) {
+            let why = reason(r);
+            let needs_external = why.starts_with("needs external");
+            if in_plat && (r.pass || in_shared || needs_external) {
                 stale.push(r.case.id.clone());
             }
             if !r.pass && !in_shared {
-                let why = reason(r);
-                if why.starts_with("needs external") {
+                if needs_external {
                     external += 1;
                 } else {
                     only_platform += 1;
-                }
-                if !in_plat {
-                    new.push((*r, why));
+                    if !in_plat {
+                        new.push((*r, why));
+                    }
                 }
             }
         }
@@ -134,9 +137,11 @@ pub fn check<'a>(
                     format!(
                         "# Ratchet for layer {layer} on {platform} (D1113): active cases that pass natively"
                     ),
-                    "# (not in expected-failures.txt) but may fail here, each with its reason."
+                    "# (not in expected-failures.txt) but may fail here, each with its reason. Cases"
                         .into(),
-                    "# psh-spec --update-ratchet removes cases that pass; never add a regression."
+                    "# that need external programs are not listed. psh-spec --update-ratchet removes"
+                        .into(),
+                    "# cases that pass; never add a regression."
                         .into(),
                 ];
             }

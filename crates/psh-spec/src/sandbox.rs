@@ -126,10 +126,10 @@ fn walk(dir: &Path, prefix: &str, out: &mut Vec<FileEntry>) {
             continue;
         };
         let ft = meta.file_type();
-        // A git repository's internals (index mtimes, objects, the git version's
-        // defaults) are git's, not the shell's, and differ per run and per git: the
-        // agent cases (L3) compare what git prints, not `.git` (0031).
-        if ft.is_dir() && path.rsplit('/').next() == Some(".git") {
+        // A git repository's internals (`.git`, bare `*.git`: index mtimes, objects, the
+        // git version's and the file system's defaults) are git's, not the shell's, and
+        // differ per run and per git: the agent cases (L3) compare what git prints (0031).
+        if ft.is_dir() && path.rsplit('/').next().is_some_and(|n| n.ends_with(".git")) {
             continue;
         }
         let e = if ft.is_symlink() {

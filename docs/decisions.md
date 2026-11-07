@@ -1791,3 +1791,23 @@ and the parent's mtime move with changes; times set exactly keep their nanosecon
 and gid 0 are root, 1000 is user; the local zone). EBUSY and EXDEV join the errno
 table. psh-spec's wasm driver now writes back directories made in memory (only lazy
 mounts nobody opened are skipped), which the D1150 cases need.
+## D1310: The recording image has git, ripgrep and jq; .git is not compared
+date: 2026-11-07 · by: shapes · issue: 0031
+The goldens image (`docker/Dockerfile`) installs git 2.47, ripgrep 14.1 and jq 1.7 at
+pinned Debian versions: agents run them in about a quarter of their commands, and L3
+must cover those commands. Cases using them build everything they need locally (git with
+a fixed identity and dates). psh-spec leaves `.git` and bare `*.git` directories out of
+the file snapshot it compares (index mtimes and git-version defaults are git's business,
+not the shell's). Tools the image lacks (node, python, npm, make, cargo, gh, …) appear as
+stub scripts in the case's `bin/`, so the agent's command keeps its exact shape. If
+Debian drops a pinned version, rebuilding needs snapshot.debian.org or a new pin and a
+re-recording.
+
+## D1311: L3 coverage is measured against the shape corpus
+date: 2026-11-07 · by: shapes · issue: 0031
+`tests/agent/coverage.py` turns every run of consecutive command lines of every agent
+case into a skeleton (scripts/shape-corpus's rules) and matches it with the committed
+shapes at three levels: exact (placeholders unified), args (argument lists collapsed,
+tool subcommands kept) and syntax (every word a word). "args" is the reported number:
+the share of the commands the shapes stand for that have a case with the same command
+structure (49.7% with 701 cases). The script reads only committed files.

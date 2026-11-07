@@ -190,6 +190,12 @@ glob). Please keep `HostFuture`, `HostFile` (`&self`, `Any`), drop semantics and
 - Scores after the rebase (psh-os host): oils 1111/2511, brush 1064/3171, agent 115/144;
   full psh-spec ~26 s.
 
+- Non-UTF-8 scripts (0023, D1233): `Script::source` is bytes, parsed with
+  `Parser::from_bytes`, line tables from `LineIndex::from_bytes`, literal word text and
+  here-doc bodies from `Ast::bytes`, backquote bodies restored with `restore_bytes`; the
+  `psh` binary reads `-c`, script paths and files as bytes (`args_os`). `$'…'` and
+  `${x@E}` decode with psh-syntax's `decode_ansi_c`.
+
 ## Follow-ups
 - Background jobs of a non-interactive bash share its process group; psh-os gives each
   external its own session, so `psh -c 'long &'` leaves an orphan session no group kill

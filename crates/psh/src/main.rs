@@ -70,6 +70,19 @@ fn os_bytes(s: std::ffi::OsString) -> Vec<u8> {
     }
 }
 
+/// A path from the command line's bytes (not necessarily UTF-8 on Unix).
+fn os_path(b: &[u8]) -> std::path::PathBuf {
+    #[cfg(unix)]
+    {
+        use std::os::unix::ffi::OsStrExt;
+        std::path::PathBuf::from(std::ffi::OsStr::from_bytes(b))
+    }
+    #[cfg(not(unix))]
+    {
+        std::path::PathBuf::from(String::from_utf8_lossy(b).into_owned())
+    }
+}
+
 fn usage() -> ExitCode {
     eprintln!("usage: psh [-c COMMAND [NAME [ARGS...]] | FILE [ARGS...]]");
     eprintln!("       psh --parse [--compact] [-O extglob] [-c COMMAND | FILE]");
@@ -101,14 +114,14 @@ fn main() -> ExitCode {
         }
         Ok(Invocation::Help) => return usage(),
         Ok(Invocation::Command { source, arg0, args }) => Script {
-            source: text(&source),
+            source,
             arg0: arg0.unwrap_or_else(|| b"psh".to_vec()),
             args,
             dash_c: true,
         },
-        Ok(Invocation::File { path, args }) => match std::fs::read(text(&path)) {
+        Ok(Invocation::File { path, args }) => match std::fs::read(os_path(&path)) {
             Ok(src) => Script {
-                source: text(&src),
+                source: src,
                 arg0: path,
                 args,
                 dash_c: false,
@@ -126,7 +139,7 @@ fn main() -> ExitCode {
                 return ExitCode::from(2);
             }
             Script {
-                source: text(&src),
+                source: src,
                 arg0: b"psh".to_vec(),
                 args,
                 dash_c: false,

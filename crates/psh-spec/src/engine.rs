@@ -332,7 +332,7 @@ impl Engine for InProcess {
             Ok(Invocation::Help) => return fail("--help".into()),
             Ok(Invocation::Command { source, arg0, args }) => (
                 Script {
-                    source: text(&source),
+                    source,
                     arg0: arg0.unwrap_or_else(|| b"psh".to_vec()),
                     args,
                     dash_c: true,
@@ -344,7 +344,7 @@ impl Engine for InProcess {
                 match std::fs::read(&full) {
                     Ok(src) => (
                         Script {
-                            source: text(&src),
+                            source: src,
                             arg0: path,
                             args,
                             dash_c: false,
@@ -363,7 +363,7 @@ impl Engine for InProcess {
             }
             Ok(Invocation::Stdin { args }) => (
                 Script {
-                    source: text(req.stdin.unwrap_or_default()),
+                    source: req.stdin.unwrap_or_default().to_vec(),
                     arg0: b"psh".to_vec(),
                     args,
                     dash_c: false,

@@ -211,9 +211,7 @@ fn brace_expand<'a>(code: &'a Code, parts: &'a [WordPart]) -> Vec<Vec<Piece<'a>>
                             Some(items) => {
                                 items.into_iter().map(|t| vec![Piece::Text(t)]).collect()
                             }
-                            None => vec![vec![Piece::Text(
-                                code.ast.text(part.span).as_bytes().to_vec(),
-                            )]],
+                            None => vec![vec![Piece::Text(code.ast.bytes(part.span).to_vec())]],
                         }
                     }
                 };
@@ -494,7 +492,7 @@ async fn expand_part(
     ctx: Ctx,
     first: bool,
 ) -> Result<(), Unwind> {
-    let text = code.ast.text(part.span).as_bytes();
+    let text = code.ast.bytes(part.span);
     match &part.kind {
         Part::Lit => {
             if quoted {
@@ -537,7 +535,9 @@ async fn expand_part(
             emit(f, &out, quoted);
         }
         Part::Backtick => {
+            // Unescaped on the UTF-8 view, then back to the source's bytes.
             let body = psh_syntax::backtick_body(code.ast.text(part.span), quoted);
+            let body = code.ast.restore_bytes(&body).into_owned();
             let (out, st) = exec::command_subst_text(vp, code, &body, part.span.start).await?;
             f.subst_status = Some(st);
             emit(f, &out, quoted);
@@ -1142,7 +1142,7 @@ pub(crate) async fn expand_decl_words(
     for (i, w) in words.iter().enumerate() {
         let assignment = i > 0
             && matches!(w.parts.first(), Some(p) if matches!(p.kind, Part::Lit) && {
-                let t = code.ast.text(p.span).as_bytes();
+                let t = code.ast.bytes(p.span);
                 t.iter().position(|&b| b == b'=').is_some_and(|eq| {
                     let n = t[..eq].strip_suffix(b"+").unwrap_or(&t[..eq]);
                     is_name(n)

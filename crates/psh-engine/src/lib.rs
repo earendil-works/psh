@@ -118,7 +118,8 @@ impl ShellConfig {
 
 /// A script to run.
 pub struct Script {
-    pub source: String,
+    /// The script's bytes; need not be UTF-8 (parsed byte-exactly).
+    pub source: Vec<u8>,
     /// `$0`, also the name in front of messages.
     pub arg0: Vec<u8>,
     /// `$1`…
@@ -131,7 +132,7 @@ impl Script {
     /// `psh -c SOURCE`.
     pub fn command(source: &str) -> Script {
         Script {
-            source: source.to_string(),
+            source: source.as_bytes().to_vec(),
             arg0: b"psh".to_vec(),
             args: Vec::new(),
             dash_c: true,
@@ -377,10 +378,9 @@ impl Shell {
 }
 
 /// The main vproc: parses and runs the script one top-level line at a time.
-async fn run_script(mut vp: Vp, source: String) -> (i32, Vp) {
-    let source: Arc<str> = Arc::from(source);
-    let lines = Rc::new(LineIndex::new(&source));
-    let mut parser = Parser::new(source.clone(), Options::default());
+async fn run_script(mut vp: Vp, source: Vec<u8>) -> (i32, Vp) {
+    let lines = Rc::new(LineIndex::from_bytes(&source));
+    let mut parser = Parser::from_bytes(&source, Options::default());
     while let Some(chunk) = parser.next_chunk() {
         match chunk {
             Ok(ast) => {
@@ -406,12 +406,14 @@ async fn run_script(mut vp: Vp, source: String) -> (i32, Vp) {
                 vp.line = line;
                 let dash_c = if vp.core.dash_c.get() { "-c: " } else { "" };
                 let name = vp.core.msg_name.borrow().clone();
-                let mut msg = format!("{name}: {dash_c}line {line}: {}\n", e.message);
+                let mut msg = format!("{name}: {dash_c}line {line}: {}\n", e.message).into_bytes();
                 if e.message.starts_with("syntax error near") {
-                    let text = source_line(&source, &lines, e.span.start);
-                    msg.push_str(&format!("{name}: {dash_c}line {line}: `{text}'\n"));
+                    let text = source_line(&source, line);
+                    msg.extend_from_slice(format!("{name}: {dash_c}line {line}: `").as_bytes());
+                    msg.extend_from_slice(text);
+                    msg.extend_from_slice(b"'\n");
                 }
-                vp.error_raw(msg.as_bytes()).await;
+                vp.error_raw(&msg).await;
                 vp.status = 2;
                 return (2, vp);
             }
@@ -421,9 +423,12 @@ async fn run_script(mut vp: Vp, source: String) -> (i32, Vp) {
     (st, vp)
 }
 
-fn source_line<'a>(source: &'a str, lines: &LineIndex, offset: u32) -> &'a str {
-    let line = lines.line(offset);
-    source.lines().nth(line as usize - 1).unwrap_or("")
+fn source_line(source: &[u8], line: u32) -> &[u8] {
+    let l = source
+        .split(|&b| b == b'\n')
+        .nth(line as usize - 1)
+        .unwrap_or(b"");
+    l.strip_suffix(b"\r").unwrap_or(l)
 }
 
 /// Runs a command string on the test host's empty fs: for quick checks and doc tests.

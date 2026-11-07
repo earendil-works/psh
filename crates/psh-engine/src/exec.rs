@@ -1029,7 +1029,7 @@ async fn open_to(
 fn literal_body(code: &Code, body: &psh_syntax::Word) -> Vec<u8> {
     let mut out = Vec::new();
     for p in &body.parts {
-        out.extend_from_slice(code.ast.text(p.span).as_bytes());
+        out.extend_from_slice(code.ast.bytes(p.span));
     }
     out
 }
@@ -1070,14 +1070,14 @@ async fn subst(vp: &mut Vp, code: Rc<Code>, list: ListId) -> Result<(Vec<u8>, i3
 pub(crate) async fn command_subst_text(
     vp: &mut Vp,
     code: &Rc<Code>,
-    text: &str,
+    text: &[u8],
     offset: u32,
 ) -> Result<(Vec<u8>, i32), Unwind> {
-    match psh_syntax::parse(text) {
+    match psh_syntax::parse_bytes(text, psh_syntax::Options::default()) {
         Ok(ast) => {
             let root = ast.root();
             let inner = Rc::new(Code {
-                lines: Rc::new(psh_syntax::LineIndex::new(ast.source())),
+                lines: Rc::new(psh_syntax::LineIndex::from_bytes(ast.source_bytes())),
                 ast: Arc::new(ast),
                 line_base: code.line(offset) - 1,
             });

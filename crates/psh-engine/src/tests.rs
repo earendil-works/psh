@@ -558,3 +558,18 @@ fn background_jobs_at_exit() {
         assert!(out.contains("fg\n") && out.contains("bg\n"), "{out}");
     }
 }
+
+#[test]
+fn non_utf8_scripts_are_byte_exact() {
+    let host = Rc::new(TestHost::new());
+    let mut shell = Shell::new(host.config());
+    shell.start(Script {
+        source: b"x='\xff\xfe'; echo \"$x\" a\xe9b; echo `echo \xff`\necho )".to_vec(),
+        arg0: b"psh".to_vec(),
+        args: Vec::new(),
+        dash_c: true,
+    });
+    while !matches!(shell.step(100), Step::Done(_)) {}
+    assert_eq!(host.stdout(), b"\xff\xfe a\xe9b\n\xff\n");
+    assert!(host.stderr().ends_with(b"line 2: `echo )'\n"));
+}

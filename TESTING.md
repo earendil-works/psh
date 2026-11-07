@@ -203,8 +203,14 @@ Each leg is a file `scripts/gate.d/NN-name.sh`, run in order under
 a file. `scripts/gate.sh --list` names the legs; `scripts/gate.sh LEG...` runs a few
 while iterating.
 
-Later the gate caches each leg by its inputs, so a docs-only change gates in seconds.
-Never weaken a leg to get green.
+The gate caches passes (D1221): a leg file lists the paths it reads on `# inputs:`
+lines (git pathspecs), and a leg whose inputs, leg file, `gate.sh`, `timeout.sh` and
+toolchains are exactly as on an earlier pass, anywhere in the repository's worktrees, is
+skipped with a note. Only committed, clean inputs are cached; a leg without `# inputs:`
+always runs; `scripts/gate.sh --full` ignores the cache. A docs-only change gates in
+seconds, and the Windows leg is skipped when no Rust input or Windows script changed.
+When a leg starts reading a new path, add it to its `# inputs:`: a missing input is a
+wrong skip. Never weaken a leg to get green.
 
 ## Inner-loop rules
 

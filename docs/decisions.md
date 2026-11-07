@@ -694,3 +694,17 @@ error tokens follow bash (the divisor's start for `/` `%`, the token after the e
 `**`). The evaluator's own nesting is capped at 2048 (`x=x` takes one per level), so
 values nested deep inside nested values fail with "expression recursion level exceeded"
 earlier than bash would, instead of overflowing a 1 MiB stack.
+
+## D1221: Gate cache keyed by declared leg inputs
+date: 2026-11-07 · by: infra · issue: 0022
+Each `scripts/gate.d` leg may declare `# inputs: PATHSPEC...`. Before running it, the gate
+hashes the leg file's name, the toolchains (`rustc -Vv`, `cargo -V`, `rustup toolchain
+list`) and `git ls-files -s` of the inputs, the leg file, `gate.sh` and `timeout.sh`; a
+pass is recorded as a file under the primary checkout's `work/scratch/gate-cache/`
+(shared by all worktrees), and a later run with the same key skips the leg. No key, so no
+skip and no record, when an input has uncommitted or untracked changes or the leg has no
+`# inputs:`. A leg that did not really check anything touches `$PSH_GATE_NOCACHE` (the
+Windows leg when skipped with `PSH_GATE_WINDOWS=0`). `--full` ignores the cache. Rust legs
+declare `crates/ Cargo.toml Cargo.lock .cargo/` and `tests/` where tests or runs read it;
+docs, work and research files are nobody's input, so they gate in seconds. Alternatives:
+djs's per-leg input classes in a Python gate (more machinery than we need now).

@@ -18,7 +18,7 @@ measure the parser in the gate.
       corpus (`tests/goldens/shapes/bash-n.txt`) and `tests/l0/syntax.txt`, plus
       print → reparse round-trip. Its own ratchet; shown by `scripts/status`. A gate leg
       file in `scripts/gate.d/`.
-- [ ] **Gate caching by leg inputs** (0001 follow-up): each leg declares its inputs
+- [x] **Gate caching by leg inputs** (0001 follow-up): each leg declares its inputs
       (paths/globs); a leg whose inputs and the leg script are unchanged since its last
       pass on a recorded tree hash is skipped with a note. Docs-only changes gate in
       seconds; the Windows leg is skipped when no Rust/script input changed. A `--full`
@@ -46,6 +46,13 @@ measure the parser in the gate.
   skeletons fail the round trip (print → reparse changes the tree; mostly here-docs
   whose delimiter line is missing or followed by more commands, plus `F=/w1` and a `2>`
   case). They start the ratchet; tell the parser agent.
+- 2026-11-07, part 2 (gate cache): `# inputs:` lines in every leg, cache in the primary
+  checkout's `work/scratch/gate-cache/`, `--full`, `$PSH_GATE_NOCACHE` for the skipped
+  Windows leg (D1221). `scripts/test-gate-cache.sh` (in `script-tests`) covers unchanged,
+  docs-only, changed, dirty, untracked, `--full`, leg edits, opt-out and failing legs; a
+  mutation that ignores the opt-out fails it. A second full local gate: every leg cached,
+  1 s. While testing I ran the gate once with `PSH_GATE_WINDOWS=0`, which logged a line
+  in `work/scratch/windows-gate/skipped.tsv` (not a merge).
 
 ## Follow-ups
 

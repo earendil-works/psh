@@ -16,6 +16,7 @@ oils/builtin-cd/8: psh bug (files): mkdir -p splits off the drive of C:/...
 oils/builtin-eval-source/15: Windows paths start with a drive (HOME is C:/...), not /
 oils/builtin-eval-source/16: Windows paths start with a drive (HOME is C:/...), not /
 oils/builtin-meta/3: Windows keeps no execute bit: it comes from the extension or a #! line
+oils/builtin-misc/1: no /bin/echo on Windows (`/bin/X` means X on PATH, and there is no echo program)
 oils/builtin-printf/33: needs python2 (the Oils helper argv.py)
 oils/builtin-read/45: Windows file names cannot contain * ? | < > " \ :
 oils/builtin-trap/31: no SIGUSR1 to deliver to a process on Windows
@@ -44,6 +45,7 @@ oils/redirect-multi/0: Windows file names cannot contain * ? | < > " \ :
 oils/redirect-multi/1: Windows file names cannot contain * ? | < > " \ :
 oils/redirect-multi/2: Windows file names cannot contain * ? | < > " \ :
 oils/redirect-multi/9: Windows file names cannot contain * ? | < > " \ :
+oils/vars-special/2: no Unix file system layout (/bin, /usr) on Windows: the PATH a shell sets has no /usr/bin
 oils/vars-special/5: no Unix file system layout (/bin, /usr) on Windows
 oils/array-sparse/20: $SH is a Windows path whose drive colon ends the case's `sed "s:$SH:…"` early (GNU sed fails the same way)
 oils/sh-options-bash/5: runs bash, which the Windows VM does not have

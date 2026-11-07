@@ -372,6 +372,20 @@ fn is_drive_path(p: &[u8]) -> bool {
 
 #[cfg(any(unix, windows))]
 fn native_stat(p: &std::path::Path, follow: bool) -> io::Result<Metadata> {
+    // Windows' null device (the host's `/dev/null`) has no metadata there; it is a
+    // character device, as the host's own `stat` says.
+    if cfg!(windows) && p.as_os_str().eq_ignore_ascii_case("NUL") {
+        return Ok(Metadata {
+            kind: crate::host::FileKind::CharDevice,
+            size: 0,
+            mode: 0o666,
+            mtime_ns: 0,
+            dev: 0,
+            ino: 0,
+            uid: 0,
+            gid: 0,
+        });
+    }
     let m = if follow {
         std::fs::metadata(p)?
     } else {

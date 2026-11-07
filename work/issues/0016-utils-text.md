@@ -74,7 +74,7 @@ Landed `sort uniq cut tr paste nl tee seq comm`, all mode S, in
 the GNU manuals and man pages (no ported code, so no NOTICE entries). Shared helpers in
 `textio.rs`: `LineReader` (delimited lines from a `common::Input`), `char_lengths`/
 `decode_char` (UTF-8 positions), `open_or_report`, and `fall_through(ctx, argv, what)` for
-forms psh does not implement. Unit tests in `src/tests_text.rs`; L4: 154 cases in
+forms psh does not implement. Unit tests in `src/tests_text.rs`; L4: 191 cases in
 `tests/utils/{sort,uniq,cut,tr,paste,nl,tee,seq,comm}/`, GNU and BSD recorded, all pass
 natively and in wasm (stderr differs only in GNU's ‘’ quotes).
 

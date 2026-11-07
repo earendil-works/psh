@@ -1,7 +1,7 @@
 # 0008: Utility framework and first batch
 
-status: open
-agent: -
+status: in-progress
+agent: infra
 branch: issue/0008-utilities
 depends-on: 0005, 0006
 touches: crates/psh-utils/, crates/psh-engine/ (utility dispatch, announced), crates/psh-spec/ (L4 layer), scripts/record-goldens (L4 recording), tests/utils/
@@ -49,6 +49,74 @@ later batch (0013–0021) builds on this; it fixes the interface they all use.
   stable, and record their shape as a decision in your range.
 
 ## Log
+- 2026-11-07: Coordinator correction: "worker threads" cannot be the model (no threads in
+  wasm32-unknown-unknown, and wasm/sandbox mode needs utilities most). Proposal below,
+  sent for review before the registry is built.
+
+### Proposal: the utility interface (to become D1080)
+
+**Default: async utilities on the engine scheduler, like shell builtins.** A utility is
+`async fn run(ctx: &mut UtilCtx) -> i32`, called on the vproc that runs the command
+(the same place a builtin runs; pipeline stages are already concurrent vprocs). The
+context lives in psh-engine (`psh_engine::util`, a small public module) because it wraps
+the vproc's descriptors; psh-utils implements utilities against it and the embedder
+(psh binary, pi-env, psh-wasm) passes the registry in `ShellConfig`, so psh-engine never
+depends on psh-utils.
+- I/O: `ctx.stdin`/`stdout`/`stderr` are the command's descriptors as the engine has
+  them (engine pipes, host files), read and written with `.await`. Output goes through a
+  buffer that is written synchronously and flushed at a size threshold, at line ends
+  for terminals, and at exit, so ported loops stay mostly synchronous: the await points
+  are reads and flushes. Helpers: `read_chunk`, `lines()`, `read_to_end`, `open(path)`
+  (relative to the shell's cwd, through the Host), `stat`, `read_dir`.
+- Cancellation is dropping the future (as for builtins); `ctx.check().await` in long
+  loops is the safepoint: it observes cancel and yields when the step budget is spent,
+  so a CPU-heavy loop never starves the scheduler or the embedder.
+- `ctx.run(argv)` runs a command for the wrappers (`env`, `timeout`, `xargs`,
+  `find -exec`, `nice`, `nohup`): builtins in their standalone forms, utilities,
+  externals, with the context's descriptors and environment, as a child vproc.
+- Why: one code path natively and in wasm; no thread to stop or join, so cancel and
+  `timeout` are exact; deterministic order; `cat f | head` stays in-process with no OS
+  pipe or pump; `head` closing early and `tail -f` (a timer loop on `Host::sleep`) need
+  nothing special. Cost: ported code (uutils uses `Read`/`Write` and `std::fs`) gets its
+  I/O loops rewritten onto the context; the algorithms (parsing, formatting, counting)
+  are reused as they are. All of batch A and most coreutils fit this well.
+
+**Escape hatch: blocking utilities**, for code built on synchronous crates (0013's
+ripgrep crates and `ignore` walker, jaq, a large `sort`): `fn run(ctx: &mut SyncCtx) ->
+i32` with std `Read`/`Write` stdio and a synchronous fs view.
+- Natively, with the OS host: on a worker thread. Its stdio are channels the engine
+  pumps to and from the command's descriptors (as it pumps externals' pipes); cancel sets
+  a flag and closes the channels, so reads end and writes fail with EPIPE; the command's
+  status is reported only after the thread has ended or can no longer write. The fs view
+  is `std::fs` resolved against the shell's cwd.
+- In wasm or with a non-OS host (sandbox): inline on the engine thread. stdin is read to
+  EOF first, stdout is collected and written after; the fs view makes synchronous host
+  calls, which a host must answer at once (the JS MemHost does; others make such a
+  utility fail clearly). Streaming is lost there (`tail -f | rg` does not stream in the
+  browser), nothing else.
+- Few utilities need it; batch A needs none.
+
+**Option parsing and the classifier (D1090).** Utilities declare their options as data
+(`Spec`: short and long options, which take a value, GNU-style permutation, `--`,
+`-n5`/`-n 5`, `--x=y`, unambiguous long-option prefixes, plus hooks for forms like
+`head -5`). One shared parser; `fallthrough_or_fail` for unknown options is one line per
+utility. A test compares every utility's `Spec` with its `psh_classify::utils` entry:
+the value-taking short and long options must be the same, and every effect option the
+classifier lists must be one the utility accepts (or falls through on).
+
+**Registry and dispatch.** A static table of entries `{ names, mode: S|F|W,
+destructive, run: Async(fn) | Blocking(fn), spec }` in psh-utils. The engine looks a
+name up after functions and builtins and before PATH: S runs the utility, F only when
+PATH has no such program (or the host is a sandbox, which treats F as S), W is S on
+Windows and F elsewhere; a name with a slash always runs the program; off switches
+(all, destructive group, names) are per shell. `command -v`/`type` say what runs.
+
+Alternatives weighed: synchronous utilities on threads natively plus "something else"
+in wasm. Inline synchronous code in wasm deadlocks as soon as it waits on a pipe whose
+writer is another vproc on the same thread (`yes | head`), so wasm would need either a
+second implementation or buffering every input first; and natively, threads make cancel
+and `timeout` approximate and output order racy. The porting saving (keeping uutils'
+`Read`/`Write` loops) is real but small next to that.
 
 ## Follow-ups
 

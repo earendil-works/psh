@@ -1,7 +1,7 @@
 # 0026: Arrays and the rest of word expansion
 
-status: open
-agent: -
+status: in-progress
+agent: engine
 branch: issue/0026-arrays-expansion
 depends-on: 0005
 touches: crates/psh-engine/src/{expand.rs,state.rs,arith.rs}, crates/psh-engine/src/builtins/{declare*,unset*,shift*,mapfile*} (new modules where possible), tests/**/expected-failures.txt

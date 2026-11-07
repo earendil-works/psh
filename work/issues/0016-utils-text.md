@@ -1,6 +1,6 @@
 # 0016: Utilities batch E: text filters
 
-status: in-progress
+status: done
 agent: text
 branch: issue/0016-utils-text
 depends-on: 0008
@@ -12,19 +12,19 @@ decisions: D1160–D1169
 The text filters of Tier 1, all S: `sort uniq cut tr paste nl tee seq comm`.
 
 ## Acceptance criteria
-- [ ] `sort`: `-u -n -r -k -t -V -h -s -z -o -R`. Default collation is decided in
+- [x] `sort`: `-u -n -r -k -t -V -h -s -z -o -R`. Default collation is decided in
       this issue (D034): propose it with evidence and record it in your range; until then
       sorting in a non-C locale falls through.
-- [ ] `uniq`: `-c` with GNU widths, `-d -u -f`.
-- [ ] `cut`: `-c` counts characters, not bytes, on UTF-8 (agents mean characters;
+- [x] `uniq`: `-c` with GNU widths, `-d -u -f`.
+- [x] `cut`: `-c` counts characters, not bytes, on UTF-8 (agents mean characters;
       record it as a deliberate difference from GNU); `-d -f -b`.
-- [ ] `tr`: classes and octal escapes. `paste -sd+`, `nl -ba`, `tee -a`, `seq -w -s
+- [x] `tr`: classes and octal escapes. `paste -sd+`, `nl -ba`, `tee -a`, `seq -w -s
       -f`, `comm`.
-- [ ] Each utility registered with its mode; unsupported flags fall through or fail
+- [x] Each utility registered with its mode; unsupported flags fall through or fail
       clearly (tested per utility).
-- [ ] L4 cases in `tests/utils/<name>/` for every flag listed above, recorded against
+- [x] L4 cases in `tests/utils/<name>/` for every flag listed above, recorded against
       GNU and BSD, with the D016 rule named where they conflict.
-- [ ] Attribution headers and `NOTICE` entries for ported code.
+- [x] Attribution headers and `NOTICE` entries for ported code.
 
 ## Notes
 - uutils (MIT).
@@ -60,5 +60,29 @@ The text filters of Tier 1, all S: `sort uniq cut tr paste nl tee seq comm`.
   Classifier: `sort`'s long value options completed.
 
 ## Follow-ups
+- `nl -b pREGEX` (and `-h`/`-f` with `p`) falls through: needs the regex crate in
+  psh-utils (0013 brings it); then a BRE-to-regex translation shared with `sed`/`grep`.
+- Error messages quote with ASCII `'…'`; the recording container's GNU uses `‘…’`
+  (stderr score only, all utilities alike). A shared decision for the quote style would
+  lift the stderr score of every utility.
+- `sort` reads its inputs whole on the vproc (no external merge); a multi-GB sort needs
+  the blocking-utility path (D1080) or a merge on temporary files.
 
 ## Result
+Landed `sort uniq cut tr paste nl tee seq comm`, all mode S, in
+`crates/psh-utils/src/{sort,uniq,cut,tr,paste,nl,tee,seq,comm}.rs`, written for psh from
+the GNU manuals and man pages (no ported code, so no NOTICE entries). Shared helpers in
+`textio.rs`: `LineReader` (delimited lines from a `common::Input`), `char_lengths`/
+`decode_char` (UTF-8 positions), `open_or_report`, and `fall_through(ctx, argv, what)` for
+forms psh does not implement. Unit tests in `src/tests_text.rs`; L4: 154 cases in
+`tests/utils/{sort,uniq,cut,tr,paste,nl,tee,seq,comm}/`, GNU and BSD recorded, all pass
+natively and in wasm (stderr differs only in GNU's ‘’ quotes).
+
+Decisions: D1160 (sort collation: bytes in every locale, settling D034), D1161 (`cut -c`
+counts characters), D1162 (`tr` on bytes unless a set has a non-ASCII character).
+Elsewhere GNU wins per D016 (`uniq -c` widths, `seq` and `paste` endings, `nl`
+indentation), BSD-only flags are accepted where they do not conflict (`cut -w`, `comm
+-i`, `tr -C -u`, `seq -t`). Unknown options fall through to the real program or fail
+with `NAME: unsupported option` (status 2), tested for every utility.
+
+Known gaps: see Follow-ups (`nl -bp`, quote style, huge sorts).

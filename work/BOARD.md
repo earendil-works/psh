@@ -6,24 +6,28 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
-| 0022 | L0 leg, gate caching, hit list on the parser, deps allowlist | infra | .worktrees/infra |
+| 0006 | Unix process layer (part 1 merged 46375e2) | procs | .worktrees/procs |
+| 0007 | Windows: part A merged (bad4d63, rework 6ca3d08); part B next after 0006 | windows | .worktrees/windows |
+| 0022 | follow-up: serial cases in psh-spec | infra | .worktrees/infra |
 | 0025 | Alias expansion in the parser, syntax guide page | parser | .worktrees/parser |
-| 0005 | Minimal interpreter (part 1 merged f409212; part 2: control flow, functions, arithmetic) | engine | .worktrees/engine |
-| 0006 | Unix process layer | procs | .worktrees/procs |
+| 0026 | Arrays and the rest of word expansion | engine | .worktrees/engine |
+| 0028 | Shell options, errexit and traps | shapes | .worktrees/shapes |
+| 0029 | Core shell builtins | builtins | .worktrees/builtins |
 
 ## Open (ready)
 
 | issue | title | depends-on | touches |
 | --- | --- | --- | --- |
+| 0027 | [[ ]], test, and a POSIX regex engine (parser agent after 0025) | 0005 ✓ | crates/psh-regex/, builtins/test.rs, cond.rs |
+| 0011 | WASM build and JS host | 0005 ✓ | crates/psh-wasm/, js/ |
 
 ## Open (blocked on dependencies)
 
 | issue | title | depends-on |
 | --- | --- | --- |
 | 0007B | Windows process layer (part B of 0007) | 0006 |
-| 0008 | Utility framework and first batch | 0005, 0006 |
+| 0008 | Utility framework and first batch | 0006 |
 | 0010 | pi-env integration behind a flag | 0006, 0007, L3 high |
-| 0011 | WASM build and JS host | 0005 |
 | 0013 | Utilities B: rg, fd, grep + shared search layer | 0008 |
 | 0014 | Utilities C: sed | 0008, 0013 |
 | 0015 | Utilities D: files and paths (17 names) | 0008 |
@@ -59,3 +63,5 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0009 | Classifier | 44a7306 (shapes) |
 | 0024 | Classifier follow-ups and guide page | f0b4905 (shapes) |
 | 0023 | Arithmetic parser, bash-format printer, byte-exact sources | 35a1a89 (parser) |
+| 0005 | Minimal interpreter | e98333b (engine) |
+| 0022 | L0 leg, gate caching, hit list on the parser, deps allowlist | 342ca7a (infra) |

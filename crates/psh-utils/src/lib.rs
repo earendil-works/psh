@@ -32,6 +32,7 @@ mod touch;
 
 mod awk;
 mod chmod;
+mod fd;
 mod grep;
 // Formatted in ripgrep's style (rg/rustfmt.toml), not the workspace's, so the copied code stays a
 // small diff from upstream.
@@ -270,6 +271,12 @@ pub static REGISTRY: &[UtilEntry] = &[
         run: util_fn!(grep::run),
     },
     UtilEntry {
+        names: &["fd"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(fd::run),
+    },
+    UtilEntry {
         names: &["rg"],
         mode: Mode::Always,
         destructive: false,
@@ -379,6 +386,7 @@ pub static SPECS: &[opts::Spec] = &[
     ln::SPEC,
     chmod::SPEC,
     grep::SPEC,
+    fd::SPEC,
     grep::EGREP_SPEC,
     grep::FGREP_SPEC,
     base64::SPEC,

@@ -61,3 +61,4 @@ oils/builtin-process/19: Windows has no resource limits (Host::rlimit is None), 
 oils/builtin-process/20: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
 oils/builtin-process/23: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
 oils/builtin-process/24: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+oils/builtin-process/10: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource

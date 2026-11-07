@@ -73,8 +73,32 @@ Part B:
   escape hatch, logged; VM refcount), agreed with the coordinator. Updated TESTING.md
   ("The gate", "Windows"), outside `touches:` as the coordinator asked; ARCH.md's D027
   paragraph is still accurate. Guide: none affected (windows.md not written yet).
+- 2026-11-07 (gate reliability; branch issue/0007-windows-race). Two failures reported by
+  infra. (1) "PrlJob_GetRetCode": the VM was suspended under a run. Causes: concurrent
+  runs, and old-style runs that could not see newer ones. (2) LNK1104 on test-x64.
+  Nothing had survived the Job Object. The holder was Windows on arm64's **XtaCache
+  service** (xtac64se.exe): it opens x64 executables that ran under emulation and keeps
+  them open while it builds its translation cache, for minutes under load. Reproduced
+  with two parallel x64 test loops; Restart Manager (RmGetList) named the holder. Also
+  seen: with 3-4 gates in parallel on the 4-vCPU VM, a run took 40 minutes, and an
+  emulated psh.exe needed 3-4s to start, which broke the cli tests' 10s deadlines.
+  Fix (D1072): runs take turns (a queue with a bounded wait), one shared checkout
+  `C:\psh-gate\shared`, kill-and-wait of the whole job after every leg (a leaked test
+  process fails the leg), a wait for held executables before test legs plus one retry on
+  LNK1104/os error 5, waits for transitional VM states, and one retry on prlctl's own
+  failure (255). Gate timeouts were raised to cover the queue: 99-windows 7500s,
+  merge-to-main's default PSH_GATE_TIMEOUT 10800s (outside `touches:`, minimal). Tested:
+  a single run (cold shared checkout 14 min, warm full run 5 min, warm `test` 34s); A
+  running, B queued behind it (A did not suspend), and C started while B suspended the
+  VM (C waited, then woke it). Not done: disabling XtaCache (the owner's decision) and
+  a cargo runner that runs copies (psh.exe would still be held). The old per-worktree
+  directories in C:\psh-gate are now unused and can be deleted.
 
 ## Follow-ups
+- Delete the old per-worktree checkouts in the VM (C:\psh-gate\<worktree>) once no
+  old-style run is left.
+- If the owner agrees: disable XtaCache in the VM (D1072); then the wait and retry are a
+  rarely used fallback.
 - Part A, second box: the spec runner and its normalization table on Windows, once 0002
   lands (a `spec` leg in windows-gate.ps1 that runs the same ratchets against the
   goldens).

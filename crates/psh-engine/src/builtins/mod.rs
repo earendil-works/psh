@@ -6,6 +6,7 @@ mod command;
 #[cfg(test)]
 mod core_tests;
 pub(crate) mod declare;
+mod dirs;
 mod eval;
 pub(crate) mod hash;
 mod help;
@@ -20,7 +21,8 @@ mod shopt;
 pub(crate) mod strftime;
 pub(crate) mod test;
 pub(crate) mod trap;
-mod umask;
+mod ulimit;
+pub(crate) mod umask;
 
 pub(crate) use set::apply_invocation_options;
 
@@ -95,6 +97,10 @@ pub(crate) fn find(name: &[u8]) -> Option<Builtin> {
         b"caller" => (builtin!(command::caller), false),
         b"help" => (builtin!(help::help), false),
         b"umask" => (builtin!(umask::umask), false),
+        b"dirs" => (builtin!(dirs::dirs), false),
+        b"ulimit" => (builtin!(ulimit::ulimit), false),
+        b"pushd" => (builtin!(dirs::pushd), false),
+        b"popd" => (builtin!(dirs::popd), false),
         b"logout" => (builtin!(help::logout), false),
         b"history" => (builtin!(help::history), false),
         // Every other bash builtin: an error, never a program of the same name.
@@ -857,10 +863,11 @@ pub(crate) fn shell_quote(v: &[u8]) -> Vec<u8> {
                 | b']'
                 | b'{'
                 | b'}'
-                | b'#'
                 | b'^'
                 | b','
-        ) || (b == b'~' && i == 0)
+        ) || (b == b'#' && i == 0)
+            // A tilde that would expand: first, or after `:` or `=`.
+            || (b == b'~' && (i == 0 || matches!(v[i - 1], b':' | b'=')))
             || (b == b'=' && i == 0);
         if special {
             out.push(b'\\');

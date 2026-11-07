@@ -28,9 +28,11 @@ pub(super) async fn printf(vp: &mut Vp, args: &[Vec<u8>]) -> R {
                     args.get(i + 1).map(Vec::as_slice)
                 }) else {
                     vp.error("printf: -v: option requires an argument").await;
+                    vp.error_raw(b"printf: usage: printf [-v var] format [arguments]\n")
+                        .await;
                     return Ok(2);
                 };
-                if !is_name(n) {
+                if !valid_target(n) {
                     vp.error(&format!("printf: `{}': not a valid identifier", s(n)))
                         .await;
                     return Ok(2);
@@ -81,12 +83,53 @@ pub(super) async fn printf(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     }
     match var {
         Some(n) => {
-            vp.set_var(&n, f.out);
+            // `NAME` or `NAME[SUB]`, with the variable's attributes.
+            let r = match n.split_once('[') {
+                Some((base, sub)) => {
+                    let sub = sub.strip_suffix(']').unwrap_or(sub);
+                    vp.assign_elem(base, sub.as_bytes(), f.out, false)
+                }
+                None => vp.assign(&n, f.out),
+            };
+            if let Err(msg) = r {
+                vp.error(&msg).await;
+                return Ok(1);
+            }
             Ok(status)
         }
         None => {
             let st = out(vp, "printf", &f.out).await?;
             Ok(if st != 0 { st } else { status })
+        }
+    }
+}
+
+/// `%#q`: always single quotes (`'it'\''s'`), unless control characters need `$'…'`.
+fn single_quote(v: &[u8]) -> Vec<u8> {
+    if v.iter().any(u8::is_ascii_control) {
+        return shell_quote(v);
+    }
+    let mut out = vec![b'\''];
+    for &b in v {
+        if b == b'\'' {
+            out.extend_from_slice(b"'\\''");
+        } else {
+            out.push(b);
+        }
+    }
+    out.push(b'\'');
+    out
+}
+
+/// `-v`'s target: a name, or a name with a non-empty subscript ending the word.
+fn valid_target(n: &[u8]) -> bool {
+    match n.iter().position(|&b| b == b'[') {
+        None => is_name(n),
+        Some(open) => {
+            is_name(&n[..open]) && n.len() > open + 2 && n.last() == Some(&b']') && {
+                let sub = &n[open + 1..n.len() - 1];
+                !sub.contains(&b']')
+            }
         }
     }
 }
@@ -374,11 +417,29 @@ impl Formatter<'_> {
 
     fn convert(&mut self, conv: u8, spec: &Spec) {
         match conv {
-            b's' | b'b' | b'q' => {
-                let a = self.arg().map(<[u8]>::to_vec).unwrap_or_default();
+            b's' | b'b' | b'q' | b'Q' => {
+                let mut a = self.arg().map(<[u8]>::to_vec).unwrap_or_default();
+                // `%Q`: the precision cuts the argument, before it is quoted.
+                if conv == b'Q'
+                    && let Some(p) = spec.prec
+                {
+                    a.truncate(p);
+                }
+                let quote = |a: &[u8]| {
+                    if spec.alt {
+                        single_quote(a)
+                    } else {
+                        shell_quote(a)
+                    }
+                };
                 let mut body = match conv {
                     b's' => a,
-                    b'q' => shell_quote(&a),
+                    b'q' => quote(&a),
+                    b'Q' => {
+                        let q = quote(&a);
+                        self.pad(&q, spec, false);
+                        return;
+                    }
                     _ => {
                         let d = decode(&a, Dialect::PercentB);
                         if d.stop {

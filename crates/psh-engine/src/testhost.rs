@@ -964,6 +964,7 @@ pub struct TestHost {
     latency: Cell<bool>,
     /// What `path_entries` splits on (`;` plays a Windows host).
     path_sep: Cell<u8>,
+    strips_crlf: Cell<bool>,
     counters: Rc<Counters>,
     stdin: Rc<RefCell<Vec<u8>>>,
     stdout: Rc<RefCell<Vec<u8>>>,
@@ -987,6 +988,7 @@ impl TestHost {
             commands: RefCell::new(HashMap::new()),
             latency: Cell::new(false),
             path_sep: Cell::new(b':'),
+            strips_crlf: Cell::new(false),
             counters: Rc::new(Counters::default()),
             stdin: Rc::new(RefCell::new(Vec::new())),
             stdout: Rc::new(RefCell::new(Vec::new())),
@@ -1004,6 +1006,11 @@ impl TestHost {
     /// The separator of `PATH` entries (`path_entries`).
     pub fn set_path_sep(&self, sep: u8) {
         self.path_sep.set(sep);
+    }
+
+    /// Act as a Windows host for line ends (`Host::strips_crlf`).
+    pub fn set_strips_crlf(&self, on: bool) {
+        self.strips_crlf.set(on);
     }
 
     pub fn set_stdin(&self, data: &[u8]) {
@@ -1185,6 +1192,25 @@ impl Host for TestHost {
 
     fn canonicalize(&self, path: &[u8]) -> HostFuture<io::Result<Vec<u8>>> {
         delayed(self.latency.get(), self.fs.canonicalize(path))
+    }
+
+    fn strips_crlf(&self) -> bool {
+        self.strips_crlf.get()
+    }
+
+    /// A few fixed limits, so `ulimit` has something to report; the rest are absent.
+    fn rlimit(
+        &self,
+        resource: crate::host::Rlimit,
+    ) -> Option<(crate::host::Limit, crate::host::Limit)> {
+        use crate::host::Rlimit;
+        match resource {
+            Rlimit::NoFile => Some((Some(1024), Some(4096))),
+            Rlimit::Core => Some((Some(0), None)),
+            Rlimit::FileSize | Rlimit::Cpu => Some((None, None)),
+            Rlimit::Stack => Some((Some(8 << 20), None)),
+            _ => None,
+        }
     }
 
     fn path_entries(&self, path: &[u8]) -> Vec<Vec<u8>> {

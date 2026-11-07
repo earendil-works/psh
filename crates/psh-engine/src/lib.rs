@@ -274,6 +274,7 @@ impl Shell {
             ("BASH_ALIASES", vars::Dynamic::BashAliases),
             ("BASH_MONOSECONDS", vars::Dynamic::BashMonoseconds),
             ("LINENO", vars::Dynamic::Lineno),
+            ("DIRSTACK", vars::Dynamic::Dirstack),
         ] {
             let v = vars.entry(name);
             v.dynamic = Some(d);
@@ -437,6 +438,8 @@ impl Shell {
             top: true,
             xtrace_level: 1,
             umask: None,
+            dirstack: Vec::new(),
+            rlimits: Vec::new(),
         };
         let mut vp = vp;
         options::sync_vars(&mut vp.vars, &vp.opts);

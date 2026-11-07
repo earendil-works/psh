@@ -26,3 +26,31 @@ brush/compat/patterns/patterns/0: Windows file names cannot contain * ? | < > " 
 brush/compat/signals/30: no Unix file system layout (/bin, /usr) on Windows
 brush/compat/signals/41: no Unix file system layout (/bin, /usr) on Windows
 brush/compat/well_known_vars/3: OSTYPE is msys on Windows, by design
+brush/compat/builtins/pushd_popd_dirs/0: dirs/pushd output on Windows (drive-letter paths of the stack; not yet investigated: 0029 follow-up)
+brush/compat/builtins/pushd_popd_dirs/2: dirs/pushd output on Windows (drive-letter paths of the stack; not yet investigated: 0029 follow-up)
+brush/compat/builtins/pushd_popd_dirs/6: dirs/pushd output on Windows (drive-letter paths of the stack; not yet investigated: 0029 follow-up)
+brush/compat/builtins/pushd_popd_dirs/7: dirs/pushd output on Windows (drive-letter paths of the stack; not yet investigated: 0029 follow-up)
+brush/compat/builtins/pushd_popd_dirs/10: dirs/pushd output on Windows (drive-letter paths of the stack; not yet investigated: 0029 follow-up)
+brush/compat/builtins/pushd_popd_dirs/11: dirs/pushd output on Windows (drive-letter paths of the stack; not yet investigated: 0029 follow-up)
+brush/compat/builtins/ulimit/0: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/1: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/2: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/3: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/4: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/7: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/9: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/11: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/12: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/13: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/14: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/15: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/16: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/18: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/19: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/21: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/22: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/26: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/31: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/fd_management/0: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/fd_management/1: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/fd_management/2: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource

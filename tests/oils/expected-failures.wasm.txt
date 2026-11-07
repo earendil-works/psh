@@ -3,4 +3,15 @@
 # Cases that need external programs are not listed. psh-spec --update-ratchet
 # removes cases that pass; never add a regression.
 oils/builtin-bracket/31: psh's touch -d does not take 2017/12/31 (utilities; natively the host's touch runs)
+oils/builtin-process/11: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+oils/builtin-process/12: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+oils/builtin-process/13: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+oils/builtin-process/15: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+oils/builtin-process/17: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+oils/builtin-process/18: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+oils/builtin-process/19: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+oils/builtin-process/20: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+oils/builtin-process/23: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+oils/builtin-process/24: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
 oils/globignore/7: the case's files are written back to the case-insensitive macOS file system (A and a are one file)
+oils/builtin-process/10: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource

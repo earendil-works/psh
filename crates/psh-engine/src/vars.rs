@@ -44,6 +44,8 @@ pub(crate) enum Dynamic {
     BashAliases,
     BashMonoseconds,
     Lineno,
+    /// `DIRSTACK`: the current directory, then `pushd`'s stack.
+    Dirstack,
 }
 
 /// `declare -l` / `-u` (and `-c` is not bash 5.3's).

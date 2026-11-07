@@ -58,24 +58,15 @@ oils/builtin-cd/3
 oils/builtin-cd/14
 oils/builtin-cd/23
 oils/builtin-cd/26
-oils/builtin-dirs/0
-oils/builtin-dirs/1
-oils/builtin-dirs/2
-oils/builtin-dirs/3
-oils/builtin-dirs/4
-oils/builtin-dirs/5
-oils/builtin-dirs/6
-oils/builtin-dirs/7
-oils/builtin-dirs/8
-oils/builtin-dirs/9
-oils/builtin-dirs/10
-oils/builtin-dirs/11
-oils/builtin-dirs/12
-oils/builtin-dirs/13
-oils/builtin-dirs/14
-oils/builtin-dirs/15
-oils/builtin-dirs/16: passed via macOS /usr/bin wrapper
-oils/builtin-dirs/17: passed via macOS /usr/bin wrapper
+oils/builtin-echo/17
+oils/builtin-echo/18
+oils/builtin-echo/19
+oils/builtin-echo/20
+oils/builtin-echo/21
+oils/builtin-echo/22
+oils/builtin-echo/23
+oils/builtin-echo/24
+oils/builtin-echo/25
 oils/builtin-getopts/6
 oils/builtin-getopts/13
 oils/builtin-getopts/14
@@ -84,22 +75,13 @@ oils/builtin-meta/4
 oils/builtin-meta/6
 oils/builtin-meta/10: tr is an always-on psh utility (mode S, D015), so a tr script earlier on PATH does not shadow it
 oils/builtin-misc/0
-oils/builtin-printf/3
+oils/builtin-misc/1
+oils/builtin-printf/38
+oils/builtin-printf/46
+oils/builtin-printf/48: macOS has the legacy zone Portugal, the recording container does not
+oils/builtin-printf/58
 oils/builtin-process/4
-oils/builtin-process/10: passed via macOS /usr/bin wrapper
-oils/builtin-process/11: passed via macOS /usr/bin wrapper
-oils/builtin-process/12: passed via macOS /usr/bin wrapper
-oils/builtin-process/13
 oils/builtin-process/14
-oils/builtin-process/15: passed via macOS /usr/bin wrapper
-oils/builtin-process/17: passed via macOS /usr/bin wrapper
-oils/builtin-process/18
-oils/builtin-process/19
-oils/builtin-process/20: passed via macOS /usr/bin wrapper
-oils/builtin-process/21
-oils/builtin-process/22: passed via macOS /usr/bin wrapper
-oils/builtin-process/23
-oils/builtin-process/24
 oils/builtin-process/25
 oils/builtin-read/19
 oils/builtin-read/24
@@ -142,8 +124,9 @@ oils/builtin-vars/17
 oils/builtin-vars/24
 oils/builtin-vars/26
 oils/builtin-vars/32
-oils/command_/15
-oils/divergence/2
+oils/command-sub/8
+oils/command-sub/9
+oils/divergence/3
 oils/dparen/10
 oils/exit-status/2
 oils/extglob-files/9

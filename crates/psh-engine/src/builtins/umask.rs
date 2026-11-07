@@ -1,16 +1,27 @@
 //! `umask [-p] [-S] [mode]`: the file creation mask, octal or symbolic (`u=rwx,g-w`).
 //!
-//! The mask lives in the vproc (`Vp::umask`) and is passed to the programs it starts.
-//! Until the Host can report the process's own mask, an unset mask shows as 0022.
+//! The mask lives in the vproc (`Vp::umask`; `None` until a `umask` command: the
+//! process's, `Host::umask`). It goes to the programs the vproc starts
+//! (`SpawnSpec::umask`) and to the files it creates itself (`OpenOptions::mode`).
 
+use crate::host::OpenOptions;
 use crate::state::{R, Vp};
 
 use super::{out, s};
 
 const USAGE: &[u8] = b"umask: usage: umask [-p] [-S] [mode]\n";
 
-/// The mask before any `umask` command.
-const DEFAULT: u32 = 0o022;
+/// Gives a creating open the exact permission bits the shell's mask leaves (D1069).
+/// Without a `umask` command the host's default (the process's mask) is already right.
+pub(crate) fn creation_mode(vp: &Vp, mut opts: OpenOptions) -> OpenOptions {
+    if (opts.create || opts.create_new)
+        && opts.mode.is_none()
+        && let Some(mask) = vp.umask
+    {
+        opts.mode = Some(0o666 & !mask);
+    }
+    opts
+}
 
 pub(super) async fn umask(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     let (mut print, mut symbolic) = (false, false);
@@ -37,7 +48,7 @@ pub(super) async fn umask(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         }
         i += 1;
     }
-    let current = vp.umask.unwrap_or(DEFAULT);
+    let current = vp.umask.unwrap_or_else(|| vp.host().umask());
     // Further arguments are ignored, as in bash.
     let Some(mode) = args.get(i) else {
         let shown = if symbolic {

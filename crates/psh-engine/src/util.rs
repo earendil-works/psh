@@ -455,6 +455,8 @@ impl UtilCtx<'_> {
         if let Some(n) = crate::exec::dev_fd(path) {
             return self.fd(n).map(|file| UtilFile { file }).ok_or_else(bad_fd);
         }
+        // Files a utility creates get the shell's umask, as a child process would.
+        let opts = crate::builtins::umask::creation_mode(self.vp, opts);
         let file = self.vp.host().open(&self.path(path), opts).await?;
         Ok(UtilFile {
             file: Rc::new(FdObj::File(file)),

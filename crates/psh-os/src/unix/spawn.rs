@@ -63,6 +63,8 @@ pub(crate) struct Setup {
     ignore: [bool; NSIG as usize],
     /// The child's umask, when it differs from the process's.
     umask: Option<libc::mode_t>,
+    /// Resource limits the child starts with (`ulimit`).
+    rlimits: Vec<(super::rlimit::Resource, libc::rlimit)>,
 }
 
 /// The signals the process ignores now, except SIGPIPE (Rust programs ignore it before
@@ -422,6 +424,7 @@ pub(crate) fn spawn(shared: &Arc<Shared>, mut spec: SpawnSpec) -> io::Result<Spa
             .umask
             .filter(|&m| m != process_umask())
             .map(|m| m as libc::mode_t),
+        rlimits: super::rlimit::for_child(&spec.rlimits),
     };
     let mut extra_ignored = false;
     // Linux numbers (D1283) to the OS's.
@@ -440,9 +443,10 @@ pub(crate) fn spawn(shared: &Arc<Shared>, mut spec: SpawnSpec) -> io::Result<Spa
             *slot = true;
         }
     }
-    // posix_spawn can neither set a umask nor ignore a signal the process does not
-    // ignore itself.
+    // posix_spawn can neither set a umask or resource limits nor ignore a signal the
+    // process does not ignore itself.
     let fork = setup.umask.is_some()
+        || !setup.rlimits.is_empty()
         || extra_ignored
         || shared.fork_only.load(std::sync::atomic::Ordering::Relaxed);
     let mut tries = 0;
@@ -533,7 +537,7 @@ fn fork_exec(exec: &Exec, fds: &[(i32, RawFd)], setup: &Setup, floor: RawFd) -> 
         old
     };
     // SAFETY: the child calls only async-signal-safe functions (setsid, chdir, dup2,
-    // sigaction, sigprocmask, execve, write, _exit) on memory prepared before the fork,
+    // umask, setrlimit, sigaction, sigprocmask, execve, write, _exit) on memory prepared before the fork,
     // and never returns.
     let pid = unsafe { libc::fork() };
     if pid == 0 {
@@ -557,6 +561,11 @@ fn fork_exec(exec: &Exec, fds: &[(i32, RawFd)], setup: &Setup, floor: RawFd) -> 
             }
             if let Some(m) = setup.umask {
                 libc::umask(m);
+            }
+            // A limit the kernel refuses (macOS caps open files below "unlimited")
+            // leaves the inherited one, as a failed `ulimit` would.
+            for (res, lim) in &setup.rlimits {
+                libc::setrlimit(*res, lim);
             }
             let mut dfl = std::mem::zeroed::<libc::sigaction>();
             dfl.sa_sigaction = libc::SIG_DFL;

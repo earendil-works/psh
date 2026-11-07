@@ -207,6 +207,7 @@ pub(super) async fn read(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     let mut escape = false;
     let mut status = 0;
     let exact = matches!(o.count, Some((_, true)));
+    let crlf = o.delim == b'\n' && o.count.is_none() && vp.host().strips_crlf();
     loop {
         if let Some((n, _)) = o.count
             && chars >= n
@@ -251,6 +252,11 @@ pub(super) async fn read(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             escape = true;
             continue;
         } else if !exact && b == o.delim {
+            // A CRLF line from a host whose lines end so: the `\r` goes too, only
+            // for whole lines (no -d, -n, -N), with or without -r (D1292).
+            if crlf && line.last() == Some(&(b'\r', false)) {
+                line.pop();
+            }
             break;
         } else {
             line.push((b, false));

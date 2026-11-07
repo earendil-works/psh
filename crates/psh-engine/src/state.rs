@@ -211,6 +211,11 @@ pub(crate) struct Vp {
     pub calls: Vec<Call>,
     /// Remembered command paths (`hash`); shared with subshells until one changes it.
     pub hash: Rc<crate::builtins::hash::HashTable>,
+    /// Limits set with `ulimit` (soft, hard), for what this vproc starts; the shell
+    /// itself is not limited (D1293).
+    pub rlimits: Vec<(crate::host::Rlimit, crate::host::Limit, crate::host::Limit)>,
+    /// `pushd`'s directory stack below the current directory, top first.
+    pub dirstack: Vec<Vec<u8>>,
     /// The file creation mask set with `umask`; `None`: the process's.
     pub umask: Option<u32>,
     /// Builtins turned off with `enable -n`.
@@ -358,6 +363,17 @@ impl Vp {
             Dynamic::Lineno => self.line.to_string(),
             Dynamic::BashPid => self.bashpid.to_string(),
             Dynamic::BashSubshell => self.subshell_level.to_string(),
+            Dynamic::Dirstack => {
+                let mut m = std::collections::BTreeMap::new();
+                m.insert(0, self.cwd.clone());
+                for (k, d) in self.dirstack.iter().enumerate() {
+                    m.insert(k as i64 + 1, d.clone());
+                }
+                if let Some(var) = self.vars.get_mut(name) {
+                    var.value = Value::Indexed(m);
+                }
+                return;
+            }
         };
         if let Some(var) = self.vars.get_mut(name) {
             var.value = Value::Str(v.into_bytes());

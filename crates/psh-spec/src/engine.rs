@@ -733,6 +733,15 @@ impl psh_engine::Host for Noting {
     fn info(&self) -> psh_engine::host::HostInfo {
         self.inner.info()
     }
+    fn strips_crlf(&self) -> bool {
+        self.inner.strips_crlf()
+    }
+    fn rlimit(
+        &self,
+        resource: psh_engine::host::Rlimit,
+    ) -> Option<(psh_engine::host::Limit, psh_engine::host::Limit)> {
+        self.inner.rlimit(resource)
+    }
     fn umask(&self) -> u32 {
         self.inner.umask()
     }

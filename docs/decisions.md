@@ -2584,3 +2584,27 @@ stdin), the body searches with `grep-searcher` and psh's own GNU sink.
   file read.
 Incremental search in wasm (`yes | grep x | head -1`) is still D1130's follow-up: the
 inline backend reads stdin first.
+## D1292: CRLF line ends are dropped only where the host says lines end so
+date: 2026-11-07 · by: builtins (rule by the coordinator) · issue: 0029
+`Host::strips_crlf()` (default false; the Windows host true; the test host has a switch)
+says whether the programs and files of the host end lines in `\r\n` as a rule; the
+platform is never guessed with `cfg!(windows)`. Then `read`, when it reads a whole line
+(delimiter `\n`: no `-d`, `-n` or `-N`), drops one unescaped `\r` right before the
+newline, before IFS splitting, with or without `-r`; a `\r` before end of file without a
+newline stays. Command substitution drops a `\r` right before each trailing newline it
+removes; `\r\n` inside the output stays. Elsewhere bytes are bash's: `\r` is data.
+
+## D1293: ulimit limits what the shell starts, never the shell itself
+date: 2026-11-07 · by: builtins · issue: 0029
+Additive Host items: `Host::rlimit(Rlimit) -> Option<(Limit, Limit)>` (the process's
+soft and hard limit; `None` where the platform lacks the resource, and `ulimit` then
+rejects its option with status 2, as bash does there; default `None`, so Windows and
+the JS host have none) and `SpawnSpec::rlimits`. psh-os on Unix reads them with
+`getrlimit` and sets a child's with `setrlimit` in the fork path (posix_spawn cannot,
+as with the umask); a limit the kernel refuses leaves the inherited one. What `ulimit`
+sets lives in `Vp::rlimits`, so a subshell's settings stay in it. Raising a hard limit
+is refused ("Operation not permitted": psh assumes no privileges), a soft limit above
+the hard one is "Invalid argument"; `-p` is fixed at 8 (PIPE_BUF in 512-byte blocks).
+Known gap: the shell process is never limited (an embedded engine must not lower its
+embedder's limits), so in-process work — redirections, builtins, utilities — ignores
+`ulimit -f`/`-n` that a bash process would hit.

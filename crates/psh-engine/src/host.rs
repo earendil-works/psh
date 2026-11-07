@@ -240,7 +240,51 @@ pub struct SpawnSpec {
     /// of its own, is not killed with the run's leftovers, and dropping its `ExtProc`
     /// releases it instead of abandoning it.
     pub detach: bool,
+    /// Resource limits for the child (`ulimit`), soft and hard; the others are the
+    /// process's.
+    pub rlimits: Vec<(Rlimit, Limit, Limit)>,
 }
+
+/// A resource limit `ulimit` reports and sets. Values are in the resource's own unit:
+/// bytes, seconds, microseconds (`RtTime`) or a count.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Rlimit {
+    /// `-c`: core file size.
+    Core,
+    /// `-d`: data segment size.
+    Data,
+    /// `-e`: scheduling priority (nice).
+    Nice,
+    /// `-f`: file size.
+    FileSize,
+    /// `-i`: pending signals.
+    SigPending,
+    /// `-l`: locked memory.
+    MemLock,
+    /// `-m`: resident set size.
+    Rss,
+    /// `-n`: open files.
+    NoFile,
+    /// `-q`: POSIX message queue bytes.
+    MsgQueue,
+    /// `-r`: real-time priority.
+    RtPrio,
+    /// `-s`: stack size.
+    Stack,
+    /// `-t`: CPU time.
+    Cpu,
+    /// `-u`: user processes.
+    NProc,
+    /// `-v`: address space.
+    As,
+    /// `-x`: file locks.
+    Locks,
+    /// `-R`: real-time CPU time without blocking.
+    RtTime,
+}
+
+/// A limit: `None` is unlimited.
+pub type Limit = Option<u64>;
 
 /// A running external process. Dropping it while it runs abandons it: the host sends
 /// TERM, KILL after a grace period, and reaps it in the background. What a released
@@ -395,6 +439,18 @@ pub trait Host {
     /// once per shell.
     fn info(&self) -> HostInfo {
         HostInfo::default()
+    }
+    /// Whether lines from this host's programs and files end in `\r\n` as a rule
+    /// (Windows): `read` then drops a `\r` right before the newline, and command
+    /// substitution one before each trailing newline it removes (D1292).
+    fn strips_crlf(&self) -> bool {
+        false
+    }
+    /// The process's soft and hard limit of a resource; `None` when the platform has no
+    /// such limit (`ulimit` then rejects its option, as bash does there).
+    fn rlimit(&self, resource: Rlimit) -> Option<(Limit, Limit)> {
+        let _ = resource;
+        None
     }
     /// The process's file mode creation mask when the host was made: where the shell's
     /// own mask (`umask`) starts. Hosts without one report `0o022`.

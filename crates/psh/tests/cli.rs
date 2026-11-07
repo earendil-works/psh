@@ -638,3 +638,36 @@ fn windows_shadowed_names_are_psh_s_utilities() {
         out.stderr
     );
 }
+
+/// `PATH=dir cmd` looks `cmd` up in that PATH, not in the shell's (nor in its hash
+/// table), and does not remember what it found.
+#[cfg(unix)]
+#[test]
+fn prefix_path_is_used_for_lookup() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = std::env::temp_dir().join(format!("psh-cli-prefix-path-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let tool = dir.join("ls");
+    std::fs::write(&tool, "#!/bin/sh\necho mine \"$@\"\n").unwrap();
+    std::fs::set_permissions(&tool, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let d = dir.to_str().unwrap();
+    let script = format!(
+        "ls -d / >/dev/null; PATH={d} ls x; PATH=/nonexistent ls; echo $?; hash -t ls; PATH={d} command ls y"
+    );
+    let out = psh(&["-c", &script]);
+    std::fs::remove_dir_all(&dir).ok();
+    let lines: Vec<&str> = out.stdout.lines().collect();
+    assert_eq!(lines[0], "mine x");
+    assert_eq!(lines[1], "127");
+    assert!(
+        lines[2].ends_with("/ls") && !lines[2].contains("psh-cli"),
+        "{}",
+        out.stdout
+    );
+    assert_eq!(lines[3], "mine y");
+    assert!(
+        out.stderr.contains("ls: command not found"),
+        "{}",
+        out.stderr
+    );
+}

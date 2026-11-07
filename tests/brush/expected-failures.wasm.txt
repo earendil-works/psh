@@ -2,6 +2,7 @@
 # but pass on Linux (they are not in expected-failures.txt), each with its reason.
 # Cases that need external programs are not listed. psh-spec --update-ratchet
 # removes cases that pass; never add a regression.
+brush/compat/assignments/6: the JS host has no home_dir (~root stays as written)
 brush/compat/builtins/kill/2: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/builtins/kill/4: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/builtins/kill/5: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
@@ -11,13 +12,34 @@ brush/compat/builtins/kill/13: signals a process (`kill $$`, a shell dying of a 
 brush/compat/builtins/kill/15: the runner's fake `$$` is 99999999, the pid this case uses as one that does not exist
 brush/compat/builtins/kill/31: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/builtins/test/2: needs host files: /bin/sh, /etc/os-release
+brush/compat/builtins/ulimit/7: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/9: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/11: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/12: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/13: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/14: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/15: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/16: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/18: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/19: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/21: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/22: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/26: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/extended_tests/11: needs host files: /bin/sh, /etc/os-release (as builtins/test/2)
 brush/compat/signals/7: a shell a signal's default action ends reports 128+n: no process to die by it (D1903)
 brush/compat/signals/8: a shell a signal's default action ends reports 128+n: no process to die by it (D1903)
 brush/compat/signals/9: a shell a signal's default action ends reports 128+n: no process to die by it (D1903)
 brush/compat/signals/19: a shell a signal's default action ends reports 128+n: no process to die by it (D1903)
 brush/compat/signals/26: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/signals/32: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
-brush/compat/extended_tests/11: needs host files: /bin/sh, /etc/os-release (as builtins/test/2)
-brush/compat/assignments/6: the JS host has no home_dir (~root stays as written)
 brush/compat/well_known_vars/3: the JS host reports no OS (OSTYPE is unknown)
 brush/compat/well_known_vars/4: `env -v` (FreeBSD and GNU 9.x) is not psh's env and the JS host has no real env to fall through to (D1082)
+brush/compat/builtins/ulimit/31: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/0: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/1: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/2: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/3: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/builtins/ulimit/4: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/fd_management/0: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/fd_management/1: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/fd_management/2: the JS host has no resource limits (Host::rlimit is None), so ulimit rejects every resource

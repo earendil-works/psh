@@ -17,7 +17,6 @@ brush/brush/external_commands/13
 brush/brush/external_commands/16: passed only with the stub (status 2); bash fails on `"$0" --inherit-fd=3` with $0=bash on PATH, psh $0 is not on PATH
 brush/brush/pipelines/22
 brush/brush/redirection/6
-brush/brush/scripting/11
 brush/brush/scripting/27
 brush/compat/arguments/23
 brush/compat/arguments/38
@@ -140,35 +139,11 @@ brush/compat/builtins/let/5
 brush/compat/builtins/mapfile/30
 brush/compat/builtins/mapfile/36
 brush/compat/builtins/printf/3
-brush/compat/builtins/printf/64
-brush/compat/builtins/printf/65
-brush/compat/builtins/printf/67
-brush/compat/builtins/printf/68
-brush/compat/builtins/printf/69
-brush/compat/builtins/printf/70
 brush/compat/builtins/printf/77
 brush/compat/builtins/printf/79
 brush/compat/builtins/printf/80
-brush/compat/builtins/printf/81
 brush/compat/builtins/printf/82
-brush/compat/builtins/pushd_popd_dirs/0
-brush/compat/builtins/pushd_popd_dirs/1
-brush/compat/builtins/pushd_popd_dirs/2
-brush/compat/builtins/pushd_popd_dirs/3
-brush/compat/builtins/pushd_popd_dirs/4
-brush/compat/builtins/pushd_popd_dirs/5
-brush/compat/builtins/pushd_popd_dirs/6
-brush/compat/builtins/pushd_popd_dirs/7
-brush/compat/builtins/pushd_popd_dirs/8
 brush/compat/builtins/pushd_popd_dirs/9
-brush/compat/builtins/pushd_popd_dirs/10
-brush/compat/builtins/pushd_popd_dirs/11
-brush/compat/builtins/pushd_popd_dirs/12
-brush/compat/builtins/pushd_popd_dirs/13
-brush/compat/builtins/pushd_popd_dirs/14
-brush/compat/builtins/pushd_popd_dirs/15
-brush/compat/builtins/pushd_popd_dirs/16
-brush/compat/builtins/pushd_popd_dirs/17
 brush/compat/builtins/pwd/2
 brush/compat/builtins/pwd/3
 brush/compat/builtins/pwd/5
@@ -200,36 +175,14 @@ brush/compat/builtins/trap/115
 brush/compat/builtins/type/19
 brush/compat/builtins/type/20
 brush/compat/builtins/type/25
-brush/compat/builtins/ulimit/0: passed via macOS /usr/bin wrapper
-brush/compat/builtins/ulimit/1: passed via macOS /usr/bin wrapper
-brush/compat/builtins/ulimit/2: passed via macOS /usr/bin wrapper
-brush/compat/builtins/ulimit/3: passed via macOS /usr/bin wrapper
-brush/compat/builtins/ulimit/4: passed via macOS /usr/bin wrapper
+brush/compat/builtins/type/26
 brush/compat/builtins/ulimit/5
 brush/compat/builtins/ulimit/6
-brush/compat/builtins/ulimit/7: passed via macOS /usr/bin wrapper
 brush/compat/builtins/ulimit/8
-brush/compat/builtins/ulimit/9: passed via macOS /usr/bin wrapper
-brush/compat/builtins/ulimit/10
-brush/compat/builtins/ulimit/11: passed via macOS /usr/bin wrapper
-brush/compat/builtins/ulimit/12: passed via macOS /usr/bin wrapper
-brush/compat/builtins/ulimit/13: passed via macOS /usr/bin wrapper
-brush/compat/builtins/ulimit/14: passed via macOS /usr/bin wrapper
-brush/compat/builtins/ulimit/15
-brush/compat/builtins/ulimit/16: passed via macOS /usr/bin wrapper
 brush/compat/builtins/ulimit/17
-brush/compat/builtins/ulimit/18
-brush/compat/builtins/ulimit/19
 brush/compat/builtins/ulimit/20
-brush/compat/builtins/ulimit/21
-brush/compat/builtins/ulimit/22
-brush/compat/builtins/ulimit/23: passed via macOS /usr/bin wrapper
 brush/compat/builtins/ulimit/24
 brush/compat/builtins/ulimit/25
-brush/compat/builtins/ulimit/26
-brush/compat/builtins/ulimit/27: passed via macOS /usr/bin wrapper
-brush/compat/builtins/ulimit/28: passed via macOS /usr/bin wrapper
-brush/compat/builtins/ulimit/29: passed via macOS /usr/bin wrapper
 brush/compat/builtins/ulimit/30
 brush/compat/builtins/unset/10
 brush/compat/builtins/unset/11
@@ -257,9 +210,6 @@ brush/compat/errors/64
 brush/compat/errors/65
 brush/compat/errors/67
 brush/compat/errors/77
-brush/compat/fd_management/0: passed via macOS /usr/bin wrapper
-brush/compat/fd_management/1: passed via macOS /usr/bin wrapper
-brush/compat/fd_management/2: passed via macOS /usr/bin wrapper
 brush/compat/functions/9
 brush/compat/functions/21
 brush/compat/here/22
@@ -333,7 +283,6 @@ brush/compat/pipeline/17
 brush/compat/process/0
 brush/compat/redirection/15
 brush/compat/redirection/34
-brush/compat/redirection/35
 brush/compat/redirection/44
 brush/compat/redirection/45
 brush/compat/redirection/47
@@ -366,7 +315,6 @@ brush/compat/special_parameters/34
 brush/compat/special_parameters/35
 brush/compat/special_parameters/36
 brush/compat/variables/11
-brush/compat/variables/12: passed via macOS /usr/bin wrapper
 brush/compat/variables/13
 brush/compat/variables/14
 brush/compat/variables/15

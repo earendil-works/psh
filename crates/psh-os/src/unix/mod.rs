@@ -13,6 +13,7 @@
 mod file;
 mod fs;
 pub mod ready;
+mod rlimit;
 pub mod signals;
 pub mod signum;
 mod spawn;
@@ -28,8 +29,8 @@ use std::time::Duration;
 
 use psh_engine::HostFile;
 use psh_engine::host::{
-    Access, DirEntry, ExtraMetadata, FileKind, Host, HostFuture, Metadata, OpenOptions, Signal,
-    SpawnSpec, Spawned,
+    Access, DirEntry, ExtraMetadata, FileKind, Host, HostFuture, Limit, Metadata, OpenOptions,
+    Signal, SpawnSpec, Spawned,
 };
 
 pub use crate::Leftovers;
@@ -541,6 +542,10 @@ impl Host for UnixHost {
             }
             buf.resize(n, 0);
         }
+    }
+
+    fn rlimit(&self, resource: psh_engine::host::Rlimit) -> Option<(Limit, Limit)> {
+        rlimit::get(resource)
     }
 
     fn now(&self) -> Duration {

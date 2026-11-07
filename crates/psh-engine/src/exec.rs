@@ -1353,7 +1353,14 @@ pub(crate) async fn run_external_with(
     let program = if name.contains(&b'/') {
         vp.abs_path(&name)
     } else {
-        match builtins::hash::find(vp, &name, opts.path.as_deref(), true).await {
+        // `PATH=… cmd`: the command is looked up in that PATH, past the hash table and
+        // without remembering what it finds (bash).
+        let temp_path = assigns.iter().find(|(n, _)| n == "PATH").map(|(_, v)| v);
+        let found = match temp_path {
+            Some(p) if opts.path.is_none() => builtins::hash::search(vp, &name, Some(p)).await,
+            _ => builtins::hash::find(vp, &name, opts.path.as_deref(), true).await,
+        };
+        match found {
             Some(p) => vp.abs_path(&p),
             None => {
                 vp.error(&format!("{shown}: command not found")).await;
@@ -1434,6 +1441,7 @@ pub(crate) async fn run_external_with(
             Some(b"nohup" | b"setsid")
         ) || vp.job.as_ref().is_some_and(|j| j.disowned.get()),
         umask: vp.umask,
+        rlimits: vp.rlimits.clone(),
     };
     let program = spec.program.clone();
     let spawned = match vp.host().spawn(spec) {
@@ -1883,6 +1891,7 @@ async fn open_to(
         return Ok(false);
     }
     let path = vp.abs_path(target);
+    let opts = builtins::umask::creation_mode(vp, opts);
     // An open that waits (a FIFO) gives way to a signal that ends the shell (D1306).
     let opened = crate::signals::or_signal(
         vp,

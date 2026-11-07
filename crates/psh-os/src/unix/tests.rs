@@ -365,6 +365,26 @@ fn ignored_signals_and_umask_take_effect() {
 }
 
 #[test]
+fn rlimits_are_read_and_given_to_children() {
+    use psh_engine::host::Rlimit;
+    let h = host();
+    let (soft, hard) = h
+        .rlimit(Rlimit::NoFile)
+        .expect("every Unix has RLIMIT_NOFILE");
+    assert!(soft.is_some() || hard.is_none());
+    // Lower than the process's own soft limit: always allowed.
+    let low = soft.map_or(64, |s| s.min(64)) - 1;
+    let mut spec = sh("ulimit -n", piped_out());
+    spec.rlimits = vec![(Rlimit::NoFile, Some(low), hard)];
+    let s = h.spawn(spec).unwrap();
+    let mut p = s.proc;
+    assert_eq!(read_all(&s.pipes[0].1), format!("{low}\n").as_bytes());
+    assert_eq!(block(|cx| p.poll_wait(cx)), ExitStatus::Exited(0));
+    // The process's own limit is untouched.
+    assert_eq!(h.rlimit(Rlimit::NoFile), Some((soft, hard)));
+}
+
+#[test]
 fn os_pipe_between_two_externals() {
     let h = host();
     let (r, w) = h.pipe().unwrap();

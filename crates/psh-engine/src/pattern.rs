@@ -421,10 +421,10 @@ fn class_matches(name: &str, c: Unit) -> bool {
 /// Escapes the pattern chars of literal text, so that it matches only itself.
 pub(crate) fn escape(text: &[u8], out: &mut Vec<u8>) {
     for &b in text {
-        // Also the chars of extglob groups.
+        // Also the chars of extglob groups, and `-` `^` for bracket expressions.
         if matches!(
             b,
-            b'*' | b'?' | b'[' | b']' | b'\\' | b'(' | b')' | b'|' | b'!' | b'@' | b'+'
+            b'*' | b'?' | b'[' | b']' | b'\\' | b'(' | b')' | b'|' | b'!' | b'@' | b'+' | b'-' | b'^'
         ) {
             out.push(b'\\');
         }

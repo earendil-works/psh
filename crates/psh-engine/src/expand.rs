@@ -46,6 +46,8 @@ pub(crate) struct Fields {
     cur: Field,
     pending: Pending,
     ifs: Vec<u8>,
+    /// Multibyte chars of IFS (UTF-8 locale): delimiters as a whole, not by byte.
+    ifs_mb: Vec<Vec<u8>>,
     /// Word splitting applies (command words); off for assignments, redirection
     /// targets, here-strings, patterns.
     split: bool,
@@ -64,15 +66,30 @@ fn is_ifs_ws(b: u8) -> bool {
 
 impl Fields {
     pub(crate) fn new(vp: &Vp, split: bool) -> Fields {
-        let ifs = match vp.var("IFS") {
+        let mut ifs = match vp.var("IFS") {
             Some(v) => v.to_vec(),
             None => b" \t\n".to_vec(),
         };
+        let mut ifs_mb = Vec::new();
+        if ifs.iter().any(|&b| b >= 0x80) && vp.utf8() {
+            let (units, offs) = pattern::units(&ifs, true);
+            let mut single = Vec::new();
+            for (i, _) in units.iter().enumerate() {
+                let ch = &ifs[offs[i]..offs[i + 1]];
+                if ch.len() == 1 {
+                    single.push(ch[0]);
+                } else {
+                    ifs_mb.push(ch.to_vec());
+                }
+            }
+            ifs = single;
+        }
         Fields {
             out: Vec::new(),
             cur: Field::default(),
             pending: Pending::None,
             ifs,
+            ifs_mb,
             split,
             subst_status: None,
             rep: false,
@@ -140,7 +157,18 @@ impl Fields {
             }
             return;
         }
-        for &b in s {
+        let mut i = 0;
+        while i < s.len() {
+            let b = s[i];
+            i += 1;
+            if b >= 0x80
+                && let Some(mb) = self.ifs_mb.iter().find(|m| s[i - 1..].starts_with(m))
+            {
+                i += mb.len() - 1;
+                self.push_cur();
+                self.pending = Pending::Delim;
+                continue;
+            }
             if self.ifs.contains(&b) {
                 if is_ifs_ws(b) {
                     if self.pending == Pending::None && self.cur.started {
@@ -845,8 +873,13 @@ fn by_name(vp: &Vp, name: &[u8]) -> Option<Val> {
     None
 }
 
+/// The first char of IFS, which joins `"$*"` (a whole multibyte char in UTF-8).
 fn ifs_first(vp: &Vp) -> Vec<u8> {
     match vp.var("IFS") {
+        Some(v) if v.first().is_some_and(|&b| b >= 0x80) => {
+            let (_, offs) = pattern::units(v, vp.utf8());
+            v[..offs[1]].to_vec()
+        }
         Some(v) => v.first().map(|b| vec![*b]).unwrap_or_default(),
         None => b" ".to_vec(),
     }
@@ -1904,10 +1937,17 @@ pub(crate) async fn glob(vp: &Vp, pat: &[u8]) -> Vec<Vec<u8>> {
             let dot_ok = comp.first() == Some(&b'.') || dotglob;
             // `dir/*/`: only directories.
             let need_dir = !last || pat.ends_with(b"/");
+            // `shopt -u globskipdots`: `.*` also matches `.` and `..`.
+            let dots = comp.first() == Some(&b'.') && !vp.opts.shopt(Shopt::Globskipdots);
             for (shown, abs) in &cur {
                 let Ok(mut entries) = vp.host().read_dir(abs).await else {
                     continue;
                 };
+                if dots {
+                    for d in [&b"."[..], b".."] {
+                        entries.push(crate::host::DirEntry { name: d.to_vec() });
+                    }
+                }
                 entries.sort_by(|a, b| a.name.cmp(&b.name));
                 for e in entries {
                     if e.name.first() == Some(&b'.') && !dot_ok {

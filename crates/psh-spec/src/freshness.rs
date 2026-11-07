@@ -57,10 +57,15 @@ pub fn check(root: &Path, artifact: &Path, crates: &[&str], fix: &str) -> Result
         && src > built
     {
         let rel = path.strip_prefix(root).unwrap_or(&path);
+        // `/`-separated on every platform, like the rest of psh-spec's messages.
+        let rel: Vec<String> = rel
+            .components()
+            .map(|c| c.as_os_str().to_string_lossy().into_owned())
+            .collect();
         return Err(format!(
             "{} is older than its sources ({} changed since); results would show old behavior.\nRebuild it: {fix}",
             artifact.display(),
-            rel.display()
+            rel.join("/")
         ));
     }
     Ok(())

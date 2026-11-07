@@ -59,9 +59,9 @@ mod cmp;
 mod date;
 mod diff;
 mod diff_algo;
+mod sed;
 mod sum;
 mod which;
-mod sed;
 
 use psh_engine::util::{Mode, UtilEntry, UtilPolicy};
 

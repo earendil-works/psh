@@ -2449,3 +2449,35 @@ files. Formats follow GNU's manual and output: normal, `-u`/`-U`, `-c`/`-C` (tim
 at `(hw+off-1)/2`), `--color` (GNU's default palette), `-p`/`-F`, and `diff -r` lines
 that echo the options shell-quoted. `-I` and `-F` take BREs through the search
 utilities' translator; a pattern it cannot carry runs the real diff.
+## D1140: sed is written for psh on psh-regex, GNU's language and messages
+date: 2026-11-07 · by: parser · issue: 0014
+`sed` (`crates/psh-utils/src/sed*`, mode S) implements GNU sed 4.9's language: every
+command (`e` falls through to a real sed), GNU's addresses (`0,/re/`, `addr,+N`,
+`addr,~N`, `first~step`, `I`/`M`), one-line `a`/`i`/`c`, `s///` with `Ng`, `p`, `w`,
+`I`, `M` and `\U \L \u \l \E`, `-n -e -f -E/-r -s -z -l -u --posix --sandbox`, GNU's
+error texts with their positions and statuses (1 syntax, 2 unreadable input, 4 I/O, a
+missing label and "no input files" are 4). Regexes are psh-regex (D1270) with sed's
+own escapes (`\n \t \dNNN \oNNN \xHH \cX`, also in brackets) resolved first; `\delim`
+becomes the bare char. It is a fresh byte-oriented implementation rather than a port
+of uutils sed: uutils works on `String`/chars with the regex crate and a synchronous
+reader, so a port would have been a rewrite of every layer; nothing was copied, so no
+NOTICE entry. Behavior was taken from GNU sed run in the recording container (probes
+in `work/scratch/0014/`), including the output rule for a last line without a newline
+(kept so; a newline is supplied before later output; `G`/`x`/`g` carry the hold
+space's state), empty matches next to a match not counting in `s///g`, `D` keeping the
+append queue, and `-s`/`-i` starting each file with fresh line numbers, ranges and
+hold space. Speed is on par with the system sed on a million lines.
+
+## D1141: `sed -i`'s two forms, as D016 states
+date: 2026-11-07 · by: parser · issue: 0014
+A `-i` with text attached (`-i.bak`, `--in-place=.bak`) has that suffix. A bare `-i`
+looks at the next word: `''` is BSD's empty suffix; an option is not a suffix (GNU,
+no backup). When the script is an operand: a word that compiles as a sed script with
+more operands after it is GNU's script; a `.`-prefixed word without command
+characters (`;/{}\!$=,~#`, blanks) followed by a word that compiles is BSD's suffix;
+anything else is GNU's. When `-e`/`-f` give the script, a dotted word followed by an
+option is BSD's suffix (`sed -i .bak -e …`), else a file. In-place editing writes a
+temporary file in the file's directory with the file's mode and renames it over the
+file (after renaming the original to its backup name, `*` in the suffix standing for
+the file's name); non-regular files are refused with status 4, missing ones skipped
+with status 2.

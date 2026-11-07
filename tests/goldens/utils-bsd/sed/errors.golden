@@ -1,0 +1,153 @@
+# Goldens for tests/utils/sed/errors.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: unterminated s
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: 1: "s/a/b
+|": unescaped newline inside substitute pattern
+
+=== 1: unknown command
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: 1: "k
+|": invalid command code k
+
+=== 2: unknown option to s
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: 1: "s/a/b/k
+|": bad flag in substitute command: 'k'
+
+=== 3: missing command
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: 1: "1
+|": command expected
+
+=== 4: unmatched braces
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+--- stderr
+|sed: 2: "{p
+|": unexpected EOF (pending }'s)
+|sed: 1: "p;}
+|": unexpected }
+
+=== 5: extra characters
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: 1: "p x
+|": extra characters at the end of p command
+
+=== 6: bad regex
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+--- stderr
+|sed: 1: "s/\(/x/
+|": RE error: parentheses not balanced
+|sed: 1: "s/(/x/
+|": RE error: parentheses not balanced
+
+=== 7: invalid reference
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: 1: "s/a/\1/
+|": \1 not defined in the RE
+
+=== 8: missing label
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: 2: "b foo
+|": undefined label 'foo'
+
+=== 9: errors in -f and later -e
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+--- stderr
+|sed: 2: s.sed: invalid command code k
+|sed: 1: "k
+|": invalid command code k
+--- file s.sed
+|p
+|k
+
+=== 10: addresses where none are allowed
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+|2
+|0
+--- stderr
+|sed: 1: "1# foo
+|": command # expects up to 0 address(es), found 1
+|sed: 1: "1,2q
+|": command q expects up to 1 address(es), found 2
+
+=== 11: y lengths
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: 1: "y/ab/c/
+|": transform strings are not the same length
+
+=== 12: missing input file
+status: 0
+bash-n: 0
+--- stdout
+|a
+|a
+|1
+--- stderr
+|sed: nosuch: No such file or directory
+--- file f
+|a
+
+=== 13: no previous regex
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: first RE may not be empty
+
+=== 14: no script
+status: 0
+bash-n: 0
+--- stdout
+|0

@@ -1,0 +1,379 @@
+# Goldens for tests/utils/sed/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: substitute, global, nth
+status: 0
+bash-n: 0
+--- stdout
+|Xaa
+|bXb
+|XXX
+|aXa
+
+=== 1: nth and g together
+status: 0
+bash-n: 0
+--- stdout
+|aaXXX
+
+=== 2: p and -n
+status: 0
+bash-n: 0
+--- stdout
+|X
+|b
+
+=== 3: line and last addresses
+status: 0
+bash-n: 0
+--- stdout
+|3
+|5
+
+=== 4: ranges
+status: 0
+bash-n: 0
+--- stdout
+|2
+|3
+|4
+|4
+|2
+|3
+|4
+|ab
+|c
+|b
+
+=== 5: range ends again and restarts
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|a
+|b
+
+=== 6: GNU range forms
+status: 0
+bash-n: 0
+--- stdout
+|ab
+|2
+|3
+|4
+|5
+|6
+|7
+|8
+|3
+|6
+|9
+
+=== 7: negation
+status: 0
+bash-n: 0
+--- stdout
+|1
+|3
+|1
+
+=== 8: delete and print
+status: 0
+bash-n: 0
+--- stdout
+|1
+|3
+|3
+|4
+
+=== 9: blocks
+status: 0
+bash-n: 0
+--- stdout
+|2
+|4
+
+=== 10: append, insert, change (POSIX form)
+status: 0
+bash-n: 0
+--- stdout
+|changed
+|after
+|before
+|2
+
+=== 11: one-line a, i, c
+status: 0
+bash-n: 0
+--- stdout
+|1
+|after
+|before
+|2
+|changed
+
+=== 12: a with leading blanks kept
+status: 0
+bash-n: 0
+--- stdout
+|1
+|   x
+
+=== 13: a text continued
+status: 0
+bash-n: 0
+--- stdout
+|1
+|foo
+|bar
+
+=== 14: a, i, c from several -e
+status: 0
+bash-n: 0
+--- stdout
+|x
+|1
+|1
+
+=== 15: c over a range prints once
+status: 0
+bash-n: 0
+--- stdout
+|1
+|X
+|4
+
+=== 16: c with negation
+status: 0
+bash-n: 0
+--- stdout
+|X
+|X
+|3
+
+=== 17: append queue flushed by n and N
+status: 0
+bash-n: 0
+--- stdout
+|1
+|foo
+|2
+|3
+
+=== 18: r reads a file after the cycle
+status: 0
+bash-n: 0
+--- stdout
+|1
+|inc
+|2
+|inc
+|1
+|2
+--- file inc
+|inc
+
+=== 19: R reads one line at a time
+status: 0
+bash-n: 0
+--- stdout
+|1
+|x
+|2
+|y
+|3
+--- file inc
+|x
+|y
+
+=== 20: w writes a file
+status: 0
+bash-n: 0
+--- stdout
+|2
+--- file out
+|2
+
+=== 21: w to /dev/stdout
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+|2
+|2
+
+=== 22: hold space
+status: 0
+bash-n: 0
+--- stdout
+|c
+|b
+|a
+|
+
+=== 23: N, P, D
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|3
+|1+2
+|3
+
+=== 24: N on the last line prints
+status: 0
+bash-n: 0
+--- stdout
+|1-2
+|3
+
+=== 25: n
+status: 0
+bash-n: 0
+--- stdout
+|1
+|3
+|2
+
+=== 26: labels and branches
+status: 0
+bash-n: 0
+--- stdout
+|a b c
+
+=== 27: t and T
+status: 0
+bash-n: 0
+--- stdout
+|Xb yes
+|b no
+
+=== 28: T branches without a substitution
+status: 0
+bash-n: 0
+--- stdout
+|Xb yes
+|b no
+
+=== 29: = prints the line number
+status: 0
+bash-n: 0
+--- stdout
+|2
+
+=== 30: y transliterates
+status: 0
+bash-n: 0
+--- stdout
+|hippo
+|aXb
+
+=== 31: l shows the pattern space
+status: 0
+bash-n: 0
+--- stdout
+|a\tb\001\\$
+
+=== 32: l wraps
+status: 0
+bash-n: 0
+--- stdout
+|aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\
+|aaaaaaaaaaaaaaaaa$
+|aaaaaaaaa\
+|aaaaaaaaa\
+|aaaaaaaaa$
+|aaaaaaa\
+|aaaaaaa\
+|aaaaaaa\
+|aaaaaa$
+
+=== 33: q and Q with exit codes
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|5
+|1
+|0
+
+=== 34: q
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+
+=== 35: z and F
+status: 0
+bash-n: 0
+--- stdout
+|empty
+|f
+|a
+--- file f
+|a
+
+=== 36: a last line without a newline stays so
+status: 0
+bash-n: 0
+--- stdout
+|a
+|a
+|b
+|bb
+~ no newline at end
+
+=== 37: #n on the first line
+status: 0
+bash-n: 0
+--- stdout
+|2
+
+=== 38: comments
+status: 0
+bash-n: 0
+--- stdout
+|1
+
+=== 39: several files are one stream
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+--- file x
+|a
+--- file y
+|b
+
+=== 40: -s separates files
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|c
+|d
+--- file x
+|a
+|b
+--- file y
+|c
+|d
+
+=== 41: stdin as -
+status: 0
+bash-n: 0
+--- stdout
+|a
+|a
+|b
+|b
+--- file f
+|a

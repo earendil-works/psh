@@ -1,0 +1,259 @@
+# Goldens for tests/utils/sed/options.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: -e and -f
+status: 0
+bash-n: 0
+--- stdout
+|xb
+--- file script.sed
+|s/a/b/
+
+=== 1: -f with a comment and two lines
+status: 0
+bash-n: 0
+--- stdout
+|c
+--- file script.sed
+|# comment
+|s/a/b/
+|s/b/c/
+
+=== 2: --expression and --quiet
+status: 1
+bash-n: 0
+--- stderr
+|sed: illegal option -- -
+|usage: sed script [-EHalnru] [-i extension] [file ...]
+|	sed [-EHalnu] [-i extension] [-e script] ... [-f script_file] ... [file ...]
+
+=== 3: -z
+status: 0
+bash-n: 0
+--- stderr
+|sed: illegal option -- z
+|usage: sed script [-EHalnru] [-i extension] [file ...]
+|	sed [-EHalnu] [-i extension] [-e script] ... [-f script_file] ... [file ...]
+
+=== 4: -- ends the options
+status: 0
+bash-n: 0
+--- stdout
+|a
+|a
+--- file f
+|a
+
+=== 5: options after the script
+status: 1
+bash-n: 0
+--- stderr
+|sed: -E: No such file or directory
+
+=== 6: -i edits in place, GNU form
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|f
+--- stderr
+|sed: 1: "f
+|": invalid command code f
+--- file f
+|a
+|b
+
+=== 7: -i with -e, GNU form
+status: 0
+bash-n: 0
+--- stdout
+|X
+|f
+|f-e
+--- file f
+|X
+--- file f-e
+|a
+
+=== 8: -i '' is BSD's empty suffix
+status: 0
+bash-n: 0
+--- stdout
+|X
+|f
+--- file f
+|X
+
+=== 9: -i '' -e
+status: 0
+bash-n: 0
+--- stdout
+|Y
+|f
+--- file f
+|Y
+
+=== 10: -i.bak attached suffix
+status: 0
+bash-n: 0
+--- stdout
+|X
+|a
+|f
+|f.bak
+--- file f
+|X
+--- file f.bak
+|a
+
+=== 11: -i .bak is a BSD suffix
+status: 0
+bash-n: 0
+--- stdout
+|X
+|a
+|f
+|f.bak
+--- file f
+|X
+--- file f.bak
+|a
+
+=== 12: -i .bak -e is a BSD suffix
+status: 0
+bash-n: 0
+--- stdout
+|X
+|a
+|f
+|f.bak
+--- file f
+|X
+--- file f.bak
+|a
+
+=== 13: -Ei '' combined
+status: 0
+bash-n: 0
+--- stdout
+|X
+|f
+--- file f
+|X
+
+=== 14: -i -n
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|b
+|f
+|f-n
+--- file f
+|a
+|b
+|b
+--- file f-n
+|a
+|b
+
+=== 15: --in-place=SUFFIX
+status: 1
+bash-n: 0
+--- stdout
+|a
+--- stderr
+|sed: illegal option -- -
+|usage: sed script [-EHalnru] [-i extension] [file ...]
+|	sed [-EHalnu] [-i extension] [-e script] ... [-f script_file] ... [file ...]
+|cat: f.orig: No such file or directory
+--- file f
+|a
+
+=== 16: -i with * in the suffix
+status: 1
+bash-n: 0
+--- stdout
+|a
+--- stderr
+|sed: rename(): No such file or directory
+|cat: bak/f.old: No such file or directory
+--- dir bak
+--- file f
+|a
+
+=== 17: -i edits each file separately
+status: 0
+bash-n: 0
+--- stdout
+|b
+|d
+--- file x
+|b
+--- file x.b
+|a
+|b
+--- file y
+|d
+--- file y.b
+|c
+|d
+
+=== 18: -i and q keep what was printed
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+--- file f
+|1
+|2
+--- file f.b
+|1
+|2
+|3
+|4
+
+=== 19: -i keeps the mode
+status: 0
+bash-n: 0
+--- stdout
+|-rwxr-x--x
+--- file f
+|b
+--- file f.b
+|a
+
+=== 20: -i without files
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: -I or -i may not be used with stdin
+
+=== 21: -i on a missing file goes on
+status: 0
+bash-n: 0
+--- stdout
+|1
+|a
+--- stderr
+|sed: 1: "nosuch
+|": extra characters at the end of n command
+--- file f
+|a
+
+=== 22: -i with w /dev/stdout
+status: 0
+bash-n: 0
+--- stdout
+|a
+--- stderr
+|sed: 1: "f
+|": invalid command code f
+--- file f
+|a

@@ -40,6 +40,7 @@ seq 3 | sed '1 ! d'
 seq 4 | sed '2d;3p'
 
 #### blocks
+## expect: gnu (BSD sed needs a ; before })
 seq 5 | sed -n '2,4{/3/d;p}'
 
 #### append, insert, change (POSIX form)
@@ -95,6 +96,7 @@ seq 3 | sed -n '2w out'
 cat out
 
 #### w to /dev/stdout
+## expect: gnu (BSD sed writes /dev/stdout around its buffered output)
 seq 2 | sed 'w /dev/stdout'
 
 #### hold space
@@ -114,6 +116,7 @@ seq 3 | sed 'n;d'
 seq 3 | sed -n 'n;p'
 
 #### labels and branches
+## expect: gnu (BSD sed's labels run to the end of the line)
 printf 'a\nb\nc\n' | sed ':a;N;$!ba;s/\n/ /g'
 
 #### t and T
@@ -131,6 +134,7 @@ echo hello | sed 'y/el/ip/'
 printf 'a\tb\n' | sed 'y/\t/X/'
 
 #### l shows the pattern space
+## expect: gnu (BSD sed's l does not escape a backslash)
 printf 'a\tb\001\\\n' | sed -n l
 
 #### l wraps
@@ -153,6 +157,7 @@ echo a | sed 'z;s/^$/empty/'
 echo a > f; sed F f
 
 #### a last line without a newline stays so
+## expect: gnu (BSD sed does not supply the missing newline)
 printf 'a\nb' | sed p
 printf 'a' | sed 's/a/b/'
 
@@ -161,6 +166,7 @@ seq 2 | sed '#n
 2p'
 
 #### comments
+## expect: gnu (BSD sed rejects a comment after a command)
 seq 2 | sed -n '# a comment
 1p # another'
 
@@ -174,5 +180,6 @@ printf 'a\nb\n' > x; printf 'c\nd\n' > y
 sed -s -n '$p;1p' x y
 
 #### stdin as -
+## expect: gnu (BSD sed has no - for stdin)
 echo a > f
 echo b | sed p f -

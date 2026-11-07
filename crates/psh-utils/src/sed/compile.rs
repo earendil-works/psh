@@ -439,7 +439,10 @@ impl P<'_> {
             b'e' => return Err(E::Unsupported("the e command")),
             b'v' => {
                 // `v [version]`: psh is new enough.
-                while self.peek().is_some_and(|c| !matches!(c, b'\n' | b';' | b'}')) {
+                while self
+                    .peek()
+                    .is_some_and(|c| !matches!(c, b'\n' | b';' | b'}'))
+                {
                     self.i += 1;
                 }
                 self.end_of_command()?;
@@ -708,8 +711,7 @@ impl P<'_> {
             write: None,
         };
         let (mut icase, mut multi) = (false, false);
-        loop {
-            let Some(c) = self.peek() else { break };
+        while let Some(c) = self.peek() {
             match c {
                 b'g' => {
                     self.i += 1;

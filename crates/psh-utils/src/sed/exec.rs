@@ -280,8 +280,9 @@ impl State {
     /// Writes what the `w` files have buffered once it is much (stderr: always).
     async fn drain(&mut self, ctx: &mut UtilCtx<'_>, prog: &Program) -> Result<(), i32> {
         let much = self.wfiles.iter().any(|w| {
-            w.as_ref()
-                .is_some_and(|(f, o)| o.buf.len() >= 64 * 1024 || (f.is_none() && !o.buf.is_empty()))
+            w.as_ref().is_some_and(|(f, o)| {
+                o.buf.len() >= 64 * 1024 || (f.is_none() && !o.buf.is_empty())
+            })
         });
         if !much {
             return Ok(());
@@ -386,12 +387,7 @@ impl<'p> Run<'p> {
     }
 
     /// Runs the program over `reader`. Line numbers continue from `first_line`.
-    pub async fn run(
-        &mut self,
-        ctx: &mut UtilCtx<'_>,
-        st: &mut State,
-        reader: &mut Reader,
-    ) -> End {
+    pub async fn run(&mut self, ctx: &mut UtilCtx<'_>, st: &mut State, reader: &mut Reader) -> End {
         let mut restart = false;
         let mut steps: u32 = 0;
         loop {
@@ -580,7 +576,7 @@ impl<'p> Run<'p> {
                 if *step == 0 {
                     self.line_no == *first
                 } else {
-                    self.line_no >= *first && (self.line_no - first) % step == 0
+                    self.line_no >= *first && (self.line_no - first).is_multiple_of(*step)
                 }
             }
         }

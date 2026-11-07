@@ -1,0 +1,131 @@
+# Goldens for tests/utils/sed/regex.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: BRE groups and back-references
+status: 0
+bash-n: 0
+--- stdout
+|world hello
+|abab
+
+=== 1: ERE with -E and -r
+status: 0
+bash-n: 0
+--- stdout
+|world hello
+|X
+
+=== 2: & and escaped &
+status: 0
+bash-n: 0
+--- stdout
+|[a][&]b
+
+=== 3: GNU BRE extensions
+status: 0
+bash-n: 0
+--- stdout
+|X
+|X
+|aX
+
+=== 4: GNU escapes \w \s \b \< \>
+status: 0
+bash-n: 0
+--- stdout
+|W_b
+|Xb Xb
+|X concat
+
+=== 5: intervals
+status: 0
+bash-n: 0
+--- stdout
+|Xa
+|Xa
+
+=== 6: case conversion
+status: 0
+bash-n: 0
+--- stdout
+|Hello WORLD!
+|Foo Bar
+|hello
+
+=== 7: newline and tab in the replacement
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|Tb
+
+=== 8: escaped newline in the replacement
+status: 0
+bash-n: 0
+--- stdout
+|x
+|yb
+
+=== 9: newline in the pattern space
+status: 0
+bash-n: 0
+--- stdout
+|a,b
+
+=== 10: other delimiters
+status: 0
+bash-n: 0
+--- stdout
+|a_b
+|X
+|a/b
+
+=== 11: empty matches with g
+status: 0
+bash-n: 0
+--- stdout
+|-a-b-c-
+|xbxcx
+|XhXeXoX
+
+=== 12: anchors only at the start in g
+status: 0
+bash-n: 0
+--- stdout
+|Xaa
+
+=== 13: the empty regex reuses the last one
+status: 0
+bash-n: 0
+--- stdout
+|aXc
+
+=== 14: I flag
+status: 0
+bash-n: 0
+--- stdout
+|AxC
+|ABC
+
+=== 15: M flag
+status: 0
+bash-n: 0
+--- stdout
+|>a
+|>b
+
+=== 16: bracket expressions
+status: 0
+bash-n: 0
+--- stdout
+|aXb
+|aXb
+|aXb
+
+=== 17: dot is a char in UTF-8
+status: 0
+bash-n: 0
+--- stdout
+|X

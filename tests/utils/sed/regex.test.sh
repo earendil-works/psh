@@ -36,7 +36,7 @@ echo 'Hello' | sed 's/.*/\L&/'
 #### newline and tab in the replacement
 ## expect: gnu (BSD sed has no \n or \t in replacements)
 echo a.b | sed 's/\./\n/'
-echo ab | sed 's/a/\t/' | od -c | head -1
+echo ab | sed 's/a/\t/' | tr '\t' T
 
 #### escaped newline in the replacement
 echo ab | sed 's/a/x\

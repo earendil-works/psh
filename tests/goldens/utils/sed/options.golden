@@ -1,0 +1,241 @@
+# Goldens for tests/utils/sed/options.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: -e and -f
+status: 0
+bash-n: 0
+--- stdout
+|xb
+--- file script.sed
+|s/a/b/
+
+=== 1: -f with a comment and two lines
+status: 0
+bash-n: 0
+--- stdout
+|c
+--- file script.sed
+|# comment
+|s/a/b/
+|s/b/c/
+
+=== 2: --expression and --quiet
+status: 0
+bash-n: 0
+--- stdout
+|a
+
+=== 3: -z
+status: 0
+bash-n: 0
+--- stdout
+|Xa
+|Xb
+
+=== 4: -- ends the options
+status: 0
+bash-n: 0
+--- stdout
+|a
+|a
+--- file f
+|a
+
+=== 5: options after the script
+status: 0
+bash-n: 0
+--- stdout
+|X
+
+=== 6: -i edits in place, GNU form
+status: 0
+bash-n: 0
+--- stdout
+|X
+|b
+|f
+--- file f
+|X
+|b
+
+=== 7: -i with -e, GNU form
+status: 0
+bash-n: 0
+--- stdout
+|X
+|f
+--- file f
+|X
+
+=== 8: -i '' is BSD's empty suffix
+status: 0
+bash-n: 0
+--- stdout
+|a
+|f
+--- stderr
+|sed: can't read s/a/X/: No such file or directory
+--- file f
+|a
+
+=== 9: -i '' -e
+status: 0
+bash-n: 0
+--- stdout
+|Y
+|f
+--- stderr
+|sed: can't read : No such file or directory
+--- file f
+|Y
+
+=== 10: -i.bak attached suffix
+status: 0
+bash-n: 0
+--- stdout
+|X
+|a
+|f
+|f.bak
+--- file f
+|X
+--- file f.bak
+|a
+
+=== 11: -i .bak is a BSD suffix
+status: 0
+bash-n: 0
+--- stdout
+|a
+|f
+--- stderr
+|sed: -e expression #1, char 1: unknown command: `.'
+|cat: f.bak: No such file or directory
+--- file f
+|a
+
+=== 12: -i .bak -e is a BSD suffix
+status: 0
+bash-n: 0
+--- stdout
+|X
+|f
+--- stderr
+|sed: can't read .bak: No such file or directory
+|cat: f.bak: No such file or directory
+--- file f
+|X
+
+=== 13: -Ei '' combined
+status: 0
+bash-n: 0
+--- stdout
+|aa
+|f
+--- stderr
+|sed: can't read s/a+/X/: No such file or directory
+--- file f
+|aa
+
+=== 14: -i -n
+status: 0
+bash-n: 0
+--- stdout
+|b
+|f
+--- file f
+|b
+
+=== 15: --in-place=SUFFIX
+status: 0
+bash-n: 0
+--- stdout
+|X
+|a
+--- file f
+|X
+--- file f.orig
+|a
+
+=== 16: -i with * in the suffix
+status: 0
+bash-n: 0
+--- stdout
+|X
+|a
+--- dir bak
+--- file bak/f.old
+|a
+--- file f
+|X
+
+=== 17: -i edits each file separately
+status: 0
+bash-n: 0
+--- stdout
+|b
+|d
+--- file x
+|b
+--- file x.b
+|a
+|b
+--- file y
+|d
+--- file y.b
+|c
+|d
+
+=== 18: -i and q keep what was printed
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+--- file f
+|1
+|2
+--- file f.b
+|1
+|2
+|3
+|4
+
+=== 19: -i keeps the mode
+status: 0
+bash-n: 0
+--- stdout
+|-rwxr-x--x
+--- file f
+|b
+--- file f.b
+|a
+
+=== 20: -i without files
+status: 0
+bash-n: 0
+--- stdout
+|4
+--- stderr
+|sed: no input files
+
+=== 21: -i on a missing file goes on
+status: 0
+bash-n: 0
+--- stdout
+|2
+|b
+--- stderr
+|sed: can't read nosuch: No such file or directory
+--- file f
+|b
+
+=== 22: -i with w /dev/stdout
+status: 0
+bash-n: 0
+--- stdout
+|b
+|b
+--- file f
+|b

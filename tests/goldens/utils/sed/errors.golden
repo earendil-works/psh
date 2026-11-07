@@ -1,0 +1,138 @@
+# Goldens for tests/utils/sed/errors.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: unterminated s
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: -e expression #1, char 5: unterminated `s' command
+
+=== 1: unknown command
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: -e expression #1, char 1: unknown command: `k'
+
+=== 2: unknown option to s
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: -e expression #1, char 7: unknown option to `s'
+
+=== 3: missing command
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: -e expression #1, char 1: missing command
+
+=== 4: unmatched braces
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+--- stderr
+|sed: -e expression #1, char 0: unmatched `{'
+|sed: -e expression #1, char 3: unexpected `}'
+
+=== 5: extra characters
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: -e expression #1, char 3: extra characters after command
+
+=== 6: bad regex
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+--- stderr
+|sed: -e expression #1, char 7: Unmatched ( or \(
+|sed: -e expression #1, char 6: Unmatched ( or \(
+
+=== 7: invalid reference
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: -e expression #1, char 7: invalid reference \1 on `s' command's RHS
+
+=== 8: missing label
+status: 0
+bash-n: 0
+--- stdout
+|4
+--- stderr
+|sed: can't find label for jump to `foo'
+
+=== 9: errors in -f and later -e
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+--- stderr
+|sed: file s.sed line 2: unknown command: `k'
+|sed: -e expression #2, char 1: unknown command: `k'
+--- file s.sed
+|p
+|k
+
+=== 10: addresses where none are allowed
+status: 0
+bash-n: 0
+--- stdout
+|1
+|1
+|1
+--- stderr
+|sed: -e expression #1, char 2: comments don't accept any addresses
+|sed: -e expression #1, char 4: command only uses one address
+|sed: -e expression #1, char 3: multiple `!'s
+
+=== 11: y lengths
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: -e expression #1, char 7: strings for `y' command are different lengths
+
+=== 12: missing input file
+status: 0
+bash-n: 0
+--- stdout
+|a
+|a
+|2
+--- stderr
+|sed: can't read nosuch: No such file or directory
+--- file f
+|a
+
+=== 13: no previous regex
+status: 0
+bash-n: 0
+--- stdout
+|1
+--- stderr
+|sed: -e expression #1, char 0: no previous regular expression
+
+=== 14: no script
+status: 0
+bash-n: 0
+--- stdout
+|1

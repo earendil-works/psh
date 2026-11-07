@@ -5,7 +5,6 @@ brush/compat/assignments/6: ~root is /var/root on macOS
 brush/compat/builtins/command/9: BSD ls: other messages and exit status than GNU ls
 brush/compat/builtins/echo/2: the case's hexdump/xxd: the recording image lacks it (bash's status 127), macOS has it
 brush/compat/builtins/exec/12: macOS's /usr/bin/printf has no -v
-brush/compat/here/43: BSD sed does not read - as stdin
 brush/compat/pipeline/4: macOS's /bin/sh (bash 3.2, POSIX mode) has an echo that prints -n
 brush/compat/redirection/18: BSD ls: other messages and exit status than GNU ls
 brush/compat/redirection/22: BSD ls: other messages and exit status than GNU ls

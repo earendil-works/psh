@@ -100,7 +100,10 @@ fn parse_args(argv: &[Vec<u8>], utf8: bool) -> Result<Opts, ParseEnd> {
     // For telling `-i`'s forms apart: is -E given anywhere, does a -e/-f give the script.
     let any_ext = argv[1..].iter().any(|a| {
         a.as_slice() == b"--regexp-extended"
-            || (a.len() > 1 && a[0] == b'-' && a[1] != b'-' && a[1..].iter().any(|c| matches!(c, b'E' | b'r')))
+            || (a.len() > 1
+                && a[0] == b'-'
+                && a[1] != b'-'
+                && a[1..].iter().any(|c| matches!(c, b'E' | b'r')))
     });
     let any_script_opt = argv[1..].iter().any(|a| {
         a.starts_with(b"--expression") || a.starts_with(b"--file") || {
@@ -116,9 +119,9 @@ fn parse_args(argv: &[Vec<u8>], utf8: bool) -> Result<Opts, ParseEnd> {
     let mut i = 1;
     let mut only_operands = false;
     let need = |i: usize, c: char| -> Result<Vec<u8>, ParseEnd> {
-        argv.get(i).cloned().ok_or_else(|| {
-            ParseEnd::Usage(format!("option requires an argument -- '{c}'"))
-        })
+        argv.get(i)
+            .cloned()
+            .ok_or_else(|| ParseEnd::Usage(format!("option requires an argument -- '{c}'")))
     };
     while i < argv.len() {
         let a = &argv[i];
@@ -228,8 +231,13 @@ fn parse_args(argv: &[Vec<u8>], utf8: bool) -> Result<Opts, ParseEnd> {
                     if j < a.len() {
                         o.in_place = Some(a[j..].to_vec());
                         j = a.len();
-                    } else if bsd_suffix(argv, i, any_script_opt || !o.scripts.is_empty(), any_ext, utf8)
-                    {
+                    } else if bsd_suffix(
+                        argv,
+                        i,
+                        any_script_opt || !o.scripts.is_empty(),
+                        any_ext,
+                        utf8,
+                    ) {
                         o.in_place = Some(argv[i].clone());
                         i += 1;
                     } else {
@@ -250,7 +258,11 @@ fn parse_args(argv: &[Vec<u8>], utf8: bool) -> Result<Opts, ParseEnd> {
 
 /// GNU's `-l` takes what number it can read.
 fn atoi(v: &[u8]) -> usize {
-    let digits: Vec<u8> = v.iter().take_while(|c| c.is_ascii_digit()).copied().collect();
+    let digits: Vec<u8> = v
+        .iter()
+        .take_while(|c| c.is_ascii_digit())
+        .copied()
+        .collect();
     std::str::from_utf8(&digits)
         .ok()
         .and_then(|s| s.parse().ok())
@@ -263,7 +275,13 @@ fn atoi(v: &[u8]) -> usize {
 /// it is GNU's script; a `.`-prefixed word without command characters followed by a
 /// script is a BSD suffix. When `-e`/`-f` give the script: such a word followed by an
 /// option is a BSD suffix (`sed -i .bak -e s/a/b/ f`), anything else a file.
-fn bsd_suffix(argv: &[Vec<u8>], next: usize, script_opts: bool, extended: bool, utf8: bool) -> bool {
+fn bsd_suffix(
+    argv: &[Vec<u8>],
+    next: usize,
+    script_opts: bool,
+    extended: bool,
+    utf8: bool,
+) -> bool {
     let Some(word) = argv.get(next) else {
         return false;
     };
@@ -274,10 +292,7 @@ fn bsd_suffix(argv: &[Vec<u8>], next: usize, script_opts: bool, extended: bool, 
         return false;
     }
     let after = &argv[next + 1..];
-    let dotted = word[0] == b'.'
-        && !word
-            .iter()
-            .any(|b| b" \t\n;/{}\\!$=,~#".contains(b));
+    let dotted = word[0] == b'.' && !word.iter().any(|b| b" \t\n;/{}\\!$=,~#".contains(b));
     if script_opts {
         return dotted && after.first().is_some_and(|f| f.len() > 1 && f[0] == b'-');
     }
@@ -460,7 +475,9 @@ async fn edit_in_place(
         return Err(4);
     }
     let path = if follow {
-        ctx.canonicalize(name).await.unwrap_or_else(|_| name.to_vec())
+        ctx.canonicalize(name)
+            .await
+            .unwrap_or_else(|_| name.to_vec())
     } else {
         name.to_vec()
     };
@@ -548,8 +565,13 @@ fn temp_name(ctx: &UtilCtx<'_>, dir: &[u8]) -> Vec<u8> {
     let mut name = dir.to_vec();
     name.extend_from_slice(b"sed");
     for _ in 0..6 {
-        x = x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        x = x
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
         name.push(chars[(x >> 33) as usize % chars.len()]);
     }
     name
 }
+
+#[cfg(test)]
+mod tests;

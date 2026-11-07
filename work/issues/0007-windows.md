@@ -327,12 +327,21 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
   (RunInShell), `\r` in `$(…)`, utilities and System32 shadowing. Examples were run in
   the VM. The host also accepts `/C:\x` (what normalize makes of `cd 'C:\x'`).
 
+### 2026-11-07 One L5 harness for both platforms
+- `tests/process/harness.rs` now runs over `UnixHost` or `WindowsHost` (an `os` module
+  each: host, file wrapping, environment, the leak watch: process groups on Unix, jobs
+  through `RunKiller::leftovers` on Windows); `$H` (`psh-test-helper`) and the
+  `PSH_TEST_TIME_SCALE` deadline factor on both. `main.rs` holds `common` (13 portable
+  cases with `$H`, run on both), `unix` (procs' cases, moved unchanged from main.rs) and
+  `windows` (shims, paths, CRLF, System32 through PATH). The `process-windows` target is
+  gone: `cargo test -p psh-os --test process` everywhere. 46 pass on macOS, 17 on Windows
+  (arm64 and x64). TESTING.md's L5 row updated.
+
 ## Follow-ups
 - Engine: strip the `\r` of CRLF in `$(…)` and `read` on Windows (ARCH "Windows rules").
 - Engine: the "run this file in psh" hook (D1079).
 - Engine: `normalize` turns `C:/x` into `/C:/x` (`cd`, `pwd` show it); keep the drive.
 - Engine (routed to builtins): `PATH=/x cmd` ignores the prefix PATH for the lookup.
-- One L5 harness for both platforms once procs' part 3 has settled `tests/process/`.
 - Delete the old per-worktree checkouts in the VM (C:\psh-gate\<worktree>) once no
   old-style run is left.
 - If the owner agrees: disable XtaCache in the VM (D1072); then the wait and retry are a

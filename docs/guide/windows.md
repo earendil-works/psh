@@ -141,10 +141,13 @@ killed when the run ends.
 ## Text and encodings
 
 psh works in UTF-8. Scripts with Windows line endings (`\r\n`) run as they are. Output of
-native programs passes through unchanged:
+native programs passes through unchanged, except where a script takes it apart: `$(…)`
+(and backquotes, `$(< file)`, `${ …; }`) drops the `\r` before each trailing newline it
+removes, so `x=$(cmd /c echo hello)` gives `hello`, not `hello` and a `\r`. `rg`
+treats `\r\n` as a line end, so `rg 'x$'` finds lines that end in `x\r\n`.
 
-> **Not built yet.** `$(…)` and `read` will drop the `\r` of a `\r\n` line end, so
-> `x=$(cmd /c echo hello)` gives `hello`. Today it gives `hello` followed by `\r`.
+> **Not built yet.** `read` will drop the `\r` of a `\r\n` line end the same way, and
+> `grep` will treat `\r\n` as a line end as `rg` does.
 
 Programs that print in the system's ANSI code page instead of UTF-8 (older tools, some of
 the System32 ones) can be decoded where psh reads their output, for `$(…)` and pipes into
@@ -162,12 +165,15 @@ UTF-8 and a guess can garble them.
 | `test -x` | true for directories, files with a `PATHEXT` extension and `#!` scripts |
 | `/bin/sh` | none; psh is the shell |
 
-> **Not built yet.** Most utilities scripts expect (`ls`, `cat`, `grep`, `sed`, ...) will
-> run inside psh, so they exist on Windows without any extra install. The names that
-> Windows already uses for different programs (`find`, `sort`, `timeout`, `tree`, `more`,
-> `hostname`, `whoami`) will always be psh's own on Windows, so `find . -name x` does
-> what the script means; `find`, `sort` and `timeout` already are, on every platform.
-> Until then the others run whatever `PATH` finds, or are not found (127).
+The utilities psh runs in-process (`cat`, `head`, `sort`, `cut`, `find`, `xargs`, `rg`,
+`timeout` and the others on [Utilities that run in-process](utilities.md)) exist on
+Windows without any extra install. The names that Windows already uses for different
+programs are psh's own there: `find`, `sort` and `timeout` on every platform, so
+`find . -name x` does what the script means.
+
+> **Not built yet.** The other everyday utilities (`ls`, `grep`, `sed`, ...) and the
+> remaining names Windows uses for other programs (`tree`, `more`, `hostname`,
+> `whoami`). Until then they run whatever `PATH` finds, or are not found (127).
 
 ## Where to look
 

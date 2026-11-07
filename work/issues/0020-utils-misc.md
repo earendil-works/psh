@@ -1,7 +1,7 @@
 # 0020: Utilities batch I: diff, checksums, base64, date, env, nice, nohup, which
 
-status: open
-agent: -
+status: in-progress
+agent: shapes
 branch: issue/0020-utils-misc
 depends-on: 0008, 0006
 touches: crates/psh-utils/src/{diff,cmp,base64,sum,date,env,nice,nohup,which}*, tests/utils/ (same names)

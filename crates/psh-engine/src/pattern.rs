@@ -137,7 +137,7 @@ fn compile(u: &[Unit], mut i: usize, extglob: bool, in_group: bool) -> (Vec<Tok>
                     toks.push(Tok::Any);
                     i += 1;
                 }
-                0x5b /* [ */ => match parse_class(&u, i + 1) {
+                0x5b /* [ */ => match parse_class(u, i + 1) {
                     Some((tok, next)) => {
                         toks.push(tok);
                         i = next;

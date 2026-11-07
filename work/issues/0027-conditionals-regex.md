@@ -38,6 +38,25 @@ leftmost-longest matching and back-references in BREs; the `regex` crate has nei
 
 ## Log
 
+### 2026-11-07: part 1, psh-regex
+- Oracle: `work/scratch/0027/oracle/rx.c` (calls `regcomp`/`regexec`, hex in/out, a
+  2 s alarm per match because glibc's back-reference matching can hang) built into a
+  scratch image `psh-rx-oracle` (Debian stable, same base as the recording image), and
+  with macOS's libc. Drivers: `q.py` (ask the oracle), `d.py` (diff against
+  `examples/rxcheck`), `gen.py` (random patterns: ERE/BRE, back-references, UTF-8,
+  icase, newline), `runall.sh`, `mkgolden.py` (writes `crates/psh-regex/tests/gnu.txt`).
+- GNU semantics found (D1270): leftmost-longest overall, groups as an in-order greedy
+  backtracker finds them within the bounds; `((a)|b)*` keeps group 2 from an earlier
+  iteration; `(a*)*` on `aa` gives `(0,2)` (only the first iteration may be empty);
+  repeated anchors are an error in ERE, `*`/`\{\}` after another operator in BRE;
+  back-references only to groups in the same alternative; unmatched `)` is literal in
+  ERE; invalid UTF-8 bytes match nothing but themselves; C.UTF-8 classes.
+- Random differential runs: ~24k cases over all variants agree except ~0.1% (which
+  alternative or iteration owns a group when assertions such as `\b` or bounded group
+  repetitions are involved: `(\b)*`, `(a*){2,3}`). Recorded: 4,053 cases with 4 known
+  differences. Deliberate deviation: non-ASCII ranges (D1271).
+- Linear: `(a*)*b`, `(a|aa)*$`, `(x+x+)+y` over 20k chars in milliseconds (test).
+
 ## Follow-ups
 
 ## Result

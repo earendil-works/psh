@@ -1667,3 +1667,29 @@ Native Windows programs end lines with CRLF; `x=$(git rev-parse HEAD)` must not 
 right before it along. Elsewhere bash behavior is unchanged (a `\r` is data there and
 the goldens keep it). `read` should follow the same rule on Windows (builtins agent).
 Alternative: all platforms (would break byte-exact output on Unix).
+## D1270: psh-regex: GNU's POSIX regex semantics in a linear-time engine
+date: 2026-11-07 · by: parser · issue: 0027
+A new crate `psh-regex` (no_std + alloc, no dependencies) implements POSIX ERE and BRE
+with GNU's extensions (`\w \W \s \S \b \B \< \> \` \'`, back-references in ERE, `\+ \?
+\|` in BRE, `{,n}`), GNU's error codes and messages, case folding, newline mode and
+UTF-8 or byte text. The oracle is GNU libc's `regcomp`/`regexec` (bash's `=~` and the
+GNU tools use it), driven by a small C harness in the recording container: overall
+leftmost-longest match; subexpressions as a backtracking matcher taking alternatives in
+order and repetitions greedily finds them within those bounds (GNU, not strict POSIX:
+`(a|ab)(c|bcd)` gives `a` and `bcd`); a group in a repetition keeps an earlier
+iteration's value; only the first iteration of `*`/`+` may be empty; GNU's syntax rules
+(no repeated anchors, BRE stacking rules, a back-reference only to a group in the same
+alternative). Matching without back-references is linear: an NFA simulation finds the
+bounds, a memoized backtracking search (each instruction/position pair once) finds the
+groups; with back-references a budgeted backtracking search. 4,053 recorded GNU results
+are a test (`crates/psh-regex/tests/gnu.txt`); 4 known differences remain, all in which
+alternative or iteration gets a group when assertions or bounded repetitions of groups
+are involved. macOS's regex differs widely (no GNU escapes) and is not a target.
+
+## D1271: Non-ASCII ranges work by code point (unlike glibc's C.UTF-8)
+date: 2026-11-07 · by: parser · issue: 0027
+glibc in C.UTF-8 (the recording locale) rejects a bracket range or collating element
+with a non-ASCII char (`[à-é]` is "Invalid collation character"). psh-regex accepts it
+and compares code points, as other UTF-8 locales effectively do. Reason: agent-first
+over bash's behavior (D033); an agent's `[[ $x =~ [à-ÿ] ]]` should work, and no golden
+depends on the error.

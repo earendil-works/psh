@@ -57,7 +57,7 @@ pub(crate) fn parse(pat: &[u8], opts: Options) -> Result<Parsed, Error> {
         i: 0,
         opts,
         groups: 0,
-        open: Vec::new(),
+        visible: Vec::new(),
         backrefs: false,
     };
     let node = p.alt(0)?;
@@ -77,8 +77,9 @@ struct P<'a> {
     i: usize,
     opts: Options,
     groups: usize,
-    /// Groups not closed yet (a back-reference to one is an error).
-    open: Vec<usize>,
+    /// Closed groups a back-reference here may name: not those in another
+    /// alternative of an enclosing `|` (GNU rejects `(a)|\1`).
+    visible: Vec<usize>,
     backrefs: bool,
 }
 
@@ -119,14 +120,21 @@ impl P<'_> {
 
     fn alt(&mut self, depth: usize) -> Result<Node, Error> {
         let mut alts = Vec::new();
+        let base = self.visible.len();
+        let mut inside = Vec::new();
         loop {
+            self.visible.truncate(base);
             alts.push(self.cat(depth)?);
+            inside.extend_from_slice(&self.visible[base..]);
             if self.at_bar() {
                 self.i += if self.ere() { 1 } else { 2 };
                 continue;
             }
             break;
         }
+        // After the alternation, the groups of all its alternatives can be named.
+        self.visible.truncate(base);
+        self.visible.extend(inside);
         Ok(if alts.len() == 1 {
             alts.pop().unwrap()
         } else {
@@ -145,10 +153,14 @@ impl P<'_> {
                 if depth > 0 {
                     break;
                 }
+                // An unmatched `)` is an ordinary char in ERE; `\)` is an error in BRE.
                 if self.ere() {
-                    return err(ErrorKind::RParen);
+                    let atom = self.lit_here();
+                    let atom = self.quantifiers(atom)?;
+                    items.push(atom);
+                    continue;
                 }
-                return err(ErrorKind::RParen);
+                return err(ErrorKind::Paren);
             }
             let at_start = self.i == start;
             let atom = self.atom(at_start, depth)?;
@@ -163,11 +175,37 @@ impl P<'_> {
     }
 
     fn quantifiers(&mut self, mut atom: Node) -> Result<Node, Error> {
-        // In BRE a `*` right after a leading `^` is literal.
-        if !self.ere() && matches!(atom, Node::Assert(Assert::Bol)) {
+        let assertion = matches!(atom, Node::Assert(_));
+        // In BRE a `*` right after an anchor is literal.
+        if !self.ere() && assertion && self.peek() == Some(b'*') {
             return Ok(atom);
         }
+        // The previous repetition operator, for BRE's stacking rules.
+        let mut prev: Option<u8> = None;
         loop {
+            // Which operator is here: `*`, `+`, `?` or `{`.
+            let op = match self.peek() {
+                Some(b'*') => Some(b'*'),
+                Some(c @ (b'+' | b'?' | b'{')) if self.ere() => Some(c),
+                Some(b'\\') if !self.ere() => {
+                    self.peek2().filter(|c| matches!(c, b'+' | b'?' | b'{'))
+                }
+                _ => None,
+            };
+            if let Some(op) = op {
+                // An anchor cannot be repeated. In BRE (not ERE, where `a**` is fine),
+                // `*` and `\{\}` cannot follow another operator (`a\?\?` and
+                // `a\{1\}\+` are fine).
+                let stacked = match prev {
+                    None => false,
+                    Some(_) if self.ere() => false,
+                    Some(_) => op == b'*' || op == b'{',
+                };
+                if assertion || stacked {
+                    return err(ErrorKind::BadRepeat);
+                }
+                prev = Some(op);
+            }
             let (min, max) = match self.peek() {
                 Some(b'*') => {
                     self.i += 1;
@@ -219,6 +257,15 @@ impl P<'_> {
             (p.i > start).then_some(v)
         };
         let min = num(self);
+        // After the first count only `,` or the closing brace may follow.
+        let closing = if self.ere() {
+            self.peek() == Some(b'}')
+        } else {
+            self.peek() == Some(b'\\') && self.peek2() == Some(b'}')
+        };
+        if min.is_some() && self.peek() != Some(b',') && !closing {
+            return err(ErrorKind::Brace);
+        }
         let max = if self.peek() == Some(b',') {
             self.i += 1;
             num(self)
@@ -333,13 +380,12 @@ impl P<'_> {
     fn group(&mut self, depth: usize) -> Result<Node, Error> {
         self.groups += 1;
         let idx = self.groups;
-        self.open.push(idx);
         let inner = self.alt(depth + 1)?;
         if !self.at_close() {
             return err(ErrorKind::Paren);
         }
         self.i += if self.ere() { 1 } else { 2 };
-        self.open.pop();
+        self.visible.push(idx);
         Ok(Node::Group(Box::new(inner), idx))
     }
 
@@ -357,7 +403,7 @@ impl P<'_> {
         let node = match c {
             b'1'..=b'9' => {
                 let n = (c - b'0') as usize;
-                if n > self.groups || self.open.contains(&n) {
+                if !self.visible.contains(&n) {
                     return err(ErrorKind::Subreg);
                 }
                 self.backrefs = true;
@@ -413,7 +459,13 @@ impl P<'_> {
             // One element: a char, a collating symbol, an equivalence class, or a class.
             let lo = match self.element(&mut set)? {
                 Some(u) => u,
-                None => continue,
+                None => {
+                    // A class cannot start a range.
+                    if self.peek() == Some(b'-') && self.peek2().is_some_and(|c| c != b']') {
+                        return err(ErrorKind::Range);
+                    }
+                    continue;
+                }
             };
             // A range?
             if self.peek() == Some(b'-') && self.peek2().is_some_and(|c| c != b']') {

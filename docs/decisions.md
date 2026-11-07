@@ -2690,7 +2690,7 @@ binary is the oracle). A blocking utility (D1130) with an async front end:
   context cannot look names up), `--owner` on Windows (fd has none there),
   `--hyperlink` (needs the host name).
 - **Windows**: `/` separators by default (`--path-separator` overrides; fd does this
-  only under MSYS); the leading-dot pattern error applies everywhere but Windows (wasm
-  included).
+  only under MSYS); the leading-dot pattern error applies on every platform (fd: Unix
+  only), so a command behaves the same everywhere (dot files are hidden on Windows too).
 - The classifier's fd table lists every value option now (`-C`, `--and`, `--size`,
   `--format`, `--search-path`, ... were missing) and `--ignore-file` as a file read.

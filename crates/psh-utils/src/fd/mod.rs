@@ -444,10 +444,9 @@ async fn prepare(
     let read_vcsignore = !(opts.no_ignore || opts.no_ignore_vcs);
     let read_global_ignore = !(opts.no_ignore || opts.no_global_ignore_file);
 
-    // psh: everywhere but Windows (fd: Unix; wasm hosts are Unix-like).
-    if !cfg!(windows)
-        && ignore_hidden
-        && patterns::patterns_match_strings_with_leading_dots(&patterns, pattern_type)
+    // psh: on every platform (fd: Unix only), so one command behaves the same
+    // everywhere; dot files are hidden on Windows too.
+    if ignore_hidden && patterns::patterns_match_strings_with_leading_dots(&patterns, pattern_type)
     {
         return Err(
             "The pattern(s) seems to only match files with a leading dot, but hidden \

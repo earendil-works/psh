@@ -44,3 +44,6 @@ utils/sum/basic/5: Windows file names cannot hold a newline
 utils/date/basic/0: Windows has no zone files: TZ=Region/City falls back to the host's offset, %Z to the number
 utils/date/basic/8: Windows has no zone files: TZ=Region/City falls back to the host's offset, %Z to the number
 utils/date/basic/10: Windows has no zone files: TZ=Region/City falls back to the host's offset, %Z to the number
+utils/fd/basic/10: the Windows VM cannot create symlinks to files (no Developer Mode), and Windows keeps no execute bits (chmod +x is not tracked yet; 0015 follow-up)
+utils/fd/basic/11: the Windows VM cannot create symlinks to files (no Developer Mode): ln -s fails with Permission denied
+utils/fd/basic/26: the Windows VM cannot create symlinks to files (no Developer Mode), and Windows keeps no execute bits (chmod +x is not tracked yet; 0015 follow-up)

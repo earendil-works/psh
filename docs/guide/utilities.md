@@ -59,8 +59,8 @@ Each utility has one of three modes:
 
 | Mode | The utility runs | Used for |
 | --- | --- | --- |
-| always | always | every utility above except `awk` |
-| `PATH` fallback | only when `PATH` has no program of that name | `awk`, until it passes the awk test suites; later tools whose real version is better |
+| always | always | every utility above |
+| `PATH` fallback | only when `PATH` has no program of that name | tools whose real version is better (none now) |
 | Windows shadow | always on Windows; elsewhere as `PATH` fallback | names Windows uses for other programs, such as `tree`, `more`, `hostname` (none built yet) |
 
 `find`, `sort` and `timeout` are names that Windows also uses (for programs that do

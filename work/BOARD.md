@@ -8,7 +8,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | --- | --- | --- | --- |
 | 0006 | Unix process layer (part 1 merged 46375e2) | procs | .worktrees/procs |
 | 0007 | Windows: part A merged (bad4d63, rework 6ca3d08); part B next after 0006 | windows | .worktrees/windows |
-| 0022 | follow-up: serial cases in psh-spec | infra | .worktrees/infra |
+| 0011 | WASM build and JS host | infra | .worktrees/infra |
 | 0025 | Alias expansion in the parser, syntax guide page | parser | .worktrees/parser |
 | 0026 | Arrays and the rest of word expansion | engine | .worktrees/engine |
 | 0028 | Shell options, errexit and traps | shapes | .worktrees/shapes |
@@ -19,7 +19,6 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | issue | title | depends-on | touches |
 | --- | --- | --- | --- |
 | 0027 | [[ ]], test, and a POSIX regex engine (parser agent after 0025) | 0005 ✓ | crates/psh-regex/, builtins/test.rs, cond.rs |
-| 0011 | WASM build and JS host | 0005 ✓ | crates/psh-wasm/, js/ |
 
 ## Open (blocked on dependencies)
 

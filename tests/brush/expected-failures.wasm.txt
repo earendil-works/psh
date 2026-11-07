@@ -15,6 +15,13 @@ brush/compat/arguments/95: command-line options and the `s` of `$-` are not in t
 brush/compat/arguments/96: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
 brush/compat/arguments/97: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
 brush/compat/arguments/98: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/builtins/kill/2: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
+brush/compat/builtins/kill/4: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
+brush/compat/builtins/kill/5: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
+brush/compat/builtins/kill/6: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
+brush/compat/builtins/kill/7: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
+brush/compat/builtins/kill/13: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
+brush/compat/builtins/kill/29: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
 brush/compat/builtins/set/2: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
 brush/compat/builtins/set/3: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
 brush/compat/builtins/set/14: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
@@ -26,3 +33,5 @@ brush/compat/builtins/test/2: needs host files: /bin/sh, /etc/os-release
 brush/compat/options/default/0: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
 brush/compat/options/set-e/4: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
 brush/compat/options/set-u/2: command-line options and the `s` of `$-` are not in the wasm protocol yet (0028 follow-up)
+brush/compat/signals/26: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals
+brush/compat/signals/32: signals a process (`kill $$`, a shell dying of a signal): the JS host has no processes or signals

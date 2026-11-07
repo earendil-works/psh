@@ -243,7 +243,6 @@ brush/compat/builtins/set/11
 brush/compat/builtins/set/13
 brush/compat/builtins/set/22
 brush/compat/builtins/set/23
-brush/compat/builtins/set/24
 brush/compat/builtins/set/25
 brush/compat/builtins/set/26
 brush/compat/builtins/set/27

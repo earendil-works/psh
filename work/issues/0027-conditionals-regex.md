@@ -78,8 +78,6 @@ leftmost-longest matching and back-references in BREs; the `regex` crate has nei
   `/etc/os-release`, which the JS host lacks (the same reason as `builtins/test/2`).
 
 ## Follow-ups
-- `touch -d "2 hours ago"` (utils): blocks brush `builtins/test/3,4`,
-  `extended_tests/12,13`, oils `builtin-bracket/31`.
 - `[[ -v ref[N] ]]` with `ref` a nameref to a whole array (brush marks it a known
   failure too); `-N` needs access times from the Host.
 - The 4 known psh-regex differences from GNU (D1270): which iteration or alternative
@@ -89,7 +87,8 @@ leftmost-longest matching and back-references in BREs; the `regex` crate has nei
 - `crates/psh-regex`: POSIX ERE/BRE with GNU semantics (`Regex::new(pat, Options)`,
   `exec`/`find`/`is_match`), linear without back-references, 4,057 recorded GNU cases
   as a test (D1270, D1271). Ready for `sed`/`grep` fall-throughs.
-- `[[ ]]` complete (D1272) and the `test` long tail. Scores (native): oils 2094 → 2220
-  of 2511 active, brush 2560 → 2696 of 3171, agent 140 → 141 of 144; 263 ratchet
-  entries removed. Remaining `[[`/`test` failures: `touch -d` (utils) and the
-  follow-ups above.
+- `[[ ]]` complete (D1272) and the `test` long tail. Scores (native, after rebasing
+  onto main with `touch -d`): oils 2094 → 2220 of 2511 active, brush 2560 → 2700 of
+  3171, agent 140 → 141 of 144; 270 ratchet entries removed. Remaining `[[`/`test`
+  failures: oils `builtin-bracket/31` (`touch` with no operand's message), the
+  follow-ups below.

@@ -33,8 +33,10 @@ struct Inner {
     write_wakers: Vec<Waker>,
     /// The OS pipe once materialized: (read end, write end), each dropped when the
     /// engine's last reader or writer goes.
-    os: Option<(Option<Rc<dyn HostFile>>, Option<Rc<dyn HostFile>>)>,
+    os: Option<(OsEnd, OsEnd)>,
 }
+
+type OsEnd = Option<Rc<dyn HostFile>>;
 
 fn register(list: &mut Vec<Waker>, w: &Waker) {
     if !list.iter().any(|x| x.will_wake(w)) {

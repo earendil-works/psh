@@ -125,7 +125,8 @@ fn remove<'a, 'v>(
 ) -> LocalBoxFuture<'a, bool> {
     Box::pin(async move {
         ctx.check().await;
-        let m = match ctx.stat(&f, false).await {
+        // `name/` names what a symlink points to (POSIX path resolution), on every host.
+        let m = match ctx.stat(&f, f.last() == Some(&b'/')).await {
             Ok(m) => m,
             Err(e) => {
                 if o.force && e.kind() == io::ErrorKind::NotFound && top {

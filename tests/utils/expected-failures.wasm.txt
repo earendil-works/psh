@@ -1,0 +1,5 @@
+# Ratchet for layer utils on wasm (D1113): active cases that pass natively
+# (not in expected-failures.txt) but may fail here, each with its reason. Cases
+# that need external programs are not listed. psh-spec --update-ratchet removes
+# cases that pass; never add a regression.
+utils/rm/basic/13: the JS MemHost has no permission checks (a read-only directory's entries can be removed)

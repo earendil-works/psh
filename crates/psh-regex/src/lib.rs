@@ -147,12 +147,24 @@ impl Regex {
 
     /// The leftmost-longest match in `text` with its subexpressions, or `None`.
     pub fn exec(&self, text: &[u8], eopts: ExecOptions) -> Option<Captures> {
-        exec::exec(&self.prog, self.groups, text, eopts, true)
+        exec::exec(&self.prog, self.groups, text, 0, eopts, true)
     }
 
     /// The bounds of the leftmost-longest match only (cheaper: no subexpressions).
     pub fn find(&self, text: &[u8], eopts: ExecOptions) -> Option<(usize, usize)> {
-        exec::exec(&self.prog, self.groups, text, eopts, false).and_then(|c| c[0])
+        exec::exec(&self.prog, self.groups, text, 0, eopts, false).and_then(|c| c[0])
+    }
+
+    /// [`Self::exec`] for a match that starts at `start` or later, with the text before
+    /// it in view of `^` (start of line), `\b`, `\<` and the like: the next match of a
+    /// global substitution. Offsets are into the whole `text`.
+    pub fn exec_at(&self, text: &[u8], start: usize, eopts: ExecOptions) -> Option<Captures> {
+        exec::exec(&self.prog, self.groups, text, start, eopts, true)
+    }
+
+    /// [`Self::find`] from `start`, as [`Self::exec_at`].
+    pub fn find_at(&self, text: &[u8], start: usize, eopts: ExecOptions) -> Option<(usize, usize)> {
+        exec::exec(&self.prog, self.groups, text, start, eopts, false).and_then(|c| c[0])
     }
 
     pub fn is_match(&self, text: &[u8]) -> bool {

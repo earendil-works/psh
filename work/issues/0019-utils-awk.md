@@ -103,6 +103,14 @@ implementation. Port goawk (MIT) to Rust (D018); F mode until conformant, then S
   outside touches): psh fails only the checks gawk fails, plus 3 ratcheted (`.` and
   invalid UTF-8 in psh-regex). Fixed on the way: `//` in split, glibc's srand(0) = 1,
   gawk's "unexpected newline or end of string", "syntax error" for a bad number.
+- Part 3, outside touches (announced): psh-regex gains `Regex::exec_at` / `find_at`
+  (search from an offset with the text before it in view of `^`, `\b`, `\B`, `\<`):
+  additive, for global substitution (awk's gsub, gensub, FS/RS regexes; sed's `g`
+  can use it too). With it and fixes found by running gawk's own suite locally (GPL,
+  never vendored; 231 of 237 match real gawk, the rest for-in order, rand, ARGV[0] as
+  gawk, a NUL in the source, one `%c` subtlety): gawk's sub/gsub backslash rules, octal
+  escapes in a regex as written characters (`/a\52b/` is `a*b`), bracket ranges with
+  `]`/`[` ends and collating symbols, FILENAME `-` for stdin, ARGV[0] the name called by.
 
 ## Follow-ups
 - psh-regex: an option for `.` (and bracket negations) to match bytes outside valid

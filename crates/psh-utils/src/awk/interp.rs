@@ -872,10 +872,8 @@ impl<'c, 'v> Interp<'c, 'v> {
                     let mut arr = arr.borrow_mut();
                     arr.clear();
                     let mut n = 0;
-                    // split() takes newlines as separators in paragraph mode only for FS.
-                    let paragraph =
-                        matches!(sep, SplitSep::Fs) && matches!(self.rs_mode, Rs::Paragraph);
-                    split_into(&text, &fs, paragraph, self.utf8, |f| {
+                    // Newlines separate the fields of a paragraph record, not split()'s.
+                    split_into(&text, &fs, false, self.utf8, |f| {
                         n += 1;
                         arr.set(s(n.to_string().as_bytes()), Value::strnum(f));
                     });
@@ -1205,7 +1203,8 @@ impl<'c, 'v> Interp<'c, 'v> {
                 }
                 self.had_files = true;
                 self.main = Some(RecordReader::new(Src::Stdin));
-                self.filename = Value::Uninit;
+                // gawk names stdin "-" (it is "" in BEGIN).
+                self.filename = Value::StrNum(s(b"-"));
                 self.fnr = 0.0;
                 self.assigned[1] = None;
                 return Ok(true);
@@ -1804,11 +1803,11 @@ pub fn split_into(text: &[u8], fs: &Fs, paragraph: bool, utf8: bool, mut f: impl
             let mut start = 0;
             let mut from = 0;
             while from <= text.len() {
-                let Some((ms, me)) = find_nonempty(re, &text[from..], from > 0) else {
+                let Some((ms, me)) = find_nonempty(re, text, from) else {
                     break;
                 };
-                emit(&text[start..from + ms]);
-                start = from + me;
+                emit(&text[start..ms]);
+                start = me;
                 from = start;
             }
             emit(&text[start..]);
@@ -1832,14 +1831,9 @@ pub fn substitute(
     // Whether the last match ended here (an empty match right after it is skipped).
     let mut last_end: Option<usize> = None;
     while pos <= text.len() {
-        let eo = ExecOptions {
-            not_bol: pos > 0,
-            not_eol: false,
-        };
-        let Some((s0, e0)) = re.find(&text[pos..], eo) else {
+        let Some((ms, me)) = re.find_at(text, pos, ExecOptions::default()) else {
             break;
         };
-        let (ms, me) = (pos + s0, pos + e0);
         if ms == me && last_end == Some(ms) {
             // An empty match where the previous one ended: step over a character.
             if ms >= text.len() {
@@ -1889,16 +1883,25 @@ fn char_step(text: &[u8], at: usize, utf8: bool) -> usize {
 }
 
 fn expand_repl(out: &mut Vec<u8>, repl: &[u8], matched: &[u8]) {
+    // gawk's rules: before `&`, a run of k backslashes gives k/2 of them and then a
+    // literal `&` (k odd) or the match (k even); elsewhere backslashes stay as they are.
     let mut i = 0;
     while i < repl.len() {
         match repl[i] {
-            b'\\' if repl.get(i + 1) == Some(&b'&') => {
-                out.push(b'&');
-                i += 2;
-            }
-            b'\\' if repl.get(i + 1) == Some(&b'\\') && repl.get(i + 2) == Some(&b'&') => {
-                out.push(b'\\');
-                i += 2;
+            b'\\' => {
+                let k = repl[i..].iter().take_while(|&&b| b == b'\\').count();
+                if repl.get(i + k) == Some(&b'&') {
+                    out.extend(std::iter::repeat_n(b'\\', k / 2));
+                    if k % 2 == 1 {
+                        out.push(b'&');
+                    } else {
+                        out.extend_from_slice(matched);
+                    }
+                    i += k + 1;
+                } else {
+                    out.extend(std::iter::repeat_n(b'\\', k));
+                    i += k;
+                }
             }
             b'&' => {
                 out.extend_from_slice(matched);
@@ -1919,15 +1922,10 @@ fn gensub(re: &Regex, repl: &[u8], text: &[u8], which: usize, utf8: bool) -> Vec
     let mut n = 0;
     let mut last_end: Option<usize> = None;
     while pos <= text.len() {
-        let eo = ExecOptions {
-            not_bol: pos > 0,
-            not_eol: false,
-        };
-        let Some(caps) = re.exec(&text[pos..], eo) else {
+        let Some(caps) = re.exec_at(text, pos, ExecOptions::default()) else {
             break;
         };
-        let (s0, e0) = caps[0].unwrap();
-        let (ms, me) = (pos + s0, pos + e0);
+        let (ms, me) = caps[0].unwrap();
         if ms == me && last_end == Some(ms) {
             if ms >= text.len() {
                 break;
@@ -1947,7 +1945,7 @@ fn gensub(re: &Regex, repl: &[u8], text: &[u8], which: usize, utf8: bool) -> Vec
                     b'\\' if i + 1 < repl.len() && repl[i + 1].is_ascii_digit() => {
                         let g = (repl[i + 1] - b'0') as usize;
                         if let Some(Some((cs, ce))) = caps.get(g) {
-                            out.extend_from_slice(&text[pos + cs..pos + ce]);
+                            out.extend_from_slice(&text[*cs..*ce]);
                         }
                         i += 2;
                     }

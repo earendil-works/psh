@@ -177,7 +177,9 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
     m.places = source.files.clone();
     if let Some(a) = m.global_array(b"ARGV") {
         let mut a = a.borrow_mut();
-        a.set(Rc::from(&b"0"[..]), Value::str(b"awk"));
+        // The name it was called by, as gawk.
+        let arg0 = m.ctx.name().as_bytes().to_vec();
+        a.set(Rc::from(&b"0"[..]), Value::str(&arg0));
         let mut n = 1;
         for op in operands {
             a.set(Rc::from(n.to_string().as_bytes()), Value::strnum(&op));

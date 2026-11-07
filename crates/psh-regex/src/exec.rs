@@ -17,10 +17,16 @@ pub(crate) fn exec(
     prog: &Prog,
     groups: usize,
     text: &[u8],
+    start: usize,
     eopts: ExecOptions,
     want_groups: bool,
 ) -> Option<Captures> {
-    let m = M { prog, text, eopts };
+    let m = M {
+        prog,
+        text,
+        start,
+        eopts,
+    };
     if prog.backrefs {
         return m.search_backrefs(groups);
     }
@@ -47,6 +53,8 @@ fn fill(caps: &mut Captures, slots: &[Option<usize>]) {
 struct M<'a> {
     prog: &'a Prog,
     text: &'a [u8],
+    /// Where the search starts; assertions still see the text before it.
+    start: usize,
     eopts: ExecOptions,
 }
 
@@ -194,9 +202,9 @@ impl M<'_> {
         let mut nlist = Threads::new(n);
         let mut stack = Vec::new();
         let mut best: Option<(usize, usize)> = None;
-        let mut pos = 0;
+        let mut pos = self.start;
         loop {
-            if best.is_none() && (pos == 0 || !self.prog.anchored) {
+            if best.is_none() && (pos == self.start || !self.prog.anchored) {
                 self.add(&mut clist, 0, pos, pos, &mut best, &mut stack);
             }
             if pos >= self.text.len() {
@@ -384,7 +392,7 @@ impl M<'_> {
     /// then its subexpressions as the first path in program order that ends there.
     fn search_backrefs(&self, groups: usize) -> Option<Captures> {
         let mut budget = BACKTRACK_BUDGET;
-        let mut start = 0;
+        let mut start = self.start;
         loop {
             if let Some(slots) = self.backtrack(start, Target::Longest, false, &mut budget) {
                 let end = slots[1].unwrap();

@@ -108,6 +108,28 @@ fn is_interval(s: &[u8]) -> bool {
     i < s.len() && s[i] == b'}'
 }
 
+/// The one character of a bracket element: a byte, or a collating symbol `[.x.]`.
+fn single(elem: &[u8]) -> Option<Vec<u8>> {
+    if elem.len() == 1 {
+        return Some(elem.to_vec());
+    }
+    elem.strip_prefix(b"[.")
+        .and_then(|e| e.strip_suffix(b".]"))
+        .map(<[u8]>::to_vec)
+}
+
+/// A range end as POSIX brackets take it: bytes special there as a collating symbol.
+fn end(c: &[u8]) -> Vec<u8> {
+    if matches!(c, b"]" | b"-" | b"^" | b"[") || c.len() > 1 {
+        let mut v = b"[.".to_vec();
+        v.extend_from_slice(c);
+        v.extend_from_slice(b".]");
+        v
+    } else {
+        c.to_vec()
+    }
+}
+
 pub fn translate(src: &[u8]) -> Vec<u8> {
     let mut out = Vec::with_capacity(src.len() + 8);
     let mut i = 0;
@@ -125,7 +147,8 @@ pub fn translate(src: &[u8]) -> Vec<u8> {
                     break;
                 };
                 if let Some((b, n)) = escape_byte(&src[i..]) {
-                    push_lit(&mut out, b);
+                    // The byte as if written there: gawk turns `/a\52b/` into `a*b`.
+                    out.push(b);
                     i += n;
                 } else {
                     match e {
@@ -235,26 +258,31 @@ fn bracket(src: &[u8], start: usize, out: &mut Vec<u8>) -> usize {
                 (vec![c], 1)
             };
         i += len;
-        // A range `a-b` (the `-` not last).
-        if src.get(i) == Some(&b'-')
+        // A range `a-b` (the `-` not last); an end may be `[.x.]` or an escape.
+        let lo = single(&elem);
+        if let Some(lo) = lo
+            && src.get(i) == Some(&b'-')
             && src.get(i + 1).is_some_and(|&n| n != b']')
-            && elem.len() == 1
         {
-            let mut j = i + 1;
+            let j = i + 1;
             let (hi, hlen): (Vec<u8>, usize) = if src[j] == b'\\' && j + 1 < src.len() {
                 match escape_byte(&src[j + 1..]) {
                     Some((b, n)) => (vec![b], n + 1),
                     None => (vec![src[j + 1]], 2),
                 }
+            } else if src[j] == b'[' && src.get(j + 1) == Some(&b'.') {
+                match src[j + 2..].windows(2).position(|w| w == b".]") {
+                    Some(p) => (src[j + 2..j + 2 + p].to_vec(), p + 4),
+                    None => (vec![b'['], 1),
+                }
             } else {
                 (vec![src[j]], 1)
             };
-            j += hlen;
-            let mut r = elem.clone();
+            let mut r = end(&lo);
             r.push(b'-');
-            r.extend_from_slice(&hi);
+            r.extend_from_slice(&end(&hi));
             items.push(r);
-            i = j;
+            i = j + hlen;
             continue;
         }
         match elem.as_slice() {
@@ -313,7 +341,9 @@ mod tests {
         assert_eq!(t("a{2}"), "a{2}");
         assert_eq!(t("a{"), r"a\{");
         assert_eq!(t("*a"), r"\*a");
-        assert_eq!(t(r"\056"), r"\.");
+        assert_eq!(t(r"\056"), ".");
+        assert_eq!(t(r"[\[-\]]"), "[[.[.]-[.].]]");
+        assert_eq!(t("[[.c.]-[.z.]]"), "[c-z]");
         assert_eq!(t("[-a]"), "[a-]");
     }
 }

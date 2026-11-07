@@ -196,7 +196,8 @@ impl RecordReader {
     ) -> io::Result<Option<(Vec<u8>, Vec<u8>)>> {
         loop {
             let hay = &self.buf[self.pos..];
-            let m = find_nonempty(re, hay, self.pos > 0);
+            let m =
+                find_nonempty(re, &self.buf, self.pos).map(|(s, e)| (s - self.pos, e - self.pos));
             match m {
                 // A match that reaches the end of the data may grow with more input.
                 Some((s, e)) if self.pos + e < self.buf.len() || self.eof => {
@@ -208,7 +209,9 @@ impl RecordReader {
                 _ => {}
             }
             if !self.fill(ctx).await? {
-                if let Some((s, e)) = find_nonempty(re, &self.buf[self.pos..], self.pos > 0) {
+                if let Some((s, e)) = find_nonempty(re, &self.buf, self.pos)
+                    .map(|(s, e)| (s - self.pos, e - self.pos))
+                {
                     let hay = &self.buf[self.pos..];
                     let rec = hay[..s].to_vec();
                     let rt = hay[s..e].to_vec();
@@ -226,19 +229,15 @@ impl RecordReader {
     }
 }
 
-/// The first match of `re` in `hay` that is not empty.
-pub fn find_nonempty(re: &Regex, hay: &[u8], not_bol: bool) -> Option<(usize, usize)> {
-    let mut from = 0;
-    while from <= hay.len() {
-        let eo = ExecOptions {
-            not_bol: not_bol || from > 0,
-            not_eol: false,
-        };
-        let (s, e) = re.find(&hay[from..], eo)?;
+/// The first match of `re` in `text` at `start` or later that is not empty.
+pub fn find_nonempty(re: &Regex, text: &[u8], start: usize) -> Option<(usize, usize)> {
+    let mut from = start;
+    while from <= text.len() {
+        let (s, e) = re.find_at(text, from, ExecOptions::default())?;
         if e > s {
-            return Some((from + s, from + e));
+            return Some((s, e));
         }
-        from += s + 1;
+        from = s + 1;
     }
     None
 }

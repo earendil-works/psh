@@ -105,6 +105,40 @@ fn basics() {
 }
 
 #[test]
+fn regex_and_substitution_details() {
+    // Global substitution sees the text before each match (\B), gawk's backslashes.
+    check(
+        r#"awk 'BEGIN { x = "abcd"; gsub(/\B/, ":", x); print x }'"#,
+        "",
+        "a:b:c:d\n",
+    );
+    check(
+        r#"awk '{ s = $0; sub(/B/, "\\\\&", s); print s }'"#,
+        "B\n",
+        "\\B\n",
+    );
+    check(
+        r#"awk '{ s = $0; sub(/B/, "\\\\\\\\&", s); print s }'"#,
+        "B\n",
+        "\\\\B\n",
+    );
+    check(
+        r#"awk '{ s = $0; sub(/B/, "x\\&y", s); print s }'"#,
+        "B\n",
+        "x&y\n",
+    );
+    // split() does not split at newlines in paragraph mode; octal escapes in a regex.
+    check(
+        r#"awk 'BEGIN { RS = ""; FS = ":"; print split("a:b\nc:d", p) }'"#,
+        "",
+        "3\n",
+    );
+    check(r#"awk '/a\52b/ { print "m" }'"#, "ab\n", "m\n");
+    check(r#"awk '{ print FILENAME }'"#, "x\n", "-\n");
+    check(r#"awk '{ print ("\\" ~ /[\[-\]]/) }'"#, "x\n", "1\n");
+}
+
+#[test]
 fn unsupported_options_and_errors() {
     // No awk program on the test host to fall through to: a clear error.
     let o = run("awk --posix 'BEGIN { }'", b"", &[]);

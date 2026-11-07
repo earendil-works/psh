@@ -141,3 +141,18 @@ fn newline_mode() {
     assert_eq!(re.find(b"a\nbc\nd", ExecOptions::default()), Some((2, 4)));
     assert_eq!(re.find(b"a\nb\n\nd", ExecOptions::default()), None);
 }
+
+#[test]
+fn search_from_an_offset_sees_the_text_before() {
+    let nb = ere(r"\B");
+    let eo = ExecOptions::default();
+    // Inside "abcd" every position between letters is not a word boundary.
+    assert_eq!(nb.find_at(b"abcd", 1, eo), Some((1, 1)));
+    assert_eq!(nb.find_at(b"abcd", 2, eo), Some((2, 2)));
+    let b = ere(r"\<b");
+    assert_eq!(b.find_at(b"ab b", 1, eo), Some((3, 4)));
+    let caret = ere("^a");
+    assert_eq!(caret.find_at(b"aa", 1, eo), None);
+    let g = ere("(b+)");
+    assert_eq!(g.exec_at(b"abba bb", 4, eo).unwrap()[1], Some((5, 7)));
+}

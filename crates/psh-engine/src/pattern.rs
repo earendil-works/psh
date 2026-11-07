@@ -424,7 +424,18 @@ pub(crate) fn escape(text: &[u8], out: &mut Vec<u8>) {
         // Also the chars of extglob groups, and `-` `^` for bracket expressions.
         if matches!(
             b,
-            b'*' | b'?' | b'[' | b']' | b'\\' | b'(' | b')' | b'|' | b'!' | b'@' | b'+' | b'-' | b'^'
+            b'*' | b'?'
+                | b'['
+                | b']'
+                | b'\\'
+                | b'('
+                | b')'
+                | b'|'
+                | b'!'
+                | b'@'
+                | b'+'
+                | b'-'
+                | b'^'
         ) {
             out.push(b'\\');
         }

@@ -655,8 +655,9 @@ async fn expand_part(
         }
         Part::Backtick => {
             // Unescaped on the UTF-8 view, then back to the source's bytes.
-            // In a `${x-…}` operand, bash unescapes the body as outside double quotes.
-            let in_dq = quoted && ctx != Ctx::Operand;
+            // In a `${x-…}` operand and a here-document, bash unescapes the body as
+            // outside double quotes (`\"` stays).
+            let in_dq = quoted && ctx != Ctx::Operand && ctx != Ctx::HereDoc;
             let body = psh_syntax::backtick_body(code.ast.text(part.span), in_dq);
             let mut body = code.ast.restore_bytes(&body).into_owned();
             // A backslash-newline in the body is a line continuation.

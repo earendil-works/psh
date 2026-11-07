@@ -187,6 +187,9 @@ pub(crate) struct Vp {
     /// Descriptors of the running command's process substitutions (`<(…)`), closed
     /// when it completes.
     pub subst_fds: Vec<u32>,
+    /// `{var}>` redirections of the running command: they outlast it (D1326), so the
+    /// restore of its descriptors applies them again (`None`: closed).
+    pub var_fds: Vec<(u32, Option<crate::fd::Fd>)>,
     /// The last words of the simple commands running, innermost last: `$_` once each
     /// completes.
     pub last_args: Vec<Vec<u8>>,

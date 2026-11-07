@@ -353,6 +353,7 @@ impl Shell {
             loops: 0,
             getopts: (0, 0),
             subst_fds: Vec::new(),
+            var_fds: Vec::new(),
             last_args: Vec::new(),
             subshell_level: 0,
             bashpid: cfg.host.pid(),

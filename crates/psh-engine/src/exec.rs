@@ -249,7 +249,7 @@ async fn run_pipeline_stages(vp: &mut Vp, code: &Rc<Code>, p: &Pipeline) -> R {
                 vp.fds.set(0, r);
             }
             let r = run_command_unchecked(vp, code, stage.cmd).await;
-            vp.fds = saved;
+            restore_fds(vp, saved);
             last_here = Some(r);
             break;
         }
@@ -541,13 +541,13 @@ async fn with_redirects(vp: &mut Vp, code: &Rc<Code>, cmd: &Command) -> R {
         match Box::pin(apply_redirects(vp, code, &cmd.redirects)).await {
             Ok(true) => {}
             Ok(false) => {
-                vp.fds = saved;
+                restore_fds(vp, saved);
                 // The compound command failed itself: errexit and ERR see it (D1281).
                 set_pipestatus(vp, &[1]);
                 return check_failure(vp, 1).await;
             }
             Err(u) => {
-                vp.fds = saved;
+                restore_fds(vp, saved);
                 return Err(u);
             }
         }
@@ -555,7 +555,7 @@ async fn with_redirects(vp: &mut Vp, code: &Rc<Code>, cmd: &Command) -> R {
     };
     let r = run_compound(vp, code, cmd).await;
     if let Some(saved) = saved {
-        vp.fds = saved;
+        restore_fds(vp, saved);
     }
     r
 }
@@ -1064,7 +1064,7 @@ async fn prepare_simple(
         }
         let saved = vp.fds.clone();
         let ok = Box::pin(apply_redirects(vp, code, &cmd.redirects)).await;
-        vp.fds = saved;
+        restore_fds(vp, saved);
         return Ok(Prepared::Done(if ok? { status } else { 1 }));
     }
     if let (Some(which), Some(args)) = (decl, decl_args) {
@@ -1147,7 +1147,7 @@ fn run_simple<'a>(
                 } else {
                     Ok(1)
                 };
-                vp.fds = saved;
+                restore_fds(vp, saved);
                 for (n, v) in old {
                     match v {
                         Some(v) => vp.vars.insert(&n, v),
@@ -1167,24 +1167,21 @@ fn run_simple<'a>(
         let name = String::from_utf8_lossy(&argv[0]).into_owned();
         // `exec` without a command keeps its redirections.
         if name == "exec" && argv.len() == 1 {
-            return Ok(
-                if Box::pin(apply_redirects(vp, code, &cmd.redirects)).await? {
-                    0
-                } else {
-                    1
-                },
-            );
+            let ok = Box::pin(apply_redirects(vp, code, &cmd.redirects)).await;
+            // Nothing is restored, so nothing to apply again.
+            vp.var_fds.clear();
+            return Ok(if ok? { 0 } else { 1 });
         }
 
         let saved = vp.fds.clone();
         match Box::pin(apply_redirects(vp, code, &cmd.redirects)).await {
             Ok(true) => {}
             Ok(false) => {
-                vp.fds = saved;
+                restore_fds(vp, saved);
                 return Ok(1);
             }
             Err(u) => {
-                vp.fds = saved;
+                restore_fds(vp, saved);
                 return Err(u);
             }
         }
@@ -1196,7 +1193,7 @@ fn run_simple<'a>(
             return run_argv(vp, argv, assigns).await;
         }
         let r = run_argv(vp, argv, assigns).await;
-        vp.fds = saved;
+        restore_fds(vp, saved);
         r
     })
 }
@@ -1613,12 +1610,68 @@ pub(crate) fn dev_fd(path: &[u8]) -> Option<u32> {
     }
 }
 
+/// Puts back a command's saved descriptors, keeping what its `{var}>` redirections did.
+fn restore_fds(vp: &mut Vp, saved: crate::fd::FdTable) {
+    vp.fds = saved;
+    for (n, obj) in std::mem::take(&mut vp.var_fds) {
+        match obj {
+            Some(obj) => vp.fds.set(n, obj),
+            None => vp.fds.close(n),
+        }
+    }
+}
+
 async fn apply_redirect(vp: &mut Vp, code: &Rc<Code>, r: &Redirect) -> Result<bool, Unwind> {
     let fd = match r.fd {
         Some(RedirFd::Number(n)) => n,
-        Some(RedirFd::Var(_)) => return expand::unsupported(vp, "{var}> redirection").await,
+        Some(RedirFd::Var(span)) => return var_redirect(vp, code, r, span).await,
         None => default_fd(r.op),
     };
+    redirect_fd(vp, code, r, fd).await
+}
+
+/// `{var}>file`: a new descriptor of 10 or more whose number goes into `var`;
+/// `{var}>&-` closes the one `var` holds (D1326).
+async fn var_redirect(
+    vp: &mut Vp,
+    code: &Rc<Code>,
+    r: &Redirect,
+    span: psh_syntax::Span,
+) -> Result<bool, Unwind> {
+    let name = code.ast.text(span).to_string();
+    let closing = matches!(r.op, RedirOp::DupRead | RedirOp::DupWrite)
+        && matches!(&r.target, RedirTarget::Word(w) if code.ast.text(w.span) == "-");
+    if closing {
+        let value = vp.var(&name).map(<[u8]>::to_vec).unwrap_or_default();
+        let n = std::str::from_utf8(&value)
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok());
+        let Some(n) = n.filter(|n| vp.fd(*n).is_some()) else {
+            vp.error(&format!(
+                "{}: Bad file descriptor",
+                String::from_utf8_lossy(&value)
+            ))
+            .await;
+            return Ok(false);
+        };
+        vp.fds.close(n);
+        vp.var_fds.push((n, None));
+        return Ok(true);
+    }
+    let n = (10..).find(|n| vp.fds.get(*n).is_none()).unwrap_or(10);
+    if !redirect_fd(vp, code, r, n).await? {
+        return Ok(false);
+    }
+    if let Err(msg) = vp.assign(&name, n.to_string().into_bytes()) {
+        vp.fds.close(n);
+        vp.error(&msg).await;
+        return Ok(false);
+    }
+    vp.var_fds.push((n, vp.fds.get(n).cloned()));
+    Ok(true)
+}
+
+async fn redirect_fd(vp: &mut Vp, code: &Rc<Code>, r: &Redirect, fd: u32) -> Result<bool, Unwind> {
     match r.op {
         RedirOp::HereDoc | RedirOp::HereDocStrip => {
             let RedirTarget::HereDoc(id) = &r.target else {
@@ -1687,15 +1740,31 @@ async fn apply_redirect(vp: &mut Vp, code: &Rc<Code>, r: &Redirect) -> Result<bo
                             vp.fds.close(src);
                         }
                     }
+                    // `3>&3` of a closed descriptor changes nothing (bash).
+                    None if src == fd => {}
                     None => {
-                        vp.error(&format!("{src}: Bad file descriptor")).await;
+                        // bash names the word as written when it expands to the number
+                        // (`$fd: Bad file descriptor`), or the redirected descriptor
+                        // when that is given (`5>&$fd`).
+                        let text = code.ast.text(word.span);
+                        let shown = if !text
+                            .bytes()
+                            .any(|b| matches!(b, b'$' | b'`' | b'"' | b'\''))
+                        {
+                            src.to_string()
+                        } else if r.fd.is_some() {
+                            fd.to_string()
+                        } else {
+                            text.to_string()
+                        };
+                        vp.error(&format!("{shown}: Bad file descriptor")).await;
                         return Ok(false);
                     }
                 }
                 return Ok(true);
             }
-            if r.op == RedirOp::DupWrite && r.fd.is_none() {
-                // `>& file` is `&> file`.
+            if r.op == RedirOp::DupWrite && matches!(r.fd, None | Some(RedirFd::Number(1))) {
+                // `>& file` and `1>& file` are `&> file`.
                 let Some(opts) = clobber_check(vp, &target).await else {
                     return Ok(false);
                 };

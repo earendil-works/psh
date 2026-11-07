@@ -382,8 +382,7 @@ fn run_command_with<'a>(
         }
         let mark = vp.subst_fds.len();
         let last_args = vp.last_args.len();
-        let simple = matches!(cmd.kind, CommandKind::Simple(_));
-        if simple {
+        if matches!(cmd.kind, CommandKind::Simple(_)) {
             vp.core.fg_signal.set(None);
         }
         let result = match &cmd.kind {
@@ -407,9 +406,6 @@ fn run_command_with<'a>(
             set_underscore(vp, last);
         }
         let status = result?;
-        if simple && check && !vp.in_subst {
-            Box::pin(report_signal_death(vp, code, cmd, status)).await;
-        }
         match after_command(vp, code, cmd, status, check) {
             Some(f) => f.await,
             None => Ok(status),
@@ -474,6 +470,32 @@ fn after_command<'a>(
         return None;
     }
     set_pipestatus(vp, &[status]);
+    // A program a signal ended is reported first (D1303); through this boxed helper, so
+    // the per-level frame of `run_command_with` stays small (D1059).
+    if check
+        && !vp.in_subst
+        && matches!(cmd.kind, CommandKind::Simple(_))
+        && vp.core.fg_signal.get().is_some_and(|(sig, _)| status == 128 + sig)
+    {
+        return Some(Box::pin(async move {
+            report_signal_death(vp, code, cmd, status).await;
+            match after_errexit(vp, code, cmd, status, check) {
+                Some(f) => f.await,
+                None => Ok(status),
+            }
+        }));
+    }
+    after_errexit(vp, code, cmd, status, check)
+}
+
+/// errexit and the ERR trap after a command (D1281).
+fn after_errexit<'a>(
+    vp: &'a mut Vp,
+    code: &'a Rc<Code>,
+    cmd: &'a Command,
+    status: i32,
+    check: bool,
+) -> Option<LocalBoxFuture<'a, R>> {
     if !check || status == 0 || vp.no_errexit {
         return None;
     }

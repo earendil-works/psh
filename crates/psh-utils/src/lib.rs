@@ -38,6 +38,11 @@ mod sort;
 mod tee;
 mod tr;
 mod uniq;
+mod chmod;
+mod cp;
+mod ln;
+mod mv;
+mod rm;
 
 use psh_engine::util::{Mode, UtilEntry, UtilPolicy};
 
@@ -183,6 +188,36 @@ pub static REGISTRY: &[UtilEntry] = &[
         destructive: false,
         run: util_fn!(sort::run),
     },
+    UtilEntry {
+        names: &["rm"],
+        mode: Mode::Always,
+        destructive: true,
+        run: util_fn!(rm::run),
+    },
+    UtilEntry {
+        names: &["mv"],
+        mode: Mode::Always,
+        destructive: true,
+        run: util_fn!(mv::run),
+    },
+    UtilEntry {
+        names: &["cp"],
+        mode: Mode::Always,
+        destructive: true,
+        run: util_fn!(cp::run),
+    },
+    UtilEntry {
+        names: &["ln"],
+        mode: Mode::Always,
+        destructive: true,
+        run: util_fn!(ln::run),
+    },
+    UtilEntry {
+        names: &["chmod"],
+        mode: Mode::Always,
+        destructive: false,
+        run: util_fn!(chmod::run),
+    },
 ];
 
 /// The option specs, for the classifier check (D1082).
@@ -210,6 +245,11 @@ pub static SPECS: &[opts::Spec] = &[
     comm::SPEC,
     nl::SPEC,
     sort::SPEC,
+    rm::SPEC,
+    mv::SPEC,
+    cp::SPEC,
+    ln::SPEC,
+    chmod::SPEC,
 ];
 
 /// The policy for a shell: every utility on. `sandbox`: no real programs exist (wasm),

@@ -266,3 +266,201 @@ fn unsupported_host() {
         (1, "readlink: ln: Operation not supported\n")
     );
 }
+
+#[test]
+fn rm() {
+    let r = run("rm f; rm -r dir; rm ln dangling; echo $?");
+    assert_eq!((r.stdout.as_str(), r.stderr.as_str()), ("0\n", ""));
+    assert!(!r.host.fs.exists("/tmp/f") && !r.host.fs.exists("/tmp/dir"));
+    check_all(
+        "rm nope; rm -f nope; echo $?",
+        0,
+        "0\n",
+        "rm: cannot remove 'nope': No such file or directory\n",
+    );
+    check_all("rm dir", 1, "", "rm: cannot remove 'dir': Is a directory\n");
+    check_all(
+        "rm -d dir",
+        1,
+        "",
+        "rm: cannot remove 'dir': Directory not empty\n",
+    );
+    check_all(
+        "rm -r . dir/..",
+        1,
+        "",
+        "rm: refusing to remove '.' or '..' directory: skipping '.'\n\
+         rm: refusing to remove '.' or '..' directory: skipping 'dir/..'\n",
+    );
+    check_all(
+        "rm -rf /",
+        1,
+        "",
+        "rm: it is dangerous to operate recursively on '/'\n\
+         rm: use --no-preserve-root to override this failsafe\n",
+    );
+    check(
+        "rm -rv dir",
+        "removed 'dir/sub/x'\nremoved directory 'dir/sub'\nremoved directory 'dir'\n",
+    );
+    // A symlink to a directory goes, its target stays.
+    let r = run("rm -r ln");
+    assert!(r.host.fs.exists("/tmp/dir/sub/x") && !r.host.fs.exists("/tmp/ln"));
+    check_all(
+        "rm; echo $?; rm -f; echo $?",
+        0,
+        "1\n0\n",
+        "rm: missing operand\nTry 'rm --help' for more information.\n",
+    );
+}
+
+#[test]
+fn mv() {
+    let r = run("mv f g && mv dir d2 && mv -v g d2");
+    assert_eq!(r.stdout, "renamed 'g' -> 'd2/g'\n", "{}", r.stderr);
+    assert_eq!(
+        r.host.fs.read_file("/tmp/d2/g").as_deref(),
+        Some(&b"one\ntwo\n"[..])
+    );
+    assert!(r.host.fs.exists("/tmp/d2/sub/x") && !r.host.fs.exists("/tmp/dir"));
+    check_all(
+        "mv dir dir/sub",
+        1,
+        "",
+        "mv: cannot move 'dir' to a subdirectory of itself, 'dir/sub/dir'\n",
+    );
+    check_all(
+        "mv nope x",
+        1,
+        "",
+        "mv: cannot stat 'nope': No such file or directory\n",
+    );
+    check_all("mv f f", 1, "", "mv: 'f' and 'f' are the same file\n");
+    check_all(
+        "mv f dir/sub/x/y",
+        1,
+        "",
+        "mv: cannot move 'f' to 'dir/sub/x/y': Not a directory\n",
+    );
+    check_all("mv a b c", 1, "", "mv: target 'c': Not a directory\n");
+    let r = run("echo new > n; mv -n n f; cat f; mv -b n f; cat f f~");
+    assert_eq!(r.stdout, "one\ntwo\nnew\none\ntwo\n");
+    // A symlink moves as itself.
+    let r = run("mv ln l2; readlink l2");
+    assert_eq!(r.stdout, "dir/sub\n");
+}
+
+#[test]
+fn cp() {
+    let r = run("cp f g; cat g; cp -R dir d2; cat d2/sub/x; cp -v f dir");
+    assert_eq!(r.stdout, "one\ntwo\nx\n'f' -> 'dir/f'\n", "{}", r.stderr);
+    check_all(
+        "cp dir e",
+        1,
+        "",
+        "cp: -r not specified; omitting directory 'dir'\n",
+    );
+    check_all("cp f f", 1, "", "cp: 'f' and 'f' are the same file\n");
+    check_all(
+        "cp -R dir dir/sub",
+        1,
+        "",
+        "cp: cannot copy a directory, 'dir', into itself, 'dir/sub/dir'\n",
+    );
+    check_all(
+        "cp nope x",
+        1,
+        "",
+        "cp: cannot stat 'nope': No such file or directory\n",
+    );
+    // -R keeps symlinks; plain cp follows them.
+    check("mkdir d; ln -s ../f d/l; cp -R d e; readlink e/l", "../f\n");
+    check("cp ln/x y; cat y", "x\n");
+    check("cp -a ln l2; readlink l2", "dir/sub\n");
+    // Into an existing directory, src/ too (GNU, D016).
+    let r = run("mkdir t; cp -R dir/ t; cat t/dir/sub/x");
+    assert_eq!(r.stdout, "x\n", "{}", r.stderr);
+    check("mkdir t; cp --parents dir/sub/x t; cat t/dir/sub/x", "x\n");
+    check("echo a > a; cp -n a f; cat f", "one\ntwo\n");
+    check_all(
+        "cp; echo $?",
+        0,
+        "1\n",
+        "cp: missing file operand\nTry 'cp --help' for more information.\n",
+    );
+    check_all(
+        "cp f",
+        1,
+        "",
+        "cp: missing destination file operand after 'f'\nTry 'cp --help' for more information.\n",
+    );
+}
+
+#[test]
+fn ln() {
+    check("ln -s f l; readlink l; ln f h; cat h", "f\none\ntwo\n");
+    check_all(
+        "ln -s x ln",
+        1,
+        "",
+        "ln: failed to create symbolic link 'ln/x': File exists\n",
+    );
+    // -n: the symlink to a directory is replaced, not entered.
+    check("ln -sfn f ln; readlink ln", "f\n");
+    check("ln -sf f ln; readlink dir/sub/f", "f\n");
+    check_all(
+        "ln -s f dangling",
+        1,
+        "",
+        "ln: failed to create symbolic link 'dangling': File exists\n",
+    );
+    check("ln -sv f l; ln -v f h", "'l' -> 'f'\n'h' => 'f'\n");
+    check("ln -sr f dir/sub/l; readlink dir/sub/l", "../../f\n");
+    check("cd dir; ln -s ../f; readlink f", "../f\n");
+    check_all(
+        "ln nope x",
+        1,
+        "",
+        "ln: failed to access 'nope': No such file or directory\n",
+    );
+}
+
+#[test]
+fn chmod() {
+    use psh_engine::Host;
+    let mode = |r: &Run, p: &str| futures_ready(r.host.stat(p.as_bytes(), true)).unwrap().mode;
+    let r = run("chmod 755 f");
+    assert_eq!(mode(&r, "/tmp/f"), 0o755);
+    let r = run("chmod -x,g+w f");
+    assert_eq!(mode(&r, "/tmp/f"), 0o664);
+    let r = run("chmod -R go-rx dir");
+    assert_eq!(
+        (mode(&r, "/tmp/dir"), mode(&r, "/tmp/dir/sub/x")),
+        (0o700, 0o600)
+    );
+    check(
+        "chmod -v 600 f; chmod -v 600 f; chmod -c 600 f",
+        "mode of 'f' changed from 0644 (rw-r--r--) to 0600 (rw-------)\n\
+         mode of 'f' retained as 0600 (rw-------)\n",
+    );
+    check_all(
+        "chmod bad f",
+        1,
+        "",
+        "chmod: invalid mode: 'bad'\nTry 'chmod --help' for more information.\n",
+    );
+    check_all(
+        "chmod 644 nope",
+        1,
+        "",
+        "chmod: cannot access 'nope': No such file or directory\n",
+    );
+    check_all(
+        "chmod 755",
+        1,
+        "",
+        "chmod: missing operand after '755'\nTry 'chmod --help' for more information.\n",
+    );
+    let r = run("chmod --reference=dir f");
+    assert_eq!(mode(&r, "/tmp/f"), 0o755);
+}

@@ -23,7 +23,6 @@ pub fn s(b: &[u8]) -> std::borrow::Cow<'_, str> {
 }
 
 /// `dir/name`, without doubling a slash.
-#[allow(dead_code)] // for cp, rm and ls, which come next
 pub fn join(dir: &[u8], name: &[u8]) -> Vec<u8> {
     let mut p = dir.to_vec();
     if !p.is_empty() && p.last() != Some(&b'/') {

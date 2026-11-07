@@ -168,7 +168,6 @@ impl Mode {
 }
 
 /// `ls -l`'s ten characters: the kind and the permission bits.
-#[allow(dead_code)] // for cp, rm and ls, which come next
 pub fn mode_string(kind: FileKind, mode: u32) -> String {
     let mut s = String::with_capacity(10);
     s.push(match kind {

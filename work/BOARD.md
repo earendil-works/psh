@@ -8,7 +8,6 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | --- | --- | --- | --- |
 | 0022 | L0 leg, gate caching, hit list on the parser, deps allowlist | infra | .worktrees/infra |
 | 0023 | Arithmetic parser, bash-format printer, byte-exact sources | parser | .worktrees/parser |
-| 0024 | Classifier follow-ups and guide page | shapes | .worktrees/shapes |
 | 0005 | Minimal interpreter | engine | .worktrees/engine |
 
 ## Open (ready)
@@ -58,3 +57,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0002 | psh-spec runner, vendored cases, recorded goldens, ratchets, status | feb2a7c (infra) |
 | 0004 | Parser: psh-syntax from brush-parser, hand-written | f6bf28a (parser) |
 | 0009 | Classifier | 44a7306 (shapes) |
+| 0024 | Classifier follow-ups and guide page | f0b4905 (shapes) |

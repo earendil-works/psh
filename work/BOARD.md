@@ -6,16 +6,20 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
-| 0034b | cli.md guide page, psh --utils | cli | .worktrees/cli |
-| 0020 | Utilities I: diff, checksums, base64, date, env, nice, nohup, which | shapes | .worktrees/shapes |
-| 0035 | Tier 2: process and host utilities | procs | .worktrees/procs |
-| 0007 | Windows: part A merged (bad4d63, rework 6ca3d08); part B in progress | windows | .worktrees/windows |
-| 0008-wasm | JS host: Host::now/mode (D1069), then 0013 | infra | .worktrees/infra |
-| 0015 | Utilities D: files and paths | files | .worktrees/files |
-| 0019 | Utilities H: awk (goawk port) | text | .worktrees/text |
-| 0014 | Utilities C: sed (on psh-regex) | parser | .worktrees/parser |
 | 0032 | Engine follow-ups and the hit list | engine | .worktrees/engine |
-| 0029 | Core shell builtins | builtins | .worktrees/builtins |
+| 0013 | Utilities B: rg, grep done; fd next | infra | .worktrees/infra |
+| 0014+ | sed done; parser hit-list items queued | parser | .worktrees/parser |
+| 0035 | Tier 2: process and host utilities | procs | .worktrees/procs |
+| 0015 | Utilities D: files and paths (part 3: ls, stat, du, mktemp) | files | .worktrees/files |
+| 0029 | Core shell builtins (finishing, then stop) | builtins | .worktrees/builtins |
+
+## Paused (resume points in the issue logs)
+
+| issue | what is left | agent |
+| --- | --- | --- |
+| 0007 | strips_crlf true, nice mapping (planned) | windows (archived) |
+| 0020 | part 3: nice, nohup | shapes (idle) |
+| 0034b | --force-utils flag | cli (archived) |
 
 ## Open (ready)
 
@@ -72,3 +76,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0034 | psh binary command line on argument (D035) | 4e79b31 (cli) |
 | 0018 | Utilities G: jq | af40922 (procs) |
 | 0014 | Utilities C: sed | 888caeb (parser) |
+| 0019 | Utilities H: awk | 6998430 (text) |

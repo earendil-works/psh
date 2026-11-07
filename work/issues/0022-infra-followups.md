@@ -69,6 +69,12 @@ measure the parser in the gate.
   point at the list (coordinator's file).
 
 ## Follow-ups
+- Platform-dependent cases (coordinator's plan, implement when the macOS/Windows spec
+  legs need it): goldens stay Linux bash 5.3; per-platform ratchets
+  `tests/<layer>/expected-failures.<os>.txt` next to the shared one, listing only cases
+  that pass on Linux; a `platform` tag in spec.toml for inherently host-specific cases
+  (`/bin` layout, case-insensitive file systems, signal numbers). Many differences go
+  away once psh's own utilities shadow the host's (modes S/W).
 
 ## Result
 - **L0** (main 59b798e): `cargo run -p psh-spec -- --l0 [FILTER] [--diff]

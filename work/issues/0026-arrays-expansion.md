@@ -18,7 +18,7 @@ arrays extend `Var`'s value; `Fields` stays the expansion model.
 - [ ] Indexed and associative arrays: `a=(…)`, `a[i]=`, `a+=(…)`, `${a[i]}`, `${a[@]}`,
       `${a[*]}`, `${#a[@]}`, `${!a[@]}`, negative indices, sparse arrays, `"$@"`-like
       quoting of `"${a[@]}"`, arrays in arithmetic (via `ArithEnv`), `unset a[i]`.
-- [ ] `declare`/`typeset`/`local` with `-a -A -i -r -x -g -n -l -u -p` (namerefs),
+- [ ] `declare`/`typeset`/`local` with `-a -A -i -r -x -g -n -l -u -p -f -F` (namerefs; `declare -f` prints functions with `psh_syntax::print_function_bash`, restoring bytes for non-UTF-8 sources),
       `readonly -a`, `export` of arrays (not exported, as bash), `mapfile`/`readarray`.
 - [ ] Remaining parameter expansions: `${x:o:l}`, `${x/p/r}` (`//`, `/#`, `/%`),
       `${x^^}` / `${x,,}` and friends, `${!prefix*}`, `${!name}` indirection,

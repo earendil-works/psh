@@ -63,6 +63,23 @@ date env printenv nice nohup which`.
 - L4: tests/utils/{base64,cmp,sum,which,printenv}/ and env/flags (the case dirs are
   recorded, so a file name with a newline must be removed before a case ends).
 
+- Part 2 (shapes): `date` (D1204) and `diff` (D1205). The engine's TZif reader now
+  backs `UtilCtx::load_zone`/`zone_abbr`/`use_utc` (outside touch: psh-engine util.rs,
+  builtins/strftime.rs `load`), so a command's `TZ` works in utilities; touch and find do
+  not call `load_zone` yet (follow-up). timefmt (shared with touch/find): days of the
+  week, `YYYYMMDD`, zone names, `+ 2 weeks`, and a GNU `date` strftime. diff was tuned
+  against GNU as an oracle on generated and real pairs (scratch: rnd/, real/, proto*.py);
+  probes showed GNU's `-y` geometry (formula in D1205). macOS's diff agrees with GNU on
+  nearly every case except times in headers, `--left-column`, `--color`, quoting.
+- oils/array-assign/6 failed once in a loaded spec-linux run and passed alone; quarantine
+  it if it recurs.
+- ARCH.md: the `which` line now says it reports the PATH program (coordinator's call).
+
 ## Follow-ups
+- touch -d / find -newermt: call `ctx.load_zone()` so `TZ=...` applies (one line each).
+- diff: `-e`/`-f`/`-n` (ed/RCS output), `-t`/`-T`, `--tabsize`, `-D`, `--no-dereference`,
+  `-y` with `\ No newline` lines; the remaining GNU alignment differences (D1205).
+- date: `-z` (BSD output zone), `--debug`, GNU's `TZ="..."` inside `-d` strings.
+- cksum and b2sum (BLAKE2b) for the checksum family.
 
 ## Result

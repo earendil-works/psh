@@ -2430,3 +2430,22 @@ macOS does: Jan 31 + 1 month is Feb 29), `-j [[[mm]dd]HH]MM[[cc]yy][.SS]`. `-r`:
 D016's rule. `-f FILE` without `-j` is GNU's dates file. Setting the clock (`-s`, a date
 operand without `-j`) runs the real program, or fails in a sandbox. GNU's quirk of
 reading `10:00 -3 hours` as a zone is not reproduced.
+
+## D1205: diff is ours: Myers in linear space, tuned against GNU's choices
+date: 2026-11-07 · by: shapes · issue: 0020
+`diff` is written for psh (no diffutils port: its algorithm code is GPL; uutils'
+diffutils lacks `-y`, `-I`, `-B` and directory output in GNU's shape). The algorithm is
+Myers' O(ND) middle-snake recursion from the paper, with two choices tuned by running
+GNU diff as an oracle on 400 generated and 108 real file pairs (this repository's
+history): the forward search tries diagonals from the deletion side first, and a
+compaction pass slides each changed run up (merging), then down to the last position
+where it meets a change of the other file, else to the bottom. psh then prints GNU's
+hunks for 102 of the 108 real pairs and 343 of the 400 generated ones; the rest are
+equally minimal diffs with other alignments. Past an edit distance of 2048 the split is
+the furthest forward point (no longer minimal), bounding the time on very different
+files. Formats follow GNU's manual and output: normal, `-u`/`-U`, `-c`/`-C` (times as
+`%Y-%m-%d %H:%M:%S.%N %z`), `-q`, `-s`, `-y` (column geometry measured: right column at
+`(W+11)/2` rounded down to a tab stop, half width `min(off-3, W-off)`, the gutter mark
+at `(hw+off-1)/2`), `--color` (GNU's default palette), `-p`/`-F`, and `diff -r` lines
+that echo the options shell-quoted. `-I` and `-F` take BREs through the search
+utilities' translator; a pattern it cannot carry runs the real diff.

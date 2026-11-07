@@ -848,6 +848,7 @@ async fn call_function(
         source: f.source.clone(),
         line: vp.line,
         sourced: false,
+        args: vp.args.clone(),
     });
     for (n, v) in assigns {
         let var = vp.vars.entry(&n);

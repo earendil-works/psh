@@ -193,6 +193,8 @@ pub(crate) struct Vp {
     pub subshell_level: u32,
     /// `$BASHPID`: the shell's pid, a made-up one in subshells (vprocs have none).
     pub bashpid: u32,
+    /// The script's own arguments, the bottom of `BASH_ARGV`.
+    pub script_args: Vec<Vec<u8>>,
     /// `alias` definitions; a subshell's own (bash keeps them per process).
     pub aliases: psh_syntax::Aliases,
     /// `shopt expand_aliases`: off, as in non-interactive bash.
@@ -245,6 +247,8 @@ pub(crate) struct Call {
     pub line: u32,
     /// A sourced file (`return` ends it; messages carry its name).
     pub sourced: bool,
+    /// Its arguments (`BASH_ARGV`, `BASH_ARGC` under extdebug).
+    pub args: Vec<Vec<u8>>,
 }
 
 /// A function call's locals: each shadowed variable with its value before the call
@@ -291,12 +295,76 @@ impl Vp {
                 .to_string(),
             Dynamic::EpochSeconds => now.as_secs().to_string(),
             Dynamic::EpochRealtime => format!("{}.{:06}", now.as_secs(), now.subsec_micros()),
+            Dynamic::FuncName
+            | Dynamic::BashSource
+            | Dynamic::BashLineno
+            | Dynamic::BashArgv
+            | Dynamic::BashArgc => {
+                let items = self.call_stack(d);
+                if let Some(var) = self.vars.get_mut(name) {
+                    // bash shows an empty FUNCNAME as declared only, the others as `()`.
+                    var.declared_only = items.is_empty() && d == Dynamic::FuncName;
+                    var.value = Value::Indexed(
+                        items
+                            .into_iter()
+                            .enumerate()
+                            .map(|(i, v)| (i as i64, v))
+                            .collect(),
+                    );
+                }
+                return;
+            }
             Dynamic::BashPid => self.bashpid.to_string(),
             Dynamic::BashSubshell => self.subshell_level.to_string(),
         };
         if let Some(var) = self.vars.get_mut(name) {
             var.value = Value::Str(v.into_bytes());
         }
+    }
+
+    /// `FUNCNAME`, `BASH_SOURCE`, `BASH_LINENO`, `BASH_ARGV`, `BASH_ARGC`, innermost
+    /// first. A script run from a file has a bottom frame: `main` (in `FUNCNAME` only
+    /// below a call), its name, line 0.
+    fn call_stack(&self, d: crate::vars::Dynamic) -> Vec<Vec<u8>> {
+        use crate::vars::Dynamic;
+        let file = !self.opts.dash_c && !self.opts.stdin;
+        let calls = self.calls.iter().rev();
+        let mut out: Vec<Vec<u8>> = match d {
+            Dynamic::FuncName => calls.map(|c| c.func.clone().into_bytes()).collect(),
+            Dynamic::BashSource => calls.map(|c| c.source.clone().into_bytes()).collect(),
+            Dynamic::BashLineno => calls.map(|c| c.line.to_string().into_bytes()).collect(),
+            Dynamic::BashArgc | Dynamic::BashArgv => {
+                if !self.opts.shopt(crate::options::Shopt::Extdebug) {
+                    return Vec::new();
+                }
+                let mut frames: Vec<&[Vec<u8>]> =
+                    self.calls.iter().rev().map(|c| &c.args[..]).collect();
+                if file {
+                    frames.push(&self.script_args);
+                }
+                return if d == Dynamic::BashArgc {
+                    frames
+                        .iter()
+                        .map(|f| f.len().to_string().into_bytes())
+                        .collect()
+                } else {
+                    frames
+                        .iter()
+                        .flat_map(|f| f.iter().rev().cloned())
+                        .collect()
+                };
+            }
+            _ => Vec::new(),
+        };
+        if file {
+            match d {
+                Dynamic::FuncName if !self.calls.is_empty() => out.push(b"main".to_vec()),
+                Dynamic::BashSource => out.push(self.arg0.clone()),
+                Dynamic::BashLineno => out.push(b"0".to_vec()),
+                _ => {}
+            }
+        }
+        out
     }
 
     fn next_random(&self) -> u64 {

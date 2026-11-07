@@ -661,6 +661,7 @@ async fn print_named(vp: &mut Vp, bname: &str, names: &[DeclArg]) -> R {
         let found = match a {
             DeclArg::Word(w) if is_name(w) => {
                 let n = String::from_utf8_lossy(w).into_owned();
+                vp.refresh_dynamic(&n);
                 vp.vars.get(&n).map(|v| declaration(&n, v))
             }
             _ => None,

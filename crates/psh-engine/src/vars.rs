@@ -30,6 +30,12 @@ pub(crate) enum Dynamic {
     EpochRealtime,
     BashPid,
     BashSubshell,
+    /// The call stack (D1320).
+    FuncName,
+    BashSource,
+    BashLineno,
+    BashArgv,
+    BashArgc,
 }
 
 /// `declare -l` / `-u` (and `-c` is not bash 5.3's).

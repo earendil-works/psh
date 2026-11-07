@@ -140,11 +140,16 @@ pub(crate) const SHOPTS: &[(&str, bool)] = &[
 /// `shopt` options the engine looks at.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Shopt {
+    Dotglob,
     ExpandAliases,
+    Extdebug,
     Extglob,
     Failglob,
+    Globstar,
     InheritErrexit,
     Lastpipe,
+    Nocaseglob,
+    Nocasematch,
     Nullglob,
     XpgEcho,
 }
@@ -152,8 +157,13 @@ pub(crate) enum Shopt {
 impl Shopt {
     fn name(self) -> &'static str {
         match self {
+            Shopt::Dotglob => "dotglob",
             Shopt::ExpandAliases => "expand_aliases",
+            Shopt::Extdebug => "extdebug",
             Shopt::Extglob => "extglob",
+            Shopt::Globstar => "globstar",
+            Shopt::Nocaseglob => "nocaseglob",
+            Shopt::Nocasematch => "nocasematch",
             Shopt::Failglob => "failglob",
             Shopt::InheritErrexit => "inherit_errexit",
             Shopt::Lastpipe => "lastpipe",

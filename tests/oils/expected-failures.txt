@@ -315,18 +315,7 @@ oils/here-doc/17
 oils/here-doc/26
 oils/here-doc/29
 oils/if_/3
-oils/introspect/0
 oils/introspect/1
-oils/introspect/2
-oils/introspect/3
-oils/introspect/4
-oils/introspect/6
-oils/introspect/7
-oils/introspect/8
-oils/introspect/9
-oils/introspect/10
-oils/introspect/11
-oils/introspect/12
 oils/let/1
 oils/loop/17
 oils/nameref/11
@@ -439,7 +428,6 @@ oils/var-op-test/35
 oils/var-ref/3
 oils/var-ref/4
 oils/var-ref/8
-oils/var-ref/9
 oils/var-ref/10
 oils/var-ref/26
 oils/var-ref/28

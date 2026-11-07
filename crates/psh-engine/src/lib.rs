@@ -264,10 +264,30 @@ impl Shell {
             ("EPOCHREALTIME", vars::Dynamic::EpochRealtime),
             ("BASHPID", vars::Dynamic::BashPid),
             ("BASH_SUBSHELL", vars::Dynamic::BashSubshell),
+            ("FUNCNAME", vars::Dynamic::FuncName),
+            ("BASH_SOURCE", vars::Dynamic::BashSource),
+            ("BASH_LINENO", vars::Dynamic::BashLineno),
+            ("BASH_ARGV", vars::Dynamic::BashArgv),
+            ("BASH_ARGC", vars::Dynamic::BashArgc),
         ] {
             let v = vars.entry(name);
             v.dynamic = Some(d);
-            v.integer = matches!(d, vars::Dynamic::Random | vars::Dynamic::Seconds);
+            // The attributes `declare -p` shows for them in bash.
+            v.integer = matches!(
+                d,
+                vars::Dynamic::Random | vars::Dynamic::Srandom | vars::Dynamic::BashPid
+            );
+            if matches!(
+                d,
+                vars::Dynamic::FuncName
+                    | vars::Dynamic::BashSource
+                    | vars::Dynamic::BashLineno
+                    | vars::Dynamic::BashArgv
+                    | vars::Dynamic::BashArgc
+            ) {
+                v.value = vars::Value::Indexed(Default::default());
+                v.declared_only = true;
+            }
         }
         // psh's compatibility target; scripts gate bash-isms on these (D1264).
         vars.insert("BASH_VERSION", Var::scalar(b"5.3.9(1)-release".to_vec()));
@@ -335,6 +355,7 @@ impl Shell {
             last_args: Vec::new(),
             subshell_level: 0,
             bashpid: cfg.host.pid(),
+            script_args: Vec::new(),
             aliases: psh_syntax::Aliases::new(),
             expand_aliases: false,
             calls: Vec::new(),
@@ -390,6 +411,7 @@ impl Shell {
             vp.vars.insert("_", Var::scalar(script.arg0.clone()));
         }
         vp.arg0 = script.arg0;
+        vp.script_args = script.args.clone();
         vp.args = script.args;
         vp.opts.dash_c = script.dash_c;
         builtins::apply_invocation_options(&mut vp, &script.options);

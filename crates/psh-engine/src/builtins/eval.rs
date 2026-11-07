@@ -167,6 +167,7 @@ pub(super) async fn source(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         source: s(file).into_owned(),
         line,
         sourced: true,
+        args: vp.args.clone(),
     });
     let r = Box::pin(run_text(vp, &text, 0, Origin::File)).await;
     vp.calls.pop();

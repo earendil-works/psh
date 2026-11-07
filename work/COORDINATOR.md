@@ -56,3 +56,11 @@ the hard way.
 
 ## Pushing
 - There is no remote yet. Sub-agents never push.
+
+## Machine health (learned 2026-11-07)
+- Check `uptime`, `df -h ~`, `docker ps` and long-running processes (`ps -Ao pid,etime,command`)
+  every few hours. Leaked containers (an oracle probe ran 15 h at 100% CPU), orphaned
+  test loops and an editor opened by `git commit` (6 h) all went unnoticed for hours.
+- Keep at most ~5 implementation agents active on this 18-core machine: with 11, load
+  sat at ~100 and ~60% of merge attempts failed on contention and flakes.
+- Relay only what the recipient needs; don't forward FYIs to agents who don't act on them.

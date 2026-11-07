@@ -117,6 +117,18 @@ Rules:
 - Stay inside your issue's `touches:`. If you must change something outside them, say so
   in the log and keep it minimal: others may be working there.
 
+## Working efficiently (coordinator rules)
+
+- Report once per landed part, briefly. No separate "notes" plus a final answer that
+  repeats it; no replies to FYIs or relayed notes unless they ask a question; ignore a
+  stale relay silently.
+- Never let a tool open an editor or pager: `git commit -m`/`-F`, `GIT_EDITOR=true`,
+  `GIT_PAGER=cat`.
+- Docker: always `docker run --rm` under `scripts/timeout.sh`; never leave a container
+  running.
+- Keep local runs small (`psh-spec -j 4`, filtered); the gate runs the full suites. Run
+  `scripts/merge-to-main.sh` in the foreground, never as a background job.
+
 ## Testing while iterating
 
 The gate runs once, inside `scripts/merge-to-main.sh`; don't run it yourself before

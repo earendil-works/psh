@@ -601,9 +601,7 @@ brush/compat/builtins/kill/31
 brush/compat/builtins/kill/32
 brush/compat/builtins/kill/34
 brush/compat/builtins/let/2
-brush/compat/builtins/let/4
 brush/compat/builtins/let/5
-brush/compat/builtins/let/6
 brush/compat/builtins/local/1
 brush/compat/builtins/local/2
 brush/compat/builtins/mapfile/0

@@ -13,7 +13,6 @@ use psh_syntax::{
     Word, WordPart,
 };
 
-use crate::escape::{Dialect, decode};
 use crate::exec;
 use crate::pattern::{self, Pattern, ReplaceMode};
 use crate::sched::LocalBoxFuture;
@@ -513,7 +512,7 @@ async fn expand_part(
         Part::Single => f.quoted(&text[1..text.len() - 1]),
         Part::AnsiC => {
             let inner = &text[2..text.len() - 1];
-            f.quoted(&decode(inner, Dialect::AnsiC).bytes);
+            f.quoted(&psh_syntax::decode_ansi_c(inner));
         }
         Part::Double(inner) | Part::Locale(inner) => {
             // `"…"` makes a field even when everything inside is empty, except that
@@ -875,7 +874,7 @@ async fn param(
                 b'Q' | b'E' | b'U' | b'L' | b'u' => {
                     let val = map_val(val, |s| match op {
                         b'Q' => quote(s),
-                        b'E' => decode(s, Dialect::AnsiC).bytes,
+                        b'E' => psh_syntax::decode_ansi_c(s),
                         b'U' => s.to_ascii_uppercase(),
                         b'L' => s.to_ascii_lowercase(),
                         _ => {

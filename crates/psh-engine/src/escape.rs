@@ -1,10 +1,9 @@
-//! Backslash escapes: `$'…'`, `echo -e` and `printf`.
+//! Backslash escapes of `echo -e` and `printf` (`$'…'` is psh-syntax's
+//! `decode_ansi_c`).
 
 /// Which escape dialect: they differ in octal and `\c`.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Dialect {
-    /// `$'…'`: `\nnn` octal (1–3 digits), `\cX` control chars, `\'` and `\"`.
-    AnsiC,
     /// `echo -e` and `printf %b`: `\0nnn` octal (0–3 digits after the 0), `\c` stops
     /// all output.
     Echo,
@@ -51,22 +50,12 @@ pub(crate) fn decode(s: &[u8], dialect: Dialect) -> Decoded {
             b't' => out.push(b'\t'),
             b'v' => out.push(0x0b),
             b'\\' => out.push(b'\\'),
-            b'\'' if dialect == Dialect::AnsiC => out.push(b'\''),
             b'"' if dialect != Dialect::Echo => out.push(b'"'),
-            b'?' if dialect == Dialect::AnsiC => out.push(b'?'),
             b'c' if dialect == Dialect::Echo => {
                 return Decoded {
                     bytes: out,
                     stop: true,
                 };
-            }
-            b'c' if dialect == Dialect::AnsiC && i < s.len() => {
-                let x = s[i];
-                i += 1;
-                if x == b'\\' && i < s.len() && s[i] == b'\\' {
-                    i += 1;
-                }
-                out.push(x & 0x1f);
             }
             b'0'..=b'7' => {
                 let (mut v, max) = if dialect == Dialect::Echo {
@@ -134,15 +123,6 @@ pub(crate) fn decode(s: &[u8], dialect: Dialect) -> Decoded {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn ansi_c() {
-        assert_eq!(
-            decode(br"a\tb\x41\101\u00e9", Dialect::AnsiC).bytes,
-            "a\tbAAé".as_bytes()
-        );
-        assert_eq!(decode(br"\cA", Dialect::AnsiC).bytes, b"\x01");
-    }
 
     #[test]
     fn echo() {

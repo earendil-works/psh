@@ -1,0 +1,101 @@
+T.-f-f	BAD: T.-f-f 3 files
+T.-f-f	BAD: T.-f-f source file name
+T.argv	BAD: T.argv delete ARGV[2]
+T.clv	BAD: T.clv (7B: illegal varname)
+T.clv	BAD: T.clv (x=20)
+T.clv	BAD: T.clv (x=20a)
+T.errmsg	BAD: illegal primary in regular expression failed
+T.errmsg	BAD: illegal break, continue, next or nextfile from BEGIN failed
+T.errmsg	BAD: illegal break, continue, next or nextfile from END failed
+T.errmsg	BAD: nextfile is illegal inside a function failed
+T.errmsg	BAD: duplicate argument failed
+T.errmsg	BAD: nonterminated character class failed
+T.errmsg	BAD: syntax error in regular expression failed
+T.errmsg	BAD: division by zero in /= failed
+T.errmsg	BAD: division by zero in %= failed
+T.errmsg	BAD: division by zero in mod failed
+T.errmsg	BAD: can.t read value.* array name. failed
+T.errmsg	BAD: can.t read value.* function failed
+T.errmsg	BAD: can.t assign.* a function failed
+T.errmsg	BAD: can.t assign to x; it.s an array name. failed
+T.errmsg	BAD: is a function, not an array failed
+T.errmsg	BAD: function f called with 1 args, uses only 0 failed
+T.errmsg	BAD: can.t use function f as argument in f failed
+T.errmsg	BAD: x is an array, not a function failed
+T.errmsg	BAD: illegal nested function failed
+T.errmsg	BAD: return not in function failed
+T.errmsg	BAD: break illegal outside failed
+T.errmsg	BAD: continue illegal outside failed
+T.errmsg	BAD: non-terminated string failed
+T.errmsg	BAD: next is illegal inside a function failed
+T.errmsg	BAD: not enough args in printf(%s) failed
+T.errmsg	BAD: weird printf conversion failed
+T.errmsg	BAD: function f has .* arguments, limit .* failed
+T.errmsg	BAD: bailing out failed
+T.errmsg	BAD: extra ) failed
+T.errmsg	BAD: illegal statement failed
+T.errmsg	BAD: illegal .*next.* from BEGIN failed
+T.errmsg	BAD: illegal .*next.* from END failed
+T.errmsg	BAD: can.t open file ./nonexistentdir/foo failed
+T.errmsg	BAD: you can.t define function f more than once failed
+T.errmsg	BAD: function mp called with 1 args, uses only 0 failed
+T.errmsg	BAD: index.*doesn.t permit regular expressions failed
+T.errmsg	BAD: log argument out of domain failed
+T.errmsg	BAD: exp result out of range failed
+T.errmsg	BAD: null file name in print or getline failed
+T.errmsg	BAD: function has too many arguments failed
+T.errmsg	BAD: calling undefined function foo failed
+T.errmsg	BAD: this should print a BAD message failed
+T.errmsg	BAD: T.errmsg newline in string
+T.errmsg	BAD: T.errmsg cmd|getline unsafe
+T.errmsg	BAD: T.errmsg print > unsafe
+T.errmsg	BAD: T.errmsg print >> unsafe
+T.errmsg	BAD: T.errmsg print | unsafe
+T.errmsg	BAD: T.errmsg system unsafe
+T.latin1	BAD: T.latin1 6
+T.latin1	BAD: T.latin1 7
+T.misc	BAD: T.misc fcn args
+T.misc	BAD: T.misc undefined function
+T.misc	BAD: T.misc foo bug
+T.misc	BAD: T.misc nonterminated fails
+T.misc	BAD: T.misc split error
+T.misc	BAD: T.misc hello error
+T.misc	BAD: T.misc pile error
+T.misc	BAD: T.misc atan2 error
+T.misc	BAD: T.misc gsub banana error
+T.misc	BAD: T.misc sub banana error
+T.misc	BAD: T.misc lineno
+T.misc	BAD: T.misc can't open
+T.misc	BAD: T.misc continuation line number
+T.misc	BAD: T.misc syntax error line number
+T.misc	BAD: T.misc $f[1]++
+T.misc	BAD: T.misc bare quote fails
+T.misc	BAD: T.misc non-terminated RE
+T.misc	BAD: T.misc looping syntax error 1
+T.misc	BAD: T.misc looping syntax error 2
+T.misc	BAD: T.misc looping syntax error 3
+T.misc	BAD: T.misc '$' not permitted in formats
+T.misc	BAD: T.misc exit status on I/O error
+T.misc	ï¿½BAD: T.misc escape sequences in strings mishandled
+T.overflow	BAD: T.overflow $400000
+T.utf8bad	BAD: T.utf8bad 1: ($0 ~ /b/) index($0, "b") length($0) on a\300\200b gave [gawk: cmd. line:1: (FILENAME=- FNR=1) warning: Invalid multibyte data detected. There may be a mismatch between your data and your locale
+T.utf8bad	BAD: T.utf8bad 2: gsub(/./, "+") " " $0 on a\300\200b gave [2 +À€+], expected [4 ++++] (and every byte of it is one character to .)
+T.utf8bad	BAD: T.utf8bad 3: length($0) " " gsub(/./, "+") on \367\277\277\277 gave [1 1], expected [4 4] (above MAX_CODE_POINT: the two decoders must agree)
+T.utf8bad	BAD: T.utf8bad 4: length($0) " " gsub(/./, "+") on \355\240\200 gave [gawk: cmd. line:1: (FILENAME=- FNR=1) warning: Invalid multibyte data detected. There may be a mismatch between your data and your locale
+T.utf8bad	BAD: T.utf8bad 5: length($0) " " gsub(/./, "+") on \300\257 gave [gawk: cmd. line:1: (FILENAME=- FNR=1) warning: Invalid multibyte data detected. There may be a mismatch between your data and your locale
+T.utf8bad	BAD: T.utf8bad 6: length($0) on \367\277\277\277 gave [1], expected [4] (F7 BF BF BF encodes 0x1fffff)
+T.utf8bad	BAD: T.utf8bad 7: length($0) on \364\220\200\200 gave [1], expected [4] (F4 90 80 80 is U+110000, one past the end)
+T.utf8bad	BAD: T.utf8bad 9: length($0) on \355\240\200 gave [gawk: cmd. line:1: (FILENAME=- FNR=1) warning: Invalid multibyte data detected. There may be a mismatch between your data and your locale
+T.utf8bad	BAD: T.utf8bad 10: length($0) on \355\277\277 gave [gawk: cmd. line:1: (FILENAME=- FNR=1) warning: Invalid multibyte data detected. There may be a mismatch between your data and your locale
+T.utf8bad	BAD: T.utf8bad 13: length($0) on \300\200 gave [gawk: cmd. line:1: (FILENAME=- FNR=1) warning: Invalid multibyte data detected. There may be a mismatch between your data and your locale
+T.utf8bad	BAD: T.utf8bad 14: length($0) on \300\257 gave [gawk: cmd. line:1: (FILENAME=- FNR=1) warning: Invalid multibyte data detected. There may be a mismatch between your data and your locale
+T.utf8bad	BAD: T.utf8bad 15: length($0) on \301\277 gave [gawk: cmd. line:1: (FILENAME=- FNR=1) warning: Invalid multibyte data detected. There may be a mismatch between your data and your locale
+T.utf8bad	BAD: T.utf8bad 16: length($0) on \340\200\257 gave [gawk: cmd. line:1: (FILENAME=- FNR=1) warning: Invalid multibyte data detected. There may be a mismatch between your data and your locale
+T.utf8bad	BAD: T.utf8bad 17: length($0) on \340\237\277 gave [gawk: cmd. line:1: (FILENAME=- FNR=1) warning: Invalid multibyte data detected. There may be a mismatch between your data and your locale
+T.utf8bad	BAD: T.utf8bad 18: length($0) on \360\200\200\257 gave [gawk: cmd. line:1: (FILENAME=- FNR=1) warning: Invalid multibyte data detected. There may be a mismatch between your data and your locale
+T.utf8bad	BAD: T.utf8bad 19: length($0) on \360\217\277\277 gave [gawk: cmd. line:1: (FILENAME=- FNR=1) warning: Invalid multibyte data detected. There may be a mismatch between your data and your locale
+T.utf8bad	BAD: T.utf8bad 25: length($0) on \303 gave [gawk: cmd. line:1: (FILENAME=- FNR=1) warning: Invalid multibyte data detected. There may be a mismatch between your data and your locale
+T.utf8bad	BAD: T.utf8bad 26: length($0) on \200 gave [gawk: cmd. line:1: (FILENAME=- FNR=1) warning: Invalid multibyte data detected. There may be a mismatch between your data and your locale
+T.utf8bad	BAD: T.utf8bad 27: length($0) on \370\200\200\200\200 gave [gawk: cmd. line:1: (FILENAME=- FNR=1) warning: Invalid multibyte data detected. There may be a mismatch between your data and your locale
+T.utf8bad	BAD: T.utf8bad 29: ($0 ~ /[\ud800]/) on x\355\240\200y gave [gawk: cmd. line:1: warning: regexp escape sequence `\u' is not a known regexp operator
+T.utf8bad	BAD: T.utf8bad 30: ($0 ~ /[\u110000]/) on x\364\220\200\200y gave [gawk: cmd. line:1: warning: regexp escape sequence `\u' is not a known regexp operator

@@ -1080,6 +1080,12 @@ impl Parser<'_> {
     }
 
     fn error(&self, msg: &str) -> ParseError {
+        // gawk's words for a program that ends too early.
+        let msg = if msg == "syntax error" && matches!(self.tok, Tok::Eof | Tok::Newline) {
+            "unexpected newline or end of string"
+        } else {
+            msg
+        };
         ParseError {
             pos: self.pos,
             msg: msg.into(),

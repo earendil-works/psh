@@ -97,7 +97,17 @@ implementation. Port goawk (MIT) to Rust (D018); F mode until conformant, then S
 - L4: `tests/utils/awk/` (69 cases: basic, functions, io, errors), GNU and BSD recorded,
   8 `## expect: gnu` with reasons; 69/69 pass natively (stdout and stderr), 68/69 on
   wasm (`date` missing there). psh.wasm grew 1.52 MB -> 1.90 MB with awk.
+- Part 3: onetrueawk's T.* scripts (31 of 34; README) vendored in
+  `tests/vendor-awk/onetrueawk-T/`, run through the psh binary by
+  `cargo test -p psh --test onetrueawk` (Unix; `[[test]]` in crates/psh/Cargo.toml,
+  outside touches): psh fails only the checks gawk fails, plus 3 ratcheted (`.` and
+  invalid UTF-8 in psh-regex). Fixed on the way: `//` in split, glibc's srand(0) = 1,
+  gawk's "unexpected newline or end of string", "syntax error" for a bad number.
 
 ## Follow-ups
+- psh-regex: an option for `.` (and bracket negations) to match bytes outside valid
+  UTF-8, as gawk's matcher does (3 T.utf8bad checks).
+- `system()`/`close()` of a command killed by a signal: gawk returns 256+N, psh's shell
+  status is 128+N (`ShellChild::wait` would need the signal).
 
 ## Result

@@ -21,6 +21,17 @@ exit status and stdout, with gawk's result.
   listed, and on a listed case that passes; `PSH_UPDATE_RATCHET=1` rewrites the file
   (keeping the reasons). `PSH_AWK_SHOW=1 ... -- --nocapture` prints each failure.
 
+- `onetrueawk-T/`: onetrueawk's self-checking `T.*` scripts and the files they read,
+  except T.arnold and T.beebe (they unpack tar files of other suites) and T.gawk
+  (adapted from gawk's GPL suite). `cargo test -p psh --test onetrueawk` (Unix: the
+  scripts use the system's tools) runs each with the psh binary, `awk=awk` and
+  `PSH_UTILS_FORCE=awk`, and an `./echo` like the suite's echo.c. A script prints a
+  `BAD:` line per failing check; psh may fail those gawk fails (`expected.T.gnu.txt`,
+  `record.sh --T`: they are where gawk and onetrueawk differ), the rest is the ratchet
+  `expected-failures.T.txt` (`script<TAB>line`; regressions and stale lines fail,
+  `PSH_UPDATE_RATCHET=1` rewrites it). Its three lines: psh-regex's `.` does not match
+  bytes that are not valid UTF-8 (as GNU's regexec), gawk's matcher does.
+
 gawk's own test suite is GPL: it may be run for reference, never vendored.
 
 Where gawk and BSD awk disagree (83 of 772 cases) psh follows gawk (GNU on conflict):

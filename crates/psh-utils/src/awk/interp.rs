@@ -194,7 +194,7 @@ impl<'c, 'v> Interp<'c, 'v> {
             regex_cache: HashMap::new(),
             fs_cache: None,
             range_active: vec![false; n_actions],
-            rand_state: 0x853c_49e6_748f_ea9b,
+            rand_state: seed_state(0.0),
             seed: 0.0,
         }
     }
@@ -1571,7 +1571,7 @@ impl<'c, 'v> Interp<'c, 'v> {
                     Some(v) => v.num(),
                     None => self.ctx.now().as_secs() as f64,
                 };
-                self.rand_state = (self.seed as i64 as u64) ^ 0x853c_49e6_748f_ea9b;
+                self.rand_state = seed_state(self.seed);
                 Value::Num(prev)
             }
             B::Match => {
@@ -2005,4 +2005,12 @@ fn assigned_slot(sp: Special) -> Option<usize> {
         Special::Nf => 5,
         _ => return None,
     })
+}
+
+/// The generator's state for a seed: the seed's integer, 0 the same as 1 (as glibc's
+/// srandom, which gawk uses: `srand(1)` and the initial seed 0 give one sequence).
+fn seed_state(seed: f64) -> u64 {
+    let n = seed as i64 as u64;
+    let n = if n == 0 { 1 } else { n };
+    n ^ 0x853c_49e6_748f_ea9b
 }

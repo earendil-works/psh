@@ -291,7 +291,7 @@ impl<'a> Lexer<'a> {
                     self.next();
                 }
                 if !got_digit {
-                    return self.illegal("expected digits");
+                    return self.illegal("syntax error");
                 }
                 if self.ch == b'e' || self.ch == b'E' {
                     // "1e" is "1 e" (e a variable), "1e+" is "1e + ...", as in awk and gawk.

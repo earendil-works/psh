@@ -28,3 +28,8 @@ workspace = true
 [[test]]
 name = "standalone"
 path = "../../tests/process/standalone.rs"
+
+# onetrueawk's T.* scripts through the binary with psh's awk (tests/vendor-awk, Unix).
+[[test]]
+name = "onetrueawk"
+path = "../../tests/vendor-awk/onetrueawk_t.rs"

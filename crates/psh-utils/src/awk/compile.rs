@@ -973,6 +973,11 @@ impl Compiler<'_> {
                 let a = self.array(name);
                 let sep = match args.get(2) {
                     None => SplitSep::Fs,
+                    // `//`: every character (gawk).
+                    Some(Expr::RegexArg(r)) if r.is_empty() => {
+                        self.add(Op::Str(Rc::from(&b""[..])));
+                        SplitSep::Dynamic
+                    }
                     Some(Expr::RegexArg(r)) => SplitSep::Regex(self.regex(r, Pos::default())?),
                     Some(e) => {
                         self.expr(e)?;

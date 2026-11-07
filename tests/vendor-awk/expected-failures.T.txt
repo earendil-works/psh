@@ -1,0 +1,5 @@
+# Checks of onetrueawk's T.* scripts psh fails and gawk passes (tests/vendor-awk/README.md):
+# `script<TAB>BAD line`. Update with PSH_UPDATE_RATCHET=1 cargo test -p psh --test onetrueawk
+T.utf8bad	BAD: T.utf8bad 3: length($0) " " gsub(/./, "+") on \367\277\277\277 gave [4 0], expected [4 4] (above MAX_CODE_POINT: the two decoders must agree)
+T.utf8bad	BAD: T.utf8bad 4: length($0) " " gsub(/./, "+") on \355\240\200 gave [3 0], expected [3 3] (a surrogate: the two decoders must agree)
+T.utf8bad	BAD: T.utf8bad 5: length($0) " " gsub(/./, "+") on \300\257 gave [2 0], expected [2 2] (an overlong form: the two decoders must agree)

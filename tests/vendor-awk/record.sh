@@ -2,6 +2,7 @@
 # Records the expected results of the vendored awk suites (README.md here):
 #   tests/vendor-awk/record.sh        gawk in the recording container -> expected.gnu.txt
 #   tests/vendor-awk/record.sh --bsd  macOS's /usr/bin/awk            -> expected.bsd.txt
+#   tests/vendor-awk/record.sh --T    onetrueawk's T.* under gawk     -> expected.T.gnu.txt
 # Re-record only when the cases change, in a commit of its own.
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -13,6 +14,12 @@ if [ "${1:-}" = --bsd ]; then
   exit
 fi
 tag=$(git -C ../.. hash-object docker/Dockerfile | cut -c1-12)
+if [ "${1:-}" = --T ]; then
+  docker run --rm -v "$here:/v:ro" "psh-goldens:$tag" \
+    env PATH=/usr/local/bin:/usr/bin:/bin perl /v/record-T.pl /v bash gawk > expected.T.gnu.txt.new
+  mv expected.T.gnu.txt.new expected.T.gnu.txt
+  exit
+fi
 docker run --rm -v "$here:/v:ro" "psh-goldens:$tag" \
   env PATH=/usr/local/bin:/usr/bin:/bin perl /v/record.pl /v gawk > expected.gnu.txt.new
 mv expected.gnu.txt.new expected.gnu.txt

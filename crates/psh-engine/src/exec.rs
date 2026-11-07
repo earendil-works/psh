@@ -1247,18 +1247,23 @@ pub(crate) async fn run_external_with(
             fds.push((n as u32, ChildFd::Null));
         }
     }
+    // Kept for a script psh runs itself (D1300).
+    let script_argv = argv.clone();
     let spec = SpawnSpec {
         program,
         argv,
         env,
         cwd: vp.cwd.clone(),
         fds,
-        // Background jobs ignore INT and QUIT, as bash's do without job control.
-        sig_ignore: if vp.job.is_some() {
-            vec![crate::host::SIGINT, crate::host::SIGQUIT]
-        } else {
-            Vec::new()
-        },
+        // `trap '' SIG` passes on to children (D1284); background jobs also ignore INT
+        // and QUIT, as bash's do without job control.
+        sig_ignore: (1..64)
+            .filter(|&sig| {
+                vp.signal_trap_ignored(sig)
+                    || (vp.job.is_some()
+                        && (sig == crate::host::SIGINT || sig == crate::host::SIGQUIT))
+            })
+            .collect(),
         // `nohup` and `setsid` leave the shell's run (D1067), as do disowned jobs.
         detach: matches!(
             name.rsplit(|&b| b == b'/').next(),
@@ -1269,6 +1274,9 @@ pub(crate) async fn run_external_with(
     let program = spec.program.clone();
     let spawned = match vp.host().spawn(spec) {
         Ok(s) => s,
+        Err(e) if crate::host::RunInShell::is(&e) => {
+            return Box::pin(run_in_shell(vp, &program, script_argv, &shown)).await;
+        }
         // Spawning a directory fails with EACCES; bash says what it is.
         Err(_) if matches!(vp.host().stat(&program, true).await, Ok(m) if m.kind == crate::host::FileKind::Dir) =>
         {
@@ -1346,6 +1354,62 @@ pub(crate) async fn run_external_with(
         });
     }
     Ok(st.code())
+}
+
+/// Runs a program file the host cannot start as a psh script (D1300), as bash runs a
+/// file `execve` rejects: in a subshell that starts afresh, as if a new shell ran the
+/// file (only exported variables, no functions, aliases, traps or options of ours), with
+/// `$0` the name as written and `$@` the arguments; the descriptors, cwd and environment
+/// are the command's. A file that looks binary is refused, as bash does.
+async fn run_in_shell(vp: &mut Vp, program: &[u8], argv: Vec<Vec<u8>>, shown: &str) -> R {
+    let file = match vp.host().open(program, OpenOptions::read()).await {
+        Ok(f) => FdObj::File(f),
+        Err(e) => {
+            vp.error(&format!("{shown}: {}", error_text(&e))).await;
+            return Ok(126);
+        }
+    };
+    let mut source = Vec::new();
+    if let Err(e) = file.read_to_end(&mut source).await {
+        vp.error(&format!("{shown}: {}", error_text(&e))).await;
+        return Ok(126);
+    }
+    drop(file);
+    // bash's test: a NUL before the first newline in the first 80 bytes.
+    let head = &source[..source.len().min(80)];
+    let first_line = head.split(|&b| b == b'\n').next().unwrap_or(head);
+    if first_line.contains(&0) {
+        vp.error(&format!(
+            "{shown}: cannot execute binary file: Exec format error"
+        ))
+        .await;
+        return Ok(126);
+    }
+    let mut sub = enter(vp).await?;
+    let unexported: Vec<String> = sub
+        .vars
+        .iter()
+        .filter(|(_, v)| !v.exported)
+        .map(|(n, _)| n.clone())
+        .collect();
+    for n in unexported {
+        sub.vars.remove(&n);
+    }
+    sub.funcs = Default::default();
+    sub.aliases = Default::default();
+    sub.expand_aliases = false;
+    sub.traps = Default::default();
+    sub.opts = Default::default();
+    sub.frames.clear();
+    sub.calls.clear();
+    sub.loops = 0;
+    sub.status = 0;
+    sub.last_bg = None;
+    let mut argv = argv.into_iter();
+    sub.arg0 = argv.next().unwrap_or_default();
+    sub.args = argv.collect();
+    let (status, _) = Box::pin(crate::run_script(sub, source)).await;
+    Ok(status)
 }
 
 /// Owns a running external: dropping it abandons the process (cancel), releases it

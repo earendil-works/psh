@@ -1436,3 +1436,18 @@ colon. `Host::path_entries(path)` returns the entries; the default splits on `:`
 the test host, wasm), `WindowsHost` splits as D1076 says. The separator policy is then
 one host function. The test host can split on `;` to cover the engine side; the Windows
 L5 suite runs system programs through the real PATH, so a regression fails the gate.
+
+## D1300: Scripts the host cannot start run in psh (RunInShell)
+date: 2026-11-07 · by: procs · issue: 0030
+Implements D1079, superseding D1063. `host::RunInShell` is a marker error `spawn` returns
+(inside `io::Error`, `RunInShell::is`) for a program the engine must run itself: Unix
+for `ENOEXEC` (no `#!`), Windows for `#!/bin/sh`, `#!/bin/bash` and files with neither an
+interpreter line nor an executable extension (the Windows host switches to it). The
+engine reads the file through the host and runs it as bash runs a file `execve`
+rejects: in a subshell that starts afresh (exported variables only; no functions,
+aliases, traps or options), `$0` the name as written, `$@` the arguments, the command's
+descriptors and cwd; a file with a NUL in its first line (within 80 bytes) is refused
+with "cannot execute binary file: Exec format error" (126). Messages name `$0` per vproc
+now (`Vp::msg_name` uses `arg0`, syntax errors and `-c` wording use the vproc's
+options), so the script's errors say `./s: line N:`. Also: `trap '' SIG` passes on to
+externals (`SpawnSpec::sig_ignore`, D1284), which 0006 had left unwired.

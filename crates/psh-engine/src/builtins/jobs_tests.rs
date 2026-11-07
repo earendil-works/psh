@@ -94,3 +94,35 @@ fn disown_hides_a_job() {
     assert!(o.stderr.contains("disown: current: no such job"));
     assert_eq!(o.status, 1);
 }
+
+// Scripts the host cannot start run in psh (D1300).
+
+#[test]
+fn a_file_the_host_rejects_runs_as_a_script() {
+    use crate::tests::run_setup;
+    let o = run_setup(
+        "Y=1; export X=2; f() { :; }; /s a b; echo st=$?; cd / && ./s c",
+        |h| {
+            h.fs.write_file(
+                "/s",
+                b"echo \"$0 [$*] x=$X y=${Y-unset}\"\ntype f >/dev/null 2>&1 || echo nof\nexit 3\n",
+            )
+        },
+    );
+    assert_eq!(
+        o.stdout,
+        "/s [a b] x=2 y=unset\nnof\nst=3\n./s [c] x=2 y=unset\nnof\n"
+    );
+    let o = run_setup("/s", |h| h.fs.write_file("/s", b"nosuch\n"));
+    assert!(
+        o.stderr.contains("/s: line 1: nosuch: command not found"),
+        "{}",
+        o.stderr
+    );
+    let o = run_setup("/b; echo $?", |h| h.fs.write_file("/b", b"\x7fELF\x00\x01"));
+    assert_eq!(o.stdout, "126\n");
+    assert!(
+        o.stderr
+            .contains("/b: cannot execute binary file: Exec format error")
+    );
+}

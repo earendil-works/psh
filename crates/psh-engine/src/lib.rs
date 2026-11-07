@@ -432,7 +432,7 @@ impl Shell {
 }
 
 /// The main vproc: runs the script, then the EXIT trap (D1283).
-async fn run_script(vp: Vp, source: Vec<u8>) -> (i32, Vp) {
+pub(crate) async fn run_script(vp: Vp, source: Vec<u8>) -> (i32, Vp) {
     let (mut status, mut vp) = run_script_lines(vp, source).await;
     // A signal that came with the last command still acts (D1903).
     if let Err(u) = builtins::trap::take_signals(&mut vp).await {
@@ -485,8 +485,8 @@ async fn run_script_lines(mut vp: Vp, source: Vec<u8>) -> (i32, Vp) {
             Err(e) => {
                 let line = lines.line(e.span.start);
                 vp.line = line;
-                let dash_c = if vp.core.dash_c.get() { "-c: " } else { "" };
-                let name = vp.core.msg_name.borrow().clone();
+                let dash_c = if vp.opts.dash_c { "-c: " } else { "" };
+                let name = vp.msg_name();
                 let mut msg = format!("{name}: {dash_c}line {line}: {}\n", e.message).into_bytes();
                 if e.message.starts_with("syntax error near") {
                     let text = source_line(&source, line);

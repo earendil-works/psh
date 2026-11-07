@@ -221,6 +221,35 @@ pub trait ExtProc {
     }
 }
 
+/// What `spawn` answers, inside an `io::Error`, for a program psh must run itself as a
+/// shell script (D1300): a file the OS cannot start that bash would run in a copy of
+/// itself. Unix: `execve` fails with `ENOEXEC` (no `#!`). Windows: `#!/bin/sh`,
+/// `#!/bin/bash` (also through `/usr/bin/env`) and files with neither an interpreter line
+/// nor an executable extension. The engine then reads `program` and runs it in a fresh
+/// subshell with the same argv, environment, cwd and descriptors.
+#[derive(Debug)]
+pub struct RunInShell;
+
+impl RunInShell {
+    /// The error a host returns from `spawn`.
+    pub fn error() -> io::Error {
+        io::Error::other(RunInShell)
+    }
+
+    /// Whether `e` is that answer.
+    pub fn is(e: &io::Error) -> bool {
+        e.get_ref().is_some_and(|inner| inner.is::<RunInShell>())
+    }
+}
+
+impl std::fmt::Display for RunInShell {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("a shell script for psh to run itself")
+    }
+}
+
+impl std::error::Error for RunInShell {}
+
 pub struct Spawned {
     pub proc: Box<dyn ExtProc>,
     /// The engine's ends of the `ChildFd::Pipe` descriptors, by child fd.

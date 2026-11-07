@@ -316,3 +316,20 @@ fn a_builtin_loop_into_head_ends_by_sigpipe() {
     let r = run("while :; do echo y; done | head -n 1; echo ${PIPESTATUS[0]} ${PIPESTATUS[1]}");
     assert_eq!(r.stdout, "y\n141 0\n", "{r:?}");
 }
+
+#[test]
+fn ignored_traps_pass_on_to_children() {
+    let r = run("trap '' USR1; sh -c 'kill -USR1 $$; echo survived'");
+    assert_eq!(r.stdout, "survived\n", "{r:?}");
+}
+
+#[test]
+fn a_file_without_an_interpreter_line_runs_in_psh() {
+    // bash runs a file execve rejects itself; so does psh (D1300), afresh: only
+    // exported variables, no functions.
+    let r = run(
+        "cd \"$TMPDIR_CASE\"; printf 'echo \"$0 $1 x=$X y=${Y-unset}\"; type f 2>/dev/null || echo nof; exit 4\\n' > s; chmod +x s; \
+         Y=1; export X=2; f() { :; }; ./s a; echo st=$?",
+    );
+    assert_eq!(r.stdout, "./s a x=2 y=unset\nnof\nst=4\n", "{r:?}");
+}

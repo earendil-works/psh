@@ -706,7 +706,7 @@ async fn getopts(vp: &mut Vp, args: &[Vec<u8>]) -> R {
                 } else {
                     let msg = format!(
                         "{}: option requires an argument -- {}\n",
-                        vp.core.msg_name.borrow(),
+                        String::from_utf8_lossy(&vp.arg0),
                         c as char
                     );
                     vp.error_raw(msg.as_bytes()).await;
@@ -722,7 +722,7 @@ async fn getopts(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             } else {
                 let msg = format!(
                     "{}: illegal option -- {}\n",
-                    vp.core.msg_name.borrow(),
+                    String::from_utf8_lossy(&vp.arg0),
                     c as char
                 );
                 vp.error_raw(msg.as_bytes()).await;

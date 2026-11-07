@@ -707,6 +707,12 @@ impl Host for TestHost {
     }
 
     fn spawn(&self, spec: SpawnSpec) -> io::Result<Spawned> {
+        // A file of the in-memory fs is a script for the shell to run (D1300).
+        if let Ok(p) = std::str::from_utf8(&spec.program)
+            && self.fs.read_file(p).is_some()
+        {
+            return Err(crate::host::RunInShell::error());
+        }
         let name = spec
             .program
             .strip_prefix(b"/bin/")

@@ -347,8 +347,7 @@ fn dup_above(fd: RawFd, floor: RawFd) -> io::Result<OwnedFd> {
 }
 
 pub(crate) fn spawn(shared: &Arc<Shared>, mut spec: SpawnSpec) -> io::Result<Spawned> {
-    let mut exec = Exec::new(&spec.program, &spec.argv, &spec.env, &spec.cwd)?;
-    let mut tried_sh = false;
+    let exec = Exec::new(&spec.program, &spec.argv, &spec.env, &spec.cwd)?;
     let mut sources: Vec<Src> = Vec::new();
     // (child fd, index into `sources`)
     let mut installs: Vec<(i32, usize)> = Vec::new();
@@ -423,7 +422,12 @@ pub(crate) fn spawn(shared: &Arc<Shared>, mut spec: SpawnSpec) -> io::Result<Spa
             .map(|m| m as libc::mode_t),
     };
     let mut extra_ignored = false;
-    for &sig in &spec.sig_ignore {
+    // Linux numbers (D1283) to the OS's.
+    for sig in spec
+        .sig_ignore
+        .iter()
+        .filter_map(|&s| super::signum::to_os(s))
+    {
         if let Some(slot) = usize::try_from(sig)
             .ok()
             .and_then(|n| setup.ignore.get_mut(n))
@@ -454,14 +458,10 @@ pub(crate) fn spawn(shared: &Arc<Shared>, mut spec: SpawnSpec) -> io::Result<Spa
                 tries += 1;
                 std::thread::sleep(Duration::from_millis(1));
             }
-            // A file without `#!` that the kernel refuses runs in `/bin/sh`, as `execvp`
-            // does. bash runs such files itself; until the engine does (a follow-up),
-            // this keeps them working.
-            Err(e) if e.raw_os_error() == Some(libc::ENOEXEC) && !tried_sh => {
-                tried_sh = true;
-                let mut argv = vec![b"sh".to_vec(), spec.program.clone()];
-                argv.extend(spec.argv.iter().skip(1).cloned());
-                exec = Exec::new(b"/bin/sh", &argv, &spec.env, &spec.cwd)?;
+            // A file without `#!` that the kernel refuses: the engine runs it as a psh
+            // script, as bash runs it itself (D1300).
+            Err(e) if e.raw_os_error() == Some(libc::ENOEXEC) => {
+                return Err(psh_engine::host::RunInShell::error());
             }
             Err(e) => return Err(e),
         }

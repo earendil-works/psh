@@ -31,6 +31,20 @@ Close the process-layer follow-ups from 0006 and the coordinator's queue.
 
 ## Log
 
+### 2026-11-07 part 1: RunInShell (D1300)
+- host.rs: `RunInShell` marker (`error()`, `is()`). Engine `run_external_with`: on it,
+  `run_in_shell` reads the file through the host, refuses binaries (bash's NUL test),
+  and runs it in a fresh subshell via `run_script` (now `pub(crate)`). `Vp::msg_name`
+  uses `$0` (was the Core's), syntax-error and `${x?}` status wording use `vp.opts.dash_c`,
+  getopts messages `$0`. psh-os returns `RunInShell` for ENOEXEC (no more `/bin/sh`).
+  Test host: a file of its fs is a script. Tests: engine `jobs_tests` (args, fresh
+  state, messages, binary refusal), L5 (`./s` without `#!`).
+- Found: `trap '' SIG` never reached children (`signal_trap_ignored` was unwired) and
+  psh-os's `sig_ignore` skipped the Linux→OS mapping (USR1 = 30 on macOS); both fixed,
+  L5 test. +3 brush trap/signal cases.
+- Windows (for the windows agent): return `RunInShell::error()` from `spawn` for the
+  D1079 cases; nothing else needed.
+
 ## Follow-ups
 
 ## Result

@@ -262,7 +262,6 @@ impl Vp {
 
     /// Whether a signal is ignored here (`trap '' SIG`): externals start with it ignored
     /// (D1284).
-    #[allow(dead_code)] // for 0006's spawn dispositions
     pub(crate) fn signal_trap_ignored(&self, sig: i32) -> bool {
         self.traps
             .map
@@ -551,11 +550,12 @@ impl Vp {
         env
     }
 
-    /// The name in front of messages: the file being sourced, else `$0`.
+    /// The name in front of messages: the file being sourced, else `$0` (a script psh
+    /// runs itself has its own, D1300).
     pub(crate) fn msg_name(&self) -> String {
         match self.calls.iter().rev().find(|c| c.sourced) {
             Some(c) => c.source.clone(),
-            None => self.core.msg_name.borrow().clone(),
+            None => String::from_utf8_lossy(&self.arg0).into_owned(),
         }
     }
 

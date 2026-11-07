@@ -339,8 +339,12 @@ fn piped_out() -> Vec<(u32, ChildFd)> {
 #[test]
 fn ignored_signals_and_umask_take_effect() {
     let h = host();
-    let mut spec = sh("kill -INT $$; echo alive; umask", piped_out());
-    spec.sig_ignore = vec![libc::SIGINT];
+    let mut spec = sh(
+        "kill -INT $$; kill -USR1 $$; echo alive; umask",
+        piped_out(),
+    );
+    // Linux numbers (D1283): 10 is USR1 on every platform.
+    spec.sig_ignore = vec![2, 10];
     spec.umask = Some(0o077);
     let s = h.spawn(spec).unwrap();
     let mut p = s.proc;

@@ -56,10 +56,18 @@ generated help pages, usage lines and errors.
 - Size: release psh 8,874,176 → 8,985,456 bytes (+109 KiB, macOS arm64).
 - Docs: ARCH.md "The `psh` binary" updated; no guide page affected (cli.md does not exist).
 
+- 0034b (branch issue/0034-cli-followups): `psh --utils [--json]` (crates/psh/src/utils.rs,
+  D1341): every registry name with mode, destructive, what runs here and the PATH
+  program, answered by a shell configured as `psh -c` (`type -a`), not a re-implemented
+  lookup; `shell_config()` is shared with the normal run. An unreadable script operand
+  is now 126 (127 only when missing), as bash. Guide page docs/guide/cli.md written and
+  in SUMMARY.md; utilities.md points at `--utils`; ARCH.md mentions it. Tests: unit
+  (row parsing, names need no quoting), CLI (`--utils` table and JSON with an empty
+  PATH; on Unix an `awk` on PATH runs the program, `PSH_UTILS_FORCE=awk` psh; 126/127).
+
 ## Follow-ups
-- Guide page `cli.md` (the binary's modes and the help page) is still to be written.
-- `--utils` (list the utilities and their mode) and `--force-utils` fit as more
-  top-level `Opt`s / sub-specs in cli.rs.
+- `--force-utils` (a flag for what PSH_UTILS_FORCE does) fits as another top-level `Opt`.
+- psh-spec's in-process runner still reports every unreadable script as 127.
 - bash rejects GNU long options after single-letter ones (`bash -e --norc` is an error);
   invocation.rs still accepts them anywhere among the options (unchanged here).
 

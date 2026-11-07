@@ -30,6 +30,7 @@ param(
   [string]$Msrv,
   [string]$Legs,
   [string]$Root = 'C:\psh-gate',
+  [string]$ResultFile,
   [switch]$Kill
 )
 $ErrorActionPreference = 'Stop'
@@ -41,11 +42,20 @@ function Say([string]$s) {
   $out.Write($b, 0, $b.Length)
   $out.Flush()
 }
+# Ends the run with `code`, also written to -ResultFile (on the host's share): prlctl
+# sometimes fails to fetch a guest's exit code ("PrlJob_GetRetCode"), and then the file
+# still tells the host how the run ended.
+function Finish([int]$code) {
+  if ($ResultFile) {
+    try { [IO.File]::WriteAllText($ResultFile, "$code") } catch { }
+  }
+  exit $code
+}
 # An error of the runner itself is a setup failure (2), not a failing leg (1).
 trap {
   Say "windows-gate: runner error: $_"
   Say "$($_.InvocationInfo.PositionMessage)"
-  exit 2
+  Finish 2
 }
 
 New-Item -ItemType Directory -Force $Root | Out-Null
@@ -70,7 +80,7 @@ function Stop-StaleRunner {
 
 if ($Kill) {
   Stop-StaleRunner
-  exit 0
+  Finish 0
 }
 
 Add-Type -TypeDefinition @'
@@ -210,7 +220,7 @@ function Stop-JobOthers {
     }
     if ($deadline.Elapsed.TotalSeconds -ge 60) {
       Say "windows-gate: processes of the job do not exit: $($others -join ', ')"
-      exit 2
+      Finish 2
     }
     Start-Sleep -Milliseconds 200
   }
@@ -252,7 +262,7 @@ function Invoke-Setup([string]$what, [scriptblock]$cmd) {
   & $cmd | ForEach-Object { Say "$_" }
   if ($LASTEXITCODE -ne 0) {
     Say "windows-gate: setup failed: $what (exit $LASTEXITCODE)"
-    exit 2
+    Finish 2
   }
 }
 
@@ -358,7 +368,7 @@ foreach ($entry in $Legs.Split(',')) {
   $cmd = Get-LegCommand $leg
   if (-not $cmd) {
     Say "windows-gate: unknown leg '$leg'"
-    exit 2
+    Finish 2
   }
   Say "== windows-gate: $leg"
   $log = Join-Path $logDir "$leg.log"
@@ -373,14 +383,14 @@ foreach ($entry in $Legs.Split(',')) {
     'ok' { Say "== windows-gate: $leg ok (${took}s)" }
     'timeout' {
       Say "== windows-gate: TIMEOUT in leg '$leg' after ${took}s"
-      exit 124
+      Finish 124
     }
     default {
       Say "== windows-gate: FAILED in leg '$leg' after ${took}s ($result)"
-      exit 1
+      Finish 1
     }
   }
 }
 Say "== windows-gate: passed ($([int]$total.Elapsed.TotalSeconds)s)"
 Remove-Item $pidFile -ErrorAction SilentlyContinue
-exit 0
+Finish 0

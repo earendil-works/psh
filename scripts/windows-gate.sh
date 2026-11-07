@@ -298,16 +298,27 @@ have_lock=1
 # In the background, so a signal to this script runs its trap at once instead of after
 # prlctl returns (timeout.sh puts prlctl into a process group of its own, out of reach of
 # a signal to ours).
+# The runner also writes its exit status to a file on the share: prlctl now and then
+# fails to fetch a guest's exit code (`PrlJob_GetRetCode`, status 255) for a run that
+# went through, and the file still says how it ended.
+result="$locks/result-$name-$$.txt"
+result_share=$(to_share "$result" | tr / '\\')
 run() {
   running=1
+  rm -f "$result"
   scripts/timeout.sh "$backstop" prlctl exec "$vm" --current-user powershell -NoProfile \
     -NonInteractive -ExecutionPolicy Bypass -File "$runner" -Repo "$repo_share" \
     -Ref "refs/windows-gate/$name" -Name "$name" -Toolchain "$toolchain" -Msrv "$msrv" \
-    -Legs "$selected" &
+    -Legs "$selected" -ResultFile "$result_share" &
   run_pid=$!
   st=0
   wait "$run_pid" || st=$?
   run_pid=
+  if [ "$st" = 255 ] && [ -s "$result" ]; then
+    st=$(tr -dc '0-9' <"$result")
+    echo "windows-gate: prlctl lost the runner's exit status; its result file says $st" >&2
+  fi
+  rm -f "$result"
 }
 
 st=0

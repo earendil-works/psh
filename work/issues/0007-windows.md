@@ -364,6 +364,11 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
   Unsupported and broke the macOS spec leg); a unit test compares it with the trait.
   L4 on Windows now: 148 cases, 33 need external programs (`ln`, `tr`, `seq`, ...), 0
   other differences.
+- `PrlJob_GetRetCode` (prlctl exit 255) also hits runs that went through, and even
+  trivial `prlctl exec` calls now and then (1 in 3 while another exec streams). The
+  runner now also writes its exit status to a file on the host's share
+  (`work/scratch/windows-gate/result-NAME-PID.txt`); the host takes it when prlctl says
+  255, and retries only without one.
 - Mode W: `timeout` (W) runs psh's utility on Windows though System32 has
   `timeout.exe`: cli test (`timeout 5 cmd /c echo hi`, `timeout 0.2 ping` → 124). The
   other W names (`find`, `sort`, `tree`, ...) are not built yet.

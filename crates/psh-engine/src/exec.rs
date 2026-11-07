@@ -2010,6 +2010,59 @@ async fn subst(vp: &mut Vp, code: Rc<Code>, list: ListId) -> Result<(Vec<u8>, i3
     Ok((out, status))
 }
 
+/// `${ list; }` and `${| list; }` (bash 5.3, D1327): the list runs in this shell, its
+/// stdout read by a task of its own; with `|`, the value is `$REPLY`, local to it.
+pub(crate) async fn fun_subst(
+    vp: &mut Vp,
+    code: &Rc<Code>,
+    list: ListId,
+    reply: bool,
+) -> Result<(Vec<u8>, i32), Unwind> {
+    let saved = vp.fds.clone();
+    let old_reply = if reply {
+        let old = vp.vars.get("REPLY").cloned();
+        vp.vars.remove("REPLY");
+        Some(old)
+    } else {
+        None
+    };
+    let (r, w) = pipe::pipe();
+    if !reply {
+        vp.fds.set(1, Rc::new(FdObj::PipeWrite(w)));
+    } else {
+        drop(w);
+    }
+    let reader = vp.core.sched.spawn(async move {
+        let reader = FdObj::PipeRead(r);
+        let mut out = Vec::new();
+        let _ = reader.read_to_end(&mut out).await;
+        out
+    });
+    let r = run_list(vp, code, list).await;
+    restore_fds(vp, saved);
+    let mut out = reader.await;
+    let value = old_reply.map(|old| {
+        let v = vp.var("REPLY").map(<[u8]>::to_vec).unwrap_or_default();
+        match old {
+            Some(old) => vp.vars.insert("REPLY", old),
+            None => {
+                vp.vars.remove("REPLY");
+            }
+        }
+        v
+    });
+    let status = r?;
+    vp.status = status;
+    match value {
+        Some(v) => Ok((v, status)),
+        None => {
+            out.retain(|&b| b != 0);
+            strip_newlines(&mut out);
+            Ok((out, status))
+        }
+    }
+}
+
 /// `<(list)` (`output` false) or `>(list)`: the list runs as a vproc on one end of a
 /// pipe; the word is `/dev/fd/N` for the other end, a descriptor of this vproc (63 and
 /// down, as bash) until the command completes.
@@ -2059,8 +2112,16 @@ pub(crate) async fn command_subst_text(
             subst(vp, inner, root).await
         }
         Err(e) => {
-            vp.error(&format!("command substitution: {}", e.message))
-                .await;
+            // bash: `NAME: command substitution: line N: …`, N counted into the text.
+            let start = (e.span.start as usize).min(text.len());
+            let nl = text[..start].iter().filter(|&&b| b == b'\n').count() as u32;
+            let msg = format!(
+                "{}: command substitution: line {}: {}\n",
+                vp.msg_name(),
+                code.line(offset) + nl,
+                e.message
+            );
+            vp.error_raw(msg.as_bytes()).await;
             vp.status = 2;
             Ok((Vec::new(), 2))
         }

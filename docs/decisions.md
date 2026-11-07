@@ -2000,3 +2000,25 @@ NAME)`) stay ASCII. `fsutil::q` is this helper. Applied to the text filters and 
 head, tail, sleep, timeout and wc; other utilities follow it when they are next touched.
 Reason: the stderr score against GNU's goldens (recorded in C.UTF-8), and one rule
 instead of one per batch.
+## D1325: `patsub_replacement`: the replacement is expanded with `\` and `&` marked
+date: 2026-11-08 · by: engine · issue: 0032
+With `patsub_replacement` (on by default) the replacement of `${x/p/r}` is expanded as
+one word whose quoted `\` and `&` are backslash-escaped; then an unescaped `&` is the
+matched text and `\&`, `\\` are the char, while other backslashes (also those an
+unquoted expansion yields, `r='\$1'`) stay, as bash does. `nocasematch` applies to
+`${x/…}` but not to `${x#…}`/`${x%…}` (bash).
+
+## D1326: `{var}>` redirections persist; restores apply them again
+date: 2026-11-08 · by: engine · issue: 0032
+`{var}>file` takes the lowest free descriptor from 10, assigns its number to `var` after
+the redirection succeeded, and outlasts the command (bash without `varredir_close`).
+`{var}>&-` closes the descriptor `var` holds. Each such change is recorded in
+`Vp::var_fds`; restoring a command's saved descriptor table (`restore_fds`) applies them
+again, so the rest of the command's redirections are undone as before.
+
+## D1327: `${ list; }` runs in the shell with a reader task
+date: 2026-11-08 · by: engine · issue: 0032
+Bash 5.3's function substitution runs its list on the current vproc with stdout set to
+an engine pipe; a scheduler task reads the pipe meanwhile, so output beyond the pipe's
+capacity cannot deadlock. `${| list; }` captures nothing and yields `$REPLY`, which is
+local to it (unset at the start, the old value restored after).

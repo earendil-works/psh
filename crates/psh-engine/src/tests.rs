@@ -832,3 +832,46 @@ fn tilde_user_and_drive_paths() {
     assert_eq!(crate::builtins::normalize(br"c:\a\..\b"), b"c:/b");
     assert_eq!(crate::builtins::normalize(b"/a/../b"), b"/b");
 }
+
+#[test]
+fn expansion_climb() {
+    // Array slices: a negative length is an error only inside the elements.
+    check(
+        "a=(a b c); echo \"[${a[@]:3:-1}]\"; s=hello; echo ${s[@]:1:2}",
+        "[]\nel\n",
+    );
+    // patsub_replacement.
+    check(
+        "x=abc; echo ${x/b/<&>} ${x/b/\\&} \"${x//?/[&]}\"; r='\\&'; echo ${x/b/$r}",
+        "a<b>c a&c [a][b][c]\na&c\n",
+    );
+    // Function substitutions run in the shell.
+    check(
+        "x=${ echo hi; y=1; }; echo $x $y; REPLY=o; z=${| REPLY=v; }; echo $z $REPLY",
+        "hi 1\nv o\n",
+    );
+    // `{var}` redirections outlast the command.
+    check(
+        "exec {fd}>/f; echo $fd; echo hi >&$fd; exec {fd}>&-; cat /f; : {g}>/g; echo x >&$g; cat /g",
+        "10\nhi\nx\n",
+    );
+    // `~:` ends a tilde prefix; assignment operands use assignment rules.
+    check(
+        "HOME=/h; echo ~:x; x=~:${u-~:~}; echo $x",
+        "/h:x\n/h:/h:/h\n",
+    );
+}
+
+#[test]
+fn globignore() {
+    let setup = |h: &TestHost| {
+        for f in ["/g/a.txt", "/g/b.txt", "/g/.c.txt"] {
+            h.fs.write_file(f, b"");
+        }
+    };
+    let o = run_setup(
+        "cd /g; GLOBIGNORE=b.txt; echo *.txt; unset GLOBIGNORE; echo *.txt",
+        setup,
+    );
+    assert_eq!(o.stdout, ".c.txt a.txt\na.txt b.txt\n", "{}", o.stderr);
+}

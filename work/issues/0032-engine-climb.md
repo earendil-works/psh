@@ -48,7 +48,29 @@ Collect the engine's open items and then climb the hit list for engine-owned are
   reads of a materialized pipe to read the OS end straight into the caller's buffer
   instead of a 16 KiB read-ahead (one copy and allocation less per read).
 
+- Hit list, part 2 (expansion, redirections, here-docs, messages): array substring
+  bounds with negative lengths and `${scalar[@]:o:l}` (also LINENO); patsub_replacement
+  (D1325); nocasematch for `${x/…}`; `"${v:+"x\y"}"` (backslash quotes any char in a
+  nested double-quoted operand); `@Q` uses `$'…'` for control chars and `\'` for a
+  lone quote; `@k` of scalars, `@A` of arrays without element 0, `${!ref@a}`;
+  `${!empty[@]-DEF}`; `"${a[@]+x}"` with no elements is no word; tilde: `~:` ends the
+  prefix, `${x:=~}` expands like an operand (quoted: no tilde), `x=${u-~:~}` uses
+  assignment rules; GLOBIGNORE; `*/` matches only directories; quoted `-`/`^` in
+  bracket expressions; globskipdots; multibyte IFS chars; `{var}>` redirections (D1326);
+  `n>&n` of a closed fd is a no-op; `1>&file`; bash's wording of `>&$fd` errors;
+  backticks in here-documents keep `\"`; `${ list; }`/`${| list; }` (D1327); message
+  `NAME: command substitution: line N:` for backtick parse errors.
+- Not engine (route): `[[ ]]` (0027; brush patterns/patterns/* all need it); `$'…'` in
+  a double-quoted `${…}` operand (extquote) and the out-of-range io-number word
+  (brush redirection/44,45), here-doc line continuations inside `$( '…' )`, here-doc
+  parse warnings and line numbers: parser; `wait` for process substitutions: procs;
+  many remaining hit-list failures are macOS vs Linux (hexdump, tac, od, /var/root,
+  BSD messages) and pass in the container.
+
 ## Follow-ups
+- parser: extquote (`"${x:-$'\t'}"` decodes `$'…'`), brush params/53 and 63 line 3.
+- procs: `wait` waits for process substitutions and `$!` names the last one (brush
+  redirection/15).
 - windows agent: drop the `/C:/x` workaround in psh-os/src/windows/path.rs (D1323);
   Windows/JS `home_dir`.
 - builtins agent: `read` drops `\r` before the newline on Windows (D1324).

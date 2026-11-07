@@ -701,7 +701,11 @@ async fn expand_part(
             let path = exec::process_subst(vp, code, *list, *output).await?;
             f.literal(&path);
         }
-        Part::FunSub { .. } => return unsupported(vp, "${ …; } substitution").await,
+        Part::FunSub { list, reply } => {
+            let (out, st) = exec::fun_subst(vp, code, *list, *reply).await?;
+            f.subst_status = Some(st);
+            emit(f, &out, quoted);
+        }
         Part::ExtGlob { op, alts } => {
             // The pattern `op(alt|alt)` with each alternative expanded as a pattern;
             // the text, should nothing match, is the same with quotes removed.

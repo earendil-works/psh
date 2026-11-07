@@ -8,7 +8,8 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | --- | --- | --- | --- |
 | 0022 | L0 leg, gate caching, hit list on the parser, deps allowlist | infra | .worktrees/infra |
 | 0023 | Arithmetic parser, bash-format printer, byte-exact sources | parser | .worktrees/parser |
-| 0005 | Minimal interpreter | engine | .worktrees/engine |
+| 0005 | Minimal interpreter (part 1 merged f409212; part 2: control flow, functions, arithmetic) | engine | .worktrees/engine |
+| 0006 | Unix process layer | procs | .worktrees/procs |
 
 ## Open (ready)
 
@@ -19,7 +20,6 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | depends-on |
 | --- | --- | --- |
-| 0006 | Unix process layer | 0005 |
 | 0007B | Windows process layer (part B of 0007) | 0006 |
 | 0008 | Utility framework and first batch | 0005, 0006 |
 | 0010 | pi-env integration behind a flag | 0006, 0007, L3 high |

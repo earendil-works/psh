@@ -48,8 +48,6 @@ oils/assign-extended/8
 oils/assign-extended/9
 oils/assign-extended/10
 oils/assign-extended/21
-oils/background/21
-oils/assign-extended/32
 oils/ble-features/0
 oils/ble-features/1
 oils/ble-features/2
@@ -121,14 +119,10 @@ oils/builtin-meta/4
 oils/builtin-meta/6
 oils/builtin-misc/0
 oils/builtin-misc/1
-oils/builtin-misc/3
-oils/builtin-misc/2
-oils/builtin-printf/2
 oils/builtin-printf/3
 oils/builtin-printf/38
 oils/builtin-printf/46
 oils/builtin-printf/48: macOS has the legacy zone Portugal, the recording container does not
-oils/builtin-printf/51
 oils/builtin-printf/58
 oils/builtin-process/4
 oils/builtin-process/10: passed via macOS /usr/bin wrapper
@@ -423,9 +417,6 @@ oils/sh-options-bash/6
 oils/smoke/6
 oils/smoke/7
 oils/smoke/14: platform-dependent: GNU ls exits 2 for a missing file, macOS BSD ls 1 (passes on Linux; per-platform ratchet or psh ls later)
-oils/tilde/1
-oils/tilde/3
-oils/tilde/4
 oils/tilde/7
 oils/tilde/11
 oils/tilde/13

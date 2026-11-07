@@ -1,5 +1,5 @@
 //! psh's own command line (D035, D1340). `argument` parses psh's modes (`--parse`,
-//! `--classify`), `--help` and `--version`, and renders the help pages, usage lines and
+//! `--classify`, `--utils`), `--help` and `--version`, and renders the help pages, usage lines and
 //! errors. Bash's invocation (`-c`, `-euc`, `+o NAME`, `-O NAME`, `--`, the first operand
 //! ending the options, bash's long options) is not expressible in `argument` (`+`
 //! options, `-o` taking the next argument even inside `-eo`, `-c` as a flag whose command
@@ -21,6 +21,8 @@ pub enum Mode {
     Parse(Diag),
     /// `--classify`
     Classify(Diag),
+    /// `--utils [--json]`
+    Utils { json: bool },
 }
 
 /// The arguments of `--parse` and `--classify`.
@@ -44,6 +46,7 @@ pub enum Source {
 enum Top {
     Parse,
     Classify,
+    Utils,
     /// The shell's options: listed in the help, never parsed here.
     Shell,
 }
@@ -51,7 +54,8 @@ enum Top {
 const USAGE: &str = "[OPTIONS] [FILE [ARGS]...]
        psh [OPTIONS] -c COMMAND [NAME [ARGS]...]
        psh --parse [--compact] [-O extglob] [-c COMMAND | FILE]
-       psh --classify [--compact] [-O extglob] [-c COMMAND | FILE]";
+       psh --classify [--compact] [-O extglob] [-c COMMAND | FILE]
+       psh --utils [--json]";
 
 static PSH: Cli<Top> = Cli::new("psh")
     .version(env!("CARGO_PKG_VERSION"))
@@ -68,6 +72,9 @@ static PSH: Cli<Top> = Cli::new("psh")
         Opt::new(Top::Classify)
             .long("classify")
             .help("Print what a script does as JSON (see 'psh --classify --help')"),
+        Opt::new(Top::Utils)
+            .long("utils")
+            .help("List psh's own utilities and which of them run here (see 'psh --utils --help')"),
         Opt::section("Shell options (as bash)"),
         Opt::new(Top::Shell)
             .short('c')
@@ -154,6 +161,28 @@ static CLASSIFY: Cli<D> = Cli::new("--classify")
          \"unknown\").",
     );
 
+#[derive(Copy, Clone)]
+enum U {
+    Json,
+}
+
+static UTILS: Cli<U> = Cli::new("--utils")
+    .about(
+        "Lists the utilities psh runs in-process instead of a program (cat, head, rm, \
+         timeout, ...): their names, their mode, whether they are destructive, and what a \
+         command of that name runs here, with this PATH and PSH_UTILS_FORCE.",
+    )
+    .opts(&[Opt::new(U::Json)
+        .long("json")
+        .help("Print the list as JSON")])
+    .after_help(
+        "Modes: S runs in-process always; F only when PATH has no such program; W always \
+         on Windows (where the system's programs of these names are others) and as F \
+         elsewhere. PSH_UTILS_FORCE=NAME,... (or all) runs F and W utilities in-process \
+         even when PATH has the program. RUNS is what a command of that name runs: psh \
+         (the utility), program (the one PATH finds, under PATH) or builtin.",
+    );
+
 /// Parses the command line after the program name. Help, version and errors are
 /// printed by `argument`'s `Error::exit` (status 0 for help and version, 2 for errors).
 pub fn parse(args: Vec<OsString>) -> Result<Mode, Error> {
@@ -181,6 +210,7 @@ pub fn parse(args: Vec<OsString>) -> Result<Mode, Error> {
         match p.param()? {
             Some(Top::Parse) => return diag(p.subcommand(&PARSE)).map(Mode::Parse),
             Some(Top::Classify) => return diag(p.subcommand(&CLASSIFY)).map(Mode::Classify),
+            Some(Top::Utils) => return utils(p.subcommand(&UTILS)),
             // `-c`, `-o` and the rest never reach `param`: an argument not starting with
             // `--` ended the loop above.
             Some(Top::Shell) | None => unreachable!("bash's options are parsed by invocation"),
@@ -191,6 +221,16 @@ pub fn parse(args: Vec<OsString>) -> Result<Mode, Error> {
 fn is_long(a: &OsStr) -> bool {
     let b = a.as_encoded_bytes();
     b.len() > 2 && b.starts_with(b"--")
+}
+
+fn utils(mut p: Parser<U>) -> Result<Mode, Error> {
+    let mut json = false;
+    while let Some(arg) = p.param()? {
+        match arg {
+            U::Json => json = true,
+        }
+    }
+    Ok(Mode::Utils { json })
 }
 
 fn diag(mut p: Parser<D>) -> Result<Diag, Error> {
@@ -287,6 +327,11 @@ mod tests {
             panic!()
         };
         assert!(matches!(d.source, Source::File(f) if f == std::path::Path::new("f.sh")));
+        assert!(matches!(run(&["--utils"]), Ok(Mode::Utils { json: false })));
+        assert!(matches!(
+            run(&["--utils", "--json"]),
+            Ok(Mode::Utils { json: true })
+        ));
     }
 
     #[test]
@@ -304,6 +349,7 @@ mod tests {
         assert_eq!(kind(&["--parse", "-c"]), Some(ErrorKind::MissingValue));
         assert!(kind(&["--parse", "-c", "x", "f.sh"]).is_some());
         assert!(kind(&["--classify", "a", "b"]).is_some());
+        assert_eq!(kind(&["--utils", "x"]), Some(ErrorKind::UnexpectedArgument));
     }
 
     #[test]

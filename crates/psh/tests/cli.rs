@@ -31,7 +31,7 @@ fn psh(args: &[&str]) -> Output {
 /// [`psh`] with `stdin` as its standard input.
 fn psh_with(args: &[&str], stdin: &[u8]) -> Output {
     let args: Vec<&OsStr> = args.iter().map(OsStr::new).collect();
-    let out = psh_bytes(&args, stdin);
+    let out = psh_bytes(&args, stdin, &[]);
     Output {
         status: out.status,
         stdout: String::from_utf8(out.stdout).expect("UTF-8 stdout"),
@@ -45,10 +45,12 @@ struct BytesOutput {
     stderr: Vec<u8>,
 }
 
-/// Runs psh with arguments that need not be UTF-8, `stdin` as its input.
-fn psh_bytes(args: &[&OsStr], stdin: &[u8]) -> BytesOutput {
+/// Runs psh with arguments that need not be UTF-8, `stdin` as its input and `env` set
+/// in its environment.
+fn psh_bytes(args: &[&OsStr], stdin: &[u8], env: &[(&str, &OsStr)]) -> BytesOutput {
     let mut child = Command::new(env!("CARGO_BIN_EXE_psh"))
         .args(args)
+        .envs(env.iter().copied())
         // A fixed width for the help pages.
         .env("COLUMNS", "100")
         .stdin(Stdio::piped())
@@ -323,6 +325,7 @@ fn arguments_that_are_not_utf8() {
             arg,
         ],
         b"",
+        &[],
     );
     assert_eq!(out.stdout, b"caf\xe9");
     let out = psh_bytes(
@@ -333,10 +336,87 @@ fn arguments_that_are_not_utf8() {
             OsStr::from_bytes(b"echo caf\xe9 ok"),
         ],
         b"",
+        &[],
     );
     let json = String::from_utf8(out.stdout).unwrap();
     assert!(json.contains(r#""span":[10,12],"text":"ok""#), "{json}");
     assert!(json.contains(r#""utf8":false"#), "{json}");
+}
+
+/// `psh --utils` with `env`: its stdout.
+fn utils(args: &[&str], env: &[(&str, &OsStr)]) -> String {
+    let mut all = vec![OsStr::new("--utils")];
+    all.extend(args.iter().map(OsStr::new));
+    let out = psh_bytes(&all, b"", env);
+    assert_eq!(
+        out.status,
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    String::from_utf8(out.stdout).unwrap()
+}
+
+#[test]
+fn utils_list() {
+    let empty = std::env::temp_dir().join(format!("psh-cli-utils-{}", std::process::id()));
+    std::fs::create_dir_all(&empty).unwrap();
+    let path = [("PATH", empty.as_os_str())];
+    let table = utils(&[], &path);
+    assert!(
+        table.starts_with("NAME       MODE  DESTRUCTIVE  RUNS     PATH\n"),
+        "{table}"
+    );
+    let line = |name: &str| {
+        table
+            .lines()
+            .find(|l| l.split_whitespace().next() == Some(name))
+            .unwrap_or_else(|| panic!("{name} in {table}"))
+            .split_whitespace()
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(line("rm"), ["rm", "S", "yes", "psh"]);
+    // F: in-process when PATH has no awk.
+    assert_eq!(line("awk"), ["awk", "F", "no", "psh"]);
+    let json = utils(&["--json"], &path);
+    assert!(json.starts_with("{\n  \"utilities\": [\n"), "{json}");
+    assert!(json.contains("\"name\": \"gtimeout\",\n      \"utility\": \"timeout\",\n      \"mode\": \"S\",\n      \"destructive\": false,\n      \"runs\": \"psh\",\n      \"path\": null"), "{json}");
+    std::fs::remove_dir_all(&empty).ok();
+}
+
+/// An F utility whose program PATH has runs the program, unless PSH_UTILS_FORCE names it.
+#[cfg(unix)]
+#[test]
+fn utils_follow_path_and_force() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = std::env::temp_dir().join(format!("psh-cli-utils-path-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let awk = dir.join("awk");
+    std::fs::write(&awk, "#!/bin/sh\n").unwrap();
+    std::fs::set_permissions(&awk, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let row = |env: &[(&str, &OsStr)]| {
+        let table = utils(&[], env);
+        table
+            .lines()
+            .find(|l| l.starts_with("awk "))
+            .unwrap()
+            .split_whitespace()
+            .map(str::to_owned)
+            .collect::<Vec<_>>()
+    };
+    let awk_path = awk.to_str().unwrap().to_owned();
+    assert_eq!(
+        row(&[("PATH", dir.as_os_str())]),
+        ["awk", "F", "no", "program", &awk_path]
+    );
+    assert_eq!(
+        row(&[
+            ("PATH", dir.as_os_str()),
+            ("PSH_UTILS_FORCE", OsStr::new("awk"))
+        ]),
+        ["awk", "F", "no", "psh", &awk_path]
+    );
+    std::fs::remove_dir_all(&dir).ok();
 }
 
 #[test]

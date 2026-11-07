@@ -14,6 +14,7 @@ mod classify_json;
 mod cli;
 mod json;
 mod parse_json;
+mod utils;
 
 use std::io::{Read, Write};
 use std::process::ExitCode;
@@ -91,6 +92,44 @@ fn os_path(b: &[u8]) -> std::path::PathBuf {
     }
 }
 
+/// The standalone shell's configuration: the OS host and its stdio, the utilities (with
+/// `PSH_UTILS_FORCE`), the environment and the working directory. `psh --utils` asks a
+/// shell configured so which utilities run.
+fn shell_config() -> ShellConfig {
+    let (host, [stdin, stdout, stderr]) = os_host();
+    let mut cfg = ShellConfig::new(host);
+    cfg.utilities = psh_utils::policy(false);
+    cfg.env = std::env::vars_os()
+        .map(|(k, v)| (os_bytes(k), os_bytes(v)))
+        .collect();
+    // PSH_UTILS_FORCE (D1192): utilities that run in-process even in F/W mode; the
+    // variable is psh's, so it is not passed on.
+    if let Some(i) = cfg
+        .env
+        .iter()
+        .position(|(k, _)| k == psh_utils::FORCE_VAR.as_bytes())
+    {
+        let (_, v) = cfg.env.remove(i);
+        cfg.utilities.force_names = psh_utils::force_names(&v);
+    }
+    cfg.cwd = std::env::current_dir()
+        .map(|p| os_bytes(p.into_os_string()))
+        .unwrap_or_else(|_| b"/".to_vec());
+    #[cfg(windows)]
+    {
+        cfg.cwd = cfg
+            .cwd
+            .iter()
+            .map(|&b| if b == b'\\' { b'/' } else { b })
+            .collect();
+        cfg.env = psh_os::windows::shell_env(std::mem::take(&mut cfg.env));
+    }
+    cfg.stdin = stdin;
+    cfg.stdout = stdout;
+    cfg.stderr = stderr;
+    cfg
+}
+
 /// A shell invocation error: bash's message, then the usage, status 2.
 fn usage_error(msg: &str) -> ExitCode {
     eprintln!("psh: {msg}\n{}", cli::usage_hint());
@@ -102,6 +141,7 @@ fn main() -> ExitCode {
         Ok(cli::Mode::Shell(args)) => args,
         Ok(cli::Mode::Parse(d)) => return parse_command(d),
         Ok(cli::Mode::Classify(d)) => return classify_command(d),
+        Ok(cli::Mode::Utils { json }) => return utils::list(json),
         Err(e) => {
             e.print();
             return ExitCode::from(e.exit_code() as u8);
@@ -163,37 +203,7 @@ fn main() -> ExitCode {
     let signals = Signals::catch();
     let control = signals.control.clone();
     let thread = engine_thread(move || {
-        let (host, [stdin, stdout, stderr]) = os_host();
-        let mut cfg = ShellConfig::new(host);
-        cfg.utilities = psh_utils::policy(false);
-        cfg.env = std::env::vars_os()
-            .map(|(k, v)| (os_bytes(k), os_bytes(v)))
-            .collect();
-        // PSH_UTILS_FORCE (D1192): utilities that run in-process even in F/W mode; the
-        // variable is psh's, so it is not passed on.
-        if let Some(i) = cfg
-            .env
-            .iter()
-            .position(|(k, _)| k == psh_utils::FORCE_VAR.as_bytes())
-        {
-            let (_, v) = cfg.env.remove(i);
-            cfg.utilities.force_names = psh_utils::force_names(&v);
-        }
-        cfg.cwd = std::env::current_dir()
-            .map(|p| os_bytes(p.into_os_string()))
-            .unwrap_or_else(|_| b"/".to_vec());
-        #[cfg(windows)]
-        {
-            cfg.cwd = cfg
-                .cwd
-                .iter()
-                .map(|&b| if b == b'\\' { b'/' } else { b })
-                .collect();
-            cfg.env = psh_os::windows::shell_env(std::mem::take(&mut cfg.env));
-        }
-        cfg.stdin = stdin;
-        cfg.stdout = stdout;
-        cfg.stderr = stderr;
+        let cfg = shell_config();
         let mut shell = Shell::new(cfg);
         Signals::attach(&control, shell.control());
         shell.start(script);

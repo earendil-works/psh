@@ -10,7 +10,11 @@ mod eval;
 pub(crate) mod hash;
 mod printf;
 mod read;
+mod set;
+mod shopt;
 mod test;
+
+pub(crate) use set::apply_invocation_options;
 
 use crate::escape::{Dialect, decode};
 use crate::host::{FileKind, error_text};
@@ -53,7 +57,8 @@ pub(crate) fn find(name: &[u8]) -> Option<Builtin> {
         b"alias" => (builtin!(alias::alias), false),
         b"unalias" => (builtin!(alias::unalias), false),
         b"exit" => (builtin!(exit), true),
-        b"set" => (builtin!(set), true),
+        b"set" => (builtin!(set::set), true),
+        b"shopt" => (builtin!(shopt::shopt), false),
         b"shift" => (builtin!(shift), true),
         b"return" => (builtin!(return_), true),
         b"break" => (builtin!(break_), true),
@@ -475,39 +480,6 @@ async fn exit(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             Ok(1)
         }
     }
-}
-
-async fn set(vp: &mut Vp, args: &[Vec<u8>]) -> R {
-    let i = 1;
-    if i < args.len() {
-        let a = &args[i];
-        if a == b"--" {
-            vp.args = args[i + 1..].to_vec();
-            return Ok(0);
-        }
-        if a == b"-" {
-            vp.args = args[i + 1..].to_vec();
-            return Ok(0);
-        }
-        if (a.first() == Some(&b'-') || a.first() == Some(&b'+')) && a.len() > 1 {
-            return crate::expand::unsupported(vp, &format!("set {}", s(a))).await;
-        }
-        vp.args = args[i..].to_vec();
-        return Ok(0);
-    }
-    if args.len() == 1 {
-        let mut vars: Vec<_> = vp.vars.iter().filter(|(_, v)| v.get().is_some()).collect();
-        vars.sort_by(|a, b| a.0.cmp(b.0));
-        let mut buf = Vec::new();
-        for (n, v) in vars {
-            buf.extend_from_slice(n.as_bytes());
-            buf.push(b'=');
-            buf.extend_from_slice(&shell_quote(v.get().unwrap_or_default()));
-            buf.push(b'\n');
-        }
-        return out(vp, "set", &buf).await;
-    }
-    Ok(0)
 }
 
 async fn return_(vp: &mut Vp, args: &[Vec<u8>]) -> R {

@@ -339,16 +339,26 @@ impl Engine for InProcess {
         let (script, stdin_data) = match parse_args(&args) {
             Err(msg) => return fail(msg),
             Ok(Invocation::Help) => return fail("--help".into()),
-            Ok(Invocation::Command { source, arg0, args }) => (
+            Ok(Invocation::Command {
+                source,
+                arg0,
+                args,
+                options,
+            }) => (
                 Script {
                     source,
                     arg0: arg0.unwrap_or_else(|| b"psh".to_vec()),
                     args,
                     dash_c: true,
+                    options,
                 },
                 req.stdin.map(<[u8]>::to_vec),
             ),
-            Ok(Invocation::File { path, args }) => {
+            Ok(Invocation::File {
+                path,
+                args,
+                options,
+            }) => {
                 let full = req.cwd.join(text(&path));
                 match std::fs::read(&full) {
                     Ok(src) => (
@@ -357,6 +367,7 @@ impl Engine for InProcess {
                             arg0: path,
                             args,
                             dash_c: false,
+                            options,
                         },
                         req.stdin.map(<[u8]>::to_vec),
                     ),
@@ -371,12 +382,13 @@ impl Engine for InProcess {
                     }
                 }
             }
-            Ok(Invocation::Stdin { args }) => (
+            Ok(Invocation::Stdin { args, options }) => (
                 Script {
                     source: req.stdin.unwrap_or_default().to_vec(),
                     arg0: b"psh".to_vec(),
                     args,
                     dash_c: false,
+                    options,
                 },
                 None,
             ),

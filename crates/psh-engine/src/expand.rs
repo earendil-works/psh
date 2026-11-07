@@ -14,6 +14,7 @@ use psh_syntax::{
 };
 
 use crate::exec;
+use crate::options::{SetOpt, Shopt};
 use crate::pattern::{self, Pattern, ReplaceMode};
 use crate::sched::LocalBoxFuture;
 use crate::state::{Code, Unwind, Vp, is_name};
@@ -316,7 +317,7 @@ pub(crate) async fn expand_words(
             f.finish_word();
         }
     }
-    glob_fields(vp, &mut f).await;
+    glob_fields(vp, &mut f).await?;
     Ok(f)
 }
 
@@ -584,6 +585,22 @@ fn is_at(p: &WordPart) -> bool {
     }
 }
 
+/// The status a fatal expansion error (`${x?}`, `set -u`) ends the shell with: 127
+/// under `-c` unless errexit is on, else 1, as bash 5.3 does.
+pub(crate) fn expansion_exit_status(vp: &Vp) -> i32 {
+    if vp.core.dash_c.get() && !vp.opts.get(SetOpt::Errexit) {
+        127
+    } else {
+        1
+    }
+}
+
+/// `set -u`: `NAME: unbound variable`, and the shell ends (D1282).
+pub(crate) async fn unbound<T>(vp: &Vp, name: &str) -> Result<T, Unwind> {
+    vp.error(&format!("{name}: unbound variable")).await;
+    Err(Unwind::Exit(expansion_exit_status(vp)))
+}
+
 pub(crate) async fn unsupported<T>(vp: &Vp, what: &str) -> Result<T, Unwind> {
     vp.error(&format!("{what}: not supported yet")).await;
     // The script stops: what follows likely depends on it (D1057).
@@ -615,7 +632,7 @@ fn special(vp: &Vp, c: u8) -> Val {
             Some(p) => Val::Str(p.to_string().into_bytes()),
             None => Val::Unset,
         },
-        b'-' => Val::Str(b"hB".to_vec()),
+        b'-' => Val::Str(vp.opts.dash()),
         b'0' => Val::Str(vp.arg0.clone()),
         b'@' => Val::List(vp.args.clone(), false),
         b'*' => Val::List(vp.args.clone(), true),
@@ -729,6 +746,22 @@ async fn param(
         }
     };
 
+    // `set -u` (D1282): an unset parameter is an error unless an operator handles it.
+    if matches!(val, Val::Unset)
+        && p.prefix != ParamPrefix::Indirect
+        && !matches!(p.op, ParamOp::Default { .. } | ParamOp::Names { .. })
+        && vp.opts.get(SetOpt::Nounset)
+    {
+        let mut name = String::new();
+        if !p.braced && p.name != ParamName::Var {
+            name.push('$');
+        }
+        name.push_str(&String::from_utf8_lossy(name_text));
+        if let Some(Subscript::Expr(w)) = &p.index {
+            name.push_str(&format!("[{}]", code.ast.text(w.span)));
+        }
+        return unbound(vp, &name).await;
+    }
     match p.prefix {
         ParamPrefix::None => {}
         ParamPrefix::Length => {
@@ -775,6 +808,13 @@ async fn param(
                     Val::List(..) => return bad(vp).await,
                 };
                 val = match indirect(vp, code, &target).await? {
+                    Some(Val::Unset)
+                        if vp.opts.get(SetOpt::Nounset)
+                            && !matches!(p.op, ParamOp::Default { .. }) =>
+                    {
+                        return unbound(vp, &format!("!{}", String::from_utf8_lossy(name_text)))
+                            .await;
+                    }
                     Some(v) => v,
                     None => {
                         vp.error(&format!(
@@ -856,7 +896,7 @@ async fn param(
                     };
                     vp.error(&format!("{}: {msg}", String::from_utf8_lossy(name_text)))
                         .await;
-                    Err(Unwind::Exit(if vp.core.dash_c.get() { 127 } else { 1 }))
+                    Err(Unwind::Exit(expansion_exit_status(vp)))
                 }
             }
         }
@@ -1192,10 +1232,11 @@ async fn expand_operand(
     expand_parts(vp, code, &word.parts, quoted, f).await
 }
 
-/// Pathname expansion of the fields with unquoted pattern chars.
-async fn glob_fields(vp: &mut Vp, f: &mut Fields) {
-    if !f.out.iter().any(|x| x.glob) {
-        return;
+/// Pathname expansion of the fields with unquoted pattern chars; `set -f`, `nullglob`
+/// and `failglob` (D1280).
+async fn glob_fields(vp: &mut Vp, f: &mut Fields) -> Result<(), Unwind> {
+    if !f.out.iter().any(|x| x.glob) || vp.opts.get(SetOpt::Noglob) {
+        return Ok(());
     }
     let fields = std::mem::take(&mut f.out);
     for field in fields {
@@ -1204,7 +1245,19 @@ async fn glob_fields(vp: &mut Vp, f: &mut Fields) {
             continue;
         }
         let matches = glob(vp, &field.pat).await;
-        if matches.is_empty() {
+        if matches.is_empty() && is_pattern(&field.pat) {
+            if vp.opts.shopt(Shopt::Failglob) {
+                vp.error(&format!(
+                    "no match: {}",
+                    String::from_utf8_lossy(&field.text)
+                ))
+                .await;
+                return Err(Unwind::Abort(1));
+            }
+            if !vp.opts.shopt(Shopt::Nullglob) {
+                f.out.push(field);
+            }
+        } else if matches.is_empty() {
             f.out.push(field);
         } else {
             for m in matches {
@@ -1217,6 +1270,22 @@ async fn glob_fields(vp: &mut Vp, f: &mut Fields) {
             }
         }
     }
+    Ok(())
+}
+
+/// Whether a glob pattern can match anything but itself: an unescaped `*` or `?`, or a
+/// `[` with a `]` after it (a lone `[` is an ordinary char). For `nullglob`/`failglob`.
+fn is_pattern(pat: &[u8]) -> bool {
+    let mut i = 0;
+    while i < pat.len() {
+        match pat[i] {
+            b'\\' => i += 2,
+            b'*' | b'?' => return true,
+            b'[' if pat[i + 1..].contains(&b']') => return true,
+            _ => i += 1,
+        }
+    }
+    false
 }
 
 /// Unescapes a pattern component that has no pattern chars.

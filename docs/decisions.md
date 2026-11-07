@@ -1292,3 +1292,38 @@ the file. Proposed engine hook: a marker error from `spawn` (or a variant of the
 result) that tells the engine to run the program file as a psh script with the same
 argv, environment and descriptors, the way bash runs a file that `execve` rejects. The
 Unix host would use the same marker for ENOEXEC instead of `/bin/sh`.
+## D1280: Shell options live per vproc; POSIX mode is refused
+date: 2026-11-07 · by: shapes · issue: 0028
+`set` and `shopt` options are one `Copy` value per vproc (`Vp::opts`, `options.rs`):
+subshells inherit them and keep their changes, as in bash. `SHELLOPTS` and `BASHOPTS`
+are readonly variables kept in step by `set`/`shopt`; `$-` is built from the options
+(bash's letter order `abefhkmnptuvxBCEHPT`, then `c`/`s`). The command line takes the
+same options (`psh -e -o pipefail -O extglob -c …`) through `Script::options`.
+`set -o posix` (and `--posix`) fails loudly as an unsupported feature: POSIX mode is out
+of scope (D002), and running on with bash semantics after a script asked for POSIX ones
+would be a silent difference (D1057). Options implemented: errexit, nounset, pipefail,
+noglob, noclobber, allexport, noexec, verbose (xtrace and the trap options come with
+part 2); `shopt` stores all 59 of bash 5.3's and applies extglob (per chunk),
+expand_aliases, nullglob, failglob, inherit_errexit and lastpipe.
+
+## D1281: errexit as bash 5.3 applies it
+date: 2026-11-07 · by: shapes · issue: 0028
+errexit (and, with part 2, the ERR trap) looks at the status of a simple command (a
+function call included), a subshell, `((…))`, `[[ … ]]`, and a pipeline of several
+commands (its status after pipefail); never at a pipeline stage on its own, and never at
+`{ }`, `if`, `while`, `for` or `case`, which fail only through a command inside them that
+errexit has seen. `Vp::no_errexit` suspends it, inherited by everything run meanwhile
+(functions, compound commands, subshells): while an `if`/`while`/`until` condition runs,
+for every `&&`/`||` operand but the last, and for a `!` pipeline. Command substitutions
+run with errexit off unless `inherit_errexit` is set. A failing command exits with its
+own status. All of this was probed against bash 5.3 (`set -e; f() { false && true; }; f`
+exits, `{ false && true; }` does not, `x=$(false)` exits, `true | { false && true; }`
+exits).
+
+## D1282: set -u and fatal expansion errors
+date: 2026-11-07 · by: shapes · issue: 0028
+An unset parameter without an operator that handles it (`-`, `=`, `?`, `+`) is
+`NAME: unbound variable` (`$1` and `$!` unbraced keep their `$`, `x[3]` its subscript,
+`${!x}` is `!x`); `$@`, `$*` and `${a[@]}` are exempt. Like `${x?}`, it ends the shell
+with 127 under `-c` and 1 otherwise, and with 1 under `-c` when errexit is on: that is
+what bash 5.3 does. Unset variables inside arithmetic are not checked yet (follow-up).

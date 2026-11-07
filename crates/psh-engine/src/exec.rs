@@ -17,6 +17,7 @@ use crate::builtins;
 use crate::expand::{self, Ctx};
 use crate::fd::{Fd, FdObj, Pump};
 use crate::host::{ChildFd, OpenOptions, SpawnSpec, error_text};
+use crate::options::{SetOpt, Shopt};
 use crate::pipe;
 use crate::sched::{Join, LocalBoxFuture, safepoint};
 use crate::state::{Code, Frame, Func, R, Unwind, Vp, is_name};
@@ -42,7 +43,9 @@ pub(crate) fn run_list<'a>(
             {
                 // The common case, without the and-or and pipeline frames: less stack
                 // per nesting level (D1050).
-                run_command(vp, code, p.stages[0].cmd).await?
+                let st = run_command(vp, code, p.stages[0].cmd).await?;
+                set_pipestatus(vp, &[st]);
+                st
             } else {
                 Box::pin(run_andor(vp, code, item)).await?
             };
@@ -65,56 +68,125 @@ async fn run_background(vp: &mut Vp, code: &Rc<Code>, list: ListId, item: usize)
 }
 
 async fn run_andor(vp: &mut Vp, code: &Rc<Code>, ao: &AndOr) -> R {
-    let mut status = Box::pin(run_pipeline(vp, code, &ao.first)).await?;
-    for (op, p) in &ao.rest {
+    // Every pipeline but the last runs with errexit suspended (D1281).
+    let n = ao.rest.len();
+    let saved = vp.no_errexit;
+    vp.no_errexit |= n > 0;
+    let r = Box::pin(run_pipeline(vp, code, &ao.first)).await;
+    vp.no_errexit = saved;
+    let mut status = r?;
+    for (k, (op, p)) in ao.rest.iter().enumerate() {
         vp.status = status;
         let run = match op {
             AndOrOp::And => status == 0,
             AndOrOp::Or => status != 0,
         };
         if run {
-            status = Box::pin(run_pipeline(vp, code, p)).await?;
+            vp.no_errexit |= k + 1 < n;
+            let r = Box::pin(run_pipeline(vp, code, p)).await;
+            vp.no_errexit = saved;
+            status = r?;
         }
     }
     Ok(status)
 }
 
+/// `PIPESTATUS`: the statuses of the last foreground pipeline's commands.
+fn set_pipestatus(vp: &mut Vp, statuses: &[i32]) {
+    let map = statuses
+        .iter()
+        .enumerate()
+        .map(|(i, s)| (i as i64, s.to_string().into_bytes()))
+        .collect();
+    vp.vars.entry("PIPESTATUS").value = crate::vars::Value::Indexed(map);
+}
+
+/// errexit and the ERR trap after a command whose failure counts: a simple command
+/// (with function calls), a subshell, `((…))`, `[[ … ]]`, a pipeline of several
+/// commands (D1281).
+pub(crate) async fn check_failure(vp: &mut Vp, status: i32) -> R {
+    if status != 0 && !vp.no_errexit && vp.opts.get(SetOpt::Errexit) {
+        return Err(Unwind::Exit(status));
+    }
+    Ok(status)
+}
+
 async fn run_pipeline(vp: &mut Vp, code: &Rc<Code>, p: &Pipeline) -> R {
-    let status = if p.stages.is_empty() {
-        0
-    } else if p.stages.len() == 1 {
-        run_command(vp, code, p.stages[0].cmd).await?
-    } else {
-        let n = p.stages.len();
-        let mut joins: Vec<Join<i32>> = Vec::with_capacity(n);
-        let mut next_in: Option<Fd> = None;
-        for (i, stage) in p.stages.iter().enumerate() {
-            let mut sub = enter(vp).await?;
-            if let Some(r) = next_in.take() {
-                sub.fds.set(0, r);
-            }
-            if i + 1 < n {
-                let (r, w) = pipe::pipe();
-                let w: Fd = Rc::new(FdObj::PipeWrite(w));
-                sub.fds.set(1, w.clone());
-                if stage.pipe_stderr {
-                    sub.fds.set(2, w);
-                }
-                next_in = Some(Rc::new(FdObj::PipeRead(r)));
-            }
-            joins.push(spawn_sub(sub, code.clone(), Body::Cmd(stage.cmd)));
-        }
-        let mut last = 0;
-        for j in joins {
-            last = j.await;
-        }
-        last
-    };
+    // `!` suspends errexit for the whole pipeline (D1281).
+    let saved = vp.no_errexit;
+    vp.no_errexit |= p.negated();
+    let r = run_pipeline_stages(vp, code, p).await;
+    vp.no_errexit = saved;
+    let status = r?;
     Ok(if p.negated() {
         i32::from(status == 0)
     } else {
         status
     })
+}
+
+async fn run_pipeline_stages(vp: &mut Vp, code: &Rc<Code>, p: &Pipeline) -> R {
+    if p.stages.is_empty() {
+        return Ok(0);
+    }
+    if p.stages.len() == 1 {
+        let st = run_command(vp, code, p.stages[0].cmd).await?;
+        set_pipestatus(vp, &[st]);
+        return Ok(st);
+    }
+    let n = p.stages.len();
+    // `shopt -s lastpipe`: the last command runs in this shell (no job control here).
+    let lastpipe = vp.opts.shopt(Shopt::Lastpipe);
+    let mut joins: Vec<Join<i32>> = Vec::with_capacity(n);
+    let mut next_in: Option<Fd> = None;
+    let mut last_here = None;
+    for (i, stage) in p.stages.iter().enumerate() {
+        if i + 1 == n && lastpipe {
+            let saved = vp.fds.clone();
+            if let Some(r) = next_in.take() {
+                vp.fds.set(0, r);
+            }
+            let r = run_command_unchecked(vp, code, stage.cmd).await;
+            vp.fds = saved;
+            last_here = Some(r);
+            break;
+        }
+        let mut sub = enter(vp).await?;
+        if let Some(r) = next_in.take() {
+            sub.fds.set(0, r);
+        }
+        if i + 1 < n {
+            let (r, w) = pipe::pipe();
+            let w: Fd = Rc::new(FdObj::PipeWrite(w));
+            sub.fds.set(1, w.clone());
+            if stage.pipe_stderr {
+                sub.fds.set(2, w);
+            }
+            next_in = Some(Rc::new(FdObj::PipeRead(r)));
+        }
+        joins.push(spawn_sub(sub, code.clone(), Body::Stage(stage.cmd)));
+    }
+    let mut statuses = Vec::with_capacity(n);
+    for j in joins {
+        statuses.push(j.await);
+    }
+    if let Some(r) = last_here {
+        statuses.push(r?);
+    }
+    let last = statuses.last().copied().unwrap_or(0);
+    // `set -o pipefail`: the last command that failed decides.
+    let status = if vp.opts.get(SetOpt::Pipefail) {
+        statuses
+            .iter()
+            .rev()
+            .copied()
+            .find(|&s| s != 0)
+            .unwrap_or(0)
+    } else {
+        last
+    };
+    set_pipestatus(vp, &statuses);
+    check_failure(vp, status).await
 }
 
 /// Clones the state for a subshell, or fails past the nesting limit (D1050).
@@ -132,7 +204,8 @@ pub(crate) async fn enter(vp: &Vp) -> Result<Vp, Unwind> {
 
 pub(crate) enum Body {
     List(ListId),
-    Cmd(CmdId),
+    /// A pipeline stage: its own status is the pipeline's to judge, not errexit's.
+    Stage(CmdId),
 }
 
 /// Runs a subshell as its own task; the handle yields its exit status.
@@ -142,7 +215,7 @@ pub(crate) fn spawn_sub(sub: Vp, code: Rc<Code>, body: Body) -> Join<i32> {
         let mut sub = sub;
         let r = match body {
             Body::List(l) => run_list(&mut sub, &code, l).await,
-            Body::Cmd(c) => run_command(&mut sub, &code, c).await,
+            Body::Stage(c) => run_command_unchecked(&mut sub, &code, c).await,
         };
         let last = sub.status;
         r.unwrap_or_else(|u| u.status(last))
@@ -154,18 +227,50 @@ pub(crate) fn run_command<'a>(
     code: &'a Rc<Code>,
     id: CmdId,
 ) -> LocalBoxFuture<'a, R> {
+    run_command_with(vp, code, id, true)
+}
+
+/// A command whose status errexit does not look at (a pipeline stage).
+fn run_command_unchecked<'a>(
+    vp: &'a mut Vp,
+    code: &'a Rc<Code>,
+    id: CmdId,
+) -> LocalBoxFuture<'a, R> {
+    run_command_with(vp, code, id, false)
+}
+
+fn run_command_with<'a>(
+    vp: &'a mut Vp,
+    code: &'a Rc<Code>,
+    id: CmdId,
+    check: bool,
+) -> LocalBoxFuture<'a, R> {
     Box::pin(async move {
         safepoint(&vp.core.sched).await;
         let cmd = code.ast.cmd(id);
-        match &cmd.kind {
-            CommandKind::Simple(s) => run_simple(vp, code, cmd, s).await,
+        let status = match &cmd.kind {
+            CommandKind::Simple(s) => run_simple(vp, code, cmd, s).await?,
             CommandKind::Select(_) | CommandKind::Cond(_) | CommandKind::Coproc(_) => {
                 vp.line = code.line(cmd.span.start);
-                expand::unsupported(vp, compound_name(&cmd.kind)).await
+                return expand::unsupported(vp, compound_name(&cmd.kind)).await;
             }
-            _ if cmd.redirects.is_empty() => run_compound(vp, code, cmd).await,
-            _ => Box::pin(with_redirects(vp, code, cmd)).await,
+            _ if cmd.redirects.is_empty() => run_compound(vp, code, cmd).await?,
+            _ => Box::pin(with_redirects(vp, code, cmd)).await?,
+        };
+        // Compound commands other than these fail only through a command inside them,
+        // which errexit has seen already (D1281).
+        if check
+            && matches!(
+                cmd.kind,
+                CommandKind::Simple(_)
+                    | CommandKind::Subshell(_)
+                    | CommandKind::Arith(_)
+                    | CommandKind::Cond(_)
+            )
+        {
+            return check_failure(vp, status).await;
         }
+        Ok(status)
     })
 }
 
@@ -254,7 +359,7 @@ async fn run_subshell(vp: &mut Vp, code: &Rc<Code>, list: ListId) -> R {
 
 async fn run_if(vp: &mut Vp, code: &Rc<Code>, c: &psh_syntax::IfCommand) -> R {
     for br in &c.branches {
-        if run_list(vp, code, br.cond).await? == 0 {
+        if run_condition(vp, code, br.cond).await? == 0 {
             return run_list(vp, code, br.body).await;
         }
     }
@@ -262,6 +367,15 @@ async fn run_if(vp: &mut Vp, code: &Rc<Code>, c: &psh_syntax::IfCommand) -> R {
         Some(e) => run_list(vp, code, e).await,
         None => Ok(0),
     }
+}
+
+/// The condition of `if`, `while` or `until`: errexit is suspended (D1281).
+async fn run_condition(vp: &mut Vp, code: &Rc<Code>, list: ListId) -> R {
+    let saved = vp.no_errexit;
+    vp.no_errexit = true;
+    let r = run_list(vp, code, list).await;
+    vp.no_errexit = saved;
+    r
 }
 
 async fn define_function(
@@ -310,7 +424,7 @@ async fn run_while(vp: &mut Vp, code: &Rc<Code>, w: &psh_syntax::WhileCommand) -
     let mut status = 0;
     loop {
         safepoint(&vp.core.sched).await;
-        let c = match run_list(vp, code, w.cond).await {
+        let c = match run_condition(vp, code, w.cond).await {
             Ok(c) => c,
             // `continue` (or `break`) in the condition ends the loop, as in bash.
             Err(Unwind::Continue(1)) => return Ok(status),
@@ -1051,7 +1165,10 @@ async fn apply_redirect(vp: &mut Vp, code: &Rc<Code>, r: &Redirect) -> Result<bo
             }
             if r.op == RedirOp::DupWrite && r.fd.is_none() {
                 // `>& file` is `&> file`.
-                return open_to(vp, &target, OpenOptions::write(), &[1, 2]).await;
+                let Some(opts) = clobber_check(vp, &target).await else {
+                    return Ok(false);
+                };
+                return open_to(vp, &target, opts, &[1, 2]).await;
             }
             vp.error(&format!(
                 "{}: ambiguous redirect",
@@ -1061,12 +1178,21 @@ async fn apply_redirect(vp: &mut Vp, code: &Rc<Code>, r: &Redirect) -> Result<bo
             Ok(false)
         }
         RedirOp::Read => open_to(vp, &target, OpenOptions::read(), &[fd]).await,
-        RedirOp::Write | RedirOp::Clobber => {
-            open_to(vp, &target, OpenOptions::write(), &[fd]).await
+        RedirOp::Write => {
+            let Some(opts) = clobber_check(vp, &target).await else {
+                return Ok(false);
+            };
+            open_to(vp, &target, opts, &[fd]).await
         }
+        RedirOp::Clobber => open_to(vp, &target, OpenOptions::write(), &[fd]).await,
         RedirOp::Append => open_to(vp, &target, OpenOptions::append(), &[fd]).await,
         RedirOp::ReadWrite => open_to(vp, &target, OpenOptions::read_write(), &[fd]).await,
-        RedirOp::WriteBoth => open_to(vp, &target, OpenOptions::write(), &[1, 2]).await,
+        RedirOp::WriteBoth => {
+            let Some(opts) = clobber_check(vp, &target).await else {
+                return Ok(false);
+            };
+            open_to(vp, &target, opts, &[1, 2]).await
+        }
         RedirOp::AppendBoth => open_to(vp, &target, OpenOptions::append(), &[1, 2]).await,
         RedirOp::HereString | RedirOp::HereDoc | RedirOp::HereDocStrip => Ok(true),
     }
@@ -1117,6 +1243,31 @@ async fn open_to(
     }
 }
 
+/// `set -o noclobber` (D1280): `>` must not truncate an existing regular file. Returns
+/// the options to open with, or `None` after printing the error.
+async fn clobber_check(vp: &mut Vp, target: &[u8]) -> Option<OpenOptions> {
+    if !vp.opts.get(SetOpt::Noclobber) || dev_fd(target).is_some() || target.is_empty() {
+        return Some(OpenOptions::write());
+    }
+    let path = vp.abs_path(target);
+    match vp.host().stat(&path, true).await {
+        Ok(m) if m.kind == crate::host::FileKind::File => {
+            vp.error(&format!(
+                "{}: cannot overwrite existing file",
+                String::from_utf8_lossy(target)
+            ))
+            .await;
+            None
+        }
+        Ok(_) => Some(OpenOptions::write()),
+        // Not there: create it, failing if someone else just did.
+        Err(_) => Some(OpenOptions {
+            create_new: true,
+            ..OpenOptions::write()
+        }),
+    }
+}
+
 /// The body of a quoted here-document: its text, without the stripped tabs.
 fn literal_body(code: &Code, body: &psh_syntax::Word) -> Vec<u8> {
     let mut out = Vec::new();
@@ -1138,6 +1289,11 @@ pub(crate) async fn command_subst(
 
 async fn subst(vp: &mut Vp, code: Rc<Code>, list: ListId) -> Result<(Vec<u8>, i32), Unwind> {
     let mut sub = enter(vp).await?;
+    // Outside POSIX mode, command substitutions do not inherit errexit unless
+    // `inherit_errexit` is set (D1281).
+    if !sub.opts.shopt(Shopt::InheritErrexit) && !sub.opts.get(SetOpt::Posix) {
+        sub.opts.set(SetOpt::Errexit, false);
+    }
     let (r, w) = pipe::pipe();
     sub.fds.set(1, Rc::new(FdObj::PipeWrite(w)));
     let join = spawn_sub(sub, code, Body::List(list));

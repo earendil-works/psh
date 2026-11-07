@@ -186,6 +186,11 @@ runtime in D005's sense: no runtime crate, no threads, the embedder steps and pa
   (sub)shell (`exit`, `${x?}`, SIGPIPE, unsupported features), `Abort` abandons the rest
   of the top-level line and continues with the next one (bad substitution, arithmetic
   errors, readonly assignments: bash's behavior), `Return`, `Break(n)`, `Continue(n)`.
+- **Options and errexit (D1280, D1281).** `Vp::opts` holds `set` and `shopt` options
+  per vproc. errexit is checked in `run_command_with` after simple commands, subshells,
+  `((…))` and `[[ ]]`, and in `run_pipeline_stages` after multi-command pipelines;
+  `Vp::no_errexit` suspends it in conditions, `&&`/`||` operands but the last and `!`
+  pipelines. Pipeline stages run unchecked (`Body::Stage`).
 - **Functions and scope (D1059).** Functions live in `Vp::funcs` (an `Rc` map shared
   with subshells until one changes it) as `(Rc<Code>, CmdId)`; lookup order is
   function, builtin, external. A call pushes a `Frame` that records the old value of

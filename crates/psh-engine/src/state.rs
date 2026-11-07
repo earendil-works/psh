@@ -160,6 +160,12 @@ pub(crate) struct Vp {
     pub hash: Rc<crate::builtins::hash::HashTable>,
     /// Builtins turned off with `enable -n`.
     pub disabled: Rc<Vec<Vec<u8>>>,
+    /// `set` and `shopt` options (D1280).
+    pub opts: crate::options::Options,
+    /// errexit and the ERR trap are suspended: a condition (`if`, `while`, `&&`/`||`
+    /// except the last, `!`) is running, or a function or compound command called from
+    /// one (D1281).
+    pub no_errexit: bool,
 }
 
 /// A function: its body command in the chunk that defined it.
@@ -289,7 +295,11 @@ impl Vp {
     /// variables (`OPTIND`, `PWD`, …). Assignments a script makes go through `assign`.
     pub(crate) fn set_var(&mut self, name: &str, value: Vec<u8>) {
         let name = self.resolve(name).into_owned();
-        self.vars.entry(&name).set(value);
+        let allexport = self.opts.get(crate::options::SetOpt::Allexport);
+        let var = self.vars.entry(&name);
+        var.set(value);
+        // `set -a`: every variable assigned is exported.
+        var.exported |= allexport;
     }
 
     /// An assignment `name=value`: readonly check, `-i` arithmetic, `-l`/`-u` case,
@@ -297,7 +307,10 @@ impl Vp {
     pub(crate) fn assign(&mut self, name: &str, value: Vec<u8>) -> Result<(), String> {
         let name = self.resolve(name).into_owned();
         let value = self.prepare_value(&name, value, false)?;
-        self.vars.entry(&name).set(value);
+        let allexport = self.opts.get(crate::options::SetOpt::Allexport);
+        let var = self.vars.entry(&name);
+        var.set(value);
+        var.exported |= allexport;
         Ok(())
     }
 

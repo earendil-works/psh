@@ -1,7 +1,7 @@
 # 0028: Shell options, errexit and traps
 
-status: open
-agent: -
+status: in-progress
+agent: shapes
 branch: issue/0028-options-errexit
 depends-on: 0005
 touches: crates/psh-engine/src/options.rs (new), crates/psh-engine/src/builtins/{set*,shopt*,trap*} (new modules), crates/psh-engine/src/exec.rs (errexit/pipefail/ERR/EXIT hooks only, announced), tests/**/expected-failures.txt
@@ -38,6 +38,34 @@ the host), with bash's exact errexit exemptions. errexit must be right: agents r
 - Parallel: 0026, 0027, 0029.
 
 ## Log
+### 2026-11-07 part 1
+- `options.rs` (D1280): `Options` per vproc (set options with letters, all 59 shopt
+  options with bash 5.3's defaults), `$-`, `SHELLOPTS`/`BASHOPTS` (readonly, kept in
+  step), `Script::options` and `invocation::parse_args` for `psh -e -o pipefail -O x`.
+- `builtins/set.rs`: every option, `-o`/`+o` listings, `-`/`--`, positional args after
+  options, bash's error messages and statuses; `set -o posix` refused (D002).
+  `builtins/shopt.rs`: `-s -u -p -q -o`, listings, invalid names.
+- errexit (D1281) with every exemption, pipefail, `Vp::pipestatus` (exposed as
+  `PIPESTATUS` once arrays land with 0026), lastpipe, inherit_errexit; nounset with
+  bash's messages and statuses (D1282); noglob, nullglob, failglob (a lone `[` is not a
+  pattern), noclobber (`>`, `&>`, `>& file`; `>|` overrides), allexport, noexec,
+  verbose; extglob per chunk; expand_aliases syncs `Vp::expand_aliases` (0025).
+- Hooks outside `touches:` (announced, accepted by the coordinator): `exec.rs`
+  (`run_command_with(check)`, `Body::Stage`, `run_andor`/`run_pipeline`/conditions set
+  `no_errexit`, `check_failure`, pipefail/lastpipe, `clobber_check`, substitution clears
+  errexit), `state.rs` (Vp fields `opts`, `no_errexit`, `pipestatus`; `set_var` honours
+  allexport), `lib.rs` (init, `Script::options`, per-chunk extglob/verbose/noexec),
+  `expand.rs` (`$-`, nounset, noglob/nullglob/failglob, `expansion_exit_status`),
+  `invocation.rs` (an `options` field in each `Invocation`), and the two callers in
+  `crates/psh` and `crates/psh-spec`.
+- Accidental pass added to the brush ratchet with its reason: compat/options/extdebug/16
+  (passed only while `shopt` was unsupported).
+- Scores (macOS, after rebasing on main 28f29c1): oils 1279/2511, brush 1424/3171,
+  agent 123/144; ratchets: 166 oils, 354 brush, 8 agent lines removed.
+- Signal hook agreed with procs through the coordinator (part 2): `ControlHandle::signal`
+  → pending mask in `Shared`, taken at safepoints by the trap-owning vproc; trap, ignore
+  or default action (EXIT trap, then 128+sig); cancel stays forced;
+  `Vp::signal_trap_ignored` for spawn dispositions.
 
 ## Follow-ups
 

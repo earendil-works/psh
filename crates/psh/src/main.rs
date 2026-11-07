@@ -116,25 +116,36 @@ fn main() -> ExitCode {
             return usage();
         }
         Ok(Invocation::Help) => return usage(),
-        Ok(Invocation::Command { source, arg0, args }) => Script {
+        Ok(Invocation::Command {
+            source,
+            arg0,
+            args,
+            options,
+        }) => Script {
             source,
             arg0: arg0.unwrap_or_else(|| b"psh".to_vec()),
             args,
             dash_c: true,
+            options,
         },
-        Ok(Invocation::File { path, args }) => match std::fs::read(os_path(&path)) {
+        Ok(Invocation::File {
+            path,
+            args,
+            options,
+        }) => match std::fs::read(os_path(&path)) {
             Ok(src) => Script {
                 source: src,
                 arg0: path,
                 args,
                 dash_c: false,
+                options,
             },
             Err(e) => {
                 eprintln!("psh: {}: {}", text(&path), psh_engine::host::error_text(&e));
                 return ExitCode::from(127);
             }
         },
-        Ok(Invocation::Stdin { args }) => {
+        Ok(Invocation::Stdin { args, options }) => {
             // v1 reads the whole script first; bash reads it as it goes, so a command
             // in the script could read the rest of it (a follow-up).
             let mut src = Vec::new();
@@ -146,6 +157,7 @@ fn main() -> ExitCode {
                 arg0: b"psh".to_vec(),
                 args,
                 dash_c: false,
+                options,
             }
         }
     };

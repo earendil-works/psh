@@ -32,6 +32,7 @@ mod expand;
 mod fd;
 pub mod host;
 pub mod invocation;
+mod options;
 mod pattern;
 mod pipe;
 mod sched;
@@ -128,6 +129,9 @@ pub struct Script {
     pub args: Vec<Vec<u8>>,
     /// Run as `-c`: syntax errors say `-c:`.
     pub dash_c: bool,
+    /// Options from the command line, as `set` and `shopt` take them: `-e`, `+x`,
+    /// `-o NAME`, `-O NAME` (a `shopt` option), `+O NAME`.
+    pub options: Vec<Vec<u8>>,
 }
 
 impl Script {
@@ -138,6 +142,7 @@ impl Script {
             arg0: b"psh".to_vec(),
             args: Vec::new(),
             dash_c: true,
+            options: Vec::new(),
         }
     }
 }
@@ -253,7 +258,11 @@ impl Shell {
             sourced: Vec::new(),
             hash: Default::default(),
             disabled: Default::default(),
+            opts: options::Options::default(),
+            no_errexit: false,
         };
+        let mut vp = vp;
+        options::sync_vars(&mut vp.vars, &vp.opts);
         Shell {
             core,
             shared,
@@ -289,6 +298,8 @@ impl Shell {
         self.core.dash_c.set(script.dash_c);
         vp.arg0 = script.arg0;
         vp.args = script.args;
+        vp.opts.dash_c = script.dash_c;
+        builtins::apply_invocation_options(&mut vp, &script.options);
         let fut = run_script(vp, script.source);
         self.main = Some(self.core.sched.spawn(fut));
     }
@@ -383,10 +394,22 @@ async fn run_script(mut vp: Vp, source: Vec<u8>) -> (i32, Vp) {
     loop {
         // Bash expands aliases while it reads each line, with the table it has then.
         parser.set_aliases(vp.expand_aliases.then_some(&vp.aliases));
+        // `shopt -s extglob` takes effect from the next line on, as in bash (D1043).
+        parser.set_options(Options {
+            extglob: vp.opts.shopt(options::Shopt::Extglob),
+        });
+        let start = parser.offset();
         let Some(chunk) = parser.next_chunk() else {
             break;
         };
+        // `set -v`: the input is echoed as it is read.
+        if vp.opts.get(options::SetOpt::Verbose) {
+            let end = parser.offset().min(source.len());
+            vp.error_raw(&source[start..end]).await;
+        }
         match chunk {
+            // `set -n`: read, but do not run.
+            Ok(_) if vp.opts.get(options::SetOpt::Noexec) => {}
             Ok(ast) => {
                 let root = ast.root();
                 let code = Rc::new(Code {

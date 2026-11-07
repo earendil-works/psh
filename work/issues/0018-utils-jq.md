@@ -1,7 +1,7 @@
 # 0018: Utilities batch G: jq
 
-status: open
-agent: -
+status: in-progress
+agent: procs
 branch: issue/0018-utils-jq
 depends-on: 0008 (jaq allowed as a dependency, D028)
 touches: crates/psh-utils/src/jq*, tests/utils/jq/, Cargo.toml (jaq)

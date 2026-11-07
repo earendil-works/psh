@@ -1,7 +1,7 @@
 # 0034: The psh binary's own command line on `argument`
 
-status: open
-agent: -
+status: in-progress
+agent: cli
 branch: issue/0034-psh-cli
 depends-on: -
 touches: crates/psh/ (main.rs, CLI), crates/psh-engine/src/invocation.rs (only if needed), Cargo.toml, scripts/deps-allowlist.txt, docs/guide (CLI page if one exists)

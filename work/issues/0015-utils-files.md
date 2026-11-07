@@ -69,8 +69,24 @@ group (off switch).
   with "Operation not supported" instead of "command not found"; the cases that used
   them got wasm ratchet lines naming that (remove with --update-ratchet once the JS host
   has them).
+- Part 2: `rm mv cp ln chmod` (destructive group but chmod), written for psh after the
+  manuals. GNU semantics and messages; no prompting (`-i`/`-I` fall through). `rm`:
+  refuses `.`/`..` and `/` (`--no-preserve-root`), never follows symlinks, and through
+  `link/` removes the target's contents but not the target (as GNU; macOS's rmdir would
+  remove it). `cp`: `-R src/` copies the directory itself (GNU, D016), `-c`/`-X` (BSD)
+  plain copies, `-p`/`-a`/`--preserve` keep mode and times (owners, xattrs not kept),
+  simple backups (`-b`, `-S`; numbered fall through), copies `/dev/fd/N` as streams
+  (`cp <(..) >(..)`), into-itself makes the directory then refuses (as GNU). `mv`:
+  rename, across file systems copy + remove. `ln`: `-sfn` (and BSD `-h`), `-r`, `-t/-T`,
+  hard links to directories refused. `chmod`: `-x`-style modes as operands, `-R` skips
+  symlinks inside, `-v/-c`, `--reference`.
+- D1151 (coordinator's call): `type`/`type -p`/`-f`/`command -v` report the utility that
+  runs; `type -P` prints the PATH file. Two Oils type cases ratcheted with that reason.
 
 ## Follow-ups
+- Windows: `chmod +x` should be tracked for shebang execution (the read-only bit is
+  mapped by set_mode); `rm -r` relies on the host's lstat reporting junctions as
+  symlinks and remove_file removing them.
 - JS host (psh-wasm, js/psh.mjs) and Windows host: implement the D1150 operations
   (coordinator assigns to infra/windows).
 

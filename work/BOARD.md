@@ -7,7 +7,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
 | 0022 | L0 leg, gate caching, hit list on the parser, deps allowlist | infra | .worktrees/infra |
-| 0023 | Arithmetic parser, bash-format printer, byte-exact sources | parser | .worktrees/parser |
+| 0025 | Alias expansion in the parser, syntax guide page | parser | .worktrees/parser |
 | 0005 | Minimal interpreter (part 1 merged f409212; part 2: control flow, functions, arithmetic) | engine | .worktrees/engine |
 | 0006 | Unix process layer | procs | .worktrees/procs |
 
@@ -58,3 +58,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0004 | Parser: psh-syntax from brush-parser, hand-written | f6bf28a (parser) |
 | 0009 | Classifier | 44a7306 (shapes) |
 | 0024 | Classifier follow-ups and guide page | f0b4905 (shapes) |
+| 0023 | Arithmetic parser, bash-format printer, byte-exact sources | 35a1a89 (parser) |

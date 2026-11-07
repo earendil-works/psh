@@ -254,6 +254,8 @@ impl Shell {
             frames: Vec::new(),
             loops: 0,
             getopts: (0, 0),
+            aliases: psh_syntax::Aliases::new(),
+            expand_aliases: false,
         };
         Shell {
             core,
@@ -381,7 +383,12 @@ impl Shell {
 async fn run_script(mut vp: Vp, source: Vec<u8>) -> (i32, Vp) {
     let lines = Rc::new(LineIndex::from_bytes(&source));
     let mut parser = Parser::from_bytes(&source, Options::default());
-    while let Some(chunk) = parser.next_chunk() {
+    loop {
+        // Bash expands aliases while it reads each line, with the table it has then.
+        parser.set_aliases(vp.expand_aliases.then_some(&vp.aliases));
+        let Some(chunk) = parser.next_chunk() else {
+            break;
+        };
         match chunk {
             Ok(ast) => {
                 let root = ast.root();

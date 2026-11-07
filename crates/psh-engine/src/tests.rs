@@ -573,3 +573,67 @@ fn non_utf8_scripts_are_byte_exact() {
     assert_eq!(host.stdout(), b"\xff\xfe a\xe9b\n\xff\n");
     assert!(host.stderr().ends_with(b"line 2: `echo )'\n"));
 }
+
+/// Runs with `expand_aliases` on (`shopt` is not built yet), with and without latency.
+fn run_aliases(src: &str) -> Out {
+    let go = |latency: bool| {
+        let host = Rc::new(TestHost::new());
+        host.set_latency(latency);
+        let mut shell = Shell::new(host.config());
+        shell.vp.as_mut().unwrap().expand_aliases = true;
+        shell.start(Script::command(src));
+        let status = loop {
+            match shell.step(7) {
+                Step::Done(s) => break s,
+                Step::Yield => {}
+                other => panic!("{other:?} running {src:?}"),
+            }
+        };
+        Out {
+            status,
+            stdout: String::from_utf8_lossy(&host.stdout()).into_owned(),
+            stderr: String::from_utf8_lossy(&host.stderr()).into_owned(),
+        }
+    };
+    let (a, b) = (go(false), go(true));
+    assert_eq!(
+        (a.status, &a.stdout, &a.stderr),
+        (b.status, &b.stdout, &b.stderr)
+    );
+    a
+}
+
+#[test]
+fn aliases() {
+    // Expected output is bash 5.3's (with `shopt -s expand_aliases`).
+    let o = run_aliases("alias e=echo; e one\ne two; e three\nalias ll='echo ll '\nll e x");
+    assert_eq!(o.stdout, "two\nthree\nll echo x\n");
+    let o = run_aliases("alias hi='echo hello world'\nhi || echo no\necho hi\n'hi' || echo quoted");
+    assert_eq!(o.stdout, "hello world\nhi\nquoted\n");
+    assert!(
+        o.stderr.contains("line 4: hi: command not found"),
+        "{}",
+        o.stderr
+    );
+    let o = run_aliases(
+        "alias b='x y' a=\"it's\" c=\nalias\nalias a nope; echo $?\nunalias a nope; echo $?\nalias",
+    );
+    assert_eq!(
+        o.stdout,
+        "alias a='it'\\''s'\nalias b='x y'\nalias c=''\nalias a='it'\\''s'\n1\n1\nalias b='x y'\nalias c=''\n"
+    );
+    assert_eq!(
+        o.stderr,
+        "psh: line 3: alias: nope: not found\npsh: line 4: unalias: nope: not found\n"
+    );
+    // A subshell's aliases stay in it; backquote bodies expand aliases too.
+    let o = run_aliases("(alias s=echo)\ns x\nalias t='echo T'\necho `t x`");
+    assert_eq!(o.stdout, "T x\n");
+    // Line numbers of commands from alias text are those of the alias word.
+    let o = run_aliases("alias bad='nosuchcmd_x'\n\nbad");
+    assert!(
+        o.stderr.contains("line 3: nosuchcmd_x: command not found"),
+        "{}",
+        o.stderr
+    );
+}

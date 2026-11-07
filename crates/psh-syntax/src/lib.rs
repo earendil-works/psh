@@ -43,7 +43,7 @@ pub use ast::*;
 pub use bash_print::print_function_bash;
 pub use dump::dump;
 pub use error::ParseError;
-pub use parser::{Options, Parser, parse, parse_bytes, parse_with};
+pub use parser::{Options, Parser, parse, parse_bytes, parse_bytes_with_aliases, parse_with};
 pub use printer::print;
 pub use source::Source;
 pub use span::{LineCol, LineIndex, Span};

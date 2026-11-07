@@ -197,8 +197,6 @@ brush/compat/basic/6
 brush/compat/basic/13
 brush/compat/basic/16
 brush/compat/builtins/alias/0
-brush/compat/builtins/alias/1
-brush/compat/builtins/alias/2
 brush/compat/builtins/alias/3
 brush/compat/builtins/alias/4
 brush/compat/builtins/alias/7
@@ -225,11 +223,8 @@ brush/compat/builtins/alias/28
 brush/compat/builtins/alias/30
 brush/compat/builtins/alias/31
 brush/compat/builtins/alias/32
-brush/compat/builtins/alias/33
 brush/compat/builtins/alias/34
 brush/compat/builtins/alias/35
-brush/compat/builtins/alias/36
-brush/compat/builtins/alias/37
 brush/compat/builtins/alias/38
 brush/compat/builtins/alias/39
 brush/compat/builtins/builtin/0

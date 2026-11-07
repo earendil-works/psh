@@ -1074,11 +1074,14 @@ pub(crate) async fn command_subst_text(
     text: &[u8],
     offset: u32,
 ) -> Result<(Vec<u8>, i32), Unwind> {
-    match psh_syntax::parse_bytes(text, psh_syntax::Options::default()) {
+    let aliases = vp.expand_aliases.then_some(&vp.aliases);
+    match psh_syntax::parse_bytes_with_aliases(text, psh_syntax::Options::default(), aliases) {
         Ok(ast) => {
             let root = ast.root();
+            // The line table of the text itself, not of alias texts after it.
+            let script = &ast.source_bytes()[..ast.script_len() as usize];
             let inner = Rc::new(Code {
-                lines: Rc::new(psh_syntax::LineIndex::from_bytes(ast.source_bytes())),
+                lines: Rc::new(psh_syntax::LineIndex::from_bytes(script)),
                 ast: Arc::new(ast),
                 line_base: code.line(offset) - 1,
             });

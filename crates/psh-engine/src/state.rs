@@ -48,6 +48,14 @@ pub(crate) struct Code {
 
 impl Code {
     pub(crate) fn line(&self, offset: u32) -> u32 {
+        // Text that came from an alias counts as the line of the alias word.
+        let offset = if offset >= self.ast.script_len() {
+            self.ast
+                .original_span(psh_syntax::Span::new(offset, offset))
+                .start
+        } else {
+            offset
+        };
         self.lines.line(offset) + self.line_base
     }
 }
@@ -158,6 +166,10 @@ pub(crate) struct Vp {
     /// `getopts`' place inside a cluster of options (`-abc`): the `OPTIND` it was
     /// at, and the char offset in that argument.
     pub getopts: (i64, usize),
+    /// `alias` definitions; a subshell's own (bash keeps them per process).
+    pub aliases: psh_syntax::Aliases,
+    /// `shopt expand_aliases`: off, as in non-interactive bash.
+    pub expand_aliases: bool,
 }
 
 /// A function: its body command in the chunk that defined it.

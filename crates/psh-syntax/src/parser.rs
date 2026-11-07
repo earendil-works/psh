@@ -45,6 +45,24 @@ pub fn parse_bytes(source: &[u8], opts: Options) -> Result<Ast, ParseError> {
     parse_source(Source::from_bytes(source), opts)
 }
 
+/// Parses a whole text that need not be UTF-8, expanding `aliases` (`None`: no alias
+/// expansion) the way bash does while it reads, for text the shell parses at run time
+/// in one go (a backquoted command). Aliases defined inside the text do not apply to
+/// it; text read line by line (`eval`, `source`) goes through a [`Parser`] instead.
+pub fn parse_bytes_with_aliases(
+    source: &[u8],
+    opts: Options,
+    aliases: Option<&Aliases>,
+) -> Result<Ast, ParseError> {
+    let mut p = Parser::from_bytes(source, opts);
+    p.whole = true;
+    p.set_aliases(aliases);
+    match p.next_chunk() {
+        Some(r) => r,
+        None => parse_bytes(source, opts),
+    }
+}
+
 fn parse_source(source: Source, opts: Options) -> Result<Ast, ParseError> {
     let mut p = P::new(source.bytes(), 0, source.bytes().len(), opts, None)?;
     let mut items = Vec::new();
@@ -79,6 +97,8 @@ pub struct Parser {
     opts: Options,
     done: bool,
     aliases: Option<Aliases>,
+    /// One chunk for the whole input (`parse_bytes_with_aliases`).
+    whole: bool,
     /// The script followed by every alias text once, for the table in `aliases`.
     alias_buf: Option<AliasBuf>,
 }
@@ -100,6 +120,7 @@ impl Parser {
             opts,
             done: false,
             aliases: None,
+            whole: false,
             alias_buf: None,
         }
     }
@@ -128,7 +149,7 @@ impl Parser {
         }
         let source = self.source.clone();
         let result = match self.aliases.clone() {
-            None => chunk(source.bytes(), self.pos, self.opts, None).map(|r| {
+            None => chunk(source.bytes(), self.pos, self.opts, None, self.whole).map(|r| {
                 r.map(|(p, items)| {
                     let ast = p.into_ast(items, source.clone());
                     let pos = ast.chunk_end;
@@ -173,7 +194,13 @@ impl Parser {
         let (_, buf, regions) = self.alias_buf.as_ref().unwrap();
         let script_len = self.source.bytes().len();
         let by_name = |name: &[u8], _: usize| regions.get(name).copied();
-        let first = chunk(buf, self.pos, self.opts, Some((script_len, &by_name)))?;
+        let first = chunk(
+            buf,
+            self.pos,
+            self.opts,
+            Some((script_len, &by_name)),
+            self.whole,
+        )?;
         let Some((p, items)) = first else {
             return Ok(None);
         };
@@ -196,8 +223,14 @@ impl Parser {
                 .filter(|(n, _, _)| n.as_slice() == name)
                 .map(|&(_, s, e)| (s, e))
         };
-        let (p, items) = chunk(&buf2, self.pos, self.opts, Some((script_len, &by_use)))?
-            .expect("the second pass reads what the first did");
+        let (p, items) = chunk(
+            &buf2,
+            self.pos,
+            self.opts,
+            Some((script_len, &by_use)),
+            self.whole,
+        )?
+        .expect("the second pass reads what the first did");
         let uses: Vec<AliasUse> = p
             .uses
             .iter()
@@ -225,6 +258,7 @@ fn chunk<'a>(
     pos: usize,
     opts: Options,
     alias: Option<(usize, AliasLookup<'a>)>,
+    whole: bool,
 ) -> R<Option<(P<'a>, Vec<AndOr>)>> {
     let script_len = alias.map_or(buf.len(), |(n, _)| n);
     let mut p = P::new(buf, pos, script_len, opts, alias.map(|(_, l)| l))?;
@@ -233,9 +267,9 @@ fn chunk<'a>(
         if !p.parse_line(&mut items)? {
             return Ok(false);
         }
-        while !p.segs.is_empty() {
+        while whole || !p.segs.is_empty() {
             p.skip_blanks();
-            if p.segs.is_empty() || !p.parse_line(&mut items)? {
+            if (!whole && p.segs.is_empty()) || !p.parse_line(&mut items)? {
                 break;
             }
         }
@@ -778,6 +812,14 @@ impl<'a> P<'a> {
             });
             self.pos = s;
             self.end = e;
+        }
+    }
+
+    /// The word after an alias text that ends in a blank is an alias candidate too,
+    /// wherever it stands (`alias FOR='for ' eye='i ' IN='in '; FOR eye IN a b`).
+    fn alias_after_blank(&mut self) {
+        if core::mem::take(&mut self.alias_next) {
+            self.maybe_alias();
         }
     }
 
@@ -1618,6 +1660,7 @@ impl<'a> P<'a> {
             return Err(self.unexpected());
         };
         self.skip_linebreaks()?;
+        self.alias_after_blank();
         let mut words = None;
         if self.at_reserved("in") {
             self.pos += 2;
@@ -2465,6 +2508,7 @@ impl<'a> P<'a> {
     // ---- words ----
 
     fn read_word(&mut self, ctx: Ctx, brace: bool) -> R<Option<Word>> {
+        self.alias_after_blank();
         let start = self.pos;
         let mut parts = Vec::new();
         self.parse_parts(ctx, &mut parts)?;

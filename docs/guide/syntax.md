@@ -152,9 +152,9 @@ once.
 
 ### Aliases
 
-> **Not built yet.** The parser expands aliases from a table it is given, but the shell
-> does not yet keep that table, pass it on or offer the `alias` builtin, so scripts that
-> psh runs see no aliases yet.
+> **Not built yet.** psh keeps an alias table and has the `alias` and `unalias`
+> builtins, but not yet `shopt`, so a script cannot turn on `expand_aliases` and the
+> parser is never given the table.
 
 Bash expands aliases while it reads, so in psh alias expansion is part of the parser. A
 script turns it on with `shopt -s expand_aliases` (bash leaves it off in scripts and
@@ -181,9 +181,6 @@ and error positions name the line where the alias was used.
 > quote. Such aliases are not something agents write.
 
 ## Arithmetic
-
-> **Not built yet.** The arithmetic parser and evaluator exist, but the shell does not
-> evaluate `$((…))`, `((…))` or `for ((…))` with them yet.
 
 The text inside `$((…))`, `((…))` and `for ((…))` is arithmetic only after expansion: in
 `$(( $x * 2 ))` the value of `x` becomes part of the expression. So the tree keeps that

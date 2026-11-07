@@ -1,6 +1,6 @@
 # 0025: Alias expansion in the parser, and the syntax guide page
 
-status: in-progress
+status: done
 agent: parser
 branch: issue/0025-aliases-syntax-guide
 depends-on: 0023
@@ -17,17 +17,17 @@ does in `bash -c` and scripts and follow the goldens). Also the human-facing pag
 the parser.
 
 ## Acceptance criteria
-- [ ] psh-syntax: an alias-lookup hook for the chunked parser (`Parser::next_chunk` with
+- [x] psh-syntax: an alias-lookup hook for the chunked parser (`Parser::next_chunk` with
       an alias callback or table), applied where bash applies aliases (command
       position, after a trailing-space alias, not in quotes or after `\`), with the
       recursion guard; the AST keeps spans pointing at the original source and marks
       text that came from an alias.
-- [ ] Engine side kept minimal and in a new module: `alias`/`unalias` builtins and
+- [x] Engine side kept minimal and in a new module: `alias`/`unalias` builtins and
       passing the table to the parser per chunk (coordinate the exact hook with the
       engine agent through the coordinator; the engine agent owns exec.rs).
-- [ ] Oils `alias.test.sh` and brush `builtins/alias.yaml` cases pass or have recorded
+- [x] Oils `alias.test.sh` and brush `builtins/alias.yaml` cases pass or have recorded
       reasons; ratchets updated.
-- [ ] `docs/guide/syntax.md`: what the parser accepts, byte spans, `--parse` JSON,
+- [x] `docs/guide/syntax.md`: what the parser accepts, byte spans, `--parse` JSON,
       round-trip printing, error messages, aliases, non-UTF-8 input, no_std/wasm.
       `psh-docs check` passes.
 
@@ -118,6 +118,41 @@ Engine side (proposal; the engine agent owns exec.rs/lib.rs):
 - Merge of part 1 was attempted once during the Windows gate rework (VM error
   `PrlJob_GetRetCode`); waiting for the merge freeze to lift.
 
+### 2026-11-07: engine side (agreed with the engine agent via the coordinator)
+- `Vp::aliases` (`psh_syntax::Aliases`, per vproc: a subshell's definitions stay in
+  it) and `Vp::expand_aliases` (off; `shopt` is 0028's). `alias`/`unalias` registered
+  in `builtins::find` (not special), output via `builtins::out`, messages via
+  `vp.error`, usage lines raw.
+- `run_script` calls `parser.set_aliases(vp.expand_aliases.then_some(&vp.aliases))`
+  before each chunk; backquote bodies parse with the new one-shot
+  `psh_syntax::parse_bytes_with_aliases` (eval/source in 0029 should use a `Parser` and
+  set the table before each chunk instead). `Code::line` maps offsets in alias text
+  through `Ast::original_span`; the backquote line table covers the script text only.
+- Engine test `aliases` (expand_aliases set directly) checks expansion, `alias`
+  output, subshell scope, backquotes and line numbers against bash's output.
+- Spec runs with `expand_aliases` forced on (local experiment, not committed): Oils
+  `alias` 40/48, brush `builtins/alias` 38/43 pass on stdout+status. Fixed on the way:
+  the word after a blank-ended alias text is a candidate wherever it stands, also in a
+  `for` header (`FOR2 eye2 IN onetwo 3`); `alias q2="'"` prints `alias q2=\'`.
+  With the default (off), 7 alias cases newly pass (ratchet updated); no regressions.
+
 ## Follow-ups
+- 0028 (`shopt`): `shopt -s expand_aliases` sets `Vp::expand_aliases`; then the Oils and
+  brush alias cases that expand aliases can pass. Remaining failures with expansion on,
+  none in the alias code: `wc -l` padding of the host's BSD `wc` (oils/alias/7, 28, 41,
+  42), `eval` (oils/alias/31, 0029), array assignment (oils/alias/40, brush 35, 38),
+  PS4/`set -x` (oils/alias/45), `declare` (brush 39), POSIX mode (brush 34), and
+  brush/alias/20 only passes once `shopt -u` exists.
+- `declare -f`/`type` are not built in the engine yet; `print_function_bash` is ready.
 
 ## Result
+- psh-syntax: alias expansion in the chunked parser (D1250): `Aliases`,
+  `Parser::set_aliases`, `parse_bytes_with_aliases`, `Ast::{script_len, alias_uses,
+  original_span}`. Bash's rules, checked on 5,800 random alias scripts against the
+  container's bash; spans of alias text point into a per-use copy after the script.
+- psh-engine: `alias`/`unalias` builtins, the table in `Vp`, passed to the parser per
+  chunk and for backquote bodies; line numbers through `original_span`. Turning
+  expansion on waits for `shopt` (0028).
+- Also: a bare `!`/`time` before `&&`, `||`, `|` or `)` is a syntax error (as in bash).
+- `docs/guide/syntax.md` ("The parser: spans and printing").
+- L0 still 100% (cases 6576, shapes 26234, syntax 237); spec ratchets: 7 more passes.

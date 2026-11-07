@@ -1,8 +1,6 @@
 //! Shell builtins (Tier 0, ARCH.md): part of the engine, run on the vproc that calls
 //! them.
 
-// Not registered yet: the engine wires `alias`/`unalias` and the table (see the module).
-#[allow(dead_code)]
 mod alias;
 mod printf;
 mod test;
@@ -42,6 +40,8 @@ pub(crate) fn find(name: &[u8]) -> Option<Builtin> {
         b"export" => (builtin!(export), true),
         b"readonly" => (builtin!(readonly), true),
         b"unset" => (builtin!(unset), true),
+        b"alias" => (builtin!(alias::alias), false),
+        b"unalias" => (builtin!(alias::unalias), false),
         b"exit" => (builtin!(exit), true),
         b"set" => (builtin!(set), true),
         b"shift" => (builtin!(shift), true),

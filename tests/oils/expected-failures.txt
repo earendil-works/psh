@@ -7,8 +7,6 @@ oils/alias/2
 oils/alias/3
 oils/alias/4
 oils/alias/7
-oils/alias/8
-oils/alias/9
 oils/alias/11
 oils/alias/12
 oils/alias/13

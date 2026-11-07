@@ -245,13 +245,8 @@ brush/compat/arrays/51
 brush/compat/arrays/52
 brush/compat/arrays/53
 brush/compat/assignments/6
-brush/compat/background_jobs/0
-brush/compat/background_jobs/1
 brush/compat/background_jobs/2
 brush/compat/background_jobs/3
-brush/compat/background_jobs/4
-brush/compat/background_jobs/5
-brush/compat/background_jobs/7
 brush/compat/background_jobs/14
 brush/compat/background_jobs/15
 brush/compat/background_jobs/16

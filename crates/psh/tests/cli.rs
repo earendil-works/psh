@@ -76,7 +76,7 @@ fn dash_c_name_and_args() {
 
 #[test]
 fn script_file() {
-    let dir = std::env::temp_dir().join(format!("psh-cli-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("psh-cli-script-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let file = dir.join("s.sh");
     std::fs::write(&file, "echo \"$1\"\necho )\n").unwrap();

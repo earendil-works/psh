@@ -79,7 +79,8 @@ control handle, waker, Host trait, virtual processes) that everything later buil
 - Stack: 95 nested `{ }` need 256–512 KiB in release, 1–2 MiB in debug.
 - Speed: 100k `true` in 0.08 s (release, parse included). `: > /dev/null` costs ~12 µs,
   all of it macOS's open of /dev/null.
-- Score after part 1 (macOS): oils 731/2511 active, brush 720/3171 active. Top "not
+- Score after part 1 (macOS): oils 731/2511 active, brush 720/3171 active, agent
+  100/144 active. Top "not
   supported yet": functions 539, arrays 510, case 344, `[[` 219, for 182, `set -e` 181,
   `set -o` 152, `$((…))` 130, `set -u` 102, if 92, while 88.
 - Docs: ARCH.md psh-engine and Host sections, TESTING.md (psh-spec in-process). Guide:

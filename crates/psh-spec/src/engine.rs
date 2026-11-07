@@ -667,6 +667,9 @@ impl psh_engine::Host for Noting {
     fn kill(&self, pid: i32, sig: psh_engine::host::Signal) -> std::io::Result<()> {
         self.inner.kill(pid, sig)
     }
+    fn native_paths(&self) -> Option<psh_engine::host::NativePathFn> {
+        self.inner.native_paths()
+    }
     fn info(&self) -> psh_engine::host::HostInfo {
         self.inner.info()
     }

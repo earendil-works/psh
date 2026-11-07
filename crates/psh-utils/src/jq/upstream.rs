@@ -120,9 +120,11 @@ fn check(c: &Case) -> Option<String> {
         Ok(v) if v.len() == 1 => v.into_iter().next().unwrap_or_default(),
         _ => return Some("bad input".into()),
     };
-    let env_map: Map = std::env::vars()
+    // jq's test scripts set PAGER=less for the manual's `env.PAGER` examples.
+    let mut env_map: Map = std::env::vars()
         .map(|(k, v)| (k.into(), Val::str(v)))
         .collect();
+    env_map.insert("PAGER".into(), Val::str("less"));
     let env = Env {
         env: Val::obj(env_map),
         stderr: RefCell::new(Vec::new()),

@@ -1,6 +1,98 @@
 # jq's and jaq's test suites against psh's jq (crates/psh-utils/src/jq/upstream.rs):
 # cases psh does not pass, with the reason. A listed case that passes fails the test;
 # PSH_JQ_UPDATE=1 cargo test -p psh-utils upstream_suites rewrites this file.
+jaq-3.1.2/core.test:1088: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/core.test:1374: a jaq extension; psh fails as jq 1.7.1 does (its compile error text differs)
+jaq-3.1.2/core.test:159: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/core.test:174: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/core.test:209: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/core.test:214: jq parses `-1/0` as `-(1/0)` (unary minus binds looser); jaq as `(-1)/0`
+jaq-3.1.2/core.test:219: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/core.test:224: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/core.test:229: a jaq extension; psh fails as jq 1.7.1 does (its compile error text differs)
+jaq-3.1.2/core.test:314: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/core.test:40: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/core.test:413: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/core.test:523: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/core.test:599: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/core.test:619: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/core.test:624: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/core.test:739: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/core.test:85: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/core.test:919: a jaq extension; psh fails as jq 1.7.1 does (its compile error text differs)
+jaq-3.1.2/core.test:944: a jaq extension; psh fails as jq 1.7.1 does (its compile error text differs)
+jaq-3.1.2/core.test:994: a jaq extension; psh fails as jq 1.7.1 does (its compile error text differs)
+jaq-3.1.2/json.test:120: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:210: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:215: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:265: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:270: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:275: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:325: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:330: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:335: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:340: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:345: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:350: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:355: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:360: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:365: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:380: jq parses `-2 % 0` as `-(2 % 0)` (unary minus binds looser); jaq as `(-2) % 0`
+jaq-3.1.2/json.test:385: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:410: jq parses `-1 % 0` as `-(1 % 0)` (unary minus binds looser); jaq as `(-1) % 0`
+jaq-3.1.2/json.test:440: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:460: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:465: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:470: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:480: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:485: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:500: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:505: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:530: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/json.test:545: a jaq extension; psh fails as jq 1.7.1 does (its compile error text differs)
+jaq-3.1.2/std.test:150: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:260: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:285: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:305: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:315: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:330: jaq's `%6f`; jq 1.7.1 has no such directive either (it prints it padded)
+jaq-3.1.2/std.test:340: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:345: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:380: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:385: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:390: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:395: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:400: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:45: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:50: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:515: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:610: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:615: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:620: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:625: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:630: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:635: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:640: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:645: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:650: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:655: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:660: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:665: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:670: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:675: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:680: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:685: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:690: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:695: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:700: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:705: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:710: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:715: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:720: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:725: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:730: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:735: jaq's own behavior; psh gives what jq 1.7.1 gives
+jaq-3.1.2/std.test:740: jaq's own behavior; psh gives what jq 1.7.1 gives
 jq-1.7.1/jq.test:1119: jaq updates `|= empty` path by path; jq deletes all the paths at once
 jq-1.7.1/jq.test:1131: jaq's path error does not say which access failed
 jq-1.7.1/jq.test:1135: jaq's path error does not say which access failed

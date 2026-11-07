@@ -55,8 +55,10 @@ plan behind this is `research/hillclimb.md`.
 
 For L4, where GNU and BSD agree both goldens must match; where they conflict, the
 expected output follows the tie-break rules (ARCH.md "psh-utils", D016), and the case
-says which rule applies. Upstream suites back the big utilities: jaq's `jq-tests.jq`,
-the onetrueawk `T.*` and goawk tests for `awk`, ripgrep's tests for `rg`, and
+says which rule applies. Upstream suites back the big utilities: jq 1.7.1's own
+`tests/*.test` and jaq's tests (converted to the same format) for `jq`
+(`tests/utils/jq/upstream/`, run by `cargo test -p psh-utils upstream_suites` with a
+ratchet of their own), the onetrueawk `T.*` and goawk tests for `awk`, ripgrep's tests for `rg`, and
 just-bash's recorded GNU fixtures (Apache) for `grep`/`sed`/`awk`/`jq`. Permissive ones
 may be vendored (check each license); uutils' runs of the GNU test suite are run for
 reference only, never vendored.

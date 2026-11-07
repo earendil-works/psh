@@ -441,7 +441,9 @@ impl<R: Read> Reader<R> {
             "false" => return Ok(Val::Bool(false)),
             "null" => return Ok(Val::Null),
             "nan" | "NaN" | "-nan" | "-NaN" => return Ok(Val::num(f64::NAN)),
-            "Infinity" | "infinity" => return Ok(Val::num(f64::INFINITY)),
+            "Infinity" | "infinity" | "+Infinity" | "+infinity" => {
+                return Ok(Val::num(f64::INFINITY));
+            }
             "-Infinity" | "-infinity" => return Ok(Val::num(f64::NEG_INFINITY)),
             _ => {}
         }
@@ -599,14 +601,14 @@ impl Colors {
     /// arrays:objects:keys`).
     pub fn new(spec: Option<&str>) -> Colors {
         let mut c = Colors {
-            null: "1;30".into(),
+            null: "0;90".into(),
             r#false: "0;39".into(),
             r#true: "0;39".into(),
             number: "0;39".into(),
             string: "0;32".into(),
             array: "1;39".into(),
             object: "1;39".into(),
-            key: "34;1".into(),
+            key: "1;34".into(),
         };
         if let Some(spec) = spec {
             let fields = [
@@ -741,9 +743,6 @@ pub fn write(out: &mut Vec<u8>, v: &Val, style: &Style, level: usize) {
                         out.push(b',');
                     }
                     newline(out, style, level + 1);
-                    if c.is_some() {
-                        out.extend_from_slice(RESET);
-                    }
                     write(out, x, style, level + 1);
                 }
                 if let Some(c) = c {

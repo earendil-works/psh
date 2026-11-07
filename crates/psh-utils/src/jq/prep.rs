@@ -1,5 +1,11 @@
-//! jq's destructuring alternative `E as P1 ?// P2 | BODY`, which jaq's parser lacks,
-//! rewritten into what it means before the program is parsed (D1181):
+//! A jq program made fit for jaq's parser (D1181): what jq accepts and jaq does not is
+//! rewritten into what it means before the program is parsed.
+//!
+//! - `$__loc__` becomes the object jq gives for it.
+//! - `@name` of a format jq does not know becomes `format("name")`, which fails when it
+//!   runs (as in jq), not when the program compiles.
+//! - A `\uD83D\uDE00` surrogate pair in a string literal becomes the character.
+//! - The destructuring alternative `E as P1 ?// P2 | BODY`:
 //!
 //! ```text
 //! E as $alt | . as $dot | null as $v1 | ... |
@@ -254,8 +260,102 @@ fn rewrite_one(src: &str, n: usize) -> Option<String> {
     None
 }
 
+/// The program as jaq can parse it; `None` if nothing changed.
+pub fn prepare(src: &str) -> Option<String> {
+    let mut cur = src.to_string();
+    let mut changed = false;
+    for step in [with_loc, formats, surrogates, alternatives] {
+        if let Some(next) = step(&cur) {
+            cur = next;
+            changed = true;
+        }
+    }
+    changed.then_some(cur)
+}
+
+/// jaq has no `$__loc__`: each one becomes the object jq gives for it.
+fn with_loc(code: &str) -> Option<String> {
+    if !code.contains("$__loc__") {
+        return None;
+    }
+    let mut out = String::new();
+    let mut rest = code;
+    let mut line = 1;
+    while let Some(i) = rest.find("$__loc__") {
+        line += rest[..i].matches('\n').count();
+        out.push_str(&rest[..i]);
+        out.push_str(&format!("{{\"file\":\"<top-level>\",\"line\":{line}}}"));
+        rest = &rest[i + "$__loc__".len()..];
+    }
+    out.push_str(rest);
+    Some(out)
+}
+
+/// The formats psh defines as `@name`.
+const FORMATS: &[&str] = &[
+    "@text", "@json", "@html", "@uri", "@csv", "@tsv", "@sh", "@base64", "@base64d", "@base32",
+    "@base32d",
+];
+
+/// An unknown `@name` is jq's `format("name")`.
+fn formats(src: &str) -> Option<String> {
+    if !src.contains('@') {
+        return None;
+    }
+    let mut out = String::new();
+    let mut last = 0;
+    for t in tokens(src) {
+        let s = text(src, &t);
+        if t.kind == Kind::Ident && s.starts_with('@') && !FORMATS.contains(&s) {
+            out.push_str(&src[last..t.start]);
+            out.push_str(&format!("format(\"{}\")", &s[1..]));
+            last = t.end;
+        }
+    }
+    if last == 0 {
+        return None;
+    }
+    out.push_str(&src[last..]);
+    Some(out)
+}
+
+/// `\uD83C\uDDEC` in a string: jaq's lexer wants one code point per escape.
+fn surrogates(src: &str) -> Option<String> {
+    if !src.contains("\\u") {
+        return None;
+    }
+    let b = src.as_bytes();
+    let hex = |i: usize| -> Option<u32> {
+        let h = src.get(i..i + 4)?;
+        u32::from_str_radix(h, 16).ok()
+    };
+    let mut out = String::new();
+    let mut i = 0;
+    let mut changed = false;
+    while i < b.len() {
+        if b[i] == b'\\'
+            && b.get(i + 1) == Some(&b'u')
+            && let Some(hi) = hex(i + 2)
+            && (0xD800..0xDC00).contains(&hi)
+            && src.get(i + 6..i + 8) == Some("\\u")
+            && let Some(lo) = hex(i + 8)
+            && (0xDC00..0xE000).contains(&lo)
+            && let Some(c) = char::from_u32(0x10000 + ((hi - 0xD800) << 10) + (lo - 0xDC00))
+        {
+            out.push(c);
+            i += 12;
+            changed = true;
+            continue;
+        }
+        let c = src[i..].chars().next().unwrap_or('\0');
+        out.push(c);
+        i += c.len_utf8();
+    }
+    changed.then_some(out)
+}
+
 /// The program with every destructuring alternative rewritten; `None` if it has none.
-pub fn rewrite(src: &str) -> Option<String> {
+fn alternatives(src: &str) -> Option<String> {
     if !src.contains("?//") {
         return None;
     }
@@ -279,14 +379,25 @@ mod tests {
 
     #[test]
     fn rewrites_alternatives() {
-        let r = rewrite(".[] as [$a] ?// $a | $a").unwrap();
+        let r = alternatives(".[] as [$a] ?// $a | $a").unwrap();
         assert_eq!(
             r,
             ".[] as $__alt0 | (. as $__dot0 | null as $a | try ($__dot0 | $__alt0 as [$a] | $a) catch (($__dot0 | $__alt0 as $a | $a)))"
         );
         // The body ends at the enclosing bracket.
-        let r = rewrite("[.[] as {a:$x} ?// [$x] | $x], 1").unwrap();
+        let r = alternatives("[.[] as {a:$x} ?// [$x] | $x], 1").unwrap();
         assert!(r.ends_with("| $x)))], 1"), "{r}");
-        assert!(rewrite(".a // .b").is_none());
+        assert!(prepare(".a // .b").is_none());
+    }
+
+    #[test]
+    fn rewrites_the_rest() {
+        assert_eq!(prepare("@urid").unwrap(), "format(\"urid\")");
+        assert!(prepare("@base64 \"x\"").is_none());
+        assert_eq!(prepare("\"\\ud83d\\ude00\"").unwrap(), "\"😀\"");
+        assert_eq!(
+            prepare("$__loc__").unwrap(),
+            "{\"file\":\"<top-level>\",\"line\":1}"
+        );
     }
 }

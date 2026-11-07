@@ -5,11 +5,11 @@
 //! `-e`, 3 for a compile error, 2 for a usage or file error). It runs as a blocking
 //! utility (jaq is synchronous): on a worker thread natively, inline elsewhere.
 
-mod alt;
 mod funs;
 mod json;
 mod map;
 mod num;
+mod prep;
 mod time;
 mod val;
 
@@ -31,7 +31,9 @@ use json::{Colors, Indent, Reader, Style};
 use map::Map;
 use val::Val;
 
-/// jq's options, for the classifier check; the parser below is jq's own order.
+/// jq's options as the classifier models them (`-f FILE`, `--arg NAME` taking the
+/// next word); the parser below is jq's own (`--arg NAME VALUE`, the program file as
+/// the first operand).
 pub const SPEC: Spec = Spec {
     name: "jq",
     opts: &[
@@ -46,16 +48,16 @@ pub const SPEC: Spec = Spec {
         both('R', "raw-input"),
         both('C', "color-output"),
         both('M', "monochrome-output"),
-        both('f', "from-file"),
+        both('f', "from-file").value(),
         flag('L').value(),
         both('h', "help"),
         both('V', "version"),
         long("tab"),
         long("indent").value(),
-        long("arg"),
-        long("argjson"),
-        long("slurpfile"),
-        long("rawfile"),
+        long("arg").value(),
+        long("argjson").value(),
+        long("slurpfile").value(),
+        long("rawfile").value(),
         long("args"),
         long("jsonargs"),
         long("seq"),
@@ -430,7 +432,7 @@ impl<'s> Source<'s> {
                 }
                 Err(e) => {
                     let msg = format!(
-                        "jq: error: Could not open {}: {}\n",
+                        "jq: error: Could not open file {}: {}\n",
                         utf8(&f),
                         psh_engine::host::error_text(&e)
                     );
@@ -566,12 +568,19 @@ fn stream_events(v: &Val, path: &mut Vec<Val>, top: bool, out: &mut VecDeque<Val
     let _ = top;
 }
 
-/// The message of a compile error, as jq words it.
-fn compile_report(code: &str, errs: &[(String, usize)]) -> String {
+/// The message of a compile error, as jq words it: the line of the error, padded to
+/// the error's column (where jq would put a caret).
+fn compile_report(shown: &str, code: &str, errs: &[(String, Option<usize>)]) -> String {
     let mut out = String::new();
-    for (msg, line) in errs {
+    for (msg, off) in errs {
+        let off = off.unwrap_or(0).min(code.len());
+        let line = 1 + code[..off].matches('\n').count();
+        let start = code[..off].rfind('\n').map_or(0, |i| i + 1);
+        let col = code[start..off].chars().count();
+        let text = shown.lines().nth(line - 1).unwrap_or("");
         out.push_str(&format!(
-            "jq: error: {msg} at <top-level>, line {line}:\n{code}\n"
+            "jq: error: {msg} at <top-level>, line {line}:\n{text}{}\n",
+            " ".repeat(col)
         ));
     }
     let n = errs.len();
@@ -582,24 +591,20 @@ fn compile_report(code: &str, errs: &[(String, usize)]) -> String {
     out
 }
 
-/// The line of `part` in `code`; 1 when `part` is not a slice of it (an error inside
+/// Where `part` starts in `code`; `None` when it is not a slice of it (an error inside
 /// psh's own definitions).
-fn line_of(code: &str, part: &str) -> usize {
+fn offset_of(code: &str, part: &str) -> Option<usize> {
     let start = code.as_ptr() as usize;
     let at = part.as_ptr() as usize;
-    if at < start || at > start + code.len() {
-        return 1;
-    }
-    1 + code[..at - start].matches('\n').count()
+    (at >= start && at <= start + code.len()).then(|| at - start)
 }
 
 /// Compiles a program with psh's definitions and natives and the given global variables
 /// (`$name`); the error is jq's report.
 fn compile(code: &str, names: &[String]) -> Result<jaq_core::Filter<Kind>, String> {
-    let located = with_loc(code);
-    let code = located.as_deref().unwrap_or(code);
-    let alternatives = alt::rewrite(code);
-    let code = alternatives.as_deref().unwrap_or(code);
+    let original = code;
+    let prepared = prep::prepare(code);
+    let code = prepared.as_deref().unwrap_or(code);
     let arena = Arena::default();
     let defs = jaq_core::load::parse(DEFS, |p| p.defs()).expect("psh's jq definitions parse");
     let loader = Loader::new(defs);
@@ -612,7 +617,7 @@ fn compile(code: &str, names: &[String]) -> Result<jaq_core::Filter<Kind>, Strin
                 match e {
                     Error::Io(es) => {
                         for (p, m) in es {
-                            list.push((format!("module {p}: {m}"), line_of(code, p)));
+                            list.push((format!("module {p}: {m}"), offset_of(code, p)));
                         }
                     }
                     Error::Lex(es) => {
@@ -629,7 +634,7 @@ fn compile(code: &str, names: &[String]) -> Result<jaq_core::Filter<Kind>, Strin
                                 format!(
                                     "syntax error, unexpected {what} (Unix shell quoting issues?)"
                                 ),
-                                line_of(code, found),
+                                offset_of(code, found),
                             ));
                         }
                     }
@@ -649,13 +654,13 @@ fn compile(code: &str, names: &[String]) -> Result<jaq_core::Filter<Kind>, Strin
                                 format!(
                                     "syntax error, unexpected {what} (Unix shell quoting issues?)"
                                 ),
-                                line_of(code, found),
+                                offset_of(code, found),
                             ));
                         }
                     }
                 }
             }
-            return Err(compile_report(code, &list));
+            return Err(compile_report(original, code, &list));
         }
     };
     let compiler = Compiler::default()
@@ -674,30 +679,12 @@ fn compile(code: &str, names: &[String]) -> Result<jaq_core::Filter<Kind>, Strin
                         Undefined::Label => format!("$*label-{found} is not defined"),
                         _ => format!("module {found} is not defined"),
                     };
-                    list.push((msg, line_of(code, found)));
+                    list.push((msg, offset_of(code, found)));
                 }
             }
-            Err(compile_report(code, &list))
+            Err(compile_report(original, code, &list))
         }
     }
-}
-
-/// jaq has no `$__loc__`: each one becomes the object jq gives for it.
-fn with_loc(code: &str) -> Option<String> {
-    if !code.contains("$__loc__") {
-        return None;
-    }
-    let mut out = String::new();
-    let mut rest = code;
-    let mut line = 1;
-    while let Some(i) = rest.find("$__loc__") {
-        line += rest[..i].matches('\n').count();
-        out.push_str(&rest[..i]);
-        out.push_str(&format!("{{\"file\":\"<top-level>\",\"line\":{line}}}"));
-        rest = &rest[i + "$__loc__".len()..];
-    }
-    out.push_str(rest);
-    Some(out)
 }
 
 /// The blocking body.
@@ -948,6 +935,9 @@ fn body(sync: &mut SyncCtx, args: Args) -> i32 {
             };
             match next {
                 Ok(v) => {
+                    // As in jq, the status is the last input's: an error in an earlier
+                    // one does not count.
+                    status = 0;
                     if let Err(code) = run_one(v, &mut last, &mut status) {
                         finish(&shared);
                         return code;
@@ -957,7 +947,7 @@ fn body(sync: &mut SyncCtx, args: Args) -> i32 {
                     let m = m.strip_prefix("\u{0}parse:").unwrap_or(&m).to_string();
                     let text = format!("jq: parse error: {m}\n");
                     shared.borrow_mut().error_raw(text.as_bytes());
-                    status = 2;
+                    status = 5;
                     break;
                 }
             }

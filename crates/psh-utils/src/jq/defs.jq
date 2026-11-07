@@ -2,7 +2,7 @@
 #
 # Adapted from jq 1.7.1's src/builtin.jq (https://github.com/jqlang/jq), Copyright (C)
 # 2012 Stephen Dolan, MIT license (see NOTICE), and from jaq-core's defs.jq (jaq,
-# Copyright (c) 2021-2025 Michael Färber, MIT). Changes: jq's `_modify`/`_assign` are
+# by Michael Färber, MIT). Changes: jq's `_modify`/`_assign` are
 # jaq's own update operators; `limit`, `first`, `range/3` wrap jaq's path-aware natives;
 # `paths`, `getpath` and `delpaths` are written so that jaq can follow their paths.
 

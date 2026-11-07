@@ -387,3 +387,44 @@ fn xargs_unsupported() {
 // base64, the checksums, cmp, which, printenv, env's flags (0020).
 #[path = "tests_misc.rs"]
 mod misc;
+
+#[test]
+fn jq() {
+    check_all("jq -c .a", "{\"a\":[1,2]}\n", 0, "[1,2]\n", "");
+    check_all("jq -r '.[]'", "[\"x\",1]\n", 0, "x\n1\n", "");
+    check_all("jq -n '1+1'", "", 0, "2\n", "");
+    // Files: a blocking utility on the inline backend cannot wait for a slow host, so
+    // this runs without the latency pass.
+    let o = run_on("jq -c . /tmp/nonl", b"", false);
+    assert_eq!(
+        (o.status, o.stdout.as_str(), o.stderr.as_str()),
+        (
+            5,
+            "",
+            "jq: parse error: Invalid numeric literal at line 2, column 0\n"
+        )
+    );
+    check_all(
+        "jq .a.b",
+        "{\"a\":1}\n",
+        5,
+        "",
+        "jq: error (at <stdin>:1): Cannot index number with string \"b\"\n",
+    );
+    check_all("jq -n -e false", "", 1, "false\n", "");
+    check_all(
+        "jq -n 'nosuch'",
+        "",
+        3,
+        "",
+        "jq: error: nosuch/0 is not defined at <top-level>, line 1:\nnosuch\njq: 1 compile error\n",
+    );
+    // An option psh does not implement, with no jq on the test host.
+    check_all(
+        "jq --frobnicate .",
+        "",
+        2,
+        "",
+        "jq: unsupported option '--frobnicate' (psh built-in jq)\n",
+    );
+}

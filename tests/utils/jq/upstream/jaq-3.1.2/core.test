@@ -1,0 +1,1391 @@
+# Converted from jaq 3.1.2 (jaq-core/tests/*.rs, MIT, see ../README.md)
+# by convert.py: give/gives/yields! cases with literal arguments.
+
+# jaq-core/tests/defs.rs:10
+all
+{"a": false, "b": true}
+false
+
+# jaq-core/tests/defs.rs:11
+all
+{"a": 1, "b": 2}
+true
+
+# jaq-core/tests/defs.rs:19
+any
+{"a": false, "b": true}
+true
+
+# jaq-core/tests/defs.rs:22
+[] | join(" ")
+null
+""
+
+# jaq-core/tests/defs.rs:23
+["Hello", "world"] | join(" ")
+null
+"Hello world"
+
+# jaq-core/tests/defs.rs:28
+[2, 3, 4, 5] | join(",")
+null
+"2,3,4,5"
+
+# jaq-core/tests/defs.rs:30
+[1, 2] | map(.+1)
+null
+[2, 3]
+
+# jaq-core/tests/defs.rs:33
+[last({}[])]
+null
+[]
+
+# jaq-core/tests/defs.rs:34
+last(1, 2, 3)
+null
+3
+
+# jaq-core/tests/defs.rs:36
+[range(-1, 1; 0, 2)]
+null
+[-1, -1, 0, 1, 1]
+
+# jaq-core/tests/defs.rs:38
+[0, [1, 2], 3] | recurse |= (.+1)? // .
+null
+[1, [2, 3], 4]
+
+# jaq-core/tests/defs.rs:46
+[limit(3; recurse(.+1) + 0)]
+null
+[0, 1, 2]
+
+# jaq-core/tests/defs.rs:47
+[limit(3; 0 + recurse(.+1))]
+null
+[0, 1, 2]
+
+# jaq-core/tests/defs.rs:49
+[limit(2; [1] | .[repeat(0)])]
+null
+[1, 1]
+
+# jaq-core/tests/defs.rs:63
+[1 | recurse(if . < 3 then .+1 else empty end)]
+null
+[1, 2, 3]
+
+# jaq-core/tests/defs.rs:68
+reduce recurse(if . == 1000 then empty else .+1 end) as $x (0; . + $x)
+null
+500500
+
+# jaq-core/tests/defs.rs:92
+1.0 - 1.0 | tostring
+null
+"0.0"
+
+# jaq-core/tests/defs.rs:93
+"\n" | tostring
+null
+"\n"
+
+# jaq-core/tests/defs.rs:94
+["\n"] | tostring
+null
+"[\"\\n\"]"
+
+# jaq-core/tests/funs.rs:8
+def r(f): f, r(f); [limit(3; r(1, 2))]
+null
+[1, 2, 1]
+
+# jaq-core/tests/funs.rs:10
+def f: 1, [f]; limit(1; f)
+null
+1
+
+# jaq-core/tests/funs.rs:12
+def f: f; limit(1; foreach (1, f) as $x (0; .))
+null
+0
+
+# jaq-core/tests/funs.rs:18
+def f: def g: 0, g; g; def h: h; first(f)
+null
+0
+
+# jaq-core/tests/funs.rs:20
+def f($a; $b): [$a, $b], f($a+1; $b+1); [limit(3; f(0; 1))]
+null
+[[0, 1], [1, 2], [2, 3]]
+
+# jaq-core/tests/funs.rs:26
+def upto($x): .[$x], (if $x > 0 then upto($x-1) else {}[] as $x | . end); [1, 2, 3, 4] | upto(1) |= .+1
+null
+[2, 3, 3, 4]
+
+# jaq-core/tests/funs.rs:32
+[first({}[])]
+null
+[]
+
+# jaq-core/tests/funs.rs:33
+first(1, 2, 3)
+null
+1
+
+# jaq-core/tests/funs.rs:37
+keys_unsorted
+[0, null, "a"]
+[0, 1, 2]
+
+# jaq-core/tests/funs.rs:38
+keys_unsorted
+{"a": 1, "b": 2}
+["a", "b"]
+
+# jaq-core/tests/funs.rs:48
+limit(0; 1,2)
+null
+
+# jaq-core/tests/funs.rs:49
+[limit(1, 0, 3; 0, 1)]
+null
+[0, 0, 1]
+
+# jaq-core/tests/funs.rs:52
+[limit(-1; 0, 1)]
+null
+[]
+
+# jaq-core/tests/funs.rs:55
+[limit(0; def f: f | .; f)]
+null
+[]
+
+# jaq-core/tests/funs.rs:57
+[1, 2, 3] | [path(limit(2; .[]))]
+null
+[[0], [1]]
+
+# jaq-core/tests/funs.rs:58
+[1, 2, 3] | [path(skip(1; .[]))]
+null
+[[1], [2]]
+
+# jaq-core/tests/funs.rs:60
+[range(0; 6;  2)]
+null
+[0, 2, 4]
+
+# jaq-core/tests/funs.rs:61
+[range(0; 6; -2)]
+null
+[]
+
+# jaq-core/tests/funs.rs:62
+[range(0; -6; 2)]
+null
+[]
+
+# jaq-core/tests/funs.rs:63
+[range(0; -6; -2)]
+null
+[0, -2, -4]
+
+# jaq-core/tests/funs.rs:64
+[range(0; 0; 0)]
+null
+[]
+
+# jaq-core/tests/funs.rs:65
+[range(0.0; 2; 0.5)]
+null
+[0.0, 0.5, 1.0, 1.5]
+
+# jaq-core/tests/funs.rs:66
+[limit(3; range(0; 1/0; 1))]
+null
+[0, 1, 2]
+
+# jaq-core/tests/funs.rs:67
+[limit(3; range(0; -1/0; -1))]
+null
+[0, -1, -2]
+
+# jaq-core/tests/funs.rs:69
+[limit(3; range(0; 6; 0))]
+null
+[0, 0, 0]
+
+# jaq-core/tests/funs.rs:70
+[limit(3; range(0; -6; 0))]
+null
+[0, 0, 0]
+
+# jaq-core/tests/funs.rs:72
+[{a: 1, b: [2, 3]} | skip(1; path_value(..))]
+null
+[[["a"], 1], [["b"], [2, 3]], [["b", 0], 2], [["b", 1], 3]]
+
+# jaq-core/tests/path.rs:8
+.[-4]
+[0, 1, 2]
+null
+
+# jaq-core/tests/path.rs:9
+.[-3]
+[0, 1, 2]
+0
+
+# jaq-core/tests/path.rs:10
+.[-1]
+[0, 1, 2]
+2
+
+# jaq-core/tests/path.rs:11
+.[ 0]
+[0, 1, 2]
+0
+
+# jaq-core/tests/path.rs:12
+.[ 2]
+[0, 1, 2]
+2
+
+# jaq-core/tests/path.rs:13
+.[ 3]
+[0, 1, 2]
+null
+
+# jaq-core/tests/path.rs:15
+.a
+{"a": 1}
+1
+
+# jaq-core/tests/path.rs:16
+.a?
+{"a": 1}
+1
+
+# jaq-core/tests/path.rs:17
+.a ?
+{"a": 1}
+1
+
+# jaq-core/tests/path.rs:18
+."a"
+{"a": 1}
+1
+
+# jaq-core/tests/path.rs:19
+. "a"
+{"a": 1}
+1
+
+# jaq-core/tests/path.rs:20
+.["a"]
+{"a": 1}
+1
+
+# jaq-core/tests/path.rs:21
+. ["a"]
+{"a": 1}
+1
+
+# jaq-core/tests/path.rs:22
+.a_
+{"a_": 1}
+1
+
+# jaq-core/tests/path.rs:23
+._a
+{"_a": 1}
+1
+
+# jaq-core/tests/path.rs:24
+._0
+{"_0": 1}
+1
+
+# jaq-core/tests/path.rs:28
+.[0]
+{"a": 1}
+null
+
+# jaq-core/tests/path.rs:30
+.["a", 0, 0 == 0]?
+[0, 1, 2]
+0
+
+# jaq-core/tests/path.rs:31
+.[3]?
+[0, 1, 2]
+null
+
+# jaq-core/tests/path.rs:32
+.[0]?
+"asdf"
+
+# jaq-core/tests/path.rs:34
+[1, 2, 3][.]
+1
+2
+
+# jaq-core/tests/path.rs:36
+.["b", "a"]
+{"a": 1, "b": 2}
+2
+1
+
+# jaq-core/tests/path.rs:45
+.[]
+[0, 1, 2]
+0
+1
+2
+
+# jaq-core/tests/path.rs:46
+.a[]
+{"a": [1, 2]}
+1
+2
+
+# jaq-core/tests/path.rs:47
+.[]
+{"a": 1, "b": 2}
+1
+2
+
+# jaq-core/tests/path.rs:49
+.[]
+{"b": 2, "a": 1}
+2
+1
+
+# jaq-core/tests/path.rs:50
+.[]?
+"asdf"
+
+# jaq-core/tests/path.rs:55
+.[1:-1]
+"M\u00f6we"
+"\u00f6w"
+
+# jaq-core/tests/path.rs:56
+.[1:5]
+"\u0928\u092e\u0938\u094d\u0924\u0947"
+"\u092e\u0938\u094d\u0924"
+
+# jaq-core/tests/path.rs:58
+.[-4:4]
+[0, 1, 2]
+[0, 1, 2]
+
+# jaq-core/tests/path.rs:59
+.[0:3]
+[0, 1, 2]
+[0, 1, 2]
+
+# jaq-core/tests/path.rs:60
+.[1:]
+[0, 1, 2]
+[1, 2]
+
+# jaq-core/tests/path.rs:61
+.[:-1]
+[0, 1, 2]
+[0, 1]
+
+# jaq-core/tests/path.rs:62
+.[1:0]
+[0, 1, 2]
+[]
+
+# jaq-core/tests/path.rs:63
+.[4:5]
+[0, 1, 2]
+[]
+
+# jaq-core/tests/path.rs:65
+.[0:2,3.14]?
+[0, 1, 2]
+[0, 1]
+
+# jaq-core/tests/path.rs:70
+.[] = .
+[1, 2]
+[[1, 2], [1, 2]]
+
+# jaq-core/tests/path.rs:71
+.a[] = .b+.b
+{"a": [1, 2], "b": 3}
+{"a": [6, 6], "b": 3}
+
+# jaq-core/tests/path.rs:78
+{"if": 0} | .if
+null
+0
+
+# jaq-core/tests/path.rs:79
+{if: 0} | .if
+null
+0
+
+# jaq-core/tests/path.rs:81
+{} | .a  |= .+1
+null
+{"a": 1}
+
+# jaq-core/tests/path.rs:82
+{} | .a? |= .+1
+null
+{"a": 1}
+
+# jaq-core/tests/path.rs:84
+.a
+null
+null
+
+# jaq-core/tests/path.rs:85
+.[0]
+null
+null
+
+# jaq-core/tests/path.rs:89
+try .[0[]]? catch 1
+null
+1
+
+# jaq-core/tests/path.rs:90
+1, (.[0[]])?
+null
+1
+
+# jaq-core/tests/path.rs:92
+[1, 2, 3][[]]
+null
+[]
+
+# jaq-core/tests/path.rs:93
+[0, 1, 2, 1, 2] | .[[1, 2]]
+null
+[1, 3]
+
+# jaq-core/tests/path.rs:97
+.b |= .
+{"a": 1}
+{"a": 1, "b": null}
+
+# jaq-core/tests/path.rs:98
+.b |= 1
+{"a": 1}
+{"a": 1, "b": 1}
+
+# jaq-core/tests/path.rs:99
+.b |= .+1
+{"a": 1}
+{"a": 1, "b": 1}
+
+# jaq-core/tests/path.rs:100
+.b |= {}[]
+{"a": 1, "b": 2}
+{"a": 1}
+
+# jaq-core/tests/path.rs:101
+.a += 1
+{"a": 1, "b": 2}
+{"a": 2, "b": 2}
+
+# jaq-core/tests/path.rs:103
+.[1] |= .+2
+[0, 1, 2]
+[0, 3, 2]
+
+# jaq-core/tests/path.rs:104
+.[-1,-1] |= {}[]
+[0, 1, 2]
+[0]
+
+# jaq-core/tests/path.rs:105
+.[ 0, 0] |= {}[]
+[0, 1, 2]
+[2]
+
+# jaq-core/tests/path.rs:113
+.["a", 0]? |= .+1
+[0, 1, 2]
+[1, 1, 2]
+
+# jaq-core/tests/path.rs:114
+.[3]? |= .+1
+[0, 1, 2]
+[0, 1, 2]
+
+# jaq-core/tests/path.rs:115
+.[0]? |= .+1
+"asdf"
+"asdf"
+
+# jaq-core/tests/path.rs:121
+.[] |= . or 0
+[]
+[]
+
+# jaq-core/tests/path.rs:122
+.[] |= .,.
+[]
+[]
+[]
+
+# jaq-core/tests/path.rs:123
+.[] |= (.,.)
+[]
+[]
+
+# jaq-core/tests/path.rs:124
+.[] |= .+1 | .+[2]
+[0]
+[1, 2]
+
+# jaq-core/tests/path.rs:126
+.[] |= .[] |= .+1
+[[1]]
+[[2]]
+
+# jaq-core/tests/path.rs:128
+.[] |= .[] += 1
+[[1]]
+[[2]]
+
+# jaq-core/tests/path.rs:130
+.[] |= .+1
+[1]
+[2]
+
+# jaq-core/tests/path.rs:131
+.[][] |= .+1
+[[1]]
+[[2]]
+
+# jaq-core/tests/path.rs:134
+{"a": 1, "b": 2} | .[] |= ((if .>1 then . else {}[] end) | .+1)
+null
+{"b": 3}
+
+# jaq-core/tests/path.rs:139
+[[0, 1], "a"] | .[][]? |= .+1
+null
+[[1, 2], "a"]
+
+# jaq-core/tests/path.rs:147
+.[:2] |= [.[] | .+5]
+[0, 1, 2]
+[5, 6, 2]
+
+# jaq-core/tests/path.rs:148
+.[-2:-1] |= [5]+.
+[0, 1, 2]
+[0, 5, 1, 2]
+
+# jaq-core/tests/path.rs:149
+.[-2:-1,-1] |= [5,6]+.
+[0, 1, 2]
+[0, 5, 6, 5, 6, 1, 2]
+
+# jaq-core/tests/path.rs:155
+.[:2,3.0]? |= [.[] | .+1]
+[0, 1, 2]
+[1, 2, 2]
+
+# jaq-core/tests/path.rs:170
+.a |= (.,.+1)
+{"a": 1}
+{"a": 1}
+
+# jaq-core/tests/path.rs:173
+. |= {}[]
+1
+
+# jaq-core/tests/path.rs:175
+. |= (.,.)
+1
+1
+1
+
+# jaq-core/tests/path.rs:177
+.[] |= (., .+1)
+[1]
+[1, 2]
+
+# jaq-core/tests/path.rs:179
+.[] |= (., .+1)
+[1, 3]
+[1, 2, 3, 4]
+
+# jaq-core/tests/path.rs:182
+.[] |= {}[]
+[1, 2, 3, 4, 5]
+[]
+
+# jaq-core/tests/path.rs:194
+[1, 2] | .[] // . |= 3
+null
+[3, 3]
+
+# jaq-core/tests/path.rs:195
+[] | .[] // . |= 3
+null
+3
+
+# jaq-core/tests/tests.rs:18
+[(1,2) * (3,4)]
+null
+[3, 4, 6, 8]
+
+# jaq-core/tests/tests.rs:22
+. + 2
+1
+3
+
+# jaq-core/tests/tests.rs:23
+. + 2.0
+1.0
+3.0
+
+# jaq-core/tests/tests.rs:24
+2.0 + .
+1
+3.0
+
+# jaq-core/tests/tests.rs:25
+1.0e1 + 2.1e2
+null
+220.0
+
+# jaq-core/tests/tests.rs:27
+. + "world"
+"Hello "
+"Hello world"
+
+# jaq-core/tests/tests.rs:28
+. + [3, 4]
+[1, 2]
+[1, 2, 3, 4]
+
+# jaq-core/tests/tests.rs:29
+. + {c: 3, a: 4}
+{"a": 1, "b": 2}
+{"a": 4, "b": 2, "c": 3}
+
+# jaq-core/tests/tests.rs:35
+. + {}
+{}
+{}
+
+# jaq-core/tests/tests.rs:36
+. + {}
+{"a": 1}
+{"a": 1}
+
+# jaq-core/tests/tests.rs:41
+. - -2
+1
+3
+
+# jaq-core/tests/tests.rs:42
+. - 0.1
+1.0
+0.9
+
+# jaq-core/tests/tests.rs:43
+. - 1
+1.0
+0.0
+
+# jaq-core/tests/tests.rs:46
+[1, 2, 3] - [2, 3, 4]
+null
+[1]
+
+# jaq-core/tests/tests.rs:50
+. * 2
+1
+2
+
+# jaq-core/tests/tests.rs:51
+. * 2.0
+1.0
+2.0
+
+# jaq-core/tests/tests.rs:52
+2.0 * .
+1
+2.0
+
+# jaq-core/tests/tests.rs:54
+2 * .
+"Hello"
+"HelloHello"
+
+# jaq-core/tests/tests.rs:55
+. * "Hello"
+2
+"HelloHello"
+
+# jaq-core/tests/tests.rs:57
+0 * .
+"Hello"
+null
+
+# jaq-core/tests/tests.rs:58
+. * "Hello"
+-1
+null
+
+# jaq-core/tests/tests.rs:59
+. * {k: {a: 0, c: 3}}
+{"k": {"a": 1, "b": 2}}
+{"k": {"a": 0, "b": 2, "c": 3}}
+
+# jaq-core/tests/tests.rs:66
+"abcabcdab" / "ab"
+null
+["", "c", "cd", ""]
+
+# jaq-core/tests/tests.rs:67
+"" / ""
+null
+[]
+
+# jaq-core/tests/tests.rs:68
+"" / "ab"
+null
+[]
+
+# jaq-core/tests/tests.rs:69
+"aöß" / ""
+null
+["a", "ö", "ß"]
+
+# jaq-core/tests/tests.rs:78
+(-9223372036854775807 - 1) % -1
+null
+0
+
+# jaq-core/tests/tests.rs:96
+.[] // 0
+[]
+0
+
+# jaq-core/tests/tests.rs:97
+.[] // 0
+[null, false]
+0
+
+# jaq-core/tests/tests.rs:98
+[.[] // 0]
+[null, 1, false, 2]
+[1, 2]
+
+# jaq-core/tests/tests.rs:99
+[.[] // 0]
+[1, 2]
+[1, 2]
+
+# jaq-core/tests/tests.rs:100
+[.[] // -"a"]
+[1, 2]
+[1, 2]
+
+# jaq-core/tests/tests.rs:105
+.?
+0
+0
+
+# jaq-core/tests/tests.rs:106
+(-"a")?, 1
+0
+1
+
+# jaq-core/tests/tests.rs:107
+[(1, -"a", 2)?]
+0
+[1]
+
+# jaq-core/tests/tests.rs:113
+[0, 1 | . + 1]
+null
+[1, 2]
+
+# jaq-core/tests/tests.rs:114
+[0, (1 | . + 1)]
+null
+[0, 2]
+
+# jaq-core/tests/tests.rs:117
+[. += 1, 2]
+1
+[2, 2]
+
+# jaq-core/tests/tests.rs:118
+[. += (1, 2)]
+1
+[2, 3]
+
+# jaq-core/tests/tests.rs:121
+[(., .) | . = . // 0]
+false
+[0, 0]
+
+# jaq-core/tests/tests.rs:122
+((., .) | . = .) // 0
+false
+0
+
+# jaq-core/tests/tests.rs:125
+. or . // 0
+false
+0
+
+# jaq-core/tests/tests.rs:126
+. or (. // 0)
+false
+true
+
+# jaq-core/tests/tests.rs:129
+(0 != 0) and . or .
+true
+true
+
+# jaq-core/tests/tests.rs:130
+(0 != 0) and (. or .)
+true
+false
+
+# jaq-core/tests/tests.rs:132
+1 + 2 * 3
+null
+7
+
+# jaq-core/tests/tests.rs:133
+2 * 3 + 1
+null
+7
+
+# jaq-core/tests/tests.rs:138
+try def x: 1; x + x catch 0
+null
+2
+
+# jaq-core/tests/tests.rs:139
+try - 1 catch 0
+null
+-1
+
+# jaq-core/tests/tests.rs:140
+try if 0 then 1 end catch 2
+null
+1
+
+# jaq-core/tests/tests.rs:141
+try try 0[0] catch 1 catch 2
+null
+1
+
+# jaq-core/tests/tests.rs:142
+try reduce [][] as $x (0; 0) catch 1
+null
+0
+
+# jaq-core/tests/tests.rs:143
+0 as $x | try $x catch 1
+null
+0
+
+# jaq-core/tests/tests.rs:144
+def x: 0; try x catch 1
+null
+0
+
+# jaq-core/tests/tests.rs:145
+try "" catch 1
+null
+""
+
+# jaq-core/tests/tests.rs:146
+def @f: .; try @f "" catch 1
+null
+""
+
+# jaq-core/tests/tests.rs:147
+try .. catch 0
+null
+null
+
+# jaq-core/tests/tests.rs:148
+try . catch 0
+null
+null
+
+# jaq-core/tests/tests.rs:149
+{key: 0} | try .key catch 1
+null
+0
+
+# jaq-core/tests/tests.rs:150
+{key: 0} | try . "key" catch 1
+null
+0
+
+# jaq-core/tests/tests.rs:151
+def @f: .; {k: 0} | try .@f"k" catch 1
+null
+0
+
+# jaq-core/tests/tests.rs:152
+try 0 catch 1
+null
+0
+
+# jaq-core/tests/tests.rs:153
+try (1 + 1) catch 0
+null
+2
+
+# jaq-core/tests/tests.rs:154
+try [1][0] catch 0
+null
+1
+
+# jaq-core/tests/tests.rs:155
+def x: 0; try x? catch 1
+null
+0
+
+# jaq-core/tests/tests.rs:157
+[-[][]]
+null
+[]
+
+# jaq-core/tests/tests.rs:158
+try (-[])[] catch 0
+null
+0
+
+# jaq-core/tests/tests.rs:160
+.+=-1
+null
+-1
+
+# jaq-core/tests/tests.rs:162
+1 | "yields \(.+1)!"
+null
+"yields 2!"
+
+# jaq-core/tests/tests.rs:165
+2 | ["\(., .+1) \(., .*2)"]
+null
+["2 2", "2 4", "3 2", "3 4"]
+
+# jaq-core/tests/tests.rs:171
+def @say: "say " + .; @say "I \("disco"), you \("party")"
+null
+"I say disco, you say party"
+
+# jaq-core/tests/tests.rs:176
+"Here \("be \("nestings")")"
+null
+"Here be nestings"
+
+# jaq-core/tests/tests.rs:182
+"\("\tHi'\"\n❤\\")"
+null
+"\tHi'\"\n\u2764\\"
+
+# jaq-core/tests/tests.rs:183
+"\(["\tHi'\"\n❤\\"])"
+null
+"[\"\\tHi'\\\"\\n\u2764\\\\\"]"
+
+# jaq-core/tests/tests.rs:188
+"\({"❤\n": 0})"
+null
+"{\"\u2764\\n\":0}"
+
+# jaq-core/tests/tests.rs:190
+{a:1, b:2, c:3,}
+null
+{"a": 1, "b": 2, "c": 3}
+
+# jaq-core/tests/tests.rs:195
+"c" | {a: 1, "b": 2, (.): 3}
+null
+{"a": 1, "b": 2, "c": 3}
+
+# jaq-core/tests/tests.rs:200
+{a: 1, b: 2} | {a,}
+null
+{"a": 1}
+
+# jaq-core/tests/tests.rs:201
+{a: 1, b: 2} | {a, c: 3}
+null
+{"a": 1, "c": 3}
+
+# jaq-core/tests/tests.rs:206
+"x" as $k | {$k}
+null
+{"k": "x"}
+
+# jaq-core/tests/tests.rs:207
+"x" as $k | {$k: 0}
+null
+{"x": 0}
+
+# jaq-core/tests/tests.rs:208
+[{("a", "b"): 1}]
+null
+[{"a": 1}, {"b": 1}]
+
+# jaq-core/tests/tests.rs:213
+[{a: (1,2), b: (3,4)}]
+null
+[{"a": 1, "b": 3}, {"a": 1, "b": 4}, {"a": 2, "b": 3}, {"a": 2, "b": 4}]
+
+# jaq-core/tests/tests.rs:221
+if . | .[] then 0 else 0 end
+[]
+
+# jaq-core/tests/tests.rs:233
+[label $x | 0, (label $y | 1, break $x, 2), 3]
+null
+[0, 1]
+
+# jaq-core/tests/tests.rs:239
+def f(a): (label $x | a | ., f(a)), {}; [0 | label $y | f(if . > 1 then break $y else . + 1 end)]
+null
+[1, 2]
+
+# jaq-core/tests/tests.rs:244
+def f(a): (label $x | a | ., f(if . > 1 then break $x else .+1 end)), .; [0 | f(1)]
+null
+[1, 2, 1, 0]
+
+# jaq-core/tests/tests.rs:250
+[label $x | def f: .+1 | if . > 2 then break $x end, f; 0 | f]
+null
+[1, 2]
+
+# jaq-core/tests/tests.rs:256
+[label $x | (def x: break $x; (label $y | x), 0)]
+null
+[]
+
+# jaq-core/tests/tests.rs:267
+try try []["a"] catch []["b"] catch .
+null
+"cannot index [] with \"b\""
+
+# jaq-core/tests/tests.rs:272
+[(try (1,2,3[0]) catch (3,4)) | . - 1]
+null
+[0, 1, 2, 3]
+
+# jaq-core/tests/tests.rs:277
+[try (1,2,3[0],4)]
+null
+[1, 2]
+
+# jaq-core/tests/tests.rs:278
+(try -[] catch .) | . > "" and . < []
+null
+true
+
+# jaq-core/tests/tests.rs:283
+[try 0[0]? catch .]
+null
+[]
+
+# jaq-core/tests/tests.rs:293
+try (try 0[0], 1[1]) catch . == try 1[1] catch .
+null
+true
+
+# jaq-core/tests/tests.rs:298
+try (try 0 | 1[1]) catch . == try 1[1] catch .
+null
+true
+
+# jaq-core/tests/tests.rs:303
+try (try 0 + 1[1]) catch . == try 1[1] catch .
+null
+true
+
+# jaq-core/tests/tests.rs:311
+. < (0 != 0)
+null
+true
+
+# jaq-core/tests/tests.rs:312
+. < (0 == 0)
+false
+true
+
+# jaq-core/tests/tests.rs:313
+. > 0.0
+1
+true
+
+# jaq-core/tests/tests.rs:314
+. < 1.5
+1
+true
+
+# jaq-core/tests/tests.rs:315
+. < 1.5
+1.1
+true
+
+# jaq-core/tests/tests.rs:316
+. > 1.1
+1.5
+true
+
+# jaq-core/tests/tests.rs:317
+. < "b"
+"ab"
+true
+
+# jaq-core/tests/tests.rs:318
+. < "ab"
+"a"
+true
+
+# jaq-core/tests/tests.rs:319
+. < {"a": 1, "b": 0}
+{"a": 2}
+true
+
+# jaq-core/tests/tests.rs:324
+. == 1
+1
+true
+
+# jaq-core/tests/tests.rs:325
+0 == . - .
+1
+true
+
+# jaq-core/tests/tests.rs:326
+. == -1 * -1
+1
+true
+
+# jaq-core/tests/tests.rs:327
+. == 2 / 2
+1
+true
+
+# jaq-core/tests/tests.rs:329
+. == -.
+0
+true
+
+# jaq-core/tests/tests.rs:330
+-. == .
+0
+true
+
+# jaq-core/tests/tests.rs:331
+. == -.
+0.0
+true
+
+# jaq-core/tests/tests.rs:332
+-. == .
+0.0
+true
+
+# jaq-core/tests/tests.rs:334
+.[] == 0
+[0, 1]
+true
+false
+
+# jaq-core/tests/tests.rs:336
+. == 1.0
+1
+true
+
+# jaq-core/tests/tests.rs:337
+. == 2 / 2.0
+1
+true
+
+# jaq-core/tests/tests.rs:339
+. == {b: 2, a: 1}
+{"a": 1, "b": 2}
+true
+
+# jaq-core/tests/tests.rs:342
+def f($a; b): $a+b; f(1; 2)
+null
+3
+
+# jaq-core/tests/tests.rs:346
+ 2  as $x | . + $x
+1
+3
+
+# jaq-core/tests/tests.rs:347
+.+1 as $x | . + $x
+1
+3
+
+# jaq-core/tests/tests.rs:348
+. as $x | (2 as $y | 3) | $x
+1
+1
+
+# jaq-core/tests/tests.rs:350
+def g(f): f; . as $x | g($x)
+1
+1
+
+# jaq-core/tests/tests.rs:368
+def a: 1; def b: a; def a: 2; a + b
+null
+3
+
+# jaq-core/tests/tests.rs:369
+1 as $x | 2 as $x | $x
+null
+2
+
+# jaq-core/tests/tests.rs:371
+def f(g; g): g; f(1; 2)
+null
+2
+
+# jaq-core/tests/tests.rs:373
+def f($a): $a; f(0)
+null
+0
+
+# jaq-core/tests/tests.rs:374
+def f( a):  a; f(0)
+null
+0
+
+# jaq-core/tests/tests.rs:375
+def f(a; $b): a + $b; 1 as $a | f($a; 2)
+null
+3
+
+# jaq-core/tests/tests.rs:377
+def f(a): def g(b): a + b; g(1); f(2)
+null
+3
+
+# jaq-core/tests/tests.rs:378
+1 + (2 as $x | def f(a): a*$x; f(3))
+null
+7
+
+# jaq-core/tests/tests.rs:399
+[1, 2, 3] | [foreach .[] as $x (0; .+$x)]
+null
+[1, 3, 6]
+
+# jaq-core/tests/tests.rs:404
+[1, 2, 3] | [foreach .[] as $x (0; .+$x; [$x, .])]
+null
+[[1, 1], [2, 3], [3, 6]]
+
+# jaq-core/tests/tests.rs:413
+[foreach (3,4) as $x (1; .+$x, .*$x)]
+null
+[4, 8, 16, 3, 7, 12]
+
+# jaq-core/tests/tests.rs:419
+[[0!=0, 3] | .[] //= (1, 2)]
+null
+[[1, 3], [2, 3]]
+
+# jaq-core/tests/tests.rs:435
+{a: {b: "c", c: 1}} as {a: {(.b): $x}} | $x
+null
+1
+
+# jaq-core/tests/tests.rs:441
+[{a:123}] | .[0] as {$a} | [., $a]
+null
+[[{"a": 123}], 123]
+
+# jaq-core/tests/tests.rs:447
+[] as [$x] | $x
+null
+null
+
+# jaq-core/tests/tests.rs:448
+[1, 2, 3] as [$x] | $x
+null
+1
+
+# jaq-core/tests/tests.rs:449
+[1, 2, 3] as [$x, $y] | [$x, $y]
+null
+[1, 2]
+
+# jaq-core/tests/tests.rs:451
+{a: 1, b: 2} as {a:  $x, $b } | [$x, $b]
+null
+[1, 2]
+
+# jaq-core/tests/tests.rs:452
+{a: [1, 2]} as {a: [$x, $y]} | [$x, $y]
+null
+[1, 2]
+
+# jaq-core/tests/tests.rs:477
+def f: if . then . else def g: f; 2 | g + g end; f
+null
+4
+
+# jaq-core/tests/tests.rs:483
+def f: if . > 0 then .-1 | f end; 100000 | f
+null
+0
+
+# jaq-core/tests/tests.rs:485
+def f: if . > 0 then foreach . as $x (.; .-1; f) end; 10000 | f
+null
+0
+
+# jaq-core/tests/tests.rs:491
+def f: "f", def g: "g", f, g; g; nth(10000; f)
+null
+"f"
+
+# jaq-core/tests/tests.rs:497
+ [   1,   # foo \   2,   # bar \\   3,   4, # baz \\\   5, \   6,   # once   # more \    7   # comment \     comment \     comment ]
+null
+[1, 3, 4, 7]
+
+# jaq-core/tests/tests.rs:520
+[[1, 2]] | reduce (0, 1) as $p (.; .[$p]) += 1
+null
+[[1, 3]]
+
+# jaq-core/tests/tests.rs:526
+[[1, [2]]] | foreach (0, 1) as $p (.; .[$p]) += [3]
+null
+[[1, [2, 3], 3]]
+
+# jaq-core/tests/tests.rs:532
+[[1, [[2]]]] | foreach (0, 1, 0) as $p (.; .[$p]; if $p == 0 then .[0] else {}[] as $x | . end) += 1
+null
+[[2, [[3]]]]

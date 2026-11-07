@@ -366,7 +366,7 @@ pub static UTILITIES: &[Utility] = &[
     v(
         "jq",
         Read,
-        "f",
+        "Lf",
         &[
             "--arg",
             "--argjson",

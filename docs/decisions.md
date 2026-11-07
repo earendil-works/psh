@@ -2481,3 +2481,47 @@ temporary file in the file's directory with the file's mode and renames it over 
 file (after renaming the original to its backup name, `*` in the suffix standing for
 the file's name); non-regular files are refused with status 4, missing ones skipped
 with status 2.
+## D1180: jq on jaq-core with psh's own values, builtins and JSON; libm
+date: 2026-11-07 · by: procs · issue: 0018
+`jq` depends on jaq-core 3.1.2 only (the interpreter: parser, compiler, path updates;
+with dyn-clone, once_cell, typed-arena) and libm 0.2.16 (jq's math builtins with C libm's
+results, pure Rust). Not jaq-json and not jaq-std: their values, messages and number
+printing are jaq's, and they pull in num-bigint, indexmap, hifijson, jiff (time zones),
+regex-bites, base64 and urlencoding. psh-utils' `jq/` has jq 1.7's value model instead
+(doubles that keep their literal, `1.000` and `100000000000000000000` print as read and
+compare exactly; string keys in insertion order), jq's error texts (`Cannot index number
+with string "b"`, values abbreviated to 11 bytes), jq's builtins (`defs.jq` adapted from
+jq's own `builtin.jq`, natives for what jq implements in C), regexes on the regex crate
+psh already has (Oniguruma's Ruby defaults; no look-around), dates on timefmt, and a
+hand-written JSON reader and printer: jq's leniencies (`nan`, `Infinity`, leading zeros,
+a byte order mark), its parse error texts and positions, its output (indent, `--tab`,
+`-S`, `-a`, colors, `1e+17`, `1e-05`) are what the goldens compare, which deser-json
+(D029) does not model; jq's JSON is the exception to D029. Size: +1.2 MiB stripped
+natively (macOS arm64 release, 6.9 → 8.1 MB), +687 KB wasm (+210 KB gzipped). The target
+is jq 1.7.1 (Debian stable's and macOS's /usr/bin/jq; `jq --version` says `jq-1.7.1`).
+
+## D1181: jq syntax jaq lacks is rewritten before parsing
+date: 2026-11-07 · by: procs · issue: 0018
+jaq's parser lacks jq's destructuring alternative `?//`, `$__loc__`, surrogate-pair
+escapes in string literals, and accepts only the formats it defines. Instead of forking
+jaq-core, `jq/prep.rs` rewrites the program text first: `E as P1 ?// P2 | BODY` becomes
+`E as $alt | . as $dot | null as $v... | try ($dot | $alt as P1 | BODY) catch ($dot |
+$alt as P2 | BODY)` (every pattern variable bound, null where its pattern does not bind
+it; an error in a body tries the next alternative, as jq does), `$__loc__` the object jq
+gives, `@name` of an unknown format `format("name")` (an error when it runs, as in jq).
+The body of an alternative extends to the end of the enclosing group (bracket, `;`,
+`then`/`else`/`end`), found by a small tokenizer. Still different from jq, listed in the
+upstream ratchet: modules (`import`, `include`, `-L`), `$name: pattern`, `.5` literals,
+`|= empty` on several paths at once (jaq deletes path by path), which access a path error
+names, unary minus precedence (`-1/0`), and bison's syntax error texts.
+
+## D1182: jq's exit status and positions are 1.7.1's
+date: 2026-11-07 · by: procs · issue: 0018
+The status is the last input's (an error in an earlier input does not count, as in jq
+1.7.1); 5 for an error or a parse error of the input, 4 for no output with `-e`, 1 for a
+false or null last output with `-e`, 3 for a compile error, 2 for a usage error or a file
+that cannot be opened (the other files are still read). A runtime error names the input
+position as jq does, the lines read so far: jq reads its input by lines, so a value on a
+line counts that line (`(at <stdin>:1)`), `<unknown>` before any input. Input files are
+read one after the other, each its own JSON text (jq parses the concatenation as one
+text; a value split across two files is an error here).

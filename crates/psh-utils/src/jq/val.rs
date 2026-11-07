@@ -2,7 +2,7 @@
 //! error texts (indexing, iteration, slices, updates, arithmetic, order).
 //!
 //! The structure follows jaq-json's `Val` (crates.io `jaq-json` 2.0.3, `src/lib.rs`),
-//! Copyright (c) 2021-2025 Michael Färber, MIT license (see NOTICE): the trait methods
+//! by Michael Färber, MIT license (see NOTICE): the trait methods
 //! and their update logic are adapted from there; the value model (doubles with
 //! literals, string keys, UTF-8 strings) and the messages are jq's.
 
@@ -210,7 +210,7 @@ impl Val {
 /// `[1,2,1] | .[[1]]`: where the array `b` occurs in `a`.
 fn indices_of(a: &[Val], b: &[Val]) -> Val {
     if b.is_empty() {
-        return Val::Null;
+        return Val::arr(Vec::new());
     }
     let found = a
         .windows(b.len())
@@ -438,7 +438,7 @@ impl From<isize> for Val {
     fn from(i: isize) -> Val {
         // jaq passes integer literals of the program as integers: one a double cannot
         // hold keeps its digits, as jq's literals do.
-        if i.unsigned_abs() > 1 << 53 {
+        if i.unsigned_abs() as u64 > 1u64 << 53 {
             return Num::literal(&i.to_string()).map_or(Val::num(i as f64), Val::Num);
         }
         Val::num(i as f64)

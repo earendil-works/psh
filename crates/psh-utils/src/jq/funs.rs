@@ -1,7 +1,7 @@
 //! jq's builtins that jq implements in C, as jaq natives over psh's values, with jq
 //! 1.7's behavior and messages; and the data the natives share (inputs, environment,
 //! stderr). The shape of the natives follows jaq-std's `lib.rs` (crates.io `jaq-std`
-//! 3.0.4, Copyright (c) 2021-2025 Michael Färber, MIT license, see NOTICE).
+//! 3.0.4, by Michael Färber, MIT license, see NOTICE).
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -678,13 +678,13 @@ fn natives() -> Natives {
         ("infinite", v(0), |_| bome(Ok(Val::num(f64::INFINITY)))),
         ("nan", v(0), |_| bome(Ok(Val::num(f64::NAN)))),
         ("isinfinite", v(0), |cv| {
-            bome(num_arg(&cv.1, "").map(|f| Val::Bool(f.is_infinite())))
+            bome(Ok(Val::Bool(cv.1.as_f64().is_some_and(f64::is_infinite))))
         }),
         ("isnan", v(0), |cv| {
-            bome(num_arg(&cv.1, "").map(|f| Val::Bool(f.is_nan())))
+            bome(Ok(Val::Bool(cv.1.as_f64().is_some_and(f64::is_nan))))
         }),
         ("isnormal", v(0), |cv| {
-            bome(num_arg(&cv.1, "").map(|f| Val::Bool(f.is_normal())))
+            bome(Ok(Val::Bool(cv.1.as_f64().is_some_and(f64::is_normal))))
         }),
         ("sort", v(0), |cv| {
             bome(

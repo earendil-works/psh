@@ -1,0 +1,547 @@
+# Converted from jaq 3.1.2 (jaq-json/tests/*.rs, MIT, see ../README.md)
+# by convert.py: give/gives/yields! cases with literal arguments.
+
+# jaq-json/tests/defs.rs:22
+from_entries
+[]
+{}
+
+# jaq-json/tests/defs.rs:27
+map(in({"foo": 42}))
+["foo", "bar"]
+[true, false]
+
+# jaq-json/tests/defs.rs:32
+map(in([0,1]))
+[2, 0]
+[false, true]
+
+# jaq-json/tests/defs.rs:34
+inside("foobar")
+"bar"
+true
+
+# jaq-json/tests/defs.rs:45
+{"foo":null,"abc":null,"fax":null,"az":null} | keys
+null
+["abc", "az", "fax", "foo"]
+
+# jaq-json/tests/defs.rs:51
+1 | [paths]
+null
+[]
+
+# jaq-json/tests/defs.rs:52
+null | [paths]
+null
+[]
+
+# jaq-json/tests/defs.rs:53
+[1, 2] | [paths]
+null
+[[0], [1]]
+
+# jaq-json/tests/defs.rs:54
+{a: [1, [2]], b: {c: 3}} | [paths]
+null
+[["a"], ["a", 0], ["a", 1], ["a", 1, 0], ["b"], ["b", "c"]]
+
+# jaq-json/tests/defs.rs:60
+[{a: 1, b: [2, 3]} | paths(. < [])]
+null
+[["a"], ["b", 0], ["b", 1]]
+
+# jaq-json/tests/defs.rs:88
+walk(if . < [] then . else sort end)
+[[4, 1, 7], [8, 5, 2], [3, 6, 9]]
+[[1, 4, 7], [2, 5, 8], [3, 6, 9]]
+
+# jaq-json/tests/defs.rs:94
+walk(if . < {} then . + 1 else . + {"l": length} end)
+{"a": {"b": 1, "c": 2}}
+{"a": {"b": 2, "c": 3, "l": 2}, "l": 1}
+
+# jaq-json/tests/defs.rs:103
+[while(. < 100; . * 2)]
+1
+[1, 2, 4, 8, 16, 32, 64]
+
+# jaq-json/tests/defs.rs:108
+[while(length < 4; . + "a")]
+"a"
+["a", "aa", "aaa"]
+
+# jaq-json/tests/defs.rs:113
+[while(length > 0; .[1:])]
+[1, 2, 3]
+[[1, 2, 3], [2, 3], [3]]
+
+# jaq-json/tests/defs.rs:119
+until(. > 100; . * 2)
+50
+200
+
+# jaq-json/tests/defs.rs:120
+until(length == 1; .[1:]) | .[0]
+[1, 2, 3]
+3
+
+# jaq-json/tests/defs.rs:125
+[.,1] | until(.[0] < 1; [.[0] - 1, .[1] * .[0]]) | .[1]
+5
+120
+
+# jaq-json/tests/defs.rs:132
+[0, 0 == 0, {}.a, "hello", {}, [] | @json]
+null
+["0", "true", "null", "\"hello\"", "{}", "[]"]
+
+# jaq-json/tests/funs.rs:8
+[1, 3] | bsearch(0)
+null
+-1
+
+# jaq-json/tests/funs.rs:9
+[1, 3] | bsearch(2)
+null
+-2
+
+# jaq-json/tests/funs.rs:10
+[1, 3] | bsearch(4)
+null
+-3
+
+# jaq-json/tests/funs.rs:11
+[1, 3] | [bsearch(1, 3)]
+null
+[0, 1]
+
+# jaq-json/tests/funs.rs:13
+"Infinity +Infinity -Infinity" | [fromjson | tostring]
+null
+["Infinity", "Infinity", "-Infinity"]
+
+# jaq-json/tests/funs.rs:18
+" 1" | fromjson
+null
+1
+
+# jaq-json/tests/funs.rs:19
+"+1" | fromjson
+null
+1
+
+# jaq-json/tests/funs.rs:20
+"-1" | fromjson
+null
+-1
+
+# jaq-json/tests/funs.rs:35
+has(0)
+[0, null]
+true
+
+# jaq-json/tests/funs.rs:36
+has(1)
+[0, null]
+true
+
+# jaq-json/tests/funs.rs:37
+has(2)
+[0, null]
+false
+
+# jaq-json/tests/funs.rs:39
+has("a")
+{"a": 1, "b": null}
+true
+
+# jaq-json/tests/funs.rs:40
+has("b")
+{"a": 1, "b": null}
+true
+
+# jaq-json/tests/funs.rs:41
+has("c")
+{"a": 1, "b": null}
+false
+
+# jaq-json/tests/funs.rs:44
+"a,b, cd, efg" | indices(", ")
+null
+[3, 7]
+
+# jaq-json/tests/funs.rs:45
+[0, 1, 2, 1, 3, 1, 4] | indices(1)
+null
+[1, 3, 5]
+
+# jaq-json/tests/funs.rs:50
+[0, 1, 2, 3, 1, 4, 2, 5, 1, 2, 6, 7] | indices([1, 2])
+null
+[1, 8]
+
+# jaq-json/tests/funs.rs:55
+["a", "b", "c"] | indices("b")
+null
+[1]
+
+# jaq-json/tests/funs.rs:57
+[0, 1] | indices([])
+null
+[]
+
+# jaq-json/tests/funs.rs:58
+[1, 2] | indices([1, 2, 3])
+null
+[]
+
+# jaq-json/tests/funs.rs:60
+[0, 0, 0] | indices([0, 0])
+null
+[0, 1]
+
+# jaq-json/tests/funs.rs:61
+"aaa" | indices("aa")
+null
+[0, 1]
+
+# jaq-json/tests/funs.rs:62
+"🇬🇧!" | indices("!")
+null
+[2]
+
+# jaq-json/tests/funs.rs:63
+"🇬🇧🇬🇧" | indices("🇬🇧")
+null
+[0, 2]
+
+# jaq-json/tests/funs.rs:65
+"ƒoo" | length
+null
+3
+
+# jaq-json/tests/funs.rs:66
+"नमस्ते" | length
+null
+6
+
+# jaq-json/tests/funs.rs:67
+{"a": 5, "b": 3} | length
+null
+2
+
+# jaq-json/tests/funs.rs:68
+ 2 | length
+null
+2
+
+# jaq-json/tests/funs.rs:69
+-2 | length
+null
+2
+
+# jaq-json/tests/funs.rs:70
+ 2.5 | length
+null
+2.5
+
+# jaq-json/tests/funs.rs:71
+-2.5 | length
+null
+2.5
+
+# jaq-json/tests/funs.rs:73
+1.0 | tojson
+null
+"1.0"
+
+# jaq-json/tests/funs.rs:74
+1.1 | tojson
+null
+"1.1"
+
+# jaq-json/tests/funs.rs:75
+0.0 / 0.0 | tojson
+null
+"NaN"
+
+# jaq-json/tests/funs.rs:76
+1.0 / 0.0 | tojson
+null
+"Infinity"
+
+# jaq-json/tests/funs.rs:77
+-1.0 / 0.0 | tojson
+null
+"-Infinity"
+
+# jaq-json/tests/funs.rs:81
+tonumber
+1.0
+1.0
+
+# jaq-json/tests/funs.rs:82
+tonumber
+"1.0"
+1.0
+
+# jaq-json/tests/funs.rs:83
+tonumber
+"42"
+42
+
+# jaq-json/tests/funs.rs:84
+try tonumber catch -7
+"null"
+-7
+
+# jaq-json/tests/funs.rs:85
+try tonumber catch -7
+"true"
+-7
+
+# jaq-json/tests/funs.rs:86
+try tonumber catch -7
+"str"
+-7
+
+# jaq-json/tests/funs.rs:87
+try tonumber catch -7
+"\"str\""
+-7
+
+# jaq-json/tests/funs.rs:88
+try tonumber catch -7
+"[3, 4]"
+-7
+
+# jaq-json/tests/funs.rs:89
+try tonumber catch -7
+"{\"a\": 1}"
+-7
+
+# jaq-json/tests/funs.rs:94
+toboolean
+false
+false
+
+# jaq-json/tests/funs.rs:95
+toboolean
+"true"
+true
+
+# jaq-json/tests/funs.rs:96
+toboolean
+"false"
+false
+
+# jaq-json/tests/funs.rs:97
+try toboolean catch -7
+"null"
+-7
+
+# jaq-json/tests/funs.rs:98
+try toboolean catch -7
+"3"
+-7
+
+# jaq-json/tests/funs.rs:99
+try toboolean catch -7
+"str"
+-7
+
+# jaq-json/tests/funs.rs:100
+try toboolean catch -7
+"\"str\""
+-7
+
+# jaq-json/tests/funs.rs:101
+try toboolean catch -7
+"[3, 4]"
+-7
+
+# jaq-json/tests/funs.rs:102
+try toboolean catch -7
+"{\"a\": 1}"
+-7
+
+# jaq-json/tests/funs.rs:110
+-2 % -2
+null
+0
+
+# jaq-json/tests/funs.rs:111
+-2 % -1
+null
+0
+
+# jaq-json/tests/funs.rs:112
+try (-2 % 0) catch .
+null
+"cannot calculate -2 % 0"
+
+# jaq-json/tests/funs.rs:117
+-2 % 2.1
+null
+-2.0
+
+# jaq-json/tests/funs.rs:118
+-2 % 3
+null
+-2
+
+# jaq-json/tests/funs.rs:119
+-2 % 2000000001
+null
+-2
+
+# jaq-json/tests/funs.rs:120
+-1 % -2
+null
+-1
+
+# jaq-json/tests/funs.rs:121
+-1 % -1
+null
+0
+
+# jaq-json/tests/funs.rs:122
+try (-1 % 0) catch .
+null
+"cannot calculate -1 % 0"
+
+# jaq-json/tests/funs.rs:127
+-1 % 2.1
+null
+-1.0
+
+# jaq-json/tests/funs.rs:128
+-1 % 3
+null
+-1
+
+# jaq-json/tests/funs.rs:129
+-1 % 2000000001
+null
+-1
+
+# jaq-json/tests/funs.rs:130
+0 % -2
+null
+0
+
+# jaq-json/tests/funs.rs:131
+0 % -1
+null
+0
+
+# jaq-json/tests/funs.rs:132
+try (0 % 0) catch .
+null
+"cannot calculate 0 % 0"
+
+# jaq-json/tests/funs.rs:137
+0 % 2.1
+null
+0.0
+
+# jaq-json/tests/funs.rs:138
+0 % 3
+null
+0
+
+# jaq-json/tests/funs.rs:139
+0 % 2000000001
+null
+0
+
+# jaq-json/tests/funs.rs:140
+2.1 % -2 | . * 1000 | round
+null
+100
+
+# jaq-json/tests/funs.rs:141
+2.1 % -1 | . * 1000 | round
+null
+100
+
+# jaq-json/tests/funs.rs:142
+2.1 % 0 | isnan
+null
+true
+
+# jaq-json/tests/funs.rs:143
+2.1 % 2.1
+null
+0.0
+
+# jaq-json/tests/funs.rs:144
+2.1 % 3
+null
+2.1
+
+# jaq-json/tests/funs.rs:145
+2.1 % 2000000001
+null
+2.1
+
+# jaq-json/tests/funs.rs:146
+3 % -2
+null
+1
+
+# jaq-json/tests/funs.rs:147
+3 % -1
+null
+0
+
+# jaq-json/tests/funs.rs:148
+try (3 % 0) catch .
+null
+"cannot calculate 3 % 0"
+
+# jaq-json/tests/funs.rs:153
+3 % 2.1 | . * 1000 | round
+null
+900
+
+# jaq-json/tests/funs.rs:154
+3 % 3
+null
+0
+
+# jaq-json/tests/funs.rs:155
+3 % 2000000001
+null
+3
+
+# jaq-json/tests/funs.rs:156
+2000000001 % -2
+null
+1
+
+# jaq-json/tests/funs.rs:157
+2000000001 % -1
+null
+0
+
+# jaq-json/tests/funs.rs:158
+try (2000000001 % 0) catch .
+null
+"cannot calculate 2000000001 % 0"
+
+# jaq-json/tests/funs.rs:168
+2000000001 % 3
+null
+0
+
+# jaq-json/tests/funs.rs:169
+2000000001 % 2000000001
+null
+0
+
+# jaq-json/tests/funs.rs:172
+("%FF" | @urid) == ([255] | tobytes | tostring)
+null
+true

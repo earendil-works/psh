@@ -1,0 +1,742 @@
+# Converted from jaq 3.1.2 (jaq-std/tests/*.rs, MIT, see ../README.md)
+# by convert.py: give/gives/yields! cases with literal arguments.
+
+# jaq-std/tests/defs.rs:10
+add
+{"a": 1, "b": 2}
+3
+
+# jaq-std/tests/defs.rs:11
+add
+[[0, 1], [2, 3]]
+[0, 1, 2, 3]
+
+# jaq-std/tests/defs.rs:15
+"1970-01-02T00:00:00Z" | fromdate
+null
+86400
+
+# jaq-std/tests/defs.rs:16
+86400 | todate
+null
+"1970-01-02T00:00:00Z"
+
+# jaq-std/tests/defs.rs:17
+946684800 | todate | fromdate
+null
+946684800
+
+# jaq-std/tests/defs.rs:19
+[drem(nan, 1; nan, 1)] | (.[0:-1] | all(isnan)) and .[-1] == 0.0
+null
+true
+
+# jaq-std/tests/defs.rs:24
+[drem(3.5, -4; 6, 1.75, 2)]
+null
+[-2.5, 0.0, -0.5, 2.0, -0.5, -0.0]
+
+# jaq-std/tests/defs.rs:40
+[[[0], 1], 2, [3, [4]]] | flatten
+null
+[0, 1, 2, 3, 4]
+
+# jaq-std/tests/defs.rs:47
+{a: 1} | flatten
+null
+[{"a": 1}]
+
+# jaq-std/tests/defs.rs:49
+0 | flatten
+null
+[0]
+
+# jaq-std/tests/defs.rs:51
+all((0, 1, nan); isfinite)
+null
+true
+
+# jaq-std/tests/defs.rs:52
+any((infinite, -infinite, []); isfinite)
+null
+false
+
+# jaq-std/tests/defs.rs:58
+1 | isnormal
+null
+true
+
+# jaq-std/tests/defs.rs:59
+any(0, nan, infinite, -infinite, []; isnormal)
+null
+false
+
+# jaq-std/tests/defs.rs:65
+infinite | logb | . == infinite
+null
+true
+
+# jaq-std/tests/defs.rs:66
+nan | logb | isnan
+null
+true
+
+# jaq-std/tests/defs.rs:67
+-infinite | logb | . == infinite
+null
+true
+
+# jaq-std/tests/defs.rs:68
+[-2.2, -2, -1, 1, 2, 2.2] | map(logb)
+null
+[1.0, 1.0, 0.0, 0.0, 1.0, 1.0]
+
+# jaq-std/tests/defs.rs:73
+0 | logb | . == -infinite
+null
+true
+
+# jaq-std/tests/defs.rs:76
+"ABab" | [match("a", "b"; "", "i") | .string]
+null
+["a", "A", "b", "B"]
+
+# jaq-std/tests/defs.rs:84
+min
+[1, 4, 2]
+1
+
+# jaq-std/tests/defs.rs:85
+max
+[1, 4, 2]
+4
+
+# jaq-std/tests/defs.rs:88
+min_by(.a.b.c)
+[{"a": {"b": {"c": 1}}}, {"a": {"b": {"c": 4}}}, {"a": {"b": {"c": 2}}}]
+{"a": {"b": {"c": 1}}}
+
+# jaq-std/tests/defs.rs:93
+max_by(.a.b.c)
+[{"a": {"b": {"c": 1}}}, {"a": {"b": {"c": 4}}}, {"a": {"b": {"c": 2}}}]
+{"a": {"b": {"c": 4}}}
+
+# jaq-std/tests/defs.rs:100
+[] | min_by(.)
+null
+null
+
+# jaq-std/tests/defs.rs:102
+[{a: 1, b: 3}, {a: 1, b: 2}] | [(min_by(.a), max_by(.a)) | .b]
+null
+[3, 2]
+
+# jaq-std/tests/defs.rs:108
+[{a: 1, b: 3}, {a: 1, b: 2}] | max_by(.a, .b) | .b
+null
+3
+
+# jaq-std/tests/defs.rs:125
+[range(1, 2)]
+null
+[0, 0, 1]
+
+# jaq-std/tests/defs.rs:127
+[range(.)] | reverse
+3
+[2, 1, 0]
+
+# jaq-std/tests/defs.rs:147
+def fib: recurse([.[1], add])[0]; nth(100; [0, 1] | fib) | tostring
+null
+"354224848179261915075"
+
+# jaq-std/tests/defs.rs:156
+[-2.2, -1.1, -0.01, 0, 0.01, 1.1, 2.2] | [scalb(1.0; .[])] == [pow(2.0; .[])]
+null
+true
+
+# jaq-std/tests/defs.rs:161
+[scalb(nan, 1; nan, 1)] | (.[0:-1] | all(isnan)) and .[-1] == 2.0
+null
+true
+
+# jaq-std/tests/defs.rs:166
+[scalb(-2.5, 0, 2.5; 2, 2.5, 3) * 1000 | round]
+null
+[-10000, -14142, -20000, 0, 0, 0, 10000, 14142, 20000]
+
+# jaq-std/tests/defs.rs:182
+.[] | select(.>1)
+[1, 2]
+2
+
+# jaq-std/tests/defs.rs:183
+map(select(.<1, 1<.))
+[0, 1, 2]
+[0, 2]
+
+# jaq-std/tests/defs.rs:200
+infinite | significand | . == infinite
+null
+true
+
+# jaq-std/tests/defs.rs:205
+nan | significand | isnan
+null
+true
+
+# jaq-std/tests/defs.rs:206
+-infinite | significand | . == -infinite
+null
+true
+
+# jaq-std/tests/defs.rs:211
+[-123.456, -2.2, -2, -1, 0, 0.00001, 1, 2, 2.2, 123.456] | map(significand)
+null
+[-1.929, -1.1, -1.0, -1.0, 0.0, 1.31072, 1.0, 1.0, 1.1, 1.929]
+
+# jaq-std/tests/defs.rs:219
+type
+{"a": 1, "b": 2}
+"object"
+
+# jaq-std/tests/defs.rs:220
+type
+[0, 1]
+"array"
+
+# jaq-std/tests/defs.rs:221
+type
+"Hello"
+"string"
+
+# jaq-std/tests/defs.rs:222
+type
+1
+"number"
+
+# jaq-std/tests/defs.rs:223
+type
+1.0
+"number"
+
+# jaq-std/tests/defs.rs:224
+type
+true
+"boolean"
+
+# jaq-std/tests/defs.rs:225
+type
+null
+"null"
+
+# jaq-std/tests/defs.rs:228
+"XYxyXYxy" | sub("x";"Q")
+null
+"XYQyXYxy"
+
+# jaq-std/tests/defs.rs:229
+"XYxyXYxy" | gsub("x";"Q")
+null
+"XYQyXYQy"
+
+# jaq-std/tests/defs.rs:230
+"XYxyXYxy" | sub("x";"Q";"i")
+null
+"QYxyXYxy"
+
+# jaq-std/tests/defs.rs:231
+"XYxyXYxy" | gsub("x";"Q";"i")
+null
+"QYQyQYQy"
+
+# jaq-std/tests/defs.rs:233
+"XYxyXYxy" | gsub("(?<upper>[A-Z])(?<lower>[a-z])"; .lower + .upper)
+null
+"XxYyXxYy"
+
+# jaq-std/tests/defs.rs:239
+"XxYy" | [gsub("(?<upper>[A-Z])"; .upper, "!" + .upper)]
+null
+["XxYy", "Xx!Yy", "!XxYy", "!Xx!Yy"]
+
+# jaq-std/tests/defs.rs:245
+[0, 0 == 0, {}.a, "hello", {}, [] | @text]
+null
+["0", "true", "null", "hello", "{}", "[]"]
+
+# jaq-std/tests/defs.rs:255
+{a: "b"} | try @sh catch -1
+null
+-1
+
+# jaq-std/tests/defs.rs:260
+["fine, but", []] | try @sh catch -1
+null
+-1
+
+# jaq-std/tests/defs.rs:265
+["abc👍 +&?/", "", null, 123, [], {} | @uri]
+null
+["abc%F0%9F%91%8D%20%2B%26%3F%2F", "", "null", "123", "%5B%5D", "%7B%7D"]
+
+# jaq-std/tests/defs.rs:277
+["abc%F0%9F%91%8D%20%2B%26%3F%2F", "", null, 123, [], {} | try @urid catch .]
+null
+["abc👍 +&?/", "", "null", "123", "[]", "{}"]
+
+# jaq-std/tests/funs.rs:10
+ascii_upcase
+"aAaA\u00e4\u306e"
+"AAAA\u00e4\u306e"
+
+# jaq-std/tests/funs.rs:11
+ascii_downcase
+"aAaA\u00e4\u306e"
+"aaaa\u00e4\u306e"
+
+# jaq-std/tests/funs.rs:14
+"1970-01-02T00:00:00Z" | fromdateiso8601
+null
+86400
+
+# jaq-std/tests/funs.rs:19
+"1970-01-02T00:00:00.123456Z" | fromdateiso8601
+null
+86400.123456
+
+# jaq-std/tests/funs.rs:24
+86400 | todateiso8601
+null
+"1970-01-02T00:00:00Z"
+
+# jaq-std/tests/funs.rs:25
+86400.123456 | todateiso8601
+null
+"1970-01-02T00:00:00.123456Z"
+
+# jaq-std/tests/funs.rs:30
+86400 | strftime("%F %T")
+null
+"1970-01-02 00:00:00"
+
+# jaq-std/tests/funs.rs:35
+[ 1970, 0, 2, 0, 0, 0, 5, 1 ] | strftime("%F %T")
+null
+"1970-01-02 00:00:00"
+
+# jaq-std/tests/funs.rs:40
+86400.123456 | strftime("%F %T.%6f")
+null
+"1970-01-02 00:00:00.123456"
+
+# jaq-std/tests/funs.rs:45
+86400 | gmtime
+null
+[1970, 0, 2, 0, 0, 0, 5, 1]
+
+# jaq-std/tests/funs.rs:46
+86400.123456 | gmtime
+null
+[1970, 0, 2, 0, 0, 0.123456, 5, 1]
+
+# jaq-std/tests/funs.rs:51
+86400.123456 | gmtime | mktime
+null
+86400.123456
+
+# jaq-std/tests/funs.rs:56
+"1970-01-02T00:00:00Z" | strptime("%Y-%m-%dT%H:%M:%SZ")
+null
+[1970, 0, 2, 0, 0, 0, 5, 1]
+
+# jaq-std/tests/funs.rs:61
+[ 1970, 0, 2, 0, 0, 0, 5, 1 ] | mktime
+null
+86400
+
+# jaq-std/tests/funs.rs:74
+explode
+"\u2764 \u306e"
+[10084, 32, 12398]
+
+# jaq-std/tests/funs.rs:75
+explode
+"y\u0306"
+[121, 774]
+
+# jaq-std/tests/funs.rs:77
+explode | implode
+"\u2764 \u306e"
+"\u2764 \u306e"
+
+# jaq-std/tests/funs.rs:78
+explode | implode
+"y\u0306"
+"y\u0306"
+
+# jaq-std/tests/funs.rs:81
+[1114112] | try implode catch -1
+null
+-1
+
+# jaq-std/tests/funs.rs:83
+"hello cruel world" | encode_base64
+null
+"aGVsbG8gY3J1ZWwgd29ybGQ="
+
+# jaq-std/tests/funs.rs:88
+"hello cruel world" | encode_base64 | decode_base64
+null
+"hello cruel world"
+
+# jaq-std/tests/funs.rs:94
+"<p style='visibility: hidden'>sneaky</p>" | escape_html
+null
+"&lt;p style=&apos;visibility: hidden&apos;&gt;sneaky&lt;/p&gt;"
+
+# jaq-std/tests/funs.rs:99
+"abc123 ?#+&[]" | encode_uri
+null
+"abc123%20%3F%23%2B%26%5B%5D"
+
+# jaq-std/tests/funs.rs:107
+group_by(.)
+[]
+[]
+
+# jaq-std/tests/funs.rs:108
+group_by(.key)
+[{"key": 1, "value": "foo"}, {"key": 2, "value": "bar"}, {"key": 1, "value": "baz"}]
+[[{"key": 1, "value": "foo"}, {"key": 1, "value": "baz"}], [{"key": 2, "value": "bar"}]]
+
+# jaq-std/tests/funs.rs:115
+"foo" | utf8bytelength
+null
+3
+
+# jaq-std/tests/funs.rs:116
+"ƒoo" | utf8bytelength
+null
+4
+
+# jaq-std/tests/funs.rs:117
+"नमस्ते" | utf8bytelength
+null
+18
+
+# jaq-std/tests/funs.rs:119
+[-2.2, -1.1, 0, 1.1, 2.2 | sin as $s | cos as $c | $s * $s + $c * $c]
+null
+[1.0, 1.0, 1.0, 1.0, 1.0]
+
+# jaq-std/tests/funs.rs:125
+[3, 3.25, 3.5 | modf]
+null
+[[0.0, 3.0], [0.25, 3.0], [0.5, 3.0]]
+
+# jaq-std/tests/funs.rs:131
+[pow(0.25, 4, 9; 1, 0.5, 2)]
+null
+[0.25, 0.5, 0.0625, 4.0, 2.0, 16.0, 9.0, 3.0, 81.0]
+
+# jaq-std/tests/funs.rs:137
+[fma(2, 1; 3, 4; 4, 5)]
+null
+[10.0, 11.0, 12.0, 13.0, 7.0, 8.0, 8.0, 9.0]
+
+# jaq-std/tests/funs.rs:182
+[0, 1][1 | round]
+null
+1
+
+# jaq-std/tests/funs.rs:184
+ 1   | round
+null
+1
+
+# jaq-std/tests/funs.rs:185
+ 1.0 | round
+null
+1
+
+# jaq-std/tests/funs.rs:186
+-1   | round
+null
+-1
+
+# jaq-std/tests/funs.rs:187
+-1.0 | round
+null
+-1
+
+# jaq-std/tests/funs.rs:189
+-1.5 | round
+null
+-2
+
+# jaq-std/tests/funs.rs:190
+-1.5 | floor
+null
+-2
+
+# jaq-std/tests/funs.rs:191
+-1.5 | ceil 
+null
+-1
+
+# jaq-std/tests/funs.rs:193
+-1.4 | round
+null
+-1
+
+# jaq-std/tests/funs.rs:194
+-1.4 | floor
+null
+-2
+
+# jaq-std/tests/funs.rs:195
+-1.4 | ceil 
+null
+-1
+
+# jaq-std/tests/funs.rs:197
+nan | round | isnan
+null
+true
+
+# jaq-std/tests/funs.rs:198
+infinite | round | isinfinite
+null
+true
+
+# jaq-std/tests/funs.rs:199
+2e22 | round | tostring
+null
+"20000000000000000000000"
+
+# jaq-std/tests/funs.rs:205
+[1, 2] | (label $x | sort_by(label $y | ., break $x)), 3
+null
+3
+
+# jaq-std/tests/funs.rs:210
+[1, 2] | label $x | sort_by(label $y | ., break $y)
+null
+[1, 2]
+
+# jaq-std/tests/funs.rs:218
+startswith("")
+"foobar"
+true
+
+# jaq-std/tests/funs.rs:219
+startswith("bar")
+"foobar"
+false
+
+# jaq-std/tests/funs.rs:220
+startswith("foo")
+"foobar"
+true
+
+# jaq-std/tests/funs.rs:221
+startswith("foo")
+""
+false
+
+# jaq-std/tests/funs.rs:226
+endswith("")
+"foobar"
+true
+
+# jaq-std/tests/funs.rs:227
+endswith("foo")
+"foobar"
+false
+
+# jaq-std/tests/funs.rs:228
+endswith("bar")
+"foobar"
+true
+
+# jaq-std/tests/funs.rs:229
+endswith("foo")
+""
+false
+
+# jaq-std/tests/funs.rs:234
+ltrimstr("")
+"foobar"
+"foobar"
+
+# jaq-std/tests/funs.rs:235
+ltrimstr("foo")
+"foobar"
+"bar"
+
+# jaq-std/tests/funs.rs:236
+ltrimstr("bar")
+"foobar"
+"foobar"
+
+# jaq-std/tests/funs.rs:237
+ltrimstr("ا")
+"\u0627\u064e\u0644\u0652\u0639\u064e\u0631\u064e\u0628\u0650\u064a\u064e\u0651\u0629\u064f"
+"\u064e\u0644\u0652\u0639\u064e\u0631\u064e\u0628\u0650\u064a\u064e\u0651\u0629\u064f"
+
+# jaq-std/tests/funs.rs:242
+rtrimstr("")
+"foobar"
+"foobar"
+
+# jaq-std/tests/funs.rs:243
+rtrimstr("bar")
+"foobar"
+"foo"
+
+# jaq-std/tests/funs.rs:244
+rtrimstr("foo")
+"foobar"
+"foobar"
+
+# jaq-std/tests/funs.rs:245
+rtrimstr("ا")
+"\u0627\u064e\u0644\u0652\u0639\u064e\u0631\u064e\u0628\u0650\u064a\u064e\u0651\u0629\u064f"
+"\u0627\u064e\u0644\u0652\u0639\u064e\u0631\u064e\u0628\u0650\u064a\u064e\u0651\u0629\u064f"
+
+# jaq-std/tests/funs.rs:250
+trim
+""
+""
+
+# jaq-std/tests/funs.rs:251
+trim
+" "
+""
+
+# jaq-std/tests/funs.rs:252
+trim
+"  "
+""
+
+# jaq-std/tests/funs.rs:253
+trim
+"foo"
+"foo"
+
+# jaq-std/tests/funs.rs:254
+trim
+" foo  "
+"foo"
+
+# jaq-std/tests/funs.rs:255
+trim
+"  foo  "
+"foo"
+
+# jaq-std/tests/funs.rs:256
+trim
+"foo  "
+"foo"
+
+# jaq-std/tests/funs.rs:257
+trim
+"\u2003foo\u2003"
+"foo"
+
+# jaq-std/tests/funs.rs:258
+trim
+" \u0627\u064e\u0644\u0652\u0639\u064e\u0631\u064e\u0628\u0650\u064a\u064e\u0651\u0629\u064f "
+"\u0627\u064e\u0644\u0652\u0639\u064e\u0631\u064e\u0628\u0650\u064a\u064e\u0651\u0629\u064f"
+
+# jaq-std/tests/funs.rs:263
+ltrim
+""
+""
+
+# jaq-std/tests/funs.rs:264
+ltrim
+" "
+""
+
+# jaq-std/tests/funs.rs:265
+ltrim
+"  "
+""
+
+# jaq-std/tests/funs.rs:266
+ltrim
+"foo"
+"foo"
+
+# jaq-std/tests/funs.rs:267
+ltrim
+" foo  "
+"foo  "
+
+# jaq-std/tests/funs.rs:268
+ltrim
+"  foo  "
+"foo  "
+
+# jaq-std/tests/funs.rs:269
+ltrim
+"foo  "
+"foo  "
+
+# jaq-std/tests/funs.rs:270
+ltrim
+"\u2003foo\u2003"
+"foo\u2003"
+
+# jaq-std/tests/funs.rs:271
+ltrim
+" \u0627\u064e\u0644\u0652\u0639\u064e\u0631\u064e\u0628\u0650\u064a\u064e\u0651\u0629\u064f "
+"\u0627\u064e\u0644\u0652\u0639\u064e\u0631\u064e\u0628\u0650\u064a\u064e\u0651\u0629\u064f "
+
+# jaq-std/tests/funs.rs:276
+rtrim
+""
+""
+
+# jaq-std/tests/funs.rs:277
+rtrim
+" "
+""
+
+# jaq-std/tests/funs.rs:278
+rtrim
+"  "
+""
+
+# jaq-std/tests/funs.rs:279
+rtrim
+"foo"
+"foo"
+
+# jaq-std/tests/funs.rs:280
+rtrim
+"  foo "
+"  foo"
+
+# jaq-std/tests/funs.rs:281
+rtrim
+"  foo  "
+"  foo"
+
+# jaq-std/tests/funs.rs:282
+rtrim
+"  foo"
+"  foo"
+
+# jaq-std/tests/funs.rs:283
+rtrim
+"\u2003foo\u2003"
+"\u2003foo"
+
+# jaq-std/tests/funs.rs:284
+rtrim
+" \u0627\u064e\u0644\u0652\u0639\u064e\u0631\u064e\u0628\u0650\u064a\u064e\u0651\u0629\u064f "
+" \u0627\u064e\u0644\u0652\u0639\u064e\u0631\u064e\u0628\u0650\u064a\u064e\u0651\u0629\u064f"

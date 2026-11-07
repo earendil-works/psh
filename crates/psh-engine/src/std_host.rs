@@ -445,17 +445,17 @@ fn metadata(m: &std::fs::Metadata) -> Metadata {
 }
 
 fn is_executable(p: &std::path::Path) -> bool {
-    match std::fs::metadata(p) {
-        Ok(m) if m.is_file() => {
-            #[cfg(unix)]
-            {
-                use std::os::unix::fs::PermissionsExt;
-                m.permissions().mode() & 0o111 != 0
-            }
-            #[cfg(not(unix))]
-            true
-        }
-        _ => false,
+    let Ok(m) = std::fs::metadata(p) else {
+        return false;
+    };
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        m.is_file() && m.permissions().mode() & 0o111 != 0
+    }
+    #[cfg(not(unix))]
+    {
+        m.is_file()
     }
 }
 

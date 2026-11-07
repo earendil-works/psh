@@ -18,24 +18,29 @@ corpus. It runs locally and prints aggregates only. On the corpus of 2026-11-06:
 |---|--:|
 | commands | 295,401 |
 | parse errors (classified unknown) | 208 (0.07%) |
-| read-only, psh-classify | 153,422 (51.9%) |
+| read-only, psh-classify | 153,853 (52.1%) |
 | read-only, analyze.py ("pure read") | 152,595 (51.7%) |
-| read-only for both | 150,456 |
+| read-only for both | 150,866 |
 
-Primary categories: read 51.9%, unknown 29.3%, build 8.2%, vcs 3.7%, mutate 3.5%,
+Primary categories: read 52.1%, unknown 29.1%, build 8.2%, vcs 3.7%, mutate 3.5%,
 network 3.0%, install 0.3%, long-running 0.1%. Unknown is large because inline
 interpreters (`python3 - <<'PY'`, `node -e`) and local scripts are unknown by design and
 outrank every other category in a command.
 
-Read-only for psh-classify only (2,966): analyze.py labels `ps`, `sleep`, `lsof`,
-`pgrep` "process" (1,579), and treats `node --check`, `--version` queries,
+Read-only for psh-classify only (2,987): analyze.py labels `ps`, `sleep`, `lsof`,
+`pgrep` "process" (about 1,580), and treats `node --check`, `--version` queries,
 `command -v`, `git tag --contains` and `gzip -c` as scripts, builds or writes. All were
 reviewed (as skeletons) and are read-only.
 
-Read-only for analyze.py only (2,139), by psh-classify's reason: a dynamic word that
-could be an option of a utility with writing or code-running options (1,271: mostly
-`sed -n "$(…)"` scripts and `rg "$pattern"`, where `--pre` runs a program), a dynamic
-word in `find`'s arguments (207), `sips` resizing images (155, analyze.py calls all of
-`sips` read-only), unknown programs (133, mostly `sqlite3`), network (109: `git
-ls-remote`, `cargo search`), parse errors (90), repository changes such as
-`git submodule update` (65).
+Read-only for analyze.py only (1,729), by psh-classify's reason: a dynamic word that
+could be an option of a utility with writing or code-running options (1,047: mostly
+`sed -n "$(…)"` scripts and `rg "$x"` with loop variables, where `--pre` runs a
+program), `sips` resizing images (152, analyze.py calls all of `sips` read-only),
+network (109: `git ls-remote`, `cargo search`), a dynamic word in `find`'s arguments
+(95), parse errors (90), repository changes such as `git submodule update` (65),
+`sqlite3` with SQL from stdin or that can run programs (57).
+
+What the follow-ups of the first version added (read-only commands): literal variable
+tracking about +230, read-only `sqlite3` +86 (of 275 `sqlite3` commands, 86 read, 9
+mutate, the rest unknown, mostly SQL on stdin), `$HOME`/`$PWD` paths +115; 153,422
+before, 153,853 after.

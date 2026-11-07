@@ -708,3 +708,36 @@ Windows leg when skipped with `PSH_GATE_WINDOWS=0`). `--full` ignores the cache.
 declare `crates/ Cargo.toml Cargo.lock .cargo/` and `tests/` where tests or runs read it;
 docs, work and research files are nobody's input, so they gate in seconds. Alternatives:
 djs's per-leg input classes in a Python gate (more machinery than we need now).
+## D1240: Literal variable tracking in the classifier
+date: 2026-11-06 · by: shapes · issue: 0024
+A variable's value is substituted where it is used when (1) every write to it anywhere in
+the script (assignments, declaration builtins, `read`, `mapfile`, `getopts`, `printf -v`,
+`for`, `unset`, arithmetic, `${v:=…}`, `+=`, arrays) is the same literal without `~`,
+and (2) at the use, such an assignment has definitely run in the current shell: it is an
+earlier item of an enclosing list (as the item's first pipeline, single-stage, not in the
+background) or an earlier step of the same `&&` chain. Subshells, `{ …; }` groups, branches
+and loops end the scope of their assignments. `eval`, `source`, `trap`, `alias`,
+`enable`, namerefs, dynamic command names or variable names, or a backquote body that does
+not parse turn tracking off for the script. Shell variables (PWD, RANDOM, IFS, ...) and the
+variables of D1092 are never tracked. Unquoted values with blanks or glob characters are
+not substituted (splitting). `bash -c` strings, trap handlers and alias bodies start with
+nothing known; backquote bodies see the enclosing values. Flow-insensitive writes plus a
+definite-assignment check are simple and conservative; a full data-flow analysis would buy
+little (about 230 more read-only commands in the corpus came from this).
+
+## D1241: sqlite3 is classified from its literal SQL
+date: 2026-11-06 · by: shapes · issue: 0024
+`sqlite3 [OPTIONS] FILE SQL...` is read when every SQL argument (and `-cmd` value) is
+SELECT/VALUES/WITH/EXPLAIN without writing keywords, a known read pragma without a value,
+or a dot-command that only shows things (`.schema`, `.tables`, `.mode`, ...); mutate when
+it writes the database; unknown with no SQL arguments (SQL on stdin), `-init`, the archive
+mode, ATTACH/DETACH, `load_extension`, `writefile`, `edit`, `VACUUM INTO` or any other
+dot-command (`.shell`, `.system`, `.output`, `.import`, ...). `-readonly` alone does not
+make it read, since dot-commands can still run programs.
+
+## D1242: `$HOME` and `$PWD` are paths, not options
+date: 2026-11-06 · by: shapes · issue: 0024
+A word that starts with `$HOME`, `${HOME}`, `$PWD` or `${PWD}` (quoted or not) cannot be
+an option for the dynamic-option rule of D1092: both are absolute paths in practice (PWD
+always, HOME by every platform's convention), so `rg x "$HOME/.config"` is read. Their
+values are still not substituted.

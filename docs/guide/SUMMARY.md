@@ -6,7 +6,7 @@
 - [The language: bash as agents write it]()
 - [Utilities that run in-process]()
 - [psh on Windows]()
-- [Understanding commands: parsing and classification]()
+- [Understanding commands: parsing and classification](classify.md)
 - [Cancellation, timeouts and background jobs]()
 - [Embedding psh in a host]()
 - [psh in the browser]()

@@ -72,7 +72,7 @@ pub fn dir_name(p: &[u8]) -> Vec<u8> {
 
 /// The root of an absolute path and its components: `/` (or `C:/` on Windows).
 fn split_root(p: &[u8]) -> (Vec<u8>, &[u8]) {
-    if p.len() >= 2 && p[0].is_ascii_alphabetic() && p[1] == b':' {
+    if cfg!(windows) && p.len() >= 2 && p[0].is_ascii_alphabetic() && p[1] == b':' {
         let rest = &p[2..];
         return (p[..2].to_vec(), rest);
     }

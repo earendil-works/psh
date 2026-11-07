@@ -225,8 +225,6 @@ brush/compat/builtins/shift/2
 brush/compat/builtins/shift/3
 brush/compat/builtins/shift/4
 brush/compat/builtins/shopt/10
-brush/compat/builtins/test/3
-brush/compat/builtins/test/4
 brush/compat/builtins/test/33
 brush/compat/builtins/test/34
 brush/compat/builtins/times/3

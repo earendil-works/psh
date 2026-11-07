@@ -48,7 +48,30 @@ group (off switch).
   numbers, dir modes, link counts). Windows and JS hosts: by their owners, on the
   coordinator's split; until then they answer Unsupported. Outside `touches:` by
   necessity: psh-engine host.rs/util.rs/std_host.rs/testhost.rs, psh-os unix.
+- Part 1: `basename dirname readlink realpath mkdir rmdir touch` (written for psh after
+  the manuals; no ported code). Shared helpers in new modules, for any utility:
+  `fsutil.rs` (GNU quoting `q`, `resolve` for realpath/readlink -f/-e/-m, `lexical`,
+  `relative_to`, `base_name`/`dir_name`), `modes.rs` (chmod modes, octal and symbolic,
+  `mode_string`), `timefmt.rs` (civil calendar, local time via `UtilCtx::utc_offset`,
+  `parse_date` for a subset of GNU date strings, `parse_stamp` for `-t`). Unit tests in
+  `src/tests/files.rs` (a child of tests.rs, so batch tests don't collide).
+- `pwd` stays the shell builtin (found first; wrappers run it as a standalone builtin):
+  no utility.
+- Dialect choices in part 1: `realpath` with no operand resolves `.` (BSD; GNU errors);
+  `realpath f/` and a missing last component follow GNU (D016 default); `touch -d`
+  parses ISO dates and times, `@N`, month names, zones, relative items (`2 days ago`,
+  `-1 hour`, `yesterday`, `last week`), `am/pm`; anything else falls through to the real
+  `touch` (or `invalid date format`). Messages are GNU's, with its quoting (‘x’ in UTF-8
+  locales).
+- Classifier: `basename -s/--suffix`, `realpath --relative-to/--relative-base` and
+  `touch --time` take values (psh-classify utils.rs).
+- Wasm: the JS host has no D1150 operations yet, so `mkdir`/`touch`/`rmdir` fail there
+  with "Operation not supported" instead of "command not found"; the cases that used
+  them got wasm ratchet lines naming that (remove with --update-ratchet once the JS host
+  has them).
 
 ## Follow-ups
+- JS host (psh-wasm, js/psh.mjs) and Windows host: implement the D1150 operations
+  (coordinator assigns to infra/windows).
 
 ## Result

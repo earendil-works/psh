@@ -500,8 +500,10 @@ impl Host for UnixHost {
     }
 
     fn kill(&self, pid: i32, sig: Signal) -> io::Result<()> {
+        // psh numbers signals as Linux does everywhere (D1904); one this OS lacks
+        // (SIGSTKFLT, SIGPWR and the real-time ones on macOS) cannot be sent.
         let Some(sig) = signum::to_os(sig) else {
-            return Err(io::ErrorKind::InvalidInput.into());
+            return Err(io::ErrorKind::Unsupported.into());
         };
         // Embedded (a fake `$$`), the process and its group are the embedder's: a
         // script must not reach them (`kill 0`, `kill -1` and the real pid included).

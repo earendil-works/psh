@@ -345,3 +345,22 @@ fn a_foreground_programs_signal_death_is_reported() {
         "{r:?}"
     );
 }
+
+#[test]
+fn signal_numbers_are_linuxs_everywhere() {
+    // One numbering on every system (D1904): 10 is USR1 on macOS too, and `$?` of a
+    // death by it is 138.
+    let r =
+        run("kill -l 10; sh -c 'kill -USR1 $$'; echo $?; sleep 30 & kill -10 $!; wait $!; echo $?");
+    assert_eq!(r.stdout, "USR1\n138\n138\n", "{r:?}");
+    // A signal the system lacks fails clearly.
+    let r = run("kill -STKFLT 99999; echo $?");
+    assert_eq!(r.stdout, "1\n", "{r:?}");
+    if cfg!(target_os = "macos") {
+        assert!(
+            r.stderr
+                .contains("kill: SIGSTKFLT: no such signal on this system"),
+            "{r:?}"
+        );
+    }
+}

@@ -103,6 +103,13 @@ Close the process-layer follow-ups from 0006 and the coordinator's queue.
   builtin-pipeline speed, so not done here.
 - Guide: `processes.md` ("Processes on Unix") written and listed in SUMMARY.md.
 
+### 2026-11-07 addendum: one signal numbering (D1904)
+- Coordinator decision recorded. psh-os's `Host::kill` reports an unmapped signal as
+  `Unsupported`; `kill` says "no such signal on this system". `kill -- -$$` raises in the
+  shell like `kill 0`. Tests: engine `kill_on_the_shell_reaches_its_traps`, L5
+  `signal_numbers_are_linuxs_everywhere`. Landed from the 0017 branch (the worktree
+  moved).
+
 ## Follow-ups
 - Engine: wire `Host::info()` into `UID`, `EUID`, `PPID`, `GROUPS`, `HOSTNAME`, `OSTYPE`,
   `MACHTYPE`, `HOSTTYPE` (engine agent).

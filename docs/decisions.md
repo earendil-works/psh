@@ -2038,3 +2038,16 @@ run's whole output goes to `work/scratch/windows-gate/logs/NAME-TIME-PID.log` in
 primary checkout (the newest 40 kept), and the runner copies a failing leg's log from the
 VM next to it (`...-LEG.log`), so a failure can be read afterwards even when prlctl lost
 the stream; a failing run prints the path.
+## D1904: One signal numbering everywhere: Linux's
+date: 2026-11-07 · by: procs · issue: 0030
+Coordinator decision, recorded here. psh numbers signals as Linux does on every platform,
+macOS and Windows included: `kill -l`, `trap -l`, `kill -10`, `$?` = 128+n for a death by
+a signal all use Linux numbers, as the engine and the goldens do (D1283); psh-os maps them
+to the OS's own at its boundary (sending, `sig_ignore`, decoding wait statuses: on macOS
+SIGUSR1 is 30 natively and 10 in psh). Reason: portable and consistent rank above exact
+host-bash parity (D033), and agents' scripts behave the same everywhere. A signal the
+system lacks (SIGSTKFLT, SIGPWR, the real-time ones on macOS) cannot be sent: `kill`
+says `kill: SIGSTKFLT: no such signal on this system` (status 1); to a job without an
+OS process (a virtual pid) it is still delivered. `kill $$`, `kill 0` and `kill -- -$$`
+reach the shell's pending mask (D1284), the latter two also the rest of its group where
+the host may signal it.

@@ -126,3 +126,12 @@ fn a_file_the_host_rejects_runs_as_a_script() {
             .contains("/b: cannot execute binary file: Exec format error")
     );
 }
+
+#[test]
+fn kill_on_the_shell_reaches_its_traps() {
+    // `$$`, 0 and the shell's own group (D1284, D1904).
+    check(
+        "trap 'echo got' USR1; kill -USR1 $$; kill -10 0; kill -s USR1 -- -$$; echo end",
+        "got\ngot\ngot\nend\n",
+    );
+}

@@ -270,10 +270,16 @@ pub(super) async fn kill(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         // The shell itself (`$$`, and its group with `0`): the signal goes to the
         // shell's pending mask, so traps run (D1284); with 0 the host signals the
         // rest of the group too, where it may.
-        if pid == 0 || u32::try_from(pid).is_ok_and(|p| p == vp.host().pid()) {
+        let me = vp.host().pid();
+        if pid == 0
+            || u32::try_from(pid).is_ok_and(|p| p == me)
+            || pid.checked_neg().and_then(|g| u32::try_from(g).ok()) == Some(me)
+        {
+            // `kill 0` and `kill -- -$$` (the shell's group) also reach the rest of
+            // the group where the host may signal it.
             vp.core.sched.raise(sig);
-            if pid == 0 {
-                let _ = vp.host().kill(0, sig);
+            if pid <= 0 {
+                let _ = vp.host().kill(pid, sig);
             }
             continue;
         }
@@ -288,6 +294,14 @@ pub(super) async fn kill(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             continue;
         }
         if let Err(e) = vp.host().kill(pid, sig) {
+            if e.kind() == std::io::ErrorKind::Unsupported {
+                // A signal of psh's (Linux) numbering this system does not have (D1904).
+                let name = signals::name(sig).unwrap_or_else(|| sig.to_string());
+                vp.error(&format!("kill: {name}: no such signal on this system"))
+                    .await;
+                status = 1;
+                continue;
+            }
             // kill(2)'s EPERM, not open(2)'s EACCES wording.
             let text = if e.kind() == std::io::ErrorKind::PermissionDenied {
                 "Operation not permitted".to_string()

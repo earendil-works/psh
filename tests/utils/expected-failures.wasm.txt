@@ -15,6 +15,11 @@ utils/rmdir/basic/1: the JS host has no file system changes yet (mkdir, touch, r
 utils/rmdir/basic/5: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
 utils/rmdir/basic/6: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
 utils/rmdir/basic/7: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
-utils/touch/basic/5: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
-utils/touch/basic/6: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
-utils/touch/basic/10: the JS host has no file system changes yet (mkdir, touch, rmdir: D1150); remove when it has
+utils/touch/basic/5: the JS host has no set_times yet (D1150): touch fails and the comparison depends on when the files were made; remove when it has
+utils/touch/basic/6: the JS host has no set_times yet (D1150): touch fails and the comparison depends on when the files were made; remove when it has
+utils/touch/basic/7: the JS host has no set_times yet (D1150): touch fails and the comparison depends on when the files were made; remove when it has
+utils/touch/basic/8: the JS host has no set_times yet (D1150): touch fails and the comparison depends on when the files were made; remove when it has
+utils/touch/basic/9: the JS host has no set_times yet (D1150): touch fails and the comparison depends on when the files were made; remove when it has
+utils/touch/basic/10: the JS host has no set_times yet (D1150): touch fails and the comparison depends on when the files were made; remove when it has
+utils/touch/basic/11: the JS host has no set_times yet (D1150): touch fails and the comparison depends on when the files were made; remove when it has
+utils/touch/basic/12: the JS host has no set_times yet (D1150): touch fails and the comparison depends on when the files were made; remove when it has

@@ -334,12 +334,17 @@ impl Vp {
             Dynamic::BashSource => calls.map(|c| c.source.clone().into_bytes()).collect(),
             Dynamic::BashLineno => calls.map(|c| c.line.to_string().into_bytes()).collect(),
             Dynamic::BashArgc | Dynamic::BashArgv => {
-                if !self.opts.shopt(crate::options::Shopt::Extdebug) {
-                    return Vec::new();
-                }
-                let mut frames: Vec<&[Vec<u8>]> =
-                    self.calls.iter().rev().map(|c| &c.args[..]).collect();
-                if file {
+                // Function frames under extdebug only; `source` always records its
+                // arguments; the script's own frame is at the bottom (bash).
+                let extdebug = self.opts.shopt(crate::options::Shopt::Extdebug);
+                let mut frames: Vec<&[Vec<u8>]> = self
+                    .calls
+                    .iter()
+                    .rev()
+                    .filter(|c| c.sourced || extdebug)
+                    .map(|c| &c.args[..])
+                    .collect();
+                if extdebug || !frames.is_empty() {
                     frames.push(&self.script_args);
                 }
                 return if d == Dynamic::BashArgc {

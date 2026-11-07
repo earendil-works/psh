@@ -425,24 +425,32 @@ impl Host for WindowsHost {
     }
 }
 
-/// The engine's view of a few environment defaults bash scripts expect (D1075): `HOME`
-/// from `USERPROFILE` and `TMPDIR` as `/tmp`'s target, both `/`-separated, unless set.
-/// For embedders and the standalone shell to add to the shell's environment.
-pub fn env_defaults(env: &[(Vec<u8>, Vec<u8>)]) -> Vec<(Vec<u8>, Vec<u8>)> {
-    let has = |k: &[u8]| env.iter().any(|(n, _)| n.eq_ignore_ascii_case(k));
-    let mut out = Vec::new();
-    if !has(b"HOME")
+/// The shell's environment from the process's (D1075): Windows names are
+/// case-insensitive, shell variables are not, so `Path` (however it is spelled) becomes
+/// `PATH`, the name scripts use; `HOME` defaults to `USERPROFILE` and `TMPDIR` to the
+/// temp directory, both `/`-separated. For the standalone shell and embedders.
+pub fn shell_env(env: Vec<(Vec<u8>, Vec<u8>)>) -> Vec<(Vec<u8>, Vec<u8>)> {
+    let mut env: Vec<(Vec<u8>, Vec<u8>)> = env
+        .into_iter()
+        .map(|(k, v)| {
+            if k.eq_ignore_ascii_case(b"PATH") {
+                (b"PATH".to_vec(), v)
+            } else {
+                (k, v)
+            }
+        })
+        .collect();
+    let has = |env: &[(Vec<u8>, Vec<u8>)], k: &[u8]| env.iter().any(|(n, _)| n == k);
+    if !has(&env, b"HOME")
         && let Some(home) = std::env::var_os("USERPROFILE")
     {
-        out.push((
-            b"HOME".to_vec(),
-            path::engine_path(std::path::Path::new(&home)),
-        ));
+        let home = path::engine_path(std::path::Path::new(&home));
+        env.push((b"HOME".to_vec(), home));
     }
-    if !has(b"TMPDIR") {
-        out.push((b"TMPDIR".to_vec(), path::temp_dir()));
+    if !has(&env, b"TMPDIR") {
+        env.push((b"TMPDIR".to_vec(), path::temp_dir()));
     }
-    out
+    env
 }
 
 #[cfg(test)]

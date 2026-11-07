@@ -382,9 +382,10 @@ fn files_and_paths() {
 }
 
 #[test]
-fn env_defaults_fill_home_and_tmpdir() {
-    let d = env_defaults(&[]);
-    assert!(d.iter().any(|(k, v)| k == b"TMPDIR" && !v.contains(&b'\\')));
-    let d = env_defaults(&[(b"home".to_vec(), b"x".to_vec())]);
-    assert!(!d.iter().any(|(k, _)| k == b"HOME"));
+fn shell_env_names_path_and_fills_home_and_tmpdir() {
+    let e = shell_env(vec![(b"Path".to_vec(), b"C:/x".to_vec())]);
+    assert!(e.iter().any(|(k, v)| k == b"PATH" && v == b"C:/x"));
+    assert!(e.iter().any(|(k, v)| k == b"TMPDIR" && !v.contains(&b'\\')));
+    let e = shell_env(vec![(b"HOME".to_vec(), b"x".to_vec())]);
+    assert!(e.iter().filter(|(k, _)| k == b"HOME").count() == 1);
 }

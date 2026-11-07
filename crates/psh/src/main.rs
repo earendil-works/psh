@@ -167,8 +167,7 @@ fn main() -> ExitCode {
                 .iter()
                 .map(|&b| if b == b'\\' { b'/' } else { b })
                 .collect();
-            let defaults = psh_os::windows::env_defaults(&cfg.env);
-            cfg.env.extend(defaults);
+            cfg.env = psh_os::windows::shell_env(std::mem::take(&mut cfg.env));
         }
         cfg.stdin = stdin;
         cfg.stdout = stdout;

@@ -248,7 +248,50 @@ ones); PATHEXT lookup and the `#!` rule; `/dev/null`, `C:\x`, `C:/x`, `/c/x` in 
 and redirections; CRLF scripts; a 64+ KiB here-doc into an external; psh's stdin shared
 between `read` and a child. They run in the gate's `test` and `test-x64` legs.
 
+### 2026-11-07 Part B, part 1: the Windows host
+- `crates/psh-os/src/windows/`: `WindowsHost` (`WindowsConfig { placement, grace, pid,
+  leftovers, decode }`, `kill_all`, `killer()`/`RunKiller`, `groups()`, `leftovers()`,
+  `settle`), mirroring the Unix host and D1067's leftovers policy. `Leftovers` moved to
+  `psh_os::Leftovers` (re-exported from `unix`, so nothing changes there).
+  - `spawn.rs` (D1074): suspended `CreateProcessW` → own Job Object (kill-on-close for
+    the run's jobs) → resume; stdio-only handle list; `Placement::Group` (new console
+    group) or `Inherit` (standalone); `CREATE_NO_WINDOW` without a console; batch files
+    through cmd.exe; `#!` interpreters from the child's PATH; waiter thread per external
+    on the lifecycle `Tracker`; ctrl-break or `TerminateJobObject`; abandon escalation;
+    crash codes as signals; `Host::kill` by pid (run's externals via their job, others
+    `TerminateProcess`), refusing the embedder's own pid.
+  - `cmdline.rs`: MSVCRT and BatBadBut quoting after std (NOTICE).
+  - `file.rs` + `poller.rs` (D1077): `WinFile`; pump pipes as private overlapped named
+    pipes with a helper thread each (cancel event + `CancelIoEx`); shared pipes read via
+    `PeekNamedPipe` and a poller thread, written synchronously; optional ANSI decoding of
+    pumped child output (D1078).
+  - `path.rs` (D1075, D1076): `C:/x`, `/c/x`, `/dev/null` → `NUL`, `/tmp` → temp dir;
+    `\\?\` stripped from canonical paths; PATH split on `;` and on `:` except after a
+    drive letter; `resolve` with PATHEXT, `#!` bare names, App Execution Aliases;
+    `stat` with volume serial + file index as dev/ino, synthesized modes;
+    `shell_env` (Path → PATH, HOME, TMPDIR).
+- `psh` (standalone: `Inherit`, `Leftovers::Keep`, `shell_env`) and psh-spec's
+  in-process engine use `WindowsHost` on Windows; the std host is no longer used there.
+- Tests: unit tests (quoting, env block, exit codes, paths, PATH splitting, shebangs,
+  pumps, shared pipes, decoder) and host tests in `windows/tests.rs` (exit codes and
+  output, a 160 KB input pipe through findstr, abandon kills a tree with a grandchild,
+  KILL/TERM/`Host::kill`, release + `kill_all`, disown/detach leave the run, batch file
+  arguments with spaces, `&` and `%` and refusal of line breaks, lookup + `#!/usr/bin/env`
+  into a `.cmd` interpreter, files, `/c/x` = `C:/x`, `/dev/null`, `Host::pipe`). All
+  pass on arm64 and x64 in the VM; an end-to-end run of `psh.exe` with cmd, findstr,
+  ping, pipelines, here-docs and `$(...)` works.
+- Found on the way: `$(cmd /c echo sub)` keeps the `\r` of CRLF output (ARCH's "Windows
+  rules" says `$(…)` and `read` strip it): engine work, reported to the coordinator.
+- Docs: ARCH.md (hosts table, psh-os Windows, Windows rules), TESTING.md (psh-spec host),
+  NOTICE (std, oh-my-pi windows spawn). Guide: none (windows.md is a follow-up).
+
 ## Follow-ups
+- Engine: strip the `\r` of CRLF in `$(…)` and `read` on Windows (ARCH "Windows rules").
+- Engine: the "run this file in psh" hook (D1079).
+- L5 on Windows: `tests/process` is Unix-only; a cross-platform helper binary and the
+  Windows cases (part 2).
+- Standalone psh on Windows: a console ctrl handler (Ctrl-C/Ctrl-Break cancel the run,
+  `settle`, exit like bash) (part 2).
 - Delete the old per-worktree checkouts in the VM (C:\psh-gate\<worktree>) once no
   old-style run is left.
 - If the owner agrees: disable XtaCache in the VM (D1072); then the wait and retry are a

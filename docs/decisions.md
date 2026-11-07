@@ -1238,8 +1238,10 @@ date: 2026-11-07 · by: windows (as proposed by the coordinator) · issue: 0007
 The host maps `/dev/null` to `NUL`, `/tmp` and paths below it to the user's temp
 directory, and `/c/...` to `C:/...` (Git Bash style), at its boundary. The engine still
 sees the path as written (`cd /tmp; pwd` prints `/tmp`). The standalone shell (and any
-embedder that calls `psh_os::windows::env_defaults`) sets `HOME` from `USERPROFILE` and
-`TMPDIR` to the temp directory, `/`-separated, unless they are set.
+embedder that calls `psh_os::windows::shell_env`) names the OS's `Path` `PATH` (shell
+variables are case-sensitive, Windows names are not), and sets `HOME` from
+`USERPROFILE` and `TMPDIR` to the temp directory (long names), `/`-separated, unless
+they are set.
 
 ## D1076: Windows command lookup
 date: 2026-11-07 · by: windows · issue: 0007

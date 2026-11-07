@@ -13,13 +13,30 @@ fn invalid(msg: &str) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidInput, msg.to_string())
 }
 
-/// The user's temp directory, `/`-separated, without a trailing slash.
+/// The user's temp directory, `/`-separated, without a trailing slash, with long names
+/// (`TEMP` is often in 8.3 form, `C:/Users/ABCDEF~1/...`).
 pub(crate) fn temp_dir() -> Vec<u8> {
-    let mut t = engine_path(&std::env::temp_dir());
+    let tmp = std::env::temp_dir();
+    let tmp = long_path(&tmp).unwrap_or(tmp);
+    let mut t = engine_path(&tmp);
     while t.len() > 3 && t.last() == Some(&b'/') {
         t.pop();
     }
     t
+}
+
+/// The long form of an existing path (`GetLongPathNameW`).
+fn long_path(p: &Path) -> Option<PathBuf> {
+    use std::os::windows::ffi::OsStringExt;
+    use windows_sys::Win32::Storage::FileSystem::GetLongPathNameW;
+    let w = wide(p.as_os_str()).ok()?;
+    let mut buf = vec![0u16; 1024];
+    // SAFETY: a NUL-terminated input and a writable buffer of the given length.
+    let n = unsafe { GetLongPathNameW(w.as_ptr(), buf.as_mut_ptr(), buf.len() as u32) } as usize;
+    if n == 0 || n >= buf.len() {
+        return None;
+    }
+    Some(PathBuf::from(std::ffi::OsString::from_wide(&buf[..n])))
 }
 
 /// An engine path as the host's native path. Invalid UTF-8 cannot name a Windows file

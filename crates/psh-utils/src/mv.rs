@@ -136,7 +136,11 @@ async fn move_one(
         let d_dir = dm.kind == FileKind::Dir;
         let s_dir = sm.kind == FileKind::Dir;
         if d_dir && !s_dir {
-            let msg = format!("cannot overwrite directory '{}' with non-directory", s(dst));
+            let msg = format!(
+                "cannot overwrite directory '{}' with non-directory '{}'",
+                s(dst),
+                s(src)
+            );
             ctx.error(&msg).await;
             return false;
         }

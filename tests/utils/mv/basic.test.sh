@@ -23,7 +23,7 @@ ls d
 mkdir -p d/e
 touch d/e/f
 mv d x
-ls -R x
+ls x x/e
 
 #### a directory into an existing directory
 mkdir a b
@@ -56,6 +56,7 @@ mv f e
 echo "status=$?"
 
 #### the same file
+## expect: gnu (BSD mv renames a file onto itself and succeeds)
 touch a
 mv a ./a
 echo "status=$?"
@@ -117,6 +118,7 @@ mv d/ e
 ls
 
 #### no operand
+## expect: gnu (D016: GNU's usage status; BSD exits 64)
 mv
 echo "status=$?"
 mv a

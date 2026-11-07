@@ -37,7 +37,7 @@ mkdir -p d/e
 echo f > d/e/f
 echo g > d/g
 cp -R d x
-ls -R x
+ls x x/e
 cat x/e/f
 
 #### -r is -R
@@ -155,7 +155,7 @@ mkdir -p d x/y
 touch a x/y/z
 cp -t d a
 cp --parents x/y/z d
-ls -R d
+ls d d/x d/x/y
 mkdir e f
 cp -RT e f
 ls
@@ -182,6 +182,7 @@ cp -c a b
 cat b
 
 #### no operand
+## expect: gnu (D016: GNU's usage status; BSD exits 64)
 cp
 echo "status=$?"
 cp a

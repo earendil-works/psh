@@ -149,10 +149,20 @@ async fn link_one(
     } else {
         "hard link"
     };
-    if !symbolic && let Err(e) = ctx.stat(src, logical).await {
-        let msg = format!("failed to access '{}': {}", s(src), error_text(&e));
-        ctx.error(&msg).await;
-        return false;
+    if !symbolic {
+        match ctx.stat(src, logical).await {
+            Err(e) => {
+                let msg = format!("failed to access '{}': {}", s(src), error_text(&e));
+                ctx.error(&msg).await;
+                return false;
+            }
+            Ok(m) if m.kind == FileKind::Dir => {
+                let msg = format!("{}: hard link not allowed for directory", s(src));
+                ctx.error(&msg).await;
+                return false;
+            }
+            Ok(_) => {}
+        }
     }
     if let Ok(dm) = ctx.stat(dst, false).await {
         if !symbolic

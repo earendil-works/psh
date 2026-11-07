@@ -1,0 +1,142 @@
+# Goldens for tests/utils/chmod/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: octal modes
+status: 0
+bash-n: 0
+--- stdout
+|-rwxr-xr-x
+|-rw-------
+|----------
+--- other f
+
+=== 1: +x and friends
+status: 0
+bash-n: 0
+--- stdout
+|-rwxr-xr-x
+|-rw-r--r--
+|-rwxrw-r--
+--- file f
+
+=== 2: +w and = without who follow the umask
+status: 0
+bash-n: 0
+--- stdout
+|-rw-r--r--
+|-rw-r--r--
+--- file f
+
+=== 3: a, o, = and copying
+status: 0
+bash-n: 0
+--- stdout
+|-r--r--r--
+|-rwx------
+|-rwxrwx---
+|-rwxrwx--x
+--- file f
+
+=== 4: X only for directories and executables
+status: 0
+bash-n: 0
+--- stdout
+|total 0
+|-rw-r--r--
+|-rwxr-xr-x
+|drwxr-xr-x
+--- dir d
+--- file d/f
+--- file d/x
+
+=== 5: setuid, setgid and sticky
+status: 0
+bash-n: 0
+--- stdout
+|-rwSr-Sr--
+|drwxr-xr-t
+|-rwsr-xr-x
+--- dir d
+--- file f
+
+=== 6: -R changes a tree
+status: 0
+bash-n: 0
+--- stdout
+|drwx------
+|drwx------
+|-rw-------
+|-rw-------
+--- dir d
+--- dir d/e
+--- file d/e/g
+--- file d/f
+
+=== 7: -R does not follow symlinks inside
+status: 0
+bash-n: 0
+--- stdout
+|-rw-r--r--
+--- dir d
+--- link d/l -> ../t
+--- file t
+
+=== 8: a symlink operand is followed
+status: 0
+bash-n: 0
+--- stdout
+|-rw-------
+--- link l -> t
+--- file t
+
+=== 9: a missing file
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|chmod: cannot access 'nope': No such file or directory
+
+=== 10: an invalid mode
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|chmod: invalid mode: ‘bad’
+|Try 'chmod --help' for more information.
+|chmod: invalid mode: ‘8’
+|Try 'chmod --help' for more information.
+--- file f
+
+=== 11: -v and -c
+status: 0
+bash-n: 0
+--- stdout
+|mode of 'f' changed from 0644 (rw-r--r--) to 0755 (rwxr-xr-x)
+|mode of 'f' retained as 0755 (rwxr-xr-x)
+|mode of 'f' changed from 0755 (rwxr-xr-x) to 0700 (rwx------)
+--- file f
+
+=== 12: --reference
+status: 0
+bash-n: 0
+--- stdout
+|-rw-r-----
+--- file f
+--- file g
+
+=== 13: no operand
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|chmod: missing operand
+|Try 'chmod --help' for more information.
+|chmod: missing operand after ‘755’
+|Try 'chmod --help' for more information.

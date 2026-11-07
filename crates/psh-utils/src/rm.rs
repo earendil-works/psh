@@ -99,6 +99,23 @@ async fn removed(ctx: &mut UtilCtx<'_>, o: &Opts, what: &str, f: &[u8]) -> bool 
     true
 }
 
+/// `rmdir`, except through a symlink: `link/` names the directory the link points to,
+/// whose contents `-r` removes, but the link is not a directory (as GNU: some systems'
+/// `rmdir` would remove the target).
+async fn remove_dir(ctx: &mut UtilCtx<'_>, f: &[u8]) -> io::Result<()> {
+    let end = f.len() - f.iter().rev().take_while(|&&b| b == b'/').count();
+    if end > 0
+        && end < f.len()
+        && ctx
+            .stat(&f[..end], false)
+            .await
+            .is_ok_and(|m| m.kind == FileKind::Symlink)
+    {
+        return Err(io::ErrorKind::NotADirectory.into());
+    }
+    ctx.remove_dir(f).await
+}
+
 /// Removes `f` (a tree with `-r`): whether everything went.
 fn remove<'a, 'v>(
     ctx: &'a mut UtilCtx<'v>,
@@ -130,7 +147,7 @@ fn remove<'a, 'v>(
         }
         if !o.recursive {
             if o.dir {
-                return match ctx.remove_dir(&f).await {
+                return match remove_dir(ctx, &f).await {
                     Ok(()) => removed(ctx, o, "directory ", &f).await,
                     Err(e) => {
                         report(ctx, &f, &e).await;
@@ -160,7 +177,7 @@ fn remove<'a, 'v>(
             // A child stayed: the directory cannot go, and that was reported already.
             return false;
         }
-        match ctx.remove_dir(&f).await {
+        match remove_dir(ctx, &f).await {
             Ok(()) => removed(ctx, o, "directory ", &f).await,
             Err(e) => {
                 report(ctx, &f, &e).await;

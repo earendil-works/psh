@@ -1,0 +1,202 @@
+# Goldens for tests/utils/mv/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: rename a file
+status: 0
+bash-n: 0
+--- stdout
+|b
+|a
+--- file b
+|a
+
+=== 1: replace an existing file
+status: 0
+bash-n: 0
+--- stdout
+|new
+|b
+--- file b
+|new
+
+=== 2: move into a directory
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+--- dir d
+--- file d/a
+--- file d/b
+
+=== 3: rename a directory
+status: 0
+bash-n: 0
+--- stdout
+|x:
+|e
+|
+|x/e:
+|f
+--- dir x
+--- dir x/e
+--- file x/e/f
+
+=== 4: a directory into an existing directory
+status: 0
+bash-n: 0
+--- stdout
+|b:
+|a
+|
+|b/a:
+|f
+--- dir b
+--- dir b/a
+--- file b/a/f
+
+=== 5: several sources need a directory
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|mv: target 'c': Not a directory
+--- file a
+--- file b
+--- file c
+
+=== 6: a missing source
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|mv: cannot stat 'nope': No such file or directory
+
+=== 7: into itself
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|kept
+--- stderr
+|mv: cannot move 'd' to a subdirectory of itself, 'd/e/d'
+--- dir d
+--- dir d/e
+
+=== 8: a directory over a file and a file over a directory
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|mv: cannot overwrite non-directory 'f' with directory 'd'
+|mv: cannot overwrite directory 'e/f' with non-directory 'f'
+--- dir d
+--- dir e
+--- dir e/f
+--- file f
+
+=== 9: the same file
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|mv: 'a' and './a' are the same file
+--- file a
+
+=== 10: -n does not overwrite
+status: 0
+bash-n: 0
+--- stdout
+|b
+|a
+|b
+--- file a
+|a
+--- file b
+|b
+
+=== 11: -f overwrites
+status: 0
+bash-n: 0
+--- stdout
+|a
+--- file b
+|a
+
+=== 12: -v reports the rename
+status: 0
+bash-n: 0
+--- stdout
+|renamed 'a' -> 'b'
+--- file b
+
+=== 13: -t and -T
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|d
+|f
+--- dir d
+--- file d/a
+--- file d/b
+--- dir f
+
+=== 14: -b keeps a backup
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+--- file b
+|a
+--- file b~
+|b
+
+=== 15: -u keeps a newer destination
+status: 0
+bash-n: 0
+--- stdout
+|new
+|a
+|b
+--- file a
+|old
+--- file b
+|new
+
+=== 16: a symlink is moved, not its target
+status: 0
+bash-n: 0
+--- stdout
+|m
+|t
+|t
+--- link m -> t
+--- file t
+
+=== 17: a trailing slash on a directory
+status: 0
+bash-n: 0
+--- stdout
+|e
+--- dir e
+
+=== 18: no operand
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|mv: missing file operand
+|Try 'mv --help' for more information.
+|mv: missing destination file operand after 'a'
+|Try 'mv --help' for more information.

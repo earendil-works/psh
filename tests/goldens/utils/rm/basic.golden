@@ -1,0 +1,134 @@
+# Goldens for tests/utils/rm/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: files
+status: 0
+bash-n: 0
+
+=== 1: a missing file fails, -f is quiet
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=0
+--- stderr
+|rm: cannot remove 'nope': No such file or directory
+
+=== 2: a directory needs -r or -d
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=0
+|gone
+--- stderr
+|rm: cannot remove 'd': Is a directory
+
+=== 3: -d fails on a non-empty directory
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|rm: cannot remove 'd': Directory not empty
+--- dir d
+--- file d/f
+
+=== 4: -r removes a tree
+status: 0
+bash-n: 0
+--- stdout
+|gone
+
+=== 5: -rf on a mix of existing and missing names
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+
+=== 6: -R is -r
+status: 0
+bash-n: 0
+--- stdout
+|gone
+
+=== 7: symlinks are removed, not followed
+status: 0
+bash-n: 0
+--- stdout
+|f
+--- dir keep
+--- dir keep/inner
+--- file keep/inner/f
+
+=== 8: a symlink to a directory with a trailing slash
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|link-kept
+--- stderr
+|rm: cannot remove 'link/': Not a directory
+--- link link -> real
+--- dir real
+
+=== 9: . and .. are refused
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+|kept
+--- stderr
+|rm: refusing to remove '.' or '..' directory: skipping '.'
+|rm: refusing to remove '.' or '..' directory: skipping 'd/..'
+--- dir d
+
+=== 10: / is refused
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|rm: it is dangerous to operate recursively on '/'
+|rm: use --no-preserve-root to override this failsafe
+
+=== 11: -v reports each name
+status: 0
+bash-n: 0
+--- stdout
+|removed 'f'
+|removed 'd/e/g'
+|removed directory 'd/e'
+|removed directory 'd'
+
+=== 12: write-protected files go without prompting when stdin is not a terminal
+status: 0
+bash-n: 0
+--- stdout
+|gone
+
+=== 13: a file in a read-only directory cannot be removed
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|rm: cannot remove 'd/f': Permission denied
+--- dir d
+--- file d/f
+
+=== 14: no operand
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=0
+--- stderr
+|rm: missing operand
+|Try 'rm --help' for more information.
+
+=== 15: --
+status: 0
+bash-n: 0

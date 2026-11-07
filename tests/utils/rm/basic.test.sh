@@ -97,6 +97,7 @@ echo "status=$?"
 chmod 755 d
 
 #### no operand
+## expect: gnu (D016: GNU's usage status; BSD exits 64)
 rm
 echo "status=$?"
 rm -f

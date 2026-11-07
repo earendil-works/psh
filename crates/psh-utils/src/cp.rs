@@ -303,12 +303,13 @@ pub async fn targets(
             into_dir: false,
         });
     }
-    let is_dir = ctx
-        .stat(last, true)
-        .await
-        .is_ok_and(|m| m.kind == FileKind::Dir);
+    let st = ctx.stat(last, true).await;
+    let is_dir = st.as_ref().is_ok_and(|m| m.kind == FileKind::Dir);
     if ops.len() > 2 && !is_dir {
-        let msg = format!("target '{}': Not a directory", s(last));
+        let e = st
+            .err()
+            .unwrap_or_else(|| io::ErrorKind::NotADirectory.into());
+        let msg = format!("target '{}': {}", s(last), error_text(&e));
         ctx.error(&msg).await;
         return Err(1);
     }
@@ -419,8 +420,9 @@ pub fn copy<'a, 'v>(
             let dfollow = ctx.stat(&dst, true).await.ok();
             if dfollow.is_some_and(|m| m.kind == FileKind::Dir) {
                 let msg = format!(
-                    "cannot overwrite directory '{}' with non-directory",
-                    s(&dst)
+                    "cannot overwrite directory '{}' with non-directory '{}'",
+                    s(&dst),
+                    s(&src)
                 );
                 ctx.error(&msg).await;
                 return false;
@@ -567,24 +569,24 @@ async fn copy_dir(
             return false;
         }
         None => {
-            // Into itself?
-            if let (Ok(a), Ok(b)) = (
-                resolve(ctx, src, Need::All).await,
-                resolve(ctx, dst, Need::None).await,
-            ) && is_below(&b, &a)
-            {
+            let inside = matches!(
+                (resolve(ctx, src, Need::All).await, resolve(ctx, dst, Need::None).await),
+                (Ok(a), Ok(b)) if is_below(&b, &a)
+            );
+            // Writable for us while it is filled; its own mode at the end.
+            let mode = (sm.mode & 0o777 & !ctx.umask()) | 0o700;
+            if let Err(e) = ctx.mkdir(dst, mode).await {
+                fail(ctx, "cannot create directory", dst, &e).await;
+                return false;
+            }
+            // Into itself: GNU makes the directory, then refuses to fill it.
+            if inside {
                 let msg = format!(
                     "cannot copy a directory, '{}', into itself, '{}'",
                     s(src),
                     s(dst)
                 );
                 ctx.error(&msg).await;
-                return false;
-            }
-            // Writable for us while it is filled; its own mode at the end.
-            let mode = (sm.mode & 0o777 & !ctx.umask()) | 0o700;
-            if let Err(e) = ctx.mkdir(dst, mode).await {
-                fail(ctx, "cannot create directory", dst, &e).await;
                 return false;
             }
             if !verbose(ctx, o, src, dst).await {

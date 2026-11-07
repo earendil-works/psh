@@ -1,0 +1,353 @@
+# Goldens for tests/utils/cp/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: copy a file
+status: 0
+bash-n: 0
+--- stdout
+|data
+--- file a
+|data
+--- file b
+|data
+
+=== 1: overwrite keeps the destination's mode
+status: 0
+bash-n: 0
+--- stdout
+|new
+|-rw-------
+--- file a
+|new
+--- file b
+|new
+
+=== 2: a new file gets the source's mode less the umask
+status: 0
+bash-n: 0
+--- stdout
+|-rwxr-x---
+--- file a
+|x
+--- file b
+|x
+
+=== 3: into a directory
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+--- file a
+--- file b
+--- dir d
+--- file d/a
+--- file d/b
+
+=== 4: a directory needs -R
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|none
+--- stderr
+|cp: -r not specified; omitting directory 'd'
+--- dir d
+
+=== 5: -R copies a tree
+status: 0
+bash-n: 0
+--- stdout
+|x:
+|e
+|g
+|
+|x/e:
+|f
+|f
+--- dir d
+--- dir d/e
+--- file d/e/f
+|f
+--- file d/g
+|g
+--- dir x
+--- dir x/e
+--- file x/e/f
+|f
+--- file x/g
+|g
+
+=== 6: -r is -R
+status: 0
+bash-n: 0
+--- stdout
+|e
+--- dir d
+--- dir d/e
+--- dir x
+--- dir x/e
+
+=== 7: -R into an existing directory
+status: 0
+bash-n: 0
+--- stdout
+|dst:
+|d
+|
+|dst/d:
+|e
+--- dir d
+--- dir d/e
+--- dir dst
+--- dir dst/d
+--- dir dst/d/e
+
+=== 8: -R src/ copies the directory itself
+status: 0
+bash-n: 0
+--- stdout
+|src
+--- dir dst
+--- dir dst/src
+--- dir dst/src/e
+--- file dst/src/f
+--- dir src
+--- dir src/e
+--- file src/f
+
+=== 9: -R src/. copies the contents in both dialects
+status: 0
+bash-n: 0
+--- stdout
+|e
+|f
+--- dir dst
+--- dir dst/e
+--- file dst/f
+--- dir src
+--- dir src/e
+--- file src/f
+
+=== 10: into itself
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|cp: cannot copy a directory, 'd', into itself, 'd/x'
+--- dir d
+--- dir d/x
+
+=== 11: the same file
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|cp: 'a' and 'a' are the same file
+--- file a
+
+=== 12: a missing source
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|cp: cannot stat 'nope': No such file or directory
+
+=== 13: several sources need a directory
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|cp: target 'c': Not a directory
+--- file a
+--- file b
+--- file c
+
+=== 14: -n does not overwrite
+status: 0
+bash-n: 0
+--- stdout
+|b
+--- file a
+|a
+--- file b
+|b
+
+=== 15: -f replaces an unwritable destination
+status: 0
+bash-n: 0
+--- stdout
+|new
+--- file a
+|new
+--- file b
+|new
+
+=== 16: -p keeps mode and times
+status: 0
+bash-n: 0
+--- stdout
+|-rw-r-----
+|same-time
+--- file a
+|x
+--- file b
+|x
+
+=== 17: -a keeps symlinks and times in a tree
+status: 0
+bash-n: 0
+--- stdout
+|f
+|same-time
+--- dir d
+--- file d/f
+|x
+--- link d/l -> f
+--- dir e
+--- file e/f
+|x
+--- link e/l -> f
+
+=== 18: -R copies symlinks as symlinks
+status: 0
+bash-n: 0
+--- stdout
+|f
+--- dir d
+--- file d/f
+--- link d/l -> f
+--- dir e
+--- file e/f
+--- link e/l -> f
+
+=== 19: a symlink operand is followed without -R
+status: 0
+bash-n: 0
+--- stdout
+|regular
+|x
+--- file c
+|x
+--- link l -> t
+--- file t
+|x
+
+=== 20: -P copies the link itself
+status: 0
+bash-n: 0
+--- stdout
+|t
+--- link c -> t
+--- link l -> t
+--- file t
+|x
+
+=== 21: -L follows links inside a tree
+status: 0
+bash-n: 0
+--- stdout
+|regular
+|x
+--- dir d
+--- link d/l -> t
+--- file d/t
+|x
+--- dir e
+--- file e/l
+|x
+--- file e/t
+|x
+
+=== 22: -v reports each copy
+status: 0
+bash-n: 0
+--- stdout
+|'a' -> 'b'
+|'d' -> 'e'
+|'d/f' -> 'e/f'
+--- file a
+--- file b
+--- dir d
+--- file d/f
+--- dir e
+--- file e/f
+
+=== 23: -t, -T and --parents
+status: 0
+bash-n: 0
+--- stdout
+|d:
+|a
+|x
+|
+|d/x:
+|y
+|
+|d/x/y:
+|z
+|a
+|d
+|e
+|f
+|x
+--- file a
+--- dir d
+--- file d/a
+--- dir d/x
+--- dir d/x/y
+--- file d/x/y/z
+--- dir e
+--- dir f
+--- dir x
+--- dir x/y
+--- file x/y/z
+
+=== 24: -l and -s make links
+status: 0
+bash-n: 0
+--- stdout
+|a
+|same
+--- file a
+|x
+--- file hard
+|x
+--- link soft -> a
+
+=== 25: -u keeps a newer destination
+status: 0
+bash-n: 0
+--- stdout
+|new
+--- file a
+|old
+--- file b
+|new
+
+=== 26: -c (BSD clone) copies
+status: 1
+bash-n: 0
+--- stderr
+|cp: invalid option -- 'c'
+|Try 'cp --help' for more information.
+|cat: b: No such file or directory
+--- file a
+|x
+
+=== 27: no operand
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|cp: missing file operand
+|Try 'cp --help' for more information.
+|cp: missing destination file operand after 'a'
+|Try 'cp --help' for more information.

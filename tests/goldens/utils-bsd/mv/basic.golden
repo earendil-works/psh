@@ -1,0 +1,217 @@
+# Goldens for tests/utils/mv/basic.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: rename a file
+status: 0
+bash-n: 0
+--- stdout
+|b
+|a
+--- file b
+|a
+
+=== 1: replace an existing file
+status: 0
+bash-n: 0
+--- stdout
+|new
+|b
+--- file b
+|new
+
+=== 2: move into a directory
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+--- dir d
+--- file d/a
+--- file d/b
+
+=== 3: rename a directory
+status: 0
+bash-n: 0
+--- stdout
+|x:
+|e
+|
+|x/e:
+|f
+--- dir x
+--- dir x/e
+--- file x/e/f
+
+=== 4: a directory into an existing directory
+status: 0
+bash-n: 0
+--- stdout
+|b:
+|a
+|
+|b/a:
+|f
+--- dir b
+--- dir b/a
+--- file b/a/f
+
+=== 5: several sources need a directory
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|mv: c is not a directory
+--- file a
+--- file b
+--- file c
+
+=== 6: a missing source
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+--- stderr
+|mv: rename nope to x: No such file or directory
+
+=== 7: into itself
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|kept
+--- stderr
+|mv: rename d to d/e/d: Invalid argument
+--- dir d
+--- dir d/e
+
+=== 8: a directory over a file and a file over a directory
+status: 0
+bash-n: 0
+--- stdout
+|status=1
+|status=1
+--- stderr
+|mv: rename d to f: Not a directory
+|mv: rename f to e/f: Is a directory
+--- dir d
+--- dir e
+--- dir e/f
+--- file f
+
+=== 9: the same file
+status: 0
+bash-n: 0
+--- stdout
+|status=0
+--- file a
+
+=== 10: -n does not overwrite
+status: 0
+bash-n: 0
+--- stdout
+|b
+|a
+|b
+--- file a
+|a
+--- file b
+|b
+
+=== 11: -f overwrites
+status: 0
+bash-n: 0
+--- stdout
+|a
+--- file b
+|a
+
+=== 12: -v reports the rename
+status: 0
+bash-n: 0
+--- stdout
+|a -> b
+--- file b
+
+=== 13: -t and -T
+status: 0
+bash-n: 0
+--- stdout
+|a
+|b
+|d
+|e
+|f
+--- stderr
+|mv: illegal option -- t
+|usage: mv [-f | -i | -n] [-hv] source target
+|       mv [-f | -i | -n] [-v] source ... directory
+|mv: illegal option -- T
+|usage: mv [-f | -i | -n] [-hv] source target
+|       mv [-f | -i | -n] [-v] source ... directory
+--- file a
+--- file b
+--- dir d
+--- dir e
+--- dir f
+
+=== 14: -b keeps a backup
+status: 1
+bash-n: 0
+--- stdout
+|b
+--- stderr
+|mv: illegal option -- b
+|usage: mv [-f | -i | -n] [-hv] source target
+|       mv [-f | -i | -n] [-v] source ... directory
+|cat: b~: No such file or directory
+--- file a
+|a
+--- file b
+|b
+
+=== 15: -u keeps a newer destination
+status: 0
+bash-n: 0
+--- stdout
+|new
+|a
+|b
+--- stderr
+|mv: illegal option -- u
+|usage: mv [-f | -i | -n] [-hv] source target
+|       mv [-f | -i | -n] [-v] source ... directory
+--- file a
+|old
+--- file b
+|new
+
+=== 16: a symlink is moved, not its target
+status: 0
+bash-n: 0
+--- stdout
+|m
+|t
+|t
+--- link m -> t
+--- file t
+
+=== 17: a trailing slash on a directory
+status: 0
+bash-n: 0
+--- stdout
+|e
+--- dir e
+
+=== 18: no operand
+status: 0
+bash-n: 0
+--- stdout
+|status=64
+|status=64
+--- stderr
+|usage: mv [-f | -i | -n] [-hv] source target
+|       mv [-f | -i | -n] [-v] source ... directory
+|usage: mv [-f | -i | -n] [-hv] source target
+|       mv [-f | -i | -n] [-v] source ... directory

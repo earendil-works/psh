@@ -1,7 +1,7 @@
 # 0016: Utilities batch E: text filters
 
-status: open
-agent: -
+status: in-progress
+agent: text
 branch: issue/0016-utils-text
 depends-on: 0008
 touches: crates/psh-utils/src/{sort,uniq,cut,tr,paste,nl,tee,seq,comm}*, tests/utils/ (same names)

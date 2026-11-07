@@ -389,3 +389,41 @@ fn shell_env_names_path_and_fills_home_and_tmpdir() {
     let e = shell_env(vec![(b"HOME".to_vec(), b"x".to_vec())]);
     assert!(e.iter().filter(|(k, _)| k == b"HOME").count() == 1);
 }
+
+#[test]
+fn umask_now_and_creation_modes() {
+    let h = host();
+    assert_eq!(h.umask(), 0o022);
+    let now = h.now().as_secs();
+    assert!(now > 1_700_000_000, "{now}");
+    let d = scratch("mode");
+    let ro = path::engine_path(&d.join("ro"));
+    let opts = OpenOptions {
+        mode: Some(0o444),
+        ..OpenOptions::write()
+    };
+    let f = block(|cx| h.open(&ro, opts).as_mut().poll(cx)).unwrap();
+    // The creating handle still writes.
+    assert!(matches!(
+        block(|cx| f.poll_write(cx, b"x").map(Some)),
+        Some(Ok(1))
+    ));
+    drop(f);
+    let m = block(|cx| h.stat(&ro, true).as_mut().poll(cx)).unwrap();
+    assert_eq!(m.mode & 0o222, 0);
+    assert!(!block(|cx| h.access(&ro, Access::Write).as_mut().poll(cx)).unwrap());
+    // An existing file keeps its attributes; a writable mode creates a normal file.
+    let rw = path::engine_path(&d.join("rw"));
+    let opts = OpenOptions {
+        mode: Some(0o600),
+        ..OpenOptions::write()
+    };
+    drop(block(|cx| h.open(&rw, opts).as_mut().poll(cx)).unwrap());
+    let m = block(|cx| h.stat(&rw, true).as_mut().poll(cx)).unwrap();
+    assert_ne!(m.mode & 0o200, 0);
+    let mut perm = std::fs::metadata(d.join("ro")).unwrap().permissions();
+    #[allow(clippy::permissions_set_readonly_false)]
+    perm.set_readonly(false);
+    std::fs::set_permissions(d.join("ro"), perm).unwrap();
+    std::fs::remove_dir_all(&d).unwrap();
+}

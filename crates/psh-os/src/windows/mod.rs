@@ -326,11 +326,48 @@ fn std_open_options(opts: OpenOptions) -> std::fs::OpenOptions {
     o
 }
 
+/// Opens `p` (D1911). Windows keeps one permission bit, the read-only attribute: a file
+/// the open creates with `opts.mode` lacking every write bit gets it, set through the
+/// open handle, which can still write (like `open(2)` with mode 0444). Every other bit of
+/// `mode` has no Windows meaning; an existing file keeps its attributes.
+fn open_file(p: &std::path::Path, opts: OpenOptions) -> io::Result<std::fs::File> {
+    let read_only = opts.mode.is_some_and(|m| opts.create && m & 0o222 == 0);
+    if !read_only {
+        return std_open_options(opts).open(p);
+    }
+    loop {
+        let mut create = std_open_options(OpenOptions {
+            truncate: false,
+            ..opts
+        });
+        create.create_new(true);
+        match create.open(p) {
+            Ok(f) => {
+                let mut perm = f.metadata()?.permissions();
+                perm.set_readonly(true);
+                f.set_permissions(perm)?;
+                return Ok(f);
+            }
+            Err(e) if e.kind() == io::ErrorKind::AlreadyExists && !opts.create_new => {
+                let existing = std_open_options(OpenOptions {
+                    create: false,
+                    ..opts
+                });
+                match existing.open(p) {
+                    // Removed in between: create it after all.
+                    Err(e) if e.kind() == io::ErrorKind::NotFound => continue,
+                    r => return r,
+                }
+            }
+            Err(e) => return Err(e),
+        }
+    }
+}
+
 impl Host for WindowsHost {
     fn open(&self, p: &[u8], opts: OpenOptions) -> HostFuture<io::Result<Rc<dyn HostFile>>> {
         let r = path::native(p).and_then(|np| {
-            std_open_options(opts)
-                .open(np)
+            open_file(&np, opts)
                 .map(|f| Rc::new(WinFile::new(OwnedHandle::from(f))) as Rc<dyn HostFile>)
         });
         ready(r)
@@ -431,6 +468,18 @@ impl Host for WindowsHost {
             return Err(io::Error::from_raw_os_error(87));
         }
         spawn::kill_pid(pid as u32, sig)
+    }
+
+    /// Windows has no umask: bash's usual default, so `umask` shows what scripts expect
+    /// (D1911). A spawn's `umask` has nothing to apply to.
+    fn umask(&self) -> u32 {
+        0o022
+    }
+
+    fn now(&self) -> Duration {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
     }
 
     fn sleep(&self, duration: Duration) -> HostFuture<()> {

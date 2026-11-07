@@ -1533,3 +1533,23 @@ A background job that is an in-process utility (`sleep 5 &`) has no OS process: 
 is the shell's own job id. `kill`, `wait` and
 `jobs` in the shell handle it; another program cannot signal it (`sh -c "kill $!"`). One
 brush case does exactly that and fails for this reason (its ratchet line says so).
+## D1911: Windows umask, creation modes and clock
+date: 2026-11-07 · by: windows · issue: 0007
+Windows has no umask and one permission bit, the read-only attribute. `WindowsHost`
+reports `umask()` as `0o022` (bash's usual default, so `umask` prints what scripts
+expect) and ignores a spawn's `umask`. `OpenOptions::mode` on a file the open creates:
+when it has no write bit, the file is created exclusively and gets the read-only
+attribute through the open handle, which can still write (as `open(2)` with 0444);
+every other bit has no Windows meaning; an existing file keeps its attributes. `now()` is
+`SystemTime::now()` since the epoch.
+
+## D1912: Test deadlines stretch under emulation
+date: 2026-11-07 · by: windows · issue: 0007
+The psh cli tests' 10 s limit per run was missed now and then in the Windows VM's
+`test-x64` leg (x64 under emulation), also after D1072/D1073. Measured with the VM to
+itself, a freshly linked x64 `psh.exe` starts in 20-35 ms, six at once in 55-115 ms,
+and the cli tests take under a second; the misses come from moments when the host is
+saturated (other gates' macOS legs and builds), which slow the VM's emulated processes
+by an order of magnitude. Rather than lengthen every deadline everywhere, tests with
+deadlines read `PSH_TEST_TIME_SCALE` (a factor ≥ 1, default 1); `windows-gate.ps1` sets
+it to 3 for `test-x64` only. Tests still catch hangs; native runs keep their limits.

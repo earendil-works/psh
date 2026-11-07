@@ -15,8 +15,15 @@ use psh_engine::std_host::{drive_until, engine_thread};
 use psh_engine::{HostFile, Script, Shell, ShellConfig, Step};
 use psh_os::windows::{Leftovers, WinFile, WindowsConfig, WindowsHost, settle, shell_env};
 
-/// Everything a test may wait for, in total.
-const DEADLINE: Duration = Duration::from_secs(60);
+/// Everything a test may wait for, in total: 60 s, times `PSH_TEST_TIME_SCALE` (D1912).
+fn deadline_total() -> Duration {
+    let scale = std::env::var("PSH_TEST_TIME_SCALE")
+        .ok()
+        .and_then(|s| s.parse::<f64>().ok())
+        .filter(|s| *s >= 1.0)
+        .unwrap_or(1.0);
+    Duration::from_secs_f64(60.0 * scale)
+}
 /// TERM → termination in tests: short, so leak checks after a cancel finish quickly.
 const GRACE: Duration = Duration::from_millis(300);
 
@@ -107,7 +114,7 @@ impl Run {
         let out_rx = reader(out_r);
         let err_rx = reader(err_r);
         let start = Instant::now();
-        let deadline = start + DEADLINE;
+        let deadline = start + deadline_total();
         let Run {
             script,
             cancel_after,

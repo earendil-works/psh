@@ -305,7 +305,9 @@ function Get-LegCommand([string]$leg) {
     'fmt' { return "cargo +$Toolchain fmt --all --check" }
     'clippy' { return "cargo +$Toolchain clippy --workspace --all-targets --locked -- -D warnings" }
     'test' { return "cargo +$Toolchain test --workspace --locked" }
-    'test-x64' { return "cargo +$Toolchain test --workspace --locked --target x86_64-pc-windows-msvc" }
+    # Emulated x64 runs slower when the host is busy: the tests' own deadlines stretch
+    # (D1912).
+    'test-x64' { return "set PSH_TEST_TIME_SCALE=3&& cargo +$Toolchain test --workspace --locked --target x86_64-pc-windows-msvc" }
     'msrv' { return "cargo +$Msrv check --workspace --all-targets --locked" }
   }
   return $null

@@ -308,6 +308,16 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
   engine unit test and the Windows L5 case above (D1910). Other `:` splits in the engine
   are not PATH lookups (tilde expansion in assignments, getopts).
 
+### 2026-11-07 Part B, part 3: umask, modes, clock; emulated test deadlines
+- D1069's additions on Windows (D1911): `umask()` = 0o022, `now()` from `SystemTime`,
+  `OpenOptions::mode` without write bits creates a read-only file (exclusive create,
+  attribute set through the open handle); host test.
+- test-x64 flake ("did not exit within 10 s" in cli tests): with the VM to itself a
+  fresh x64 psh.exe starts in 20-35 ms (six at once: 55-115 ms), so neither XtaCache nor
+  Defender explains it; the misses come with a saturated host. `PSH_TEST_TIME_SCALE`
+  stretches the cli tests' and the Windows L5 harness's deadlines; the Windows runner
+  sets 3 for test-x64 only (D1912).
+
 ## Follow-ups
 - Engine: strip the `\r` of CRLF in `$(…)` and `read` on Windows (ARCH "Windows rules").
 - Engine: the "run this file in psh" hook (D1079).

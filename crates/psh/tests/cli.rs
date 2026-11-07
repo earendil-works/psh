@@ -11,7 +11,18 @@ struct Output {
     stderr: String,
 }
 
-/// Runs psh with `args`, killing it if it has not exited after 10 seconds.
+/// How long one psh run may take: 10 s, times `PSH_TEST_TIME_SCALE` where the gate runs
+/// the tests slowed down (x64 under emulation in the Windows VM, D1912).
+fn run_limit() -> Duration {
+    let scale = std::env::var("PSH_TEST_TIME_SCALE")
+        .ok()
+        .and_then(|s| s.parse::<f64>().ok())
+        .filter(|s| *s >= 1.0)
+        .unwrap_or(1.0);
+    Duration::from_secs_f64(10.0 * scale)
+}
+
+/// Runs psh with `args`, killing it if it has not exited within [`run_limit`].
 fn psh(args: &[&str]) -> Output {
     let mut child = Command::new(env!("CARGO_BIN_EXE_psh"))
         .args(args)
@@ -20,7 +31,8 @@ fn psh(args: &[&str]) -> Output {
         .stderr(Stdio::piped())
         .spawn()
         .expect("spawn psh");
-    let deadline = Instant::now() + Duration::from_secs(10);
+    let limit = run_limit();
+    let deadline = Instant::now() + limit;
     let status = loop {
         if let Some(status) = child.try_wait().expect("wait for psh") {
             break status;
@@ -28,7 +40,7 @@ fn psh(args: &[&str]) -> Output {
         if Instant::now() > deadline {
             child.kill().ok();
             child.wait().ok();
-            panic!("psh {args:?} did not exit within 10 seconds");
+            panic!("psh {args:?} did not exit within {limit:?}");
         }
         std::thread::sleep(Duration::from_millis(10));
     };

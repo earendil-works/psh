@@ -329,6 +329,8 @@ From `research/execution-core.md` §5; the pitfalls listed there are requirement
   `Host::pipe`) are read only as far as `PeekNamedPipe` shows data, with one poller
   thread for readiness; writes to them are synchronous. Regular files and consoles are
   synchronous.
+- `umask()` is `0o022`; a creation `mode` without write bits sets the read-only
+  attribute; other mode bits have no Windows meaning (D1911).
 - Decoding (D1078): optional (`Decode::Ansi`), in the host's pump pipes: child output
   read by the engine that is not UTF-8 is converted from the ANSI code page.
 

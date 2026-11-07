@@ -609,6 +609,12 @@ async fn local(vp: &mut Vp, args: &[Vec<u8>]) -> R {
 }
 
 async fn let_(vp: &mut Vp, args: &[Vec<u8>]) -> R {
+    // A leading `--` ends the options (there are none); `-x` is an expression.
+    let args: &[Vec<u8>] = if args.get(1).is_some_and(|a| a == b"--") {
+        &args[1..]
+    } else {
+        args
+    };
     if args.len() < 2 {
         vp.error("let: expression expected").await;
         return Ok(1);

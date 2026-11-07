@@ -482,6 +482,7 @@ fn arithmetic() {
     check("for ((;;)); do echo once; break; done", "once\n");
     check("let x=2+3 y=x*2; echo $x $y $?", "5 10 0\n");
     check("a=b; b=7; echo $((a + 1))", "8\n");
+    check("let -- x=3; echo $? $x; x=3; let -x; echo $?", "0 3\n0\n");
     let o = run("echo $((1+)); echo after");
     assert_eq!(o.status, 1);
     assert_eq!(o.stdout, "");

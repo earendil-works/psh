@@ -24,7 +24,7 @@ measure the parser in the gate.
       seconds; the Windows leg is skipped when no Rust/script input changed. A `--full`
       flag disables the cache. Keep it simple and safe (a wrong skip is worse than a
       slow gate).
-- [ ] **Hit list on psh-syntax** (0002 follow-up): detect constructs from the AST
+- [x] **Hit list on psh-syntax** (0002 follow-up): detect constructs from the AST
       instead of lexically, where the parser accepts the case.
 - [ ] Workspace-wide dependency allowlist in the `deps` leg (0001 follow-up): every
       crate's dependencies must be listed in a committed allowlist that cites the
@@ -53,6 +53,10 @@ measure the parser in the gate.
   mutation that ignores the opt-out fails it. A second full local gate: every leg cached,
   1 s. While testing I ran the gate once with `PSH_GATE_WINDOWS=0`, which logged a line
   in `work/scratch/windows-gate/skipped.tsv` (not a merge).
+- 2026-11-07, part 3 (hit list on the parser): new module `ast_features.rs` walks
+  psh-syntax's tree for the corpus features and command names (D1222); the lexical scan
+  remains for scripts the parser rejects. Today 5,623 of 5,696 failing cases are weighed
+  from the tree, 73 from the text.
 
 ## Follow-ups
 

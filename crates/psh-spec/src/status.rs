@@ -4,8 +4,8 @@
 //!
 //! A case's weight is the corpus frequency of the rarest construct in its script: a case
 //! is only as relevant as its most exotic part, which is usually what it tests. The
-//! constructs are found lexically, an approximation until psh's parser can classify
-//! scripts; the frequencies are `research/corpus/results.json` (`features` for syntax,
+//! constructs come from psh-syntax's tree (`ast_features`), or lexically where the
+//! parser rejects the script; the frequencies are `research/corpus/results.json` (`features` for syntax,
 //! `top_names` for command names). Constructs the corpus did not measure and bash
 //! builtins outside its top names count as rare.
 
@@ -77,13 +77,18 @@ impl Weights {
                 best = (w, what);
             }
         };
-        for f in features(script) {
+        // From psh-syntax's tree where it parses the script, else from the text (D1222).
+        let (feats, names) = match crate::ast_features::find(script) {
+            Some(found) => (found.features.into_iter().collect(), found.names),
+            None => (features(script), command_names(script)),
+        };
+        for f in feats {
             match self.features.get(f) {
                 Some(&n) => consider(n.max(RARE), f.to_string()),
                 None => consider(RARE, f.to_string()),
             }
         }
-        for name in command_names(script) {
+        for name in names {
             if let Some(&n) = self.names.get(&name) {
                 consider(n, name);
             } else if BUILTINS.contains(&name.as_str()) && !COVERED.contains(&name.as_str()) {
@@ -486,11 +491,16 @@ pub fn hitlist(results: &[CaseResult], weights: &Weights, n: usize) -> String {
         areas.into_iter().map(|(k, (w, n))| (k, w, n)).collect();
     areas.sort_by(|a, b| b.1.total_cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
     let mut out = String::new();
+    let parsed = cases
+        .iter()
+        .filter(|(_, c, _)| psh_syntax::parse(&c.script).is_ok())
+        .count();
     let _ = writeln!(
         out,
-        "Hit list: {} failing active cases. Weight = corpus frequency of the rarest construct in the case (of {} commands).\n",
+        "Hit list: {} failing active cases. Weight = corpus frequency of the rarest construct in the case (of {} commands);\nconstructs from the syntax tree for {parsed} cases, from the text for the {} psh-syntax rejects.\n",
         cases.len(),
-        weights.total
+        weights.total,
+        cases.len() - parsed
     );
     let _ = writeln!(out, "Areas (summed weight of failing cases):\n");
     let _ = writeln!(out, "{:>12}  {:>5}  area", "weight", "fails");

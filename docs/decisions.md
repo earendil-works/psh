@@ -945,3 +945,13 @@ the checkout's executables to be released, naming the holders, and a leg that fa
 with LNK1104 or "os error 5" runs once more. Not done: a cargo runner that runs copies of
 the test executables, because `psh.exe`, which the tests spawn through
 `CARGO_BIN_EXE_psh`, would still be held; disabling XtaCache in the VM needs the owner.
+
+## D1222: The hit list reads constructs from psh-syntax's tree
+date: 2026-11-07 · by: infra · issue: 0022
+Supersedes the lexical detection of D1028 where the parser accepts a case's script:
+`psh-spec`'s `ast_features` walks the tree (lists, pipelines, compound commands,
+redirections and here-docs, word parts, parameter operators, `set` and declaration
+arguments) and yields the corpus feature names plus literal command names; separators,
+comments and line continuations, which the tree does not keep, still come from the text.
+Scripts psh-syntax rejects (about 1% of the failing cases, all also rejected by bash) keep
+the lexical detection. The weighting rule (the rarest construct) is unchanged.

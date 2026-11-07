@@ -144,10 +144,11 @@ Moving cases between groups is a coordinator decision.
   (`research/corpus/results.json`: `features` for syntax, `top_names` for command
   names) of the rarest construct in its script, so a failing here-doc case outranks a
   failing `select` case by orders of magnitude (D1028). Constructs the corpus did not
-  measure (`select`, `coproc`, `${!x}`, namerefs, `=~`), bash builtins outside its top
-  names, and shell arguments other than `-c CODE` count as rare. The constructs are
-  found lexically for now; psh's parser will classify them once it exists. The
-  coordinator cuts issues from the top.
+  measure (`select`, `coproc`, `${!x}`, namerefs, `=~`, extglob, `${ …; }`), bash
+  builtins outside its top names, and shell arguments other than `-c CODE` count as
+  rare. The constructs are read from psh-syntax's tree; scripts the parser rejects (on
+  purpose: bash rejects them too) are scanned as text (D1222). The coordinator cuts
+  issues from the top.
 
 ## The shape corpus
 

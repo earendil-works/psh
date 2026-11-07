@@ -5,6 +5,7 @@
 //! per layer, and records the goldens itself (`--record`, through
 //! `scripts/record-goldens`). No dependencies.
 
+mod ast_features;
 mod case;
 mod engine;
 mod golden;

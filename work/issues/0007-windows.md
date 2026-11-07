@@ -19,8 +19,8 @@ Part A (can start right after 0001; the coordinator may split it out):
       VM through `prlctl exec` (D027): a script in `scripts/` syncs the tree into the VM,
       runs the legs there under a timeout and reports. GitHub Actions replaces it once
       the repository has a remote (a follow-up then).
-- [ ] The spec runner and its normalization table work on Windows against the same
-      goldens.
+- [x] The spec runner and its normalization table work on Windows against the same
+      goldens (L4 in the gate; the other layers when their differences are triaged).
 
 Part B:
 - [ ] `CreateProcessW` suspended → Job Object per job (no breakaway) → resume; only the
@@ -343,7 +343,27 @@ between `read` and a child. They run in the gate's `test` and `test-x64` legs.
   manifests or the lock file (an edit that matters rebuilds the binary). Unit test
   extended. psh-spec is infra's: minimal change, reported.
 
+### 2026-11-07 Data loss in input pumps; HostInfo; L4 on Windows; mode W
+- Bug (seen in procs' gate): `input_pipe_feeds_the_child_and_ends` got 196609 of 208890
+  bytes. Closing a writer pump set its cancel event whenever the buffer was empty, but
+  the thread may have a chunk in flight then (taken out of the buffer, `WriteFile`
+  pending): `CancelIoEx` dropped what the pipe had not taken. A writer is now never
+  cancelled on close (it hands over everything, then closes; a child that stops
+  reading ends it by ending). Stress tests: 12 sizes around the 4/16/64 KiB boundaries
+  ×100 through an input pump closed right after the last write (the old code fails it
+  within a few rounds: 65536 of 65537), output pumps ×100, the findstr host test ×10.
+- `WindowsHost::info()` (D1913): msys forms, 1000 ids, hostname, PPID.
+- psh-spec on Windows (D1914): the windows platform ratchet, notes of commands never
+  found (a `Noting` host wrapper), the Windows gate's `spec` leg for L4: 56/73 pass,
+  the 17 others need `seq`, `yes`, `sh`, `grep`, `mkdir`; no other difference.
+- Mode W: `timeout` (W) runs psh's utility on Windows though System32 has
+  `timeout.exe`: cli test (`timeout 5 cmd /c echo hi`, `timeout 0.2 ping` → 124). The
+  other W names (`find`, `sort`, `tree`, ...) are not built yet.
+
 ## Follow-ups
+- psh-spec on Windows for the oils, brush and agent layers: triage the differences into
+  `expected-failures.windows.txt` (and normalization rules where a difference is not
+  psh's), then add them to the `spec` leg.
 - Engine: strip the `\r` of CRLF in `$(…)` and `read` on Windows (ARCH "Windows rules").
 - Engine: the "run this file in psh" hook (D1079).
 - Engine: `normalize` turns `C:/x` into `/C:/x` (`cd`, `pwd` show it); keep the drive.

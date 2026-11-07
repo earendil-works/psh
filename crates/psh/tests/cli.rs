@@ -315,3 +315,20 @@ fn ctrl_break_cancels_the_run() {
     drop(p);
     assert!(host.leftovers().is_empty(), "{:?}", host.leftovers());
 }
+
+/// Utilities whose names Windows uses for other programs run as psh's own there
+/// (System32's `timeout.exe` takes `/t SECONDS`, not a command).
+#[cfg(windows)]
+#[test]
+fn windows_shadowed_names_are_psh_s_utilities() {
+    let out = psh(&[
+        "-c",
+        "timeout 5 cmd /d /c echo hi; echo $?; timeout 0.2 ping -n 30 127.0.0.1 >/dev/null; echo $?",
+    ]);
+    assert_eq!(
+        out.stdout.replace("\r\n", "\n"),
+        "hi\n0\n124\n",
+        "{}",
+        out.stderr
+    );
+}

@@ -1887,3 +1887,22 @@ FIFO) and a command substitution's output give way to a signal whose default act
 ends the shell (the open fails, the substitution yields `128+n`; the shell ends at its
 next safepoint); `read` runs the trap of a trapped signal while it goes on reading, as
 bash does outside POSIX mode, and a fatal one ends the shell.
+## D1913: Windows HostInfo in Git Bash's forms
+date: 2026-11-07 · by: windows · issue: 0007
+As D1301 proposed: `OSTYPE` `msys`, `MACHTYPE` `x86_64-pc-msys` / `aarch64-pc-msys`,
+`HOSTTYPE` the arch, so agents' scripts take their Windows branch; uid, euid and groups
+1000 (Windows users have no numeric ids worth reporting); the hostname from
+`GetComputerNameExW` (DNS host name); `PPID` from a process snapshot, or, embedded (a fake
+`$$`), the embedding process.
+
+## D1914: psh-spec on Windows checks a windows platform ratchet; L4 runs in the VM
+date: 2026-11-07 · by: windows · issue: 0007
+Run on Windows (in-process psh), psh-spec checks `tests/<layer>/expected-failures.windows.txt`
+on top of the shared ratchet, which it never changes there, the way `--wasm` does
+(D1113). The in-process engine wraps the OS host to note the commands a case looked up
+and never found, so a case that needs a program Windows lacks (`seq`, `yes`, `sh`,
+`grep` until psh has them) may fail without a line; every other difference must be
+listed with its reason. The Windows gate runs L4 (`--layer utils`) this way as its
+`spec` leg: today 56 of 73 cases pass and the other 17 need external programs, with no
+other difference, so there is no windows ratchet file yet. The other layers follow when
+their Windows differences are triaged.

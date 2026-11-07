@@ -37,6 +37,7 @@ clippy:1200
 test:1200
 test-x64:1200
 msrv:900
+spec:900
 "
 
 legs=

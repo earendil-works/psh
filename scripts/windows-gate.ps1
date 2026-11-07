@@ -309,6 +309,8 @@ function Get-LegCommand([string]$leg) {
     # (D1912).
     'test-x64' { return "set PSH_TEST_TIME_SCALE=3&& cargo +$Toolchain test --workspace --locked --target x86_64-pc-windows-msvc" }
     'msrv' { return "cargo +$Msrv check --workspace --all-targets --locked" }
+    # L4 on Windows against the shared goldens and the windows platform ratchet (D1914).
+    'spec' { return "cargo +$Toolchain build -q -p psh -p psh-spec --locked && target\debug\psh-spec.exe -j 4 --layer utils" }
   }
   return $null
 }

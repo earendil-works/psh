@@ -60,6 +60,10 @@ Close the process-layer follow-ups from 0006 and the coordinator's queue.
   interactive shell) makes `int_and_hup_too` fail: the job starts with SIGINT ignored and
   psh keeps it ignored, as bash does. Not a psh bug; run them in the foreground or via
   `xargs -P`.
+- `int_and_hup_too` in other agents' gates ("psh did not exit"): their gates run where
+  SIGINT (or SIGHUP) is ignored, and psh rightly keeps such a signal ignored; the test
+  now skips a signal the test process ignores. Stress: the standalone suite 100× (10 in
+  parallel, 4 threads each, with the L5 process suite running alongside): 100/100.
 - oils/process-sub/5 and /7 under `-j 8` load (reported by infra): not reproduced in ~90
   loaded runs; need a diff when it recurs.
 

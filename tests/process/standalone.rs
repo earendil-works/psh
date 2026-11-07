@@ -138,6 +138,13 @@ fn term_cancels_a_pipeline_and_psh_dies_by_term() {
 #[test]
 fn int_and_hup_too() {
     for sig in [SIGINT, SIGHUP] {
+        // A signal ignored where the tests run (a background job of a shell starts with
+        // SIGINT ignored, `nohup` ignores SIGHUP) stays ignored in psh, as in bash:
+        // nothing to test for it here.
+        if psh_os::unix::signals::is_ignored(sig) {
+            eprintln!("skipping signal {sig}: ignored in the test process");
+            continue;
+        }
         let mut c = Case::start(&sleeper("a", false));
         let a = c.pid("a");
         c.signal(sig);

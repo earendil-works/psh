@@ -1,7 +1,7 @@
 # 0032: Engine follow-ups and the hit list
 
-status: open
-agent: -
+status: in-progress
+agent: engine
 branch: issue/0032-engine-climb
 depends-on: 0026
 touches: crates/psh-engine/ (engine internals per ARCH), tests/**/expected-failures*.txt

@@ -1,7 +1,7 @@
 # 0027: `[[ ]]`, `test`, and a POSIX regex engine
 
-status: open
-agent: -
+status: in-progress
+agent: parser
 branch: issue/0027-conditionals-regex
 depends-on: 0005
 touches: crates/psh-regex/ (new), crates/psh-engine/src/builtins/test.rs, crates/psh-engine/src/cond.rs (new), crates/psh-engine/src/exec.rs (only the `[[ ]]` dispatch arm), Cargo.toml (workspace member), scripts/deps-allowlist.txt, tests/**/expected-failures.txt

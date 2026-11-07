@@ -366,6 +366,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "psh-regex"
+version = "0.0.0"
+
+[[package]]
 name = "psh-spec"
 version = "0.0.0"
 dependencies = [

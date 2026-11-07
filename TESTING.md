@@ -237,12 +237,18 @@ exec` until the repository has a remote, then on GitHub Actions (D027):
   (aarch64-pc-windows-msvc), `test-x64` (x86_64-pc-windows-msvc under emulation),
   `msrv`. It tests the worktree as it is, uncommitted changes included, so it is also
   the inner loop for Windows work: `scripts/windows-gate.sh test`.
-- The VM fetches a snapshot commit into `C:\psh-gate\<worktree>` and builds there with
-  the host's exact `rustc` version. Each leg has a timeout inside the VM, and nothing the
-  run starts outlives it (D1070).
+- Runs take turns: one at a time, the next waiting ("waiting for the Windows VM") for
+  at most an hour, which does not count against the legs' timeouts. The VM fetches a
+  snapshot commit into its one checkout, `C:\psh-gate\shared`, whose warm `target\`
+  every run reuses, and builds with the host's exact `rustc` version (D1070, D1072).
+- Each leg has a timeout inside the VM. After each leg the runner kills and waits for
+  every process the leg started; a test process still running after `cargo test` ended
+  fails the leg (a test leaked it). Nothing a run starts outlives it.
+- On arm64 Windows, the XtaCache service holds x64 executables that ran under emulation
+  for a while; the runner waits until they are released before a test leg, and runs a
+  leg that failed to replace a held file (LNK1104) once more (D1072).
 - The gate runs it as its last leg, always. It wakes the VM if it sleeps and lets it
-  sleep again when the last concurrent run ends; a VM that was already running stays
-  running. An unreachable VM fails the leg in bounded time. `PSH_GATE_WINDOWS=0` skips
+  sleep again when no run is waiting; a VM that was already running stays running. An unreachable VM fails the leg in bounded time. `PSH_GATE_WINDOWS=0` skips
   the leg when the VM is broken, for the coordinator and the owner only; the skip is
   logged (D1071).
 - Not on Windows: the bash/perl script legs and the `deps` and `wasm` legs, which are

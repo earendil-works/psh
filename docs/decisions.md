@@ -922,3 +922,26 @@ OS pipes for stdout and stderr read to their end, under a 30 s deadline, then wa
 `leftovers()` to be empty and fails if a group survives. A test of the check itself
 leaves a grandchild on purpose. Tests that need the `psh` binary (standalone signals) come
 with it.
+## D1072: Windows runs take turns in one shared checkout; XtaCache holds are waited out
+date: 2026-11-07 · by: windows · issue: 0007
+Supersedes D1071's refcount and D1070's checkout per worktree. Concurrent gates on the
+4-vCPU VM starved each other (a run took 40 minutes, emulated x64 test processes missed
+their deadlines), and one run's suspend could hit another between states. Now one run
+uses the VM at a time (`run.lock` in the primary checkout's
+`work/scratch/windows-gate/`), the others wait at most `PSH_WINDOWS_QUEUE_WAIT` seconds
+(default 3600) with a message naming the holder; the wait does not count against the
+legs' timeouts (99-windows: 7500s, merge-to-main's gate default 10800s). The lock is held
+from the first look at the VM until it is asleep again, and a run puts it to sleep only
+if no run is waiting and a run woke it; transitional states (suspending, resuming, ...)
+are waited out, and prlctl's own failure (255) retries the run once. All runs share
+`C:\psh-gate\shared` and its `target\`, so builds are incremental across worktrees.
+After every leg the runner kills and waits for all other processes of its Job Object
+(JobObjectBasicProcessIdList); one running an executable of the checkout fails the leg
+as leaked by a test. LNK1104 on test-x64 came from Windows on arm64's XtaCache service
+(xtac64se.exe), which opens x64 executables that ran under emulation to build its
+translation cache and holds them, under load for minutes (found with the Restart
+Manager, which the runner now uses): before a test leg the runner waits up to 300s for
+the checkout's executables to be released, naming the holders, and a leg that failed
+with LNK1104 or "os error 5" runs once more. Not done: a cargo runner that runs copies of
+the test executables, because `psh.exe`, which the tests spawn through
+`CARGO_BIN_EXE_psh`, would still be held; disabling XtaCache in the VM needs the owner.

@@ -1,7 +1,7 @@
 # 0029: Core shell builtins
 
-status: open
-agent: -
+status: in-progress
+agent: builtins
 branch: issue/0029-core-builtins
 depends-on: 0005
 touches: crates/psh-engine/src/builtins/ (new modules: read, eval, source, command, type, hash, printf, echo, umask, times, …), crates/psh-engine/src/builtins/mod.rs (registration lines only), tests/**/expected-failures.txt

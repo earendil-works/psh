@@ -1553,3 +1553,25 @@ saturated (other gates' macOS legs and builds), which slow the VM's emulated pro
 by an order of magnitude. Rather than lengthen every deadline everywhere, tests with
 deadlines read `PSH_TEST_TIME_SCALE` (a factor ≥ 1, default 1); `windows-gate.ps1` sets
 it to 3 for `test-x64` only. Tests still catch hangs; native runs keep their limits.
+## D1263: Dynamic variables and `$_`
+date: 2026-11-07 · by: engine · issue: 0026
+`RANDOM`, `SRANDOM`, `SECONDS`, `EPOCHSECONDS`, `EPOCHREALTIME`, `BASHPID` and
+`BASH_SUBSHELL` are variables marked dynamic (`Var::dynamic`): their value is computed
+when read (time from `Host::now`, so a host without a clock reads the epoch) until they
+are unset; `RANDOM=n` seeds and `SECONDS=n` restarts the count. `RANDOM` is a
+xorshift sequence, not bash's (no case depends on bash's numbers). `BASHPID` in a
+subshell is a made-up id, as vprocs have no pid. `$_` is the last word of the last simple
+command, set when the command completes (a function body sees the value from before the
+call; an assignment-only command clears it); externals get `_` as their path, except
+through `exec`. psh does not set `BASH_VERSION`/`BASH_VERSINFO`: scripts that detect
+bash then switch on options psh lacks (`set -o posix`); `PSH_VERSION` is set instead.
+
+## D1264: psh sets BASH_VERSION and BASH_VERSINFO
+date: 2026-11-07 · by: coordinator (engine records it) · issue: 0026
+Supersedes the last sentences of D1263. psh sets `BASH_VERSION=5.3.9(1)-release` and
+`BASH_VERSINFO=(5 3 9 1 release ARCH)` (readonly), its compatibility target, and also
+`PSH_VERSION` so scripts can detect psh. Reason: agent and installer scripts gate on
+`BASH_VERSION`, and some re-exec `bash` when it is missing (on Windows there may be no
+bash); a script that then uses something psh lacks fails loudly on that feature, the
+honest outcome. Cases that detect bash and switch on `set -o posix` (unsupported, D002)
+are in the ratchet.

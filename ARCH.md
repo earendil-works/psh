@@ -230,7 +230,9 @@ and errexit, builtins) extends these; restructuring them needs a decision first:
   accessors (`var`, `set_var`, `assign`, `assign_elem`, `assign_array`, `get_elem`,
   `unset_elem`, `is_set`, `resolve`), never by poking `Var` fields for assignments.
   Associative arrays keep bash's iteration order (D1261). Declaration builtins take
-  `DeclArg`s (D1262).
+  `DeclArg`s (D1262). Dynamic variables (`$RANDOM`, `$SECONDS`, …) are `Var`s marked
+  `dynamic`, refreshed by `Vp::refresh_dynamic` when expansion or arithmetic reads them
+  (D1263); `$_` is set in `run_command_with` from `Vp::last_args`.
 
 ### The Host trait
 

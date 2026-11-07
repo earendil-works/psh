@@ -363,6 +363,7 @@ fn run_command_with<'a>(
             f.await?;
         }
         let mark = vp.subst_fds.len();
+        let last_args = vp.last_args.len();
         let result = match &cmd.kind {
             CommandKind::Simple(s) => run_simple(vp, code, cmd, s).await,
             CommandKind::Select(_) | CommandKind::Cond(_) | CommandKind::Coproc(_) => {
@@ -378,12 +379,25 @@ fn run_command_with<'a>(
                 vp.fds.close(n);
             }
         }
+        if vp.last_args.len() > last_args {
+            let last = vp.last_args.swap_remove(last_args);
+            vp.last_args.truncate(last_args);
+            set_underscore(vp, last);
+        }
         let status = result?;
         match after_command(vp, code, cmd, status, check) {
             Some(f) => f.await,
             None => Ok(status),
         }
     })
+}
+
+/// `$_` after a command: its last word (unless `_` was made readonly).
+fn set_underscore(vp: &mut Vp, last: Vec<u8>) {
+    let var = vp.vars.entry("_");
+    if !var.readonly {
+        var.set(last);
+    }
 }
 
 /// Before a command: pending signals, the DEBUG trap (D1283, D1284).
@@ -839,6 +853,7 @@ async fn call_function(
         let var = vp.vars.entry(&n);
         var.set(v);
         var.exported = true;
+        vp.assigned_dynamic(&n);
     }
     let hidden = trap::enter_function(vp);
     let mut r = run_command(vp, &f.code, f.body).await;
@@ -931,15 +946,11 @@ async fn prepare_simple(
                     // Assigned at once: later assignments see earlier ones (`a=1 b=$a`).
                     vp.assign_with(&name, v, a.append)
                 } else {
-                    let v = if a.append {
-                        let mut old = vp.var(&name).map(<[u8]>::to_vec).unwrap_or_default();
-                        old.extend_from_slice(&v);
-                        old
-                    } else {
-                        v
-                    };
-                    assigns.push((name, v));
-                    Ok(())
+                    // The value with the variable's attributes (`-i` adds on `+=`); it
+                    // is set for the command's duration only.
+                    let target = vp.resolve(&name).into_owned();
+                    vp.prepare_value_unchecked(&target, v, a.append)
+                        .map(|v| assigns.push((name, v)))
                 }
             }
             (Some(idx), AssignValue::Scalar(w)) => {
@@ -971,6 +982,23 @@ async fn prepare_simple(
         }
     }
 
+    // `$_` becomes the last word once the command completes (an assignment-only
+    // command clears it); `run_command_with` applies it.
+    vp.last_args.push(match (&decl_args, argv.len()) {
+        (Some(args), _) => match args.last() {
+            Some(builtins::declare::DeclArg::Word(w)) => w.clone(),
+            Some(builtins::declare::DeclArg::Assign { name, value, .. }) => {
+                let mut v = name.clone();
+                v.push(b'=');
+                v.extend_from_slice(value);
+                v
+            }
+            Some(builtins::declare::DeclArg::Array { name, .. }) => name.clone(),
+            None => argv[0].clone(),
+        },
+        (None, 0) => Vec::new(),
+        (None, _) => argv[argv.len() - 1].clone(),
+    });
     if argv.is_empty() {
         let status = subst_status.unwrap_or(0);
         if cmd.redirects.is_empty() {
@@ -1165,6 +1193,7 @@ pub(crate) async fn run_builtin(
             let var = vp.vars.entry(&n);
             var.set(v);
             var.exported = true;
+            vp.assigned_dynamic(&n);
         }
         let r = (b.run)(vp, &argv).await;
         for (n, old) in saved {
@@ -1197,6 +1226,8 @@ pub(crate) struct ExtOpts {
     pub clear_env: bool,
     /// Search this instead of `PATH` (`command -p`).
     pub path: Option<Vec<u8>>,
+    /// `exec`: the child does not get `_` set to its path.
+    pub exec: bool,
 }
 
 /// Starts an external command and waits for it, pumping its pipes to engine objects.
@@ -1233,7 +1264,14 @@ pub(crate) async fn run_external_with(
         env.sort();
         env
     } else {
-        vp.env(&assigns)
+        // A child gets `_` as the path of what it runs, as bash passes it (not
+        // through `exec`).
+        let mut extra = assigns.clone();
+        if !opts.exec {
+            extra.retain(|(n, _)| n != "_");
+            extra.push(("_".to_string(), program.clone()));
+        }
+        vp.env(&extra)
     };
     let mut fds = Vec::new();
     let mut has = [false; 3];
@@ -1709,7 +1747,71 @@ pub(crate) async fn command_subst(
     subst(vp, code.clone(), list).await
 }
 
+/// `$(< file)`: the list is one command with only an input redirection.
+fn read_only_redirect(code: &Code, list: ListId) -> Option<&Redirect> {
+    let l = code.ast.list(list);
+    let [item] = &l.items[..] else { return None };
+    if item.background
+        || !item.rest.is_empty()
+        || item.first.stages.len() != 1
+        || item.first.negated()
+    {
+        return None;
+    }
+    let cmd = code.ast.cmd(item.first.stages[0].cmd);
+    let CommandKind::Simple(s) = &cmd.kind else {
+        return None;
+    };
+    match (&s.words[..], &s.assigns[..], &cmd.redirects[..]) {
+        ([], [], [r])
+            if r.op == RedirOp::Read && matches!(r.fd, None | Some(RedirFd::Number(0))) =>
+        {
+            Some(r)
+        }
+        _ => None,
+    }
+}
+
 async fn subst(vp: &mut Vp, code: Rc<Code>, list: ListId) -> Result<(Vec<u8>, i32), Unwind> {
+    if let Some(r) = read_only_redirect(&code, list)
+        && let RedirTarget::Word(w) = &r.target
+    {
+        // The file's contents, read by the shell itself (bash's `$(< file)`).
+        vp.line = code.line(r.span.start);
+        let Some(target) = expand::expand_target(vp, &code, w).await? else {
+            vp.error(&format!("{}: ambiguous redirect", code.ast.text(w.span)))
+                .await;
+            vp.status = 1;
+            return Ok((Vec::new(), 1));
+        };
+        let path = vp.abs_path(&target);
+        let mut out = Vec::new();
+        let status = match vp
+            .host()
+            .open(&path, crate::host::OpenOptions::read())
+            .await
+        {
+            Ok(f) => {
+                let _ = FdObj::File(f).read_to_end(&mut out).await;
+                0
+            }
+            Err(e) => {
+                vp.error(&format!(
+                    "{}: {}",
+                    String::from_utf8_lossy(&target),
+                    error_text(&e)
+                ))
+                .await;
+                1
+            }
+        };
+        vp.status = status;
+        out.retain(|&b| b != 0);
+        while out.last() == Some(&b'\n') {
+            out.pop();
+        }
+        return Ok((out, status));
+    }
     let mut sub = enter(vp).await?;
     // Outside POSIX mode, command substitutions do not inherit errexit unless
     // `inherit_errexit` is set (D1281).

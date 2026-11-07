@@ -1,6 +1,6 @@
 # 0026: Arrays and the rest of word expansion
 
-status: in-progress
+status: done
 agent: engine
 branch: issue/0026-arrays-expansion
 depends-on: 0005
@@ -15,16 +15,16 @@ model everything else uses. ARCH.md "Engine internals other work builds on" appl
 arrays extend `Var`'s value; `Fields` stays the expansion model.
 
 ## Acceptance criteria
-- [ ] Indexed and associative arrays: `a=(…)`, `a[i]=`, `a+=(…)`, `${a[i]}`, `${a[@]}`,
+- [x] Indexed and associative arrays: `a=(…)`, `a[i]=`, `a+=(…)`, `${a[i]}`, `${a[@]}`,
       `${a[*]}`, `${#a[@]}`, `${!a[@]}`, negative indices, sparse arrays, `"$@"`-like
       quoting of `"${a[@]}"`, arrays in arithmetic (via `ArithEnv`), `unset a[i]`.
-- [ ] `declare`/`typeset`/`local` with `-a -A -i -r -x -g -n -l -u -p -f -F` (namerefs; `declare -f` prints functions with `psh_syntax::print_function_bash`, restoring bytes for non-UTF-8 sources),
+- [x] `declare`/`typeset`/`local` with `-a -A -i -r -x -g -n -l -u -p -f -F` (namerefs; `declare -f` prints functions with `psh_syntax::print_function_bash`, restoring bytes for non-UTF-8 sources),
       `readonly -a`, `export` of arrays (not exported, as bash), `mapfile`/`readarray`.
-- [ ] Remaining parameter expansions: `${x:o:l}`, `${x/p/r}` (`//`, `/#`, `/%`),
+- [x] Remaining parameter expansions: `${x:o:l}`, `${x/p/r}` (`//`, `/#`, `/%`),
       `${x^^}` / `${x,,}` and friends, `${!prefix*}`, `${!name}` indirection,
       `${x@Q}` / `@E` / `@P` (where non-interactive) / `@A` / `@a`, on arrays too.
-- [ ] `$*`/`$@` and IFS edge cases, `set --` with arrays, `shift`.
-- [ ] Ratchets updated; Result records scores and which hit-list areas moved.
+- [x] `$*`/`$@` and IFS edge cases, `set --` with arrays, `shift`.
+- [x] Ratchets updated; Result records scores and which hit-list areas moved.
 
 ## Notes
 - Other agents work in parallel on `[[ ]]`/regex (0027), shell options/errexit (0028)
@@ -66,9 +66,42 @@ arrays extend `Var`'s value; `Fields` stays the expansion model.
   double-quoted operands (`"${u-\z}"`); assoc slices number from 1 (bash).
 - Scores: oils 1651/2511, brush 1789/3171, agent 121/144.
 
+### 2026-11-07 part 3
+- Dynamic variables (D1263): `RANDOM SRANDOM SECONDS EPOCHSECONDS EPOCHREALTIME BASHPID
+  BASH_SUBSHELL`, computed when read through `Host::now`; `$_` (last word of the last
+  command, set on completion; externals get `_` = their path, not through `exec`);
+  `OPTIND=1` at start. `BASH_VERSION`/`BASH_VERSINFO` as bash 5.3.9 plus `PSH_VERSION`
+  (D1264, coordinator decision); oils/builtin-special/7–9 ratcheted (`set -o posix`).
+- Operand words of `${x-…}`: unquoted literal text splits; single quotes are literal in
+  double quotes; backquotes in operands unescape as outside double quotes; tilde after
+  `=` in assignment-like words (also command arguments) and after `:`.
+- Null tests of `"$*"` (joined) and empty `$@`; empty elements of unquoted `$@` stay
+  words when IFS is non-whitespace (not the last); `${!p*}`/`${!a[*]}` with empty IFS.
+- `$(< file)` read by the shell; backslash-newline in backquotes.
+- Scores: oils 1996/2511, brush 2424/3171, agent 133/144.
+
 ## Follow-ups
 - `read -a` (0029's read.rs) can now use `vp.assign_array(name, items, false)`.
 - `test -v 'a[i+1]'` needs arithmetic in `test.rs` (0027's area): `Vp::is_set` handles
   literal subscripts only.
 
 ## Result
+Landed in three parts (4361a04, 14616ca, and the last on top).
+- Variable model (D1260): `Value::{Unset, Str, Indexed, Assoc}` with attributes
+  (`-i -l -u -c -n -r -t -x`), used through `Vp` accessors (`var`, `set_var`, `assign`,
+  `assign_with`, `assign_elem`, `assign_array`, `get_elem`, `unset_elem`, `is_set`,
+  `resolve`, `target`); associative arrays in bash's exact order (D1261).
+- Arrays end to end (assignment forms, `${a[@]}`/`${a[*]}`/`${#…}`/`${!a[@]}`, slices,
+  negative indices, arithmetic, `unset`, sparse), namerefs (chains, elements, cycles),
+  declaration builtins with `DeclArg`s (D1262), `mapfile`/`readarray`, process
+  substitution, all `${x@…}` transforms, substrings, dynamic variables and `$_` (D1263),
+  `BASH_VERSION` (D1264), IFS/`$*`/`$@` edge cases, operand quoting, `$(< file)`.
+- Scores (macOS, at merge): L1 oils 2019/2511 active (731 after 0005, 1111 at the
+  start of 0026, other issues landing in parallel), L2 brush 2450/3171, L3 agent 133/144. Hit-list
+  areas moved: arrays (oils array* now 9 left), declare (72→32 brush), nameref (69→23),
+  mapfile (40→few), word-split (13→1), var-op-* and var-sub-quote mostly done.
+- Left: host info variables (UID, EUID, PPID, HOSTNAME, OSTYPE, MACHTYPE, GROUPS; a host
+  op, procs), the call stack arrays (FUNCNAME, BASH_SOURCE, BASH_LINENO, BASH_ARGV;
+  brush callstack 37 cases), `~user`, `${x//~/…}` tilde in patterns, `set -u` cases
+  (0028), `[[ -v ]]` arithmetic subscripts (0027), `printf -v a[k]` and `read -a`
+  (0029).

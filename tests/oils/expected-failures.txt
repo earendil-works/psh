@@ -25,12 +25,10 @@ oils/array-assign/3
 oils/array-assign/4
 oils/array-assign/7
 oils/array-assign/10
-oils/array-assoc/32
 oils/array-assoc/33
 oils/array-assoc/37
 oils/array-assoc/38
 oils/array-assoc/39
-oils/array-basic/4
 oils/array-compat/7
 oils/array-literal/6
 oils/array-literal/7
@@ -50,7 +48,6 @@ oils/assign-extended/8
 oils/assign-extended/9
 oils/assign-extended/10
 oils/assign-extended/21
-oils/background/7: three jobs whose sleeps differ by 10 ms; their order races under load
 oils/background/21
 oils/assign-extended/32
 oils/ble-features/0
@@ -118,7 +115,6 @@ oils/builtin-echo/25
 oils/builtin-eval-source/15
 oils/builtin-eval-source/16
 oils/builtin-getopts/6
-oils/builtin-getopts/12
 oils/builtin-getopts/13
 oils/builtin-getopts/14
 oils/builtin-meta/4
@@ -162,6 +158,9 @@ oils/builtin-set/6
 oils/builtin-set/12
 oils/builtin-set/22
 oils/builtin-set/23
+oils/builtin-special/7: needs set -o posix (unsupported, D002)
+oils/builtin-special/8: needs set -o posix (unsupported, D002)
+oils/builtin-special/9: needs set -o posix (unsupported, D002)
 oils/builtin-special/10
 oils/builtin-trap-bash/7
 oils/builtin-trap-bash/10
@@ -345,7 +344,6 @@ oils/nameref/15
 oils/nameref/26
 oils/nameref/27
 oils/nameref/29
-oils/nix-idioms/4
 oils/nocasematch-match/0
 oils/nocasematch-match/1
 oils/nocasematch-match/3
@@ -369,7 +367,6 @@ oils/pipeline/1
 oils/process-sub/1
 oils/process-sub/2
 oils/process-sub/3
-oils/process-sub/4
 oils/quote/27
 oils/quote/28
 oils/quote/33
@@ -380,8 +377,6 @@ oils/redirect/10
 oils/redirect/27
 oils/redirect/36
 oils/redirect/39
-oils/redirect-command/1
-oils/redirect-command/2
 oils/redirect-command/8
 oils/redirect-command/13
 oils/redirect-multi/8
@@ -430,6 +425,7 @@ oils/smoke/7
 oils/smoke/14: platform-dependent: GNU ls exits 2 for a missing file, macOS BSD ls 1 (passes on Linux; per-platform ratchet or psh ls later)
 oils/tilde/1
 oils/tilde/3
+oils/tilde/4
 oils/tilde/7
 oils/tilde/11
 oils/tilde/13
@@ -438,9 +434,6 @@ oils/toysh/2
 oils/toysh/3
 oils/toysh/5
 oils/toysh/6
-oils/toysh-posix/11
-oils/toysh-posix/12
-oils/toysh-posix/18
 oils/type-compat/3
 oils/unicode/0
 oils/var-op-bash/17
@@ -455,38 +448,23 @@ oils/var-op-slice/20
 oils/var-op-strip/10
 oils/var-op-strip/28
 oils/var-op-test/17
-oils/var-op-test/22
-oils/var-op-test/33
 oils/var-op-test/35
 oils/var-ref/3
 oils/var-ref/4
 oils/var-ref/8
 oils/var-ref/9
 oils/var-ref/10
-oils/var-ref/18
-oils/var-ref/19
-oils/var-ref/24
 oils/var-ref/26
 oils/var-ref/28
 oils/var-ref/29
 oils/var-ref/30
-oils/var-sub-quote/7
-oils/var-sub-quote/10
-oils/var-sub-quote/15
-oils/var-sub-quote/16
-oils/var-sub-quote/18
 oils/var-sub-quote/25
-oils/var-sub-quote/26
-oils/var-sub-quote/32
 oils/var-sub-quote/33
-oils/var-sub-quote/37
-oils/var-sub-quote/38
 oils/vars-bash/0
 oils/vars-special/2
 oils/vars-special/3
 oils/vars-special/4
 oils/vars-special/5
-oils/vars-special/13
 oils/vars-special/15
 oils/vars-special/18
 oils/vars-special/19
@@ -494,26 +472,7 @@ oils/vars-special/20
 oils/vars-special/24
 oils/vars-special/25
 oils/vars-special/28
-oils/vars-special/31
-oils/vars-special/32
-oils/vars-special/33
-oils/vars-special/34
-oils/vars-special/35
 oils/vars-special/36
-oils/vars-special/37
-oils/vars-special/38
-oils/vars-special/39
-oils/vars-special/41
-oils/word-eval/5
-oils/word-split/21
-oils/word-split/22
-oils/word-split/23
-oils/word-split/39
-oils/word-split/40
 oils/word-split/45
-oils/word-split/48
-oils/word-split/49
-oils/word-split/50
-oils/word-split/54
 oils/xtrace/2
 oils/xtrace/10

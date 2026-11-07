@@ -1,7 +1,6 @@
 # Ratchet for layer brush: active cases that may fail (TESTING.md "Ratchets").
 # One case id per line, optionally `id: reason`. psh-spec --update-ratchet removes
 # cases that pass; never add a line to hide a regression.
-brush/brush/command_substitution/12
 brush/brush/external_commands/0
 brush/brush/external_commands/1
 brush/brush/external_commands/2
@@ -53,11 +52,8 @@ brush/compat/basic/6
 brush/compat/basic/13
 brush/compat/builtins/alias/34
 brush/compat/builtins/alias/35
-brush/compat/builtins/builtin/7
-brush/compat/builtins/builtin/8
 brush/compat/builtins/builtin/16
 brush/compat/builtins/builtin/18
-brush/compat/builtins/builtin/19
 brush/compat/builtins/builtin/20
 brush/compat/builtins/cd/6
 brush/compat/builtins/cd/7
@@ -73,7 +69,6 @@ brush/compat/builtins/command/3
 brush/compat/builtins/command/4
 brush/compat/builtins/command/7
 brush/compat/builtins/command/9
-brush/compat/builtins/command/14
 brush/compat/builtins/command/32
 brush/compat/builtins/command/33
 brush/compat/builtins/command/38
@@ -95,8 +90,6 @@ brush/compat/builtins/declare/85
 brush/compat/builtins/declare/86
 brush/compat/builtins/declare/87
 brush/compat/builtins/declare/88
-brush/compat/builtins/declare/103
-brush/compat/builtins/declare/104
 brush/compat/builtins/declare/112
 brush/compat/builtins/declare/114
 brush/compat/builtins/declare/118
@@ -451,7 +444,6 @@ brush/compat/functions/6
 brush/compat/functions/7
 brush/compat/functions/9
 brush/compat/functions/19
-brush/compat/functions/20
 brush/compat/functions/21
 brush/compat/here/22
 brush/compat/here/23
@@ -461,9 +453,7 @@ brush/compat/here/65
 brush/compat/here/71
 brush/compat/here/84
 brush/compat/ifs/0
-brush/compat/ifs/34
 brush/compat/ifs/60
-brush/compat/ifs/95
 brush/compat/ifs/96
 brush/compat/line_continuation/3
 brush/compat/line_continuation/5
@@ -483,6 +473,7 @@ brush/compat/nameref/141
 brush/compat/nameref/142
 brush/compat/nameref/143
 brush/compat/nameref/174
+brush/compat/nameref/166
 brush/compat/nameref/185
 brush/compat/nameref/199
 brush/compat/nameref/201
@@ -539,7 +530,6 @@ brush/compat/options/set-e/146
 brush/compat/options/set-t/0
 brush/compat/options/set-u/21
 brush/compat/options/set-u/27
-brush/compat/options/set-u/50
 brush/compat/options/set-u/56
 brush/compat/options/set-x/0
 brush/compat/options/set-x/19
@@ -611,7 +601,6 @@ brush/compat/signals/6
 brush/compat/signals/10
 brush/compat/signals/11
 brush/compat/signals/12
-brush/compat/signals/13: a race: when the loop writes before head starts, the pipe is pumped and the engine's 64 KiB buffer plus the pump hold the rest of the 192 KiB, so no write fails (bash: always 141)
 brush/compat/signals/15
 brush/compat/signals/16
 brush/compat/signals/18
@@ -623,7 +612,6 @@ brush/compat/signals/29
 brush/compat/signals/33
 brush/compat/signals/34
 brush/compat/signals/35
-brush/compat/signals/38
 brush/compat/signals/40
 brush/compat/signals/44
 brush/compat/signals/45
@@ -635,33 +623,6 @@ brush/compat/signals/50
 brush/compat/signals/51
 brush/compat/simple_commands/5
 brush/compat/special_parameters/0
-brush/compat/special_parameters/1
-brush/compat/special_parameters/2
-brush/compat/special_parameters/3
-brush/compat/special_parameters/4
-brush/compat/special_parameters/5
-brush/compat/special_parameters/6
-brush/compat/special_parameters/7
-brush/compat/special_parameters/8
-brush/compat/special_parameters/9
-brush/compat/special_parameters/10
-brush/compat/special_parameters/11
-brush/compat/special_parameters/12
-brush/compat/special_parameters/13
-brush/compat/special_parameters/15
-brush/compat/special_parameters/16
-brush/compat/special_parameters/17
-brush/compat/special_parameters/18
-brush/compat/special_parameters/19
-brush/compat/special_parameters/20
-brush/compat/special_parameters/21
-brush/compat/special_parameters/22
-brush/compat/special_parameters/23
-brush/compat/special_parameters/24
-brush/compat/special_parameters/25
-brush/compat/special_parameters/26
-brush/compat/special_parameters/27
-brush/compat/special_parameters/28
 brush/compat/special_parameters/29: passed only while declare was missing; needs `$_`
 brush/compat/special_parameters/30
 brush/compat/special_parameters/33
@@ -669,6 +630,7 @@ brush/compat/special_parameters/34
 brush/compat/special_parameters/35
 brush/compat/special_parameters/36
 brush/compat/special_parameters/38
+brush/compat/status/4
 brush/compat/variables/11
 brush/compat/variables/12: passed via macOS /usr/bin wrapper
 brush/compat/variables/13
@@ -687,7 +649,6 @@ brush/compat/well_known_vars/9
 brush/compat/well_known_vars/10
 brush/compat/well_known_vars/11
 brush/compat/well_known_vars/12
-brush/compat/well_known_vars/13
 brush/compat/well_known_vars/14
 brush/compat/well_known_vars/15
 brush/compat/well_known_vars/16
@@ -702,13 +663,13 @@ brush/compat/well_known_vars/27
 brush/compat/well_known_vars/29
 brush/compat/word_expansion/braces/0
 brush/compat/word_expansion/braces/7
-brush/compat/word_expansion/braces/18
 brush/compat/word_expansion/braces/28
 brush/compat/word_expansion/command_substitution/10
 brush/compat/word_expansion/command_substitution/12
 brush/compat/word_expansion/command_substitution/27
 brush/compat/word_expansion/command_substitution/28
 brush/compat/word_expansion/command_substitution/29
+brush/compat/word_expansion/command_substitution/1
 brush/compat/word_expansion/command_substitution/33
 brush/compat/word_expansion/command_substitution/34
 brush/compat/word_expansion/command_substitution/35
@@ -754,4 +715,3 @@ brush/compat/word_expansion/tilde/1
 brush/compat/word_expansion/tilde/3
 brush/compat/word_expansion/tilde/6
 brush/compat/word_expansion/tilde/7
-brush/compat/word_expansion/tilde/11

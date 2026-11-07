@@ -230,6 +230,8 @@ impl Shell {
             release_on_drop: Cell::new(false),
             died_of: Cell::new(None),
             utilities: cfg.utilities.clone(),
+            rng: Cell::new(0),
+            seconds_base: Cell::new(cfg.host.now().as_nanos() as i128),
         });
         let mut vars = Vars::default();
         let mut foreign = Vec::new();
@@ -246,6 +248,43 @@ impl Shell {
             }
         }
         vars.insert("IFS", Var::scalar(b" \t\n".to_vec()));
+        // Computed when read (D1263).
+        for (name, d) in [
+            ("RANDOM", vars::Dynamic::Random),
+            ("SRANDOM", vars::Dynamic::Srandom),
+            ("SECONDS", vars::Dynamic::Seconds),
+            ("EPOCHSECONDS", vars::Dynamic::EpochSeconds),
+            ("EPOCHREALTIME", vars::Dynamic::EpochRealtime),
+            ("BASHPID", vars::Dynamic::BashPid),
+            ("BASH_SUBSHELL", vars::Dynamic::BashSubshell),
+        ] {
+            let v = vars.entry(name);
+            v.dynamic = Some(d);
+            v.integer = matches!(d, vars::Dynamic::Random | vars::Dynamic::Seconds);
+        }
+        // psh's compatibility target; scripts gate bash-isms on these (D1264).
+        vars.insert("BASH_VERSION", Var::scalar(b"5.3.9(1)-release".to_vec()));
+        let mut info = std::collections::BTreeMap::new();
+        for (i, v) in ["5", "3", "9", "1", "release", std::env::consts::ARCH]
+            .iter()
+            .enumerate()
+        {
+            info.insert(i as i64, v.as_bytes().to_vec());
+        }
+        vars.insert(
+            "BASH_VERSINFO",
+            Var {
+                value: vars::Value::Indexed(info),
+                readonly: true,
+                ..Var::default()
+            },
+        );
+        // getopts' state, as bash starts it.
+        vars.insert("OPTIND", Var::scalar(b"1".to_vec()));
+        vars.insert(
+            "PSH_VERSION",
+            Var::scalar(env!("CARGO_PKG_VERSION").as_bytes().to_vec()),
+        );
         let pwd = vars.entry("PWD");
         pwd.value = vars::Value::Str(cfg.cwd.clone());
         pwd.exported = true;
@@ -286,6 +325,9 @@ impl Shell {
             loops: 0,
             getopts: (0, 0),
             subst_fds: Vec::new(),
+            last_args: Vec::new(),
+            subshell_level: 0,
+            bashpid: cfg.host.pid(),
             aliases: psh_syntax::Aliases::new(),
             expand_aliases: false,
             calls: Vec::new(),
@@ -336,6 +378,10 @@ impl Shell {
         self.before = Some(vp.clone());
         *self.core.msg_name.borrow_mut() = String::from_utf8_lossy(&script.arg0).into_owned();
         self.core.dash_c.set(script.dash_c);
+        // `$_` starts as `$0` unless the environment had one.
+        if vp.vars.get("_").is_none() {
+            vp.vars.insert("_", Var::scalar(script.arg0.clone()));
+        }
         vp.arg0 = script.arg0;
         vp.args = script.args;
         vp.opts.dash_c = script.dash_c;

@@ -20,6 +20,18 @@ pub(crate) enum Value {
     Assoc(Assoc),
 }
 
+/// Variables whose value the shell computes when they are read (until unset).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Dynamic {
+    Random,
+    Srandom,
+    Seconds,
+    EpochSeconds,
+    EpochRealtime,
+    BashPid,
+    BashSubshell,
+}
+
 /// `declare -l` / `-u` (and `-c` is not bash 5.3's).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(crate) enum Case {
@@ -46,6 +58,8 @@ pub(crate) struct Var {
     /// An array declared (`declare -a x`) but never assigned: `declare -p` shows no
     /// `=()`.
     pub declared_only: bool,
+    /// Computed when read (`$RANDOM`, `$SECONDS`, …).
+    pub dynamic: Option<Dynamic>,
 }
 
 impl Var {

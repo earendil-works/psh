@@ -349,7 +349,10 @@ pub(super) async fn builtin(vp: &mut Vp, args: &[Vec<u8>]) -> R {
 /// (sub)shell with its status. Without a command, its redirections stay (the caller
 /// applies them for good).
 pub(super) async fn exec_(vp: &mut Vp, args: &[Vec<u8>]) -> R {
-    let mut opts = ExtOpts::default();
+    let mut opts = ExtOpts {
+        exec: true,
+        ..ExtOpts::default()
+    };
     let mut login = false;
     let mut i = 1;
     'opts: while let Some(a) = args.get(i) {

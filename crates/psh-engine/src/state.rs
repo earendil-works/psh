@@ -32,6 +32,11 @@ pub(crate) struct Core {
     pub died_of: Cell<Option<i32>>,
     /// The in-process utilities and their off switches (D1080).
     pub utilities: crate::util::UtilPolicy,
+    /// `$RANDOM`'s state (shared by subshells, which bash reseeds; close enough).
+    pub rng: Cell<u64>,
+    /// `$SECONDS` counts from this time: nanoseconds since the epoch; may be before it (`SECONDS=100` on a host whose
+    /// clock reads the epoch).
+    pub seconds_base: Cell<i128>,
 }
 
 impl Core {
@@ -181,6 +186,13 @@ pub(crate) struct Vp {
     /// Descriptors of the running command's process substitutions (`<(…)`), closed
     /// when it completes.
     pub subst_fds: Vec<u32>,
+    /// The last words of the simple commands running, innermost last: `$_` once each
+    /// completes.
+    pub last_args: Vec<Vec<u8>>,
+    /// `$BASH_SUBSHELL`
+    pub subshell_level: u32,
+    /// `$BASHPID`: the shell's pid, a made-up one in subshells (vprocs have none).
+    pub bashpid: u32,
     /// `alias` definitions; a subshell's own (bash keeps them per process).
     pub aliases: psh_syntax::Aliases,
     /// `shopt expand_aliases`: off, as in non-interactive bash.
@@ -259,7 +271,73 @@ impl Vp {
             self.opts.get(crate::options::SetOpt::Functrace),
         );
         sub.jobs = Default::default();
+        sub.subshell_level += 1;
+        sub.bashpid = self.core.next_job_id();
         sub
+    }
+
+    /// Refreshes a dynamic variable (`$RANDOM`, `$SECONDS`, …) before it is read.
+    pub(crate) fn refresh_dynamic(&mut self, name: &str) {
+        use crate::vars::Dynamic;
+        let Some(d) = self.vars.get(name).and_then(|v| v.dynamic) else {
+            return;
+        };
+        let now = self.core.host.now();
+        let v = match d {
+            Dynamic::Random => (self.next_random() & 0x7fff).to_string(),
+            Dynamic::Srandom => ((self.next_random() >> 16) as u32).to_string(),
+            Dynamic::Seconds => ((now.as_nanos() as i128 - self.core.seconds_base.get()).max(0)
+                / 1_000_000_000)
+                .to_string(),
+            Dynamic::EpochSeconds => now.as_secs().to_string(),
+            Dynamic::EpochRealtime => format!("{}.{:06}", now.as_secs(), now.subsec_micros()),
+            Dynamic::BashPid => self.bashpid.to_string(),
+            Dynamic::BashSubshell => self.subshell_level.to_string(),
+        };
+        if let Some(var) = self.vars.get_mut(name) {
+            var.value = Value::Str(v.into_bytes());
+        }
+    }
+
+    fn next_random(&self) -> u64 {
+        // xorshift64*: any well-mixed sequence will do; bash's own is not reproduced.
+        let mut x = self.core.rng.get();
+        if x == 0 {
+            x = 0x9e37_79b9_7f4a_7c15
+                ^ u64::from(self.core.host.pid())
+                ^ self.core.host.now().as_nanos() as u64;
+        }
+        x ^= x >> 12;
+        x ^= x << 25;
+        x ^= x >> 27;
+        self.core.rng.set(x);
+        x.wrapping_mul(0x2545_f491_4f6c_dd1d) >> 16
+    }
+
+    /// An assignment to a dynamic variable: `RANDOM=n` seeds, `SECONDS=n` restarts the
+    /// count at n.
+    pub(crate) fn assigned_dynamic(&mut self, name: &str) {
+        use crate::vars::Dynamic;
+        let Some(var) = self.vars.get(name) else {
+            return;
+        };
+        let n: i64 = var
+            .get()
+            .and_then(|v| std::str::from_utf8(v).ok()?.trim().parse().ok())
+            .unwrap_or(0);
+        match var.dynamic {
+            Some(Dynamic::Random) => self
+                .core
+                .rng
+                .set((n as u64).wrapping_mul(0x9e37_79b9_7f4a_7c15) | 1),
+            Some(Dynamic::Seconds) => {
+                let now = self.core.host.now().as_nanos() as i128;
+                self.core
+                    .seconds_base
+                    .set(now - i128::from(n.max(0)) * 1_000_000_000);
+            }
+            _ => {}
+        }
     }
 
     /// Whether a signal is ignored here (`trap '' SIG`): externals start with it ignored
@@ -476,6 +554,9 @@ impl Vp {
         let var = self.vars.entry(&name);
         var.set(value);
         var.exported |= allexport;
+        if var.dynamic.is_some() {
+            self.assigned_dynamic(&name);
+        }
         Ok(())
     }
 
@@ -487,13 +568,27 @@ impl Vp {
         value: Vec<u8>,
         append: bool,
     ) -> Result<Vec<u8>, String> {
-        let (readonly, integer, case) = match self.vars.get(name) {
-            Some(v) => (v.readonly, v.integer, v.case),
-            None => (false, false, Case::None),
-        };
-        if readonly {
+        if self.vars.get(name).is_some_and(|v| v.readonly) {
             return Err(format!("{name}: readonly variable"));
         }
+        self.prepare_value_unchecked(name, value, append)
+    }
+
+    /// `prepare_value` without the readonly check (for assignments in front of a
+    /// command, which bash checks when it applies them).
+    pub(crate) fn prepare_value_unchecked(
+        &mut self,
+        name: &str,
+        value: Vec<u8>,
+        append: bool,
+    ) -> Result<Vec<u8>, String> {
+        if append {
+            self.refresh_dynamic(name);
+        }
+        let (integer, case) = match self.vars.get(name) {
+            Some(v) => (v.integer, v.case),
+            None => (false, Case::None),
+        };
         let mut value = value;
         if integer {
             let mut n = crate::arith::eval(self, &value)?;

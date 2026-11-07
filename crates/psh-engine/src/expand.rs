@@ -394,6 +394,9 @@ pub(crate) enum Ctx {
     /// An assignment value: `~` also after `:`.
     Assign,
     HereDoc,
+    /// The word of `${x-word}` and friends: unquoted, its literal text is split like
+    /// an expansion's; in double quotes, single quotes are literal (bash).
+    Operand,
 }
 
 fn expand_pieces<'a>(
@@ -423,10 +426,11 @@ fn expand_parts<'a>(
     parts: &'a [WordPart],
     quoted: bool,
     f: &'a mut Fields,
+    ctx: Ctx,
 ) -> LocalBoxFuture<'a, Result<(), Unwind>> {
     Box::pin(async move {
         for (i, p) in parts.iter().enumerate() {
-            expand_part(vp, code, p, quoted, f, Ctx::Word, i == 0 && !quoted).await?;
+            expand_part(vp, code, p, quoted, f, ctx, i == 0 && !quoted).await?;
         }
         Ok(())
     })
@@ -451,6 +455,18 @@ fn literal_with_tilde(vp: &Vp, text: &[u8], first: bool, ctx: Ctx, f: &mut Field
     }
     let mut rest = text;
     let mut at_start = first;
+    let mut ctx = ctx;
+    // A word that looks like an assignment (`x=~/a`, also as a command argument)
+    // gets tilde expansion after its `=` and each `:`, as in bash.
+    if first
+        && let Some(eq) = text.iter().position(|&b| b == b'=')
+        && eq > 0
+        && is_name(text[..eq].strip_suffix(b"+").unwrap_or(&text[..eq]))
+    {
+        f.literal(&text[..=eq]);
+        rest = &text[eq + 1..];
+        ctx = Ctx::Assign;
+    }
     loop {
         if at_start && rest.first() == Some(&b'~') {
             let end = rest
@@ -498,7 +514,14 @@ async fn expand_part(
         Part::Lit => {
             if quoted {
                 f.quoted(text);
-            } else if text.first() == Some(&b'~') || ctx == Ctx::Assign {
+            } else if ctx == Ctx::Operand {
+                // `${x-a b}` unquoted: two words.
+                if first && text.first() == Some(&b'~') {
+                    literal_with_tilde(vp, text, first, Ctx::Word, f);
+                } else {
+                    f.unquoted(text);
+                }
+            } else if text.contains(&b'~') || ctx == Ctx::Assign {
                 literal_with_tilde(vp, text, first, ctx, f);
             } else {
                 f.literal(text);
@@ -514,6 +537,8 @@ async fn expand_part(
                 f.quoted(c);
             }
         }
+        // `"${x-'b'}"`: the quotes stay.
+        Part::Single if quoted && ctx == Ctx::Operand => f.quoted(text),
         Part::Single => f.quoted(&text[1..text.len() - 1]),
         Part::AnsiC => {
             let inner = &text[2..text.len() - 1];
@@ -525,7 +550,7 @@ async fn expand_part(
             if inner.is_empty() || !inner.iter().all(is_at) {
                 f.quoted(b"");
             }
-            expand_parts(vp, code, inner, true, f).await?;
+            expand_parts(vp, code, inner, true, f, Ctx::Word).await?;
         }
         Part::Param(p) => param(vp, code, p, part, quoted, f).await?,
         Part::BadSubst => {
@@ -543,8 +568,21 @@ async fn expand_part(
         }
         Part::Backtick => {
             // Unescaped on the UTF-8 view, then back to the source's bytes.
-            let body = psh_syntax::backtick_body(code.ast.text(part.span), quoted);
-            let body = code.ast.restore_bytes(&body).into_owned();
+            // In a `${x-…}` operand, bash unescapes the body as outside double quotes.
+            let in_dq = quoted && ctx != Ctx::Operand;
+            let body = psh_syntax::backtick_body(code.ast.text(part.span), in_dq);
+            let mut body = code.ast.restore_bytes(&body).into_owned();
+            // A backslash-newline in the body is a line continuation.
+            let mut i = 0;
+            while i + 1 < body.len() {
+                if body[i] == b'\\' && body[i + 1] == b'\n' {
+                    body.drain(i..i + 2);
+                } else if body[i] == b'\\' {
+                    i += 2;
+                } else {
+                    i += 1;
+                }
+            }
             let (out, st) = exec::command_subst_text(vp, code, &body, part.span.start).await?;
             f.subst_status = Some(st);
             emit(f, &out, quoted);
@@ -758,6 +796,10 @@ async fn param(
         let name = vp.resolve(code.ast.text(p.name_span)).into_owned();
         let keys = vp.vars.get(&name).map(|v| v.keys()).unwrap_or_default();
         let star = matches!(p.index, Some(Subscript::Star));
+        // Unquoted with an empty IFS, `${!a[*]}` is one word, joined by spaces (bash).
+        if star && !quoted && f.ifs.is_empty() {
+            return emit_val(vp, f, Val::Str(keys.join(&b' ')), quoted);
+        }
         return emit_val(vp, f, Val::List(keys, star), quoted);
     }
     // `${x:o:l}` on arrays and `$@` slices by index, so it reads the source itself.
@@ -816,7 +858,10 @@ async fn param(
                 Some(Subscript::Star) => Val::List(Vec::new(), true),
                 _ => Val::Unset,
             },
-            Ok((name, None)) => lookup_var(vp, code, &name, &p.index).await?,
+            Ok((name, None)) => {
+                vp.refresh_dynamic(&name);
+                lookup_var(vp, code, &name, &p.index).await?
+            }
             Err(msg) => {
                 vp.error(&format!("warning: {msg}")).await;
                 Val::Unset
@@ -865,6 +910,10 @@ async fn param(
                     .map(|(n, _)| n.as_bytes().to_vec())
                     .collect();
                 names.sort();
+                // Unquoted with an empty IFS, `${!p*}` is one word (bash).
+                if star && !quoted && f.ifs.is_empty() {
+                    return emit_val(vp, f, Val::Str(names.concat()), quoted);
+                }
                 return emit_val(vp, f, Val::List(names, star), quoted);
             }
             // A nameref: `${!ref}` is the name it refers to.
@@ -922,6 +971,9 @@ async fn param(
             let is_set = match &val {
                 Val::Unset => false,
                 Val::Str(s) => !(*colon && s.is_empty()),
+                // `"$*"` with `:` is null when it joins to nothing; `$@` when it has no
+                // elements or one empty one.
+                Val::List(l, true) if *colon && quoted => !l.join(&ifs_first(vp)[..]).is_empty(),
                 Val::List(l, _) => {
                     !l.is_empty() && !(*colon && l.iter().all(|s| s.is_empty()) && l.len() == 1)
                 }
@@ -938,7 +990,9 @@ async fn param(
                     if is_set {
                         expand_operand(vp, code, word, quoted, f).await
                     } else {
-                        if quoted {
+                        // Quoted, an unset `${x+…}` is an empty word; an empty `$@`
+                        // is none.
+                        if quoted && !matches!(val, Val::List(_, false)) {
                             f.quoted(b"");
                         }
                         Ok(())
@@ -1286,11 +1340,15 @@ async fn indirect(vp: &mut Vp, code: &Rc<Code>, target: &[u8]) -> Result<Option<
                 let values = vp.vars.get(&name).map(|v| v.values()).unwrap_or_default();
                 Val::List(values, sub == b"*")
             }
-            _ => element(vp, &name, sub).await?,
+            _ => {
+                let sub = expand_sub_text(vp, sub).await?;
+                element(vp, &name, &sub).await?
+            }
         }));
     }
     if is_name(target) {
         let name = String::from_utf8_lossy(target).into_owned();
+        vp.refresh_dynamic(&name);
         return Ok(Some(
             vp.var(&name).map_or(Val::Unset, |v| Val::Str(v.to_vec())),
         ));
@@ -1459,11 +1517,19 @@ fn emit_val(vp: &Vp, f: &mut Fields, val: Val, quoted: bool) -> Result<(), Unwin
                 let joined = items.join(&sep[..]);
                 emit(f, &joined, quoted);
             } else {
+                // Unquoted, an empty element is an empty word unless IFS has
+                // whitespace or is empty, which drops it, or it is the last (bash).
+                let keep_empty =
+                    !quoted && f.split && !f.ifs.is_empty() && !f.ifs.iter().any(|&b| is_ifs_ws(b));
                 for (i, item) in items.iter().enumerate() {
                     if i > 0 {
                         f.field_break(quoted);
                     }
-                    emit(f, item, quoted);
+                    if item.is_empty() && keep_empty && i + 1 < items.len() {
+                        f.quoted(b"");
+                    } else {
+                        emit(f, item, quoted);
+                    }
                 }
             }
         }
@@ -1483,7 +1549,7 @@ async fn expand_operand(
         f.quoted(b"");
         return Ok(());
     }
-    expand_parts(vp, code, &word.parts, quoted, f).await
+    expand_parts(vp, code, &word.parts, quoted, f, Ctx::Operand).await
 }
 
 /// Pathname expansion of the fields with unquoted pattern chars; `set -f`, `nullglob`

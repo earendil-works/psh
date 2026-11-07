@@ -26,7 +26,10 @@ impl ArithEnv for Env<'_> {
         match index {
             None => match self.vp.target(&name)? {
                 (n, Some(sub)) => self.vp.get_elem(&n, &sub),
-                (n, None) => Ok(self.vp.vars.value(&n).map(<[u8]>::to_vec)),
+                (n, None) => {
+                    self.vp.refresh_dynamic(&n);
+                    Ok(self.vp.vars.value(&n).map(<[u8]>::to_vec))
+                }
             },
             Some(ArithIndex::Key(k)) => self.vp.get_elem(&name, k),
             // Out of range below the start: 0, without an error (bash).

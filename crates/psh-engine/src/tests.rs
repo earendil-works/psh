@@ -228,7 +228,7 @@ fn externals() {
     check("X=1 env | grep_missing_is_fine; true", "");
     check(
         "export A=1; B=2 env",
-        "A=1\nB=2\nHOME=/tmp\nPATH=/bin\nPWD=/tmp\nSHLVL=1\n",
+        "A=1\nB=2\nHOME=/tmp\nPATH=/bin\nPWD=/tmp\nSHLVL=1\n_=/bin/env\n",
     );
     check_status("exit 7 | true; ./missing", 127);
 }
@@ -698,7 +698,7 @@ fn declare_attributes() {
         "outer global\n",
     );
     check("f() { declare -g a=global; }; f; echo $a", "global\n");
-    check("export -n PATH; declare -x e=1; env | wc", "4\n");
+    check("export -n PATH; declare -x e=1; env | wc", "5\n");
     check(
         "f() { echo hi; }; declare -f f; declare -F f",
         "f () \n{ \n    echo hi\n}\nf\n",
@@ -749,4 +749,35 @@ fn path_lookups_split_path_as_the_host_says() {
     assert_eq!(o.stdout, "cat is /bin/cat\nran\n", "{}", o.stderr);
     let o = run(src);
     assert!(o.stdout.contains("cat is y;/bin/cat\n"), "{}", o.stdout);
+}
+
+#[test]
+fn special_variables_and_operands() {
+    check("echo a b; echo $_; x=1; echo \"[$_]\"", "a b\nb\n[]\n");
+    check(
+        "f() { echo \"in:$_\"; }; : seed; f arg; echo $_",
+        "in:seed\narg\n",
+    );
+    check(
+        "echo $BASH_SUBSHELL $(echo $BASH_SUBSHELL) $( (echo $BASH_SUBSHELL) )",
+        "0 1 2\n",
+    );
+    check(
+        "RANDOM=7; a=$RANDOM; RANDOM=7; [ $a = $RANDOM ] && echo seeded; echo $((RANDOM < 32768))",
+        "seeded\n1\n",
+    );
+    check("echo ${BASH_VERSINFO[0]} ${PSH_VERSION:+psh}", "5 psh\n");
+    check(
+        "argv ${u-a b} \"${u-'q'}\" ${u-\"c d\"}",
+        "[a]\n[b]\n['q']\n[c d]\n",
+    );
+    check("set -- one '' two; IFS=x; argv $@", "[one]\n[]\n[two]\n");
+}
+
+#[test]
+fn read_file_substitution() {
+    let o = run_setup("x=$(< /tmp/f); echo \"[$x]\"; y=$(< /nope); echo $?", |h| {
+        h.fs.write_file("/tmp/f", b"hello\n\n")
+    });
+    assert_eq!(o.stdout, "[hello]\n1\n");
 }

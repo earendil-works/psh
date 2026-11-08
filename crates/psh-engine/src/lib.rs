@@ -437,6 +437,9 @@ impl Shell {
     }
 }
 
+/// Environment pairs, names and values as bytes.
+type Env = Vec<(Vec<u8>, Vec<u8>)>;
+
 /// The variables a new shell starts with, from its environment (D1329): what
 /// [`Shell::new`] sets up, and what a shell psh starts afresh gets from its exported
 /// variables (D1300, D1410). Names that are not shell names stay in the second list,
@@ -445,7 +448,7 @@ pub(crate) fn initial_vars(
     host: &dyn Host,
     env: &[(Vec<u8>, Vec<u8>)],
     cwd: &[u8],
-) -> (Vars, Vec<(Vec<u8>, Vec<u8>)>) {
+) -> (Vars, Env) {
     let mut vars = Vars::default();
     let mut foreign = Vec::new();
     for (k, v) in env {

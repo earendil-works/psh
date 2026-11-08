@@ -130,6 +130,28 @@ Both parts
   - Docs: ARCH.md (command lookup, nested shells, control), guide processes.md (new
     section), differences.md, engine.md, cli.md, windows.md.
 
+- 2026-11-08 (shells), D1413 (owner's design change, superseding D1411's `$$`): a
+  nested shell has no process id. `pidscan.rs` scans a `-c` string or FILE (parsed;
+  `$(…)`, here-docs, backquotes and literal `bash -c '…'` included) for `$$`/`${$…}`/
+  `BASHPID`; a hit runs the first real program on `PATH` that is not psh itself
+  (`ShellConfig::own_program`, from `current_exe` in the binary). Otherwise `$$` and
+  `BASHPID` in a nested shell, and `BASHPID` in any subshell, are expansion errors
+  (`$$: this shell runs inside psh and has no process id`). `Vp::shell_pid`/`bashpid`
+  are `Option`s; the `Core` registry of nested shells for `kill` is gone; `$!` and jobs
+  unchanged (job ids from `next_job_id`). A fall-through program a signal ended ends the
+  nested shell with that signal, reported with its real pid.
+  - Ratchets: `jobs/12` passes on Linux now (real sh), its line is gone; wasm
+    `signals/22` passes there now (line gone). New shared lines with D1413's reason:
+    oils `vars-special/13`, brush `signals/38`, `/42` (`BASHPID` in subshells).
+  - Spec cases: the fall-through path is `agent/nested-shells/19` (`kill -0 $$`,
+    `ps -p $$`, a nested `$PPID`), and cases 4, 15, 16 now run their `$$` parts under
+    the real bash. The two error paths (no real bash; `BASHPID` in a subshell) cannot
+    match a bash golden, so they are tested in the engine
+    (`nested::tests::no_process_id`, `pid_uses_run_the_real_program`, `pidscan` tests)
+    and the binary (`tests/cli.rs nested_shells_have_no_pid`) instead. The case-4 line
+    comparing `$$` with `$BASHPID` was dropped: under fall-through on macOS it runs
+    bash 3.2, which has no `BASHPID`.
+
 ## Follow-ups
 - psh's `timeout` drops its child at the deadline and returns at once; GNU timeout
   signals and then waits for it. With a nested shell that traps TERM, its trap output

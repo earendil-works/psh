@@ -113,11 +113,72 @@ fn run_for(code: &str, limit: Duration) -> Result<Run, String> {
     ))
 }
 
-/// The AST pane uses exactly the CLI/WASM parser JSON, including parse errors.
+/// The AST pane: `psh_syntax::outline` as a tree of rows, or the parse error. live.js
+/// builds the same from `psh.parse(src, { outline: true })` and adds what needs
+/// JavaScript: folding, the link between rows and the code, and the JSON view (whose
+/// buttons show only then).
 pub fn ast_html(code: &str) -> String {
-    let (json, _) =
-        crate::parse_json::parse_to_json(code.as_bytes(), psh_syntax::Options::default());
-    crate::highlight::highlight("json", &json.to_pretty())
+    let body = match psh_syntax::parse(code) {
+        Ok(ast) => tree_html(&psh_syntax::outline(&ast)),
+        Err(e) => {
+            let lc = psh_syntax::LineIndex::new(code).line_col(code, e.span.start);
+            error_html(&e.message, lc.line, lc.column)
+        }
+    };
+    // The search index skips the pane up to the marker (search.rs).
+    format!("{}{body}<!-- /ast -->", view_bar())
+}
+
+fn view_bar() -> &'static str {
+    "<div class=\"ast-bar\"><button data-view=\"tree\" aria-pressed=\"true\">Tree</button>\
+     <button data-view=\"json\" aria-pressed=\"false\">JSON</button></div>"
+}
+
+fn error_html(message: &str, line: u32, column: u32) -> String {
+    format!(
+        "<p class=\"live-error\">Does not parse: {} (line {line}, column {column})</p>",
+        crate::highlight::esc(message)
+    )
+}
+
+/// One row per node, indented by depth (`--depth`), with its byte span for live.js;
+/// `data-open` marks a row that has children.
+fn tree_html(rows: &[psh_syntax::OutlineRow]) -> String {
+    use crate::highlight::esc;
+    if rows.is_empty() {
+        return "<p class=\"muted\">(no commands)</p>".into();
+    }
+    let mut h = String::from("<div class=\"ast-tree\">");
+    for (i, r) in rows.iter().enumerate() {
+        let open = rows.get(i + 1).is_some_and(|n| n.depth > r.depth);
+        h.push_str(&format!(
+            "<div class=\"ast-row\" data-depth=\"{d}\"{} data-span=\"{} {}\" style=\"--depth:{d}\">\
+             <span class=\"ast-twisty\"></span>",
+            if open { " data-open=\"true\"" } else { "" },
+            r.span.start,
+            r.span.end,
+            d = r.depth,
+        ));
+        if !r.role.is_empty() {
+            h.push_str(&format!(" <span class=\"ast-role\">{}</span>", esc(r.role)));
+        }
+        h.push_str(&format!(" <span class=\"ast-kind\">{}</span>", esc(r.kind)));
+        if !r.info.is_empty() {
+            h.push_str(&format!(
+                " <span class=\"ast-info\">{}</span>",
+                esc(&r.info)
+            ));
+        }
+        if !r.text.is_empty() {
+            h.push_str(&format!(
+                " <code class=\"ast-text\">{}</code>",
+                esc(&r.text)
+            ));
+        }
+        h.push_str("</div>");
+    }
+    h.push_str("</div>");
+    h
 }
 
 /// The Classification pane of a live example: what the script would run, as psh's
@@ -196,26 +257,42 @@ mod tests {
     }
 
     #[test]
-    fn ast_includes_structure_and_escapes_source() {
+    fn ast_is_an_outline_and_escapes_source() {
         let h = ast_html("echo \"$name\" | cat > '<script>&'");
-        for text in [
-            "list", "pipeline", "simple", "word", "param", "redirect", "span",
-        ] {
-            assert!(h.contains(text), "{text} in {h}");
-        }
-        assert!(h.contains("tok-string"), "{h}");
-        assert!(h.contains("\n  "), "{h}");
+        assert!(h.starts_with("<div class=\"ast-bar\">"), "{h}");
+        assert!(h.ends_with("</div><!-- /ast -->"), "{h}");
+        assert!(
+            h.contains(
+                "<div class=\"ast-row\" data-depth=\"0\" data-open=\"true\" data-span=\"0 32\" \
+                 style=\"--depth:0\"><span class=\"ast-twisty\"></span> <span class=\"ast-kind\">\
+                 pipeline</span> <span class=\"ast-info\">|</span> <code class=\"ast-text\">"
+            ),
+            "{h}"
+        );
+        assert!(
+            h.contains(
+                "<div class=\"ast-row\" data-depth=\"3\" data-span=\"6 11\" style=\"--depth:3\">\
+                 <span class=\"ast-twisty\"></span> <span class=\"ast-kind\">param</span> \
+                 <span class=\"ast-info\">name</span> <code class=\"ast-text\">$name</code></div>"
+            ),
+            "{h}"
+        );
         assert!(h.contains("&lt;script&gt;&amp;"), "{h}");
         assert!(!h.contains("<script>"), "{h}");
+        assert!(ast_html("# nothing").contains("(no commands)"));
     }
 
     #[test]
     fn ast_includes_parse_errors() {
-        let h = ast_html("if");
-        for text in ["error", "message", "span", "line", "column", "false"] {
-            assert!(h.contains(text), "{text} in {h}");
-        }
-        assert!(!h.contains("\"script\""), "{h}");
+        let h = ast_html("echo a\nfi");
+        assert!(
+            h.contains(
+                "<p class=\"live-error\">Does not parse: syntax error near unexpected token \
+                 `fi' (line 2, column 1)</p>"
+            ),
+            "{h}"
+        );
+        assert!(!h.contains("ast-tree"), "{h}");
     }
 
     #[test]

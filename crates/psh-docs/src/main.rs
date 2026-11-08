@@ -14,11 +14,6 @@
 //! the site's front page.
 
 mod highlight;
-#[path = "../../psh/src/json.rs"]
-#[allow(dead_code)]
-mod json;
-#[path = "../../psh/src/parse_json.rs"]
-mod parse_json;
 mod regions;
 mod render;
 mod rules;

@@ -236,7 +236,7 @@ fn live_block(page: &str, n: usize, hl: &str, code: &str, env: &mut Env) -> Stri
         tab("ast", "AST", false),
         pane("pre", "out", false, &out),
         pane("div", "classify", true, &classify),
-        pane("pre", "ast", true, &crate::run::ast_html(code)),
+        pane("div", "ast", true, &crate::run::ast_html(code)),
     )
 }
 
@@ -371,7 +371,7 @@ mod tests {
             "data-pane=\"classify\"",
             "data-tab=\"ast\" aria-controls=\"live-1-ast\"",
             "data-pane=\"ast\" id=\"live-1-ast\" role=\"tabpanel\" aria-labelledby=\"live-1-tab-ast\" tabindex=\"0\" hidden>",
-            "<span class=\"tok-variable\">\"script\"</span>",
+            "<span class=\"ast-kind\">simple</span>",
         ] {
             assert!(p.html.contains(want), "{want} in {}", p.html);
         }

@@ -92,8 +92,36 @@ function classificationHtml(src, c) {
   return h;
 }
 
-/** The AST pane: the same JSON as psh --parse, indented and syntax highlighted. */
-function astHtml(result) {
+// ---- The AST pane -------------------------------------------------------------------
+// The tree is psh_syntax::outline: one row per node with its byte span (run.rs ast_html
+// renders the same at build time). Hovering a row marks its span in the code; the caret
+// in the code selects the deepest row there; rows fold; JSON shows `psh --parse` itself.
+
+const enc = new TextEncoder();
+
+function viewBar(view) {
+  const b = (v, label) => `<button data-view="${v}" aria-pressed="${view === v}">${label}</button>`;
+  return `<div class="ast-bar">${b("tree", "Tree")}${b("json", "JSON")}</div>`;
+}
+
+/** The rows as the tree: run.rs tree_html. */
+function treeHtml(rows) {
+  if (!rows.length) return `<p class="muted">(no commands)</p>`;
+  let h = `<div class="ast-tree">`;
+  rows.forEach((r, i) => {
+    const open = i + 1 < rows.length && rows[i + 1].depth > r.depth ? ` data-open="true"` : "";
+    h += `<div class="ast-row" data-depth="${r.depth}"${open} data-span="${r.span[0]} ${r.span[1]}" style="--depth:${r.depth}"><span class="ast-twisty"></span>`;
+    if (r.role) h += ` <span class="ast-role">${esc(r.role)}</span>`;
+    h += ` <span class="ast-kind">${esc(r.kind)}</span>`;
+    if (r.info) h += ` <span class="ast-info">${esc(r.info)}</span>`;
+    if (r.text) h += ` <code class="ast-text">${esc(r.text)}</code>`;
+    h += `</div>`;
+  });
+  return h + `</div>`;
+}
+
+/** `psh --parse`'s JSON, indented and highlighted. */
+function jsonHtml(result) {
   const json = JSON.stringify(result, null, 2);
   // Split on JSON tokens before escaping, so source text cannot introduce markup.
   return json.split(/("(?:\\.|[^"\\])*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\b(?:true|false|null)\b)/g)
@@ -102,6 +130,168 @@ function astHtml(result) {
       const role = s[0] === '"' ? "string" : /^(true|false|null)$/.test(s) ? "keyword" : "number";
       return `<span class="tok-${role}">${esc(s)}</span>`;
     }).join("");
+}
+
+/** The AST pane for `view` from `psh.parse`'s result (outline rows for the tree). */
+function astHtml(view, r) {
+  let body;
+  if (view === "json") body = `<pre class="ast-json">${jsonHtml(r)}</pre>`;
+  else if (!r.ok) body = `<p class="live-error">Does not parse: ${esc(r.error.message)} (line ${r.error.line}, column ${r.error.column})</p>`;
+  else body = treeHtml(r.rows);
+  return viewBar(view) + body;
+}
+
+/** Fills the AST pane for `src`, which is the code the rows' spans point into. */
+function showAst(ex, psh, src) {
+  const r = psh.parse(src, { outline: ex.view === "tree" }).json;
+  ex.pane("ast").innerHTML = astHtml(ex.view, r);
+  ex.astSrc = src;
+  ex.active = null;
+  syncCaret(ex);
+}
+
+/** The parser for the JSON view, shared by all examples (runs make their own). */
+let analyzerPromise;
+function analyzer() {
+  analyzerPromise ??= lib().then(({ loadPsh, MemHost, module }) => loadPsh(module, { host: new MemHost() }));
+  return analyzerPromise;
+}
+
+const rowsOf = (ex) => [...ex.pane("ast").querySelectorAll(".ast-row")];
+const depthOf = (row) => Number(row.dataset.depth);
+const spanOf = (row) => row.dataset.span.split(" ").map(Number);
+
+/** Whether the AST pane shows a tree for the code in the editor. */
+function treeIsCurrent(ex) {
+  return !ex.pane("ast").hidden && ex.view === "tree" && ex.astSrc === ex.ta.value;
+}
+
+/** Marks the span of `row` (none: nothing) in the code. */
+function markRow(ex, row) {
+  if (!row || !treeIsCurrent(ex)) {
+    ex.marks.innerHTML = "";
+    return;
+  }
+  const bytes = enc.encode(ex.astSrc);
+  const [a, b] = spanOf(row).map((n) => dec().decode(bytes.subarray(0, n)).length);
+  const v = ex.astSrc;
+  const cls = a === b ? ` class="empty"` : "";
+  ex.marks.innerHTML = `${esc(v.slice(0, a))}<mark${cls}>${esc(v.slice(a, b))}</mark>${esc(v.slice(b))}` +
+    (v === "" || v.endsWith("\n") ? " " : "");
+}
+
+/** Shows only the rows whose ancestors are all open. */
+function applyFolds(ex) {
+  let closedAt = Infinity;
+  for (const row of rowsOf(ex)) {
+    const d = depthOf(row);
+    if (d > closedAt) {
+      row.hidden = true;
+      continue;
+    }
+    row.hidden = false;
+    closedAt = row.dataset.open === "false" ? d : Infinity;
+  }
+}
+
+function setOpen(ex, row, open) {
+  if (row.dataset.open === undefined || row.dataset.open === String(open)) return;
+  row.dataset.open = String(open);
+  applyFolds(ex);
+}
+
+/** Makes `row` the current row: highlighted, its ancestors open, scrolled into view. */
+function setActive(ex, row) {
+  ex.active?.classList.remove("is-active");
+  ex.active = row;
+  if (!row) return markRow(ex, null);
+  row.classList.add("is-active");
+  if (row.hidden) {
+    let d = depthOf(row);
+    for (let p = row.previousElementSibling; p && d > 0; p = p.previousElementSibling) {
+      if (depthOf(p) < d) {
+        p.dataset.open = "true";
+        d = depthOf(p);
+      }
+    }
+    applyFolds(ex);
+  }
+  // Scroll the pane only, never the page under the reader's caret, and not under the
+  // sticky Tree/JSON bar.
+  const pane = ex.pane("ast");
+  const top = row.offsetTop;
+  const bar = pane.querySelector(".ast-bar")?.offsetHeight ?? 0;
+  if (top - bar < pane.scrollTop) pane.scrollTop = top - bar;
+  else if (top + row.offsetHeight > pane.scrollTop + pane.clientHeight) pane.scrollTop = top + row.offsetHeight - pane.clientHeight;
+  markRow(ex, row);
+}
+
+/** Selects the deepest row at the caret in the code. */
+function syncCaret(ex) {
+  if (!treeIsCurrent(ex)) return markRow(ex, null);
+  if (!ex.caretSeen) return markRow(ex, ex.active);
+  const at = enc.encode(ex.ta.value.slice(0, ex.ta.selectionStart)).length;
+  let inside = null;
+  let touching = null;
+  // Children follow their parent, so the last row that holds the caret is the deepest.
+  for (const row of rowsOf(ex)) {
+    const [a, b] = spanOf(row);
+    if (a <= at && at < b) inside = row;
+    else if (a <= at && at === b) touching = row;
+  }
+  setActive(ex, inside ?? touching);
+}
+
+async function setView(ex, view) {
+  if (ex.view === view) return;
+  ex.view = view;
+  const src = ex.astSrc;
+  // Pending (the code was edited): the next run fills the pane in this view.
+  if (src === null || src !== ex.ta.value) return;
+  const psh = await analyzer();
+  if (ex.astSrc === src && ex.ta.value === src) showAst(ex, psh, src);
+}
+
+function setupAst(ex) {
+  const pane = ex.pane("ast");
+  pane.addEventListener("click", (ev) => {
+    const button = ev.target.closest("button[data-view]");
+    if (button) return void setView(ex, button.dataset.view).catch(() => {});
+    const row = ev.target.closest(".ast-row");
+    if (!row) return;
+    if (ev.target.closest(".ast-twisty")) setOpen(ex, row, row.dataset.open === "false");
+    setActive(ex, row);
+  });
+  pane.addEventListener("pointerover", (ev) => {
+    const row = ev.target.closest(".ast-row");
+    if (row) markRow(ex, row);
+  });
+  pane.addEventListener("pointerleave", () => markRow(ex, ex.active));
+  // The ARIA tree keys, on the focused pane: up and down move, right opens or goes to
+  // the first child, left closes or goes to the parent.
+  pane.addEventListener("keydown", (ev) => {
+    if (ev.target !== pane || ev.altKey || ev.ctrlKey || ev.metaKey || !treeIsCurrent(ex)) return;
+    const rows = rowsOf(ex).filter((r) => !r.hidden);
+    if (!rows.length) return;
+    const row = ex.active && !ex.active.hidden ? ex.active : null;
+    const i = row ? rows.indexOf(row) : -1;
+    let next;
+    if (ev.key === "ArrowDown") next = rows[Math.min(i + 1, rows.length - 1)];
+    else if (ev.key === "ArrowUp") next = rows[Math.max(i - 1, 0)];
+    else if (ev.key === "Home") next = rows[0];
+    else if (ev.key === "End") next = rows[rows.length - 1];
+    else if (ev.key === "ArrowRight" && row) {
+      if (row.dataset.open === "false") setOpen(ex, row, true);
+      next = row.dataset.open === "true" ? rows[i + 1] : row;
+    } else if (ev.key === "ArrowLeft" && row) {
+      if (row.dataset.open === "true") {
+        setOpen(ex, row, false);
+        next = row;
+      } else next = rows.slice(0, i).reverse().find((r) => depthOf(r) < depthOf(row)) ?? row;
+    } else return;
+    ev.preventDefault();
+    setActive(ex, next);
+  });
 }
 
 // ---- Editing ----------------------------------------------------------------------
@@ -191,7 +381,7 @@ async function run(ex) {
     if (id !== ex.runs) return;
     // Analysis needs only the text, not the outcome of a possibly slow run.
     pane("classify").innerHTML = classificationHtml(src, psh.classify(src).json);
-    pane("ast").innerHTML = astHtml(psh.parse(src).json);
+    showAst(ex, psh, src);
     const chunks = [];
     const shell = psh.createShell({
       cwd: CWD,
@@ -234,13 +424,22 @@ function repaint(ex) {
 function setup(el, n) {
   const pre = el.querySelector(".live-editor pre");
   const code = pre.querySelector("code");
+  // The Markdown block's final newline would be an empty last line in the editor.
+  const original = code.textContent.replace(/\n$/, "");
   const ex = {
     el,
     code,
-    // The Markdown block's final newline would be an empty last line in the editor.
-    original: code.textContent.replace(/\n$/, ""),
+    original,
     runs: 0,
     timer: 0,
+    pane: (n) => el.querySelector(`[data-pane="${n}"]`),
+    // The AST pane: its view, the code its rows were made from (the build's tree at
+    // first, null while an edit is pending), the current row, and whether the reader
+    // has put the caret in the code (before that, the caret selects no row).
+    view: "tree",
+    astSrc: original,
+    active: null,
+    caretSeen: false,
   };
   const hint = document.createElement("span");
   hint.className = "live-keys";
@@ -259,7 +458,11 @@ function setup(el, n) {
   ta.setAttribute("aria-label", `Example ${n}: shell, editable`);
   ta.setAttribute("aria-describedby", hint.id);
   pre.setAttribute("aria-hidden", "true");
-  pre.after(ta);
+  // Under the textarea, over the code: the span of the AST row in focus.
+  const marks = (ex.marks = document.createElement("div"));
+  marks.className = "live-marks";
+  marks.setAttribute("aria-hidden", "true");
+  pre.after(marks, ta);
   repaint(ex);
   el.classList.add("is-live");
 
@@ -277,11 +480,21 @@ function setup(el, n) {
   };
 
   ta.addEventListener("keydown", (ev) => onKey(ev, ex));
+  // Where the caret is, in the AST.
+  const caret = () => {
+    if (document.activeElement === ta) ex.caretSeen = true;
+    syncCaret(ex);
+  };
+  for (const k of ["selectionchange", "keyup", "pointerup"]) ta.addEventListener(k, caret);
+  setupAst(ex);
   ta.addEventListener("input", () => {
     // Invalidate an older run immediately, not only when the autorun timer fires.
     ++ex.runs;
     el.querySelector('[data-pane="classify"]').innerHTML = '<p class="muted">Classification pending…</p>';
-    el.querySelector('[data-pane="ast"]').innerHTML = '<span class="muted">AST pending…</span>';
+    el.querySelector('[data-pane="ast"]').innerHTML = '<p class="muted">AST pending…</p>';
+    ex.astSrc = null;
+    ex.active = null;
+    marks.innerHTML = "";
     repaint(ex);
     reset.hidden = ta.value === ex.original;
     el.querySelector(".live-status").textContent = "edited";
@@ -303,6 +516,7 @@ function setup(el, n) {
       t.tabIndex = t === b ? 0 : -1;
     }
     for (const p of el.querySelectorAll(".live-pane")) p.hidden = p.dataset.pane !== b.dataset.tab;
+    syncCaret(ex);
   };
   for (const [i, b] of tabs.entries()) {
     b.hidden = false;

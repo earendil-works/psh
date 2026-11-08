@@ -68,9 +68,12 @@ async function editor({ loading, parseResult } = {}) {
           classified.push(src);
           return { json: { primary: src, read_only: false, truncated: false, sources: [], commands: [], reads: [], writes: [] } };
         },
-        parse(src) {
+        parse(src, { outline = false } = {}) {
           parsed.push(src);
-          return { json: parseResult ?? { ok: true, script: { type: "list", text: src, span: [0, new TextEncoder().encode(src).length] } } };
+          const span = [0, new TextEncoder().encode(src).length];
+          if (parseResult) return { json: parseResult };
+          if (outline) return { json: { ok: true, rows: [{ depth: 0, role: "", kind: "simple", info: "i<", text: src, span }, { depth: 1, role: "do", kind: "word", info: "", text: "w", span }] } };
+          return { json: { ok: true, script: { type: "list", text: src, span } } };
         },
         createShell() {
           const done = deferred();
@@ -81,13 +84,14 @@ async function editor({ loading, parseResult } = {}) {
       };
     },
   };
+  const document = {
+    querySelectorAll: () => [el],
+    createElement(tag) { const e = new Element(); if (tag === "textarea") ta = e; if (tag === "div") marks = e; return e; },
+  };
+  let marks;
   const context = vm.createContext({
     navigator: { platform: "Mac" }, location: { hash: "" }, URL,
-    TextEncoder, TextDecoder, AbortController, performance,
-    document: {
-      querySelectorAll: () => [el],
-      createElement(tag) { const e = new Element(); if (tag === "textarea") ta = e; return e; },
-    },
+    TextEncoder, TextDecoder, AbortController, performance, document,
     fetch: async () => ({}), WebAssembly: { compileStreaming: async () => ({}) },
     setTimeout(fn, ms) { const id = ++timerId; timers.set(id, { fn, ms }); return id; },
     clearTimeout(id) { timers.delete(id); },
@@ -108,7 +112,12 @@ async function editor({ loading, parseResult } = {}) {
   await module.link(() => moduleOf({ esc, highlight }));
   await module.evaluate();
   return {
-    el, out, classification, ast, status, shells, classified, parsed, tabs,
+    el, out, classification, ast, status, shells, classified, parsed, tabs, marks,
+    /** A click on the AST pane whose target is inside `selectors` (selector: element). */
+    async clickAst(targets) {
+      ast.listeners.get("click")({ target: { closest: (k) => targets[k] ?? null } });
+      await flush();
+    },
     input(src) { ta.value = src; ta.listeners.get("input")(); },
     async run() { el.children.get(".live-run").onclick(); await flush(); },
     async autorun() {
@@ -213,19 +222,55 @@ test("an edit during module loading cannot publish or execute obsolete input", a
   await flush();
 });
 
-test("AST is indented, highlighted JSON and escapes script markup", async () => {
+test("AST is a tree of outline rows and escapes script markup", async () => {
   const e = await editor();
   const src = 'echo "<script>μ & \\"quoted\\"</script>"';
   e.input(src);
   await e.run();
   const html = e.ast.innerHTML;
-  assert.match(html, /\n  <span class="tok-string">"ok"<\/span>: <span class="tok-keyword">true<\/span>/);
-  assert.match(html, /&lt;script&gt;μ &amp;/);
+  const n = new TextEncoder().encode(src).length;
+  assert.ok(html.startsWith('<div class="ast-bar"><button data-view="tree" aria-pressed="true">Tree</button><button data-view="json" aria-pressed="false">JSON</button></div><div class="ast-tree">'), html);
+  assert.ok(html.includes(`<div class="ast-row" data-depth="0" data-open="true" data-span="0 ${n}" style="--depth:0"><span class="ast-twisty"></span> <span class="ast-kind">simple</span> <span class="ast-info">i&lt;</span> <code class="ast-text">echo "&lt;script&gt;μ &amp;`), html);
+  assert.ok(html.includes(`<div class="ast-row" data-depth="1" data-span="0 ${n}" style="--depth:1"><span class="ast-twisty"></span> <span class="ast-role">do</span> <span class="ast-kind">word</span> <code class="ast-text">w</code></div></div>`), html);
   assert.doesNotMatch(html, /<script>/);
-  const plain = html.replace(/<[^>]*>/g, "").replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
-  const parsed = JSON.parse(plain);
-  assert.equal(parsed.script.text, src);
-  assert.equal(parsed.script.span[1], new TextEncoder().encode(src).length);
+  // Without a caret in the code, no span is marked.
+  assert.equal(e.marks.innerHTML, "");
+  e.shells[0].done.resolve(0);
+  await flush();
+});
+
+test("the JSON view shows psh --parse, highlighted, and stays for later runs", async () => {
+  const e = await editor();
+  const src = 'echo "<script>μ"';
+  e.input(src);
+  await e.run();
+  e.shells[0].done.resolve(0);
+  await flush();
+  await e.clickAst({ "button[data-view]": { dataset: { view: "json" } } });
+  let html = e.ast.innerHTML;
+  assert.match(html, /aria-pressed="true">JSON/);
+  assert.match(html, /\n  <span class="tok-string">"ok"<\/span>: <span class="tok-keyword">true<\/span>/);
+  assert.doesNotMatch(html, /<script>/);
+  const plain = html.replace(/^.*?<pre class="ast-json">/s, "").replace(/<[^>]*>/g, "").replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
+  assert.equal(JSON.parse(plain).script.text, src);
+  e.input("echo new");
+  await e.autorun();
+  html = e.ast.innerHTML;
+  assert.match(html, /aria-pressed="true">JSON/);
+  assert.match(html, /echo new/);
+  await e.clickAst({ "button[data-view]": { dataset: { view: "tree" } } });
+  assert.match(e.ast.innerHTML, /class="ast-tree"/);
+  e.shells[1].done.resolve(0);
+  await flush();
+});
+
+test("the JSON view of the build's tree waits for an edit in flight", async () => {
+  const e = await editor();
+  e.input("echo pending");
+  await e.clickAst({ "button[data-view]": { dataset: { view: "json" } } });
+  assert.match(e.ast.innerHTML, /AST pending/);
+  await e.autorun();
+  assert.match(e.ast.innerHTML, /ast-json/);
   e.shells[0].done.resolve(0);
   await flush();
 });
@@ -235,8 +280,7 @@ test("AST shows parse errors before execution finishes", async () => {
   const e = await editor({ parseResult });
   e.input("if");
   await e.run();
-  assert.match(e.ast.innerHTML, /unexpected end of file/);
-  assert.match(e.ast.innerHTML, /tok-keyword">false/);
+  assert.match(e.ast.innerHTML, /<p class="live-error">Does not parse: unexpected end of file \(line 1, column 3\)<\/p>/);
   assert.equal(e.status.textContent, "running…");
   e.shells[0].done.resolve(2);
   await flush();

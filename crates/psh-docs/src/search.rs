@@ -5,11 +5,15 @@
 use crate::render::Page;
 
 /// Elements whose text is not searched: diagrams, and the live examples' classification
-/// pane (a table of the commands that are on the page anyway).
+/// pane (a table of the commands that are on the page anyway) and AST pane (their
+/// syntax trees, up to its end marker).
 const SKIP: &[(&str, &str)] = &[
     ("<svg", "</svg>"),
     ("<div class=\"live-pane\" data-pane=\"classify\"", "</div>"),
-    ("<pre class=\"live-pane\" data-pane=\"ast\"", "</pre>"),
+    (
+        "<div class=\"live-pane\" data-pane=\"ast\"",
+        "<!-- /ast -->",
+    ),
 ];
 
 /// `[[file, page title, anchor, heading, text], ...]` for `rendered` (source name, page).
@@ -176,8 +180,9 @@ mod tests {
     #[test]
     fn ast_is_not_indexed() {
         let html = "<h1 id=\"t\">Title</h1><p>Example</p>\
-                    <pre class=\"live-pane\" data-pane=\"ast\"><code>AST noise</code></pre>";
-        assert_eq!(sections(html)[0].2, "Example");
+                    <div class=\"live-pane\" data-pane=\"ast\"><div><div>AST</div> noise</div><!-- /ast --></div>\
+                    <p>After</p>";
+        assert_eq!(sections(html)[0].2, "Example After");
     }
 
     #[test]

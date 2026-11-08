@@ -343,7 +343,7 @@ figure.diagram figcaption { margin-block-start: var(--semantic-dimension-space-g
 .live-editor { position: relative; background: var(--semantic-color-background-fill-secondary); }
 @media (hover: hover) { .live.is-live .live-editor:hover { background: var(--semantic-color-background-fill-secondary-hover); } }
 .live.is-live .live-editor:focus-within { background: var(--semantic-color-background-fill-secondary); }
-.live-editor pre, .live-src {
+.live-editor pre, .live-src, .live-marks {
   box-sizing: border-box; margin: 0; border: 0;
   padding: var(--semantic-dimension-space-padding-medium) var(--semantic-dimension-space-padding-x-large);
   font: var(--semantic-typography-code-primary); letter-spacing: var(--semantic-typography-code-primary-letter-spacing);
@@ -358,6 +358,17 @@ figure.diagram figcaption { margin-block-start: var(--semantic-dimension-space-g
   background: transparent; color: transparent; -webkit-text-fill-color: transparent;
   caret-color: var(--semantic-color-text-primary);
 }
+/* The span of the AST row under the pointer or at the caret, as transparent text. */
+.live-marks {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+  color: transparent; -webkit-text-fill-color: transparent;
+}
+.live-marks mark {
+  border-radius: var(--semantic-dimension-radius-small); color: transparent;
+  background: color-mix(in srgb, var(--semantic-color-focus-ring) 22%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--semantic-color-focus-ring) 55%, transparent);
+}
+.live-marks mark.empty { display: inline-block; inline-size: 2px; block-size: 1lh; vertical-align: top; }
 .live-src::selection { background: color-mix(in srgb, var(--semantic-color-focus-ring) 30%, transparent); }
 .live-editor:has(.live-src:focus-visible) { box-shadow: inset 0 0 0 var(--semantic-dimension-border-width-large) var(--semantic-color-focus-ring); }
 @media (forced-colors: active) {
@@ -378,8 +389,46 @@ div.live-pane { padding: var(--semantic-dimension-space-padding-small) var(--sem
 div.live-pane p { margin-block: var(--semantic-dimension-space-flow-x-small); }
 /* Output on the canvas, set apart from the source above. */
 pre.live-pane { max-block-size: 22rem; background: var(--semantic-color-background-canvas); }
-/* Preserve the AST indentation; long words scroll rather than breaking the tree. */
-pre.live-pane[data-pane="ast"] { white-space: pre; tab-size: 2; }
+/* The AST pane (run.rs ast_html, live.js): a tree of rows, one per node, indented by
+   depth with a guide line per level. Folding and the Tree/JSON buttons need live.js. */
+div.live-pane[data-pane="ast"] {
+  position: relative; max-block-size: 26rem; overflow: auto;
+  padding-block-start: 0; background: var(--semantic-color-background-canvas);
+}
+div.live-pane[data-pane="ast"]:focus-visible { outline: var(--semantic-dimension-border-width-large) solid var(--semantic-color-focus-ring); outline-offset: calc(-1 * var(--semantic-dimension-border-width-large)); }
+.ast-bar {
+  position: sticky; inset-block-start: 0; z-index: 1; display: flex; gap: var(--semantic-dimension-space-control-gap-small);
+  margin-inline: calc(-1 * var(--semantic-dimension-space-padding-x-large));
+  padding: var(--semantic-dimension-space-padding-small) var(--semantic-dimension-space-padding-x-large);
+  background: var(--semantic-color-background-canvas);
+}
+.live:not(.is-live) .ast-bar { display: none; }
+.live:not(.is-live) .ast-twisty { visibility: hidden; }
+.ast-bar button { padding-block: 0; background: var(--semantic-color-background-fill-ghost-neutral); color: var(--semantic-color-text-secondary); font: var(--semantic-typography-ui-secondary); }
+.ast-bar button[aria-pressed="true"] { background: var(--semantic-color-background-fill-ghost-neutral-active); color: var(--semantic-color-text-primary); }
+.ast-tree { font: var(--semantic-typography-code-primary); letter-spacing: var(--semantic-typography-code-primary-letter-spacing); }
+.ast-row {
+  --indent: 2ch;
+  display: flex; align-items: baseline; gap: 0.6ch; white-space: nowrap;
+  padding-inline-start: calc(var(--depth) * var(--indent));
+  border-radius: var(--semantic-dimension-radius-small); cursor: default;
+  background-image: repeating-linear-gradient(to right, var(--semantic-color-border-secondary) 0 1px, transparent 1px var(--indent));
+  background-size: calc(var(--depth) * var(--indent)) 100%; background-repeat: no-repeat; background-position: 0.75ch 0;
+}
+.ast-row[hidden] { display: none; }
+@media (hover: hover) { .live.is-live .ast-row:hover { background-color: var(--semantic-color-background-fill-secondary-hover); } }
+.ast-row.is-active { background-color: color-mix(in srgb, var(--semantic-color-focus-ring) 16%, transparent); }
+.ast-twisty { flex: none; inline-size: 1.5ch; margin-inline-end: -0.3ch; color: var(--semantic-color-text-secondary); text-align: center; cursor: pointer; }
+.ast-row[data-open="true"] > .ast-twisty::before { content: "▾"; }
+.ast-row[data-open="false"] > .ast-twisty::before { content: "▸"; }
+.ast-role { color: var(--semantic-color-text-secondary); }
+.ast-role::after { content: ":"; }
+.ast-kind { color: var(--semantic-color-text-code-keyword); font-weight: var(--semantic-font-weight-ui-emphasis); }
+.ast-info { color: var(--semantic-color-text-code-string); }
+.ast-tree code.ast-text { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; padding: 0; border: 0; background: none; color: var(--semantic-color-text-secondary); font: inherit; }
+.ast-text::before { content: "· "; opacity: 0.6; }
+@media (forced-colors: active) { .ast-row.is-active { outline: 1px solid Highlight; } .live-marks mark { background: Highlight; } }
+.ast-json { margin: 0; padding: 0; background: none; white-space: pre; tab-size: 2; font: var(--semantic-typography-code-primary); }
 .muted { color: var(--semantic-color-text-secondary); }
 /* The Classification pane: one row per command the script would run. */
 table.commands { margin-block: var(--semantic-dimension-space-flow-x-small); font: var(--semantic-typography-ui-secondary); }

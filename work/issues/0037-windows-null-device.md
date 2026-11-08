@@ -55,6 +55,10 @@ exact failing session. Do not assert that Git Bash always mishandles `/dev/null`
   CreateProcess refuses the long cwd; the redirection is opened from the long cwd
   before the subshell changes directory. Updated ARCH.md, the Windows guide and
   decision D1370; no live examples or ratchets affected.
+- 2026-11-08: Merged 03bb029e..169bcb0e through `merge-to-main.sh`; the full gate
+  passed (409 s), including Windows arm64 and x64 tests, clippy, MSRV and all spec
+  layers. The Windows spec scores and stale ratchet entries are identical to the
+  preceding docs gate; no ratchet update is warranted.
 
 ## Follow-ups
 
@@ -74,5 +78,5 @@ in long paths. Canonical null-device path conversion and character-device stat n
 cover aliases; explicit verbatim paths remain available to remove existing artifacts.
 
 Three native Windows CLI tests and a path unit test cover the boundary. The arm64
-Windows workspace tests pass. No arbitrary external argv or embedded shell scripts
+and x64 Windows workspace tests and the full merge gate pass. No arbitrary external argv or embedded shell scripts
 are rewritten; those programs retain responsibility for their own path semantics.

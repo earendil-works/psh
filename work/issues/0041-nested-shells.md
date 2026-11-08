@@ -1,6 +1,6 @@
 # 0041: `bash` and `sh` in a command run in psh
 
-status: open
+status: in-progress
 agent: shells
 branch: issue/0041-nested-shells
 depends-on: -

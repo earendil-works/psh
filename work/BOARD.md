@@ -6,7 +6,6 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
-| 0040 | Readable, interactive AST outline for live examples | coordinator | .worktrees/docs |
 
 ## Paused (2026-11-08 checkpoint; resume notes in the issue logs)
 
@@ -82,3 +81,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0036 | The guide as a static site (psh-docs build, live examples) | 3a964cba (coordinator) |
 | 0037 | Windows NUL artifact investigation and null-device aliases | 169bcb0e (coordinator) |
 | 0039 | Formatted AST tab in live documentation examples | ddc417d1 (coordinator) |
+| 0040 | AST outline: psh_syntax::outline, --parse --tree, interactive AST tab | a696dec2 (coordinator) |

@@ -405,10 +405,9 @@ impl Host for WindowsHost {
 
     fn stat(&self, p: &[u8], follow: bool) -> HostFuture<io::Result<Metadata>> {
         // The devices the host provides are character devices, as on Unix.
-        if matches!(
-            p,
-            b"/dev/null" | b"/dev/zero" | b"/dev/urandom" | b"/dev/random"
-        ) {
+        if std::str::from_utf8(p).is_ok_and(path::is_null_device)
+            || matches!(p, b"/dev/zero" | b"/dev/urandom" | b"/dev/random")
+        {
             return ready(Ok(Metadata {
                 kind: FileKind::CharDevice,
                 size: 0,

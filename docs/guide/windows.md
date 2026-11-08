@@ -39,6 +39,23 @@ A few paths that every bash script assumes are mapped:
 | `/c/x` | `C:\x` |
 | `/dev/zero`, `/dev/urandom` | emulated: zeros, and random bytes from the system |
 
+Redirections to `/dev/null` are opened by psh itself. Native programs inherit the
+open handle, not a rewritten `/dev/null` argument. Windows' null-device names (`NUL`,
+`nul`, `./nul`, and names with an extension such as `NUL.txt`) also resolve to the
+null device, even in long directory paths; they do not create files. The same path
+mapping applies to in-process utilities that open files.
+
+An explicit Windows verbatim path (`//?/C:/...`) stays literal. This lets you remove
+a reserved-name file left by another program, for example:
+
+```sh
+rm -- '//?/C:/Users/me/project/nul'
+```
+
+psh does not rewrite arbitrary arguments to native programs, or scripts passed to
+another shell. A `/dev/null` inside a PowerShell or cmd script is interpreted by that
+shell, not by psh.
+
 The shell shows a path as it was written: after `cd /tmp`, `pwd` prints `/tmp` and
 `pwd -P` the temp directory (`C:/Users/me/AppData/Local/Temp`). `cd C:/Windows` and
 `cd 'C:\Windows'` both leave `pwd` at `C:/Windows`, and `..` stops at the drive.

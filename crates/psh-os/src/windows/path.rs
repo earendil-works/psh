@@ -49,8 +49,23 @@ pub(crate) fn native(p: &[u8]) -> io::Result<PathBuf> {
     Ok(PathBuf::from(native_str(s)))
 }
 
-fn native_str(s: &str) -> String {
+/// Win32 reserves NUL even with an extension or trailing spaces. Resolve it before
+/// std adds a long-path prefix: verbatim paths can otherwise create real NUL.txt
+/// files. Explicit verbatim paths stay literal so existing artifacts can be removed.
+pub(crate) fn is_null_device(s: &str) -> bool {
     if s == "/dev/null" {
+        return true;
+    }
+    if s.starts_with(r"\\?\") || s.starts_with("//?/") {
+        return false;
+    }
+    let name = s.rsplit(['/', '\\']).next().unwrap_or(s);
+    let stem = name.split('.').next().unwrap_or(name);
+    stem.trim_end_matches(' ').eq_ignore_ascii_case("NUL")
+}
+
+fn native_str(s: &str) -> String {
+    if is_null_device(s) {
         return "NUL".to_string();
     }
     if let Some(rest) = strip_dir(s, "/tmp") {
@@ -157,6 +172,23 @@ mod tests {
         assert!(tmp.ends_with(r"\a") && tmp.contains(':'), "{tmp}");
         assert_eq!(n("/tmpx"), r"\tmpx");
         assert!(native(b"C:/a\xff").is_err());
+    }
+
+    #[test]
+    fn null_device_names_are_canonicalized_before_long_paths() {
+        for name in ["NUL", "nul", "./nul", "NUL.txt", "nUl.log", "nul.", "nul "] {
+            assert_eq!(n(name), "NUL", "{name:?}");
+            let long = format!("C:/{}/{}", "a/".repeat(150), name);
+            assert_eq!(n(&long), "NUL", "{long:?}");
+        }
+        assert_eq!(n(r"C:\work\NUL.txt"), "NUL");
+        for name in ["null", "nulx", "annul.txt", "nul-device.txt", "nul/file"] {
+            assert!(!is_null_device(name), "{name:?}");
+        }
+        for name in [r"\\?\C:\work\NUL.txt", "//?/C:/work/NUL.txt"] {
+            assert!(!is_null_device(name), "{name:?}");
+            assert_eq!(n(name), r"\\?\C:\work\NUL.txt");
+        }
     }
 
     #[test]

@@ -387,7 +387,9 @@ From `research/execution-core.md` §5; the pitfalls listed there are requirement
 - `/dev/null` maps to `NUL`, `/tmp` to the user's temp directory, `/c/…` to `C:/…`;
   `/dev/stdin|stdout|stderr` are emulated in redirections. `HOME` defaults to
   `USERPROFILE`, `TMPDIR` to the temp directory, both `/`-separated, and the OS's `Path`
-  is the shell's `PATH` (D1075).
+  is the shell's `PATH` (D1075). Null-device aliases (`NUL`, case-insensitive, also
+  with an extension or trailing spaces) resolve to `NUL` before long-path conversion;
+  explicit verbatim paths remain literal for artifact removal (D1370).
 - Command lookup (D1076, D1910): `PATH` entries separated by `;`, and by `:` except
   after a drive letter, split by the host; `PATHEXT`, case-insensitive; a bare name only
   when it is a `#!` script; no implicit cwd search. `test -x` decides by extension or

@@ -2779,3 +2779,17 @@ status.md, its list of what is not built and its known gaps are status.md's last
 sections, and where the paused work stands is in work/BOARD.md and the issue logs. The
 README points at the guide and the site. ARCH.md, TESTING.md, this log and research/
 stay: they are the reference for people changing psh, which the guide is not.
+
+## D1370: Canonicalize Windows null-device aliases before long-path conversion
+date: 2026-11-08 · by: coordinator · issue: 0037
+The Windows host resolves a final component named `NUL` case-insensitively, including
+an extension or trailing spaces, to canonical `NUL`, just as `/dev/null` already does
+(D1075). It reports these paths as character devices too, including for noclobber.
+Rust's Windows file APIs can add the verbatim long-path prefix to absolute paths;
+then `NUL.txt` can become a literal NTFS file instead of a device. Native Windows
+probes reproduced this from a long cwd. Canonicalizing at `path::native` covers shell
+redirections and threaded utilities without rewriting external argv. Explicit
+verbatim paths (`\\?\` or `//?/`) remain literal so tools can remove artifacts
+created by other programs. Other reserved device names are unchanged. Native programs
+inherit opened redirection handles; text inside an explicitly invoked other shell
+remains that shell's responsibility.

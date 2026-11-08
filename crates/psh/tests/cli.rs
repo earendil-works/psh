@@ -107,6 +107,101 @@ fn dash_c_runs_commands() {
     assert_eq!(out.stderr, "err\n");
 }
 
+/// Check actual directory entries, not `test -e NUL`: Windows normally resolves
+/// reserved names to devices, which can hide a literal reserved-name file.
+#[cfg(windows)]
+fn check_windows_null_paths(targets: &[&str], name: &str) {
+    let root = std::env::temp_dir().join(format!("psh-cli-null-{name}-{}", std::process::id()));
+    let long = root
+        .join("a".repeat(100))
+        .join("b".repeat(100))
+        .join("c".repeat(100));
+    std::fs::create_dir_all(&long).unwrap();
+    assert!(long.as_os_str().len() > 260);
+    let script = r#"
+set -e
+cd "$PSH_NULL_TEST_DIR"
+test -c "$PSH_NULL_TARGET"
+printf discarded > "$PSH_NULL_TARGET"
+printf discarded >> "$PSH_NULL_TARGET"
+{ printf out; printf err >&2; } &> "$PSH_NULL_TARGET"
+{ printf err >&2; } 2> "$PSH_NULL_TARGET"
+exec 3<> "$PSH_NULL_TARGET"
+printf discarded >&3
+exec 3>&-
+if read -r line < "$PSH_NULL_TARGET"; then exit 90; fi
+printf discarded | tee "$PSH_NULL_TARGET" > "$PSH_NULL_TARGET"
+# CreateProcess requires a short cwd; the redirect still opens in the long cwd.
+( cd /tmp; "$SystemRoot/System32/hostname.exe" ) > "$PSH_NULL_TARGET"
+set -C
+printf discarded > "$PSH_NULL_TARGET"
+echo ok
+"#;
+    for dir in [&root, &long] {
+        for target in targets {
+            let out = psh_bytes(
+                &[OsStr::new("-c"), OsStr::new(script)],
+                b"",
+                &[
+                    ("PSH_NULL_TEST_DIR", dir.as_os_str()),
+                    ("PSH_NULL_TARGET", OsStr::new(target)),
+                    ("PSH_UTILS_FORCE", OsStr::new("all")),
+                ],
+            );
+            assert_eq!(
+                (out.status, out.stdout.as_slice(), out.stderr.as_slice()),
+                (Some(0), b"ok\n".as_slice(), b"".as_slice()),
+                "target {target:?} in {dir:?}"
+            );
+            let entries: Vec<_> = std::fs::read_dir(dir)
+                .unwrap()
+                .map(|e| e.unwrap().file_name())
+                .collect();
+            let expected = if dir == &root {
+                vec![std::ffi::OsString::from("a".repeat(100))]
+            } else {
+                vec![]
+            };
+            assert_eq!(entries, expected, "target {target:?} in {dir:?}");
+        }
+    }
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[cfg(windows)]
+#[test]
+fn windows_null_redirections_leave_no_files() {
+    check_windows_null_paths(&["/dev/null", "NUL", "nul", "./nul"], "basic");
+}
+
+#[cfg(windows)]
+#[test]
+fn windows_null_aliases_leave_no_files() {
+    check_windows_null_paths(&["NUL.txt", "nUl.log", "nul.", "nul "], "aliases");
+}
+
+#[cfg(windows)]
+#[test]
+fn windows_literal_null_artifacts_can_be_removed() {
+    let dir = std::env::temp_dir().join(format!("psh-cli-null-literal-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let literal = format!(r"\\?\{}\NUL.txt", dir.display());
+    std::fs::write(&literal, b"artifact").unwrap();
+    assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 1);
+    let out = psh_bytes(
+        &[OsStr::new("-c"), OsStr::new("rm -- \"$PSH_NULL_ARTIFACT\"")],
+        b"",
+        &[
+            ("PSH_NULL_ARTIFACT", OsStr::new(&literal.replace('\\', "/"))),
+            ("PSH_UTILS_FORCE", OsStr::new("all")),
+        ],
+    );
+    assert_eq!(out.status, Some(0), "{:?}", out.stderr);
+    assert!(out.stdout.is_empty() && out.stderr.is_empty());
+    assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 0);
+    std::fs::remove_dir(dir).unwrap();
+}
+
 #[test]
 fn dash_c_name_and_args() {
     let out = psh(&["-c", "echo $0 $1 $#; nosuchcommand_psh", "name", "a"]);

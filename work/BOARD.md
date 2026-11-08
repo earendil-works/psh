@@ -44,6 +44,7 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | --- | --- |
 | Where the exec-time approval hook sits (pi-env integration) | ARCH.md "Open questions"; 0010 |
 | Windows PATH separator policy (busybox-style built, D1076) | owner |
+| `$!` of compound jobs and nested shells is a made-up id (D1900, D1411): keep, error, or make it outlive the run? (`$$`/`BASHPID` in nested shells: D1413, fall back to real bash, else error) | owner; 0041 |
 
 ## Done
 

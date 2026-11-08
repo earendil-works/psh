@@ -9,7 +9,8 @@ host can do the same.
 > **In short.** pi runs every command as a fresh `bash -c` with whatever shell it finds,
 > and knows nothing about the command beyond its text. psh is designed to run inside
 > pi-env, pi's small synchronous daemon, as the in-process shell of its `exec`
-> operation, with a `parse` operation that tells pi what a command does before it runs.
+> operation, with a `parse` operation that tells pi what a command does, for its
+> interface and for replay after a crash.
 > Until that lands, the `psh` binary, its JSON output and the parser's WebAssembly
 > module already work for pi and for any other agent host.
 
@@ -32,17 +33,17 @@ combined in arrival order, cut to the last 2000 lines or 50 KB with the rest in 
 file, and the exit code, `128+n` when a signal ended the command.
 
 pi has no shell parser. The user interface shows the raw command string, or its first
-line. Permission and plan-mode checks are extensions that match regular expressions
-against the text, which `$(…)`, `eval`, `bash -c` or a `;` after a harmless prefix get
-around. The harness marks its shell tool as unsafe to replay after a crash, because it
-cannot tell a command that reads from one that writes.
+line. The few example extensions that look at commands match regular expressions against
+the text, which `$(…)`, `eval`, `bash -c` or a `;` after a harmless prefix get around.
+Durable, the agent harness, marks its shell tool as unsafe to replay after a crash,
+because it cannot tell a command that reads from one that writes.
 
 Each of these is a goal of psh's. Agents meet bash 3.2 on one machine and zsh on
 another, where an unmatched glob is an error ([consistent](goals.md#consistent)). On
 Windows, killed pipelines leave processes running for hours and console output arrives
 in the wrong code page ([portable](goals.md#portable),
 [control of execution](goals.md#control-of-execution)). And a host that can only match
-patterns cannot approve or summarize safely
+patterns can neither summarize a command honestly nor tell whether it only reads
 ([understandable commands](goals.md#understandable-commands)).
 
 ## pi-env, the daemon
@@ -132,16 +133,15 @@ gives (shortened):
 With that, pi can:
 
 - summarize a command in the interface ("read 3 files") instead of printing its first
-  line;
-- run a read-only command without asking, under the classifier's
-  [conservative rule](classify.md#read-only-and-why-the-classifier-is-conservative);
-- check permissions on the commands and paths in the tree instead of on the text;
-- mark a read-only command as safe to replay in the harness.
+  line, with its category: read, mutate, network, build and so on;
+- show the paths a command reads and writes, and highlight them in the text;
+- mark a read-only command as safe to replay in Durable, under the classifier's
+  [conservative rule](classify.md#read-only-and-why-the-classifier-is-conservative).
 
-An approval hook at run time is planned as well: the host sees each command after
-expansion, just before it runs, and can refuse or rewrite it. That covers what the
-classifier has to call unknown, such as `$cmd` or `eval "$x"`, whose meaning only exists
-at run time.
+This is reporting, not permission. psh is not a sandbox, and pi builds no permission
+policy on it: no check refuses a command because of its category, and there is no hook
+that stops a command at run time. A command the classifier cannot see through, such as
+`$cmd` or `eval "$x"`, is reported as unknown, is not replayed, and runs like any other.
 
 ## What pi can use today
 

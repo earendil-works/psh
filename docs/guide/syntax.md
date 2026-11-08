@@ -13,9 +13,9 @@ reports errors, how it reads a script line by line with aliases, and what it cos
 
 ## One parser for everything
 
-A shell that is used to approve commands must not parse them twice: if the approval check
-reads `git commit -m "$(rm -rf build)"` one way and the shell runs it another way, the
-check can be bypassed. psh has a single parser. The classifier walks the tree the engine
+A shell whose commands are reported on must not parse them twice: if the report reads
+`git commit -m "$(rm -rf build)"` one way and the shell runs it another way, the report
+is wrong exactly where it matters. psh has a single parser. The classifier walks the tree the engine
 executes, and a host that only wants to understand commands, such as a user interface in
 a browser, embeds the same parser alone. That is the
 [understandable commands](goals.md#understandable-commands) goal.

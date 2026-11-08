@@ -85,18 +85,19 @@ the real host.
 
 ### Understandable commands
 
-**For you:** a host can see what a command will do before it runs it: which programs it
-calls, which files it writes, whether it only reads, whether it reaches the network, with
-positions into the original text.
+**For you:** a host can see what a command does: which programs it calls, which files it
+reads and writes, whether it only reads, whether it reaches the network, with positions
+into the original text.
 
-**Why:** hosts summarize commands for people, auto-approve the ones that only read (about
-half of what agents run), and check permissions. Patterns matched against the command
-string are easy to get around (`$(…)`, `;` after a harmless prefix, a command name in a
-variable).
+**Why:** hosts summarize commands for people, show the paths a call touched, and need to
+know which calls only read (about half of what agents run), for example to replay them
+safely after a crash. Patterns matched against the command string get this wrong
+(`$(…)`, `;` after a harmless prefix, a command name in a variable). This is reporting,
+not a sandbox: psh does not decide what a command may do.
 
 **How:** psh's parser records the byte range of every part of a command, and the
 classifier works on the same syntax tree the engine runs, so a command cannot mean one
-thing to the check and another to the shell. The parser builds on its own, also for
+thing to the report and another to the shell. The parser builds on its own, also for
 WebAssembly.
 
 **The cost:** the syntax tree becomes an interface others depend on. And the classifier

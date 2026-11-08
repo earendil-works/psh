@@ -1,11 +1,13 @@
 # Understanding commands: parsing and classification
 
-Before a host runs a command an agent wrote, it often wants to know what the command will
-do: show a person a one-line summary, approve it without asking because it only reads,
-or check it against a permission. psh answers that with the same parser that runs the
-command, so the check and the shell can never disagree about what the text means. This
-page explains what the classifier reports, what counts as read-only, why it errs on the
-side of "unknown", and how a host uses it.
+A host that runs commands an agent wrote often wants to report what a command does: show
+a person a one-line summary, list the files it reads and writes, or know whether it only
+reads, so that running it again after a crash changes nothing. psh answers that with the
+same parser that runs the command, so the report and the shell can never disagree about
+what the text means. The classifier is for reporting: psh is not a sandbox, and the
+classification is not a permission check. This page explains what the classifier
+reports, what counts as read-only, why it errs on the side of "unknown", and how a host
+uses it.
 
 > **In short.** The classifier walks the syntax tree of a command and lists every
 > program it would run, including those hidden in `$(…)`, `bash -c '…'` or behind
@@ -78,7 +80,9 @@ an unknown part shows as unknown.
 
 ## Read-only, and why the classifier is conservative
 
-A host may run a read-only command without asking anyone. So "read-only" has to be a
+A host uses the read-only flag in two places. A harness that replays tool calls after a
+crash replays a read-only command, because running it again changes nothing; a summary
+shows it as a command that changes nothing. Both are only right if "read-only" is a
 promise: every command in it is known, reads only, and nothing is written except to
 `/dev/null` and the standard streams.
 
@@ -101,9 +105,11 @@ Anything the classifier cannot see through makes the command unknown:
   `print`, `git` with `-c` or an alias as the subcommand, shells that load startup files
   (`bash -l`), and `xargs` or `find -exec` splicing file names into `sh -c`.
 
-> **Trade-off.** False "unknown" over false "read-only". A host shown "unknown" asks a
-> person; a host shown a wrong "read-only" runs a destructive command unasked. The cost:
-> some harmless commands are unknown, such as `sed -n "$(grep -n x f | cut -d: -f1),+5p" f`.
+> **Trade-off.** False "unknown" over false "read-only". An unknown command is treated as
+> one that may change things: it is not replayed, and its summary does not claim it is
+> harmless. A wrong "read-only" would replay a deletion after a crash and tell the user
+> that nothing changed. The cost: some harmless commands are unknown, such as
+> `sed -n "$(grep -n x f | cut -d: -f1),+5p" f`.
 
 ## Commands inside commands
 

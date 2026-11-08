@@ -1,0 +1,253 @@
+# Goldens for tests/agent/nested-shells.test.sh (layer agent), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: bash -c with $0 and $@
+status: 0
+bash-n: 0
+--- stdout
+|0=name #=2 @=a b c
+|0=bash #=0
+|0=_ 1=x 2=y
+|[one two]
+|[three]
+|done
+
+=== 1: only exported variables reach the nested shell
+status: 0
+bash-n: 0
+--- stdout
+|plain=unset exported=2
+|no function
+|no alias
+|prefix: changed
+|after: 2
+
+=== 2: options and traps do not leak into the nested shell
+status: 0
+bash-n: 0
+--- stdout
+|flags=hBc
+|pipefail: pipefail       	off
+|undefined=
+|no traps above
+|end
+|outer exit trap
+
+=== 3: exit, set -e and traps of the nested shell stay inside it
+status: 0
+bash-n: 0
+--- stdout
+|status=3
+|status=1
+|body
+|inner exit trap
+|outer goes on
+|failed, outer goes on
+|end
+
+=== 4: SHLVL, BASH_SUBSHELL, $$ and PPID of a nested shell
+status: 0
+bash-n: 0
+--- stdout
+|SHLVL up by 1
+|BASH_SUBSHELL=0
+|in a subshell: BASH_SUBSHELL=0
+|PPID is the caller's $$
+|a pid of its own
+|BASHPID is $$
+
+=== 5: nested bash -c inside bash -c
+status: 0
+bash-n: 0
+--- stdout
+|deep inner x
+|middle outer
+|three levels
+|two
+|one
+|in $(…)
+|done
+
+=== 6: command line options
+status: 0
+bash-n: 0
+--- stdout
+|e: 1
+|eu: 1
+|pipefail: 1
+|extglob on
+|+ echo traced
+|traced
+|login
+|norc
+|flags: hBc
+|n: 0
+
+=== 7: bash FILE and sh FILE
+status: 0
+bash-n: 0
+--- stdout
+|script s.sh #=2 1=one
+|script ./s.sh #=1 1=x
+|status=7
+|args: a b c
+|after shift: b c
+--- file args.sh
+|echo "args: $*"
+|shift
+|echo "after shift: $*"
+--- file e.sh
+|exit 7
+--- file s.sh
+|echo "script $0 #=$# 1=$1"
+
+=== 8: bash FILE errors
+status: 0
+bash-n: 0
+--- stdout
+|missing: 127
+|dir: 126
+|binary: 126
+--- stderr
+|bash: missing.sh: No such file or directory
+|dir.sh: dir.sh: Is a directory
+|binary: binary: cannot execute binary file
+--- file binary
+\a\x00b
+~ no newline at end
+--- dir dir.sh
+
+=== 9: bash -n checks a script without running it
+status: 0
+bash-n: 0
+--- stdout
+|good: 0
+|bad: 2
+|would run
+|running bad: 2
+|good.sh ok
+|bad.sh broken
+--- stderr
+|bad.sh: line 4: syntax error: unexpected end of file from `if' command on line 2
+|bad.sh: line 4: syntax error: unexpected end of file from `if' command on line 2
+--- file bad.sh
+|echo would run
+|if true; then
+|  echo missing fi
+--- file good.sh
+|echo would run
+|if true; then
+|  echo fine
+|fi
+
+=== 10: xargs runs sh -c with each argument
+status: 0
+bash-n: 0
+--- stdout
+|[a]
+|[b c]
+|2
+|4
+|6
+|3 args: x y z
+|done
+
+=== 11: find -exec runs bash -c on each file
+status: 0
+bash-n: 0
+--- stdout
+|found a.txt
+|found b.txt
+|batch d/a.txt
+|batch d/sub/b.txt
+|log: d/c.log
+|done
+--- dir d
+--- file d/a.txt
+--- file d/c.log
+--- dir d/sub
+--- file d/sub/b.txt
+
+=== 12: wrappers: env, timeout, nohup, command, time
+status: 0
+bash-n: 0
+--- stdout
+|FOO=bar
+|HOME=unset
+|in timeout
+|timeout ok: 0
+|timed out: 124
+|nohup out
+|through command
+|timed
+|bash found
+|sh found
+--- file out.txt
+|nohup out
+
+=== 13: exec runs the nested shell in place
+status: 0
+bash-n: 0
+--- stdout
+|exec ok
+|status=4
+|0=renamed
+|exec keeps SHLVL
+|exec in nested sh
+
+=== 14: descriptors, pipes and the working directory are shared
+status: 0
+bash-n: 0
+--- stdout
+|PIPED
+|read input
+|2
+|to3
+|via4
+|stderr: err
+|sub
+|sub
+|cd inside
+|sub
+--- file in.txt
+|l1
+|l2
+--- file out4.txt
+|via4
+--- dir sub
+
+=== 15: a signal to a nested shell runs its trap
+status: 0
+bash-n: 0
+--- stdout
+|got TERM
+|status=0
+|got USR1
+|done
+
+=== 16: kill $$ in a nested shell ends only it
+status: 0
+bash-n: 0
+--- stdout
+|status=143
+|trapped
+|status=5
+|ignored
+|end
+--- stderr
+|Terminated                 bash -c 'kill $$; echo not here' 2> /dev/null
+
+=== 17: a path runs the program
+status: 0
+bash-n: 0
+--- stdout
+|0=/bin/sh
+|status=0
+
+=== 18: options psh lacks run the real bash
+status: 0
+bash-n: 0
+--- stdout
+|rcfile
+|status=0

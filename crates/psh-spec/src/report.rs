@@ -99,7 +99,12 @@ pub fn compare<'a>(
         }
     };
     let norm = |data: &[u8], name: &str| {
-        let d = normalize::shell_name(data, name);
+        let mut d = normalize::shell_name(data, name);
+        // A `bash` the case runs is psh too (D1410), and names itself `bash` as the
+        // recorded nested bash does: both become `<sh>`.
+        if name != GOLDEN_SHELL {
+            d = normalize::shell_name(&d, GOLDEN_SHELL);
+        }
         if item.case.ignore_whitespace {
             collapse_ws(&d)
         } else {

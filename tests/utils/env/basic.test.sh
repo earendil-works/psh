@@ -30,5 +30,6 @@ echo "status=$?"
 printf 'a\nb\n' | env head -n 1
 
 #### PATH changes the lookup of the command
-env PATH=/nonexistent sh -c true 2>/dev/null
+# uname: a program psh neither has as a utility nor runs itself (as it runs sh).
+env PATH=/nonexistent uname 2>/dev/null
 echo "status=$?"

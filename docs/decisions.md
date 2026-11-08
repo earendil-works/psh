@@ -2802,3 +2802,20 @@ updates it before shell execution, alongside classification. psh-docs reuses psh
 `json.rs` and `parse_json.rs` by path, like psh-wasm, rather than maintaining another
 AST conversion. It directly depends on the already-approved deser-json and deser-core
 (D029) for these modules; both are already in its transitive dependency set.
+
+## D1400: The AST tab shows an outline of the tree, from psh-syntax
+date: 2026-11-08 · by: coordinator (owner) · issue: 0040
+The full `psh --parse` JSON (D1390) was unreadable in the docs: about 300 lines for a
+one-line loop, mostly wrappers of one child, empty fields and per-word boilerplate.
+`psh_syntax::outline` lists the tree for people instead: one row per node with its
+depth, role in the parent, kind (the JSON type names), the attributes the text does not
+show, a one-line excerpt of its source and its byte span. Wrappers with one child, the
+parts of words without expansions and default fields are left out; rows inside a
+backquoted body carry the span of the whole `` `…` ``, since that body is parsed on its
+own. It lives in psh-syntax, not in a cargo feature: it needs nothing beyond `alloc`,
+and code a build does not call is dropped at link time, as `dump` is; the exported wasm
+parser grows by about 20 KB. `psh --parse --tree` prints it as text, `psh_parse` has
+an outline flag (`psh.parse(src, { outline: true })`), and the docs render the rows at
+build time and in the browser, where a row marks its span in the editor, the caret
+selects the deepest row, rows fold, and a JSON button shows the full tree. psh-docs no
+longer reuses `json.rs`/`parse_json.rs` and drops its direct deser dependencies.

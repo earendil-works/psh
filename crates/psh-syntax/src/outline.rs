@@ -205,9 +205,7 @@ impl<'a> Outliner<'a> {
         if let Some(t) = p.time {
             info.push(if t.posix { "time -p" } else { "time" });
         }
-        for _ in 0..p.bangs {
-            info.push("!");
-        }
+        info.extend(core::iter::repeat_n("!", p.bangs as usize));
         for s in &p.stages[..p.stages.len().saturating_sub(1)] {
             info.push(if s.pipe_stderr { "|&" } else { "|" });
         }

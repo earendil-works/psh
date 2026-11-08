@@ -17,8 +17,8 @@ This page explains the two modules, how they talk to JavaScript, the API in
 
 | Module | What it has | Size (gzipped) |
 | --- | --- | --- |
-| `psh-parser.wasm` | `parse` and `classify` | about 390 KB (150 KB) |
-| `psh.wasm` | the same, plus the shell and all utilities | about 4.3 MB (1.5 MB) |
+| `psh-parser.wasm` | `parse` and `classify` | about 410 KB (160 KB) |
+| `psh.wasm` | the same, plus the shell and all utilities | about 5.5 MB (1.9 MB) |
 
 The parser module is for hosts that only want to understand commands. Its two functions
 return exactly the JSON `psh --parse` and `psh --classify` print (see
@@ -32,8 +32,8 @@ in-process, whatever its mode elsewhere, since there is no real program to prefe
 
 ```text
 $ scripts/build-wasm --sizes
-psh.wasm          4255930 bytes, 1494528 gzipped
-psh-parser.wasm    389947 bytes,  148924 gzipped
+psh.wasm          5531338 bytes, 1909338 gzipped
+psh-parser.wasm    411319 bytes,  157247 gzipped
 ```
 
 ## Why there is no wasm-bindgen, Asyncify or JSPI
@@ -95,7 +95,9 @@ true vcs false [ 'git', 'rm' ]
 true
 ```
 
-`parse` and `classify` return `{ ok, json }`. `psh.run(source, options)` runs one
+`parse` and `classify` return `{ ok, json }`. `parse(source, { outline: true })`
+returns the outline of `psh --parse --tree` instead: `rows`, each with its `depth`,
+`role`, `kind`, `info`, source `text` and byte `span`. `psh.run(source, options)` runs one
 command in a fresh shell and returns `status`, `stdout` and `stderr` (strings), and
 `stdoutBytes` and `stderrBytes`; it takes the options of both calls below.
 

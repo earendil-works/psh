@@ -95,6 +95,7 @@ bash's. Each mode has its own help page (`psh --parse --help`).
 | `psh --help` | the help page: the forms above, the modes, the shell options | 0 |
 | `psh --version` | `psh` and its version | 0 |
 | `psh --parse [-c COMMAND \| FILE]` | the syntax tree as JSON | 0 if the script parses, 2 if not |
+| `psh --parse --tree [-c COMMAND \| FILE]` | the syntax tree as an outline for people | 0 if the script parses, 2 if not |
 | `psh --classify [-c COMMAND \| FILE]` | what the script does, as JSON | 0 if the script parses, 2 if not |
 | `psh --utils [--json]` | the in-process utilities and what runs here | 0 |
 
@@ -102,6 +103,25 @@ bash's. Each mode has its own help page (`psh --parse --help`).
 Both take `--compact`, which prints the JSON on one line instead of indented, and
 `-O extglob`, which parses with bash's extended patterns (`!(x)`, `@(a|b)`) on, as
 `shopt -s extglob` would earlier in the script. Neither runs anything.
+
+`--parse --tree` prints an outline instead of the JSON, one line per node: its place in
+the parent where that matters (`do:`, `then:`, `pattern:`), its kind as the JSON names it,
+what the text does not show at a glance (operators, names), and the node's source text.
+Wrappers with a single child, the parts of plain words and fields at their defaults are
+left out; a syntax error goes to standard error.
+
+```text
+$ psh --parse --tree -c 'for f in *.txt; do wc -l "$f"; done > counts'
+for f          for f in *.txt; do wc -l "$f"; done > counts
+  in: word     *.txt
+  do: simple   wc -l "$f"
+    word       wc
+    word       -l
+    double     "$f"
+      param f  $f
+  redirect >   > counts
+    word       counts
+```
 
 - `--parse` prints every node of the tree with its byte span in the input. Its format
   and its errors are on [the parser page](syntax.md#a-tree-with-byte-spans).

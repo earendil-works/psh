@@ -294,6 +294,12 @@ pub(super) async fn kill(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             j.signal(sig, &vp.core.sched);
             continue;
         }
+        // The shell itself, from a shell psh runs for `bash`/`sh` (`sh -c "kill $$"`):
+        // its mask, as `kill $$` there; never the process an embedder runs psh in.
+        if u32::try_from(pid).is_ok_and(|p| p == vp.host().pid()) {
+            crate::state::Sigs::Shell.raise(&vp.core, sig);
+            continue;
+        }
         // A shell psh runs for `bash`/`sh` that is no job of ours (D1411).
         if let Some(shell) = u32::try_from(pid)
             .ok()

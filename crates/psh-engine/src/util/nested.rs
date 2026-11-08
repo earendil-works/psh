@@ -205,10 +205,10 @@ async fn shell(
 /// itself runs as a standalone psh and fails the same way.
 async fn fall_through(sub: &mut Vp, argv: Vec<Vec<u8>>, why: &str) -> i32 {
     let name = String::from_utf8_lossy(&argv[0]).into_owned();
-    if !sub.core.utilities.sandbox
-        && crate::builtins::hash::search(sub, &argv[0], None)
-            .await
-            .is_some()
+    // Searched in a sandbox too: its host may have a `bash`, and a miss is recorded.
+    if crate::builtins::hash::search(sub, &argv[0], None)
+        .await
+        .is_some()
     {
         let r = crate::exec::run_external(sub, argv, Vec::new()).await;
         let last = sub.status;

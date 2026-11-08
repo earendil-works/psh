@@ -1,6 +1,6 @@
 # 0041: `bash` and `sh` in a command run in psh
 
-status: in-progress
+status: done
 agent: shells
 branch: issue/0041-nested-shells
 depends-on: -
@@ -156,6 +156,26 @@ Both parts
     comparing `$$` with `$BASHPID` was dropped: under fall-through on macOS it runs
     bash 3.2, which has no `BASHPID`.
 
+- 2026-11-08 (shells), part 2 (D1414): `Script::stdin` and `lib::run_stdin_lines`:
+  descriptor 0 is read a line at a time (a byte per read, as `read` does), and the unrun
+  lines are parsed for one chunk, reading more while the parser says incomplete, an
+  error sits at the end of the input, a here-doc lacks its delimiter or a line
+  continuation ends the text (the parser flags neither the `[[ … (` newline cases nor a
+  trailing `\` as incomplete; found by brush `extended_tests/52-55`, `piped_script/13-17`,
+  oils `quote/17`, `glob/35`). Line numbers stay those of the whole script (the unrun
+  text is parsed behind blank lines). Used by the standalone `psh` (no more read-all),
+  psh-spec's in-process engine (all Oils cases now feed the script on stdin, as bash
+  gets it), and a nested `bash`/`sh` with no operand or `-s`. wasm's runner still hands
+  the whole stdin over as text.
+  - New cases `agent/nested-shells/20-25` (`| bash`, `bash <<'EOF'`, `bash -s a b`,
+    `bash < file`, `cat file | bash`, an install script piped into `sh`, a syntax error
+    in a piped script). `sh` reading stdin in the recording container is dash, which
+    reads its script in blocks, so the stdin-reading cases use `bash`. Engine test
+    `nested::tests::scripts_on_stdin`, `tests/cli.rs stdin_scripts`.
+  - No regressions natively, on Linux or in wasm; brush `errors/42` passes on macOS
+    (still fails on Linux, so its shared line stays).
+  - Docs: cli.md (stdin section rewritten), syntax.md, processes.md, ARCH.md.
+
 ## Follow-ups
 - psh's `timeout` drops its child at the deadline and returns at once; GNU timeout
   signals and then waits for it. With a nested shell that traps TERM, its trap output
@@ -165,7 +185,28 @@ Both parts
 - `psh --utils` does not list `bash`/`sh`.
 - wasm: psh-spec could compare statuses like on Windows (`Signal(n)` ≈ `Exit(128+n)`),
   which would empty the "no process to die by it" wasm entries.
+- A here-document ended by the end of input gets no `warning: here-document at line N
+  delimited by end-of-file` (pre-existing, also for files and `-c`).
+- The wasm runner (`psh-spec/src/wasm.rs`, psh-wasm) still passes stdin scripts as
+  text: it could use `Script::stdin` too.
 - `scripts/spec-linux --update` moves shared entries that fail on macOS and wasm into the
   macOS file only (ulimit cases), which breaks the wasm leg.
 
 ## Result
+A command named `bash` or `sh` (no slash; on Windows also `/bin/sh`, `/bin/bash`,
+`/usr/bin/sh`, `/usr/bin/bash`) runs in psh as a new shell (D1410): after functions and
+builtins, without a utility policy too, through `env`, `xargs`, `find -exec`,
+`timeout`, `nohup`, `command`, `exec`. Its command line is `invocation::parse_args`
+(`-c`, FILE, `-s`/stdin, `-n` and the other `set`/`shopt` options, `-l`/`--login`,
+`--version`); options psh lacks run the real program from `PATH` (never psh itself),
+else status 2 naming psh. It starts afresh (variables rebuilt from the exported ones,
+`SHLVL`+1, `SHELLOPTS`/`BASHOPTS` imported; D1412) and is a virtual process with its own
+pending-signal mask (D1411): `$!`, `kill`, `wait`, `timeout` and cancels reach it and its
+traps run. It has no process id (D1413): a script that reads `$$`/`BASHPID` runs under
+the real program; without one, reading them is an error (also `BASHPID` in any
+subshell). A script on stdin is read one complete command at a time, also by the
+standalone `psh` (D1414). Off: `ShellConfig::nested_shells`, `PSH_NESTED_OFF=1`.
+`type`/`command -v`/`which` report it like a utility.
+
+Known gaps: see Follow-ups; bash's in-place exec of a last command keeps `SHLVL`, psh
+counts a level; `$!` of nested shells is a made-up id (owner undecided).

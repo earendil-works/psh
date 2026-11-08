@@ -143,6 +143,10 @@ Both parts
   - Ratchets: `jobs/12` passes on Linux now (real sh), its line is gone; wasm
     `signals/22` passes there now (line gone). New shared lines with D1413's reason:
     oils `vars-special/13`, brush `signals/38`, `/42` (`BASHPID` in subshells).
+  - Windows (no real bash there): brush `background_jobs/20`, `kill/10`, `/23`, `/28`,
+    `/30`, `signals/24` and agent `nested-shells/15`, `/16`, `/19` passed there with
+    the made-up `$$` and now end with the D1413 error; they are in the Windows
+    ratchets with that reason.
   - Spec cases: the fall-through path is `agent/nested-shells/19` (`kill -0 $$`,
     `ps -p $$`, a nested `$PPID`), and cases 4, 15, 16 now run their `$$` parts under
     the real bash. The two error paths (no real bash; `BASHPID` in a subshell) cannot

@@ -54,3 +54,9 @@ brush/compat/builtins/ulimit/31: Windows has no resource limits (Host::rlimit is
 brush/compat/fd_management/0: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
 brush/compat/fd_management/1: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
 brush/compat/fd_management/2: Windows has no resource limits (Host::rlimit is None), so ulimit rejects every resource
+brush/compat/background_jobs/20: reads $$ in a nested sh or bash: Windows has no real one to run the script, and a nested shell has no process id (D1413)
+brush/compat/builtins/kill/10: reads $$ in a nested sh or bash: Windows has no real one to run the script, and a nested shell has no process id (D1413)
+brush/compat/builtins/kill/23: reads $$ in a nested sh or bash: Windows has no real one to run the script, and a nested shell has no process id (D1413)
+brush/compat/builtins/kill/28: reads $$ in a nested sh or bash: Windows has no real one to run the script, and a nested shell has no process id (D1413)
+brush/compat/builtins/kill/30: reads $$ in a nested sh or bash: Windows has no real one to run the script, and a nested shell has no process id (D1413)
+brush/compat/signals/24: reads $$ in a nested sh or bash: Windows has no real one to run the script, and a nested shell has no process id (D1413)

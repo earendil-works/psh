@@ -10,3 +10,6 @@ agent/view/15: psh bug (files): mkdir -p splits off the drive of C:/...
 agent/view/17: psh bug (files): mkdir -p splits off the drive of C:/...
 agent/view/16: mkdir -p ~/proj fails on Windows ("cannot create directory 'C:'"), a mkdir bug the case reaches now that sed is built in
 agent/view/18: mkdir -p ~/proj fails on Windows ("cannot create directory 'C:'"), a mkdir bug the case reaches now that sed is built in
+agent/nested-shells/15: reads $$ in a nested sh or bash: Windows has no real one to run the script, and a nested shell has no process id (D1413)
+agent/nested-shells/16: reads $$ in a nested sh or bash: Windows has no real one to run the script, and a nested shell has no process id (D1413)
+agent/nested-shells/19: reads $$ in a nested sh or bash: Windows has no real one to run the script, and a nested shell has no process id (D1413)

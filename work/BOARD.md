@@ -6,6 +6,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
+| 0040 | Readable, interactive AST outline for live examples | coordinator | .worktrees/docs |
 
 ## Paused (2026-11-08 checkpoint; resume notes in the issue logs)
 

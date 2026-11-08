@@ -1,7 +1,7 @@
 # 0041: `bash` and `sh` in a command run in psh
 
 status: open
-agent: -
+agent: shells
 branch: issue/0041-nested-shells
 depends-on: -
 touches: crates/psh-engine/src/ (exec.rs command lookup, invocation.rs, lib.rs ShellConfig, builtins type/command/hash, a reader for scripts on stdin), crates/psh/src/main.rs (stdin mode), crates/psh-spec/ (config only if needed), tests/ (new cases), docs/decisions.md, ARCH.md, docs/guide/

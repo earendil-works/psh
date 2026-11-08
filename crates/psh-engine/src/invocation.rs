@@ -24,13 +24,30 @@ pub enum Invocation {
     },
     /// `--help`
     Help,
+    /// `--version`
+    Version,
 }
 
 /// bash's long options that psh takes (before the single-letter ones, as with bash):
-/// `--posix` is refused, the others change nothing in a non-interactive shell. The psh
-/// binary hands these to [`parse_args`] and parses its own long options (`--parse`,
-/// `--help`, …) itself (D1340).
-pub const LONG_OPTIONS: [&str; 4] = ["--posix", "--norc", "--noprofile", "--noediting"];
+/// `--posix` is refused, the others change nothing in a non-interactive shell
+/// (`--login` reads no profile, D1410). The psh binary hands these to [`parse_args`]
+/// and parses its own long options (`--parse`, `--help`, …) itself (D1340).
+pub const LONG_OPTIONS: [&str; 5] = ["--posix", "--norc", "--noprofile", "--noediting", "--login"];
+
+/// bash's long options psh does not implement: an error that says so. A `bash` run in
+/// psh hands its command line to the real program for these (D1410).
+const UNSUPPORTED_LONG: [&str; 10] = [
+    "--rcfile",
+    "--init-file",
+    "--restricted",
+    "--debugger",
+    "--debug",
+    "--dump-strings",
+    "--dump-po-strings",
+    "--pretty-print",
+    "--verbose",
+    "--wordexp",
+];
 
 /// Parses the arguments after the program name: `-c`, `-s`, and `set`'s and `shopt`'s
 /// options (`-e`, `+x`, `-o pipefail`, `-O extglob`, `--posix`), which come back in
@@ -49,12 +66,21 @@ pub fn parse_args(args: &[Vec<u8>]) -> Result<Invocation, String> {
         if a == b"--help" {
             return Ok(Invocation::Help);
         }
+        if a == b"--version" {
+            return Ok(Invocation::Version);
+        }
         if a.len() < 2 || (a[0] != b'-' && a[0] != b'+') {
             break;
         }
         if a.starts_with(b"--") {
             if a == b"--posix" {
                 return Err("--posix: POSIX mode is not supported".into());
+            }
+            if UNSUPPORTED_LONG
+                .iter()
+                .any(|o| o.as_bytes() == a.as_slice())
+            {
+                return Err(format!("{}: not supported", String::from_utf8_lossy(a)));
             }
             if !LONG_OPTIONS.iter().any(|o| o.as_bytes() == a.as_slice()) {
                 return Err(format!("{}: invalid option", String::from_utf8_lossy(a)));
@@ -68,6 +94,12 @@ pub fn parse_args(args: &[Vec<u8>]) -> Result<Invocation, String> {
             match c {
                 b'c' if on => command = true,
                 b's' if on => stdin = true,
+                // A login shell reads no profile here: the environment is the
+                // embedder's (D1410).
+                b'l' if on => {}
+                b'i' if on => return Err("-i: interactive shells are not supported".into()),
+                b'r' if on => return Err("-r: restricted shells are not supported".into()),
+                b'D' if on => return Err("-D: not supported".into()),
                 b'o' | b'O' => {
                     let Some(name) = args.get(i + 1) else {
                         return Err(format!("-{}: option requires an argument", c as char));
@@ -173,6 +205,33 @@ mod tests {
                 args: vec![],
                 options: v(&["-eu", "-o", "pipefail", "+O", "extglob"]),
             })
+        );
+        assert_eq!(
+            parse_args(&v(&["-lc", "x", "--login"])),
+            Ok(Invocation::Command {
+                source: b"x".to_vec(),
+                arg0: Some(b"--login".to_vec()),
+                args: vec![],
+                options: vec![],
+            })
+        );
+        assert_eq!(
+            parse_args(&v(&["--login", "--norc", "-c", "x"])),
+            Ok(Invocation::Command {
+                source: b"x".to_vec(),
+                arg0: None,
+                args: vec![],
+                options: vec![],
+            })
+        );
+        assert_eq!(parse_args(&v(&["--version"])), Ok(Invocation::Version));
+        assert_eq!(
+            parse_args(&v(&["-i", "-c", "x"])),
+            Err("-i: interactive shells are not supported".into())
+        );
+        assert_eq!(
+            parse_args(&v(&["--rcfile", "f"])),
+            Err("--rcfile: not supported".into())
         );
         assert!(parse_args(&v(&["-Z"])).is_err());
         assert!(parse_args(&v(&["-o", "bogus", "-c", "x"])).is_err());

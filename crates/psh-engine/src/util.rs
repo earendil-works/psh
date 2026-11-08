@@ -22,6 +22,7 @@ use crate::state::{R, Vp};
 pub use crate::host::Access;
 
 mod blocking;
+mod nested;
 pub use blocking::{
     BlockingOptions, IN_FLIGHT, INLINE_INPUT_LIMIT, INLINE_OUTPUT_LIMIT, Stderr, Stdin, Stdout,
     SyncCtx, SyncFile, SyncFn, SyncWriter,
@@ -80,8 +81,14 @@ pub struct UtilPolicy {
 /// The utility that runs for `name`, if any: off switches and modes applied.
 pub(crate) async fn lookup(vp: &Vp, name: &[u8]) -> Option<&'static UtilEntry> {
     // A path, or a name bound to a path with `hash -p` (or remembered from running the
-    // program), names the program.
-    if name.contains(&b'/') || crate::builtins::hash::hashed(vp, name).is_some() {
+    // program), names the program; `bash` and `sh` run in psh before utilities (D1410).
+    if crate::builtins::hash::hashed(vp, name).is_some() {
+        return None;
+    }
+    if nested::is_shell(vp, name) {
+        return Some(&nested::ENTRY);
+    }
+    if name.contains(&b'/') {
         return None;
     }
     let policy = &vp.core.utilities;
@@ -119,6 +126,22 @@ pub(crate) async fn run(
     argv: Vec<Vec<u8>>,
     assigns: Vec<(String, Vec<u8>)>,
 ) -> R {
+    run_with(vp, entry, argv, assigns, false).await
+}
+
+/// Runs a utility for `exec`, in place of the shell: a `bash` run so keeps the
+/// caller's `$$` and `SHLVL`, as the process it replaces would (D1410).
+pub(crate) async fn run_exec(vp: &mut Vp, entry: &'static UtilEntry, argv: Vec<Vec<u8>>) -> R {
+    run_with(vp, entry, argv, Vec::new(), true).await
+}
+
+async fn run_with(
+    vp: &mut Vp,
+    entry: &'static UtilEntry,
+    argv: Vec<Vec<u8>>,
+    assigns: Vec<(String, Vec<u8>)>,
+    in_place: bool,
+) -> R {
     let env = vp.env(&assigns);
     let name = String::from_utf8_lossy(&argv[0]).into_owned();
     let mut ctx = UtilCtx {
@@ -128,6 +151,7 @@ pub(crate) async fn run(
         out: Vec::new(),
         write_error: None,
         zone: None,
+        in_place,
     };
     // A signal that ends the shell ends the utility, as it ends the wait for an
     // external (D1903). The vproc is the utility's now: watch with what it needs.
@@ -180,6 +204,8 @@ pub struct UtilCtx<'v> {
     write_error: Option<io::ErrorKind>,
     /// The time zone, once [`UtilCtx::load_zone`] ran (`Some(None)`: none readable).
     zone: Option<Option<crate::builtins::strftime::Zone>>,
+    /// Run by `exec`, in place of the shell.
+    in_place: bool,
 }
 
 /// How [`UtilCtx::spawn`] changes the environment of the command it runs.
@@ -753,23 +779,13 @@ impl UtilCtx<'_> {
             join: None,
             status: None,
         };
-        let mut sub = match crate::exec::enter(self.vp).await {
+        let mut sub = match self.afresh().await {
             Ok(sub) => sub,
-            Err(u) => {
-                child.status = Some(u.status(2));
+            Err(status) => {
+                child.status = Some(status);
                 return child;
             }
         };
-        for (k, v) in &self.env {
-            if let Ok(name) = std::str::from_utf8(k)
-                && crate::state::is_name(k)
-            {
-                let var = sub.vars.entry(name);
-                var.set(v.clone());
-                var.exported = true;
-            }
-        }
-        crate::exec::start_afresh(&mut sub);
         sub.opts.dash_c = true;
         sub.arg0 = b"sh".to_vec();
         sub.args = Vec::new();
@@ -796,6 +812,26 @@ impl UtilCtx<'_> {
         child.task = Some((sched, id));
         child.join = Some(join);
         child
+    }
+}
+
+impl UtilCtx<'_> {
+    /// A new shell for what this utility runs, started afresh from its environment
+    /// (D1300): a subshell's task state, its own variables. The nesting limit's status
+    /// when it is reached.
+    async fn afresh(&self) -> Result<Vp, i32> {
+        let mut sub = crate::exec::enter(self.vp).await.map_err(|u| u.status(2))?;
+        for (k, v) in &self.env {
+            if let Ok(name) = std::str::from_utf8(k)
+                && crate::state::is_name(k)
+            {
+                let var = sub.vars.entry(name);
+                var.set(v.clone());
+                var.exported = true;
+            }
+        }
+        crate::exec::start_afresh(&mut sub);
+        Ok(sub)
     }
 }
 

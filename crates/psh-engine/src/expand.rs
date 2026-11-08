@@ -840,7 +840,7 @@ fn special(vp: &Vp, c: u8) -> Val {
     match c {
         b'?' => Val::Str(vp.status.to_string().into_bytes()),
         b'#' => Val::Str(vp.args.len().to_string().into_bytes()),
-        b'$' => Val::Str(vp.host().pid().to_string().into_bytes()),
+        b'$' => Val::Str(vp.shell_pid.to_string().into_bytes()),
         b'!' => match &vp.last_bg {
             Some(job) => Val::Str(job.pid().to_string().into_bytes()),
             None => Val::Unset,

@@ -143,6 +143,7 @@ impl Engine for WasmEngine {
         let (source, arg0, script_args, options, dash_c, stdin) = match parse_args(&args) {
             Err(msg) => return fail(msg),
             Ok(Invocation::Help) => return fail("--help".into()),
+            Ok(Invocation::Version) => return fail("--version".into()),
             Ok(Invocation::Command {
                 source,
                 arg0,

@@ -5,7 +5,7 @@ use std::rc::Rc;
 use crate::host::{SIGTERM, Signal, error_text};
 use crate::jobs::Job;
 use crate::signals;
-use crate::state::{R, Vp};
+use crate::state::{R, Unwind, Vp};
 
 use super::{out, s};
 
@@ -267,6 +267,21 @@ pub(super) async fn kill(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             status = 1;
             continue;
         };
+        // A shell psh started for `bash`/`sh` (D1410) has a `$$` of its own and no
+        // pending mask: the signal acts here, as the shell would take it (its trap, or
+        // the default action ends it). From a subshell of it, only that subshell ends.
+        if vp.shell_pid != vp.host().pid() && u32::try_from(pid).is_ok_and(|p| p == vp.shell_pid) {
+            match vp.traps.action(super::trap::TrapKey::Signal(sig)) {
+                Some(action) if action.is_empty() => {}
+                Some(action) => {
+                    let st = vp.status;
+                    super::trap::run_action(vp, &action, st).await?;
+                }
+                None if super::trap::terminates(sig) => return Err(Unwind::Exit(128 + sig)),
+                None => {}
+            }
+            continue;
+        }
         // The shell itself (`$$`, and its group with `0`): the signal goes to the
         // shell's pending mask, so traps run (D1284); with 0 the host signals the
         // rest of the group too, where it may.

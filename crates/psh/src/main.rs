@@ -93,6 +93,10 @@ fn os_path(b: &[u8]) -> std::path::PathBuf {
     }
 }
 
+/// Set (to anything but empty), a command named `bash` or `sh` runs the program on
+/// `PATH` instead of psh (D1410, D1411).
+const NESTED_OFF_VAR: &str = "PSH_NESTED_OFF";
+
 /// The standalone shell's configuration: the OS host and its stdio, the utilities (with
 /// `PSH_UTILS_FORCE`), the environment and the working directory. `psh --utils` asks a
 /// shell configured so which utilities run.
@@ -112,6 +116,15 @@ fn shell_config() -> ShellConfig {
     {
         let (_, v) = cfg.env.remove(i);
         cfg.utilities.force_names = psh_utils::force_names(&v);
+    }
+    // PSH_NESTED_OFF (D1411): `bash` and `sh` go to PATH; psh's, so not passed on.
+    if let Some(i) = cfg
+        .env
+        .iter()
+        .position(|(k, _)| k == NESTED_OFF_VAR.as_bytes())
+    {
+        let (_, v) = cfg.env.remove(i);
+        cfg.nested_shells = v.is_empty();
     }
     cfg.cwd = std::env::current_dir()
         .map(|p| os_bytes(p.into_os_string()))
@@ -154,6 +167,11 @@ fn main() -> ExitCode {
         // `--help` after bash's options (`psh -e --help`).
         Ok(Invocation::Help) => {
             println!("{}", cli::help_text());
+            return ExitCode::SUCCESS;
+        }
+        // After bash's options (`psh -e --version`), as `psh --version` prints it.
+        Ok(Invocation::Version) => {
+            println!("psh {}", env!("CARGO_PKG_VERSION"));
             return ExitCode::SUCCESS;
         }
         Ok(Invocation::Command {

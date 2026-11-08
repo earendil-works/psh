@@ -465,6 +465,7 @@ impl Engine for InProcess {
         let (script, stdin_data) = match parse_args(&args) {
             Err(msg) => return fail(msg),
             Ok(Invocation::Help) => return fail("--help".into()),
+            Ok(Invocation::Version) => return fail("--version".into()),
             Ok(Invocation::Command {
                 source,
                 arg0,

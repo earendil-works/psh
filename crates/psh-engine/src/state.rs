@@ -31,6 +31,8 @@ pub(crate) struct Core {
     pub fg_signal: Cell<Option<(i32, u32)>>,
     /// The in-process utilities and their off switches (D1080).
     pub utilities: crate::util::UtilPolicy,
+    /// `bash` and `sh` run in psh (D1410).
+    pub nested_shells: bool,
     /// `$RANDOM`'s state (shared by subshells, which bash reseeds; close enough).
     pub rng: Cell<u64>,
     /// `$SECONDS` counts from this time: nanoseconds since the epoch; may be before it (`SECONDS=100` on a host whose
@@ -200,6 +202,8 @@ pub(crate) struct Vp {
     pub subshell_level: u32,
     /// `$BASHPID`: the shell's pid, a made-up one in subshells (vprocs have none).
     pub bashpid: u32,
+    /// `$$`: the host's pid, or a made-up one in a shell psh started afresh (D1410).
+    pub shell_pid: u32,
     /// The script's own arguments, the bottom of `BASH_ARGV`.
     pub script_args: Vec<Vec<u8>>,
     /// `alias` definitions; a subshell's own (bash keeps them per process).

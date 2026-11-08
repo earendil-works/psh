@@ -99,6 +99,9 @@ pub struct ShellConfig {
     /// The in-process utilities (psh-utils' registry) and their off switches; empty by
     /// default: every command name not a function or builtin is a program (D1080).
     pub utilities: util::UtilPolicy,
+    /// A command named `bash` or `sh` runs in psh, as a new shell (D1410); `false`
+    /// sends both names to `PATH` again. On by default.
+    pub nested_shells: bool,
 }
 
 impl ShellConfig {
@@ -123,6 +126,7 @@ impl ShellConfig {
             max_depth: ShellConfig::DEFAULT_MAX_DEPTH,
             exit_grace: None,
             utilities: util::UtilPolicy::default(),
+            nested_shells: true,
         }
     }
 }
@@ -237,161 +241,11 @@ impl Shell {
             died_of: Cell::new(None),
             fg_signal: Cell::new(None),
             utilities: cfg.utilities.clone(),
+            nested_shells: cfg.nested_shells,
             rng: Cell::new(0),
             seconds_base: Cell::new(cfg.host.now().as_nanos() as i128),
         });
-        let mut vars = Vars::default();
-        let mut foreign = Vec::new();
-        for (k, v) in &cfg.env {
-            match std::str::from_utf8(k) {
-                Ok(name) if state::is_name(k) => vars.insert(
-                    name,
-                    Var {
-                        exported: true,
-                        ..Var::scalar(v.clone())
-                    },
-                ),
-                _ => foreign.push((k.clone(), v.clone())),
-            }
-        }
-        vars.insert("IFS", Var::scalar(b" \t\n".to_vec()));
-        // Computed when read (D1263).
-        for (name, d) in [
-            ("RANDOM", vars::Dynamic::Random),
-            ("SRANDOM", vars::Dynamic::Srandom),
-            ("SECONDS", vars::Dynamic::Seconds),
-            ("EPOCHSECONDS", vars::Dynamic::EpochSeconds),
-            ("EPOCHREALTIME", vars::Dynamic::EpochRealtime),
-            ("BASHPID", vars::Dynamic::BashPid),
-            ("BASH_SUBSHELL", vars::Dynamic::BashSubshell),
-            ("FUNCNAME", vars::Dynamic::FuncName),
-            ("BASH_SOURCE", vars::Dynamic::BashSource),
-            ("BASH_LINENO", vars::Dynamic::BashLineno),
-            ("BASH_ARGV", vars::Dynamic::BashArgv),
-            ("BASH_ARGC", vars::Dynamic::BashArgc),
-            ("GROUPS", vars::Dynamic::Groups),
-            ("BASH_ARGV0", vars::Dynamic::BashArgv0),
-            ("BASH_ALIASES", vars::Dynamic::BashAliases),
-            ("BASH_MONOSECONDS", vars::Dynamic::BashMonoseconds),
-            ("LINENO", vars::Dynamic::Lineno),
-            ("DIRSTACK", vars::Dynamic::Dirstack),
-        ] {
-            let v = vars.entry(name);
-            v.dynamic = Some(d);
-            // The attributes `declare -p` shows for them in bash.
-            v.integer = matches!(
-                d,
-                vars::Dynamic::Random | vars::Dynamic::Srandom | vars::Dynamic::BashPid
-            );
-            if matches!(
-                d,
-                vars::Dynamic::FuncName
-                    | vars::Dynamic::BashSource
-                    | vars::Dynamic::BashLineno
-                    | vars::Dynamic::BashArgv
-                    | vars::Dynamic::BashArgc
-                    | vars::Dynamic::Groups
-            ) {
-                v.value = vars::Value::Indexed(Default::default());
-                v.declared_only = true;
-            }
-            if d == vars::Dynamic::BashAliases {
-                v.value = vars::Value::Assoc(Default::default());
-            }
-        }
-        // Who and where the shell runs, from the host (D1328). As in bash: UID and
-        // EUID (readonly integers) and the names below give way to the environment's;
-        // PPID never does; GROUPS is computed, so assignments to it do nothing.
-        let info = cfg.host.info();
-        let ro_int = |n: u32| Var {
-            integer: true,
-            readonly: true,
-            ..Var::scalar(n.to_string().into_bytes())
-        };
-        for (name, n) in [("UID", info.uid), ("EUID", info.euid)] {
-            if vars.get(name).is_none() {
-                vars.insert(name, ro_int(n));
-            }
-        }
-        if let Some(p) = info.ppid {
-            vars.insert("PPID", ro_int(p));
-        }
-        for (name, v) in [
-            ("HOSTNAME", info.hostname.clone()),
-            ("OSTYPE", info.ostype.clone().into_bytes()),
-            ("MACHTYPE", info.machtype.clone().into_bytes()),
-            ("HOSTTYPE", info.hosttype.clone().into_bytes()),
-        ] {
-            if vars.get(name).is_none() {
-                vars.insert(name, Var::scalar(v));
-            }
-        }
-        // psh's compatibility target; scripts gate bash-isms on these (D1264).
-        vars.insert("BASH_VERSION", Var::scalar(b"5.3.9(1)-release".to_vec()));
-        let mut versinfo = std::collections::BTreeMap::new();
-        for (i, v) in ["5", "3", "9", "1", "release", &info.machtype]
-            .iter()
-            .enumerate()
-        {
-            versinfo.insert(i as i64, v.as_bytes().to_vec());
-        }
-        vars.insert(
-            "BASH_VERSINFO",
-            Var {
-                value: vars::Value::Indexed(versinfo),
-                readonly: true,
-                ..Var::default()
-            },
-        );
-        // getopts' state, as bash starts it.
-        vars.insert(
-            "OPTIND",
-            Var {
-                integer: true,
-                ..Var::scalar(b"1".to_vec())
-            },
-        );
-        vars.insert("OPTERR", Var::scalar(b"1".to_vec()));
-        // What bash sets when the environment has none (D1329). Prompts belong to
-        // interactive shells: a non-interactive bash drops inherited PS1 and PS2.
-        vars.remove("PS1");
-        vars.remove("PS2");
-        let defaults: [(&str, &[u8]); 3] = [
-            ("PS4", b"+ "),
-            ("TERM", b"dumb"),
-            ("COMP_WORDBREAKS", b" \t\n\"'@><=;|&(:"),
-        ];
-        for (name, v) in defaults {
-            if vars.get(name).is_none() {
-                vars.insert(name, Var::scalar(v.to_vec()));
-            }
-        }
-        // bash's default PATH; on Windows the host's PATH conventions differ.
-        if vars.get("PATH").is_none() && !cfg!(windows) {
-            vars.insert(
-                "PATH",
-                Var::scalar(
-                    b"/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:.".to_vec(),
-                ),
-            );
-        }
-        vars.insert(
-            "PSH_VERSION",
-            Var::scalar(env!("CARGO_PKG_VERSION").as_bytes().to_vec()),
-        );
-        let pwd = vars.entry("PWD");
-        pwd.value = vars::Value::Str(cfg.cwd.clone());
-        pwd.exported = true;
-        let shlvl = vars
-            .value("SHLVL")
-            .and_then(|v| std::str::from_utf8(v).ok())
-            .and_then(|v| v.trim().parse::<i64>().ok())
-            .unwrap_or(0);
-        let lvl = vars.entry("SHLVL");
-        lvl.value = vars::Value::Str((shlvl + 1).to_string().into_bytes());
-        lvl.exported = true;
-        let old = vars.entry("OLDPWD");
-        old.exported = true;
+        let (vars, foreign) = initial_vars(&*cfg.host, &cfg.env, &cfg.cwd);
         let mut fds = FdTable::default();
         for (n, f) in [(0, cfg.stdin), (1, cfg.stdout), (2, cfg.stderr)] {
             if let Some(f) = f {
@@ -425,6 +279,7 @@ impl Shell {
             last_args: Vec::new(),
             subshell_level: 0,
             bashpid: cfg.host.pid(),
+            shell_pid: cfg.host.pid(),
             script_args: Vec::new(),
             aliases: psh_syntax::Aliases::new(),
             expand_aliases: false,
@@ -580,6 +435,168 @@ impl Shell {
     pub fn task_count(&self) -> usize {
         self.core.sched.task_count()
     }
+}
+
+/// The variables a new shell starts with, from its environment (D1329): what
+/// [`Shell::new`] sets up, and what a shell psh starts afresh gets from its exported
+/// variables (D1300, D1410). Names that are not shell names stay in the second list,
+/// passed on to externals unchanged.
+pub(crate) fn initial_vars(
+    host: &dyn Host,
+    env: &[(Vec<u8>, Vec<u8>)],
+    cwd: &[u8],
+) -> (Vars, Vec<(Vec<u8>, Vec<u8>)>) {
+    let mut vars = Vars::default();
+    let mut foreign = Vec::new();
+    for (k, v) in env {
+        match std::str::from_utf8(k) {
+            Ok(name) if state::is_name(k) => vars.insert(
+                name,
+                Var {
+                    exported: true,
+                    ..Var::scalar(v.clone())
+                },
+            ),
+            _ => foreign.push((k.clone(), v.clone())),
+        }
+    }
+    vars.insert("IFS", Var::scalar(b" \t\n".to_vec()));
+    // Computed when read (D1263).
+    for (name, d) in [
+        ("RANDOM", vars::Dynamic::Random),
+        ("SRANDOM", vars::Dynamic::Srandom),
+        ("SECONDS", vars::Dynamic::Seconds),
+        ("EPOCHSECONDS", vars::Dynamic::EpochSeconds),
+        ("EPOCHREALTIME", vars::Dynamic::EpochRealtime),
+        ("BASHPID", vars::Dynamic::BashPid),
+        ("BASH_SUBSHELL", vars::Dynamic::BashSubshell),
+        ("FUNCNAME", vars::Dynamic::FuncName),
+        ("BASH_SOURCE", vars::Dynamic::BashSource),
+        ("BASH_LINENO", vars::Dynamic::BashLineno),
+        ("BASH_ARGV", vars::Dynamic::BashArgv),
+        ("BASH_ARGC", vars::Dynamic::BashArgc),
+        ("GROUPS", vars::Dynamic::Groups),
+        ("BASH_ARGV0", vars::Dynamic::BashArgv0),
+        ("BASH_ALIASES", vars::Dynamic::BashAliases),
+        ("BASH_MONOSECONDS", vars::Dynamic::BashMonoseconds),
+        ("LINENO", vars::Dynamic::Lineno),
+        ("DIRSTACK", vars::Dynamic::Dirstack),
+    ] {
+        let v = vars.entry(name);
+        v.dynamic = Some(d);
+        // The attributes `declare -p` shows for them in bash.
+        v.integer = matches!(
+            d,
+            vars::Dynamic::Random | vars::Dynamic::Srandom | vars::Dynamic::BashPid
+        );
+        if matches!(
+            d,
+            vars::Dynamic::FuncName
+                | vars::Dynamic::BashSource
+                | vars::Dynamic::BashLineno
+                | vars::Dynamic::BashArgv
+                | vars::Dynamic::BashArgc
+                | vars::Dynamic::Groups
+        ) {
+            v.value = vars::Value::Indexed(Default::default());
+            v.declared_only = true;
+        }
+        if d == vars::Dynamic::BashAliases {
+            v.value = vars::Value::Assoc(Default::default());
+        }
+    }
+    // Who and where the shell runs, from the host (D1328). As in bash: UID and
+    // EUID (readonly integers) and the names below give way to the environment's;
+    // PPID never does; GROUPS is computed, so assignments to it do nothing.
+    let info = host.info();
+    let ro_int = |n: u32| Var {
+        integer: true,
+        readonly: true,
+        ..Var::scalar(n.to_string().into_bytes())
+    };
+    for (name, n) in [("UID", info.uid), ("EUID", info.euid)] {
+        if vars.get(name).is_none() {
+            vars.insert(name, ro_int(n));
+        }
+    }
+    if let Some(p) = info.ppid {
+        vars.insert("PPID", ro_int(p));
+    }
+    for (name, v) in [
+        ("HOSTNAME", info.hostname.clone()),
+        ("OSTYPE", info.ostype.clone().into_bytes()),
+        ("MACHTYPE", info.machtype.clone().into_bytes()),
+        ("HOSTTYPE", info.hosttype.clone().into_bytes()),
+    ] {
+        if vars.get(name).is_none() {
+            vars.insert(name, Var::scalar(v));
+        }
+    }
+    // psh's compatibility target; scripts gate bash-isms on these (D1264).
+    vars.insert("BASH_VERSION", Var::scalar(b"5.3.9(1)-release".to_vec()));
+    let mut versinfo = std::collections::BTreeMap::new();
+    for (i, v) in ["5", "3", "9", "1", "release", &info.machtype]
+        .iter()
+        .enumerate()
+    {
+        versinfo.insert(i as i64, v.as_bytes().to_vec());
+    }
+    vars.insert(
+        "BASH_VERSINFO",
+        Var {
+            value: vars::Value::Indexed(versinfo),
+            readonly: true,
+            ..Var::default()
+        },
+    );
+    // getopts' state, as bash starts it.
+    vars.insert(
+        "OPTIND",
+        Var {
+            integer: true,
+            ..Var::scalar(b"1".to_vec())
+        },
+    );
+    vars.insert("OPTERR", Var::scalar(b"1".to_vec()));
+    // What bash sets when the environment has none (D1329). Prompts belong to
+    // interactive shells: a non-interactive bash drops inherited PS1 and PS2.
+    vars.remove("PS1");
+    vars.remove("PS2");
+    let defaults: [(&str, &[u8]); 3] = [
+        ("PS4", b"+ "),
+        ("TERM", b"dumb"),
+        ("COMP_WORDBREAKS", b" \t\n\"'@><=;|&(:"),
+    ];
+    for (name, v) in defaults {
+        if vars.get(name).is_none() {
+            vars.insert(name, Var::scalar(v.to_vec()));
+        }
+    }
+    // bash's default PATH; on Windows the host's PATH conventions differ.
+    if vars.get("PATH").is_none() && !cfg!(windows) {
+        vars.insert(
+            "PATH",
+            Var::scalar(b"/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:.".to_vec()),
+        );
+    }
+    vars.insert(
+        "PSH_VERSION",
+        Var::scalar(env!("CARGO_PKG_VERSION").as_bytes().to_vec()),
+    );
+    let pwd = vars.entry("PWD");
+    pwd.value = vars::Value::Str(cwd.to_vec());
+    pwd.exported = true;
+    let shlvl = vars
+        .value("SHLVL")
+        .and_then(|v| std::str::from_utf8(v).ok())
+        .and_then(|v| v.trim().parse::<i64>().ok())
+        .unwrap_or(0);
+    let lvl = vars.entry("SHLVL");
+    lvl.value = vars::Value::Str((shlvl + 1).to_string().into_bytes());
+    lvl.exported = true;
+    let old = vars.entry("OLDPWD");
+    old.exported = true;
+    (vars, foreign)
 }
 
 /// The main vproc: runs the script, then the EXIT trap (D1283).

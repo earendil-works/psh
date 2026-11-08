@@ -416,7 +416,7 @@ pub(super) async fn exec_(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     };
     // A utility runs in place of the shell: then the shell ends with its status.
     if let Some(e) = crate::util::lookup(vp, name).await {
-        let st = crate::util::run(vp, e, rest.to_vec(), Vec::new()).await?;
+        let st = crate::util::run_exec(vp, e, rest.to_vec()).await?;
         return Err(Unwind::Exit(st));
     }
     if !name.contains(&b'/') && hash::find(vp, name, None, false).await.is_none() {

@@ -1571,29 +1571,42 @@ async fn run_in_shell(vp: &mut Vp, program: &[u8], argv: Vec<Vec<u8>>, shown: &s
     Ok(status)
 }
 
-/// Turns a subshell into a shell that starts afresh, as a new `sh` would (D1300; also
-/// `UtilCtx::spawn_shell`, D1191): only exported variables, no functions, aliases,
-/// traps or options of ours. Descriptors and cwd stay.
+/// Turns a subshell into a shell that starts afresh, as a new `bash` process would
+/// (D1300, D1410; also `UtilCtx::spawn_shell`, D1191): its variables are built from
+/// the exported ones as [`Shell::new`](crate::Shell::new) builds them from its
+/// environment (`SHLVL` one higher, `IFS`, `PPID`, the dynamic ones), with no
+/// functions, aliases, traps or options of ours; `$$` and `$BASHPID` are a pid of its
+/// own and `$PPID` the caller's `$$`. Descriptors, cwd, umask and limits stay.
 pub(crate) fn start_afresh(sub: &mut Vp) {
-    let unexported: Vec<String> = sub
-        .vars
-        .iter()
-        .filter(|(_, v)| !v.exported)
-        .map(|(n, _)| n.clone())
-        .collect();
-    for n in unexported {
-        sub.vars.remove(&n);
-    }
+    let env = sub.env(&[]);
+    let (vars, foreign) = crate::initial_vars(&*sub.core.host.clone(), &env, &sub.cwd);
+    sub.vars = vars;
+    sub.foreign_env = Rc::new(foreign);
+    let ppid = sub.vars.entry("PPID");
+    ppid.set(sub.shell_pid.to_string().into_bytes());
+    ppid.integer = true;
+    ppid.readonly = true;
+    sub.shell_pid = sub.bashpid;
+    sub.subshell_level = 0;
     sub.funcs = Default::default();
     sub.aliases = Default::default();
     sub.expand_aliases = false;
     sub.traps = Default::default();
     sub.opts = Default::default();
+    crate::options::sync_vars(&mut sub.vars, &sub.opts);
+    sub.no_errexit = false;
+    sub.in_trap = None;
+    sub.xtrace_level = 1;
     sub.frames.clear();
     sub.calls.clear();
     sub.loops = 0;
     sub.status = 0;
     sub.last_bg = None;
+    sub.last_args.clear();
+    sub.getopts = (0, 0);
+    sub.hash = Default::default();
+    sub.disabled = Default::default();
+    sub.dirstack.clear();
 }
 
 /// Owns a running external: dropping it abandons the process (cancel), releases it

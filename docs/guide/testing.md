@@ -78,8 +78,9 @@ bash's standard input, brush cases their arguments and input, agent and utility 
 as `bash -c CODE`, the way an agent's command runs. Every case starts in a fresh
 directory with its own home and an environment built from scratch, nothing inherited.
 
-**L0** runs the parser over 7,807 case scripts, 26,234 skeletons of the shape corpus and
-237 snippets written for the parser; all of them agree with `bash -n` and round-trip.
+**L0** runs the parser over every case script, the 26,234 skeletons of the shape corpus
+and 237 snippets written for the parser; all of them agree with `bash -n` and
+round-trip.
 [The parser](syntax.md) explains the printing that makes the round trip possible.
 
 **L1 and L2** are the two largest suites of bash behavior with permissive licenses. They
@@ -184,18 +185,9 @@ scripts instead of a handful of tests. A process that starts a session of its ow
 
 ## Where psh stands
 
-Active cases passing (stdout, status and files), and how many also match on stderr:
-
-| Layer | Active | Pass | % | Also stderr | Skip |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| L1 Oils | 2,511 | 2,252 | 89.7% | 2,175 | 234 |
-| L2 brush | 3,171 | 2,747 | 86.6% | 2,640 | 465 |
-| L3 agent | 701 | 689 | 98.3% | 687 | 0 |
-| L4 utilities | 671 | 671 | 100% | 668 | 0 |
-| L0 parse | 34,278 | 34,278 | 100% | – | – |
-
-These are macOS numbers. The twelve agent cases that fail all fail only there, on BSD
-utilities' output; the shared agent ratchet is empty.
+On Linux, where the goldens come from, psh passes 93.8% of the active Oils cases, 90.0% of
+the brush cases and every agent, utility and L0 case; [Status in numbers](status.md) has
+the tables for each platform and what the numbers mean.
 
 ## The hit list
 

@@ -13,11 +13,13 @@ read the rest of the guide.
 > real program for anything they don't support. One parser serves both running commands and
 > understanding them.
 
-psh is young. It runs the language agents use and passes close to nine in ten of the
-shell conformance cases it is held to, it has a first set of in-process utilities, and
-it runs on macOS, Linux, Windows and in WebAssembly; [how psh is
-tested](testing.md#where-psh-stands) has the numbers. Its daemon integration and a few
-large utilities are still to come, and the pages that describe them say so.
+psh is young. It runs the language agents use, passing more than nine in ten of the
+upstream shell conformance cases on Linux and every case shaped like an agent command.
+Its 58 in-process utility names include `grep`, `sed`, `awk`, `jq`, `rg`, `find` and
+`ls`, and it runs on macOS, Linux, Windows and in WebAssembly; [Status in
+numbers](status.md) has the figures. Still to come are its integration into an agent
+host's daemon and a later set of utilities (`ps`, `tar`, `tree`, `od`, ...), and the
+pages that describe them say so.
 
 ## A command an agent writes
 

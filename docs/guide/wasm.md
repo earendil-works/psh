@@ -172,8 +172,8 @@ functions, arrays, traps, background jobs and `wait`. Pipeline stages, subshells
 missing follows from having no operating system:
 
 - **No programs.** Nothing outside the shell exists unless the host adds it, so `git`,
-  `python`, `node` and `make` are "command not found" (127), as are utilities psh does
-  not have yet (`ls`, `grep`, `sed`). This mode suits exploring and editing files, not
+  `python`, `node` and `make` are "command not found" (127); psh's own utilities
+  (`ls`, `grep`, `sed`, `jq`, ...) are all there. This mode suits exploring and editing files, not
   building a project, unless the host supplies such commands.
 - **Signals cannot stop JavaScript.** A JavaScript function cannot be interrupted from
   outside. When the shell signals a JavaScript command (`kill`, `timeout`, a cancelled

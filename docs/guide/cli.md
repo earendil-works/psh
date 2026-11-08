@@ -123,8 +123,8 @@ command lookup, the one `type` uses, so it is what a script would get. On a Mac:
 ```text
 $ psh --utils
 NAME       MODE  DESTRUCTIVE  RUNS     PATH
-awk        F     no           program  /usr/bin/awk
-gawk       F     no           psh
+awk        S     no           psh      /usr/bin/awk
+gawk       S     no           psh
 ...
 timeout    S     no           psh
 cat        S     no           psh      /bin/cat

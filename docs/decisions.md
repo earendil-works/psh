@@ -2793,3 +2793,12 @@ verbatim paths (`\\?\` or `//?/`) remain literal so tools can remove artifacts
 created by other programs. Other reserved device names are unchanged. Native programs
 inherit opened redirection handles; text inside an explicitly invoked other shell
 remains that shell's responsibility.
+
+## D1390: Live examples show the parser's AST JSON
+date: 2026-11-08 · by: coordinator · issue: 0039
+The docs' AST tab shows syntax-highlighted, indented `psh --parse` JSON, including
+byte spans and parse errors. The initial tree is rendered at build time; editing
+updates it before shell execution, alongside classification. psh-docs reuses psh's
+`json.rs` and `parse_json.rs` by path, like psh-wasm, rather than maintaining another
+AST conversion. It directly depends on the already-approved deser-json and deser-core
+(D029) for these modules; both are already in its transitive dependency set.

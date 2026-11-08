@@ -18,5 +18,9 @@ psh-utils.workspace = true
 psh-syntax.workspace = true
 psh-classify.workspace = true
 
+# Shared CLI AST JSON modules for the live AST pane (D1390).
+deser-json = { version = "0.10.1", default-features = false, features = ["std"] }
+deser-core = { version = "0.10.2", default-features = false, features = ["std"] }
+
 [lints]
 workspace = true

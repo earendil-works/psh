@@ -61,7 +61,7 @@ crates/
   psh-wasm/      the WASM modules and their ABI                    syntax, classify, engine,
                                                                    utils, deser-json
   psh-docs/      the guide: its writing rules, live examples and   engine, utils, syntax, classify,
-                 the static site (D1120, D1360, D1361)             pulldown-cmark
+                 the static site (D1120, D1360, D1361, D1390)     pulldown-cmark, deser-json
 third_party/
   grep-printer/  grep-printer 0.3.1 with a wasm-safe clock (D1135), via [patch.crates-io]
 js/              the JS glue and host for psh-wasm (`psh.mjs`), its tests and spec driver
@@ -87,6 +87,9 @@ stable; the gate's `msrv` leg checks 1.96.
 **JSON (D029).** All JSON in psh goes through `deser-json`. The parser crate does not
 depend on it: `psh --parse` and `--classify` build their JSON in the `psh` crate
 (`parse_json.rs`, `classify_json.rs`, D1047), and `psh-wasm` reuses those files.
+`psh-docs` also reuses `json.rs` and `parse_json.rs` to render the live examples' AST
+tab at build time (D1390); the browser updates it through the WASM parser before
+execution, alongside classification.
 
 ## psh-syntax: the parser
 

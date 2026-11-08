@@ -5,7 +5,7 @@
 // (render.rs live_block): the textarea does the editing (caret, selection, undo, input
 // methods, screen readers) and highlight.js repaints the `pre` under it on every input.
 // Without JavaScript (or from file://) the page shows the code and the output and
-// classification made at build time.
+// classification and AST made at build time.
 import { esc, highlight } from "./highlight.js";
 
 const CWD = "/work";
@@ -90,6 +90,18 @@ function classificationHtml(src, c) {
   if (c.reads.length) h += `<p>Reads ${paths(c.reads)}</p>`;
   if (c.writes.length) h += `<p>Writes ${paths(c.writes)}</p>`;
   return h;
+}
+
+/** The AST pane: the same JSON as psh --parse, indented and syntax highlighted. */
+function astHtml(result) {
+  const json = JSON.stringify(result, null, 2);
+  // Split on JSON tokens before escaping, so source text cannot introduce markup.
+  return json.split(/("(?:\\.|[^"\\])*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\b(?:true|false|null)\b)/g)
+    .map((s, i) => {
+      if (i % 2 === 0) return esc(s);
+      const role = s[0] === '"' ? "string" : /^(true|false|null)$/.test(s) ? "keyword" : "number";
+      return `<span class="tok-${role}">${esc(s)}</span>`;
+    }).join("");
 }
 
 // ---- Editing ----------------------------------------------------------------------
@@ -177,8 +189,9 @@ async function run(ex) {
     host.fs.mkdir(CWD);
     const psh = await loadPsh(module, { host });
     if (id !== ex.runs) return;
-    // Classification needs only the text, not the outcome of a possibly slow run.
+    // Analysis needs only the text, not the outcome of a possibly slow run.
     pane("classify").innerHTML = classificationHtml(src, psh.classify(src).json);
+    pane("ast").innerHTML = astHtml(psh.parse(src).json);
     const chunks = [];
     const shell = psh.createShell({
       cwd: CWD,
@@ -268,6 +281,7 @@ function setup(el, n) {
     // Invalidate an older run immediately, not only when the autorun timer fires.
     ++ex.runs;
     el.querySelector('[data-pane="classify"]').innerHTML = '<p class="muted">Classification pending…</p>';
+    el.querySelector('[data-pane="ast"]').innerHTML = '<span class="muted">AST pending…</span>';
     repaint(ex);
     reset.hidden = ta.value === ex.original;
     el.querySelector(".live-status").textContent = "edited";

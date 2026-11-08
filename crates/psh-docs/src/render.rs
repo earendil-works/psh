@@ -228,13 +228,15 @@ fn live_block(page: &str, n: usize, hl: &str, code: &str, env: &mut Env) -> Stri
          <button class=\"live-reset\" hidden>Reset</button>\
          <button class=\"live-run\" hidden>Run</button></div>\n\
          <div class=\"live-editor\"><pre class=\"code\"><code class=\"lang-sh\">{hl}</code></pre></div>\n\
-         <div class=\"live-tabs\" role=\"tablist\" aria-label=\"Results\">{}{}\
+         <div class=\"live-tabs\" role=\"tablist\" aria-label=\"Results\">{}{}{}\
          <span class=\"live-status\" role=\"status\"></span></div>\n\
-         {}{}</div>\n",
+         {}{}{}</div>\n",
         tab("out", "Output", true),
         tab("classify", "Classification", false),
+        tab("ast", "AST", false),
         pane("pre", "out", false, &out),
         pane("div", "classify", true, &classify),
+        pane("pre", "ast", true, &crate::run::ast_html(code)),
     )
 }
 
@@ -367,6 +369,9 @@ mod tests {
             "<div class=\"live-editor\"><pre class=\"code\"><code class=\"lang-sh\"><span class=\"tok-function\">echo</span>",
             "data-pane=\"out\" id=\"live-1-out\" role=\"tabpanel\" aria-labelledby=\"live-1-tab-out\" tabindex=\"0\">hi\n<span class=\"live-stderr\">err\n</span><span class=\"live-exit\">(exit status 2)</span></pre>",
             "data-pane=\"classify\"",
+            "data-tab=\"ast\" aria-controls=\"live-1-ast\"",
+            "data-pane=\"ast\" id=\"live-1-ast\" role=\"tabpanel\" aria-labelledby=\"live-1-tab-ast\" tabindex=\"0\" hidden>",
+            "<span class=\"tok-variable\">\"script\"</span>",
         ] {
             assert!(p.html.contains(want), "{want} in {}", p.html);
         }

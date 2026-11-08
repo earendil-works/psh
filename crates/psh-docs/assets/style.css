@@ -378,6 +378,8 @@ div.live-pane { padding: var(--semantic-dimension-space-padding-small) var(--sem
 div.live-pane p { margin-block: var(--semantic-dimension-space-flow-x-small); }
 /* Output on the canvas, set apart from the source above. */
 pre.live-pane { max-block-size: 22rem; background: var(--semantic-color-background-canvas); }
+/* Preserve the AST indentation; long words scroll rather than breaking the tree. */
+pre.live-pane[data-pane="ast"] { white-space: pre; tab-size: 2; }
 .muted { color: var(--semantic-color-text-secondary); }
 /* The Classification pane: one row per command the script would run. */
 table.commands { margin-block: var(--semantic-dimension-space-flow-x-small); font: var(--semantic-typography-ui-secondary); }

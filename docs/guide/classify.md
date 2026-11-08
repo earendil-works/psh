@@ -64,7 +64,9 @@ The live example below runs a script and also classifies it: its Classification 
 lists each command with its categories and how it comes to run, and the paths the
 script reads and writes. There is no `git` where live examples run, so running it fails
 at `git`; the classification needs nothing but the text and appears without waiting
-for execution to finish.
+for execution to finish. The AST tab shows the same script's syntax tree as formatted
+JSON, with node types, words, expansions and byte ranges, just like `psh --parse`.
+Invalid input shows the parser's error instead of a tree.
 
 ```sh live
 git commit -m "$(rm -rf build)"

@@ -554,6 +554,8 @@ dependencies = [
 name = "psh-docs"
 version = "0.0.0"
 dependencies = [
+ "deser-core",
+ "deser-json",
  "psh-classify",
  "psh-engine",
  "psh-syntax",

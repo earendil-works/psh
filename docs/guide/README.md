@@ -95,9 +95,11 @@ reader can change the script and run it (Run, Ctrl/Cmd-Enter, or by itself 600 m
 the last edit) in psh.wasm, in the page. Its tabs show the output, stdout and stderr as
 they came with stderr in red and the exit status when it is not 0, and the
 classification of the script: the commands it would run, their categories, and the
-paths it reads and writes. Classification updates before execution starts, without
-waiting for a slow script to finish or reach the five-second execution limit. Editing
-marks classification as pending until the new text is classified.
+paths it reads and writes. The AST tab shows the parser's syntax tree as indented,
+syntax-highlighted JSON, including byte spans, or the parse error for invalid input.
+Classification and the AST update before execution starts, without waiting for a slow
+script to finish or reach the five-second execution limit. Editing marks both as
+pending until the new text is parsed.
 
 Each one runs in a fresh shell in an empty `/work` directory (also `HOME`) with
 `PATH=/usr/bin:/bin`, over an in-memory file system, with every utility in-process and

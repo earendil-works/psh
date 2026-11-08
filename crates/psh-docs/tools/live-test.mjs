@@ -33,7 +33,7 @@ class Element {
   after() {}
 }
 
-async function editor({ loading } = {}) {
+async function editor({ loading, parseResult } = {}) {
   const el = new Element();
   el.id = "example";
   const code = new Element();
@@ -41,22 +41,24 @@ async function editor({ loading } = {}) {
   const pre = new Element();
   pre.children.set("code", code);
   el.children.set(".live-editor pre", pre);
-  for (const k of [".live-note", ".live-run", ".live-reset", ".live-status", '[data-pane="out"]', '[data-pane="classify"]'])
+  for (const k of [".live-note", ".live-run", ".live-reset", ".live-status", '[data-pane="out"]', '[data-pane="classify"]', '[data-pane="ast"]'])
     el.children.set(k, new Element());
   const out = el.children.get('[data-pane="out"]');
   const classification = el.children.get('[data-pane="classify"]');
+  const ast = el.children.get('[data-pane="ast"]');
   const status = el.children.get(".live-status");
-  const tabs = ["out", "classify"].map((tab) => {
+  const tabs = ["out", "classify", "ast"].map((tab) => {
     const b = new Element();
     b.dataset.tab = tab;
     return b;
   });
   out.dataset.pane = "out";
   classification.dataset.pane = "classify";
-  el.querySelectorAll = (k) => k === '[role="tab"]' ? tabs : [out, classification];
+  ast.dataset.pane = "ast";
+  el.querySelectorAll = (k) => k === '[role="tab"]' ? tabs : [out, classification, ast];
   const timers = new Map();
   let timerId = 0, ta;
-  const shells = [], classified = [];
+  const shells = [], classified = [], parsed = [];
   const glue = {
     MemHost: class { fs = { mkdir() {} }; },
     async loadPsh() {
@@ -65,6 +67,10 @@ async function editor({ loading } = {}) {
         classify(src) {
           classified.push(src);
           return { json: { primary: src, read_only: false, truncated: false, sources: [], commands: [], reads: [], writes: [] } };
+        },
+        parse(src) {
+          parsed.push(src);
+          return { json: parseResult ?? { ok: true, script: { type: "list", text: src, span: [0, new TextEncoder().encode(src).length] } } };
         },
         createShell() {
           const done = deferred();
@@ -102,7 +108,7 @@ async function editor({ loading } = {}) {
   await module.link(() => moduleOf({ esc, highlight }));
   await module.evaluate();
   return {
-    el, out, classification, status, shells, classified, tabs,
+    el, out, classification, ast, status, shells, classified, parsed, tabs,
     input(src) { ta.value = src; ta.listeners.get("input")(); },
     async run() { el.children.get(".live-run").onclick(); await flush(); },
     async autorun() {
@@ -117,11 +123,17 @@ test("classification is available while execution is blocked", async () => {
   e.input("sleep 60");
   await e.autorun();
   assert.deepEqual(e.classified, ["sleep 60"]);
+  assert.deepEqual(e.parsed, ["sleep 60"]);
+  assert.match(e.ast.innerHTML, /sleep 60/);
   assert.match(e.classification.innerHTML, /sleep 60/);
   assert.equal(e.status.textContent, "running…");
   assert.equal(e.shells[0].freed, false);
   e.tabs[1].onclick();
   assert.equal(e.classification.hidden, false);
+  assert.equal(e.out.hidden, true);
+  e.tabs[2].onclick();
+  assert.equal(e.ast.hidden, false);
+  assert.equal(e.classification.hidden, true);
   assert.equal(e.out.hidden, true);
   e.shells[0].done.resolve(143);
   await flush();
@@ -139,10 +151,12 @@ test("an edit invalidates old results before the autorun debounce fires", async 
   e.shells[0].done.resolve(0);
   await flush();
   assert.equal(e.status.textContent, "edited");
+  assert.match(e.ast.innerHTML, /AST pending/);
   assert.equal(e.out.innerHTML, "");
   assert.match(e.classification.innerHTML, /pending/);
   await e.autorun();
   assert.match(e.classification.innerHTML, /echo new/);
+  assert.match(e.ast.innerHTML, /echo new/);
   e.shells[1].done.resolve(0);
   await flush();
 });
@@ -162,6 +176,8 @@ test("an older run finishing cannot overwrite a newer run's results", async () =
   assert.equal(e.status.textContent, status);
   assert.equal(e.out.innerHTML, output);
   assert.match(e.classification.innerHTML, /echo new/);
+  assert.match(e.ast.innerHTML, /echo new/);
+  assert.doesNotMatch(e.ast.innerHTML, /echo old/);
   assert.ok(e.shells.every((s) => s.freed));
 });
 
@@ -172,6 +188,7 @@ test("execution errors do not prevent classification", async () => {
   e.shells[0].done.reject(Error("execution failed"));
   await flush();
   assert.match(e.status.textContent, /could not run: execution failed/);
+  assert.match(e.ast.innerHTML, /echo new/);
   assert.match(e.classification.innerHTML, /echo new/);
   assert.equal(e.shells[0].freed, true);
 });
@@ -185,10 +202,62 @@ test("an edit during module loading cannot publish or execute obsolete input", a
   loading.resolve();
   await flush();
   assert.deepEqual(e.classified, []);
+  assert.deepEqual(e.parsed, []);
+  assert.match(e.ast.innerHTML, /AST pending/);
   assert.equal(e.shells.length, 0);
   assert.match(e.classification.innerHTML, /pending/);
   await e.autorun();
   assert.deepEqual(e.classified, ["echo new"]);
+  assert.deepEqual(e.parsed, ["echo new"]);
   e.shells[0].done.resolve(0);
   await flush();
+});
+
+test("AST is indented, highlighted JSON and escapes script markup", async () => {
+  const e = await editor();
+  const src = 'echo "<script>μ & \\"quoted\\"</script>"';
+  e.input(src);
+  await e.run();
+  const html = e.ast.innerHTML;
+  assert.match(html, /\n  <span class="tok-string">"ok"<\/span>: <span class="tok-keyword">true<\/span>/);
+  assert.match(html, /&lt;script&gt;μ &amp;/);
+  assert.doesNotMatch(html, /<script>/);
+  const plain = html.replace(/<[^>]*>/g, "").replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
+  const parsed = JSON.parse(plain);
+  assert.equal(parsed.script.text, src);
+  assert.equal(parsed.script.span[1], new TextEncoder().encode(src).length);
+  e.shells[0].done.resolve(0);
+  await flush();
+});
+
+test("AST shows parse errors before execution finishes", async () => {
+  const parseResult = { ok: false, error: { message: "unexpected end of file", span: [2, 2], line: 1, column: 3, incomplete: true } };
+  const e = await editor({ parseResult });
+  e.input("if");
+  await e.run();
+  assert.match(e.ast.innerHTML, /unexpected end of file/);
+  assert.match(e.ast.innerHTML, /tok-keyword">false/);
+  assert.equal(e.status.textContent, "running…");
+  e.shells[0].done.resolve(2);
+  await flush();
+});
+
+test("keyboard navigation includes the AST tab and wraps", async () => {
+  const e = await editor();
+  let focused;
+  e.tabs.forEach((t, i) => t.focus = () => { focused = i; });
+  const key = (i, key) => e.tabs[i].onkeydown({ key, preventDefault() {} });
+  key(1, "ArrowRight");
+  assert.equal(focused, 2);
+  assert.equal(e.ast.hidden, false);
+  assert.equal(e.tabs[2].attributes.get("aria-selected"), "true");
+  assert.equal(e.tabs[2].tabIndex, 0);
+  assert.equal(e.tabs[1].tabIndex, -1);
+  key(2, "ArrowRight");
+  assert.equal(focused, 0);
+  assert.equal(e.ast.hidden, true);
+  key(0, "End");
+  assert.equal(focused, 2);
+  key(2, "Home");
+  assert.equal(focused, 0);
 });

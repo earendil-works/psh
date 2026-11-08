@@ -1,6 +1,6 @@
 # 0039: Show formatted ASTs in live documentation examples
 
-status: in-progress
+status: done
 agent: coordinator
 branch: issue/0039-live-ast
 depends-on: 0036, 0038
@@ -14,15 +14,29 @@ Reuse the parser JSON used by the CLI and WASM, with readable indentation and sy
 highlighting, without waiting for execution.
 
 ## Acceptance criteria
-- [ ] AST tab includes the initial example's parsed tree and updates after edits.
-- [ ] Parse errors appear in the AST tab; old runs cannot overwrite newer results.
-- [ ] Tests cover rendering, escaping, tab navigation and asynchronous edits.
-- [ ] Guide documents the tab; targeted checks and the merge gate pass.
+- [x] AST tab includes the initial example's parsed tree and updates after edits.
+- [x] Parse errors appear in the AST tab; old runs cannot overwrite newer results.
+- [x] Tests cover rendering, escaping, tab navigation and asynchronous edits.
+- [x] Guide documents the tab; targeted checks pass (merge runs the full gate).
 
 ## Log
 - 2026-11-08: Started in the docs worktree. Reuse the CLI JSON modules for build-time
   output, as the WASM crate does. No parser/ABI changes needed.
+- Added a third accessible result tab with indented, highlighted JSON at build time
+  and after browser edits. Parsing happens alongside classification, before execution;
+  edits mark both pending and retain the existing stale-result protections.
+- Reused the CLI JSON modules with existing deser-json/deser-core dependencies
+  (D1390); excluded AST text from the search index to avoid indexing duplicate noise.
+- Updated ARCH.md, docs/guide/README.md and docs/guide/classify.md. No example output
+  or conformance ratchets changed; no engine or WASM ABI changes.
+- Validation: 33 psh-docs unit tests, eight editor regression tests, guide check
+  (21 pages), site build and formatting pass. Headless Chrome checked the initial AST,
+  tab switching, edited pipeline structure and parse errors using the real WASM parser.
 
 ## Follow-ups
 
 ## Result
+Every live example has an AST tab beside Output and Classification. It shows the
+parser's full JSON result with node types, word expansions and byte spans, or a parse
+error, indented and syntax highlighted. It is available before running an example and
+updates before edited code starts executing. No known gaps within this scope.

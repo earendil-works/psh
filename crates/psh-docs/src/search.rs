@@ -9,6 +9,7 @@ use crate::render::Page;
 const SKIP: &[(&str, &str)] = &[
     ("<svg", "</svg>"),
     ("<div class=\"live-pane\" data-pane=\"classify\"", "</div>"),
+    ("<pre class=\"live-pane\" data-pane=\"ast\"", "</pre>"),
 ];
 
 /// `[[file, page title, anchor, heading, text], ...]` for `rendered` (source name, page).
@@ -170,6 +171,13 @@ mod tests {
                 ("c".into(), "C".into(), "two".into()),
             ]
         );
+    }
+
+    #[test]
+    fn ast_is_not_indexed() {
+        let html = "<h1 id=\"t\">Title</h1><p>Example</p>\
+                    <pre class=\"live-pane\" data-pane=\"ast\"><code>AST noise</code></pre>";
+        assert_eq!(sections(html)[0].2, "Example");
     }
 
     #[test]

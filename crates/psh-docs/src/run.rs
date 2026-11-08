@@ -113,6 +113,13 @@ fn run_for(code: &str, limit: Duration) -> Result<Run, String> {
     ))
 }
 
+/// The AST pane uses exactly the CLI/WASM parser JSON, including parse errors.
+pub fn ast_html(code: &str) -> String {
+    let (json, _) =
+        crate::parse_json::parse_to_json(code.as_bytes(), psh_syntax::Options::default());
+    crate::highlight::highlight("json", &json.to_pretty())
+}
+
 /// The Classification pane of a live example: what the script would run, as psh's
 /// classifier sees it (live.js builds the same from `psh.classify`).
 pub fn classification_html(code: &str) -> String {
@@ -186,6 +193,29 @@ mod tests {
     #[test]
     fn endless_loops_end() {
         assert!(run_for("while :; do :; done", Duration::from_millis(100)).is_err());
+    }
+
+    #[test]
+    fn ast_includes_structure_and_escapes_source() {
+        let h = ast_html("echo \"$name\" | cat > '<script>&'");
+        for text in [
+            "list", "pipeline", "simple", "word", "param", "redirect", "span",
+        ] {
+            assert!(h.contains(text), "{text} in {h}");
+        }
+        assert!(h.contains("tok-string"), "{h}");
+        assert!(h.contains("\n  "), "{h}");
+        assert!(h.contains("&lt;script&gt;&amp;"), "{h}");
+        assert!(!h.contains("<script>"), "{h}");
+    }
+
+    #[test]
+    fn ast_includes_parse_errors() {
+        let h = ast_html("if");
+        for text in ["error", "message", "span", "line", "column", "false"] {
+            assert!(h.contains(text), "{text} in {h}");
+        }
+        assert!(!h.contains("\"script\""), "{h}");
     }
 
     #[test]

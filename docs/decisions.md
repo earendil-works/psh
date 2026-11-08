@@ -2819,3 +2819,37 @@ an outline flag (`psh.parse(src, { outline: true })`), and the docs render the r
 build time and in the browser, where a row marks its span in the editor, the caret
 selects the deepest row, rows fold, and a JSON button shows the full tree. psh-docs no
 longer reuses `json.rs`/`parse_json.rs` and drops its direct deser dependencies.
+
+## D1410: `bash` and `sh` named in a command run in psh; shebangs stay with the kernel
+date: 2026-11-08 · by: coordinator (owner) · issue: 0041
+Agents' commands call a shell again: in 314k bash tool calls of the owner's pi and p2
+sessions, a bare `bash` or `sh` appears in about 1,400 (`FILE` 733, `-c` 313, `-n` 333),
+and a script fed on stdin in about 3. Today such a call leaves psh for whatever `bash`
+is on `PATH` (bash 3.2 on macOS, nothing on Windows or in wasm), and with it psh's
+utilities, cancellation and sandbox. So a command whose name is `bash` or `sh`, with no
+slash, runs in psh: after functions and shell builtins, before utilities and `PATH`, so
+the wrappers (`env`, `xargs`, `find -exec`, `timeout`, `nohup`, `time`) reach it too.
+`exec bash …` runs it in place of the vproc. It is a new shell, as a new bash process
+is: it starts afresh like a script psh runs itself (D1300: exported variables only, no
+functions, aliases, traps or options; the command's descriptors and cwd), with `SHLVL`
+one higher, `$$` and `BASHPID` a pid of its own, `$PPID` the caller's `$$`. Its command
+line is psh's own (`invocation::parse_args`): `-c STR [ARG0 ARGS…]`, `FILE [ARGS…]`, `-s`
+and stdin, `set` and `shopt` options (including `-n`), `--norc`/`--noprofile`;
+`-l`/`--login` is accepted and reads no profile (the embedder's environment is the
+agent's); `--version` prints psh's version. Options psh lacks (`-i`, `--rcfile`, `-r`,
+`--posix`, …) run the real program from `PATH` if there is one, else fail with status 2
+naming psh, as utilities fall through (D1082). `sh` runs in bash mode, since POSIX mode
+is refused (D1280). A per-session off switch (`ShellConfig`) sends both names to `PATH`
+again. `type` and `command -v` report them like utilities (D1083).
+Not included: a path (`/bin/bash`, `/opt/homebrew/bin/bash`, `command -p bash`) runs the
+program, so oracle probes keep the real bash; on Windows, where those files do not
+exist, `/bin/sh`, `/bin/bash`, `/usr/bin/sh` and `/usr/bin/bash` mean psh, as they do
+in shebangs there. Shebang scripts are not intercepted: on Unix the kernel runs them
+under their interpreter, as before; D1300 (no `#!`; `sh`/`bash` scripts on Windows) is
+unchanged. `zsh`, `dash` and `ksh` stay programs. Programs that start shells themselves
+(make, npm, git hooks) are out of reach. Considered: running `#!/bin/sh` and
+`#!/bin/bash` scripts in psh on Unix too (16k calls run a `.sh` file directly);
+rejected by the owner: a script that names its interpreter gets that interpreter.
+A script on stdin must be read one complete command at a time, so that the commands in
+it can read the rest of stdin, as bash does; until that lands (0041 part 2), a bare
+`bash`/`sh` with no script operand runs the real program, or fails where there is none.

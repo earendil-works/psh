@@ -23,6 +23,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | depends-on | touches |
 | --- | --- | --- | --- |
+| 0041 | `bash`/`sh` in a command run in psh (part 1: -c, FILE, options; part 2: stdin) | - | engine lookup, invocation, psh stdin mode, tests |
 
 ## Open (blocked on dependencies)
 

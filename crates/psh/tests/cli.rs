@@ -563,6 +563,33 @@ fn parse_prints_json() {
 }
 
 #[test]
+fn parse_prints_an_outline_with_tree() {
+    let out = psh(&["--parse", "--tree", "-c", "echo \"$x\" > out"]);
+    assert_eq!(out.status, Some(0), "{}", out.stderr);
+    assert_eq!(
+        out.stdout,
+        concat!(
+            "simple        echo \"$x\" > out\n",
+            "  word        echo\n",
+            "  double      \"$x\"\n",
+            "    param x   $x\n",
+            "  redirect >  > out\n",
+            "    word      out\n",
+        )
+    );
+    let out = psh(&["--parse", "--tree", "-c", "echo a\nfi"]);
+    assert_eq!(out.status, Some(2));
+    assert_eq!(out.stdout, "");
+    assert_eq!(
+        out.stderr,
+        "psh: line 2, column 1: syntax error near unexpected token `fi'\n"
+    );
+    let out = psh(&["--parse", "--tree", "--compact", "-c", "x"]);
+    assert_eq!(out.status, Some(2));
+    assert!(out.stderr.contains("exclude each other"), "{}", out.stderr);
+}
+
+#[test]
 fn parse_reports_syntax_errors() {
     let out = psh(&["--parse", "--compact", "-c", "echo a\nfi"]);
     assert_eq!(out.status, Some(2));

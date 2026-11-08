@@ -17,6 +17,8 @@ const parser = await loadPsh(await readFile(`${root}target/wasm/psh-parser.wasm`
 {
   const r = parser.parse("echo hi | wc -l");
   check("parse ok", r.ok && r.json.ok === true, r);
+  const o = parser.parse("echo $x", { outline: true });
+  check("parse outline", o.ok && o.json.rows.map((r) => r.kind).join() === "simple,word,param", o);
   const bad = parser.parse("if then");
   check("parse error", !bad.ok && bad.json.ok === false, bad);
   const c = parser.classify("rm -rf build && ls");

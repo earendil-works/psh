@@ -961,9 +961,12 @@ export class Psh {
     this.x.psh_complete(op, err, value, len);
   }
 
-  /** `psh --parse` as a function: { ok, json }. */
-  parse(source, { extglob = false, compact = true } = {}) {
-    const ok = this.x.psh_parse(this.input(source), (extglob ? 1 : 0) | (compact ? 2 : 0));
+  /**
+   * `psh --parse` as a function: { ok, json }. With `outline`, `json` is the outline for
+   * people instead of the tree: { ok, rows: [{ depth, role, kind, info, text, span }] }.
+   */
+  parse(source, { extglob = false, compact = true, outline = false } = {}) {
+    const ok = this.x.psh_parse(this.input(source), (extglob ? 1 : 0) | (compact ? 2 : 0) | (outline ? 4 : 0));
     return { ok: ok === 1, json: JSON.parse(dec.decode(this.output())) };
   }
 

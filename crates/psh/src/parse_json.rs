@@ -54,17 +54,43 @@ pub fn parse_to_json(source: &[u8], opts: Options) -> (Json, bool) {
             }
             (j.set("script", script), true)
         }
-        Err(e) => {
-            let lc = LineIndex::from_bytes(source).line_col_bytes(source, e.span.start);
-            let error = Json::obj()
-                .set("message", e.message.as_str())
-                .set("span", span(e.span))
-                .set("line", lc.line)
-                .set("column", lc.column)
-                .set("incomplete", e.incomplete);
-            (Json::obj().set("ok", false).set("error", error), false)
-        }
+        Err(e) => (error_json(source, &e), false),
     }
+}
+
+/// The outline of `psh_syntax::outline` (the docs' AST tab): `{"ok": true, "rows":
+/// [{depth, role, kind, info, text, span}]}`, or the error as `parse_to_json` gives it.
+#[allow(dead_code)] // psh prints the outline as text; psh-wasm and psh-docs use this.
+pub fn outline_to_json(source: &[u8], opts: Options) -> (Json, bool) {
+    match parse_bytes(source, opts) {
+        Ok(ast) => {
+            let rows = outline(&ast)
+                .into_iter()
+                .map(|r| {
+                    Json::obj()
+                        .set("depth", r.depth)
+                        .set("role", r.role)
+                        .set("kind", r.kind)
+                        .set("info", r.info)
+                        .set("text", r.text)
+                        .set("span", span(r.span))
+                })
+                .collect::<Vec<_>>();
+            (Json::obj().set("ok", true).set("rows", rows), true)
+        }
+        Err(e) => (error_json(source, &e), false),
+    }
+}
+
+fn error_json(source: &[u8], e: &ParseError) -> Json {
+    let lc = LineIndex::from_bytes(source).line_col_bytes(source, e.span.start);
+    let error = Json::obj()
+        .set("message", e.message.as_str())
+        .set("span", span(e.span))
+        .set("line", lc.line)
+        .set("column", lc.column)
+        .set("incomplete", e.incomplete);
+    Json::obj().set("ok", false).set("error", error)
 }
 
 fn span(s: Span) -> Json {
@@ -532,6 +558,23 @@ mod tests {
         let text = j.to_compact();
         assert!(text.contains(r#""type":"cmd_subst""#));
         assert!(text.contains(r#""type":"proc_subst","span":[7,13],"direction":"<""#));
+    }
+
+    #[test]
+    fn outline_rows() {
+        let (j, ok) = outline_to_json(b"echo $x", Options::default());
+        assert!(ok);
+        assert_eq!(
+            j.to_compact(),
+            concat!(
+                r#"{"ok":true,"rows":[{"depth":0,"role":"","kind":"simple","info":"","text":"echo $x","span":[0,7]},"#,
+                r#"{"depth":1,"role":"","kind":"word","info":"","text":"echo","span":[0,4]},"#,
+                r#"{"depth":1,"role":"","kind":"param","info":"x","text":"$x","span":[5,7]}]}"#
+            )
+        );
+        let (j, ok) = outline_to_json(b"if", Options::default());
+        assert!(!ok);
+        assert!(j.to_compact().starts_with(r#"{"ok":false,"error":{"#));
     }
 
     #[test]

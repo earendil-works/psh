@@ -120,6 +120,8 @@ export! {
 const PARSE_EXTGLOB: u32 = 1;
 /// `flags` of `psh_parse` and `psh_classify`: compact JSON (else pretty).
 const COMPACT: u32 = 2;
+/// `flags` of `psh_parse`: the outline rows (`psh_syntax::outline`) instead of the tree.
+const PARSE_OUTLINE: u32 = 4;
 
 fn json_out(json: &json::Json, flags: u32) {
     let text = if flags & COMPACT != 0 {
@@ -131,14 +133,18 @@ fn json_out(json: &json::Json, flags: u32) {
 }
 
 export! {
-    /// Parses the `len` input bytes; the output is `psh --parse`'s JSON. Returns 1 when
-    /// the script parses, 0 when not.
+    /// Parses the `len` input bytes; the output is `psh --parse`'s JSON, or with
+    /// `PARSE_OUTLINE` the outline's rows. Returns 1 when the script parses, 0 when not.
     fn psh_parse(len: usize, flags: u32) -> u32 {
         let source = take_input(len);
         let opts = psh_syntax::Options {
             extglob: flags & PARSE_EXTGLOB != 0,
         };
-        let (json, ok) = parse_json::parse_to_json(&source, opts);
+        let (json, ok) = if flags & PARSE_OUTLINE != 0 {
+            parse_json::outline_to_json(&source, opts)
+        } else {
+            parse_json::parse_to_json(&source, opts)
+        };
         json_out(&json, flags);
         u32::from(ok)
     }
@@ -179,6 +185,13 @@ mod tests {
         let len = input(b"if then");
         assert_eq!(psh_parse(len, COMPACT), 0);
         assert!(output().contains("\"ok\":false"));
+        let len = input(b"echo hi");
+        assert_eq!(psh_parse(len, COMPACT | PARSE_OUTLINE), 1);
+        assert!(
+            output().starts_with(r#"{"ok":true,"rows":[{"depth":0,"role":"","kind":"simple""#),
+            "{}",
+            output()
+        );
         let len = input(b"rm -rf /tmp/x");
         assert_eq!(psh_classify(len, COMPACT), 1);
         assert!(output().contains("rm"), "{}", output());

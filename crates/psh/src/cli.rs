@@ -29,6 +29,8 @@ pub enum Mode {
 pub struct Diag {
     pub source: Source,
     pub compact: bool,
+    /// `--parse --tree`: the outline as text, not the JSON.
+    pub tree: bool,
     pub options: psh_syntax::Options,
 }
 
@@ -53,7 +55,7 @@ enum Top {
 
 const USAGE: &str = "[OPTIONS] [FILE [ARGS]...]
        psh [OPTIONS] -c COMMAND [NAME [ARGS]...]
-       psh --parse [--compact] [-O extglob] [-c COMMAND | FILE]
+       psh --parse [--compact | --tree] [-O extglob] [-c COMMAND | FILE]
        psh --classify [--compact] [-O extglob] [-c COMMAND | FILE]
        psh --utils [--json]";
 
@@ -110,24 +112,34 @@ static PSH: Cli<Top> = Cli::new("psh")
 enum D {
     Command,
     Compact,
+    Tree,
     Shopt,
     File,
 }
 
-/// The options `--parse` and `--classify` share.
-const DIAG_OPTS: [Opt<D>; 3] = [
-    Opt::new(D::Command)
-        .short('c')
-        .value("COMMAND")
-        .help("Read the script from COMMAND"),
-    Opt::new(D::Compact)
-        .long("compact")
-        .help("Print the JSON on one line instead of indented"),
-    Opt::new(D::Shopt)
-        .short('O')
-        .value("NAME")
-        .possible_values(&["extglob"])
-        .help("Parse with the shopt option NAME on"),
+const COMMAND: Opt<D> = Opt::new(D::Command)
+    .short('c')
+    .value("COMMAND")
+    .help("Read the script from COMMAND");
+const COMPACT: Opt<D> = Opt::new(D::Compact)
+    .long("compact")
+    .help("Print the JSON on one line instead of indented");
+const SHOPT: Opt<D> = Opt::new(D::Shopt)
+    .short('O')
+    .value("NAME")
+    .possible_values(&["extglob"])
+    .help("Parse with the shopt option NAME on");
+
+/// The options of `--classify`; `--parse` has `--tree` too.
+const DIAG_OPTS: [Opt<D>; 3] = [COMMAND, COMPACT, SHOPT];
+const PARSE_OPTS: [Opt<D>; 4] = [
+    COMMAND,
+    COMPACT,
+    Opt::new(D::Tree).long("tree").help(
+        "Print an outline for people instead: one line per node, with its kind and \
+         source text, wrappers of one child left out",
+    ),
+    SHOPT,
 ];
 
 const DIAG_FILE: [Pos<D>; 1] = [Pos::new(D::File, "FILE")
@@ -140,11 +152,11 @@ static PARSE: Cli<D> = Cli::new("--parse")
         "Prints the syntax tree of a script as JSON: every node with its type, its byte \
          span in the input and its parts. Bytes that are not UTF-8 keep their offsets.",
     )
-    .opts(&DIAG_OPTS)
+    .opts(&PARSE_OPTS)
     .args(&DIAG_FILE)
     .after_help(
         "Exits with 0 when the script parses and with 2 when it does not; the JSON then \
-         holds the error with its span, line and column.",
+         holds the error with its span, line and column (with --tree, stderr has it).",
     );
 
 static CLASSIFY: Cli<D> = Cli::new("--classify")
@@ -237,12 +249,17 @@ fn diag(mut p: Parser<D>) -> Result<Diag, Error> {
     let mut d = Diag {
         source: Source::Stdin,
         compact: false,
+        tree: false,
         options: psh_syntax::Options::default(),
     };
     while let Some(arg) = p.param()? {
         let source = match arg {
             D::Compact => {
                 d.compact = true;
+                continue;
+            }
+            D::Tree => {
+                d.tree = true;
                 continue;
             }
             D::Shopt => {
@@ -258,6 +275,9 @@ fn diag(mut p: Parser<D>) -> Result<Diag, Error> {
             return Err(p.error("give the script once: -c COMMAND or FILE"));
         }
         d.source = source;
+    }
+    if d.compact && d.tree {
+        return Err(p.error("--compact and --tree exclude each other"));
     }
     Ok(d)
 }

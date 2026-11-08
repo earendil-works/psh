@@ -4,6 +4,7 @@
 //!
 //! `psh --parse [--compact] [-O extglob] [-c CMD | FILE]` prints the syntax tree as
 //! JSON (stdin when neither `-c` nor a file is given); status 0 if it parses, 2 if not.
+//! With `--tree` it prints `psh_syntax::outline_text` instead.
 //!
 //! `psh --classify [--compact] [-O extglob] [-c CMD | FILE]` prints what the script does
 //! as JSON (`classify_json.rs`); status 0 if it parses, 2 if not.
@@ -322,8 +323,34 @@ fn parse_command(d: cli::Diag) -> ExitCode {
     let Some(bytes) = read_source(d.source) else {
         return ExitCode::from(2);
     };
+    if d.tree {
+        return parse_tree(&bytes, d.options);
+    }
     let (json, ok) = parse_json::parse_to_json(&bytes, d.options);
     print_json(&json, d.compact, ok)
+}
+
+/// `--parse --tree`: the outline, or the error on stderr; status 0 or 2 as with JSON.
+fn parse_tree(bytes: &[u8], options: psh_syntax::Options) -> ExitCode {
+    match psh_syntax::parse_bytes(bytes, options) {
+        Ok(ast) => {
+            let text = psh_syntax::outline_text(&psh_syntax::outline(&ast));
+            let mut stdout = std::io::stdout().lock();
+            if stdout
+                .write_all(text.as_bytes())
+                .and_then(|_| stdout.flush())
+                .is_err()
+            {
+                return ExitCode::from(2);
+            }
+            ExitCode::SUCCESS
+        }
+        Err(e) => {
+            let lc = psh_syntax::LineIndex::from_bytes(bytes).line_col_bytes(bytes, e.span.start);
+            eprintln!("psh: line {}, column {}: {}", lc.line, lc.column, e.message);
+            ExitCode::from(2)
+        }
+    }
 }
 
 fn classify_command(d: cli::Diag) -> ExitCode {

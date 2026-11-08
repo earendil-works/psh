@@ -394,8 +394,9 @@ From `research/execution-core.md` §5; the pitfalls listed there are requirement
 - Environment names are case-insensitive for the OS environment, case-sensitive for
   shell variables.
 - CRLF: scripts with `\r\n` parse; `$(…)` (also backticks, `$(< f)`, `${ …; }`) drops
-  the `\r` before each trailing newline it removes, as `read` does, because the
-  Windows host's `strips_crlf()` is true (D1292, D1940); `grep` and `rg` treat CRLF
+  the `\r` before each trailing newline it removes, as `read` does, on a host whose
+  `strips_crlf()` is true (D1292, D1940). **Planned:** the Windows host does not
+  override it yet, so on Windows both keep the `\r` today. `grep` and `rg` treat CRLF
   as a line end (D030).
 - Utilities whose names collide with System32 programs are always the builtin on
   Windows: `find`, `sort` and `timeout` are mode S everywhere (D1172), the others
@@ -535,7 +536,7 @@ Around the modes:
   seq comm printf echo test true false sleep find xargs diff cmp jq base64 md5sum
   sha1sum sha256sum sha512sum shasum md5 date env printenv timeout nice nohup which`.
   `timeout` came first: it is the most common "command not found" (389) in the corpus.
-  `awk` is F until conformant; the rest are S.
+  All are S, `awk` too since it passes its suites (D1194).
 - **Tier 2**, soon after (~45 names): process tools (`ps pgrep pkill`, per OS), host
   info (`uptime nproc id uname whoami hostname df`), `tree column tac rev strings od
   xxd hexdump expr yes truncate fold expand unexpand join split`, the rest of the
@@ -552,7 +553,7 @@ Port mature permissive code rather than write new:
 
 - `rg`, `fd`, `grep` on the ripgrep crates (next section); `sed` on psh-regex; `jq` on
   jaq (a dependency, D028); **`awk`** is a port of GoAWK (MIT), checked against the
-  vendored onetrueawk and GoAWK suites, in F mode until it passes them (D1193).
+  vendored onetrueawk and GoAWK suites (D1193), mode S (D1194).
 - Most of the rest from uutils coreutils, findutils and diffutils, rewritten onto
   `UtilCtx`.
 - Ours: the wrappers (`timeout nice nohup env xargs`, on psh's process model), `find`'s
@@ -706,7 +707,7 @@ runs every `exec` as `bash -c` today (`research/pi-current.md`). psh plugs in at
 - Output stays combined stdout+stderr in arrival order, with exit status, and goes
   through the daemon's existing decoding, windowing and spill. Exit codes follow
   pi-env's contract (`128+n` for signals).
-- A `parse` op returns the classification for UI and permissions, even where execution
+- A `parse` op returns the classification for UI summaries and replay (D036), even where execution
   still uses real bash.
 - **Sessions (D026).** Each `exec` gets a fresh psh shell; nothing (cwd, variables,
   functions) persists across calls, which keeps Durable's replay model intact.
@@ -743,7 +744,7 @@ supplies such commands. psh-spec runs every case in `psh.wasm` under node (D1113
 ## psh-classify: understanding commands
 
 The classifier runs on the same AST the engine executes (D013), so a command is never
-parsed one way for approval and another way for execution.
+parsed one way for a report and another way for execution.
 
 - For each simple command: the command name (literal or dynamic), argv words with spans
   (literal or which expansions they contain), redirections with targets, its category

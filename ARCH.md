@@ -536,7 +536,7 @@ Around the modes:
   seq comm printf echo test true false sleep find xargs diff cmp jq base64 md5sum
   sha1sum sha256sum sha512sum shasum md5 date env printenv timeout nice nohup which`.
   `timeout` came first: it is the most common "command not found" (389) in the corpus.
-  All are S, `awk` too since it passes its suites (D1194).
+  All are S, `awk` too (D1194).
 - **Tier 2**, soon after (~45 names): process tools (`ps pgrep pkill`, per OS), host
   info (`uptime nproc id uname whoami hostname df`), `tree column tac rev strings od
   xxd hexdump expr yes truncate fold expand unexpand join split`, the rest of the

@@ -28,6 +28,23 @@ utility are listed on [Utilities and their flags](ref-utilities.md).
   the moment a run is cancelled, costs no process start, and the classifier knows
   exactly which of its options write or run code.
 
+Both dialects in one script, with `awk` and `jq` from the same toolset:
+
+```sh live
+printf 'b 2\na 1\nb 3\n' > data.txt
+sed -i '' 's/ /=/' data.txt
+sed -i 's/=/: /' data.txt
+sort data.txt | awk -F': ' '{ sum[$1] += $2 } END { for (k in sum) print k, sum[k] }' | sort
+seq 3 | jq -s 'map(. * 10)' -c
+```
+<!-- gen:run -->
+```text
+a 1
+b 5
+[10,20,30]
+```
+<!-- /gen -->
+
 > **Trade-off.** Generous built-in utilities over always running the installed tool.
 > They make the same command work on every platform. The cost: where psh's version
 > shadows a better real program, it can differ from it in a detail, and psh carries a

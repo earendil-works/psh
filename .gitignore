@@ -4,3 +4,4 @@ target/
 .worktrees/
 work/scratch/
 vendor/
+node_modules/

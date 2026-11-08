@@ -2739,3 +2739,43 @@ expressions and addresses), replacements and `y`. GNU matches such a byte even i
 multibyte char (`s/\xce//` on `μ` in C.UTF-8), so a regex whose escapes leave bytes that
 are not whole UTF-8 chars is matched on bytes; `\xce\xbc` stays the char `μ`. (A
 side effect: in such a regex `.` matches one byte, where GNU's `\xce.` matches nothing.)
+
+## D1360: The guide is a static site built by psh-docs, in Elanor's design
+date: 2026-11-08 · by: coordinator (owner) · issue: 0036
+`psh-docs build` renders docs/guide into a static site (target/docs-site), the way djs's
+`djs-docs build` does: navigation from SUMMARY.md, a page outline, previous/next,
+search over every section in the browser (search.json, no server), light and dark,
+highlighting, and repository links to GitHub at the commit the site is built from.
+index.md is its front page (checked by the writing rules too, not a chapter). The look is
+Elanor, Earendil's design system: its published tokens, fonts, icons and logos are
+vendored into crates/psh-docs/assets/elanor by scripts/elanor-update.sh (pinned to one
+elanor commit, as djs pins it), so building needs no login or network. Markdown is
+rendered by pulldown-cmark (default features off, `html` only; with its own
+pulldown-cmark-escape, bitflags and unicase), in psh-docs only; the writing rules keep
+their line scanner, which reports line numbers. Alternatives: mdBook (a tool to install,
+its own theme), a hand-written Markdown renderer (tables, footnotes and HTML blocks are
+not worth writing). Owner's request: docs like djs's.
+
+## D1361: Live examples run in psh at build time and in psh.wasm in the page
+date: 2026-11-08 · by: coordinator · issue: 0036
+A ```` ```sh live ```` block is an editable example on the site: live.js runs it in
+psh.wasm over js/psh.mjs's MemHost and shows its output and its classification. The
+build runs it natively, in psh-engine's in-memory test host with psh-utils in sandbox
+mode, in an empty /work with the same environment (HOME=/work, PATH=/usr/bin:/bin), so
+psh-docs depends on psh-engine, psh-utils, psh-syntax and psh-classify. Its output
+(stdout and stderr as they interleave, then `(exit status N)` when not 0) is kept in a
+`gen:run` region after the block, for readers of the Markdown: `regen` writes a missing
+one, a changed output fails `check` until `regen --examples` accepts it, as in djs. The
+wasm leg checks that psh.wasm prints the same (crates/psh-docs/tools/live-check.mjs), and
+a psh-docs test checks that assets/highlight.js, the editor's highlighter, matches
+highlight.rs on every shell block of the guide. The examples have no external programs,
+so they show the language and the utilities, not `git` or `cargo`.
+
+## D1362: REPORT.md is folded into the guide
+date: 2026-11-08 · by: coordinator (owner) · issue: 0036
+The project report (REPORT.md, a snapshot of 2026-11-08) duplicated the guide's status
+page and README's table, and went stale with every merge. Its numbers and costs are on
+status.md, its list of what is not built and its known gaps are status.md's last
+sections, and where the paused work stands is in work/BOARD.md and the issue logs. The
+README points at the guide and the site. ARCH.md, TESTING.md, this log and research/
+stay: they are the reference for people changing psh, which the guide is not.

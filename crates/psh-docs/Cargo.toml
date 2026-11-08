@@ -1,6 +1,6 @@
 [package]
 name = "psh-docs"
-description = "Checks the guide (docs/guide) against its writing rules"
+description = "The guide (docs/guide): its writing rules, live examples and the static site"
 edition.workspace = true
 rust-version.workspace = true
 version.workspace = true
@@ -8,6 +8,15 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+# Markdown to HTML for the site (D1360). Without its default features: no binary, no
+# SIMD; html only.
+pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
+# The live examples run in psh at build time, on the engine's in-memory test host with
+# the utilities in sandbox mode, as psh.wasm runs them in the page (D1361).
+psh-engine.workspace = true
+psh-utils.workspace = true
+psh-syntax.workspace = true
+psh-classify.workspace = true
 
 [lints]
 workspace = true

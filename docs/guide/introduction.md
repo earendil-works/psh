@@ -66,11 +66,15 @@ psh is a set of Rust libraries and one program:
 - **The `psh` program** runs `psh -c '…'` and scripts like `bash` does, and can print the
   syntax tree or the classification of a command.
 
-```sh
-$ psh -c 'cd /tmp && printf "%s\n" b a c | sort | head -2'
+```sh live
+cd /tmp && printf "%s\n" b a c | sort | head -2
+```
+<!-- gen:run -->
+```text
 a
 b
 ```
+<!-- /gen -->
 
 ## Reading the guide
 

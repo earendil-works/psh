@@ -60,6 +60,24 @@ Every position is a byte range into the original text, so a user interface can
 highlight exactly the word that writes a file. This is what the
 [understandable commands](goals.md#understandable-commands) goal asks for.
 
+The live example below runs a script and also classifies it: its Classification tab
+lists each command with its categories and how it comes to run, and the paths the
+script reads and writes. There is no `git` where live examples run, so running it fails
+at `git`; the classification needs nothing but the text.
+
+```sh live
+git commit -m "$(rm -rf build)"
+find . -name '*.log' | xargs rm
+timeout 600 cargo test
+```
+<!-- gen:run -->
+```text
+psh: line 1: git: command not found
+psh: line 3: cargo: command not found
+(exit status 127)
+```
+<!-- /gen -->
+
 ## Categories
 
 | Category | Means | Examples |

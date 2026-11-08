@@ -16,7 +16,9 @@ happens when a script uses one of the few parts of bash psh leaves out.
 The full list of syntax and builtins is on [Supported syntax and shell
 builtins](ref-syntax.md), the places where psh deliberately differs on [Differences
 from bash](differences.md), and how the parser works on [The parser](syntax.md). The
-examples below are real output of `psh -c '...'`, run on macOS.
+examples marked "live" run in psh in an empty directory with no external programs; on
+the site they are editable and run in the page. The others are real output of
+`psh -c '...'`, run on macOS.
 
 ## What runs
 
@@ -38,38 +40,52 @@ Everything a non-interactive bash script uses, which is what agents write
 
 A few of these at once:
 
-```sh
-$ psh -c 'f=src/main.rs; echo ${f##*/} ${f%.rs} ${f/main/lib} ${#f} ${f^^} ${x:-def}'
+```sh live
+f=src/main.rs
+echo ${f##*/} ${f%.rs} ${f/main/lib} ${#f} ${f^^} ${x:-def}
+echo {a,b}{1..3}; echo "$(echo hi | tr a-z A-Z)" $((2**10 % 7))
+paste <(echo a) <(echo b)
+x="a  b c"; printf "<%s>" $x; echo
+mkdir -p a/b && touch a/x.rs a/b/y.rs
+shopt -s globstar; echo **/*.rs
+shopt -s failglob; echo *.md; echo after
+```
+<!-- gen:run -->
+```text
 main.rs src/main src/lib.rs 11 SRC/MAIN.RS def
-$ psh -c 'echo {a,b}{1..3}; echo "$(echo hi | tr a-z A-Z)" $((2**10 % 7))'
 a1 a2 a3 b1 b2 b3
 HI 2
-$ psh -c 'paste <(echo a) <(echo b)'
 a	b
-$ psh -c 'x="a  b c"; printf "<%s>" $x; echo'
 <a><b><c>
-$ psh -c 'shopt -s globstar; echo **/*.rs'
 a/b/y.rs a/x.rs
-$ psh -c 'shopt -s failglob; echo *.md; echo after'
-psh: line 1: no match: *.md
+psh: line 8: no match: *.md
+(exit status 1)
 ```
+<!-- /gen -->
 
 Arrays, functions and the tests behave as in bash, including the order in which an
 associative array lists its keys, which bash derives from its hash table and which psh
 reproduces, since scripts print `${!h[@]}` without sorting it:
 
-```sh
-$ psh -c 'declare -A h=([k]=v [x]=y); h[z]=w; for k in "${!h[@]}"; do echo "$k=${h[$k]}"; done'
+```sh live
+declare -A h=([k]=v [x]=y); h[z]=w
+for k in "${!h[@]}"; do echo "$k=${h[$k]}"; done
+f() { local x=in; echo "$x $1"; return 3; }
+x=out; f arg; echo "$? $x"
+[[ x.rs =~ \.(rs)$ ]] && echo "${BASH_REMATCH[1]}"
+(( n = 3 * 4, n > 10 )) && echo $n
+```
+<!-- gen:run -->
+```text
 z=w
 x=y
 k=v
-$ psh -c 'f() { local x=in; echo "$x $1"; return 3; }; x=out; f arg; echo "$? $x"'
 in arg
 3 out
-$ psh -c '[[ x.rs =~ \.(rs)$ ]] && echo "${BASH_REMATCH[1]}"; (( n = 3 * 4, n > 10 )) && echo $n'
 rs
 12
 ```
+<!-- /gen -->
 
 Every builtin is psh's own; a name like `read` or `type` never falls through to a
 program of the same name. Common utilities such as `grep`, `sed` and `sort` also run

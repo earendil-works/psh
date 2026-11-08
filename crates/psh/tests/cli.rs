@@ -762,20 +762,20 @@ fn windows_shadowed_names_are_psh_s_utilities() {
 }
 
 /// `PATH=dir cmd` looks `cmd` up in that PATH, not in the shell's (nor in its hash
-/// table), and does not remember what it found. (`sh`: a program psh has no utility
-/// for, so the lookup is the PATH's.)
+/// table), and does not remember what it found. (`uname`: a program psh has no utility
+/// for and does not run itself, as it runs `sh`, so the lookup is the PATH's.)
 #[cfg(unix)]
 #[test]
 fn prefix_path_is_used_for_lookup() {
     use std::os::unix::fs::PermissionsExt;
     let dir = std::env::temp_dir().join(format!("psh-cli-prefix-path-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
-    let tool = dir.join("sh");
+    let tool = dir.join("uname");
     std::fs::write(&tool, "#!/bin/sh\necho mine \"$@\"\n").unwrap();
     std::fs::set_permissions(&tool, std::fs::Permissions::from_mode(0o755)).unwrap();
     let d = dir.to_str().unwrap();
     let script = format!(
-        "sh -c : >/dev/null; PATH={d} sh x; PATH=/nonexistent sh; echo $?; hash -t sh; PATH={d} command sh y"
+        "uname >/dev/null; PATH={d} uname x; PATH=/nonexistent uname; echo $?; hash -t uname; PATH={d} command uname y"
     );
     let out = psh(&["-c", &script]);
     std::fs::remove_dir_all(&dir).ok();
@@ -783,13 +783,13 @@ fn prefix_path_is_used_for_lookup() {
     assert_eq!(lines[0], "mine x");
     assert_eq!(lines[1], "127");
     assert!(
-        lines[2].ends_with("/sh") && !lines[2].contains("psh-cli"),
+        lines[2].ends_with("/uname") && !lines[2].contains("psh-cli"),
         "{}",
         out.stdout
     );
     assert_eq!(lines[3], "mine y");
     assert!(
-        out.stderr.contains("sh: command not found"),
+        out.stderr.contains("uname: command not found"),
         "{}",
         out.stderr
     );

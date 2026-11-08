@@ -120,7 +120,7 @@ fn gone(pid: i32, within: Duration) -> bool {
 /// An external that writes its pid to `file` and sleeps, ignoring TERM if `stubborn`.
 fn sleeper(file: &str, stubborn: bool) -> String {
     let trap = if stubborn { "trap \"\" TERM; " } else { "" };
-    format!("sh -c '{trap}echo $$ > {file}; exec sleep 30'")
+    format!("/bin/sh -c '{trap}echo $$ > {file}; exec sleep 30'")
 }
 
 fn assert_signaled(s: ExitStatus, sig: i32) {
@@ -169,7 +169,7 @@ fn an_external_ignoring_term_is_killed_before_psh_exits() {
 #[test]
 fn a_signal_ignored_at_start_stays_ignored() {
     // bash: signals ignored on entry cannot be trapped or reset; children inherit that.
-    let script = "sh -c 'kill -INT $$; echo $$ > a; sleep 0.3; echo alive > b'";
+    let script = "/bin/sh -c 'kill -INT $$; echo $$ > a; sleep 0.3; echo alive > b'";
     let mut c = Case::start_with(Command::new("/bin/sh").args([
         "-c",
         "trap '' INT; exec \"$0\" -c \"$1\"",
@@ -185,9 +185,9 @@ fn a_signal_ignored_at_start_stays_ignored() {
 
 #[test]
 fn normal_exit_codes_are_unchanged() {
-    let mut c = Case::start("sh -c 'exit 3'");
+    let mut c = Case::start("/bin/sh -c 'exit 3'");
     assert_eq!(c.wait(Duration::from_secs(10)).code(), Some(3));
-    let mut c = Case::start("sh -c 'kill -TERM $$'");
+    let mut c = Case::start("/bin/sh -c 'kill -TERM $$'");
     assert_eq!(c.wait(Duration::from_secs(10)).code(), Some(143));
 }
 
@@ -208,7 +208,7 @@ fn background_jobs_stay_in_psh_group_and_die_with_it() {
 fn what_an_external_left_dies_with_psh_even_if_only_psh_is_signalled() {
     // `sh` leaves a background sleep in psh's group; TERM to psh's pid alone: psh
     // abandons `sh` and, leading its group, ends the group too.
-    let mut c = Case::start("sh -c 'sleep 30 & echo $! > a; wait'");
+    let mut c = Case::start("/bin/sh -c 'sleep 30 & echo $! > a; wait'");
     let a = c.pid("a");
     c.signal(SIGTERM);
     assert_signaled(c.wait(Duration::from_secs(10)), SIGTERM);
@@ -255,7 +255,7 @@ fn traps_run_for_signals_from_outside() {
     assert_eq!((s.code(), out.as_str()), (Some(0), "t\nafter\n"));
     // A trapped signal ends `wait` with 128+n, then the trap runs.
     let (s, out) = output(
-        "trap 'echo t' USR1; sh -c 'sleep 0.2; kill -USR1 '$$ & wait; echo w=$?; wait; echo end",
+        "trap 'echo t' USR1; /bin/sh -c 'sleep 0.2; kill -USR1 '$$ & wait; echo w=$?; wait; echo end",
     );
     assert_eq!((s.code(), out.as_str()), (Some(0), "t\nw=138\nend\n"));
     // An ignored one does nothing.
@@ -277,7 +277,7 @@ fn kill_dollar_dollar_ends_the_shell_by_the_signal() {
 fn a_fatal_signal_ends_a_foreground_wait() {
     // No trap: the foreground program is abandoned, psh ends at once by the signal.
     let start = Instant::now();
-    let (s, _) = output("sh -c 'sleep 0.2; kill -TERM '$$ & sleep 30; echo no");
+    let (s, _) = output("/bin/sh -c 'sleep 0.2; kill -TERM '$$ & sleep 30; echo no");
     assert_signaled(s, SIGTERM);
     assert!(start.elapsed() < Duration::from_secs(5));
 }

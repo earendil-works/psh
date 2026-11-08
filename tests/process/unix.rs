@@ -1,4 +1,5 @@
-//! The Unix cases: they use the system's own programs (`sh`, `yes`, `seq`, `cat`, ...).
+//! The Unix cases: they use the system's own programs (`/bin/sh` by path, since a bare `sh`
+//! runs in psh; `yes`, `seq`, `cat`, ...).
 
 use std::time::{Duration, Instant};
 
@@ -35,7 +36,7 @@ fn here_string_and_builtin_into_an_external() {
 #[test]
 fn signal_exit_codes_are_128_plus_n() {
     let r = run(
-        "sh -c 'kill -TERM $$'; echo $?; sh -c 'kill -KILL $$'; echo $?; sh -c 'kill -INT $$'; echo $?; sh -c 'exit 7'; echo $?",
+        "/bin/sh -c 'kill -TERM $$'; echo $?; /bin/sh -c 'kill -KILL $$'; echo $?; /bin/sh -c 'kill -INT $$'; echo $?; /bin/sh -c 'exit 7'; echo $?",
     );
     assert_eq!(r.stdout, "143\n137\n130\n7\n", "{r:?}");
 }
@@ -43,9 +44,10 @@ fn signal_exit_codes_are_128_plus_n() {
 #[test]
 fn cancel_mid_pipeline_leaves_no_process() {
     let start = Instant::now();
-    let r = Run::new("echo start; sleep 30 | sh -c 'trap \"\" TERM; sleep 30' | cat; echo never")
-        .cancel_after(Duration::from_millis(300))
-        .go();
+    let r =
+        Run::new("echo start; sleep 30 | /bin/sh -c 'trap \"\" TERM; sleep 30' | cat; echo never")
+            .cancel_after(Duration::from_millis(300))
+            .go();
     assert_eq!(r.status, 143, "{r:?}");
     assert_eq!(r.stdout, "start\n", "{r:?}");
     // The leak check (in `go`) waited for TERM, the grace period and KILL.
@@ -64,7 +66,7 @@ fn cancel_in_a_substitution_leaves_no_process() {
 fn output_after_the_shells_exit_is_collected() {
     // The shell is done at once; a background process still writes to its stdout,
     // and the reader gets that at the end of the pipe, as with bash -c.
-    let r = Run::new("echo first; sh -c 'sleep 0.3; echo late' &")
+    let r = Run::new("echo first; /bin/sh -c 'sleep 0.3; echo late' &")
         .keep_leftovers()
         .go();
     assert_eq!(r.status, 0);
@@ -75,13 +77,14 @@ fn output_after_the_shells_exit_is_collected() {
 #[test]
 fn grandchild_holding_the_pipe_is_waited_for() {
     // The command is complete at the end of its output, not at its exit.
-    let r = run("x=$(sh -c '(sleep 0.2; echo inner) & echo outer'); echo \"$x\"");
+    let r = run("x=$(/bin/sh -c '(sleep 0.2; echo inner) & echo outer'); echo \"$x\"");
     assert_eq!(r.stdout, "outer\ninner\n", "{r:?}");
 }
 
 #[test]
 fn extra_descriptors_reach_externals() {
-    let r = run("exec 3>&1; sh -c 'echo to3 >&3'; sh -c 'echo err >&2' 2>&1 | tr a-z A-Z");
+    let r =
+        run("exec 3>&1; /bin/sh -c 'echo to3 >&3'; /bin/sh -c 'echo err >&2' 2>&1 | tr a-z A-Z");
     assert_eq!(r.stdout, "to3\nERR\n", "{r:?}");
 }
 
@@ -137,7 +140,7 @@ fn pumps_on_both_sides_of_a_brace_group() {
 
 #[test]
 fn exec_an_external() {
-    let r = run("exec sh -c 'echo replaced; exit 5'; echo never");
+    let r = run("exec /bin/sh -c 'echo replaced; exit 5'; echo never");
     assert_eq!((r.status, r.stdout.as_str()), (5, "replaced\n"), "{r:?}");
 }
 
@@ -172,7 +175,7 @@ fn concurrent_shells_do_not_interfere() {
 // What survives a run (D1067): only detached and disowned processes. A loop that
 // ignores TERM, started in the background, is what the gates once left behind by the
 // dozen.
-const STUBBORN_LOOP: &str = "sh -c 'trap \"\" TERM; while :; do sleep 0.05; done'";
+const STUBBORN_LOOP: &str = "/bin/sh -c 'trap \"\" TERM; while :; do sleep 0.05; done'";
 
 #[test]
 fn a_normal_end_kills_background_jobs() {
@@ -182,7 +185,7 @@ fn a_normal_end_kills_background_jobs() {
 
 #[test]
 fn a_normal_end_kills_what_a_finished_external_left() {
-    let r = run("sh -c 'sleep 30 >/dev/null 2>&1 &'; echo done");
+    let r = run("/bin/sh -c 'sleep 30 >/dev/null 2>&1 &'; echo done");
     assert_eq!(r.stdout, "done\n", "{r:?}");
 }
 
@@ -205,7 +208,7 @@ fn the_embedder_kills_the_run_from_another_thread() {
 
 #[test]
 fn keep_leaves_background_jobs_running() {
-    let r = Run::new("sh -c 'sleep 30' & echo started")
+    let r = Run::new("/bin/sh -c 'sleep 30' & echo started")
         .keep_leftovers()
         .expect_survivors()
         .go();
@@ -217,7 +220,7 @@ fn builtins_and_externals_share_a_pipe_in_order() {
     // The pipe may become an OS pipe in the middle (D1068): order must hold either way.
     for _ in 0..20 {
         let r = run(
-            "{ echo a; seq 2 3; echo b; sh -c 'echo c'; echo d; } | cat; seq 1 3 | { cat; echo e; } | tr -d '\\n'",
+            "{ echo a; seq 2 3; echo b; /bin/sh -c 'echo c'; echo d; } | cat; seq 1 3 | { cat; echo e; } | tr -d '\\n'",
         );
         assert_eq!(r.stdout, "a\n2\n3\nb\nc\nd\n123e", "{r:?}");
     }
@@ -228,7 +231,7 @@ fn builtins_and_externals_share_a_pipe_in_order() {
 fn two_externals_share_one_os_pipe() {
     // (dash moves its own fds around for `>&2`: ask from outside.)
     let r = run("cd \"$TMPDIR_CASE\"; \
-        sh -c 'echo $$ > a; sleep 0.5' | sh -c 'echo $$ > b; cat' & \
+        /bin/sh -c 'echo $$ > a; sleep 0.5' | /bin/sh -c 'echo $$ > b; cat' & \
         sleep 0.3; readlink /proc/$(cat a)/fd/1 /proc/$(cat b)/fd/0");
     let lines: Vec<&str> = r.stdout.lines().collect();
     assert_eq!(lines.len(), 2, "{r:?}");
@@ -250,16 +253,18 @@ fn background_and_wait() {
 
 #[test]
 fn bang_is_the_programs_real_pid() {
-    let r = run("cd \"$TMPDIR_CASE\"; sh -c 'echo $$ > p; exec sleep 30' & \
+    let r = run(
+        "cd \"$TMPDIR_CASE\"; /bin/sh -c 'echo $$ > p; exec sleep 30' & \
          while [ ! -s p ]; do sleep 0.02; done; \
-         test \"$(cat p)\" = \"$!\" && echo same; kill $!; wait $!; echo $?");
+         test \"$(cat p)\" = \"$!\" && echo same; kill $!; wait $!; echo $?",
+    );
     assert_eq!(r.stdout, "same\n143\n", "{r:?}");
 }
 
 #[test]
 fn kill_reaches_the_jobs_whole_group() {
     let r = run(
-        "cd \"$TMPDIR_CASE\"; sh -c 'sleep 30 & echo $! > gc; wait' & \
+        "cd \"$TMPDIR_CASE\"; /bin/sh -c 'sleep 30 & echo $! > gc; wait' & \
          while [ ! -s gc ]; do sleep 0.02; done; \
          kill $!; wait $!; echo $?; sleep 0.2; kill -0 $(cat gc) 2>/dev/null || echo gone",
     );
@@ -290,8 +295,8 @@ fn survived(file: &std::path::Path) {
 fn nohup_and_disown_survive_the_runs_end() {
     let (a, b) = (pidfile("nohup"), pidfile("disown"));
     let r = run(&format!(
-        "nohup sh -c 'echo $$ > {}; exec sleep 30' >/dev/null 2>&1 & \
-         sh -c 'echo $$ > {}; exec sleep 30' >/dev/null 2>&1 & disown; \
+        "nohup /bin/sh -c 'echo $$ > {}; exec sleep 30' >/dev/null 2>&1 & \
+         /bin/sh -c 'echo $$ > {}; exec sleep 30' >/dev/null 2>&1 & disown; \
          while [ ! -s {} ] || [ ! -s {} ]; do sleep 0.02; done; echo ok",
         a.display(),
         b.display(),
@@ -313,7 +318,7 @@ fn a_builtin_loop_into_head_ends_by_sigpipe() {
 
 #[test]
 fn ignored_traps_pass_on_to_children() {
-    let r = run("trap '' USR1; sh -c 'kill -USR1 $$; echo survived'");
+    let r = run("trap '' USR1; /bin/sh -c 'kill -USR1 $$; echo survived'");
     assert_eq!(r.stdout, "survived\n", "{r:?}");
 }
 
@@ -333,15 +338,18 @@ fn a_foreground_programs_signal_death_is_reported() {
     // As bash prints it non-interactively (D1303): TERM bare, the others with the line
     // and pid; INT and PIPE not at all; nothing for `$(…)`.
     let r = run(
-        "sh -c 'kill -TERM $$'; sh -c 'kill -9 $$'; sh -c 'kill -INT $$'; x=$(sh -c 'kill -HUP $$'); echo after",
+        "/bin/sh -c 'kill -TERM $$'; /bin/sh -c 'kill -9 $$'; /bin/sh -c 'kill -INT $$'; x=$(/bin/sh -c 'kill -HUP $$'); echo after",
     );
     assert_eq!(r.stdout, "after\n", "{r:?}");
     let lines: Vec<&str> = r.stderr.lines().collect();
     assert_eq!(lines.len(), 2, "{r:?}");
-    assert_eq!(lines[0], "Terminated                 sh -c 'kill -TERM $$'");
+    assert_eq!(
+        lines[0],
+        "Terminated                 /bin/sh -c 'kill -TERM $$'"
+    );
     assert!(lines[1].starts_with("psh: line 1: "), "{r:?}");
     assert!(
-        lines[1].ends_with(" Killed                     sh -c 'kill -9 $$'"),
+        lines[1].ends_with(" Killed                     /bin/sh -c 'kill -9 $$'"),
         "{r:?}"
     );
 }
@@ -350,8 +358,9 @@ fn a_foreground_programs_signal_death_is_reported() {
 fn signal_numbers_are_linuxs_everywhere() {
     // One numbering on every system (D1904): 10 is USR1 on macOS too, and `$?` of a
     // death by it is 138.
-    let r =
-        run("kill -l 10; sh -c 'kill -USR1 $$'; echo $?; sleep 30 & kill -10 $!; wait $!; echo $?");
+    let r = run(
+        "kill -l 10; /bin/sh -c 'kill -USR1 $$'; echo $?; sleep 30 & kill -10 $!; wait $!; echo $?",
+    );
     assert_eq!(r.stdout, "USR1\n138\n138\n", "{r:?}");
     // A signal the system lacks fails clearly.
     let r = run("kill -STKFLT 99999; echo $?");
@@ -375,7 +384,7 @@ fn stray_descriptors_do_not_reach_forked_externals() {
     // SAFETY: fcntl on a descriptor this test owns.
     unsafe { libc::fcntl(fd, libc::F_SETFD, 0) };
     let out = run(&format!(
-        "trap '' USR1; sh -c 'if [ -e /dev/fd/{fd} ]; then echo leaked; else echo closed; fi'"
+        "trap '' USR1; /bin/sh -c 'if [ -e /dev/fd/{fd} ]; then echo leaked; else echo closed; fi'"
     ));
     drop((r, w));
     assert_eq!(out.stdout, "closed\n", "{out:?}");

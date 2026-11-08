@@ -196,6 +196,7 @@ fn main() -> ExitCode {
             args,
             dash_c: true,
             options,
+            stdin: false,
         },
         Ok(Invocation::File {
             path,
@@ -208,6 +209,7 @@ fn main() -> ExitCode {
                 args,
                 dash_c: false,
                 options,
+                stdin: false,
             },
             Err(e) => {
                 // As bash: 127 for a script that does not exist, 126 for one that
@@ -224,21 +226,15 @@ fn main() -> ExitCode {
                 return ExitCode::from(if missing { 127 } else { 126 });
             }
         },
-        Ok(Invocation::Stdin { args, options }) => {
-            // v1 reads the whole script first; bash reads it as it goes, so a command
-            // in the script could read the rest of it (a follow-up).
-            let mut src = Vec::new();
-            if std::io::stdin().read_to_end(&mut src).is_err() {
-                return ExitCode::from(2);
-            }
-            Script {
-                source: src,
-                arg0: b"psh".to_vec(),
-                args,
-                dash_c: false,
-                options,
-            }
-        }
+        // Read as it runs, one command at a time, as bash does (D1414).
+        Ok(Invocation::Stdin { args, options }) => Script {
+            source: Vec::new(),
+            arg0: b"psh".to_vec(),
+            args,
+            dash_c: false,
+            options,
+            stdin: true,
+        },
     };
     let signals = Signals::catch();
     let control = signals.control.clone();

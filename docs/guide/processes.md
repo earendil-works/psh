@@ -194,6 +194,10 @@ Without a real `bash` (Windows, the browser), or when the use only shows at run 
 `BASHPID` in a subshell of any shell is the same error; the shell's own `$$` and
 `BASHPID` are real.
 
+A script on its standard input (`curl … | sh`, `bash <<'EOF'`, `bash -s a b`) is read
+one command at a time, as bash reads it, so its commands can read the lines that follow
+them.
+
 What still runs the program: a path (`/bin/bash`, `./bash`, `/opt/homebrew/bin/bash`),
 `command -p bash`, a name bound with `hash -p`, an option psh lacks (`-i`, `--rcfile`,
 `--posix`), and scripts that name their interpreter (`#!/bin/bash`), which the kernel

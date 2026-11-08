@@ -27,6 +27,7 @@ use crate::fd::FdObj;
 use crate::host::{ExitStatus, ExtProc, FileKind, OpenOptions, Signal, Spawned, error_text};
 use crate::invocation::{Invocation, parse_args};
 use crate::sched::Join;
+use crate::Input;
 use crate::state::{Core, NestedSigs, Sigs, Unwind, Vp};
 
 /// Not in any registry: the engine looks it up itself (`super::lookup`), and
@@ -125,14 +126,14 @@ pub(crate) async fn start(
 
 /// The shell's task: its command line, then its script.
 async fn shell(mut sub: Vp, argv: Vec<Vec<u8>>, ignore: Vec<Signal>, caller: Caller) -> i32 {
-    let (source, arg0, args, options, dash_c) = match parse_args(&argv[1..]) {
+    let (input, arg0, args, options, dash_c) = match parse_args(&argv[1..]) {
         Ok(Invocation::Command {
             source,
             arg0,
             args,
             options,
         }) => (
-            source,
+            Input::Text(source),
             arg0.unwrap_or_else(|| argv[0].clone()),
             args,
             options,
@@ -143,7 +144,7 @@ async fn shell(mut sub: Vp, argv: Vec<Vec<u8>>, ignore: Vec<Signal>, caller: Cal
             args,
             options,
         }) => match read_script(&sub, &argv[0], &path).await {
-            Ok(source) => (source, path, args, options, false),
+            Ok(source) => (Input::Text(source), path, args, options, false),
             Err(status) => return status,
         },
         Ok(Invocation::Version) => {
@@ -153,16 +154,17 @@ async fn shell(mut sub: Vp, argv: Vec<Vec<u8>>, ignore: Vec<Signal>, caller: Cal
                 None => 1,
             };
         }
-        // Until psh reads a script from stdin one command at a time (0041 part 2).
-        Ok(Invocation::Stdin { .. }) => {
-            return fall_through(&mut sub, argv, "a script on stdin is not supported yet").await;
+        // Read one command at a time as it runs (D1414): nothing to scan ahead.
+        Ok(Invocation::Stdin { args, options }) => {
+            (Input::Stdin, argv[0].clone(), args, options, false)
         }
         Ok(Invocation::Help) => return fall_through(&mut sub, argv, "--help: not supported").await,
         Err(msg) => return fall_through(&mut sub, argv, &msg).await,
     };
     // No process id to give (D1413): a script that reads one runs under the real
     // program, if there is one; else reading it fails.
-    if crate::pidscan::uses_pid(&source)
+    if let Input::Text(source) = &input
+        && crate::pidscan::uses_pid(source)
         && let Some(status) = real_program(&mut sub, &argv).await
     {
         return status;
@@ -209,7 +211,7 @@ async fn shell(mut sub: Vp, argv: Vec<Vec<u8>>, ignore: Vec<Signal>, caller: Cal
     sub.args = args;
     sub.opts.dash_c = dash_c;
     crate::builtins::apply_invocation_options(&mut sub, &options);
-    let (status, _) = Box::pin(crate::run_script(sub, source)).await;
+    let (status, _) = Box::pin(crate::run_script(sub, input)).await;
     status
 }
 
@@ -228,7 +230,7 @@ fn set_ppid(sub: &mut Vp, value: Option<Vec<u8>>) {
     }
 }
 
-/// An option psh lacks (or a script on stdin, for now): the real program from `PATH`
+/// An option psh lacks: the real program from `PATH`
 /// runs, else the shell fails with status 2 naming psh.
 async fn fall_through(sub: &mut Vp, argv: Vec<Vec<u8>>, why: &str) -> i32 {
     if let Some(status) = real_program(sub, &argv).await {
@@ -617,10 +619,10 @@ mod tests {
             o.stderr,
             "bash: -i: interactive shells are not supported (psh built-in bash)\n"
         );
-        let o = run("echo 'echo x' | sh; echo $?");
-        assert_eq!(o.stdout, "2\n");
+        // A script on stdin runs in psh (D1414).
+        check("echo 'echo x' | sh; echo $?", "x\n0\n");
         // The real program when `PATH` has one.
-        let o = run_setup("bash -i -c x; bash --rcfile f; bash; echo $?", |h| {
+        let o = run_setup("bash -i -c x; bash --rcfile f; bash -r; echo $?", |h| {
             h.add_command("bash", |p| {
                 Box::pin(async move {
                     let mut line = b"real".to_vec();
@@ -634,7 +636,27 @@ mod tests {
                 })
             });
         });
-        assert_eq!(o.stdout, "real -i -c x\nreal --rcfile f\nreal\n5\n");
+        assert_eq!(o.stdout, "real -i -c x\nreal --rcfile f\nreal -r\n5\n");
+    }
+
+    /// A script on stdin is read one command at a time: its commands read the rest.
+    #[test]
+    fn scripts_on_stdin() {
+        check(
+            "printf 'read x\\nhello\\necho got $x\\n' | bash",
+            "got hello\n",
+        );
+        check(
+            "bash -s a b <<'EOF'\nread -r l\nline two\necho \"$0 $1 $2 $l\"\ncat <<E2\nbody $1\nE2\nif true\nthen echo multi\nfi\nEOF",
+            "bash a b line two\nbody a\nmulti\n",
+        );
+        let o = run("printf 'echo a\\necho )\\necho b\\n' | sh; echo $?");
+        assert_eq!(o.stdout, "a\n2\n");
+        assert_eq!(
+            o.stderr,
+            "sh: line 2: syntax error near unexpected token `)'\nsh: line 2: `echo )'\n"
+        );
+        check("printf 'echo \\\\\\n  joined\\n' | bash", "joined\n");
     }
 
     #[test]

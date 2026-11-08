@@ -699,7 +699,8 @@ the daemon build, on by default (D031).
 
 ## The `psh` binary
 
-`psh -c CMD [ARGS]`, `psh SCRIPT [ARGS]`, a script on stdin, with bash's options (`-e`,
+`psh -c CMD [ARGS]`, `psh SCRIPT [ARGS]`, a script on stdin (`Script::stdin`: read a
+line at a time as it runs, D1414), with bash's options (`-e`,
 `-o pipefail`, `-O extglob`, ...), parsed by `psh_engine::invocation`. Its own modes:
 `psh --parse [--compact] [-O extglob] [-c CMD | FILE]` prints the AST as JSON with spans
 (D1047); `psh --classify` prints the classification; `psh --utils [--json]` lists the

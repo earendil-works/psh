@@ -2926,3 +2926,22 @@ caller's `$$` (unset if it has none); D1300 scripts and `spawn_shell` keep the c
 id comes from `Core::next_job_id`, and the `Core` registry that let `kill` find nested
 shells by `$$` is gone. Three cases that read `BASHPID` in subshells are ratchet lines
 with this reason (oils `vars-special/13`, brush `signals/38`, `/42`).
+
+## D1414: A script on stdin is read one complete command at a time
+date: 2026-11-08 · by: shells · issue: 0041
+`Script::stdin` (the `psh` binary without `-c`/FILE or with `-s`, psh-spec's in-process
+engine for the Oils layer, a nested `bash`/`sh` with no script operand or `-s`; this
+replaces D1412's fall-through for those) runs `lib::run_stdin_lines`: it reads
+descriptor 0 a line at a time, one byte per read (as `read` does, so nothing past the
+line is taken from a pipe; no seeking back on files), and parses the unrun lines for one
+chunk. It reads another line while the parser reports the input incomplete, an error
+sits at the very end of the input (the parser does not flag every end-of-input error
+as incomplete, e.g. `[[ (` before its newline), the chunk's here-document lacks its
+delimiter line, or the text ends in a line continuation. At end of input the last
+error is reported as bash does. The unrun text is parsed behind blank lines standing
+for the lines already run, so `line N`, `$LINENO` and the parser's `on line N` count
+from the top of the script. Each chunk sees the aliases and options of the moment, as
+in a script file. The engine reads the current descriptor 0 each time, so `exec <file`
+in such a script switches its input as in bash. The wasm path still hands the whole
+stdin over as the script text. A nested shell reading stdin cannot be scanned ahead for
+`$$` (D1413): such a use is the run-time error there.

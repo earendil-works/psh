@@ -478,6 +478,7 @@ impl Engine for InProcess {
                     args,
                     dash_c: true,
                     options,
+                    stdin: false,
                 },
                 req.stdin.map(<[u8]>::to_vec),
             ),
@@ -495,6 +496,7 @@ impl Engine for InProcess {
                             args,
                             dash_c: false,
                             options,
+                            stdin: false,
                         },
                         req.stdin.map(<[u8]>::to_vec),
                     ),
@@ -510,15 +512,17 @@ impl Engine for InProcess {
                     }
                 }
             }
+            // The script is the shell's stdin, read as it runs (D1414).
             Ok(Invocation::Stdin { args, options }) => (
                 Script {
-                    source: req.stdin.unwrap_or_default().to_vec(),
+                    source: Vec::new(),
                     arg0: b"psh".to_vec(),
                     args,
                     dash_c: false,
                     options,
+                    stdin: true,
                 },
-                None,
+                Some(req.stdin.unwrap_or_default().to_vec()),
             ),
         };
 

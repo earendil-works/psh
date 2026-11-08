@@ -258,3 +258,86 @@ bash-n: 0
 |bash: a live process
 |sh: ps finds it
 |the inner PPID is the outer $$
+
+=== 20: a script piped into bash: its commands read the rest of stdin
+status: 0
+bash-n: 0
+--- stdout
+|got hello
+|first line / second line
+|status=0
+
+=== 21: a here-doc fed to bash
+status: 0
+bash-n: 0
+--- stdout
+|hello world
+|i=1
+|i=2
+|inner here-doc
+|args: 0
+|status=0
+
+=== 22: bash -s with arguments and a here-doc
+status: 0
+bash-n: 0
+--- stdout
+|2 args: alpha | beta gamma
+|[alpha]
+|[beta gamma]
+|sh x y
+
+=== 23: bash < file and cat file | bash
+status: 0
+bash-n: 0
+--- stdout
+|from file bash
+|read: this line is data
+|from file bash
+|read: this line is data
+--- file script.sh
+|echo "from file $0"
+|read -r line
+|this line is data
+|echo "read: $line"
+
+=== 24: a downloaded install script piped into sh
+status: 0
+bash-n: 0
+--- stdout
+|installing to opt
+|done
+|tool 1.0
+|installing to other
+|done
+|tool
+--- file install.sh
+|set -e
+|PREFIX="${PREFIX:-$PWD/opt}"
+|echo "installing to ${PREFIX#$PWD/}"
+|mkdir -p "$PREFIX/bin"
+|printf '#!/bin/sh\necho tool 1.0\n' > "$PREFIX/bin/tool"
+|chmod +x "$PREFIX/bin/tool"
+|echo "done"
+--- dir opt
+--- dir opt/bin
+--- file opt/bin/tool
+|#!/bin/sh
+|echo tool 1.0
+--- dir other
+--- dir other/bin
+--- file other/bin/tool
+|#!/bin/sh
+|echo tool 1.0
+
+=== 25: a syntax error in a piped script stops there
+status: 0
+bash-n: 0
+--- stdout
+|before
+|status=2
+|one
+|two
+--- stderr
+|bash: line 2: syntax error near unexpected token `then'
+|bash: line 2: `if then'

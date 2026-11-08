@@ -1594,7 +1594,7 @@ async fn run_in_shell(vp: &mut Vp, program: &[u8], argv: Vec<Vec<u8>>, shown: &s
     let mut argv = argv.into_iter();
     sub.arg0 = argv.next().unwrap_or_default();
     sub.args = argv.collect();
-    let (status, _) = Box::pin(crate::run_script(sub, source)).await;
+    let (status, _) = Box::pin(crate::run_script(sub, crate::Input::Text(source))).await;
     Ok(status)
 }
 

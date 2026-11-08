@@ -168,6 +168,7 @@ export! {
                 args,
                 dash_c: dash_c != 0,
                 options,
+                stdin: false,
             })
         })();
         let Some(script) = parsed else {

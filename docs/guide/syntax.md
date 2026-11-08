@@ -147,7 +147,10 @@ Bash does not parse a whole script before running it. It reads one complete comm
 runs it, and reads the next. So `echo a` on line 1 runs even if line 2 has a syntax
 error, and `shopt -s extglob` on one line changes how the next line is read. psh's engine
 works the same way: the parser hands it one chunk at a time, and the engine may change the
-parser's options between chunks. The classifier and `psh --parse` read the whole input at
+parser's options between chunks. A script on standard input is even read that way: the
+engine reads a line at a time and asks the parser for a chunk, reading more lines while
+the input ends inside a command or a here-document, so the script's commands can read
+the lines after them. The classifier and `psh --parse` read the whole input at
 once.
 
 ### Aliases

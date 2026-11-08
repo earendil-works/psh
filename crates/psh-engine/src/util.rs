@@ -824,7 +824,7 @@ impl UtilCtx<'_> {
         let script = script.to_vec();
         let sched = self.vp.core.sched.clone();
         let (id, join) = sched.spawn_with_id(async move {
-            let (status, _) = crate::run_script(sub, script).await;
+            let (status, _) = crate::run_script(sub, crate::Input::Text(script)).await;
             status
         });
         child.task = Some((sched, id));

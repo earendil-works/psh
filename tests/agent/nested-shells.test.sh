@@ -198,3 +198,58 @@ sh -c 'ps -p $$ >/dev/null && echo "sh: ps finds it"'
 bash -c 'echo $$ > pid.txt; bash -c "echo \$PPID" > ppid.txt'
 [ "$(cat pid.txt)" = "$(cat ppid.txt)" ] && echo "the inner PPID is the outer \$\$"
 rm pid.txt ppid.txt
+
+#### a script piped into bash: its commands read the rest of stdin
+printf 'read x\nhello\necho "got $x"\n' | bash
+printf 'read -r a\nfirst line\nread -r b\nsecond line\necho "$a / $b"\n' | bash
+echo "status=$?"
+
+#### a here-doc fed to bash
+bash <<'EOF'
+read -r name
+world
+echo "hello $name"
+for i in 1 2; do
+  echo "i=$i"
+done
+cat <<INNER
+inner here-doc
+INNER
+echo "args: $#"
+EOF
+echo "status=$?"
+
+#### bash -s with arguments and a here-doc
+bash -s alpha 'beta gamma' <<EOF
+echo "\$# args: \$1 | \$2"
+for a in "\$@"; do echo "[\$a]"; done
+EOF
+sh -s -- x y <<'EOF'
+echo "$0 $1 $2"
+EOF
+
+#### bash < file and cat file | bash
+printf 'echo "from file $0"\nread -r line\nthis line is data\necho "read: $line"\n' > script.sh
+bash < script.sh
+cat script.sh | bash
+
+#### a downloaded install script piped into sh
+cat > install.sh <<'EOF'
+#!/bin/sh
+set -e
+PREFIX="${PREFIX:-$PWD/opt}"
+echo "installing to ${PREFIX#$PWD/}"
+mkdir -p "$PREFIX/bin"
+printf '#!/bin/sh\necho tool 1.0\n' > "$PREFIX/bin/tool"
+chmod +x "$PREFIX/bin/tool"
+echo "done"
+EOF
+cat install.sh | sh
+"$PWD/opt/bin/tool"
+cat install.sh | PREFIX="$PWD/other" bash -s
+ls other/bin
+
+#### a syntax error in a piped script stops there
+printf 'echo before\nif then\necho after\n' | bash
+echo "status=$?"
+printf 'echo one\necho two |\ncat\n' | bash

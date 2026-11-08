@@ -569,6 +569,7 @@ fn non_utf8_scripts_are_byte_exact() {
         args: Vec::new(),
         dash_c: true,
         options: Vec::new(),
+        stdin: false,
     });
     while !matches!(shell.step(100), Step::Done(_)) {}
     assert_eq!(host.stdout(), b"\xff\xfe a\xe9b\n\xff\n");

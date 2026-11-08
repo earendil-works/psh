@@ -33,18 +33,20 @@ from stdin x
 - Without `-c` or a file, the script is standard input. `-s` reads it from standard input
   even when arguments follow, which then become `$1` and on.
 
-psh reads a script from standard input whole before it runs it. bash reads it as it
-goes, so a command in the script can read the script's remaining lines as its own input;
-in psh it cannot:
+psh reads a script from standard input as bash does: one complete command at a time,
+running each before it reads the next. A command in the script can therefore read the
+script's remaining lines as its own input, and the commands before a syntax error have
+run:
 
 ```text
 $ printf 'read x; echo got $x\nsecond line\n' | psh
-got
-psh: line 2: second: command not found
+got second line
 ```
 
-(bash prints `got second line`.) Agents write scripts with `-c` or into files, where the
-two agree.
+The script is read a byte at a time, so nothing past the command is taken from a pipe;
+a command that reads more than it needs (`cat`, `head`) takes the rest, as with bash.
+The same holds for a `bash` or `sh` in a script fed a script on stdin (`| bash`,
+`bash <<'EOF'`, `bash -s ARGS`).
 
 ## Shell options
 

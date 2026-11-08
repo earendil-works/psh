@@ -149,6 +149,10 @@ pub struct Script {
     /// Options from the command line, as `set` and `shopt` take them: `-e`, `+x`,
     /// `-o NAME`, `-O NAME` (a `shopt` option), `+O NAME`.
     pub options: Vec<Vec<u8>>,
+    /// The script is descriptor 0, read one complete command at a time as it runs, so
+    /// its commands can read the rest of stdin (`psh` with no script operand, `-s`;
+    /// D1414); `source` is not used.
+    pub stdin: bool,
 }
 
 impl Script {
@@ -160,6 +164,7 @@ impl Script {
             args: Vec::new(),
             dash_c: true,
             options: Vec::new(),
+            stdin: false,
         }
     }
 }
@@ -348,7 +353,12 @@ impl Shell {
         vp.args = script.args;
         vp.opts.dash_c = script.dash_c;
         builtins::apply_invocation_options(&mut vp, &script.options);
-        let fut = run_script(vp, script.source);
+        let input = if script.stdin {
+            Input::Stdin
+        } else {
+            Input::Text(script.source)
+        };
+        let fut = run_script(vp, input);
         self.main = Some(self.core.sched.spawn(fut));
     }
 
@@ -606,9 +616,19 @@ pub(crate) fn initial_vars(host: &dyn Host, env: &[(Vec<u8>, Vec<u8>)], cwd: &[u
     (vars, foreign)
 }
 
+/// Where a script comes from.
+pub(crate) enum Input {
+    Text(Vec<u8>),
+    /// Descriptor 0, read one complete command at a time (D1414).
+    Stdin,
+}
+
 /// The main vproc: runs the script, then the EXIT trap (D1283).
-pub(crate) async fn run_script(vp: Vp, source: Vec<u8>) -> (i32, Vp) {
-    let (mut status, mut vp) = run_script_lines(vp, source).await;
+pub(crate) async fn run_script(vp: Vp, input: Input) -> (i32, Vp) {
+    let (mut status, mut vp) = match input {
+        Input::Text(source) => run_script_lines(vp, source).await,
+        Input::Stdin => run_stdin_lines(vp).await,
+    };
     // A signal that came with the last command still acts (D1903).
     if let Err(u) = builtins::trap::take_signals(&mut vp).await {
         status = u.status(status);
@@ -631,52 +651,185 @@ async fn run_script_lines(mut vp: Vp, source: Vec<u8>) -> (i32, Vp) {
         let Some(chunk) = parser.next_chunk() else {
             break;
         };
-        // `set -v`: the input is echoed as it is read.
-        if vp.opts.get(options::SetOpt::Verbose) {
-            let end = parser.offset().min(source.len());
-            vp.error_raw(&source[start..end]).await;
-        }
-        match chunk {
-            // `set -n`: read, but do not run.
-            Ok(_) if vp.opts.get(options::SetOpt::Noexec) => {}
-            Ok(ast) => {
-                let root = ast.root();
-                let code = Rc::new(Code {
-                    ast: Arc::new(ast),
-                    lines: lines.clone(),
-                    line_base: 0,
-                });
-                match exec::run_list(&mut vp, &code, root).await {
-                    Ok(s) => vp.status = s,
-                    Err(u) => {
-                        let st = u.status(vp.status);
-                        vp.status = st;
-                        if let Unwind::Exit(_) = u {
-                            return (st, vp);
-                        }
-                    }
-                }
-            }
-            Err(e) => {
-                let line = lines.line(e.span.start);
-                vp.line = line;
-                let dash_c = if vp.opts.dash_c { "-c: " } else { "" };
-                let name = vp.msg_name();
-                let mut msg = format!("{name}: {dash_c}line {line}: {}\n", e.message).into_bytes();
-                if e.message.starts_with("syntax error near") {
-                    let text = source_line(&source, line);
-                    msg.extend_from_slice(format!("{name}: {dash_c}line {line}: `").as_bytes());
-                    msg.extend_from_slice(text);
-                    msg.extend_from_slice(b"'\n");
-                }
-                vp.error_raw(&msg).await;
-                vp.status = 2;
-                return (2, vp);
-            }
+        let end = parser.offset().min(source.len());
+        if let Some(st) = run_chunk(&mut vp, chunk, &source, &lines, start..end).await {
+            return (st, vp);
         }
     }
     let st = vp.status;
     (st, vp)
+}
+
+/// Reads the script from descriptor 0 as it runs it, one complete top-level line at a
+/// time, as bash does (D1414): the commands can read the rest of stdin themselves
+/// (`read`, `cat`), and the commands before a syntax error have run. A line is read one
+/// byte at a time, so nothing past it is taken from a pipe; more lines are read while
+/// the parser says the input is incomplete or a here-document lacks its delimiter.
+async fn run_stdin_lines(mut vp: Vp) -> (i32, Vp) {
+    // The bytes read and not yet run, from the start of a line, and the lines before.
+    let mut text: Vec<u8> = Vec::new();
+    let mut base = 0usize;
+    let mut eof = false;
+    loop {
+        if !eof && !text.contains(&b'\n') {
+            match read_line(&mut vp, &mut text).await {
+                Ok(more) => eof = !more,
+                Err(st) => return (st, vp),
+            }
+        }
+        if text.is_empty() {
+            break;
+        }
+        // Blank lines in front keep line numbers (`line N`, `$LINENO`, the parser's
+        // own `on line N`) those of the whole script.
+        let mut buf = vec![b'\n'; base];
+        buf.extend_from_slice(&text);
+        let mut parser = Parser::from_bytes(&buf, options::parser_options(&vp.opts));
+        parser.set_aliases(vp.expand_aliases.then_some(&vp.aliases));
+        let chunk = parser.next_chunk();
+        // The input so far ends inside a command: a construct the parser calls
+        // incomplete, an error at the very end (`[[ (` before its newline), a
+        // here-document without its delimiter, or a line continuation.
+        let at_end = |e: &psh_syntax::ParseError| {
+            let len = buf.iter().rposition(|b| !b.is_ascii_whitespace()).map_or(0, |i| i + 1);
+            e.span.start as usize >= len
+        };
+        let more = match &chunk {
+            Some(Err(e)) => e.incomplete || at_end(e),
+            Some(Ok(ast)) => {
+                !heredocs_terminated(ast) || (parser.offset() >= buf.len() && continues(&text))
+            }
+            None => continues(&text),
+        };
+        if more && !eof {
+            match read_line(&mut vp, &mut text).await {
+                Ok(m) => eof = !m,
+                Err(st) => return (st, vp),
+            }
+            continue;
+        }
+        let Some(chunk) = chunk else {
+            // Only blank lines and comments.
+            if eof {
+                break;
+            }
+            base += text.iter().filter(|&&b| b == b'\n').count();
+            text.clear();
+            continue;
+        };
+        let end = parser.offset().min(buf.len());
+        let lines = Rc::new(LineIndex::from_bytes(&buf));
+        if let Some(st) = run_chunk(&mut vp, chunk, &buf, &lines, base..end).await {
+            return (st, vp);
+        }
+        let used = end - base;
+        base += text[..used].iter().filter(|&&b| b == b'\n').count();
+        text.drain(..used);
+    }
+    let st = vp.status;
+    (st, vp)
+}
+
+/// Whether the text ends in a line continuation (a backslash that is not escaped, then
+/// the newline). Also in a comment, where it is none: reading one more line then costs
+/// nothing but the line.
+fn continues(text: &[u8]) -> bool {
+    let Some(body) = text.strip_suffix(b"\n") else {
+        return false;
+    };
+    let body = body.strip_suffix(b"\r").unwrap_or(body);
+    body.iter().rev().take_while(|&&b| b == b'\\').count() % 2 == 1
+}
+
+/// Whether every here-document of the chunk found its delimiter line.
+fn heredocs_terminated(ast: &psh_syntax::Ast) -> bool {
+    ast.cmd_ids().all(|id| {
+        ast.cmd(id).redirects.iter().all(|r| match &r.target {
+            psh_syntax::RedirTarget::HereDoc(h) => ast.heredoc(*h).terminated,
+            psh_syntax::RedirTarget::Word(_) => true,
+        })
+    })
+}
+
+/// Reads one line of the script from descriptor 0 into `text`, a byte at a time; false
+/// at the end of the input. A read error ends the input, as bash's does. Waits give way
+/// to the shell's signals; one that ends the shell ends it with its status (`Err`).
+async fn read_line(vp: &mut Vp, text: &mut Vec<u8>) -> Result<bool, i32> {
+    loop {
+        let Some(fd) = vp.fd(0) else {
+            return Ok(false);
+        };
+        let mut b = [0u8];
+        let got = signals::or_signal(vp, signals::Gives::Fatal, fd.read(&mut b)).await;
+        match got {
+            Ok(Ok(1)) => {
+                text.push(b[0]);
+                if b[0] == b'\n' {
+                    return Ok(true);
+                }
+            }
+            Ok(_) => return Ok(false),
+            Err(_) => {
+                if let Err(u) = builtins::trap::take_signals(vp).await {
+                    return Err(u.status(vp.status));
+                }
+            }
+        }
+    }
+}
+
+/// Runs one parsed chunk of a script (`echo`: its text, for `set -v`), or reports its
+/// syntax error. `Some(status)`: the script ends.
+async fn run_chunk(
+    vp: &mut Vp,
+    chunk: Result<psh_syntax::Ast, psh_syntax::ParseError>,
+    source: &[u8],
+    lines: &Rc<LineIndex>,
+    echo: std::ops::Range<usize>,
+) -> Option<i32> {
+    // `set -v`: the input is echoed as it is read.
+    if vp.opts.get(options::SetOpt::Verbose) {
+        vp.error_raw(&source[echo]).await;
+    }
+    match chunk {
+        // `set -n`: read, but do not run.
+        Ok(_) if vp.opts.get(options::SetOpt::Noexec) => None,
+        Ok(ast) => {
+            let root = ast.root();
+            let code = Rc::new(Code {
+                ast: Arc::new(ast),
+                lines: lines.clone(),
+                line_base: 0,
+            });
+            match exec::run_list(vp, &code, root).await {
+                Ok(s) => {
+                    vp.status = s;
+                    None
+                }
+                Err(u) => {
+                    let st = u.status(vp.status);
+                    vp.status = st;
+                    matches!(u, Unwind::Exit(_)).then_some(st)
+                }
+            }
+        }
+        Err(e) => {
+            let line = lines.line(e.span.start);
+            vp.line = line;
+            let dash_c = if vp.opts.dash_c { "-c: " } else { "" };
+            let name = vp.msg_name();
+            let mut msg = format!("{name}: {dash_c}line {line}: {}\n", e.message).into_bytes();
+            if e.message.starts_with("syntax error near") {
+                let text = source_line(source, line);
+                msg.extend_from_slice(format!("{name}: {dash_c}line {line}: `").as_bytes());
+                msg.extend_from_slice(text);
+                msg.extend_from_slice(b"'\n");
+            }
+            vp.error_raw(&msg).await;
+            vp.status = 2;
+            Some(2)
+        }
+    }
 }
 
 fn source_line(source: &[u8], line: u32) -> &[u8] {

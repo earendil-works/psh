@@ -6,20 +6,19 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
-| 0032 | Engine follow-ups and the hit list | engine | .worktrees/engine |
-| 0013 | Utilities B: rg, grep done; fd next | infra | .worktrees/infra |
-| 0014+ | sed done; parser hit-list items queued | parser | .worktrees/parser |
-| 0035 | Tier 2: process and host utilities | procs | .worktrees/procs |
-| 0015 | Utilities D: files and paths (part 3: ls, stat, du, mktemp) | files | .worktrees/files |
-| 0029 | Core shell builtins (finishing, then stop) | builtins | .worktrees/builtins |
+| - | Wrap-up: guide chapters (docs), sed \xHH escapes (parser) | docs, parser | primary, .worktrees/parser |
 
-## Paused (resume points in the issue logs)
+## Paused (2026-11-08 checkpoint; resume notes in the issue logs, see REPORT.md)
 
-| issue | what is left | agent |
+| issue | what is left | branch |
 | --- | --- | --- |
-| 0007 | strips_crlf true, nice mapping (planned) | windows (archived) |
-| 0020 | part 3: nice, nohup | shapes (idle) |
-| 0034b | --force-utils flag | cli (archived) |
+| 0010 | pi-env integration (not started) | - |
+| 0013 | upstream ripgrep/fd suites, perf re-measure, Result | issue/0013-utils-search |
+| 0020 | part 3: nice, nohup | issue/0020-utils-misc |
+| 0032 | engine hit list | issue/0032-engine-climb |
+| 0035 | ps, pgrep, pkill, uname, df… (started) | issue/0035-utils-tier2-process |
+| 0007 | Windows: strips_crlf true, nice mapping | issue/0007-windows |
+| 0021 | rest of Tier 2 | - |
 
 ## Open (ready)
 
@@ -77,3 +76,6 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0018 | Utilities G: jq | af40922 (procs) |
 | 0014 | Utilities C: sed | 888caeb (parser) |
 | 0019 | Utilities H: awk | 6998430 (text) |
+| 0015 | Utilities D: files and paths | afbcf3c8 (files) |
+| 0029 | Core shell builtins | 5cdf21b2 (builtins) |
+| 0034 | psh binary command line, --utils, merge lock | 4c364a1 (cli) |

@@ -284,9 +284,9 @@ the engine's ends of its pipes. A spawn error carrying `RunInShell` asks the eng
 run the file itself (D1300). Open files are `HostFile`s (`poll_read`, `poll_write`,
 `is_terminal`, `kind`).
 
-**Planned:** an exec-time approval hook (an embedder vetoes or rewrites a command after
-expansion, in `resolve`/`spawn`) for pi-env; `Host::strips_crlf()` to make the CRLF rule
-of `$(…)` a host property instead of a build property (D1329).
+`Host::strips_crlf()` makes the CRLF rule of `read` and `$(…)` a host property (D1292,
+D1940); the Windows host does not return true yet (a small follow-up). There is no
+exec-time approval hook: classification serves reporting only (D036).
 
 Hosts:
 
@@ -771,5 +771,5 @@ parsed one way for approval and another way for execution.
 
 1. Whether the WASM host (and a WASI build) matters before pi-env integration, and
    which storage a browser host uses.
-2. Where the exec-time approval hook sits (`resolve`, `spawn`, or a hook of its own),
-   once pi-env needs it.
+2. ~~Where the exec-time approval hook sits~~: dropped (D036). Classification is for
+   reporting only; there is no permission policy layer.

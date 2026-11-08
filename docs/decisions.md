@@ -2725,3 +2725,10 @@ other is BSD's prefix (`ARG.XXXXXXXXXX` there), `-t` as the last word is GNU's f
 splitmix64 stream seeded by `/dev/urandom` where it exists and the clock; creation is
 exclusive (`O_EXCL`, mode 0600; directories 0700) with retries, so predictability only
 costs retries. psh uses `$TMPDIR` where macOS's `mktemp` prefers its per-user directory.
+
+## D036: No permission policy layer; classification is for reporting
+date: 2026-11-08 · by: coordinator (owner) · issue: 0010
+psh is not a sandbox and Pi will not build a permission policy on it. The classifier
+exists to help reporting: UI summaries of what a call does (read, mutate, network, …),
+the paths it touches, and a read-only flag Durable can use for replay. The planned
+exec-time approval hook is dropped; ARCH's open question about where it sits is closed.

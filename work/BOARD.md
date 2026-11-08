@@ -6,7 +6,6 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
-| 0041 | `bash`/`sh` in a command run in psh | shells | .worktrees/cli |
 
 ## Paused (2026-11-08 checkpoint; resume notes in the issue logs)
 
@@ -44,6 +43,7 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | --- | --- |
 | Where the exec-time approval hook sits (pi-env integration) | ARCH.md "Open questions"; 0010 |
 | Windows PATH separator policy (busybox-style built, D1076) | owner |
+| Follow-ups of 0041: `timeout` should signal then wait (nested TERM traps print after its status); parser does not mark every end-of-input case incomplete (`[[ … ( … )` newline, trailing `\\`), stdin reader works around it; wasm runner/psh-wasm stdin scripts via `Script::stdin`; `psh --utils` lists no bash/sh | 0041 Follow-ups |
 | `$!` of compound jobs and nested shells is a made-up id (D1900, D1411): keep, error, or make it outlive the run? (`$$`/`BASHPID` in nested shells: D1413, fall back to real bash, else error) | owner; 0041 |
 
 ## Done
@@ -84,3 +84,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0037 | Windows NUL artifact investigation and null-device aliases | 169bcb0e (coordinator) |
 | 0039 | Formatted AST tab in live documentation examples | ddc417d1 (coordinator) |
 | 0040 | AST outline: psh_syntax::outline, --parse --tree, interactive AST tab | a696dec2 (coordinator) |
+| 0041 | Nested `bash`/`sh` run in psh: -c, FILE, -n, stdin scripts, virtual-process signals, no made-up `$$` (D1410–D1414) | 10922422 (shells) |

@@ -6,7 +6,6 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
-| 0036 | The guide as a static site | coordinator | .worktrees/docs |
 
 ## Paused (2026-11-08 checkpoint; resume notes in the issue logs)
 
@@ -79,3 +78,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0015 | Utilities D: files and paths | afbcf3c8 (files) |
 | 0029 | Core shell builtins | 5cdf21b2 (builtins) |
 | 0034 | psh binary command line, --utils, merge lock | 4c364a1 (cli) |
+| 0036 | The guide as a static site (psh-docs build, live examples) | 3a964cba (coordinator) |

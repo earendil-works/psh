@@ -16,32 +16,25 @@ agents write. Unreleased and under active development.
 
 ## Status
 
-Built: the parser (no_std, byte spans, `bash -n` agreement), the classifier, the stepped
-engine with most of the language (expansion, arrays, functions, `[[ ]]`, options and
-errexit, traps, jobs), a POSIX regex engine with GNU semantics, the Unix and Windows
-process hosts, about 40 in-process utilities, the `psh` binary, and the WASM modules
-with a JavaScript host. Still to come: the remaining Tier 1 utilities (`grep`, `fd`,
-`sed`, `jq`, `ls`, `stat`, `date`, `diff`, ...) and pi-env integration.
+See [REPORT.md](REPORT.md) for the full state of the project. In short, against recorded
+bash 5.3 output on Linux (main at `3475d0aa`, 2026-11-08):
 
-Conformance against recorded bash 5.3 output (`scripts/status`, macOS, 2026-11-07,
-main at `aa673bc`); a case passes on stdout, exit status and files, stderr is counted
-separately:
+| Layer | Active | Pass | % |
+| --- | ---: | ---: | ---: |
+| L0 parse (`bash -n` agreement, print → reparse) | 34,501 | 34,501 | 100% |
+| L1 Oils spec | 2,511 | 2,355 | 93.8% |
+| L2 brush cases | 3,171 | 2,855 | 90.0% |
+| L3 agent-shaped cases | 701 | 701 | 100% |
+| L4 utilities | 994 | 994 | 100% |
 
-| Layer | Active | Pass | % | Also stderr |
-| --- | ---: | ---: | ---: | ---: |
-| L0 parse (`bash -n` agreement, print → reparse) | 34,278 | 34,278 | 100% | – |
-| L1 Oils spec | 2,511 | 2,252 | 89.7% | 2,175 |
-| L2 brush cases | 3,171 | 2,747 | 86.6% | 2,640 |
-| L3 agent-shaped cases | 701 | 689 | 98.3% | 687 |
-| L4 utilities | 671 | 671 | 100% | 668 |
-
-History is in `tests/scores/status.tsv`; `scripts/status --hitlist` ranks what fails by
-how often agents use it.
+59 utilities run in-process (`psh --utils` lists them). Not done yet: pi-env integration,
+release builds and the size budget, CI off the development machine.
 
 ## Building and running
 
 ```sh
 cargo build -p psh
+target/debug/psh --help
 target/debug/psh -c 'cd src && ls | sort | head -3'
 target/debug/psh --classify -c 'git commit -m "$(rm -rf build)"'
 scripts/build-wasm            # target/wasm/psh.wasm and psh-parser.wasm
@@ -51,6 +44,7 @@ scripts/build-wasm            # target/wasm/psh.wasm and psh-parser.wasm
 
 | File | What |
 | --- | --- |
+| [REPORT.md](REPORT.md) | State of the project: what psh can do, how well, what is left |
 | [docs/guide/](docs/guide/SUMMARY.md) | The guide: what psh is, how to use it, how it works |
 | [ARCH.md](ARCH.md) | The architecture: the design reference |
 | [TESTING.md](TESTING.md) | The oracle, test layers, ratchets and the gate |

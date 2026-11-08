@@ -1540,13 +1540,13 @@ async fn spawn_program(
     match vp.host().spawn(spec) {
         Ok(s) => Ok(s),
         Err(e) if crate::host::RunInShell::is(&e) => {
-            return Err(Box::pin(run_in_shell(vp, &program, script_argv, shown)).await);
+            Err(Box::pin(run_in_shell(vp, &program, script_argv, shown)).await)
         }
         // Spawning a directory fails with EACCES; bash says what it is.
         Err(_) if matches!(vp.host().stat(&program, true).await, Ok(m) if m.kind == crate::host::FileKind::Dir) =>
         {
             vp.error(&format!("{shown}: Is a directory")).await;
-            return Err(Ok(126));
+            Err(Ok(126))
         }
         Err(e) => {
             let status = if e.kind() == std::io::ErrorKind::NotFound {
@@ -1555,7 +1555,7 @@ async fn spawn_program(
                 126
             };
             vp.error(&format!("{shown}: {}", error_text(&e))).await;
-            return Err(Ok(status));
+            Err(Ok(status))
         }
     }
 }

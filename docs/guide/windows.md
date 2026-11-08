@@ -119,8 +119,10 @@ Scripts for `sh` or `bash` (`#!/bin/sh`, `#!/usr/bin/env bash`), and files with 
 a `#!` line nor a program extension, run in psh itself: in a fresh subshell that sees
 only the exported variables, with the script's name as `$0` and its arguments, as bash
 runs a file the system cannot start. Windows has no `/bin/sh`, and psh is the shell
-anyway. A command that names `sh` or `bash` (`sh -c '...'`) is different: it runs
-whatever `PATH` finds, such as Git's `bash.exe`, or fails with 127.
+anyway. A command that names `sh` or `bash` (`sh -c '...'`, `bash script.sh`) runs in
+psh too, as on every system, and so do `/bin/sh`, `/bin/bash`, `/usr/bin/sh` and
+`/usr/bin/bash`, which do not exist on Windows: `"/bin/bash" -c 'echo hi'` works there.
+Any other path to a shell, such as Git's `bash.exe`, runs that program.
 
 ## How programs run
 

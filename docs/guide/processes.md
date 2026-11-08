@@ -159,6 +159,32 @@ start. bash runs such a file itself, and so does psh: in a fresh subshell that s
 the exported variables, with the file name as `$0` and the arguments as `$@`. A file
 whose first line contains a NUL byte is refused as a binary, with bash's message.
 
+## `bash` and `sh` in a command
+
+Agents' commands call a shell again: `bash -c '…'`, `bash -n script.sh`,
+`xargs -I{} sh -c '…' _ {}`, `find … -exec bash -c '…' _ {} \;`. A command named `bash`
+or `sh`, without a slash, runs in psh itself, so it gets psh's utilities, cancellation
+and bash 5.3's behavior instead of whatever `bash` the system has (bash 3.2 on macOS,
+none on Windows). It is a new shell, as a new bash process is: only exported variables
+reach it, `exit` and `set -e` end only it, and its options and traps stay inside it.
+`sh` runs with bash's rules too, since psh has no POSIX mode.
+
+```sh
+x=plain; export y=exported
+bash -c 'echo "x=${x-unset} y=$y $0 $1"' name arg   # x=unset y=exported name arg
+```
+
+It runs inside the shell but behaves as a process: it has a `$$` of its own (an id
+above every real process id), `$PPID` is the caller's `$$`, `$!` of `bash -c '…' &` is
+its `$$`, and `kill`, `wait` and `timeout` reach it. A signal sent to it runs its trap or
+ends it, as with a program; `timeout` and a cancel stop it and what it is running.
+
+What still runs the program: a path (`/bin/bash`, `./bash`, `/opt/homebrew/bin/bash`),
+`command -p bash`, a name bound with `hash -p`, an option psh lacks (`-i`, `--rcfile`,
+`--posix`), and scripts that name their interpreter (`#!/bin/bash`), which the kernel
+starts as before. The `psh` command sends `bash` and `sh` to `PATH` again when
+`PSH_NESTED_OFF` is set; an embedder does so through its configuration.
+
 ## Where to look
 
 - [crates/psh-os/src/unix/spawn.rs](../../crates/psh-os/src/unix/spawn.rs): spawning,

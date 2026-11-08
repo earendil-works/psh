@@ -81,7 +81,58 @@ Both parts
 - Oracle probes use `/opt/homebrew/bin/bash` by path; that must keep running bash.
 
 ## Log
+- 2026-11-08 (shells), part 1:
+  - Lookup: `util::lookup` returns an engine-internal entry (`util/nested.rs`) for a bare
+    `bash`/`sh` (on Windows also `/bin/sh`, `/bin/bash`, `/usr/bin/sh`, `/usr/bin/bash`)
+    after hashed names and before slashes and the registry, so `command`, `exec`,
+    wrappers (`run_wrapped`), `type`, `command -v` and `which` all see it, with or
+    without a policy. `util::run_with` starts it through `run_external_with`
+    (`ExtOpts::shell`).
+  - Found: `start_afresh` (D1300) dropped every unexported variable, so a script psh ran
+    itself had an empty `IFS`, no `$RANDOM`, `PPID`, `BASH_VERSION`. It now rebuilds the
+    variables from the exported ones via `lib::initial_vars` (factored out of
+    `Shell::new`), plus `SHELLOPTS`/`BASHOPTS` import (D1412).
+  - First version ran the nested shell inline; the full run showed 6 brush regressions
+    (`sh -c 'trap … TERM' &` then `kill $!`/`kill $(cat pidfile)`). With the
+    coordinator: a nested shell is now a virtual process (D1411): an `ExtProc` over its
+    own task, with its own `$$` and pending-signal mask (`Vp::sigs`, replacing the
+    scheduler's mask at the ~10 signal sites), a registry of nested shells by `$$` for
+    `kill`, abandon = TERM to it and its foreground wait, task dropped after 2 s. Also
+    `kill <the shell's pid>` from a nested shell goes to the shell's mask (wasm and
+    embedders: never to the embedding process).
+  - `exec -a/-l` name a nested shell's `$0`; `exec bash` keeps `$$`, `PPID`, `SHLVL`.
+    bash's exec of a last command (`-c`, `( )`, `$( )`) keeps `SHLVL` too, with odd rules
+    (probed: `( bash … )` keeps, `( exec bash … )` counts); psh always counts (D1412).
+  - utils/env/basic/7 (`env PATH=/nonexistent sh -c true` → 127) changed to `uname`
+    (neither a utility nor a nested shell), with the coordinator's OK; the golden did not
+    change (still 127). That `env PATH=/nonexistent sh -c 'echo ok'` works now is tested
+    in the engine (`nested::tests::runs_without_a_policy_or_path`) and the psh binary
+    (`tests/cli.rs nested_shells`), since bash's golden says 127 there.
+  - Ratchets: `brush/compat/builtins/jobs/12` (`/proc/$$` of a bare `sh`) in the shared
+    file, reason D1410 (coordinator's OK). wasm: `brush/compat/signals/12`, `/22` were
+    "needs external programs" there; they now reach the existing wasm limitation (a shell
+    cannot die by a signal, D1903) and are in `expected-failures.wasm.txt` (OK'd).
+    `scripts/spec-linux --update` also wanted to move ulimit/pushd entries from the shared
+    file to the macOS one, which would have broken the wasm leg; I left those as they
+    were (unrelated to this issue).
+  - psh-spec: psh's side also maps a leading `bash:` to `<sh>` (a nested bash names
+    itself `bash`, as the recorded one does).
+  - New cases: `tests/agent/nested-shells.test.sh` (19 cases, goldens recorded); engine
+    tests in `util/nested.rs`; `tests/cli.rs` `nested_shells`,
+    `timeout_sends_term_to_a_nested_shell`.
+  - Docs: ARCH.md (command lookup, nested shells, control), guide processes.md (new
+    section), differences.md, engine.md, cli.md, windows.md.
 
 ## Follow-ups
+- psh's `timeout` drops its child at the deadline and returns at once; GNU timeout
+  signals and then waits for it. With a nested shell that traps TERM, its trap output
+  comes after timeout's status (`UtilChild` has no `signal`).
+- `set +B` / `bash +B` do not turn brace expansion off (pre-existing).
+- `psh -c 'if'` says `-c: line 1:` where bash says `-c: line 2:` (pre-existing).
+- `psh --utils` does not list `bash`/`sh`.
+- wasm: psh-spec could compare statuses like on Windows (`Signal(n)` ≈ `Exit(128+n)`),
+  which would empty the "no process to die by it" wasm entries.
+- `scripts/spec-linux --update` moves shared entries that fail on macOS and wasm into the
+  macOS file only (ulimit cases), which breaks the wasm leg.
 
 ## Result

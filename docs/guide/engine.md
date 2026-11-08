@@ -174,9 +174,10 @@ The WebAssembly module links a 16 MiB stack and caps the depth at 768.
 
 ## Finding a command
 
-A name is looked up as functions, shell builtins, psh's in-process utilities (only when
-the embedder passed them in; see [Utilities that run in-process](utilities.md)), then
-`PATH`, one entry at a time, through the host. A found program is remembered in a hash
+A name is looked up as functions, shell builtins, `bash` and `sh` (which run in psh
+itself, below), psh's in-process utilities (only when the embedder passed them in; see
+[Utilities that run in-process](utilities.md)), then `PATH`, one entry at a time,
+through the host. A found program is remembered in a hash
 table that belongs to the `PATH` value it was found under. A name with a slash, a hashed
 path and `command -p` run the program directly.
 
@@ -192,6 +193,15 @@ When the host cannot start a file (on Unix, an executable without `#!`; on Windo
 extension), it answers "run this in the shell", and the engine runs the file as bash
 runs one the kernel rejects: in a fresh subshell that sees only exported variables, with
 the file name as `$0`.
+
+A command named `bash` or `sh`, without a slash, runs in psh as a new shell, also in an
+engine without utilities and in the browser, where no bash exists. It starts afresh as a
+new bash process would: its variables are built from the exported ones (`SHLVL` one
+higher), with no functions, aliases, traps or options of the caller. It is a virtual
+process with a task of its own: it has a `$$` of its own, `$!` of `bash -c '…' &` is
+that id, and `kill`, `wait`, `timeout` and a cancel reach it as they reach a program; a
+signal sent to it runs its trap. `ShellConfig::nested_shells = false` leaves both names
+to `PATH`.
 
 ## Errors that end the shell, and errors that abandon a line
 

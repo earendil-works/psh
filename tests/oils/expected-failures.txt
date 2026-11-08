@@ -58,29 +58,16 @@ oils/builtin-cd/3
 oils/builtin-cd/14
 oils/builtin-cd/23
 oils/builtin-cd/26
-oils/builtin-echo/17
-oils/builtin-echo/18
-oils/builtin-echo/19
-oils/builtin-echo/20
-oils/builtin-echo/21
-oils/builtin-echo/22
-oils/builtin-echo/23
-oils/builtin-echo/24
-oils/builtin-echo/25
 oils/builtin-getopts/6
 oils/builtin-getopts/13
 oils/builtin-getopts/14
-oils/builtin-meta/1: grep is an always-on psh utility (mode S, D015, D1151), so command -v prints its name, not a PATH file
 oils/builtin-meta/1: S-mode psh utility shadows the PATH file (D1083, D1151); type reports what runs (ls)
 oils/builtin-meta/4
 oils/builtin-meta/6
 oils/builtin-meta/10: tr is an always-on psh utility (mode S, D015), so a tr script earlier on PATH does not shadow it
 oils/builtin-misc/0
-oils/builtin-misc/1
-oils/builtin-printf/38
 oils/builtin-printf/46
 oils/builtin-printf/48: macOS has the legacy zone Portugal, the recording container does not
-oils/builtin-printf/58
 oils/builtin-process/4
 oils/builtin-process/14
 oils/builtin-process/25
@@ -118,15 +105,11 @@ oils/builtin-type-bash/21
 oils/builtin-type-bash/22
 oils/builtin-type-bash/24: date is an S-mode psh utility (0020); type -a reports it before the PATH files
 oils/builtin-type-bash/30
-oils/builtin-umask/10
-oils/builtin-umask/11
 oils/builtin-vars/16
 oils/builtin-vars/17
 oils/builtin-vars/24
 oils/builtin-vars/26
 oils/builtin-vars/32
-oils/command-sub/8
-oils/command-sub/9
 oils/divergence/3
 oils/dparen/10
 oils/exit-status/2
@@ -161,7 +144,6 @@ oils/redirect/3
 oils/redirect/27
 oils/serialize/3
 oils/serialize/5
-oils/sh-options-bash/4
 oils/tilde/7
 oils/tilde/13
 oils/toysh/1

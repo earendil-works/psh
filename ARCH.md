@@ -180,7 +180,8 @@ runtime in D005's sense: no runtime crate, no threads, the embedder steps and pa
   runs, an ignored signal does nothing, otherwise the default action (EXIT trap, then
   `128+n`); waits and blocking reads of the shell give way to such signals (D1903,
   D1306). `start` clears the control word, so a late cancel never leaks into the next
-  run.
+  run. A nested `bash`/`sh` has a pending-signal mask of its own, which `kill` and its
+  `ExtProc` set; each vproc's `sigs` names the mask it takes signals from (D1411).
 - **Signals are numbered as on Linux** everywhere, in `kill -l`, `trap`, `$?`; hosts
   map them to the OS's numbers at their boundary (D1904).
 - **Values are bytes (D1053).** Variables, words and paths are `Vec<u8>`; char-wise
@@ -202,14 +203,25 @@ runtime in D005's sense: no runtime crate, no threads, the embedder steps and pa
 - **`/dev/stdin`, `/dev/stdout`, `/dev/stderr`, `/dev/fd/N`** in redirections always
   refer to the vproc's descriptors (embedded, the process's are not the shell's; D1055).
   `{var}>file` takes a descriptor from 10 up and outlasts the command (D1326).
-- **Command lookup** (D1083, D1291): functions, then shell builtins, then psh's
-  utilities (when the embedder passed a policy), then `PATH` through the host, one entry
-  at a time (`Host::path_entries`, D1910), remembered in a hash table that belongs to
-  the `PATH` value it was filled under. A name with a slash, a hashed path and
-  `command -p` (the host's standard path, D1332) run the program. A program the host
-  cannot start itself (no `#!` on Unix; `sh`/`bash` scripts on Windows) comes back as
-  `RunInShell` and runs in a fresh psh subshell, as bash runs a file `execve` rejects
-  (D1300).
+- **Command lookup** (D1083, D1291, D1410): functions, then shell builtins, then a bare
+  `bash` or `sh` (psh itself, below), then psh's utilities (when the embedder passed a
+  policy), then `PATH` through the host, one entry at a time (`Host::path_entries`,
+  D1910), remembered in a hash table that belongs to the `PATH` value it was filled
+  under. A name with a slash, a hashed path and `command -p` (the host's standard path,
+  D1332) run the program. A program the host cannot start itself (no `#!` on Unix;
+  `sh`/`bash` scripts on Windows) comes back as `RunInShell` and runs in a fresh psh
+  subshell, as bash runs a file `execve` rejects (D1300).
+- **Nested shells** (D1410–D1412, `util/nested.rs`): a bare `bash`/`sh` (on Windows also
+  `/bin/sh`, `/bin/bash`, `/usr/bin/sh`, `/usr/bin/bash`) runs in psh, also without a
+  utility policy and from the wrappers (`env`, `xargs`, `find -exec`, `timeout`); `type`
+  reports it like a utility; `ShellConfig::nested_shells` turns it off. Its command line
+  is `invocation::parse_args`; options psh lacks run the program from `PATH`. It starts
+  afresh (`exec::start_afresh`: variables rebuilt from the exported ones as `Shell::new`
+  builds them, `SHLVL` one higher, no functions, aliases, traps or options beyond
+  `SHELLOPTS`/`BASHOPTS`) and is a virtual process: an `ExtProc` over a task of its own,
+  started where programs are spawned, with a made-up `$$` and a pending-signal mask of
+  its own (`Vp::sigs`), so jobs, `kill`, `wait` and abandoning treat it as a program and
+  its traps run. Shebang scripts are not intercepted.
 - **Shell builtins** (`cd`, `export`, `set`, `trap`, `read`, `printf`, `test`, `kill`,
   `wait`, ...) are async functions on the calling vproc. Assignments in front of any
   builtin are temporary and exported (D1290). Job control is limited to `&`, `wait`,

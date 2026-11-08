@@ -80,10 +80,16 @@ For more information, try 'psh --help'.
 
 `-h` is bash's `set -h`, not a request for help.
 
-Of bash's long options, psh takes `--norc`, `--noprofile` and `--noediting`, which change
-nothing in a shell that reads no startup files and has no line editor, so scripts that
-pass them keep working. Put them first, as bash requires. `--posix` is
-refused, since psh has no POSIX mode. The others (`--login`, `--rcfile`, ...) are errors.
+Of bash's long options, psh takes `--norc`, `--noprofile`, `--noediting` and `--login`
+(also `-l`), which change nothing in a shell that reads no startup files and has no line
+editor, so scripts that pass them keep working. Put them first, as bash requires.
+`--version` after bash's options prints what `psh --version` prints. `--posix` is
+refused, since psh has no POSIX mode. The others (`--rcfile`, `-i`, ...) are errors.
+
+The same command line serves `bash` and `sh` inside a script: psh runs those itself
+(`bash -c '…'`, `bash -n script.sh`, `sh -euc '…'`). Given an option psh lacks there
+(`-i`, `--rcfile`, `--posix`), the `bash` that `PATH` finds runs instead, and without one
+the command fails with status 2 and a message that names psh.
 
 ## psh's own modes
 
@@ -200,10 +206,14 @@ surrogate becomes U+FFFD.
 
 ## The environment
 
-psh passes its environment to the script, with one exception: `PSH_UTILS_FORCE`, a
-comma-separated list of utility names (or `all`) that run in-process even when `PATH`
-has the program, is psh's own and is taken out
-([turning utilities off](utilities.md#turning-utilities-off)).
+psh passes its environment to the script, with two exceptions, which are psh's own and
+are taken out:
+
+- `PSH_UTILS_FORCE`, a comma-separated list of utility names (or `all`) that run
+  in-process even when `PATH` has the program
+  ([turning utilities off](utilities.md#turning-utilities-off)).
+- `PSH_NESTED_OFF`: when set and not empty, a command named `bash` or `sh` runs the
+  program `PATH` finds instead of psh.
 
 ## Where to look
 

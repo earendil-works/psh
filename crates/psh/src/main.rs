@@ -94,7 +94,7 @@ fn os_path(b: &[u8]) -> std::path::PathBuf {
 }
 
 /// Set (to anything but empty), a command named `bash` or `sh` runs the program on
-/// `PATH` instead of psh (D1410, D1411).
+/// `PATH` instead of psh (D1410, D1412).
 const NESTED_OFF_VAR: &str = "PSH_NESTED_OFF";
 
 /// The standalone shell's configuration: the OS host and its stdio, the utilities (with
@@ -117,7 +117,7 @@ fn shell_config() -> ShellConfig {
         let (_, v) = cfg.env.remove(i);
         cfg.utilities.force_names = psh_utils::force_names(&v);
     }
-    // PSH_NESTED_OFF (D1411): `bash` and `sh` go to PATH; psh's, so not passed on.
+    // PSH_NESTED_OFF (D1412): `bash` and `sh` go to PATH; psh's, so not passed on.
     if let Some(i) = cfg
         .env
         .iter()

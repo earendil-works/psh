@@ -794,3 +794,43 @@ fn prefix_path_is_used_for_lookup() {
         out.stderr
     );
 }
+
+/// `bash` and `sh` run in psh (D1410): without a program on `PATH`, `--version` is
+/// psh's, `PSH_NESTED_OFF` sends them to `PATH` again.
+#[test]
+fn nested_shells() {
+    let out = psh(&[
+        "-c",
+        "PATH=/nonexistent; bash -c 'echo \"in $0\"'; sh -c 'echo $0'",
+    ]);
+    assert_eq!(out.stdout, "in bash\nsh\n", "{}", out.stderr);
+    let out = psh(&[
+        "-c",
+        "bash --version; psh_v=$(bash -e --version); echo \"$psh_v\"",
+    ]);
+    let v = format!("psh {}\n", env!("CARGO_PKG_VERSION"));
+    assert_eq!(out.stdout, format!("{v}{v}"));
+    let out = psh(&["-e", "--version"]);
+    assert_eq!(out.stdout, v);
+    let off = [("PSH_NESTED_OFF", OsStr::new("1"))];
+    let args = [
+        OsStr::new("-c"),
+        OsStr::new("PATH=/nonexistent; bash -c 'echo no'; echo \"$? ${PSH_NESTED_OFF-unset}\""),
+    ];
+    let out = psh_bytes(&args, b"", &off);
+    assert_eq!(String::from_utf8_lossy(&out.stdout), "127 unset\n");
+}
+
+/// A nested shell abandoned by `timeout` gets TERM, as a program's process group would:
+/// what it waits for ends and its trap runs.
+#[test]
+fn timeout_sends_term_to_a_nested_shell() {
+    let start = Instant::now();
+    let out = psh(&[
+        "-c",
+        "timeout 1 bash -c 'trap \"echo term; exit 3\" TERM; sleep 5; echo not here'; \
+         echo \"status $?\"; sleep 1",
+    ]);
+    assert_eq!(out.stdout, "status 124\nterm\n", "{}", out.stderr);
+    assert!(start.elapsed() < run_limit() / 2, "{:?}", start.elapsed());
+}

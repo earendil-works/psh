@@ -27,9 +27,15 @@ use std::process::ExitCode;
 
 const USAGE: &str = "usage: psh-docs check | regen [--examples] | build [--out DIR] [--wasm FILE]";
 
+/// The repository root: two levels above this crate (no `canonicalize`, which gives
+/// Windows paths a `\\?\` prefix other programs do not take).
 pub fn repo() -> PathBuf {
-    let p = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-    p.canonicalize().unwrap_or(p)
+    let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    crate_dir
+        .parent()
+        .and_then(Path::parent)
+        .unwrap_or(crate_dir)
+        .to_path_buf()
 }
 
 /// The guide after regeneration (in memory).

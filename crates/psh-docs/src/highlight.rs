@@ -688,15 +688,15 @@ mod tests {
             }
         }
         let js = crate::repo().join("crates/psh-docs/assets/highlight.js");
-        let script = format!(
-            "import {{ highlight }} from {:?};\n\
+        // The module's path as an argument, made a file URL by node (Windows paths too).
+        let script = "import { pathToFileURL } from 'node:url';\n\
+             const { highlight } = await import(pathToFileURL(process.argv[1]).href);\n\
              let s = ''; process.stdin.setEncoding('utf8');\n\
              for await (const c of process.stdin) s += c;\n\
-             process.stdout.write(s.split('\\0').map(highlight).join('\\0'));\n",
-            format!("file://{}", js.display())
-        );
+             process.stdout.write(s.split('\\0').map(highlight).join('\\0'));\n";
         let child = Command::new("node")
-            .args(["--input-type=module", "-e", &script])
+            .args(["--input-type=module", "-e", script])
+            .arg(&js)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn();

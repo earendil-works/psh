@@ -60,7 +60,8 @@ crates/
   psh-spec/      the conformance runner (TESTING.md)               engine, syntax, os, utils
   psh-wasm/      the WASM modules and their ABI                    syntax, classify, engine,
                                                                    utils, deser-json
-  psh-docs/      the guide's check tool (D1120)                    no deps
+  psh-docs/      the guide: its writing rules, live examples and   engine, utils, syntax, classify,
+                 the static site (D1120, D1360, D1361)             pulldown-cmark
 third_party/
   grep-printer/  grep-printer 0.3.1 with a wasm-safe clock (D1135), via [patch.crates-io]
 js/              the JS glue and host for psh-wasm (`psh.mjs`), its tests and spec driver

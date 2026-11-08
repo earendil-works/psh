@@ -14,10 +14,14 @@ agents write. Unreleased and under active development.
   network, ...).
 - Compiles to WebAssembly for browsers and sandboxes.
 
+**Documentation:** the guide, in `docs/guide/`: what psh is, how to use and embed it,
+how it works, and its status in numbers. `cargo run -p psh-docs -- build` makes it a
+site in `target/docs-site/` with search and live examples that run psh.wasm in the page
+(`scripts/build-wasm` first); `.github/workflows/docs.yml` publishes it to GitHub Pages.
+
 ## Status
 
-See [REPORT.md](REPORT.md) for the full state of the project. In short, against recorded
-bash 5.3 output on Linux (main at `3475d0aa`, 2026-11-08):
+Against recorded bash 5.3 output on Linux (main at `3475d0aa`, 2026-11-08):
 
 | Layer | Active | Pass | % |
 | --- | ---: | ---: | ---: |
@@ -27,8 +31,8 @@ bash 5.3 output on Linux (main at `3475d0aa`, 2026-11-08):
 | L3 agent-shaped cases | 701 | 701 | 100% |
 | L4 utilities | 994 | 994 | 100% |
 
-49 utilities (58 names) run in-process (`psh --utils` lists them). Not done yet: pi-env integration,
-release builds and the size budget, CI off the development machine.
+49 utilities (58 names) run in-process (`psh --utils` lists them). The guide's "Status in
+numbers" has macOS and Windows, sizes, speed, what is not built yet and the known gaps.
 
 ## Building and running
 
@@ -37,15 +41,15 @@ cargo build -p psh
 target/debug/psh --help
 target/debug/psh -c 'cd src && ls | sort | head -3'
 target/debug/psh --classify -c 'git commit -m "$(rm -rf build)"'
-scripts/build-wasm            # target/wasm/psh.wasm and psh-parser.wasm
+scripts/build-wasm              # target/wasm/psh.wasm and psh-parser.wasm
+cargo run -p psh-docs -- build  # the guide as a site: target/docs-site/
 ```
 
 ## Where to read
 
 | File | What |
 | --- | --- |
-| [REPORT.md](REPORT.md) | State of the project: what psh can do, how well, what is left |
-| [docs/guide/](docs/guide/SUMMARY.md) | The guide: what psh is, how to use it, how it works |
+| [docs/guide/](docs/guide/SUMMARY.md) | The guide: what psh is, how to use it, how it works, its status |
 | [ARCH.md](ARCH.md) | The architecture: the design reference |
 | [TESTING.md](TESTING.md) | The oracle, test layers, ratchets and the gate |
 | [docs/decisions.md](docs/decisions.md) | Append-only decision log |

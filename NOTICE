@@ -422,3 +422,15 @@ tests/utils/jq/upstream/jq-1.7.1/{jq,onig,optional,base64}.test (tests/, verbati
 tests/utils/jq/upstream/jq-1.7.1/{man,manonig}.test (tests/, verbatim; generated from the
   manual, docs/content/manual/manual.yml: CC BY 3.0, by the jq authors)
 tests/utils/jq/upstream/jq-1.7.1/COPYING (jq's license, verbatim)
+
+-------------------------------------------------------------------------------
+Elanor (https://github.com/earendil-works/elanor), Earendil's design system: the guide's
+site ships its published files unchanged, each under the license next to it
+-------------------------------------------------------------------------------
+
+crates/psh-docs/assets/elanor/tokens.css (ISC, tokens.LICENSE)
+crates/psh-docs/assets/elanor/fonts/ (Mallos Serif and Commit Mono, SIL Open Font
+  License 1.1, fonts/licenses/)
+crates/psh-docs/assets/elanor/icons/ (Material Symbols, Apache-2.0, icons/LICENSE and
+  icons/NOTICE)
+crates/psh-docs/assets/elanor/logos/ (Earendil's marks, used as BRAND-GUIDELINES.md says)

@@ -260,12 +260,12 @@ reaches `main` (AGENTS.md). Its legs, in order (`scripts/gate.d/`):
 | `fmt`, `clippy`, `test` | `cargo fmt --check`, clippy `-D warnings`, `cargo test --workspace` |
 | `deps` | every dependency of every workspace crate (direct or transitive, any target) is in `scripts/deps-allowlist.txt` with the decision that allows it, and nothing else is (D1223) |
 | `wasm` | `psh-syntax`, `psh-engine` and `psh-classify` build for `wasm32-unknown-unknown` |
-| `wasm-host` | `psh-wasm` passes clippy for wasm32, both wasm modules build, the JS host's tests pass under node, and `psh-spec --wasm` holds the shared and the wasm ratchets (D1113) |
+| `wasm-host` | `psh-wasm` passes clippy for wasm32, both wasm modules build, the JS host's tests pass under node, the guide's live examples print in psh.wasm what the guide records (D1361), and `psh-spec --wasm` holds the shared and the wasm ratchets (D1113) |
 | `msrv` | the workspace builds with Rust 1.96 (D025) |
 | `linux` | `cargo check` of the workspace, tests included, for `aarch64-` and `x86_64-unknown-linux-musl`, since no other leg compiles Linux-only code (D1330) |
 | `script-tests` | the tests of `timeout.sh` and `merge-to-main.sh` (D1013) |
 | `shapes` | the shape corpus passes its privacy check (D1030) |
-| `guide` | `psh-docs check` holds the guide to its writing rules (D1120) |
+| `guide` | `psh-docs check` holds the guide to its writing rules (D1120), renders every page, and fails when a live example's output differs from the one the page records (D1361) |
 | `spec` | the ratchets of every layer, shared and this platform's |
 | `l0` | the L0 ratchet (D1220) |
 | `windows` | always last: `fmt`, clippy, `cargo test` (arm64 and x64), the MSRV check and L4 on the owner's Windows VM (D027, D1070); see "Windows" below |

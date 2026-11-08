@@ -8,7 +8,7 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 | --- | --- | --- | --- |
 | 0036 | The guide as a static site | coordinator | .worktrees/docs |
 
-## Paused (2026-11-08 checkpoint; resume notes in the issue logs, see REPORT.md)
+## Paused (2026-11-08 checkpoint; resume notes in the issue logs)
 
 | issue | what is left | branch |
 | --- | --- | --- |

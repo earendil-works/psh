@@ -2,9 +2,10 @@
 
 This page collects psh's measured numbers: how much of bash's behavior it matches on each
 platform, how large its parts are, what a build costs in bytes, and how fast a few
-everyday things run. Each table says what it counts. How the cases are recorded and
-compared is on [How psh is tested](testing.md); what psh deliberately does differently is
-on [Differences from bash](differences.md).
+everyday things run, and at the end what is not built yet and the gaps known today. Each
+table says what it counts. How the cases are recorded and compared is on [How psh is
+tested](testing.md); what psh deliberately does differently is on [Differences from
+bash](differences.md).
 
 > **In short.** On Linux, at commit `3475d0aa`, psh passes 93.8% of the Oils spec cases
 > and 90.0% of brush's, and every one of its 701 agent-shaped cases, 994 utility cases
@@ -195,6 +196,39 @@ process, starting a program uses `posix_spawn`, and `seq`, `sort` and `head` run
 in-process. One slow path stands out: an unquoted word with an unmatched `[`, such as
 the `[` of `[ "$i" -lt 5 ]`, reads the current directory every time it is expanded, so
 `[ … ]` in a hot loop costs far more than `test …` or `[[ … ]]`.
+
+## What is not built yet
+
+- **Running inside an agent host's daemon.** An embedding interface for a long-lived
+  daemon (both output streams in one, cancellation and a time limit per call), running
+  commands through it, and the classifier in the host's user interface.
+  [One agent host](pi.md) describes how it plans to use psh.
+- **Shipping.** Release builds for every target, a size budget with cargo features for
+  the heavy groups of utilities (search, `jq`, `awk`) so that an embedder can leave them
+  out, and continuous integration on machines other than the development one.
+- **Robustness for embedding.** Limits on output size and memory, a stress layer that
+  cancels runs at random points, fuzzing of the engine, and benchmarks against bash.
+- **Output control for agents.** Shortening long output and handling commands that run
+  for a long time are not designed yet.
+- **More utilities.** `nice`, `nohup`, process and host tools, small text tools and
+  archives, as [Utilities that run in-process](utilities.md#what-is-built) lists.
+
+## Known gaps
+
+- On Windows, `$(…)` and `read` keep the `\r` of native programs' output: the Windows
+  host does not strip CR line ends yet.
+- `timeout -s SIG` stops the command with TERM and then KILL, not with SIG; `-k` and
+  `--foreground` are accepted and do nothing. In the `psh` program, `timeout` and
+  cancelling reach the program itself but not its children; the embedded hosts stop
+  whole process trees.
+- `time` prints no timing report, and `diff <(…) <(…)` fails with "Bad file descriptor".
+- `set -m`, `set -o vi`, `set -o emacs`, `set -o history` and `FUNCNEST` are accepted
+  and have no effect.
+- psh ignores an inherited logical `$PWD`: under a symlinked `/tmp` it prints
+  `/private/tmp/…` where bash prints `/tmp/…`.
+- `fd --changed-within` and `--changed-before` run the real `fd`.
+- In a `sed` regular expression with `\xHH` bytes, `.` matches a single byte, where
+  GNU sed matches nothing.
 
 ## Where to look
 

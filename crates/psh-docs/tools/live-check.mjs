@@ -6,7 +6,7 @@
 // another after it.
 //
 //   node crates/psh-docs/tools/live-check.mjs [psh.wasm]   (default target/wasm/psh.wasm)
-import { readFile, readdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../../..", import.meta.url));
@@ -17,7 +17,10 @@ const LIVE = /^```(?:sh|bash) [^\n]*\blive\b[^\n]*\n([\s\S]*?)^```\n<!-- gen:run
 
 let n = 0;
 let bad = 0;
-for (const f of (await readdir(`${root}/docs/guide`)).filter((f) => f.endsWith(".md")).sort()) {
+// The guide's pages: those SUMMARY.md links, and the front page.
+const summary = await readFile(`${root}/docs/guide/SUMMARY.md`, "utf8");
+const pages = [...summary.matchAll(/\]\(([^)]+\.md)\)/g)].map((m) => m[1]).concat("index.md");
+for (const f of pages) {
   const md = await readFile(`${root}/docs/guide/${f}`, "utf8");
   for (const m of md.matchAll(LIVE)) {
     n++;

@@ -61,8 +61,15 @@ a chapter not written yet.
 
 ## Tooling
 
-`cargo run -p psh-docs -- check` checks every page in `SUMMARY.md`; the gate runs it. It
-reports `docs/guide/PAGE:LINE: message` for:
+```sh
+cargo run -q -p psh-docs -- check             # the rules, the examples' output, rendering
+cargo run -q -p psh-docs -- regen             # write missing example output into the pages
+cargo run -q -p psh-docs -- regen --examples  # also accept example output that changed
+cargo run -q -p psh-docs -- build             # the site: target/docs-site/
+```
+
+`check` checks every page in `SUMMARY.md` and the front page, `index.md`; the gate runs
+it. It reports `docs/guide/PAGE:LINE: message` for:
 
 - a link to a page that is not in `SUMMARY.md`, to a section (`#id`, as mdBook makes ids
   from headings) that does not exist, or to a repository file that does not exist;
@@ -75,3 +82,60 @@ reports `docs/guide/PAGE:LINE: message` for:
 
 Fenced code blocks are skipped; inline code is held to the word rules but not to the
 history phrases. A false positive is fixed in the tool, not worked around in the text.
+
+`check` also renders every page and runs every live example (below): an example whose
+output differs from the one its page records fails until `regen --examples` accepts the
+new output, and whoever accepts it checks that the text around it still says the right
+thing.
+
+## Live examples
+
+A block marked ```` ```sh live ```` is a live example. On the site it is an editor: the
+reader can change the script and run it (Run, Ctrl/Cmd-Enter, or by itself 600 ms after
+the last edit) in psh.wasm, in the page. Its tabs show the output, stdout and stderr as
+they came with stderr in red and the exit status when it is not 0, and the
+classification of the script: the commands it would run, their categories, and the
+paths it reads and writes.
+
+Each one runs in a fresh shell in an empty `/work` directory (also `HOME`) with
+`PATH=/usr/bin:/bin`, over an in-memory file system, with every utility in-process and
+no external programs: an example makes the files it needs, and `git` or `cargo` are
+"command not found". The build runs it the same way in psh itself, on the engine's
+in-memory host, and writes the output after the block for readers of the Markdown:
+
+````markdown
+```sh live
+printf 'b\na\n' | sort
+```
+<!-- gen:run -->
+```text
+a
+b
+```
+<!-- /gen -->
+````
+
+`regen` writes this region; never edit it by hand. A failed example ends with an
+`(exit status N)` line. The wasm leg of the gate runs every live example in psh.wasm
+through `js/psh.mjs` and fails if it prints anything else, so the output a reader sees
+before running an example is the output they get when they run it. Pick examples whose
+output does not depend on the clock, process ids or the machine.
+
+## The site
+
+`build` renders every page with the navigation of `SUMMARY.md`, an outline of the page,
+previous and next links, a search box (`/` focuses it; `search.json` is searched in the
+browser, there is no server), light and dark, and syntax highlighting for shell, Rust,
+JavaScript and JSON. A shell block whose lines start with `$ ` is a session: those lines
+are commands, the others their output. Links to repository files go to GitHub at the
+commit the site is built from. `> **In short.**`, `> **Trade-off.**` and
+`> **Not built yet.**` quotes become callouts. It copies `target/wasm/psh.wasm` (from
+`scripts/build-wasm`; `--wasm FILE` for another) and `js/psh.mjs` for the live examples;
+without the module the examples show their recorded output only, as they do without
+JavaScript or from `file://`. Serve the directory over HTTP to try them:
+`python3 -m http.server -d target/docs-site`.
+
+The design is Elanor, Earendil's design system: its tokens, fonts, icons and logos are
+vendored in `crates/psh-docs/assets/elanor/` by `scripts/elanor-update.sh`, so a build
+needs no network. The page template is in `crates/psh-docs/src/site.rs`, the styles in
+`crates/psh-docs/assets/style.css`, and the editor in `crates/psh-docs/assets/live.js`.

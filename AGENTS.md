@@ -151,6 +151,9 @@ or a new one is needed, list it under `## Follow-ups`. Guide rules in short:
 self-contained (no links to ARCH.md, TESTING.md, docs/*.md, work/ or issue numbers), no
 decision IDs, no history, pi named only on `pi.md`, goals by name with a link to
 `goals.md`.
+A change that alters what a live example (```` ```sh live ````) prints fails the guide
+leg: check the new output, accept it with `cargo run -q -p psh-docs -- regen --examples`,
+and check that the page's text still says the right thing.
 
 ## Coordinator
 

@@ -408,7 +408,8 @@ div.live-pane[data-pane="ast"]:focus-visible { outline: var(--semantic-dimension
 .ast-bar button[aria-pressed="true"] { background: var(--semantic-color-background-fill-ghost-neutral-active); color: var(--semantic-color-text-primary); }
 .ast-tree { font: var(--semantic-typography-code-primary); letter-spacing: var(--semantic-typography-code-primary-letter-spacing); }
 .ast-row {
-  --indent: 2ch;
+  /* --depth is set per row (style attribute); --indent is one level. */
+  --depth: 0; --indent: 2ch;
   display: flex; align-items: baseline; gap: 0.6ch; white-space: nowrap;
   padding-inline-start: calc(var(--depth) * var(--indent));
   border-radius: var(--semantic-dimension-radius-small); cursor: default;

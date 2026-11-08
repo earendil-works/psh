@@ -318,15 +318,17 @@ fn template(
 mod tests {
     use super::*;
 
-    /// Every token the site's CSS uses exists in the vendored Elanor tokens: an Elanor
-    /// update that renames one fails here instead of silently unstyling the site.
+    /// Every token the site's CSS uses exists in the vendored Elanor tokens (or is the
+    /// site's own, set in style.css): an Elanor update that renames one fails here
+    /// instead of silently unstyling the site.
     #[test]
     fn tokens_exist() {
         let tokens = std::fs::read_to_string(repo().join(ELANOR_DIR).join("tokens.css")).unwrap();
         for part in STYLE.split("var(").skip(1) {
             let name = part.split([',', ')']).next().unwrap().trim();
+            let def = format!("{name}:");
             assert!(
-                tokens.contains(&format!("{name}:")),
+                tokens.contains(&def) || STYLE.contains(&def),
                 "style.css uses {name}, which elanor/tokens.css does not define"
             );
         }

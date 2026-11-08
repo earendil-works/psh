@@ -33,6 +33,8 @@ pub(crate) struct Core {
     pub utilities: crate::util::UtilPolicy,
     /// `bash` and `sh` run in psh (D1410).
     pub nested_shells: bool,
+    /// The shells psh runs for `bash`/`sh` by their `$$`, for `kill` (D1411).
+    pub nested: RefCell<Vec<(u32, std::rc::Weak<NestedSigs>)>>,
     /// `$RANDOM`'s state (shared by subshells, which bash reseeds; close enough).
     pub rng: Cell<u64>,
     /// `$SECONDS` counts from this time: nanoseconds since the epoch; may be before it (`SECONDS=100` on a host whose
@@ -40,7 +42,102 @@ pub(crate) struct Core {
     pub seconds_base: Cell<i128>,
 }
 
+/// Where a vproc's pending signals are (D1411): the shell's mask, which the embedder's
+/// `ControlHandle` and the standalone shell's handlers set, or the mask of a shell psh
+/// runs for `bash`/`sh` (a virtual process: `kill`, `timeout` and jobs signal it, its
+/// traps run). A subshell shares its shell's; only the shell's own vproc (`top`)
+/// takes them.
+#[derive(Clone, Default)]
+pub(crate) enum Sigs {
+    #[default]
+    Shell,
+    Nested(Rc<NestedSigs>),
+}
+
+/// The pending signals of a shell psh runs for `bash`/`sh` (D1411).
+#[derive(Default)]
+pub(crate) struct NestedSigs {
+    pending: Cell<u64>,
+    waiters: RefCell<Vec<std::task::Waker>>,
+    /// The signal whose default action ended the shell.
+    pub died_of: Cell<Option<i32>>,
+    /// It was abandoned: the TERM went to its process group, so the program it waits
+    /// for got it too and its waits give way to a trapped signal as well.
+    pub group: Cell<bool>,
+}
+
+impl NestedSigs {
+    /// Sends `sig` (Linux numbering): its waits that give way to signals wake.
+    pub(crate) fn raise(&self, sig: i32) {
+        if (1..64).contains(&sig) {
+            self.pending.set(self.pending.get() | 1u64 << sig);
+            for w in self.waiters.borrow_mut().drain(..) {
+                w.wake();
+            }
+        }
+    }
+}
+
+impl Sigs {
+    pub(crate) fn peek(&self, core: &Core) -> u64 {
+        match self {
+            Sigs::Shell => core.sched.peek_signals(),
+            Sigs::Nested(n) => n.pending.get(),
+        }
+    }
+
+    pub(crate) fn take(&self, core: &Core) -> u64 {
+        match self {
+            Sigs::Shell => core.sched.take_signals(),
+            Sigs::Nested(n) => n.pending.replace(0),
+        }
+    }
+
+    /// Sends `sig` to the shell itself (`kill $$`, D1284).
+    pub(crate) fn raise(&self, core: &Core, sig: i32) {
+        match self {
+            Sigs::Shell => core.sched.raise(sig),
+            Sigs::Nested(n) => n.raise(sig),
+        }
+    }
+
+    /// Wakes `w` when a signal is sent to the shell (D1903).
+    /// Waits give way to trapped signals too (an abandoned shell, D1411).
+    pub(crate) fn group(&self) -> bool {
+        matches!(self, Sigs::Nested(n) if n.group.get())
+    }
+
+    pub(crate) fn on_signal(&self, core: &Core, w: &std::task::Waker) {
+        match self {
+            Sigs::Shell => core.sched.on_signal(w),
+            Sigs::Nested(n) => {
+                let mut ws = n.waiters.borrow_mut();
+                if !ws.iter().any(|x| x.will_wake(w)) {
+                    ws.push(w.clone());
+                }
+            }
+        }
+    }
+
+    /// The signal's default action ends the shell (D1903).
+    pub(crate) fn died_of(&self, core: &Core, sig: i32) {
+        match self {
+            Sigs::Shell => core.died_of.set(Some(sig)),
+            Sigs::Nested(n) => n.died_of.set(Some(sig)),
+        }
+    }
+}
+
 impl Core {
+    /// The shell psh runs for `bash`/`sh` whose `$$` is `pid`, while it runs (D1411).
+    pub(crate) fn nested_shell(&self, pid: u32) -> Option<Rc<NestedSigs>> {
+        let mut list = self.nested.borrow_mut();
+        list.retain(|(_, w)| w.strong_count() > 0);
+        list.iter()
+            .find(|(p, _)| *p == pid)
+            .and_then(|(_, w)| w.upgrade())
+    }
+
     pub(crate) fn next_job_id(&self) -> u32 {
         self.jobs.set(self.jobs.get() + 1);
         // Looks like a pid, cannot be one of ours.
@@ -237,6 +334,8 @@ pub(crate) struct Vp {
     pub in_trap: Option<i32>,
     /// This is the shell itself, not a subshell: it takes the shell's signals.
     pub top: bool,
+    /// Where the shell's pending signals are (D1411).
+    pub sigs: Sigs,
     /// Levels of command substitution and `eval`: `set -x` repeats PS4's first char.
     pub xtrace_level: u32,
 }

@@ -238,7 +238,7 @@ pub(crate) async fn take_signals(vp: &mut Vp) -> Result<(), Unwind> {
     if !vp.top || vp.in_trap.is_some() {
         return Ok(());
     }
-    let pending = vp.core.sched.take_signals();
+    let pending = vp.sigs.take(&vp.core);
     if pending == 0 {
         return Ok(());
     }
@@ -253,7 +253,7 @@ pub(crate) async fn take_signals(vp: &mut Vp) -> Result<(), Unwind> {
                 run_action(vp, &action, st).await?;
             }
             None if terminates(sig) => {
-                vp.core.died_of.set(Some(sig));
+                vp.sigs.died_of(&vp.core, sig);
                 return Err(Unwind::Exit(128 + sig));
             }
             None => {}

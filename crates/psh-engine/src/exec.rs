@@ -431,7 +431,7 @@ fn before_command<'a>(
     code: &'a Rc<Code>,
     cmd: &'a Command,
 ) -> Option<LocalBoxFuture<'a, Result<(), Unwind>>> {
-    let signals = vp.top && vp.core.sched.has_signals();
+    let signals = vp.top && vp.sigs.peek(&vp.core) != 0;
     let debug = !vp.traps.map.is_empty()
         && matches!(
             cmd.kind,
@@ -1334,8 +1334,11 @@ pub(crate) struct ExtOpts {
     pub clear_env: bool,
     /// Search this instead of `PATH` (`command -p`).
     pub path: Option<Vec<u8>>,
-    /// `exec`: the child does not get `_` set to its path.
+    /// `exec`: the child does not get `_` set to its path; a shell psh runs keeps the
+    /// caller's `$$`.
     pub exec: bool,
+    /// `bash`/`sh` run in psh: a virtual process instead of a program (D1411).
+    pub shell: bool,
 }
 
 /// Starts an external command and waits for it, pumping its pipes to engine objects.
@@ -1350,7 +1353,9 @@ pub(crate) async fn run_external_with(
     }
     let name = argv[0].clone();
     let shown = String::from_utf8_lossy(&name).into_owned();
-    let program = if name.contains(&b'/') {
+    let program = if opts.shell {
+        name.clone()
+    } else if name.contains(&b'/') {
         vp.abs_path(&name)
     } else {
         // `PATH=… cmd`: the command is looked up in that PATH, past the hash table and
@@ -1388,81 +1393,20 @@ pub(crate) async fn run_external_with(
         }
         vp.env(&extra)
     };
-    let mut fds = Vec::new();
-    let mut has = [false; 3];
-    let mut seen: Vec<(u32, &Fd)> = Vec::new();
-    for (n, fd) in vp.fds.iter() {
-        let child = match &**fd {
-            FdObj::File(f) => ChildFd::File(f.clone()),
-            _ if let Some((m, _)) = seen.iter().find(|(_, o)| Rc::ptr_eq(o, fd)) => {
-                ChildFd::Dup(*m)
-            }
-            // An OS pipe passed as it is when possible (D1068), else a pump.
-            FdObj::PipeRead(r) => match r.os_end(vp.host()) {
-                Some(f) => ChildFd::File(f),
-                None => ChildFd::Pipe { input: true },
-            },
-            FdObj::PipeWrite(w) => match w.os_end(vp.host()) {
-                Some(f) => ChildFd::File(f),
-                None => ChildFd::Pipe { input: false },
-            },
-        };
-        seen.push((n, fd));
-        if (n as usize) < 3 {
-            has[n as usize] = true;
-        }
-        fds.push((n, child));
-    }
-    for (n, h) in has.iter().enumerate() {
-        if !h {
-            fds.push((n as u32, ChildFd::Null));
-        }
-    }
-    // Kept for a script psh runs itself (D1300).
-    let script_argv = argv.clone();
-    let spec = SpawnSpec {
-        program,
-        argv,
-        env,
-        cwd: vp.cwd.clone(),
-        fds,
-        // `trap '' SIG` passes on to children (D1284); background jobs also ignore INT
-        // and QUIT, as bash's do without job control.
-        sig_ignore: (1..64)
-            .filter(|&sig| {
-                vp.signal_trap_ignored(sig)
-                    || (vp.job.is_some()
-                        && (sig == crate::host::SIGINT || sig == crate::host::SIGQUIT))
-            })
-            .collect(),
-        // `nohup` and `setsid` leave the shell's run (D1067), as do disowned jobs.
-        detach: matches!(
-            name.rsplit(|&b| b == b'/').next(),
-            Some(b"nohup" | b"setsid")
-        ) || vp.job.as_ref().is_some_and(|j| j.disowned.get()),
-        umask: vp.umask,
-        rlimits: vp.rlimits.clone(),
-    };
-    let program = spec.program.clone();
-    let spawned = match vp.host().spawn(spec) {
-        Ok(s) => s,
-        Err(e) if crate::host::RunInShell::is(&e) => {
-            return Box::pin(run_in_shell(vp, &program, script_argv, &shown)).await;
-        }
-        // Spawning a directory fails with EACCES; bash says what it is.
-        Err(_) if matches!(vp.host().stat(&program, true).await, Ok(m) if m.kind == crate::host::FileKind::Dir) =>
-        {
-            vp.error(&format!("{shown}: Is a directory")).await;
-            return Ok(126);
-        }
-        Err(e) => {
-            let status = if e.kind() == std::io::ErrorKind::NotFound {
-                127
-            } else {
-                126
-            };
-            vp.error(&format!("{shown}: {}", error_text(&e))).await;
-            return Ok(status);
+    // `trap '' SIG` passes on to children (D1284); background jobs also ignore INT and
+    // QUIT, as bash's do without job control.
+    let sig_ignore: Vec<i32> = (1..64)
+        .filter(|&sig| {
+            vp.signal_trap_ignored(sig)
+                || (vp.job.is_some() && (sig == crate::host::SIGINT || sig == crate::host::SIGQUIT))
+        })
+        .collect();
+    let spawned = if opts.shell {
+        crate::util::start_nested(vp, argv, &assigns, sig_ignore, opts.exec).await?
+    } else {
+        match spawn_program(vp, program, argv, env, sig_ignore, &name, &shown).await {
+            Ok(s) => s,
+            Err(r) => return r,
         }
     };
     let mut proc = ProcGuard {
@@ -1533,6 +1477,89 @@ pub(crate) async fn run_external_with(
     Ok(st.code())
 }
 
+/// Spawns a program through the host, its descriptors made `ChildFd`s. `Err` is the
+/// command's result when it does not start: an error status, or a script psh ran
+/// itself (D1300).
+async fn spawn_program(
+    vp: &mut Vp,
+    program: Vec<u8>,
+    argv: Vec<Vec<u8>>,
+    env: Vec<(Vec<u8>, Vec<u8>)>,
+    sig_ignore: Vec<i32>,
+    name: &[u8],
+    shown: &str,
+) -> Result<crate::host::Spawned, R> {
+    let mut fds = Vec::new();
+    let mut has = [false; 3];
+    let mut seen: Vec<(u32, &Fd)> = Vec::new();
+    for (n, fd) in vp.fds.iter() {
+        let child = match &**fd {
+            FdObj::File(f) => ChildFd::File(f.clone()),
+            _ if let Some((m, _)) = seen.iter().find(|(_, o)| Rc::ptr_eq(o, fd)) => {
+                ChildFd::Dup(*m)
+            }
+            // An OS pipe passed as it is when possible (D1068), else a pump.
+            FdObj::PipeRead(r) => match r.os_end(vp.host()) {
+                Some(f) => ChildFd::File(f),
+                None => ChildFd::Pipe { input: true },
+            },
+            FdObj::PipeWrite(w) => match w.os_end(vp.host()) {
+                Some(f) => ChildFd::File(f),
+                None => ChildFd::Pipe { input: false },
+            },
+        };
+        seen.push((n, fd));
+        if (n as usize) < 3 {
+            has[n as usize] = true;
+        }
+        fds.push((n, child));
+    }
+    for (n, h) in has.iter().enumerate() {
+        if !h {
+            fds.push((n as u32, ChildFd::Null));
+        }
+    }
+    // Kept for a script psh runs itself (D1300).
+    let script_argv = argv.clone();
+    let spec = SpawnSpec {
+        program,
+        argv,
+        env,
+        cwd: vp.cwd.clone(),
+        fds,
+        sig_ignore,
+        // `nohup` and `setsid` leave the shell's run (D1067), as do disowned jobs.
+        detach: matches!(
+            name.rsplit(|&b| b == b'/').next(),
+            Some(b"nohup" | b"setsid")
+        ) || vp.job.as_ref().is_some_and(|j| j.disowned.get()),
+        umask: vp.umask,
+        rlimits: vp.rlimits.clone(),
+    };
+    let program = spec.program.clone();
+    match vp.host().spawn(spec) {
+        Ok(s) => Ok(s),
+        Err(e) if crate::host::RunInShell::is(&e) => {
+            return Err(Box::pin(run_in_shell(vp, &program, script_argv, shown)).await);
+        }
+        // Spawning a directory fails with EACCES; bash says what it is.
+        Err(_) if matches!(vp.host().stat(&program, true).await, Ok(m) if m.kind == crate::host::FileKind::Dir) =>
+        {
+            vp.error(&format!("{shown}: Is a directory")).await;
+            return Err(Ok(126));
+        }
+        Err(e) => {
+            let status = if e.kind() == std::io::ErrorKind::NotFound {
+                127
+            } else {
+                126
+            };
+            vp.error(&format!("{shown}: {}", error_text(&e))).await;
+            return Err(Ok(status));
+        }
+    }
+}
+
 /// Runs a program file the host cannot start as a psh script (D1300), as bash runs a
 /// file `execve` rejects: in a subshell that starts afresh, as if a new shell ran the
 /// file (only exported variables, no functions, aliases, traps or options of ours), with
@@ -1592,7 +1619,7 @@ pub(crate) fn start_afresh(sub: &mut Vp) {
     sub.aliases = Default::default();
     sub.expand_aliases = false;
     sub.traps = Default::default();
-    sub.opts = Default::default();
+    sub.opts = crate::options::inherited(&sub.vars);
     crate::options::sync_vars(&mut sub.vars, &sub.opts);
     sub.no_errexit = false;
     sub.in_trap = None;

@@ -242,10 +242,12 @@ impl Shell {
             fg_signal: Cell::new(None),
             utilities: cfg.utilities.clone(),
             nested_shells: cfg.nested_shells,
+            nested: Default::default(),
             rng: Cell::new(0),
             seconds_base: Cell::new(cfg.host.now().as_nanos() as i128),
         });
         let (vars, foreign) = initial_vars(&*cfg.host, &cfg.env, &cfg.cwd);
+        let opts = options::inherited(&vars);
         let mut fds = FdTable::default();
         for (n, f) in [(0, cfg.stdin), (1, cfg.stdout), (2, cfg.stderr)] {
             if let Some(f) = f {
@@ -286,11 +288,12 @@ impl Shell {
             calls: Vec::new(),
             hash: Default::default(),
             disabled: Default::default(),
-            opts: options::Options::default(),
+            opts,
             no_errexit: false,
             traps: Rc::new(Default::default()),
             in_trap: None,
             top: true,
+            sigs: state::Sigs::Shell,
             xtrace_level: 1,
             umask: None,
             dirstack: Vec::new(),
@@ -444,11 +447,7 @@ type Env = Vec<(Vec<u8>, Vec<u8>)>;
 /// [`Shell::new`] sets up, and what a shell psh starts afresh gets from its exported
 /// variables (D1300, D1410). Names that are not shell names stay in the second list,
 /// passed on to externals unchanged.
-pub(crate) fn initial_vars(
-    host: &dyn Host,
-    env: &[(Vec<u8>, Vec<u8>)],
-    cwd: &[u8],
-) -> (Vars, Env) {
+pub(crate) fn initial_vars(host: &dyn Host, env: &[(Vec<u8>, Vec<u8>)], cwd: &[u8]) -> (Vars, Env) {
     let mut vars = Vars::default();
     let mut foreign = Vec::new();
     for (k, v) in env {

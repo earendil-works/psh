@@ -172,6 +172,11 @@ impl Sched {
         true
     }
 
+    /// Whether task `id` exists (not yet ended or dropped).
+    pub(crate) fn has_task(&self, id: usize) -> bool {
+        matches!(self.slots.borrow().get(id), Some(Some(_)))
+    }
+
     /// Starts a task and returns a handle to await its result. Dropping the handle
     /// detaches the task.
     pub(crate) fn spawn<T: 'static>(&self, fut: impl Future<Output = T> + 'static) -> Join<T> {

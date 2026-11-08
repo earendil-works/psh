@@ -414,19 +414,26 @@ pub(super) async fn exec_(vp: &mut Vp, args: &[Vec<u8>]) -> R {
     let Some(name) = rest.first() else {
         return Ok(0);
     };
+    if login {
+        let mut a0 = b"-".to_vec();
+        a0.extend_from_slice(opts.arg0.as_deref().unwrap_or(name));
+        opts.arg0 = Some(a0);
+    }
     // A utility runs in place of the shell: then the shell ends with its status.
     if let Some(e) = crate::util::lookup(vp, name).await {
-        let st = crate::util::run_exec(vp, e, rest.to_vec()).await?;
+        let mut argv = rest.to_vec();
+        // A shell psh runs (D1410) has `-a`'s name, and `-l`'s, as its `$0`.
+        if crate::util::is_nested_shell(e)
+            && let Some(a0) = opts.arg0
+        {
+            argv[0] = a0;
+        }
+        let st = crate::util::run_exec(vp, e, argv).await?;
         return Err(Unwind::Exit(st));
     }
     if !name.contains(&b'/') && hash::find(vp, name, None, false).await.is_none() {
         vp.error(&format!("exec: {}: not found", s(name))).await;
         return Err(Unwind::Exit(127));
-    }
-    if login {
-        let mut a0 = b"-".to_vec();
-        a0.extend_from_slice(opts.arg0.as_deref().unwrap_or(name));
-        opts.arg0 = Some(a0);
     }
     let st = exec::run_external_with(vp, rest.to_vec(), Vec::new(), opts).await?;
     Err(Unwind::Exit(st))

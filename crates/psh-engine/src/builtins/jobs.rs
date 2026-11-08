@@ -5,7 +5,7 @@ use std::rc::Rc;
 use crate::host::{SIGTERM, Signal, error_text};
 use crate::jobs::Job;
 use crate::signals;
-use crate::state::{R, Unwind, Vp};
+use crate::state::{R, Vp};
 
 use super::{out, s};
 
@@ -267,32 +267,18 @@ pub(super) async fn kill(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             status = 1;
             continue;
         };
-        // A shell psh started for `bash`/`sh` (D1410) has a `$$` of its own and no
-        // pending mask: the signal acts here, as the shell would take it (its trap, or
-        // the default action ends it). From a subshell of it, only that subshell ends.
-        if vp.shell_pid != vp.host().pid() && u32::try_from(pid).is_ok_and(|p| p == vp.shell_pid) {
-            match vp.traps.action(super::trap::TrapKey::Signal(sig)) {
-                Some(action) if action.is_empty() => {}
-                Some(action) => {
-                    let st = vp.status;
-                    super::trap::run_action(vp, &action, st).await?;
-                }
-                None if super::trap::terminates(sig) => return Err(Unwind::Exit(128 + sig)),
-                None => {}
-            }
-            continue;
-        }
         // The shell itself (`$$`, and its group with `0`): the signal goes to the
         // shell's pending mask, so traps run (D1284); with 0 the host signals the
         // rest of the group too, where it may.
-        let me = vp.host().pid();
+        // A shell psh runs for `bash`/`sh` has a `$$` and a mask of its own (D1411).
+        let me = vp.shell_pid;
         if pid == 0
             || u32::try_from(pid).is_ok_and(|p| p == me)
             || pid.checked_neg().and_then(|g| u32::try_from(g).ok()) == Some(me)
         {
             // `kill 0` and `kill -- -$$` (the shell's group) also reach the rest of
             // the group where the host may signal it.
-            vp.core.sched.raise(sig);
+            vp.sigs.raise(&vp.core, sig);
             if pid <= 0 {
                 let _ = vp.host().kill(pid, sig);
             }
@@ -306,6 +292,14 @@ pub(super) async fn kill(vp: &mut Vp, args: &[Vec<u8>]) -> R {
             && j.status().is_none()
         {
             j.signal(sig, &vp.core.sched);
+            continue;
+        }
+        // A shell psh runs for `bash`/`sh` that is no job of ours (D1411).
+        if let Some(shell) = u32::try_from(pid)
+            .ok()
+            .and_then(|p| vp.core.nested_shell(p))
+        {
+            shell.raise(sig);
             continue;
         }
         if let Err(e) = vp.host().kill(pid, sig) {

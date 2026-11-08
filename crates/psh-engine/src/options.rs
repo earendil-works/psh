@@ -317,6 +317,30 @@ pub(crate) fn sync(vp: &mut crate::state::Vp) {
 }
 
 /// Sets `SHELLOPTS` and `BASHOPTS` (readonly, as in bash) from the options.
+/// The options a new shell starts with: the defaults, plus the ones its environment's
+/// `SHELLOPTS` and `BASHOPTS` name, as bash takes them (an exported `SHELLOPTS` passes
+/// `set -x` on to the shells a script starts). POSIX mode stays off (D1280).
+pub(crate) fn inherited(vars: &Vars) -> Options {
+    let mut o = Options::default();
+    if let Some(list) = vars.value("SHELLOPTS") {
+        for name in list.split(|&b| b == b':') {
+            if let Some(opt) = by_name(name)
+                && name != b"posix"
+            {
+                o.set(opt, true);
+            }
+        }
+    }
+    if let Some(list) = vars.value("BASHOPTS") {
+        for name in list.split(|&b| b == b':') {
+            if let Some(i) = std::str::from_utf8(name).ok().and_then(shopt_index) {
+                o.set_shopt_at(i, true);
+            }
+        }
+    }
+    o
+}
+
 pub(crate) fn sync_vars(vars: &mut Vars, opts: &Options) {
     for (name, value) in [
         ("SHELLOPTS", opts.shellopts()),

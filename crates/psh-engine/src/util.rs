@@ -119,6 +119,13 @@ pub(crate) async fn lookup(vp: &Vp, name: &[u8]) -> Option<&'static UtilEntry> {
     Some(entry)
 }
 
+pub(crate) use nested::start as start_nested;
+
+/// Whether `entry` is the shell psh runs for `bash` and `sh` (D1410).
+pub(crate) fn is_nested_shell(entry: &UtilEntry) -> bool {
+    std::ptr::eq(entry, &nested::ENTRY)
+}
+
 /// Runs a utility with the prefix assignments of its command line in its environment.
 pub(crate) async fn run(
     vp: &mut Vp,
@@ -142,6 +149,15 @@ async fn run_with(
     assigns: Vec<(String, Vec<u8>)>,
     in_place: bool,
 ) -> R {
+    // A virtual process, started where externals start (D1411).
+    if is_nested_shell(entry) {
+        let opts = crate::exec::ExtOpts {
+            shell: true,
+            exec: in_place,
+            ..Default::default()
+        };
+        return crate::exec::run_external_with(vp, argv, assigns, opts).await;
+    }
     let env = vp.env(&assigns);
     let name = String::from_utf8_lossy(&argv[0]).into_owned();
     let mut ctx = UtilCtx {
@@ -151,25 +167,29 @@ async fn run_with(
         out: Vec::new(),
         write_error: None,
         zone: None,
-        in_place,
     };
     // A signal that ends the shell ends the utility, as it ends the wait for an
     // external (D1903). The vproc is the utility's now: watch with what it needs.
-    let watch = (ctx.vp.top && ctx.vp.in_trap.is_none())
-        .then(|| (ctx.vp.core.clone(), ctx.vp.traps.clone()));
+    let watch = (ctx.vp.top && ctx.vp.in_trap.is_none()).then(|| {
+        (
+            ctx.vp.core.clone(),
+            ctx.vp.sigs.clone(),
+            ctx.vp.traps.clone(),
+        )
+    });
     let status = {
         let mut fut = std::pin::pin!((entry.run)(&mut ctx, &argv));
         std::future::poll_fn(|cx| {
-            if let Some((core, traps)) = &watch
-                && let Some(sig) = crate::signals::breaking_in(core, traps, Gives::Fatal)
+            if let Some((core, sigs, traps)) = &watch
+                && let Some(sig) = crate::signals::breaking_in(core, sigs, traps, Gives::Fatal)
             {
                 return Poll::Ready(Err(sig));
             }
             match fut.as_mut().poll(cx) {
                 Poll::Ready(st) => Poll::Ready(Ok(st)),
                 Poll::Pending => {
-                    if let Some((core, _)) = &watch {
-                        core.sched.on_signal(cx.waker());
+                    if let Some((core, sigs, _)) = &watch {
+                        sigs.on_signal(core, cx.waker());
                     }
                     Poll::Pending
                 }
@@ -204,8 +224,6 @@ pub struct UtilCtx<'v> {
     write_error: Option<io::ErrorKind>,
     /// The time zone, once [`UtilCtx::load_zone`] ran (`Some(None)`: none readable).
     zone: Option<Option<crate::builtins::strftime::Zone>>,
-    /// Run by `exec`, in place of the shell.
-    in_place: bool,
 }
 
 /// How [`UtilCtx::spawn`] changes the environment of the command it runs.

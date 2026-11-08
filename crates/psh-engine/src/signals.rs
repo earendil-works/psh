@@ -141,18 +141,20 @@ pub(crate) fn breaking(vp: &crate::state::Vp, gives: Gives) -> Option<Signal> {
     if !vp.top || vp.in_trap.is_some() {
         return None;
     }
-    breaking_in(&vp.core, &vp.traps, gives)
+    breaking_in(&vp.core, &vp.sigs, &vp.traps, gives)
 }
 
 /// [`breaking`] for a wait that cannot borrow its vproc (an in-process utility holds
 /// it): the caller checked that the vproc takes signals.
 pub(crate) fn breaking_in(
     core: &crate::state::Core,
+    sigs: &crate::state::Sigs,
     traps: &crate::builtins::trap::Traps,
     gives: Gives,
 ) -> Option<Signal> {
     use crate::builtins::trap::{TrapKey, terminates};
-    let pending = core.sched.peek_signals();
+    let pending = sigs.peek(core);
+    let gives = if sigs.group() { Gives::Trapped } else { gives };
     (1..64).filter(|s| pending & (1u64 << s) != 0).find(|&sig| {
         match traps.action(TrapKey::Signal(sig)) {
             Some(a) if a.is_empty() => false,
@@ -177,7 +179,7 @@ pub(crate) async fn or_signal<F: std::future::Future>(
             std::task::Poll::Ready(v) => std::task::Poll::Ready(Ok(v)),
             std::task::Poll::Pending => {
                 if vp.top {
-                    vp.core.sched.on_signal(cx.waker());
+                    vp.sigs.on_signal(&vp.core, cx.waker());
                 }
                 std::task::Poll::Pending
             }

@@ -32,6 +32,8 @@ highlighting, without waiting for execution.
 - Validation: 33 psh-docs unit tests, eight editor regression tests, guide check
   (21 pages), site build and formatting pass. Headless Chrome checked the initial AST,
   tab switching, edited pipeline structure and parse errors using the real WASM parser.
+- Merged ddc417d1 through scripts/merge-to-main.sh: the full gate passed in 260 s,
+  including WASM and native Windows tests. Coordinator reviewed the guide and result.
 
 ## Follow-ups
 

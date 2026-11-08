@@ -80,3 +80,4 @@ Language areas (expansion, execution, shell builtins) are cut from the hit list 
 | 0034 | psh binary command line, --utils, merge lock | 4c364a1 (cli) |
 | 0036 | The guide as a static site (psh-docs build, live examples) | 3a964cba (coordinator) |
 | 0037 | Windows NUL artifact investigation and null-device aliases | 169bcb0e (coordinator) |
+| 0039 | Formatted AST tab in live documentation examples | ddc417d1 (coordinator) |

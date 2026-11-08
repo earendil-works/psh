@@ -115,6 +115,13 @@ Both parts
     `scripts/spec-linux --update` also wanted to move ulimit/pushd entries from the shared
     file to the macOS one, which would have broken the wasm leg; I left those as they
     were (unrelated to this issue).
+  - Windows ratchet: `oils/builtin-umask/10`, `/11` (no group/other bits) and
+    `oils/sh-options-bash/4` (`$SH` is `psh.exe`, the case's `sed 's/.*sh /sh /'` misses
+    it) left the shared file as passing on Linux and macOS, so they went into
+    `expected-failures.windows.txt`; `sh-options-bash/5` (needed bash) passes there now.
+    The process tests (`tests/process/unix.rs`, `standalone.rs`) start `/bin/sh` by path,
+    since they need a real process; `tests/cli.rs` `prefix_path_is_used_for_lookup` uses
+    `uname` instead of `sh`.
   - psh-spec: psh's side also maps a leading `bash:` to `<sh>` (a nested bash names
     itself `bash`, as the recorded one does).
   - New cases: `tests/agent/nested-shells.test.sh` (19 cases, goldens recorded); engine

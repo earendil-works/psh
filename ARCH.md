@@ -219,9 +219,12 @@ runtime in D005's sense: no runtime crate, no threads, the embedder steps and pa
   afresh (`exec::start_afresh`: variables rebuilt from the exported ones as `Shell::new`
   builds them, `SHLVL` one higher, no functions, aliases, traps or options beyond
   `SHELLOPTS`/`BASHOPTS`) and is a virtual process: an `ExtProc` over a task of its own,
-  started where programs are spawned, with a made-up `$$` and a pending-signal mask of
-  its own (`Vp::sigs`), so jobs, `kill`, `wait` and abandoning treat it as a program and
-  its traps run. Shebang scripts are not intercepted.
+  started where programs are spawned, with a job id for `$!` and a pending-signal mask
+  of its own (`Vp::sigs`), so jobs, `kill`, `wait` and abandoning treat it as a program
+  and its traps run. It has no `$$` (D1413): a script that reads `$$` or `BASHPID`
+  (`pidscan.rs` over its parsed tree) runs under the real program on `PATH` that is not
+  psh itself (`ShellConfig::own_program`); without one, reading them is an expansion
+  error, as is `BASHPID` in any subshell. Shebang scripts are not intercepted.
 - **Shell builtins** (`cd`, `export`, `set`, `trap`, `read`, `printf`, `test`, `kill`,
   `wait`, ...) are async functions on the calling vproc. Assignments in front of any
   builtin are temporary and exported (D1290). Job control is limited to `&`, `wait`,

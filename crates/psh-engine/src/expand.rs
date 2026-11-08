@@ -840,7 +840,10 @@ fn special(vp: &Vp, c: u8) -> Val {
     match c {
         b'?' => Val::Str(vp.status.to_string().into_bytes()),
         b'#' => Val::Str(vp.args.len().to_string().into_bytes()),
-        b'$' => Val::Str(vp.shell_pid.to_string().into_bytes()),
+        b'$' => match vp.shell_pid {
+            Some(pid) => Val::Str(pid.to_string().into_bytes()),
+            None => Val::Unset,
+        },
         b'!' => match &vp.last_bg {
             Some(job) => Val::Str(job.pid().to_string().into_bytes()),
             None => Val::Unset,
@@ -978,6 +981,9 @@ async fn param(
             }
         };
         return emit_val(vp, f, Val::List(items, star), quoted);
+    }
+    if matches!(p.name, ParamName::Special(b'$') | ParamName::Var) {
+        check_pid(vp, code.ast.text(p.name_span).as_bytes()).await?;
     }
     let mut val = match p.name {
         // `$LINENO`: the line of the command running (in a trap, the line it fired at).
@@ -1513,9 +1519,37 @@ async fn element(vp: &mut Vp, name: &str, sub: &[u8]) -> Result<Val, Unwind> {
     }
 }
 
+/// `$$` or `$BASHPID` where psh has no process id to give (D1413): a nested `bash`/`sh`
+/// (`$$`, `BASHPID`) or a subshell (`BASHPID`). An expansion error that ends the shell,
+/// as `${x:?}` does.
+async fn check_pid(vp: &Vp, name: &[u8]) -> Result<(), Unwind> {
+    let missing = match name {
+        b"$" => vp.shell_pid.is_none(),
+        b"BASHPID" => vp.bashpid.is_none(),
+        _ => false,
+    };
+    if !missing {
+        return Ok(());
+    }
+    vp.error(&pid_error(vp, name)).await;
+    Err(Unwind::Exit(expansion_exit_status(vp)))
+}
+
+/// The message for a process id psh cannot give (D1413).
+pub(crate) fn pid_error(vp: &Vp, name: &[u8]) -> String {
+    let what = if vp.shell_pid.is_none() {
+        "this shell"
+    } else {
+        "this subshell"
+    };
+    let name = if name == b"$" { "$$" } else { "BASHPID" };
+    format!("{name}: {what} runs inside psh and has no process id")
+}
+
 /// `${!name}`: the value of the variable (or `a[sub]`, `a[@]`, positional) named by
 /// `target`; `None` if it is not a valid name.
 async fn indirect(vp: &mut Vp, code: &Rc<Code>, target: &[u8]) -> Result<Option<Val>, Unwind> {
+    check_pid(vp, target).await?;
     if let Some(open) = target.iter().position(|&b| b == b'[')
         && target.ends_with(b"]")
         && is_name(&target[..open])

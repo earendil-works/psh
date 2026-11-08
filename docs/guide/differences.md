@@ -74,10 +74,11 @@ deep, fail with `expression recursion level exceeded`, where bash goes deeper.
 | Signal descriptions (`User defined signal 2`) | the system's texts | glibc's texts | one wording everywhere |
 | `INT`, `TERM`, `HUP` sent to the standalone `psh` | waits for the foreground program; after `INT` it goes on if the program did not die of it | stops the foreground program and every program of the run at once, then dies by the signal | an agent host that sends `TERM` or `INT` wants the run to stop now, not when the program finishes |
 | A `( … )` subshell when the shell is killed | the subshell's process may run on | stops with the shell | a subshell is part of the shell, not a process |
-| `BASHPID` in a subshell | the subshell's process id | a made-up id (`100001`) | subshells are not processes |
 | `bash` and `sh` in a command (`bash -c '…'`, `sh script.sh`) | the program `PATH` finds | psh itself, as a new shell; `sh` with bash's rules; a path such as `/bin/bash` still runs the program | the same shell and utilities everywhere, also on Windows and in the browser, and a cancel reaches it |
-| `$$` of such a `bash` or `sh` | its process id | an id above every real process id; `kill`, `wait` and `jobs` know it, but `/proc/$$` and `ps -p $$` find nothing | it runs inside psh, not as a process |
-| `SHLVL` and `$$` when bash runs the last command of `-c`, `( … )` or `$( … )` in place | the nested shell keeps them | the nested shell counts one more level and has an id of its own; `exec bash` keeps them in both | psh does not imitate that optimization |
+| `$$` and `BASHPID` in such a `bash` or `sh` | its process id | a script that reads them runs under the real program `PATH` finds instead; without one (Windows, the browser), or when the use only shows at run time (`eval`, `source`), reading them is an error that ends that shell: `$$: this shell runs inside psh and has no process id` | it runs inside psh and has no process id; a made-up one would reach `/proc/$$`, `ps -p $$` or a pid file and silently name no process |
+| `BASHPID` in a subshell (`( … )`, `$( … )`, a pipeline stage) | the subshell's process id | the same error; `$$` and the shell's own `BASHPID` are real | a subshell is not a process |
+| `$PPID` in such a `bash` or `sh` | its parent's process id | the caller's `$$` | the caller is its parent |
+| `SHLVL` when bash runs the last command of `-c`, `( … )` or `$( … )` in place | the nested shell keeps it | the nested shell counts one more level; `exec bash` keeps it in both | psh does not imitate that optimization |
 | `$!` of a background job that is more than one program, or a psh utility | a process id | a job id above every real process id (`4294306`); the shell's `kill`, `wait` and `jobs` know it, other programs cannot signal it | such a job has no operating system process |
 | Background programs when an embedded run ends | they outlive the shell | the host ends them with the run, unless they were detached (`nohup`, `setsid`, `disown`) | an embedder must be able to end a run completely; the standalone `psh` leaves them, as bash does |
 | `ulimit` | limits bash's own process and, through it, everything it starts | limits only the programs psh starts; redirections, builtins and utilities inside psh are not limited | an embedded shell must not lower the limits of the program that embeds it |
@@ -89,7 +90,7 @@ $ psh -c 'kill -l | head -2; kill -l USR1; sh -c "kill -USR2 \$\$"; echo $?'
  1) SIGHUP	 2) SIGINT	 3) SIGQUIT	 4) SIGILL	 5) SIGTRAP
  6) SIGABRT	 7) SIGBUS	 8) SIGFPE	 9) SIGKILL	10) SIGUSR1
 10
-psh: line 1: 100003 User defined signal 2      sh -c "kill -USR2 \$\$"
+psh: line 1: 95087 User defined signal 2      sh -c "kill -USR2 \$\$"
 140
 ```
 

@@ -821,6 +821,28 @@ fn nested_shells() {
     assert_eq!(String::from_utf8_lossy(&out.stdout), "127 unset\n");
 }
 
+/// A nested shell has no process id (D1413): with a real `bash` on `PATH`, a script that
+/// reads `$$` runs under it; without one, reading `$$` or `BASHPID` there, or `BASHPID`
+/// in a subshell, is an error that ends that shell.
+#[test]
+fn nested_shells_have_no_pid() {
+    let out = psh(&[
+        "-c",
+        "PATH=/nonexistent; bash -c 'echo \"pid $$\"; echo no'; echo \"status $?\"; \
+         (echo $BASHPID; echo no); echo \"status $?\"; [ $BASHPID = $$ ] && echo same",
+    ]);
+    assert_eq!(out.stdout, "status 127\nstatus 1\nsame\n");
+    assert_eq!(
+        out.stderr,
+        "bash: line 1: $$: this shell runs inside psh and has no process id\n\
+         psh: line 1: BASHPID: this subshell runs inside psh and has no process id\n"
+    );
+    if cfg!(unix) && std::path::Path::new("/bin/sh").exists() {
+        let out = psh(&["-c", "sh -c 'kill -0 $$ && echo live'; sh -c 'echo none'"]);
+        assert_eq!(out.stdout, "live\nnone\n", "{}", out.stderr);
+    }
+}
+
 /// A nested shell abandoned by `timeout` gets TERM, as a program's process group would:
 /// what it waits for ends and its trap runs.
 #[test]

@@ -166,5 +166,6 @@ oils/var-sub-quote/25
 oils/vars-bash/0
 oils/vars-special/3
 oils/vars-special/4
+oils/vars-special/13: BASHPID in a subshell is an error: a subshell runs inside psh and has no process id (D1413)
 oils/vars-special/15
 oils/xtrace/2

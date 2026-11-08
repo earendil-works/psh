@@ -126,6 +126,17 @@ fn shell_config() -> ShellConfig {
         let (_, v) = cfg.env.remove(i);
         cfg.nested_shells = v.is_empty();
     }
+    // A nested `bash` that runs the real program never runs psh itself (D1413).
+    cfg.own_program = std::env::current_exe().ok().map(|p| {
+        let b = os_bytes(p.into_os_string());
+        if cfg!(windows) {
+            b.into_iter()
+                .map(|c| if c == b'\\' { b'/' } else { c })
+                .collect()
+        } else {
+            b
+        }
+    });
     cfg.cwd = std::env::current_dir()
         .map(|p| os_bytes(p.into_os_string()))
         .unwrap_or_else(|_| b"/".to_vec());

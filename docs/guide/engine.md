@@ -87,8 +87,9 @@ in about 0.2 seconds, start-up and parsing included.
 bash forks for a subshell, each pipeline stage, `$(…)`, `<(…)` and a `&` job. psh
 runs each as a task that owns a copy of its parent's state: variables, functions,
 options, traps, positional parameters, the working directory, the descriptor table and
-`$?`. What the copy changes stays in it, and each one has a process id of its own,
-larger than any real one, which `$BASHPID`, `$!`, `wait` and `kill` understand:
+`$?`. What the copy changes stays in it. A `&` job has an id of its own, larger than
+any real process id, which `$!`, `wait` and `kill` understand; a subshell has no
+process id, so `$BASHPID` in one is an error:
 
 ```sh
 $ psh -c 'x=1; { x=2; echo "in stage: $x"; } | cat; echo "after: $x"'
@@ -198,10 +199,12 @@ A command named `bash` or `sh`, without a slash, runs in psh as a new shell, als
 engine without utilities and in the browser, where no bash exists. It starts afresh as a
 new bash process would: its variables are built from the exported ones (`SHLVL` one
 higher), with no functions, aliases, traps or options of the caller. It is a virtual
-process with a task of its own: it has a `$$` of its own, `$!` of `bash -c '…' &` is
-that id, and `kill`, `wait`, `timeout` and a cancel reach it as they reach a program; a
-signal sent to it runs its trap. `ShellConfig::nested_shells = false` leaves both names
-to `PATH`.
+process with a task of its own: `$!` of `bash -c '…' &` names it, and `kill`, `wait`,
+`timeout` and a cancel reach it as they reach a program; a signal sent to it runs its
+trap. It has no process id: a script that reads `$$` or `BASHPID` runs under the real
+program on `PATH` (never psh itself, `ShellConfig::own_program`), and without one
+reading them is an error. `ShellConfig::nested_shells = false` leaves both names to
+`PATH`.
 
 ## Errors that end the shell, and errors that abandon a line
 

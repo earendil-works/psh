@@ -55,11 +55,15 @@ pub(crate) fn is_shell(vp: &Vp, name: &[u8]) -> bool {
         && (matches!(name, b"bash" | b"sh") || (cfg!(windows) && WINDOWS_PATHS.contains(&name)))
 }
 
-/// What a shell `exec` started keeps of the one it replaces.
+/// What a nested shell takes from the shell that starts it.
 struct Caller {
-    shell_pid: u32,
-    bashpid: u32,
+    /// Its `$$`: the nested shell's `$PPID`.
+    shell_pid: Option<u32>,
+    /// Its `$BASHPID`: `exec bash` replaces that process, keeping its id as `$$`.
+    bashpid: Option<u32>,
+    /// Its `$PPID`, for `exec bash`.
     ppid: Option<Vec<u8>>,
+    in_place: bool,
 }
 
 /// Starts `argv` (`bash …`) as a virtual process: a subshell of `vp` with the prefix
@@ -88,16 +92,14 @@ pub(crate) async fn start(
     sub.top = true;
     let sigs = Rc::new(NestedSigs::default());
     sub.sigs = Sigs::Nested(sigs.clone());
-    let caller = in_place.then(|| Caller {
+    let caller = Caller {
         shell_pid: vp.shell_pid,
         bashpid: vp.bashpid,
         ppid: vp.var("PPID").map(<[u8]>::to_vec),
-    });
-    let pid = if in_place { vp.shell_pid } else { sub.bashpid };
-    vp.core
-        .nested
-        .borrow_mut()
-        .push((pid, Rc::downgrade(&sigs)));
+        in_place,
+    };
+    // Its job id for `$!`, `kill` and `wait`; never its `$$` (D1413).
+    let pid = vp.core.next_job_id();
     let watch = sigs.clone();
     let (id, join) = vp.core.sched.spawn_with_id(async move {
         let status = shell(sub, argv, ignore, caller).await;
@@ -122,12 +124,7 @@ pub(crate) async fn start(
 }
 
 /// The shell's task: its command line, then its script.
-async fn shell(
-    mut sub: Vp,
-    argv: Vec<Vec<u8>>,
-    ignore: Vec<Signal>,
-    caller: Option<Caller>,
-) -> i32 {
+async fn shell(mut sub: Vp, argv: Vec<Vec<u8>>, ignore: Vec<Signal>, caller: Caller) -> i32 {
     let (source, arg0, args, options, dash_c) = match parse_args(&argv[1..]) {
         Ok(Invocation::Command {
             source,
@@ -163,20 +160,36 @@ async fn shell(
         Ok(Invocation::Help) => return fall_through(&mut sub, argv, "--help: not supported").await,
         Err(msg) => return fall_through(&mut sub, argv, &msg).await,
     };
-    if let Some(c) = &caller {
-        // `exec bash`: the same process goes on.
-        sub.shell_pid = c.shell_pid;
-        sub.bashpid = c.bashpid;
+    // No process id to give (D1413): a script that reads one runs under the real
+    // program, if there is one; else reading it fails.
+    if crate::pidscan::uses_pid(&source)
+        && let Some(status) = real_program(&mut sub, &argv).await
+    {
+        return status;
     }
     let shlvl = sub.var("SHLVL").map(<[u8]>::to_vec);
     crate::exec::start_afresh(&mut sub);
-    if let Some(c) = caller {
-        // bash lowers `SHLVL` before it execs; the new shell raises it again.
-        for (name, value) in [("PPID", c.ppid), ("SHLVL", shlvl)] {
-            if let (Some(value), Some(var)) = (value, sub.vars.get_mut(name)) {
-                var.value = crate::vars::Value::Str(value);
-            }
+    if caller.in_place {
+        // `exec bash`: the process it replaces goes on, and its id is the new `$$`;
+        // bash lowers `SHLVL` before it execs, the new shell raises it again.
+        // From a subshell, the process it replaces is the shell's child.
+        let ppid = match caller.bashpid {
+            Some(_) => caller.ppid,
+            None => caller.shell_pid.map(|p| p.to_string().into_bytes()),
+        };
+        sub.shell_pid = caller.bashpid;
+        sub.bashpid = caller.bashpid;
+        set_ppid(&mut sub, ppid);
+        if let (Some(value), Some(var)) = (shlvl, sub.vars.get_mut("SHLVL")) {
+            var.value = crate::vars::Value::Str(value);
         }
+    } else {
+        sub.shell_pid = None;
+        sub.bashpid = None;
+        set_ppid(
+            &mut sub,
+            caller.shell_pid.map(|p| p.to_string().into_bytes()),
+        );
     }
     // Signals ignored when a shell starts stay ignored (bash).
     if !ignore.is_empty() {
@@ -200,23 +213,85 @@ async fn shell(
     status
 }
 
-/// An option psh lacks (or a script on stdin, for now): the real program from `PATH`
-/// runs, else the shell fails with status 2 naming psh. A `bash` on `PATH` that is psh
-/// itself runs as a standalone psh and fails the same way.
-async fn fall_through(sub: &mut Vp, argv: Vec<Vec<u8>>, why: &str) -> i32 {
-    let name = String::from_utf8_lossy(&argv[0]).into_owned();
-    // Searched in a sandbox too: its host may have a `bash`, and a miss is recorded.
-    if crate::builtins::hash::search(sub, &argv[0], None)
-        .await
-        .is_some()
-    {
-        let r = crate::exec::run_external(sub, argv, Vec::new()).await;
-        let last = sub.status;
-        return r.unwrap_or_else(|u| u.status(last));
+/// `$PPID`, a readonly integer; unset when there is no such process.
+fn set_ppid(sub: &mut Vp, value: Option<Vec<u8>>) {
+    match value {
+        Some(v) => {
+            let ppid = sub.vars.entry("PPID");
+            ppid.set(v);
+            ppid.integer = true;
+            ppid.readonly = true;
+        }
+        None => {
+            sub.vars.remove("PPID");
+        }
     }
+}
+
+/// An option psh lacks (or a script on stdin, for now): the real program from `PATH`
+/// runs, else the shell fails with status 2 naming psh.
+async fn fall_through(sub: &mut Vp, argv: Vec<Vec<u8>>, why: &str) -> i32 {
+    if let Some(status) = real_program(sub, &argv).await {
+        return status;
+    }
+    let name = String::from_utf8_lossy(&argv[0]).into_owned();
     let text = format!("{name}: {why} (psh built-in {name})\n");
     sub.error_raw(text.as_bytes()).await;
     2
+}
+
+/// Runs the first program named `argv[0]` in `PATH` that is not psh itself (D1413):
+/// its status, or `None` when there is none. Searched in a sandbox too: its host may
+/// have a `bash`, and a miss is recorded. `$0` stays the name as written.
+async fn real_program(sub: &mut Vp, argv: &[Vec<u8>]) -> Option<i32> {
+    let name = &argv[0];
+    let program = if name.contains(&b'/') {
+        // `/bin/bash` on Windows, which does not exist there.
+        crate::builtins::hash::search(sub, name, None).await?
+    } else {
+        let path = sub
+            .var("PATH")
+            .map(<[u8]>::to_vec)
+            .unwrap_or_else(|| crate::exec::DEFAULT_PATH.to_vec());
+        let own = match sub.core.own_program.clone() {
+            Some(p) => Some(sub.host().canonicalize(&p).await.unwrap_or(p)),
+            None => None,
+        };
+        let mut found = None;
+        for dir in sub.host().path_entries(&path) {
+            let Some(p) = crate::builtins::hash::search(sub, name, Some(&dir)).await else {
+                continue;
+            };
+            let p = sub.abs_path(&p);
+            if let Some(own) = &own
+                && sub
+                    .host()
+                    .canonicalize(&p)
+                    .await
+                    .unwrap_or_else(|_| p.clone())
+                    == *own
+            {
+                continue;
+            }
+            found = Some(p);
+            break;
+        }
+        found?
+    };
+    let mut argv = argv.to_vec();
+    argv[0] = program;
+    let opts = crate::exec::ExtOpts {
+        arg0: Some(name.clone()),
+        ..Default::default()
+    };
+    let r = crate::exec::run_external_with(sub, argv, Vec::new(), opts).await;
+    // A program a signal ended: so did this shell, for the caller's report (D1303).
+    if let (Some((sig, pid)), Sigs::Nested(n)) = (sub.core.fg_signal.take(), &sub.sigs) {
+        n.died_of.set(Some(sig));
+        n.real_pid.set(Some(pid));
+    }
+    let last = sub.status;
+    Some(r.unwrap_or_else(|u| u.status(last)))
 }
 
 /// The script `bash FILE` runs: `FILE` from the cwd, else (no slash) from a directory
@@ -334,7 +409,7 @@ impl ExtProc for NestedProc {
     }
 
     fn pid(&self) -> Option<u32> {
-        Some(self.pid)
+        Some(self.sigs.real_pid.get().unwrap_or(self.pid))
     }
 }
 
@@ -428,14 +503,81 @@ mod tests {
             "bash -c 'echo \"$SHLVL $BASH_SUBSHELL $PPID [$IFS]\"'",
             "2 0 4242 [ \t\n]\n",
         );
-        check(
-            "bash -c '[ $$ != 4242 ] && [ $$ = $BASHPID ] && echo own'",
-            "own\n",
-        );
         check("export SHELLOPTS; set -u; bash -c 'echo $-'", "huBc\n");
         // `exec`: the same process goes on.
         check("(exec bash -c 'echo \"$SHLVL $PPID\"')", "1 4242\n");
         check("exec -a me bash -c 'echo $0'", "me\n");
+    }
+
+    /// Without a real `bash`, `$$` and `BASHPID` in a nested shell end it as `${x:?}`
+    /// would; `BASHPID` in a subshell too; the shell's own stay (D1413).
+    #[test]
+    fn no_process_id() {
+        let o = run("bash -c 'echo $$; echo no'; echo $?; sh -c 'echo ${#BASHPID}'; echo $?");
+        assert_eq!(o.stdout, "127\n127\n");
+        assert_eq!(
+            o.stderr,
+            "bash: line 1: $$: this shell runs inside psh and has no process id\n\
+             sh: line 1: BASHPID: this shell runs inside psh and has no process id\n"
+        );
+        // Only when it is read: at run time, past the scan.
+        check(
+            "bash -c 'echo ok; x=$; eval \"echo \\$$x\"; echo no'",
+            "ok\n",
+        );
+        check("bash -c 'echo $PPID'", "4242\n");
+        check("exec bash -c 'echo $$ $BASHPID'", "4242 4242\n");
+        check("echo $$ $BASHPID; (echo $$)", "4242 4242\n4242\n");
+        let o = run("(echo $BASHPID; echo no); echo $?; echo $(( BASHPID ))");
+        assert_eq!(o.stdout, "1\n4242\n");
+        assert_eq!(
+            o.stderr,
+            "psh: line 1: BASHPID: this subshell runs inside psh and has no process id\n"
+        );
+    }
+
+    /// A script that reads `$$` or `BASHPID` runs under the real program (not psh
+    /// itself); one that does not stays in psh.
+    #[test]
+    fn pid_uses_run_the_real_program() {
+        let real = |h: &TestHost| {
+            h.add_command("bash", |p| {
+                Box::pin(async move {
+                    let mut line = b"real".to_vec();
+                    for a in &p.argv {
+                        line.push(b' ');
+                        line.extend_from_slice(a);
+                    }
+                    line.push(b'\n');
+                    let _ = p.write(&line).await;
+                    0
+                })
+            });
+        };
+        let o = run_setup(
+            "bash -c 'echo $$'; bash -c 'bash -c \"echo \\$BASHPID\"'; bash -c 'echo in-psh'",
+            real,
+        );
+        assert_eq!(
+            o.stdout,
+            "real bash -c echo $$\nreal bash -c bash -c \"echo \\$BASHPID\"\nin-psh\n"
+        );
+        let o = run_setup("printf 'echo $$\\n' > s.sh; bash s.sh", real);
+        assert_eq!(o.stdout, "real bash s.sh\n");
+        // psh itself is never the real program.
+        let host = Rc::new(TestHost::new());
+        real(&host);
+        let mut cfg = host.config();
+        cfg.own_program = Some(b"/bin/bash".to_vec());
+        let mut shell = Shell::new(cfg);
+        shell.start(Script::command("bash -c 'echo $$'; echo $?"));
+        let status = loop {
+            if let Step::Done(s) = shell.step(7) {
+                break s;
+            }
+        };
+        assert_eq!(status, 0);
+        assert_eq!(host.stdout(), b"127\n");
     }
 
     #[test]
@@ -520,17 +662,16 @@ mod tests {
              while [ ! -e r ]; do :; done; kill $!; wait $!; echo $?",
             "got\n3\n",
         );
-        // By its `$$` from elsewhere, and from inside.
+        // A signal it traps leaves it running.
         check(
-            "bash -c 'echo $$ > p; trap \"echo usr1\" USR1; while [ ! -e go ]; do :; done' & \
-             while [ ! -s p ]; do :; done; kill -USR1 $(cat p); \
+            "bash -c 'trap \"echo usr1\" USR1; echo r > r2; while [ ! -e go ]; do :; done' & \
+             while [ ! -e r2 ]; do :; done; kill -USR1 $!; \
              while [ ! -e go ]; do :> go; done; wait; echo end",
             "usr1\nend\n",
         );
-        let o = run("bash -c 'kill $$; echo no'; echo $?");
-        assert_eq!(o.stdout, "143\n");
+        // `kill 0` from inside reaches its own trap.
         check(
-            "bash -c 'trap \"echo t\" TERM; kill $$; echo after'",
+            "bash -c 'trap \"echo t\" TERM; kill -TERM 0; echo after'",
             "t\nafter\n",
         );
     }

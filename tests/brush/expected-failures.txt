@@ -305,7 +305,9 @@ brush/compat/signals/29
 brush/compat/signals/33
 brush/compat/signals/34
 brush/compat/signals/35
+brush/compat/signals/38: BASHPID in a subshell is an error: a subshell runs inside psh and has no process id (D1413)
 brush/compat/signals/40
+brush/compat/signals/42: BASHPID in a subshell is an error: a subshell runs inside psh and has no process id (D1413)
 brush/compat/signals/44
 brush/compat/signals/45
 brush/compat/signals/46

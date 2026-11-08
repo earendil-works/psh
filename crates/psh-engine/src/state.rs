@@ -33,8 +33,9 @@ pub(crate) struct Core {
     pub utilities: crate::util::UtilPolicy,
     /// `bash` and `sh` run in psh (D1410).
     pub nested_shells: bool,
-    /// The shells psh runs for `bash`/`sh` by their `$$`, for `kill` (D1411).
-    pub nested: RefCell<Vec<(u32, std::rc::Weak<NestedSigs>)>>,
+    /// The program psh runs in, if any: never the real `bash` a nested one falls
+    /// through to (D1413).
+    pub own_program: Option<Vec<u8>>,
     /// `$RANDOM`'s state (shared by subshells, which bash reseeds; close enough).
     pub rng: Cell<u64>,
     /// `$SECONDS` counts from this time: nanoseconds since the epoch; may be before it (`SECONDS=100` on a host whose
@@ -61,6 +62,9 @@ pub(crate) struct NestedSigs {
     waiters: RefCell<Vec<std::task::Waker>>,
     /// The signal whose default action ended the shell.
     pub died_of: Cell<Option<i32>>,
+    /// The pid of the real program it ran instead, once a signal ended that (D1413):
+    /// what the caller's report names.
+    pub real_pid: Cell<Option<u32>>,
     /// It was abandoned: the TERM went to its process group, so the program it waits
     /// for got it too and its waits give way to a trapped signal as well.
     pub group: Cell<bool>,
@@ -129,15 +133,6 @@ impl Sigs {
 }
 
 impl Core {
-    /// The shell psh runs for `bash`/`sh` whose `$$` is `pid`, while it runs (D1411).
-    pub(crate) fn nested_shell(&self, pid: u32) -> Option<Rc<NestedSigs>> {
-        let mut list = self.nested.borrow_mut();
-        list.retain(|(_, w)| w.strong_count() > 0);
-        list.iter()
-            .find(|(p, _)| *p == pid)
-            .and_then(|(_, w)| w.upgrade())
-    }
-
     pub(crate) fn next_job_id(&self) -> u32 {
         self.jobs.set(self.jobs.get() + 1);
         // Looks like a pid, cannot be one of ours.
@@ -297,10 +292,11 @@ pub(crate) struct Vp {
     pub last_args: Vec<Vec<u8>>,
     /// `$BASH_SUBSHELL`
     pub subshell_level: u32,
-    /// `$BASHPID`: the shell's pid, a made-up one in subshells (vprocs have none).
-    pub bashpid: u32,
-    /// `$$`: the host's pid, or a made-up one in a shell psh started afresh (D1410).
-    pub shell_pid: u32,
+    /// `$BASHPID`: the shell's pid; `None` in a subshell or a nested `bash`, which are
+    /// no processes: reading it there is an error (D1413).
+    pub bashpid: Option<u32>,
+    /// `$$`: the host's pid; `None` in a nested `bash`/`sh`, which has none (D1413).
+    pub shell_pid: Option<u32>,
     /// The script's own arguments, the bottom of `BASH_ARGV`.
     pub script_args: Vec<Vec<u8>>,
     /// `alias` definitions; a subshell's own (bash keeps them per process).
@@ -394,7 +390,7 @@ impl Vp {
         sub.jobs = Default::default();
         sub.subshell_level += 1;
         sub.stage_subshell = false;
-        sub.bashpid = self.core.next_job_id();
+        sub.bashpid = None;
         sub
     }
 
@@ -464,7 +460,7 @@ impl Vp {
             }
             Dynamic::BashMonoseconds => now.as_secs().to_string(),
             Dynamic::Lineno => self.line.to_string(),
-            Dynamic::BashPid => self.bashpid.to_string(),
+            Dynamic::BashPid => self.bashpid.map(|p| p.to_string()).unwrap_or_default(),
             Dynamic::BashSubshell => self.subshell_level.to_string(),
             Dynamic::Dirstack => {
                 let mut m = std::collections::BTreeMap::new();

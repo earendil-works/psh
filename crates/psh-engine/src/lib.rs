@@ -36,6 +36,7 @@ pub mod invocation;
 mod jobs;
 mod options;
 mod pattern;
+mod pidscan;
 mod pipe;
 mod sched;
 mod signals;
@@ -102,6 +103,9 @@ pub struct ShellConfig {
     /// A command named `bash` or `sh` runs in psh, as a new shell (D1410); `false`
     /// sends both names to `PATH` again. On by default.
     pub nested_shells: bool,
+    /// The program this shell runs in (the `psh` binary), if any: a nested `bash` never
+    /// falls through to it, should it be installed as `bash` (D1413).
+    pub own_program: Option<Vec<u8>>,
 }
 
 impl ShellConfig {
@@ -127,6 +131,7 @@ impl ShellConfig {
             exit_grace: None,
             utilities: util::UtilPolicy::default(),
             nested_shells: true,
+            own_program: None,
         }
     }
 }
@@ -242,7 +247,7 @@ impl Shell {
             fg_signal: Cell::new(None),
             utilities: cfg.utilities.clone(),
             nested_shells: cfg.nested_shells,
-            nested: Default::default(),
+            own_program: cfg.own_program.clone(),
             rng: Cell::new(0),
             seconds_base: Cell::new(cfg.host.now().as_nanos() as i128),
         });
@@ -280,8 +285,8 @@ impl Shell {
             stage_subshell: false,
             last_args: Vec::new(),
             subshell_level: 0,
-            bashpid: cfg.host.pid(),
-            shell_pid: cfg.host.pid(),
+            bashpid: Some(cfg.host.pid()),
+            shell_pid: Some(cfg.host.pid()),
             script_args: Vec::new(),
             aliases: psh_syntax::Aliases::new(),
             expand_aliases: false,

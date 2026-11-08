@@ -273,8 +273,8 @@ pub(super) async fn kill(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         // A shell psh runs for `bash`/`sh` has a `$$` and a mask of its own (D1411).
         let me = vp.shell_pid;
         if pid == 0
-            || u32::try_from(pid).is_ok_and(|p| p == me)
-            || pid.checked_neg().and_then(|g| u32::try_from(g).ok()) == Some(me)
+            || u32::try_from(pid).ok() == me
+            || (me.is_some() && pid.checked_neg().and_then(|g| u32::try_from(g).ok()) == me)
         {
             // `kill 0` and `kill -- -$$` (the shell's group) also reach the rest of
             // the group where the host may signal it.
@@ -298,14 +298,6 @@ pub(super) async fn kill(vp: &mut Vp, args: &[Vec<u8>]) -> R {
         // its mask, as `kill $$` there; never the process an embedder runs psh in.
         if u32::try_from(pid).is_ok_and(|p| p == vp.host().pid()) {
             crate::state::Sigs::Shell.raise(&vp.core, sig);
-            continue;
-        }
-        // A shell psh runs for `bash`/`sh` that is no job of ours (D1411).
-        if let Some(shell) = u32::try_from(pid)
-            .ok()
-            .and_then(|p| vp.core.nested_shell(p))
-        {
-            shell.raise(sig);
             continue;
         }
         if let Err(e) = vp.host().kill(pid, sig) {

@@ -52,7 +52,6 @@ bash -c 'echo $PPID' > ppid.txt
 [ "$(cat ppid.txt)" = "$$" ] && echo "PPID is the caller's \$\$"
 bash -c 'echo $$' > pid.txt
 [ "$(cat pid.txt)" != "$$" ] && echo "a pid of its own"
-bash -c '[ "$$" = "$BASHPID" ] && echo "BASHPID is \$\$"'
 rm -f lvl.txt ppid.txt pid.txt
 
 #### nested bash -c inside bash -c
@@ -192,3 +191,10 @@ echo "status=$?"
 #### options psh lacks run the real bash
 bash --rcfile /dev/null -c 'echo rcfile'
 echo "status=$?"
+
+#### a script that reads $$ runs under the real program
+bash -c 'kill -0 $$ && echo "bash: a live process"'
+sh -c 'ps -p $$ >/dev/null && echo "sh: ps finds it"'
+bash -c 'echo $$ > pid.txt; bash -c "echo \$PPID" > ppid.txt'
+[ "$(cat pid.txt)" = "$(cat ppid.txt)" ] && echo "the inner PPID is the outer \$\$"
+rm pid.txt ppid.txt

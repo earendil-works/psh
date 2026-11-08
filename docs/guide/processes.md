@@ -174,10 +174,25 @@ x=plain; export y=exported
 bash -c 'echo "x=${x-unset} y=$y $0 $1"' name arg   # x=unset y=exported name arg
 ```
 
-It runs inside the shell but behaves as a process: it has a `$$` of its own (an id
-above every real process id), `$PPID` is the caller's `$$`, `$!` of `bash -c '…' &` is
-its `$$`, and `kill`, `wait` and `timeout` reach it. A signal sent to it runs its trap or
-ends it, as with a program; `timeout` and a cancel stop it and what it is running.
+It runs inside the shell but behaves as a process: `$!` of `bash -c '…' &` names it,
+`kill`, `wait` and `timeout` reach it, and a signal sent to it runs its trap or ends it,
+as with a program; `timeout` and a cancel stop it and what it is running. `$PPID` in it
+is the caller's `$$`.
+
+What it does not have is a process id. A script that reads `$$` or `BASHPID` (psh looks
+before it runs one, into `$(…)`, here-documents and literal `bash -c '…'` inside it)
+runs under the real program `PATH` finds instead, never under psh itself, so pid files,
+`kill -0 $$` and `/proc/$$` keep working:
+
+```sh
+bash -c 'echo $$ > app.pid; exec ./server'   # the real bash: app.pid names a process
+```
+
+Without a real `bash` (Windows, the browser), or when the use only shows at run time
+(`eval`, `source`), reading `$$` or `BASHPID` there is an error that ends that shell, as
+`${x:?}` does: `bash: line 1: $$: this shell runs inside psh and has no process id`.
+`BASHPID` in a subshell of any shell is the same error; the shell's own `$$` and
+`BASHPID` are real.
 
 What still runs the program: a path (`/bin/bash`, `./bash`, `/opt/homebrew/bin/bash`),
 `command -p bash`, a name bound with `hash -p`, an option psh lacks (`-i`, `--rcfile`,

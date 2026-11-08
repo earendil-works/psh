@@ -27,6 +27,9 @@ impl ArithEnv for Env<'_> {
             None => match self.vp.target(&name)? {
                 (n, Some(sub)) => self.vp.get_elem(&n, &sub),
                 (n, None) => {
+                    if n == "BASHPID" && self.vp.bashpid.is_none() {
+                        return Err(crate::expand::pid_error(self.vp, b"BASHPID"));
+                    }
                     self.vp.refresh_dynamic(&n);
                     Ok(self.vp.vars.value(&n).map(<[u8]>::to_vec))
                 }

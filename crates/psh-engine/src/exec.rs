@@ -1602,18 +1602,13 @@ async fn run_in_shell(vp: &mut Vp, program: &[u8], argv: Vec<Vec<u8>>, shown: &s
 /// (D1300, D1410; also `UtilCtx::spawn_shell`, D1191): its variables are built from
 /// the exported ones as [`Shell::new`](crate::Shell::new) builds them from its
 /// environment (`SHLVL` one higher, `IFS`, `PPID`, the dynamic ones), with no
-/// functions, aliases, traps or options of ours; `$$` and `$BASHPID` are a pid of its
-/// own and `$PPID` the caller's `$$`. Descriptors, cwd, umask and limits stay.
+/// functions, aliases, traps or options of ours. `$$` stays (a nested `bash` drops
+/// it, D1413). Descriptors, cwd, umask and limits stay.
 pub(crate) fn start_afresh(sub: &mut Vp) {
     let env = sub.env(&[]);
     let (vars, foreign) = crate::initial_vars(&*sub.core.host.clone(), &env, &sub.cwd);
     sub.vars = vars;
     sub.foreign_env = Rc::new(foreign);
-    let ppid = sub.vars.entry("PPID");
-    ppid.set(sub.shell_pid.to_string().into_bytes());
-    ppid.integer = true;
-    ppid.readonly = true;
-    sub.shell_pid = sub.bashpid;
     sub.subshell_level = 0;
     sub.funcs = Default::default();
     sub.aliases = Default::default();

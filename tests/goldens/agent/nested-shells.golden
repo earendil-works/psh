@@ -55,7 +55,6 @@ bash-n: 0
 |in a subshell: BASH_SUBSHELL=0
 |PPID is the caller's $$
 |a pid of its own
-|BASHPID is $$
 
 === 5: nested bash -c inside bash -c
 status: 0
@@ -251,3 +250,11 @@ bash-n: 0
 --- stdout
 |rcfile
 |status=0
+
+=== 19: a script that reads $$ runs under the real program
+status: 0
+bash-n: 0
+--- stdout
+|bash: a live process
+|sh: ps finds it
+|the inner PPID is the outer $$

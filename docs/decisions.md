@@ -2900,3 +2900,29 @@ have one), else `bash: WHY (psh built-in bash)` and status 2. `--login`/`-l` is 
 and reads nothing; `--version` prints `psh VERSION` (also `psh -e --version`). psh-spec
 normalizes a leading `bash:` on psh's side too: a nested bash names itself `bash` there
 as the recorded one does.
+
+## D1413: A nested `bash`/`sh` has no process id; scripts that read one run the real program
+date: 2026-11-08 · by: shells (owner's design) · issue: 0041
+Supersedes the `$$`/`BASHPID` part of D1411. A nested shell is no process, and a made-up
+`$$` reaches `/proc/$$`, `ps -p $$`, pid files and `kill` from other programs, naming no
+process. So before a nested shell runs its `-c` string or FILE, `pidscan.rs` scans the
+parsed script (every command of every chunk, which includes `$(…)`, `<(…)` and here-doc
+bodies; backquoted text and literal `bash -c '…'` scripts inside it are parsed and
+scanned too) for a parameter expansion of `$` or of `BASHPID`, and a literal `BASHPID`
+anywhere (arithmetic names it without `$`; a false hit only costs the real program). If
+it finds one, the first program of that name on `PATH` that is not psh itself
+(`ShellConfig::own_program`, set by the psh binary from `current_exe`) runs, as for an
+unsupported option; a signal that ends it ends the nested shell (reported with its pid).
+Without such a program (Windows, wasm, a sandbox), or when the use only appears at run
+time (`eval`, `source`, `${!name}`, a script on stdin), expanding `$$` or `BASHPID` in a
+nested shell, and `BASHPID` in any subshell (`( … )`, `$( … )`, a pipeline stage, a
+job), is an expansion error that ends the (sub)shell as `${x:?}` does (127 under `-c`,
+else 1): `$$: this shell runs inside psh and has no process id` (`this subshell` for
+`BASHPID` in a subshell); arithmetic reports it as its error. `Vp::shell_pid` and
+`Vp::bashpid` are `Option`s; the top-level shell's are real, `exec bash` keeps the
+process it replaces (`$$` = the caller's `BASHPID`). `$PPID` in a nested shell is the
+caller's `$$` (unset if it has none); D1300 scripts and `spawn_shell` keep the caller's
+`$$`, with `$PPID` from the host. `$!` and the jobs are unchanged: a nested shell's job
+id comes from `Core::next_job_id`, and the `Core` registry that let `kill` find nested
+shells by `$$` is gone. Three cases that read `BASHPID` in subshells are ratchet lines
+with this reason (oils `vars-special/13`, brush `signals/38`, `/42`).

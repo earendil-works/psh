@@ -21,13 +21,13 @@ bash 5.3 output on Linux (main at `3475d0aa`, 2026-11-08):
 
 | Layer | Active | Pass | % |
 | --- | ---: | ---: | ---: |
-| L0 parse (`bash -n` agreement, print → reparse) | 34,501 | 34,501 | 100% |
+| L0 parse (`bash -n` agreement, print → reparse) | 34,598 | 34,598 | 100% |
 | L1 Oils spec | 2,511 | 2,355 | 93.8% |
 | L2 brush cases | 3,171 | 2,855 | 90.0% |
 | L3 agent-shaped cases | 701 | 701 | 100% |
 | L4 utilities | 994 | 994 | 100% |
 
-59 utilities run in-process (`psh --utils` lists them). Not done yet: pi-env integration,
+49 utilities (58 names) run in-process (`psh --utils` lists them). Not done yet: pi-env integration,
 release builds and the size budget, CI off the development machine.
 
 ## Building and running

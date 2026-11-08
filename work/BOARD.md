@@ -6,7 +6,6 @@ Owned by the coordinator. Status of all issues; details are in `issues/`.
 
 | issue | title | agent | worktree |
 | --- | --- | --- | --- |
-| - | Wrap-up: guide chapters (docs), sed \xHH escapes (parser) | docs, parser | primary, .worktrees/parser |
 
 ## Paused (2026-11-08 checkpoint; resume notes in the issue logs, see REPORT.md)
 

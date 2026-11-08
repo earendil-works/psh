@@ -22,7 +22,7 @@ runs). This report says what psh can do today, how well, what it costs, and what
   tree; at the end of an embedded run, leftover background processes are killed unless
   they were detached (`nohup`, `setsid`, `disown`), which fixes the agent problem of
   servers left running for days.
-- **Run 59 utilities in-process**, the same on every platform, falling through to the
+- **Run 49 utilities (58 names) in-process**, the same on every platform, falling through to the
   real program (or failing clearly) for flags they don't support:
   `awk gawk jq find xargs timeout gtimeout head tail cat wc env sleep basename dirname
   realpath readlink mkdir rmdir touch cut paste seq tee tr uniq comm nl sort rm mv cp ln
@@ -52,7 +52,7 @@ recorded in a pinned Debian container.
 
 | Layer | What it is | Linux | macOS | Windows |
 |---|---|---:|---:|---:|
-| L0 | parser agrees with `bash -n` and round-trips (34k inputs incl. 26k shapes of real agent commands) | 100% | 100% | – |
+| L0 | parser agrees with `bash -n` and round-trips (34,598 inputs incl. 26k shapes of real agent commands) | 100% | 100% | – |
 | L1 | Oils spec suite, 2,511 active cases | **93.8%** (2355) | 90% | 85% (2132) |
 | L2 | brush's test cases, 3,171 active | **90.0%** (2855) | 87% | 81% (2579) |
 | L3 | 701 cases built from what agents actually run | **100%** | 98.7% | 40% (283)* |
@@ -117,6 +117,25 @@ No async runtime: the engine is a stepped interpreter driven by its embedder.
    `tree`, `column`, `od`…), `nice`/`nohup`, Windows CRLF switch in the Windows host, the
    Windows `PATH` separator policy (busybox-style built, owner to confirm), the upstream
    rg/fd test suites, a licensing pass before release.
+
+## Known bugs and gaps (found while writing the guide)
+
+- Windows: `WindowsHost` doesn't return true from `strips_crlf()` yet, so `$(…)` and `read`
+  keep the `\r` of native programs' output.
+- `timeout`: `-s SIG` doesn't send SIG (the host's TERM-then-KILL is used), `-k` and
+  `--foreground` do nothing; in the standalone binary, `timeout` and cancel reach the
+  program itself but not its children (the embedded hosts kill whole trees).
+- `time` prints no timing report; `diff <(…) <(…)` fails ("Bad file descriptor");
+  `wait` prints an extra report line after a job killed by a signal.
+- `set -m`, `set -o vi/emacs/history` and `FUNCNEST` are accepted silently.
+- An inherited logical `$PWD` is ignored (under a symlinked `/tmp` psh prints
+  `/private/tmp/…`).
+- An unquoted `[` reads the directory on every expansion: `[ $i -lt N ]` loops are ~15×
+  slower than bash.
+- `fd --changed-within/--changed-before` still fall through although the date parser
+  exists; `sed`'s fall-through message is worded unlike the other utilities'.
+- sed: in a regex containing `\xHH` bytes, `.` matches one byte (GNU matches nothing).
+- Some classifier test files still say "safe to auto-approve" (wording from before D036).
 
 ## Where work stopped
 

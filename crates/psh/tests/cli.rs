@@ -423,11 +423,18 @@ fn stdin_scripts() {
     assert_eq!((out.stdout.as_str(), out.status), ("", Some(1)));
     // Read one command at a time (D1414): the script's commands read the rest of it,
     // and a syntax error stops the script after the commands before it ran.
-    let out = psh_with(&[], b"read x\nhello\necho \"got $x\"\nread y; echo \"$y\"\nfor y\necho last\n");
+    let out = psh_with(
+        &[],
+        b"read x\nhello\necho \"got $x\"\nread y; echo \"$y\"\nfor y\necho last\n",
+    );
     assert_eq!(out.stdout, "got hello\nfor y\nlast\n", "{}", out.stderr);
     let out = psh_with(&[], b"echo a\necho )\necho b\n");
     assert_eq!((out.stdout.as_str(), out.status), ("a\n", Some(2)));
-    assert!(out.stderr.contains("line 2: syntax error"), "{}", out.stderr);
+    assert!(
+        out.stderr.contains("line 2: syntax error"),
+        "{}",
+        out.stderr
+    );
 }
 
 /// Arguments that are not UTF-8 reach the script and `--parse` byte for byte.

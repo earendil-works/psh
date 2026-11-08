@@ -691,7 +691,10 @@ async fn run_stdin_lines(mut vp: Vp) -> (i32, Vp) {
         // incomplete, an error at the very end (`[[ (` before its newline), a
         // here-document without its delimiter, or a line continuation.
         let at_end = |e: &psh_syntax::ParseError| {
-            let len = buf.iter().rposition(|b| !b.is_ascii_whitespace()).map_or(0, |i| i + 1);
+            let len = buf
+                .iter()
+                .rposition(|b| !b.is_ascii_whitespace())
+                .map_or(0, |i| i + 1);
             e.span.start as usize >= len
         };
         let more = match &chunk {

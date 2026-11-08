@@ -22,12 +22,12 @@ use std::task::{Context, Poll};
 use std::time::Duration;
 
 use super::{LocalBoxFuture, Mode, UtilCtx, UtilEntry};
+use crate::Input;
 use crate::builtins::trap::{Trap, TrapKey};
 use crate::fd::FdObj;
 use crate::host::{ExitStatus, ExtProc, FileKind, OpenOptions, Signal, Spawned, error_text};
 use crate::invocation::{Invocation, parse_args};
 use crate::sched::Join;
-use crate::Input;
 use crate::state::{Core, NestedSigs, Sigs, Unwind, Vp};
 
 /// Not in any registry: the engine looks it up itself (`super::lookup`), and

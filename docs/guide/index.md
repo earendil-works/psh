@@ -5,6 +5,9 @@ them with GNU bash 5.3's behavior on macOS, Linux and Windows, without a Unix la
 runs common utilities inside itself, and can tell its host what a command will do
 before it runs.</p>
 
+> **Experimental.** psh is under active development. Expect bugs and changes to APIs
+> and behavior.
+
 <p class="cta"><a class="button" href="introduction.html">Read the guide</a><a class="button secondary" href="https://github.com/earendil-works/psh">Source on GitHub</a></p>
 
 The example below is psh itself, compiled to WebAssembly and running in this page over

@@ -1,5 +1,8 @@
 # What psh is
 
+> **Experimental.** psh is under active development. Expect bugs and changes to APIs
+> and behavior.
+
 psh is a shell for coding agents. An agent writes a bash command, psh runs it on macOS,
 Linux or Windows and returns what bash would have returned: output, errors and an exit
 status. A host that runs agents can also ask psh what a command will do before running

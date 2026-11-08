@@ -57,6 +57,12 @@ decisions: D1140–D1149
 - `e command`, `e` and `s///e` run through `UtilCtx::spawn_shell` (D1142), probed
   against GNU (`work/scratch/0014/p6.txt`); L4 `tests/utils/sed/exec.test.sh` (7 cases).
 
+### 2026-11-08: numeric escapes as bytes
+- spec-linux found oils/unicode/0 regressed: `sed 's/\xce//g'` must cut the first byte
+  of `μ` in C.UTF-8. Regexes with escapes that leave non-UTF-8 bytes now match on bytes
+  (D1143); `y` takes numeric escapes too. L4 `tests/utils/sed/escapes.test.sh` (7
+  cases); `scripts/spec-linux oils/unicode/0 utils/sed` passes.
+
 ## Follow-ups
 - `--debug` falls through to a real sed.
 - GNU's full `--help`/usage text is not reproduced (only its first line).

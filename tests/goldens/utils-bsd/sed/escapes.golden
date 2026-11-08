@@ -1,0 +1,62 @@
+# Goldens for tests/utils/sed/escapes.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-apple-darwin25.1.0).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: \xHH matches a byte, even inside a UTF-8 char
+status: 0
+bash-n: 0
+--- stdout
+|mua
+--- stderr
+|sed: 1: "s/\xce//g
+|": RE error: illegal byte sequence
+
+=== 1: \xHH in the C locale
+status: 0
+bash-n: 0
+--- stdout
+|aM-<b
+
+=== 2: \xHH makes a char that is then special
+status: 0
+bash-n: 0
+--- stdout
+|X X
+|a-b
+
+=== 3: decimal, octal and control escapes
+status: 0
+bash-n: 0
+--- stdout
+|abc
+|cA
+
+=== 4: escapes in the replacement
+status: 0
+bash-n: 0
+--- stdout
+|Ad066o103
+|[μ]
+--- stderr
+|cat: illegal option -- A
+|usage: cat [-belnstuv] [file ...]
+
+=== 5: escapes in addresses and y
+status: 0
+bash-n: 0
+--- stdout
+|b
+|aTb
+--- stderr
+|sed: 1: "y/\x61\o142/zy/
+|": transform strings are not the same length
+
+=== 6: \n \t \r in regexes
+status: 1
+bash-n: 0
+--- stdout
+|aTb
+|joined
+--- stderr
+|cat: illegal option -- A
+|usage: cat [-belnstuv] [file ...]

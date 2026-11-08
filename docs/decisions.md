@@ -2732,3 +2732,10 @@ psh is not a sandbox and Pi will not build a permission policy on it. The classi
 exists to help reporting: UI summaries of what a call does (read, mutate, network, …),
 the paths it touches, and a read-only flag Durable can use for replay. The planned
 exec-time approval hook is dropped; ARCH's open question about where it sits is closed.
+## D1143: sed's numeric escapes are bytes
+date: 2026-11-08 · by: parser · issue: 0014
+`\xHH`, `\dNNN`, `\oNNN` and `\cX` make one byte, in regexes (also in bracket
+expressions and addresses), replacements and `y`. GNU matches such a byte even inside a
+multibyte char (`s/\xce//` on `μ` in C.UTF-8), so a regex whose escapes leave bytes that
+are not whole UTF-8 chars is matched on bytes; `\xce\xbc` stays the char `μ`. (A
+side effect: in such a regex `.` matches one byte, where GNU's `\xce.` matches nothing.)

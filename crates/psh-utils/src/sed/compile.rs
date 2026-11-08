@@ -684,12 +684,16 @@ impl P<'_> {
             return Ok(None);
         }
         self.have_re = true;
-        let pat = sed_escapes(raw, true);
+        let (pat, raw_bytes) = sed_escapes(raw);
+        // `\xce` is a byte, which GNU matches even inside a multibyte char (`s/\xce//`
+        // on `μ`): a regex with such bytes that are not whole UTF-8 chars works on
+        // bytes.
+        let utf8 = self.flags.utf8 && !(raw_bytes && std::str::from_utf8(&pat).is_err());
         let opts = Options {
             extended: self.flags.extended,
             icase,
             newline: multi,
-            utf8: self.flags.utf8,
+            utf8,
         };
         match Regex::new(&pat, opts) {
             Ok(r) => Ok(Some(Rc::new(r))),
@@ -860,6 +864,11 @@ impl P<'_> {
                     let Some(d) = self.peek() else {
                         return at(self.i, "unterminated `y' command");
                     };
+                    if let Some((b, len)) = numeric_escape(&self.s[self.i..]) {
+                        out.push(b);
+                        self.i += len;
+                        continue;
+                    }
                     self.i += 1;
                     out.push(match d {
                         b'n' => b'\n',
@@ -1027,9 +1036,11 @@ fn numeric_escape(b: &[u8]) -> Option<(u8, usize)> {
     Some((v as u8, 1 + digits.len()))
 }
 
-/// Resolves sed's escapes in a regex (`\n`, `\t`, `\xHH`, ...), also inside bracket
-/// expressions; the regex escapes stay for psh-regex.
-pub fn sed_escapes(raw: &[u8], _regex: bool) -> Vec<u8> {
+/// Resolves sed's escapes in a regex (`\n`, `\t`, `\xHH`, `\dNNN`, `\oNNN`, `\cX`, ...),
+/// also inside bracket expressions; the regex escapes stay for psh-regex. Also says
+/// whether a numeric escape made a byte outside ASCII.
+pub fn sed_escapes(raw: &[u8]) -> (Vec<u8>, bool) {
+    let mut high = false;
     let mut out = Vec::with_capacity(raw.len());
     let mut i = 0;
     let mut in_bracket = false;
@@ -1085,6 +1096,7 @@ pub fn sed_escapes(raw: &[u8], _regex: bool) -> Vec<u8> {
                 continue;
             }
             if let Some((b, len)) = numeric_escape(&raw[i + 1..]) {
+                high |= b >= 0x80;
                 out.push(b);
                 i += 1 + len;
                 continue;
@@ -1103,7 +1115,7 @@ pub fn sed_escapes(raw: &[u8], _regex: bool) -> Vec<u8> {
         out.push(c);
         i += 1;
     }
-    out
+    (out, high)
 }
 
 /// The parts of a replacement.

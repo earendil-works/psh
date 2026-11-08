@@ -1,0 +1,54 @@
+# Goldens for tests/utils/sed/escapes.test.sh (layer utils), recorded by scripts/record-goldens with
+# GNU bash, version 5.3.9(1)-release (aarch64-unknown-linux-gnu).
+# Do not edit; re-record instead (TESTING.md "Cases and goldens").
+
+=== 0: \xHH matches a byte, even inside a UTF-8 char
+status: 0
+bash-n: 0
+--- stdout
+|echo M-< x
+|mua
+
+=== 1: \xHH in the C locale
+status: 0
+bash-n: 0
+--- stdout
+|aM-<b
+
+=== 2: \xHH makes a char that is then special
+status: 0
+bash-n: 0
+--- stdout
+|X X
+|aXb
+
+=== 3: decimal, octal and control escapes
+status: 0
+bash-n: 0
+--- stdout
+|aXY
+|^A
+
+=== 4: escapes in the replacement
+status: 0
+bash-n: 0
+--- stdout
+|ABC
+|^Ib$
+|[μ]
+
+=== 5: escapes in addresses and y
+status: 0
+bash-n: 0
+--- stdout
+|b
+|zyc
+|aTb
+
+=== 6: \n \t \r in regexes
+status: 0
+bash-n: 0
+--- stdout
+|aTb
+|joined
+|a$

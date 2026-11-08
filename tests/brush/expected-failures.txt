@@ -130,6 +130,7 @@ brush/compat/builtins/jobs/6: passed via macOS /usr/bin wrapper
 brush/compat/builtins/jobs/9
 brush/compat/builtins/jobs/10
 brush/compat/builtins/jobs/11
+brush/compat/builtins/jobs/12: a bare sh runs in psh (D1410): it has no OS process, /proc/$$ is not there
 brush/compat/builtins/jobs/14
 brush/compat/builtins/jobs/15
 brush/compat/builtins/kill/9

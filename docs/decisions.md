@@ -2853,3 +2853,50 @@ rejected by the owner: a script that names its interpreter gets that interpreter
 A script on stdin must be read one complete command at a time, so that the commands in
 it can read the rest of stdin, as bash does; until that lands (0041 part 2), a bare
 `bash`/`sh` with no script operand runs the real program, or fails where there is none.
+
+## D1411: A nested `bash`/`sh` is a virtual process with its own pending-signal mask
+date: 2026-11-08 · by: shells · issue: 0041
+The shell psh runs for a bare `bash` or `sh` (D1410) is an `ExtProc` backed by a
+scheduler task of its own, created where `run_external_with` would spawn a program
+(`util/nested.rs`). So jobs (`$!` of `sh -c '…' &` is its `$$`), `kill PID`, `wait`, the
+signal-death report and abandoning by a dropped wait (`timeout`) treat it as they treat a
+program, in one place. Its `$$` and `$BASHPID` are a made-up id above every real pid
+(not an OS process: `/proc/$$` and `ps -p $$` find nothing), `$PPID` is the caller's `$$`.
+Signals: each vproc has a signal handle (`Vp::sigs`): the shell's mask (the embedder's
+`ControlHandle`, the standalone handlers) or a nested shell's own; the signal sites
+(`take_signals`, `breaking`, `or_signal`, the utility watch, `kill $$`) use it instead of
+the scheduler's one mask, and the nested shell's main vproc is `top` for its own mask.
+`ExtProc::signal` raises into it (its trap runs, or the default action ends it, reported
+as `Signaled`); `kill` also finds nested shells that are no job of ours by their `$$`
+(a registry in `Core`), and `kill` of the shell's own pid from inside goes to the
+shell's mask, never to the process psh is embedded in. Dropping it abandons it as a
+program's process group would be: TERM, which also ends the wait for its foreground
+command (so a TERM trap runs at once), then its task is dropped after two seconds;
+`release`/`disown` let the task run on; a cancel drops every task. Same on Windows and
+in wasm, which need no OS pid for it. Known gaps: a signal from outside reaches a nested
+shell only through `kill` (not through the OS); `( kill $$ )` inside it ends only the
+subshell's view; brush `jobs/12` (`/proc/$$` of a bare `sh`) is a ratchet entry.
+Considered: keeping signals per shell only and taking six brush regressions (`sh -c
+'trap … TERM' &` then `kill $!`); rejected by the coordinator, since `timeout`/`kill`
+sending TERM to a `bash -c` with a trap is a real agent pattern.
+
+## D1412: A shell started afresh rebuilds its variables from the environment
+date: 2026-11-08 · by: shells · issue: 0041
+`exec::start_afresh` (D1300, D1191, D1410) no longer keeps the exported variables and
+drops the rest: it rebuilds the variables from the exported environment with
+`lib::initial_vars`, as `Shell::new` does, so a script psh runs itself and a nested
+`bash` have `IFS`, `PPID`, `OPTIND`, the dynamic variables (`RANDOM`, `LINENO`) and
+`SHLVL` one higher (before, `IFS` was empty and `$RANDOM` unset there). Its options are
+the defaults plus those its environment's `SHELLOPTS` and `BASHOPTS` name, as in bash
+(`export SHELLOPTS` passes `set -x` on); `Shell::new` does the same. `exec bash` keeps the
+caller's `$$`, `$PPID` and `SHLVL`; otherwise every nested shell counts a level, where
+bash's exec of a last command (`bash -c 'bash -c …'`, `( bash … )`, `$(bash …)`) keeps
+`SHLVL` and `$$`: psh does not imitate that optimization. The `psh` binary turns nested
+shells off when `PSH_NESTED_OFF` is set and not empty (`ShellConfig::nested_shells`),
+removed from the environment like `PSH_UTILS_FORCE`. Options psh lacks (`-i`, `-r`,
+`-D`, `--rcfile`, `--init-file`, `--restricted`, `--posix`, `--help`, …) and, until 0041
+part 2, a script on stdin run the program `PATH` finds (also in a sandbox, whose host may
+have one), else `bash: WHY (psh built-in bash)` and status 2. `--login`/`-l` is accepted
+and reads nothing; `--version` prints `psh VERSION` (also `psh -e --version`). psh-spec
+normalizes a leading `bash:` on psh's side too: a nested bash names itself `bash` there
+as the recorded one does.

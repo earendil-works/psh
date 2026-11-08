@@ -172,9 +172,13 @@ async function run(ex) {
   el.classList.add("is-running");
   try {
     const { loadPsh, MemHost, module } = await lib();
+    if (id !== ex.runs) return;
     const host = new MemHost();
     host.fs.mkdir(CWD);
     const psh = await loadPsh(module, { host });
+    if (id !== ex.runs) return;
+    // Classification needs only the text, not the outcome of a possibly slow run.
+    pane("classify").innerHTML = classificationHtml(src, psh.classify(src).json);
     const chunks = [];
     const shell = psh.createShell({
       cwd: CWD,
@@ -198,7 +202,6 @@ async function run(ex) {
     let out = outputHtml(chunks, status);
     if (stop.signal.aborted) out += `\n<span class="live-exit">(stopped after ${LIMIT_MS / 1000} s)</span>`;
     pane("out").innerHTML = out;
-    pane("classify").innerHTML = classificationHtml(src, psh.classify(src).json);
     setStatus(`exit status ${status} · ${ms.toFixed(1)} ms`);
   } catch (e) {
     if (id === ex.runs) setStatus(`could not run: ${e.message}`);
@@ -262,6 +265,9 @@ function setup(el, n) {
 
   ta.addEventListener("keydown", (ev) => onKey(ev, ex));
   ta.addEventListener("input", () => {
+    // Invalidate an older run immediately, not only when the autorun timer fires.
+    ++ex.runs;
+    el.querySelector('[data-pane="classify"]').innerHTML = '<p class="muted">Classification pending…</p>';
     repaint(ex);
     reset.hidden = ta.value === ex.original;
     el.querySelector(".live-status").textContent = "edited";

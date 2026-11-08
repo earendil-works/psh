@@ -10,5 +10,6 @@ cargo clippy -q -p psh-wasm --target wasm32-unknown-unknown --locked --no-defaul
 scripts/build-wasm --sizes
 node js/test/smoke.mjs
 node crates/psh-docs/tools/live-check.mjs
+node --experimental-vm-modules --test crates/psh-docs/tools/live-test.mjs
 cargo build -q -p psh -p psh-spec --locked
 cargo run -q -p psh-spec --locked -- --wasm -j 6

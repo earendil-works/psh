@@ -63,7 +63,8 @@ highlight exactly the word that writes a file. This is what the
 The live example below runs a script and also classifies it: its Classification tab
 lists each command with its categories and how it comes to run, and the paths the
 script reads and writes. There is no `git` where live examples run, so running it fails
-at `git`; the classification needs nothing but the text.
+at `git`; the classification needs nothing but the text and appears without waiting
+for execution to finish.
 
 ```sh live
 git commit -m "$(rm -rf build)"

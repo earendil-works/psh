@@ -88,3 +88,28 @@ pub(crate) fn for_child(limits: &[(Rlimit, Limit, Limit)]) -> Vec<(Resource, lib
         })
         .collect()
 }
+
+/// The CPU time of the process and of its reaped children (`time`, `times`).
+pub(crate) fn cpu_times() -> psh_engine::host::CpuTimes {
+    fn usage(who: libc::c_int) -> (std::time::Duration, std::time::Duration) {
+        // SAFETY: plain data; getrusage fills it.
+        let mut ru: libc::rusage = unsafe { std::mem::zeroed() };
+        // SAFETY: `ru` is writable for its size; `who` is RUSAGE_SELF or RUSAGE_CHILDREN.
+        if unsafe { libc::getrusage(who, &raw mut ru) } != 0 {
+            return Default::default();
+        }
+        let d = |t: libc::timeval| {
+            std::time::Duration::new(t.tv_sec.max(0) as u64, 0)
+                + std::time::Duration::from_micros(t.tv_usec.max(0) as u64)
+        };
+        (d(ru.ru_utime), d(ru.ru_stime))
+    }
+    let (user, sys) = usage(libc::RUSAGE_SELF);
+    let (child_user, child_sys) = usage(libc::RUSAGE_CHILDREN);
+    psh_engine::host::CpuTimes {
+        user,
+        sys,
+        child_user,
+        child_sys,
+    }
+}

@@ -630,6 +630,42 @@ impl Host for WindowsHost {
             .unwrap_or_default()
     }
 
+    fn cpu_times(&self) -> psh_engine::host::CpuTimes {
+        use std::sync::atomic::Ordering::Relaxed;
+        use windows_sys::Win32::Foundation::FILETIME;
+        use windows_sys::Win32::System::Threading::{GetCurrentProcess, GetProcessTimes};
+        // FILETIME durations count 100 ns.
+        let ticks = |t: u64| Duration::from_nanos(t.saturating_mul(100));
+        let ft =
+            |f: FILETIME| ticks(u64::from(f.dwHighDateTime) << 32 | u64::from(f.dwLowDateTime));
+        let zero = FILETIME {
+            dwLowDateTime: 0,
+            dwHighDateTime: 0,
+        };
+        let (mut created, mut exited, mut kernel, mut user) = (zero, zero, zero, zero);
+        // SAFETY: the pseudo handle of this process; the four FILETIMEs are writable.
+        let ok = unsafe {
+            GetProcessTimes(
+                GetCurrentProcess(),
+                &raw mut created,
+                &raw mut exited,
+                &raw mut kernel,
+                &raw mut user,
+            )
+        } != 0;
+        let (user, sys) = if ok {
+            (ft(user), ft(kernel))
+        } else {
+            Default::default()
+        };
+        psh_engine::host::CpuTimes {
+            user,
+            sys,
+            child_user: ticks(spawn::CHILD_USER.load(Relaxed)),
+            child_sys: ticks(spawn::CHILD_SYS.load(Relaxed)),
+        }
+    }
+
     fn sleep(&self, duration: Duration) -> HostFuture<()> {
         crate::timer::sleep(duration)
     }

@@ -245,6 +245,16 @@ pub struct SpawnSpec {
     pub rlimits: Vec<(Rlimit, Limit, Limit)>,
 }
 
+/// CPU time used so far (`time`, `times`): by the process itself, and by the children
+/// it has waited for, each split into user and system time.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct CpuTimes {
+    pub user: Duration,
+    pub sys: Duration,
+    pub child_user: Duration,
+    pub child_sys: Duration,
+}
+
 /// A resource limit `ulimit` reports and sets. Values are in the resource's own unit:
 /// bytes, seconds, microseconds (`RtTime`) or a count.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -555,6 +565,12 @@ pub trait Host {
     /// `SystemTime`; the JS host supplies `Date.now()`).
     fn now(&self) -> Duration {
         Duration::ZERO
+    }
+    /// CPU time used so far by the process and its waited-for children (`time`,
+    /// `times`). Process-wide, as bash measures it: in an embedder it includes the
+    /// embedder's own work. The default, for hosts without such clocks, is all zero.
+    fn cpu_times(&self) -> CpuTimes {
+        CpuTimes::default()
     }
     /// Completes after `duration`.
     fn sleep(&self, duration: Duration) -> HostFuture<()>;

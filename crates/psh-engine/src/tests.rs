@@ -951,3 +951,45 @@ fn prefix_assignments_and_temp_unset() {
         "[a] []\nbad\n",
     );
 }
+
+#[test]
+fn time_keyword() {
+    // The test host's clocks stand still: every duration is zero.
+    let o = run("time echo hi 2>/dev/null; echo $?");
+    assert_eq!(o.stdout, "hi\n0\n");
+    assert_eq!(
+        o.stderr,
+        "\nreal\t0m0.000s\nuser\t0m0.000s\nsys\t0m0.000s\n"
+    );
+    let o = run("TIMEFORMAT=x; time -p false | true; echo ${PIPESTATUS[@]}");
+    assert_eq!(o.stdout, "1 0\n");
+    assert_eq!(o.stderr, "real 0.00\nuser 0.00\nsys 0.00\n");
+    let o = run("TIMEFORMAT='<%R|%0lU|%1S|%P|%%>'; time ! false; echo $?; ! time true; echo $?");
+    assert_eq!(o.stdout, "0\n1\n");
+    assert_eq!(
+        o.stderr,
+        "<0.000|0m0s|0.0|0.00|%>\n<0.000|0m0s|0.0|0.00|%>\n"
+    );
+    // Empty: no report. Invalid: an error instead of it; the status stays.
+    let o = run("TIMEFORMAT=; time true; TIMEFORMAT=%x; time false; echo $?");
+    assert_eq!(o.stdout, "1\n");
+    assert!(
+        o.stderr
+            .ends_with("line 1: TIMEFORMAT: `x': invalid format character\n"),
+        "{:?}",
+        o.stderr
+    );
+    // Reported however the pipeline ends, except through `return`; a bare `time` too.
+    let o = run("TIMEFORMAT=t; time; f() { time return 3; }; f; echo $?; \
+         for i in 1; do time break; done; set -e; time false; echo no");
+    assert_eq!(o.stdout, "3\n");
+    assert_eq!(o.stderr, "t\nt\nt\n");
+    assert_eq!(o.status, 1);
+    // The report goes to the shell's stderr, not the command's; background jobs too.
+    let o = run("TIMEFORMAT=t; { time echo a 2>/dev/null >&2; } 2>&1; time true & wait");
+    assert_eq!(o.stdout, "t\n");
+    assert_eq!(o.stderr, "t\n");
+    let o = run("TIMEFORMAT=t; time exit 4");
+    assert_eq!((o.status, o.stderr.as_str()), (4, "t\n"));
+    check("times", "0m0.000s 0m0.000s\n0m0.000s 0m0.000s\n");
+}

@@ -2945,3 +2945,19 @@ in a script file. The engine reads the current descriptor 0 each time, so `exec 
 in such a script switches its input as in bash. The wasm path still hands the whole
 stdin over as the script text. A nested shell reading stdin cannot be scanned ahead for
 `$$` (D1413): such a use is the run-time error there.
+
+## D037: `time` and `times` read process-wide CPU clocks through `Host::cpu_times`
+date: 2026-11-21 · by: coordinator (owner request) · issue: -
+`time` reports real time from `Host::now` and user and system time from a new
+`Host::cpu_times()` (default: all zero): the process's own times plus those of the
+children it waited for, as bash's `getrusage(RUSAGE_SELF)` + `RUSAGE_CHILDREN`. The
+Unix host uses exactly that; the Windows host uses `GetProcessTimes` plus each external's
+job-object accounting, added up when the external exits. In-process utilities count as
+the shell's own time. The clocks are process-wide: in an embedder they include its
+other work, and nothing finer exists without per-thread or per-child accounting, which
+`time`'s callers (agents eyeballing a duration) do not need. The report follows bash
+5.3 as observed, including its quirks: `%0R` truncates while decimals round, rounding
+past `.9` shows `:` instead of carrying, `%P` is a whole percent with `.00`, an invalid
+`TIMEFORMAT` prints `TIMEFORMAT: `c': invalid format character` instead of the report,
+`time -p` ignores `TIMEFORMAT`, and a pipeline ended by `return` prints no report while
+`exit`, errexit, `break` and expansion errors do. `times` uses the same clocks.

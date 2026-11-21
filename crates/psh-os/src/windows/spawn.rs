@@ -30,7 +30,7 @@ use std::io::{self, Read};
 use std::os::windows::io::{AsRawHandle, FromRawHandle, OwnedHandle, RawHandle};
 use std::path::Path;
 use std::rc::Rc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
 use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
@@ -161,8 +161,8 @@ impl Job {
         unsafe { GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, self.pid) != 0 }
     }
 
-    /// Processes left in the job.
-    pub(crate) fn active(&self) -> u32 {
+    /// The job's accounting: its processes and the CPU time they used.
+    fn accounting(&self) -> Option<JOBOBJECT_BASIC_ACCOUNTING_INFORMATION> {
         // SAFETY: plain data, filled by the query.
         let mut info: JOBOBJECT_BASIC_ACCOUNTING_INFORMATION = unsafe { std::mem::zeroed() };
         // SAFETY: our job handle; `info` is writable for its size.
@@ -175,7 +175,12 @@ impl Job {
                 std::ptr::null_mut(),
             )
         };
-        if ok == 0 { 0 } else { info.ActiveProcesses }
+        (ok != 0).then_some(info)
+    }
+
+    /// Processes left in the job.
+    pub(crate) fn active(&self) -> u32 {
+        self.accounting().map_or(0, |i| i.ActiveProcesses)
     }
 
     pub(crate) fn pid(&self) -> u32 {
@@ -819,6 +824,10 @@ fn create(
     Ok((process, pi.dwProcessId))
 }
 
+/// The CPU time of the externals that exited, in 100 ns units (`Host::cpu_times`).
+pub(crate) static CHILD_USER: AtomicU64 = AtomicU64::new(0);
+pub(crate) static CHILD_SYS: AtomicU64 = AtomicU64::new(0);
+
 /// A waiter thread: blocks on the process handle, then reports the exit.
 fn watch(process: Arc<OwnedHandle>, job: Arc<Job>, tracker: Arc<Tracker>) -> io::Result<()> {
     std::thread::Builder::new()
@@ -838,6 +847,12 @@ fn watch(process: Arc<OwnedHandle>, job: Arc<Job>, tracker: Arc<Tracker>) -> io:
             } else {
                 ExitStatus::Exited(127)
             };
+            // What `getrusage(RUSAGE_CHILDREN)` counts on Unix: the CPU time of the
+            // external and what it started (in 100 ns units), once it was waited for.
+            if let Some(info) = job.accounting() {
+                CHILD_USER.fetch_add(info.TotalUserTime.max(0) as u64, Ordering::Relaxed);
+                CHILD_SYS.fetch_add(info.TotalKernelTime.max(0) as u64, Ordering::Relaxed);
+            }
             // Nothing to reap on Windows: the handle closes when the last owner drops.
             if let Some(w) = tracker.exited(status, || {}) {
                 w.wake();

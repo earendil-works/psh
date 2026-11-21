@@ -158,7 +158,8 @@ make an equivalent (a junction on Windows), never a copy.
 | --- | --- | --- |
 | `info()` | `UID`, `EUID`, `GROUPS`, `PPID`, `HOSTNAME`, `OSTYPE`, `MACHTYPE`, `HOSTTYPE` | uid 1000, `localhost`, `OSTYPE` `unknown` |
 | `umask()` | where the shell's `umask` starts | `022` |
-| `now()` | `$EPOCHSECONDS`, `printf '%(…)T'`, `date` | the epoch |
+| `now()` | `$EPOCHSECONDS`, `printf '%(…)T'`, `date`, `time` | the epoch |
+| `cpu_times()` | the user and system time of `time` and `times` | zero |
 | `utc_offset(secs)` | local time | UTC |
 | `user_name(uid)`, `group_name(gid)` | `ls -l`, `stat %U` | none: numbers are shown |
 | `home_dir(user)` | `~user` | none: the word stays as written |
@@ -189,6 +190,7 @@ Beyond that:
 | `info` | yes | yes | default | default | default |
 | `umask` | the process's | `022` | the process's | default | default |
 | `now` | yes | yes | yes | a fixed instant | `Date.now()` |
+| `cpu_times` | `getrusage` | the process's times and its job objects' | no | no | no |
 | `utc_offset` | yes | yes | UTC | UTC | from JavaScript |
 | `user_name` | yes | the own user | no | `user` | from JavaScript |
 | `group_name` | yes | no | no | `users` | from JavaScript |

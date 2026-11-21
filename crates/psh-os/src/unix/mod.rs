@@ -567,6 +567,10 @@ impl Host for UnixHost {
             .unwrap_or_default()
     }
 
+    fn cpu_times(&self) -> psh_engine::host::CpuTimes {
+        rlimit::cpu_times()
+    }
+
     fn sleep(&self, duration: Duration) -> HostFuture<()> {
         crate::timer::sleep(duration)
     }

@@ -237,8 +237,10 @@ These constructs still parse, so the classifier and `psh --parse` see them
 The parser's own limits, such as a nesting limit far above what scripts reach, are on
 [The parser](syntax.md).
 
-`time` is the one gap that does not fail loudly: `time cmd` runs `cmd` but prints no
-timing report.
+`time` prints bash's report, `TIMEFORMAT` included. Its user and system time are those of
+the whole process and the programs it waited for, as in bash: when psh runs inside
+another program, that program's own work counts too, and a host without such clocks
+(the browser, the test host) reports them as zero.
 
 ## Where to look
 

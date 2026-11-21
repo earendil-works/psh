@@ -270,3 +270,22 @@ import json
 print(json.load(open("missing.json"))["k"])
 EOF
 echo "exit=${PIPESTATUS[0]}"
+
+#### time reports to stderr and keeps the status
+{ time false; } 2>&1 | sed 's/[0-9]/N/g'
+echo "status=${PIPESTATUS[0]}"
+
+#### time -p
+{ time -p sleep 0.01; } 2>&1 | sed 's/[0-9]/N/g'
+
+#### time of a pipeline whose command redirects stderr
+{ time ls missing-file 2>/dev/null | wc -l; } 2>&1 | sed 's/[0-9]\.[0-9]*/N/g'
+
+#### TIMEFORMAT
+TIMEFORMAT='took %0R s (%%)'
+{ time true; } 2>&1
+TIMEFORMAT=
+{ time true; } 2>&1
+echo "empty: nothing"
+TIMEFORMAT='%x'
+{ time true; } 2>&1 | sed 's/^.*line [0-9]*: //'

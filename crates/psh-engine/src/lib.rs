@@ -46,6 +46,7 @@ pub mod std_host;
 pub mod testhost;
 #[cfg(test)]
 mod tests;
+mod timing;
 pub mod util;
 mod vars;
 

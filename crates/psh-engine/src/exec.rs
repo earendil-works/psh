@@ -86,7 +86,7 @@ async fn run_background(vp: &mut Vp, code: &Rc<Code>, list: ListId, item: usize)
         // The job's own status is not errexit's or the ERR trap's to judge (only the
         // commands inside it are).
         let p = &ao.first;
-        let r = if ao.rest.is_empty() && p.stages.len() == 1 && !p.negated() {
+        let r = if ao.rest.is_empty() && p.stages.len() == 1 && !p.negated() && p.time.is_none() {
             run_command_unchecked(&mut sub, &code, p.stages[0].cmd).await
         } else {
             Box::pin(run_andor(&mut sub, &code, ao)).await
@@ -216,6 +216,20 @@ fn command_text(code: &Rc<Code>, cmd: &Command) -> Vec<u8> {
 }
 
 async fn run_pipeline(vp: &mut Vp, code: &Rc<Code>, p: &Pipeline) -> R {
+    let Some(time) = p.time else {
+        return run_untimed(vp, code, p).await;
+    };
+    let start = crate::timing::Start::now(vp);
+    let r = run_untimed(vp, code, p).await;
+    // bash reports however the pipeline ends (an error, `exit`, errexit, `break`) except
+    // through `return`.
+    if !matches!(r, Err(Unwind::Return(_))) {
+        crate::timing::report(vp, time.posix, &start).await;
+    }
+    r
+}
+
+async fn run_untimed(vp: &mut Vp, code: &Rc<Code>, p: &Pipeline) -> R {
     // `!` suspends errexit for the whole pipeline (D1281).
     let saved = vp.no_errexit;
     vp.no_errexit |= p.negated();

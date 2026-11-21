@@ -59,7 +59,7 @@ run, so classifying and printing a command never depends on what the engine can 
 | Pipeline with stderr `\|&` | `{ echo err >&2; } \|& cat` | Supported |
 | Negation `!` | `! false; echo $?` | Supported |
 | `PIPESTATUS` | `false \| true \| (exit 3); echo ${PIPESTATUS[@]}` | Supported |
-| `time`, `time -p`, `TIMEFORMAT` | `time sleep 0.2` | Partial: runs the pipeline, prints no timing report |
+| `time`, `time -p`, `TIMEFORMAT` | `TIMEFORMAT='took %0R s'; time sleep 0.2` | Supported; user and system time are the whole process's and its children's |
 
 An assignment in front of any builtin, special or not, lasts only for that command and
 is exported to it, as in bash outside POSIX mode: `x=2 :; echo "[$x]"` prints `[]`.
@@ -298,7 +298,7 @@ A builtin's arguments, messages and statuses follow bash.
 | `mapfile`, `readarray` | `-t`, `-C`, `-c` and the rest |
 | `read` | `-r -a -d -n -N -p -s -t -u -e -i` |
 | `set`, `shopt` | see [Shell options](#shell-options) |
-| `times` | prints zero times |
+| `times` | the whole process's times and its children's; zero where the host has no such clocks |
 | `trap` | signals, `EXIT`, `ERR`, `DEBUG`, `RETURN`, `-p`, `-l` |
 | `type` | `-t`, `-a`; an in-process utility shows as `ls is a psh utility` |
 | `ulimit`, `umask` | `ulimit -a` and setting limits; `umask -S` |

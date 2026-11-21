@@ -838,6 +838,9 @@ impl psh_engine::Host for Noting {
     fn now(&self) -> Duration {
         self.inner.now()
     }
+    fn cpu_times(&self) -> psh_engine::host::CpuTimes {
+        self.inner.cpu_times()
+    }
     fn sleep(&self, duration: Duration) -> psh_engine::host::HostFuture<()> {
         self.inner.sleep(duration)
     }

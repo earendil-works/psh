@@ -294,7 +294,7 @@ boundary. Methods with a default answer `Unsupported` (changes) or a neutral val
 | Core (required) | `open(path, OpenOptions)` (with a creation `mode`, D1069), `stat(path, follow)`, `access`, `read_dir`, `canonicalize`, `resolve(name, PATH, cwd)`, `spawn(SpawnSpec)`, `sleep`, `pid` |
 | Processes | `pipe()` (OS pipes, D1068), `kill(pid, sig)`, `path_entries(PATH)` (D1910), `standard_path()` (D1332), `native_paths()` (the OS path of a host path, if the file system is the process's: lets blocking utilities use `std::fs`, D1130) |
 | File system changes (D1150) | `stat_extra`, `mkdir`, `remove_file`, `remove_dir`, `rename`, `symlink`, `hard_link`, `read_link`, `set_mode`, `set_times` |
-| Facts | `info()` (uid, euid, groups, ppid, hostname, `OSTYPE`/`MACHTYPE`/`HOSTTYPE`, D1301), `umask()`, `now()`, `utc_offset`, `user_name`, `group_name`, `home_dir(user)` (D1322) |
+| Facts | `info()` (uid, euid, groups, ppid, hostname, `OSTYPE`/`MACHTYPE`/`HOSTTYPE`, D1301), `umask()`, `now()`, `cpu_times()`, `utc_offset`, `user_name`, `group_name`, `home_dir(user)` (D1322) |
 
 `spawn` takes a `SpawnSpec` (program, argv with `argv[0]` as written, the complete env,
 cwd, the child's descriptors as `ChildFd::{File, Pipe, Dup, Null}`, signals to start

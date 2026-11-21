@@ -491,3 +491,39 @@ bash-n: 0
 |cat >/dev/null
 |echo "Traceback: KeyError" >&2
 |exit 1
+
+=== 61: time reports to stderr and keeps the status
+status: 0
+bash-n: 0
+--- stdout
+|
+|real	NmN.NNNs
+|user	NmN.NNNs
+|sys	NmN.NNNs
+|status=1
+
+=== 62: time -p
+status: 0
+bash-n: 0
+--- stdout
+|real N.NN
+|user N.NN
+|sys N.NN
+
+=== 63: time of a pipeline whose command redirects stderr
+status: 0
+bash-n: 0
+--- stdout
+|0
+|
+|real	0mNs
+|user	0mNs
+|sys	0mNs
+
+=== 64: TIMEFORMAT
+status: 0
+bash-n: 0
+--- stdout
+|took 0 s (%)
+|empty: nothing
+|TIMEFORMAT: `x': invalid format character

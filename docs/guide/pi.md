@@ -158,6 +158,30 @@ These exist and need no change to the daemon:
   the same JSON ([psh in the browser](wasm.md)).
 - **The read-only rule**, through any of the three.
 
+## Making psh pi's shell
+
+Build an optimized binary with a stable Rust toolchain, 1.96 or newer (no Git Bash or
+MSYS on Windows), and install it:
+
+```sh
+cargo build --release -p psh    # target/release/psh (psh.exe on Windows)
+cargo install --path crates/psh # or install it to ~/.cargo/bin/psh
+```
+
+pi runs every command as `<shell> -c '<command>'`, so pointing its `shellPath` setting
+at the binary is all it takes. In `~/.pi/agent/settings.json`, or in a project's
+`.pi/settings.json`:
+
+```json
+{
+  "shellPath": "~/.cargo/bin/psh"
+}
+```
+
+On Windows, give the full path to the executable, for example
+`"C:\\Users\\you\\.cargo\\bin\\psh.exe"`. After a restart of pi, both the model's
+`bash` tool and the user's `!cmd` run in psh; removing the setting goes back to bash.
+
 ## For another agent host
 
 Nothing above is specific to pi. Another host has the same three ways in, in order of

@@ -32,7 +32,7 @@ that came from GNU's tools in a Debian container.
 | Function calls | no limit unless `FUNCNEST` is set; deep recursion crashes bash | at most 1000 levels of functions and subshells together (768 in the browser), then `maximum function nesting level exceeded`; `FUNCNEST` does not change it | a runaway recursion is an error message, not a crash of the host that embeds the shell |
 | Arithmetic | evaluates while it parses | parses the whole expression first | see below |
 | Bracket ranges with non-ASCII letters in `=~` (`[à-ÿ]`) | an error in glibc's `C.UTF-8` locale | compared by code point | an agent's `[[ $x =~ [à-ÿ] ]]` should match; other UTF-8 locales behave this way too |
-| `/dev/stdin`, `/dev/stdout`, `/dev/stderr`, `/dev/fd/N` | the system's files where they exist | always the shell's own descriptors: in redirections, `source` and file operands of utilities | an embedded shell's descriptors are not its process's, and Windows has no such files |
+| `/dev/stdin`, `/dev/stdout`, `/dev/stderr`, `/dev/fd/N` | the system's files where they exist | always the shell's own descriptors: in redirections, `source`, `test` and file operands of utilities | an embedded shell's descriptors are not its process's, and Windows has no such files |
 | Messages | translated by `LC_MESSAGES`; start with `bash:` | always English; start with `psh:` (or the script's name) | psh carries no translations |
 
 A missing feature stops the script at that point:

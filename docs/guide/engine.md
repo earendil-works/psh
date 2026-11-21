@@ -125,7 +125,13 @@ the program and stop with it. A here-document or here-string is a pipe filled wi
 expanded body and without a writer, so nothing is written into a kernel pipe before the
 command that reads it runs. In redirections, `/dev/stdin`, `/dev/stdout`, `/dev/stderr`
 and `/dev/fd/N` always mean the virtual process's own descriptors: an embedded shell's
-descriptors are not its host process's, and Windows has no such files.
+descriptors are not its host process's, and Windows has no such files. The same holds
+for the file operands of psh's utilities and for `test -e /dev/fd/N`, so
+`diff <(sort a) <(sort b)` and `grep x <(git show HEAD:f)` read the process
+substitutions, which exist only inside psh. Utilities that run on a thread of their own
+(`grep`, `rg`, `jq`) read such a descriptor through the engine as they go; where they
+run on the engine's thread (the browser), psh reads the descriptors their operands name
+before they start.
 
 ## Cancelling, pausing and signalling a run
 

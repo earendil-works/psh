@@ -159,7 +159,13 @@ impl HiArgs {
         let types = types(&low)?;
         globs(&state, &low)?;
         let mut walk = walk_options(&low, types.clone());
-        let native = Walker::new(&*ctx, walk.clone())?.is_native();
+        // psh: the shell's descriptors (`<(…)`) are walked virtually, so read on this
+        // thread.
+        let native = Walker::new(&*ctx, walk.clone())?.is_native()
+            && !paths.paths.iter().any(|p| {
+                psh_engine::util::shell_fd(p.as_os_str().as_encoded_bytes())
+                    .is_some()
+            });
 
         let color = match low.color {
             ColorChoice::Auto if !state.is_terminal_stdout => {

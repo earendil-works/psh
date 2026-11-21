@@ -122,6 +122,40 @@ fn rg_flags_match_the_classifier() {
     assert_eq!((short, long), (want, want_long));
 }
 
+/// Process substitutions as operands of every kind of utility: async ones, blocking
+/// ones (here inline: their descriptors are read before they run), and `stat`.
+#[test]
+fn shell_descriptors_as_operands() {
+    check(
+        "diff <(printf 'a\\nb\\n') <(printf 'a\\nc\\n'); echo $?",
+        "2c2\n< b\n---\n> c\n1\n",
+    );
+    check("diff <(echo a) g >/dev/null; echo $?", "1\n");
+    check("grep -n b <(printf 'a\\nb\\n')", "2:b\n");
+    check(
+        "grep -c x <(echo x) <(echo y)",
+        "/dev/fd/63:1\n/dev/fd/62:0\n",
+    );
+    check("grep x /dev/fd/3 3<<<x", "x\n");
+    check("echo y | grep y /dev/stdin", "y\n");
+    check("rg -n b <(printf 'a\\nb\\n')", "2:b\n");
+    check(
+        "rg -c b <(echo b) <(echo c) <(echo b)",
+        "/dev/fd/63:1\n/dev/fd/61:1\n",
+    );
+    check("jq -c .a <(echo '{\"a\":1}')", "1\n");
+    check("jq -nc --slurpfile x <(echo 1) '$x'", "[1]\n");
+    check("test -p <(true) && echo fifo", "fifo\n");
+    check("ls -l <(true) | cut -c1", "p\n");
+    check_all(
+        "grep x /dev/fd/9; echo $?",
+        "",
+        0,
+        "2\n",
+        "grep: /dev/fd/9: Bad file descriptor\n",
+    );
+}
+
 #[test]
 fn cat() {
     check("cat f", "one\ntwo\nthree\nfour\n");

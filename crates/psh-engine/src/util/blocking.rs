@@ -39,11 +39,36 @@ pub const INLINE_INPUT_LIMIT: usize = 64 * 1024 * 1024;
 pub const INLINE_OUTPUT_LIMIT: usize = 256 * 1024 * 1024;
 
 /// How a blocking utility runs.
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct BlockingOptions {
     /// It reads stdin. Only then does the inline backend read stdin (to its end, first);
     /// without it, stdin reads see end of file there.
     pub stdin: bool,
+    /// The shell descriptors its operands name (`/dev/fd/N`, process substitutions).
+    /// The thread backend reads any descriptor when the utility opens it; the inline
+    /// one reads these to their end first, like stdin, and cannot open others.
+    pub fds: Vec<u32>,
+}
+
+impl BlockingOptions {
+    /// Options for a utility with these operands: `fds` lists the descriptors they
+    /// name, as a whole operand (`/dev/fd/63`, `/dev/stdin`) or after `=`
+    /// (`--file=/dev/fd/63`).
+    pub fn new<'a>(stdin: bool, operands: impl IntoIterator<Item = &'a [u8]>) -> BlockingOptions {
+        let mut fds = Vec::new();
+        for op in operands {
+            let path = match op.iter().position(|&b| b == b'=') {
+                Some(i) if !op.starts_with(b"/") => &op[i + 1..],
+                _ => op,
+            };
+            if let Some(n) = crate::exec::dev_fd(path)
+                && !fds.contains(&n)
+            {
+                fds.push(n);
+            }
+        }
+        BlockingOptions { stdin, fds }
+    }
 }
 
 /// A blocking utility's body: its context and what the async front end prepared (the
@@ -59,6 +84,8 @@ pub struct SyncCtx {
     env: Vec<(Vec<u8>, Vec<u8>)>,
     terminal: [bool; 3],
     stdin_readable: bool,
+    /// The shell's open descriptors when the utility started, for `/dev/fd/N`.
+    shell_fds: Vec<(u32, Metadata)>,
     io: Io,
     out: Vec<u8>,
     write_error: Option<io::ErrorKind>,
@@ -72,6 +99,8 @@ enum Io {
     Inline {
         host: Rc<dyn Host>,
         stdin: io::Cursor<Vec<u8>>,
+        /// [`BlockingOptions::fds`], read to their end.
+        fds: Vec<(u32, Rc<[u8]>)>,
         out: Arc<Mutex<InlineOut>>,
     },
 }
@@ -145,12 +174,18 @@ pub struct SyncFile {
 enum FileInner {
     Os(std::fs::File),
     Host(Rc<dyn HostFile>),
+    /// One of the shell's descriptors, read through the engine (thread backend).
+    Shell(Arc<Pipe>, u32),
+    /// One of the shell's descriptors, read before the utility ran (inline backend).
+    Data(io::Cursor<Rc<[u8]>>),
 }
 
 impl Read for SyncFile {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         match &mut self.inner {
             FileInner::Os(f) => f.read(buf),
+            FileInner::Shell(pipe, fd) => pipe.read(*fd, buf),
+            FileInner::Data(c) => c.read(buf),
             FileInner::Host(f) => match poll_once(|cx| f.poll_read(cx, buf)) {
                 Some(r) => r,
                 None => Err(would_block()),
@@ -257,8 +292,13 @@ impl SyncCtx {
         }
     }
 
-    /// Opens a file for reading.
+    /// Opens a file for reading. `/dev/fd/N` and `/dev/stdin` are the shell's
+    /// descriptors (D1055), as for redirections and async utilities: process
+    /// substitutions are engine pipes no OS path reaches.
     pub fn open(&self, p: &[u8]) -> io::Result<SyncFile> {
+        if let Some(n) = crate::exec::dev_fd(p) {
+            return self.open_shell_fd(n);
+        }
         let abs = self.path(p);
         match &self.io {
             Io::Thread { native, .. } => Ok(SyncFile {
@@ -276,8 +316,35 @@ impl SyncCtx {
         }
     }
 
-    /// `stat` (`follow`) or `lstat`.
+    fn open_shell_fd(&self, n: u32) -> io::Result<SyncFile> {
+        if !self.shell_fds.iter().any(|(fd, _)| *fd == n) {
+            return Err(crate::fd::bad_fd());
+        }
+        let inner = match &self.io {
+            Io::Thread { pipe, .. } => FileInner::Shell(pipe.clone(), n),
+            Io::Inline { stdin, fds, .. } => {
+                let data: Rc<[u8]> = match fds.iter().find(|(fd, _)| *fd == n) {
+                    Some((_, data)) => data.clone(),
+                    // What is left of stdin, if it was read.
+                    None if n == 0 => stdin.get_ref()[stdin.position() as usize..].into(),
+                    None => return Err(would_block()),
+                };
+                FileInner::Data(io::Cursor::new(data))
+            }
+        };
+        Ok(SyncFile { inner })
+    }
+
+    /// `stat` (`follow`) or `lstat`; `/dev/fd/N` as [`SyncCtx::open`] has it.
     pub fn stat(&self, p: &[u8], follow: bool) -> io::Result<Metadata> {
+        if let Some(n) = crate::exec::dev_fd(p) {
+            return self
+                .shell_fds
+                .iter()
+                .find(|(fd, _)| *fd == n)
+                .map(|(_, m)| *m)
+                .ok_or_else(crate::fd::bad_fd);
+        }
         let abs = self.path(p);
         match &self.io {
             Io::Thread { native, .. } => native_stat(&native(&abs)?, follow),
@@ -298,7 +365,7 @@ impl SyncCtx {
     pub fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let _ = self.flush();
         match &mut self.io {
-            Io::Thread { pipe, .. } => pipe.read(buf),
+            Io::Thread { pipe, .. } => pipe.read(0, buf),
             Io::Inline { stdin, .. } => stdin.read(buf),
         }
     }
@@ -469,8 +536,10 @@ struct PipeState {
     queued: usize,
     /// A failed write to fd 1 or 2: later writes to it fail the same way.
     write_error: [Option<io::ErrorKind>; 3],
-    /// The thread wants up to this many bytes of stdin.
-    read_want: Option<usize>,
+    /// The thread wants up to this many bytes from this descriptor (0: stdin).
+    read_want: Option<(u32, usize)>,
+    /// A read is in flight: others wait (the utility's threads share the queue).
+    reading: bool,
     /// The engine's answer: bytes (empty: end of file) or an error.
     read_answer: Option<io::Result<Vec<u8>>>,
     /// The thread ended (its status), or panicked (`None` with `ended`).
@@ -516,26 +585,37 @@ impl Pipe {
         Ok(())
     }
 
-    /// Thread side: one read of stdin through the engine.
-    fn read(&self, buf: &mut [u8]) -> io::Result<usize> {
+    /// Thread side: one read of the shell's descriptor `fd` through the engine.
+    fn read(&self, fd: u32, buf: &mut [u8]) -> io::Result<usize> {
         if buf.is_empty() {
             return Ok(0);
         }
         let mut st = lock(&self.state);
-        st.read_answer = None;
-        st.read_want = Some(buf.len());
-        Pipe::wake(&mut st);
-        loop {
+        while st.reading {
             if self.cancelled() {
                 return Err(io::ErrorKind::Interrupted.into());
             }
-            if let Some(ans) = st.read_answer.take() {
-                let data = ans?;
-                buf[..data.len()].copy_from_slice(&data);
-                return Ok(data.len());
-            }
             st = self.cv.wait(st).unwrap_or_else(|e| e.into_inner());
         }
+        st.reading = true;
+        st.read_answer = None;
+        st.read_want = Some((fd, buf.len()));
+        Pipe::wake(&mut st);
+        let r = loop {
+            if self.cancelled() {
+                break Err(io::ErrorKind::Interrupted.into());
+            }
+            if let Some(ans) = st.read_answer.take() {
+                break ans.map(|data| {
+                    buf[..data.len()].copy_from_slice(&data);
+                    data.len()
+                });
+            }
+            st = self.cv.wait(st).unwrap_or_else(|e| e.into_inner());
+        };
+        st.reading = false;
+        self.cv.notify_all();
+        r
     }
 
     /// Thread side: the function returned (or panicked: `None`).
@@ -561,7 +641,7 @@ impl Drop for CancelOnDrop {
 
 enum Event {
     Out(u32, Vec<u8>),
-    Read(usize),
+    Read(u32, usize),
     Done(Option<i32>),
 }
 
@@ -584,15 +664,23 @@ impl UtilCtx<'_> {
         let host = self.vp.core.host.clone();
         let native = host.native_paths();
         let stdin_readable = self.stdin_readable();
+        let shell_fds = self
+            .vp
+            .fds
+            .iter()
+            .map(|(n, f)| (n, super::fd_metadata(f, &*host)))
+            .collect();
         let mut sync = SyncCtx {
             name: self.name.clone(),
             cwd: self.vp.cwd.clone(),
             env: self.env.clone(),
             terminal,
             stdin_readable,
+            shell_fds,
             io: Io::Inline {
                 host,
                 stdin: io::Cursor::new(Vec::new()),
+                fds: Vec::new(),
                 out: Arc::default(),
             },
             out: Vec::new(),
@@ -601,11 +689,28 @@ impl UtilCtx<'_> {
         match native {
             Some(native) => self.run_thread(sync, native, arg, f).await,
             None => {
-                if opts.stdin {
-                    match self.read_limited(INLINE_INPUT_LIMIT).await {
+                if opts.stdin || opts.fds.contains(&0) {
+                    match self.read_limited(0, INLINE_INPUT_LIMIT).await {
                         Ok(data) => {
                             if let Io::Inline { stdin, .. } = &mut sync.io {
                                 *stdin = io::Cursor::new(data);
+                            }
+                        }
+                        Err(msg) => {
+                            self.error(&msg).await;
+                            return 2;
+                        }
+                    }
+                }
+                for &n in opts.fds.iter().filter(|&&n| n != 0) {
+                    // A closed one fails when the utility opens it.
+                    if self.fd(n).is_none() {
+                        continue;
+                    }
+                    match self.read_limited(n, INLINE_INPUT_LIMIT).await {
+                        Ok(data) => {
+                            if let Io::Inline { fds, .. } = &mut sync.io {
+                                fds.push((n, data.into()));
                             }
                         }
                         Err(msg) => {
@@ -635,12 +740,20 @@ impl UtilCtx<'_> {
         }
     }
 
-    /// stdin to its end, or an error message past `limit` bytes.
-    async fn read_limited(&mut self, limit: usize) -> Result<Vec<u8>, String> {
+    /// Descriptor `n` (0: stdin) to its end, or an error message past `limit` bytes.
+    async fn read_limited(&mut self, n: u32, limit: usize) -> Result<Vec<u8>, String> {
         let mut data = Vec::new();
         let mut buf = vec![0u8; 64 * 1024];
         loop {
-            match self.read(&mut buf).await {
+            let r = if n == 0 {
+                self.read(&mut buf).await
+            } else {
+                match self.fd(n) {
+                    Some(f) => f.read(&mut buf).await,
+                    None => Err(crate::fd::bad_fd()),
+                }
+            };
+            match r {
                 Ok(0) => return Ok(data),
                 Ok(n) => {
                     if data.len() + n > limit {
@@ -677,6 +790,7 @@ impl UtilCtx<'_> {
             env,
             terminal,
             stdin_readable,
+            shell_fds,
             ..
         } = sync;
         let thread_pipe = pipe.clone();
@@ -689,6 +803,7 @@ impl UtilCtx<'_> {
                     env,
                     terminal,
                     stdin_readable,
+                    shell_fds,
                     io: Io::Thread {
                         pipe: thread_pipe.clone(),
                         native,
@@ -713,8 +828,8 @@ impl UtilCtx<'_> {
                     pipe.cv.notify_all();
                     return Poll::Ready(Event::Out(fd, data));
                 }
-                if let Some(n) = st.read_want.take() {
-                    return Poll::Ready(Event::Read(n));
+                if let Some((fd, n)) = st.read_want.take() {
+                    return Poll::Ready(Event::Read(fd, n));
                 }
                 if st.ended {
                     return Poll::Ready(Event::Done(st.status));
@@ -744,9 +859,9 @@ impl UtilCtx<'_> {
                         pipe.cv.notify_all();
                     }
                 }
-                Event::Read(n) => {
+                Event::Read(fd, n) => {
                     buf.resize(n.min(BUFFER), 0);
-                    let r = match self.fd(0) {
+                    let r = match self.fd(fd) {
                         Some(file) => file.read(&mut buf).await.map(|k| buf[..k].to_vec()),
                         None => Err(crate::fd::bad_fd()),
                     };
@@ -801,7 +916,14 @@ mod tests {
     }
 
     fn bupper<'a>(ctx: &'a mut UtilCtx<'_>, _: &'a [Vec<u8>]) -> LocalBoxFuture<'a, i32> {
-        Box::pin(ctx.run_blocking(BlockingOptions { stdin: true }, (), bupper_body))
+        Box::pin(ctx.run_blocking(
+            BlockingOptions {
+                stdin: true,
+                ..Default::default()
+            },
+            (),
+            bupper_body,
+        ))
     }
 
     /// `byes`: `y` lines until a write fails (status 0, as rg on a closed pipe), in
@@ -841,7 +963,8 @@ mod tests {
 
     fn bcat<'a>(ctx: &'a mut UtilCtx<'_>, argv: &'a [Vec<u8>]) -> LocalBoxFuture<'a, i32> {
         let path = argv.get(1).cloned().unwrap_or_default();
-        Box::pin(ctx.run_blocking(BlockingOptions::default(), path, bcat_body))
+        let opts = BlockingOptions::new(false, argv.iter().map(Vec::as_slice));
+        Box::pin(ctx.run_blocking(opts, path, bcat_body))
     }
 
     fn bpanic_body(_: &mut SyncCtx, _: ()) -> i32 {
@@ -963,6 +1086,11 @@ mod tests {
         assert_eq!(inline("bcat /f.txt").1, "5:file\n");
         assert_eq!(inline("cd /; bcat f.txt").1, "5:file\n");
         assert_eq!(inline("bcat /nope; echo $?").1, "3\n");
+        // The shell's descriptors, read before the body runs.
+        assert_eq!(inline("bcat <(echo sub)").1, "0:sub\n");
+        assert_eq!(inline("bcat /dev/fd/3 3< /f.txt").1, "0:file\n");
+        assert_eq!(inline("bcat /dev/stdin").1, "0:abc\n");
+        assert_eq!(inline("bcat /dev/fd/9; echo $?").1, "3\n");
         // Inline output is written after the body: a reader that stops early still
         // ends the pipeline (byes stops at the first failed write... of the engine's).
         assert_eq!(inline("bpanic; echo $?").1, "2\n");
@@ -1037,6 +1165,17 @@ mod tests {
             0
         );
         assert_eq!(read("out7"), "yes\nyes\nno\n");
+        // The shell's descriptors, read through the engine as the body reads.
+        assert_eq!(threaded(&dir, "bcat <(echo sub) > out8"), 0);
+        assert_eq!(read("out8"), "0:sub\n");
+        let big = "i=0; while [ $i -lt 30000 ]; do echo line$i; i=$((i+1)); done";
+        assert_eq!(threaded(&dir, &format!("bcat <({big}) > out9")), 0);
+        assert_eq!(read("out9").lines().count(), 30000);
+        assert_eq!(
+            threaded(&dir, "bcat /dev/fd/9 2>/dev/null; echo $? > out10"),
+            0
+        );
+        assert_eq!(read("out10"), "3\n");
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

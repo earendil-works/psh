@@ -333,7 +333,7 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         args.color = Some(ctx.is_terminal(1) && !no_color);
     }
     let stdin = args.files.is_empty() && (!args.null_input || program_reads_input(&args));
-    let opts = BlockingOptions { stdin };
+    let opts = BlockingOptions::new(stdin, argv.iter().map(Vec::as_slice));
     ctx.run_blocking(opts, args, body).await
 }
 

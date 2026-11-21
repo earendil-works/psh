@@ -259,3 +259,35 @@ wc -c < greet.txt
 wc -w < greet.txt
 wc -c greet.txt
 printf 'one two\nthree\n' | wc -w
+
+#### diff of two process substitutions
+printf 'b\na\nc\n' > one.txt
+printf 'a\nb\nd\n' > two.txt
+diff <(sort one.txt) <(sort two.txt)
+echo "exit=$?"
+diff <(sort one.txt) <(sort one.txt) && echo same
+
+#### diff -u of a normalized file against a process substitution
+printf 'x\tERR boom\ny\tok\n' > got.txt
+printf 'x\tERR\ny\tok\n' > want.txt
+diff -u <(sed 's/\tERR .*/\tERR/' got.txt) want.txt | tail -n +3
+echo "exit=${PIPESTATUS[0]}"
+
+#### grep and rg over a process substitution
+printf 'fn main() {}\nfn helper() {}\n' > lib.rs
+grep -n "helper" <(cat lib.rs)
+grep -c fn <(cat lib.rs) lib.rs | sed 's|/dev/fd/[0-9]*|FD|'
+rg -n "main" <(cat lib.rs)
+rg -c fn lib.rs <(cat lib.rs) | sed 's|/dev/fd/[0-9]*|FD|' | sort
+
+#### jq over a process substitution
+printf '{"a":1}\n{"a":2}\n' > data.jsonl
+jq -c '.a' <(cat data.jsonl)
+jq -n --slurpfile rows <(cat data.jsonl) '$rows | length'
+
+#### test on a process substitution and an open descriptor
+printf '{}\n' > data.jsonl
+test -p <(true) && echo "fifo"
+exec 3< data.jsonl
+[ -r /dev/fd/3 ] && echo "fd 3 open"
+[ -e /dev/fd/9 ] || echo "fd 9 closed"

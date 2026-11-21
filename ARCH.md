@@ -202,6 +202,8 @@ runtime in D005's sense: no runtime crate, no threads, the embedder steps and pa
   no writer: nothing is written into a kernel pipe before its consumer runs.
 - **`/dev/stdin`, `/dev/stdout`, `/dev/stderr`, `/dev/fd/N`** in redirections always
   refer to the vproc's descriptors (embedded, the process's are not the shell's; D1055).
+  So do file operands of utilities, async and blocking, and `test`'s file operators:
+  `UtilCtx` and `SyncCtx` open and `stat` them as the shell's descriptors (D038).
   `{var}>file` takes a descriptor from 10 up and outlasts the command (D1326).
 - **Command lookup** (D1083, D1291, D1410): functions, then shell builtins, then a bare
   `bash` or `sh` (psh itself, below), then psh's utilities (when the embedder passed a

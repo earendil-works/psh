@@ -336,6 +336,34 @@ impl Drop for ShellChild {
     }
 }
 
+/// The shell descriptor a path names (`/dev/fd/N`, `/dev/stdin`, ...), which utilities
+/// reach through [`UtilCtx::open`] and [`SyncCtx::open`], never the OS (D1055).
+pub fn shell_fd(path: &[u8]) -> Option<u32> {
+    crate::exec::dev_fd(path)
+}
+
+/// What `stat` says about one of the shell's descriptors (`/dev/fd/N`): a FIFO for the
+/// engine's pipes (process substitutions), else the kind the host reports. Size and
+/// times are unknown (zero); the owner is the shell's user.
+pub(crate) fn fd_metadata(f: &FdObj, host: &dyn crate::host::Host) -> Metadata {
+    use crate::host::FileKind;
+    let kind = match f {
+        FdObj::PipeRead(_) | FdObj::PipeWrite(_) => FileKind::Fifo,
+        FdObj::File(f) => f.kind().unwrap_or(FileKind::Other),
+    };
+    let info = host.info();
+    Metadata {
+        kind,
+        size: 0,
+        mode: if kind == FileKind::Fifo { 0o600 } else { 0o644 },
+        mtime_ns: 0,
+        dev: 0,
+        ino: 0,
+        uid: info.uid,
+        gid: info.groups.first().copied().unwrap_or(0),
+    }
+}
+
 /// An open file: one of the Host, or one of the shell's descriptors (`/dev/fd/N`,
 /// `/dev/stdin`, as the engine emulates them, D1055).
 pub struct UtilFile {
@@ -507,8 +535,15 @@ impl UtilCtx<'_> {
         })
     }
 
-    /// `stat` (`follow`) or `lstat`.
+    /// `stat` (`follow`) or `lstat`. `/dev/fd/N` and `/dev/stdin` describe the shell's
+    /// descriptors, as [`UtilCtx::open`] opens them.
     pub async fn stat(&self, path: &[u8], follow: bool) -> io::Result<Metadata> {
+        if let Some(n) = crate::exec::dev_fd(path) {
+            return self
+                .fd(n)
+                .map(|f| fd_metadata(&f, self.vp.host()))
+                .ok_or_else(bad_fd);
+        }
         self.vp.host().stat(&self.path(path), follow).await
     }
 
@@ -532,6 +567,10 @@ impl UtilCtx<'_> {
         path: &[u8],
         follow: bool,
     ) -> io::Result<(Metadata, ExtraMetadata)> {
+        if crate::exec::dev_fd(path).is_some() {
+            let m = self.stat(path, follow).await?;
+            return Ok((m, ExtraMetadata::derived(&m)));
+        }
         self.vp.host().stat_extra(&self.path(path), follow).await
     }
 

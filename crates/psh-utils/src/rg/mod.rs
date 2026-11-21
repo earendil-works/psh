@@ -80,7 +80,8 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
         return crate::textio::fall_through(ctx, argv, what).await;
     }
     let stdin = reads_stdin(&low, ctx.stdin_readable());
-    ctx.run_blocking(BlockingOptions { stdin }, (low, msgs), main::run_sync)
+    let opts = BlockingOptions::new(stdin, argv.iter().map(Vec::as_slice));
+    ctx.run_blocking(opts, (low, msgs), main::run_sync)
         .await
 }
 

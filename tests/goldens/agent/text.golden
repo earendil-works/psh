@@ -516,3 +516,69 @@ bash-n: 0
 |3
 --- file greet.txt
 |hello world
+
+=== 48: diff of two process substitutions
+status: 0
+bash-n: 0
+--- stdout
+|3c3
+|< c
+|---
+|> d
+|exit=1
+|same
+--- file one.txt
+|b
+|a
+|c
+--- file two.txt
+|a
+|b
+|d
+
+=== 49: diff -u of a normalized file against a process substitution
+status: 0
+bash-n: 0
+--- stdout
+|exit=0
+--- file got.txt
+|x	ERR boom
+|y	ok
+--- file want.txt
+|x	ERR
+|y	ok
+
+=== 50: grep and rg over a process substitution
+status: 0
+bash-n: 0
+--- stdout
+|2:fn helper() {}
+|FD:2
+|lib.rs:2
+|1:fn main() {}
+|FD:2
+|lib.rs:2
+--- file lib.rs
+|fn main() {}
+|fn helper() {}
+
+=== 51: jq over a process substitution
+status: 0
+bash-n: 0
+--- stdout
+|1
+|2
+|2
+--- file data.jsonl
+|{"a":1}
+|{"a":2}
+
+=== 52: test on a process substitution and an open descriptor
+status: 0
+bash-n: 0
+--- stdout
+|fifo
+|fd 3 open
+|fd 9 closed
+--- file data.jsonl
+|{}

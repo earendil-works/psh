@@ -2961,3 +2961,17 @@ past `.9` shows `:` instead of carrying, `%P` is a whole percent with `.00`, an 
 `TIMEFORMAT` prints `TIMEFORMAT: `c': invalid format character` instead of the report,
 `time -p` ignores `TIMEFORMAT`, and a pipeline ended by `return` prints no report while
 `exit`, errexit, `break` and expansion errors do. `times` uses the same clocks.
+
+## D038: Utilities reach `/dev/fd/N` through the shell, blocking ones included
+date: 2026-11-21 · by: coordinator (owner request) · issue: -
+Extends D1055 to every file operation of a utility. `UtilCtx::stat`/`stat_extra`,
+`SyncCtx::open`/`stat` and `test`'s file operators treat `/dev/stdin` and `/dev/fd/N` as
+the vproc's descriptors (a process substitution is an engine pipe: the OS path names
+nothing, or the wrong process's descriptor when embedded); `stat` reports the engine's
+pipes as FIFOs. Agents' `diff <(…) <(…)` and `grep x <(git show …)` failed with
+`Bad file descriptor` before. The thread backend reads such a descriptor through the
+engine on demand (the stdin protocol, now per descriptor, one read in flight); the
+inline backend cannot wait, so `BlockingOptions::new` lists the descriptors the
+operands name (whole, or after `=`) and they are read to their end before the body
+runs, like stdin. `rg` and the shared walker walk roots that are shell descriptors
+virtually, on the utility's thread.

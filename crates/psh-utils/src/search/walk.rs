@@ -221,7 +221,12 @@ impl<'h> Walker<'h> {
         roots: &[Vec<u8>],
         visit: &mut dyn FnMut(Result<Entry, Error>) -> WalkState,
     ) -> WalkState {
-        if self.is_native() {
+        // The shell's descriptors (process substitutions) are not on the OS's file
+        // system: only the virtual walk reaches them, through the utility's context.
+        let shell_fds = roots
+            .iter()
+            .any(|r| psh_engine::util::shell_fd(r).is_some());
+        if self.is_native() && !shell_fds {
             self.run_native(roots, visit)
         } else {
             super::vwalk::run(self.host, &self.opts, roots, visit)

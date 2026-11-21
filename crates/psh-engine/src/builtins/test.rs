@@ -245,6 +245,33 @@ pub(crate) async fn unary(vp: &mut Vp, op: &[u8], arg: &[u8]) -> T {
     }
     let path = vp.abs_path(arg);
     let host = vp.host();
+    // `/dev/fd/N` checks the shell's descriptor N (bash's manual), as redirections and
+    // utilities see it (D1055).
+    if let Some(n) = crate::exec::dev_fd(arg) {
+        let Some(f) = vp.fd(n) else {
+            return Ok(false);
+        };
+        let m = crate::util::fd_metadata(&f, host);
+        let (read, write) = match &*f {
+            crate::fd::FdObj::PipeRead(_) => (true, false),
+            crate::fd::FdObj::PipeWrite(_) => (false, true),
+            crate::fd::FdObj::File(_) => (true, true),
+        };
+        return Ok(match c {
+            b'a' | b'e' => true,
+            b'f' => m.kind == FileKind::File,
+            b'd' => m.kind == FileKind::Dir,
+            b'p' => m.kind == FileKind::Fifo,
+            b'S' => m.kind == FileKind::Socket,
+            b'b' => m.kind == FileKind::BlockDevice,
+            b'c' => m.kind == FileKind::CharDevice,
+            b'r' => read,
+            b'w' => write,
+            b'O' => m.uid == host.info().euid,
+            b'G' => host.info().groups.first() == Some(&m.gid),
+            _ => false,
+        });
+    }
     let follow = !matches!(c, b'h' | b'L');
     let Ok(m) = host.stat(&path, follow).await else {
         return Ok(false);

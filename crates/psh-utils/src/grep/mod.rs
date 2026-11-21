@@ -483,7 +483,8 @@ pub async fn run(ctx: &mut UtilCtx<'_>, argv: &[Vec<u8>]) -> i32 {
     }
     let stdin = cfg.operands.iter().any(|o| o == b"-")
         || (cfg.operands.is_empty() && cfg.dirs != Dirs::Recurse);
-    ctx.run_blocking(BlockingOptions { stdin }, (cfg, matchers), search::run_sync)
+    let opts = BlockingOptions::new(stdin, argv.iter().map(Vec::as_slice));
+    ctx.run_blocking(opts, (cfg, matchers), search::run_sync)
         .await
 }
 

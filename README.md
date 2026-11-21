@@ -45,6 +45,34 @@ scripts/build-wasm              # target/wasm/psh.wasm and psh-parser.wasm
 cargo run -p psh-docs -- build  # the guide as a site: target/docs-site/
 ```
 
+For everyday use, build an optimized binary and put it on your `PATH`:
+
+```sh
+cargo build --release -p psh    # target/release/psh (psh.exe on Windows)
+cargo install --path crates/psh # or install it to ~/.cargo/bin/psh
+```
+
+The build needs a stable Rust toolchain, 1.96 or newer; on Windows no Git Bash or MSYS
+is required.
+
+## Using psh in pi
+
+pi runs every shell command as `<shell> -c '<command>'`, and `psh -c` takes what
+`bash -c` takes, so pi can use psh by pointing its `shellPath` setting at the binary.
+In `~/.pi/agent/settings.json` (or a project's `.pi/settings.json`):
+
+```json
+{
+  "shellPath": "~/.cargo/bin/psh"
+}
+```
+
+On Windows use the full path to the executable, for example
+`"C:\\Users\\you\\.cargo\\bin\\psh.exe"`. Restart pi afterwards; both the `bash` tool
+and `!cmd` then run in psh. To go back to bash, remove the setting. The guide's
+[psh in pi](docs/guide/pi.md) page covers what psh changes for pi and the deeper
+integration planned for pi's daemon.
+
 ## Where to read
 
 | File | What |
